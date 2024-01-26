@@ -1,0 +1,5 @@
+**/__pycache__
+venv/
+.env
+.pre-commit-config.yaml
+logfile.log
