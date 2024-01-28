@@ -21,6 +21,8 @@ class Variables:
     num_book = 21  # Must be odd
     num_acc = len(var.currencies) + 1
     frame_state = tk.Frame()
+    labels = dict()
+    labels_copy = dict()
     label_trading = tk.Label(frame_state, text="  TRADING: ")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_state = tk.Label(frame_state, text="  STATE: ")
@@ -140,12 +142,16 @@ class Variables:
 
     # Positions widget
 
-    label_pos = []
+    labels["position"] = []
+    labels_copy["position"] = []
     for name in var.name_pos:
-        tmp = []
+        lst = []
+        copy = []
         for _ in range(num_pos):
-            tmp.append(tk.Label(frame_positions, text=name))
-        label_pos.append(tmp)
+            lst.append(tk.Label(frame_positions, text=name))
+            copy.append(name)
+        labels["position"].append(lst)
+        labels_copy["position"].append(copy)
 
     # Trades widget
 

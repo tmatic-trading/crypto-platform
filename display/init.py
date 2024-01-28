@@ -57,23 +57,22 @@ def load_labels() -> None:
     for row in range(disp.num_pos):
         for column in range(len(var.name_pos)):
             if row == 0:
-                disp.label_pos[column][row].grid(
+                disp.labels["position"][column][row].grid(
                     row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
                 )
             else:
-                disp.label_pos[column][row].grid(
+                disp.labels["position"][column][row].grid(
                     row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
                 )
                 color = "yellow" if row == 1 else disp.bg_color
-                disp.label_pos[column][row]["text"] = ""
-                disp.label_pos[column][row]["bg"] = color
-                disp.label_pos[column][row].bind(
+                disp.labels["position"][column][row]["text"] = ""
+                disp.labels["position"][column][row]["bg"] = color
+                disp.labels["position"][column][row].bind(
                     "<Button-1>",
                     lambda event, row_position=row: function.handler_pos(
                         event, row_position
                     ),
                 )
-            disp.label_pos[column][row].grid(row=row, column=column)
             disp.frame_positions.grid_columnconfigure(column, weight=1)
 
     # Order book table

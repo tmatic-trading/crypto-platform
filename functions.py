@@ -4,6 +4,7 @@ import tkinter as tk
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from random import randint
+from typing import Union
 
 from dotenv import load_dotenv
 
@@ -406,9 +407,7 @@ def put_order(
     """
     Replace orders
     """
-    info_p = format_price(
-        number=price, symbol=var.orders[clOrdID]["symbol"]
-    )
+    info_p = format_price(number=price, symbol=var.orders[clOrdID]["symbol"])
     var.logger.info(
         "Putting orderID="
         + var.orders[clOrdID]["orderID"]
@@ -905,6 +904,14 @@ def volume(qty: int, symbol: str) -> str:
     return qty
 
 
+def update_label(
+    table: str, column: int, row: int, val: Union[str, int, float]
+) -> None:
+    if disp.labels_copy[table][column][row] != val:
+        disp.labels_copy[table][column][row] = val
+        disp.labels[table][column][row]["text"] = val
+
+
 def refresh_tables() -> None:
     """
     Update tkinter labels in the tables
@@ -939,40 +946,62 @@ def refresh_tables() -> None:
         var.positions[symbol]["FUND"] = round(
             var.instruments[symbol]["fundingRate"] * 100, 6
         )
-        disp.label_pos[0][num + 1]["text"] = symbol
+        update_label(table="position", column=0, row=num + 1, val=symbol)
         if var.positions[symbol]["POS"]:
             pos = volume(qty=var.positions[symbol]["POS"], symbol=symbol)
         else:
             pos = "0"
-        disp.label_pos[1][num + 1]["text"] = pos
-        disp.label_pos[2][num + 1]["text"] = (
-            format_price(
-                number=var.positions[symbol]["ENTRY"],
-                symbol=var.symbol,
-            )
-            if var.positions[symbol]["ENTRY"] is not None
-            else 0
+        update_label(table="position", column=1, row=num + 1, val=pos)
+        update_label(
+            table="position",
+            column=2,
+            row=num + 1,
+            val=(
+                format_price(
+                    number=var.positions[symbol]["ENTRY"],
+                    symbol=symbol,
+                )
+                if var.positions[symbol]["ENTRY"] is not None
+                else 0
+            ),
         )
-        disp.label_pos[3][num + 1]["text"] = (
-            var.positions[symbol]["PNL"]
-            if var.positions[symbol]["PNL"] is not None
-            else 0
+        update_label(
+            table="position",
+            column=3,
+            row=num + 1,
+            val=(
+                var.positions[symbol]["PNL"]
+                if var.positions[symbol]["PNL"] is not None
+                else 0
+            ),
         )
-        disp.label_pos[4][num + 1]["text"] = (
-            str(var.positions[symbol]["MCALL"]).replace("100000000", "inf")
-            if var.positions[symbol]["MCALL"] is not None
-            else 0
+        update_label(
+            table="position",
+            column=4,
+            row=num + 1,
+            val=(
+                str(var.positions[symbol]["MCALL"]).replace("100000000", "inf")
+                if var.positions[symbol]["MCALL"] is not None
+                else 0
+            ),
         )
-        disp.label_pos[5][num + 1]["text"] = var.positions[symbol]["STATE"]
-        disp.label_pos[6][num + 1]["text"] = humanFormat(
-            var.positions[symbol]["VOL24h"]
+        update_label(
+            table="position", column=5, row=num + 1, val=var.positions[symbol]["STATE"]
+        )
+        update_label(
+            table="position",
+            column=6,
+            row=num + 1,
+            val=humanFormat(var.positions[symbol]["VOL24h"]),
         )
         if isinstance(var.instruments[symbol]["expiry"], datetime):
             tm = var.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
         else:
             tm = var.instruments[symbol]["expiry"]
-        disp.label_pos[7][num + 1]["text"] = tm
-        disp.label_pos[8][num + 1]["text"] = var.positions[symbol]["FUND"]
+        update_label(table="position", column=7, row=num + 1, val=tm)
+        update_label(
+            table="position", column=8, row=num + 1, val=var.positions[symbol]["FUND"]
+        )
 
     # Refresh Orderbook table
 
@@ -992,9 +1021,7 @@ def refresh_tables() -> None:
             price = ""
             qty = 0
             if len(val[side]) > count:
-                price = format_price(
-                    number=val[side][count][0], symbol=var.symbol
-                )
+                price = format_price(number=val[side][count][0], symbol=var.symbol)
                 vlm = volume(qty=val[side][count][1], symbol=var.symbol)
                 if var.orders:
                     qty = volume(
@@ -1045,9 +1072,7 @@ def refresh_tables() -> None:
                         symbol=var.symbol,
                     )
                 if var.ticker[var.symbol]["ask"]:
-                    price = format_price(
-                        number=price, symbol=var.symbol
-                    )
+                    price = format_price(number=price, symbol=var.symbol)
                 else:
                     price = ""
                 disp.label_book[1][row + 1]["text"] = price
@@ -1069,9 +1094,7 @@ def refresh_tables() -> None:
                         qty=find_order(price, qty, symbol=var.symbol), symbol=var.symbol
                     )
                 if price > 0:
-                    price = format_price(
-                        number=price, symbol=var.symbol
-                    )
+                    price = format_price(number=price, symbol=var.symbol)
                 else:
                     price = ""
                 disp.label_book[1][row + 1]["text"] = price
@@ -1394,12 +1417,12 @@ def handler_pos(event, row_position: int) -> None:
         row_position = len(var.symbol_list)
     var.symbol = var.symbol_list[row_position - 1]
     for row in enumerate(var.symbol_list):
-        for column in enumerate(disp.label_pos):
+        for column in enumerate(disp.labels["position"]):
             if row[0] + 1 == row_position:
-                disp.label_pos[column[0]][row[0] + 1]["bg"] = "yellow"
+                disp.labels["position"][column[0]][row[0] + 1]["bg"] = "yellow"
             else:
                 if row[0] + 1 > 0:
-                    disp.label_pos[column[0]][row[0] + 1]["bg"] = disp.bg_color
+                    disp.labels["position"][column[0]][row[0] + 1]["bg"] = disp.bg_color
 
 
 def handler_robots(event, row_position: int) -> None:
