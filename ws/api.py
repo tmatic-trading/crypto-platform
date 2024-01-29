@@ -274,7 +274,7 @@ class Connect_websocket:
         Gets market depth (orderbook), 10 lines deep.
         """
 
-        return self.data["orderBook10"].values()
+        return self.data["orderBook10"]
 
     def get_additional_instrument_data(
         self, symbol: list, instruments: OrderedDict

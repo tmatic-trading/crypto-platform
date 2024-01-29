@@ -907,8 +907,8 @@ def volume(qty: int, symbol: str) -> str:
 def update_label(
     table: str, column: int, row: int, val: Union[str, int, float]
 ) -> None:
-    if disp.labels_copy[table][column][row] != val:
-        disp.labels_copy[table][column][row] = val
+    if disp.labels_cache[table][column][row] != val:
+        disp.labels_cache[table][column][row] = val
         disp.labels[table][column][row]["text"] = val
 
 
@@ -1029,31 +1029,36 @@ def refresh_tables() -> None:
                         symbol=var.symbol,
                     )
             if str(qty) != "0":
-                disp.label_book[col_qty][row]["text"] = qty
-                disp.label_book[col_qty][row]["bg"] = color
+                update_label(table="orderbook", column=col_qty, row=row, val=qty)
+                disp.labels["orderbook"][col_qty][row]["bg"] = color
             else:
-                disp.label_book[col_qty][row]["text"] = ""
-                disp.label_book[col_qty][row]["bg"] = disp.bg_color
-            disp.label_book[col][row]["text"] = vlm
-            disp.label_book[1][row]["text"] = price
+                update_label(table="orderbook", column=col_qty, row=row, val="")
+                disp.labels["orderbook"][col_qty][row]["bg"] = disp.bg_color
+            update_label(table="orderbook", column=col, row=row, val=vlm)
+            update_label(table="orderbook", column=1, row=row, val=price)
             count += 1
 
     num = int(disp.num_book / 2)
     if var.order_book_depth == "quote":
         if var.ticker[var.symbol]["askSize"]:
-            disp.label_book[2][num]["text"] = volume(
-                qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol
+            update_label(
+                table="orderbook",
+                column=2,
+                row=num,
+                val=volume(qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol),
             )
         else:
-            disp.label_book[2][num]["text"] = ""
+            update_label(table="orderbook", column=2, row=num, val="")
         if var.ticker[var.symbol]["bidSize"]:
-            disp.label_book[0][num + 1]["text"] = volume(
-                qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol
+            update_label(
+                table="orderbook",
+                column=0,
+                row=num + 1,
+                val=volume(qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol),
             )
         else:
-            disp.label_book[0][num + 1]["text"] = ""
-        disp.label_book[2][num]["fg"] = "black"
-        disp.label_book[0][num + 1]["fg"] = "black"
+            update_label(table="orderbook", column=0, row=num + 1, val="")
+        disp.labels["orderbook"][0][num + 1]["fg"] = "black"
         first_price_sell = (
             var.ticker[var.symbol]["ask"]
             + (num - 1) * var.instruments[var.symbol]["tickSize"]
@@ -1075,13 +1080,13 @@ def refresh_tables() -> None:
                     price = format_price(number=price, symbol=var.symbol)
                 else:
                     price = ""
-                disp.label_book[1][row + 1]["text"] = price
+                update_label(table="orderbook", column=1, row=row + 1, val=price)
                 if str(qty) != "0":
-                    disp.label_book[0][row + 1]["text"] = qty
+                    update_label(table="orderbook", column=0, row=row + 1, val=qty)
                     disp.label_book[0][row + 1]["bg"] = "orange red"
                 else:
-                    disp.label_book[0][row + 1]["text"] = ""
-                    disp.label_book[0][row + 1]["bg"] = disp.bg_color
+                    update_label(table="orderbook", column=0, row=row + 1, val="")
+                    disp.labels["orderbook"][0][row + 1]["bg"] = disp.bg_color
             else:
                 price = round(
                     first_price_buy
@@ -1097,17 +1102,15 @@ def refresh_tables() -> None:
                     price = format_price(number=price, symbol=var.symbol)
                 else:
                     price = ""
-                disp.label_book[1][row + 1]["text"] = price
+                update_label(table="orderbook", column=1, row=row + 1, val=price)
                 if str(qty) != "0":
-                    disp.label_book[2][row + 1]["text"] = qty
-                    disp.label_book[2][row + 1]["bg"] = "green2"
+                    update_label(table="orderbook", column=2, row=row + 1, val=qty)
+                    disp.labels["orderbook"][2][row + 1]["bg"] = "green2"
                 else:
-                    disp.label_book[2][row + 1]["text"] = ""
-                    disp.label_book[2][row + 1]["bg"] = disp.bg_color
+                    update_label(table="orderbook", column=2, row=row + 1, val="")
+                    disp.labels["orderbook"][2][row + 1]["bg"] = disp.bg_color
     else:
-        for val in var.ws.market_depth10():
-            if val["symbol"] == var.symbol:
-                break
+        val = var.ws.market_depth10()[(("symbol", var.symbol),)]
         display_order_book_values(
             val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
         )
@@ -1132,24 +1135,49 @@ def refresh_tables() -> None:
                 - bot.robots[emi]["COMMISS"]
             )
         symbol = bot.robots[emi]["SYMBOL"]
-        disp.label_robots[0][num + 1]["text"] = emi
-        disp.label_robots[1][num + 1]["text"] = symbol
-        disp.label_robots[2][num + 1]["text"] = var.instruments[symbol]["settlCurrency"]
-        disp.label_robots[3][num + 1]["text"] = str(bot.robots[emi]["TIMEFR"])
-        disp.label_robots[4][num + 1]["text"] = str(bot.robots[emi]["CAPITAL"])
-        disp.label_robots[5][num + 1]["text"] = bot.robots[emi]["STATUS"]
-        disp.label_robots[6][num + 1]["text"] = humanFormat(bot.robots[emi]["VOL"])
-        disp.label_robots[7][num + 1]["text"] = "{:.8f}".format(bot.robots[emi]["PNL"])
-        disp.label_robots[8][num + 1]["text"] = volume(
-            qty=bot.robots[emi]["POS"], symbol=symbol
+        update_label(table="robots", column=0, row=num + 1, val=emi)
+        update_label(table="robots", column=1, row=num + 1, val=symbol)
+        update_label(
+            table="robots",
+            column=2,
+            row=num + 1,
+            val=var.instruments[symbol]["settlCurrency"],
+        )
+        update_label(
+            table="robots", column=3, row=num + 1, val=bot.robots[emi]["TIMEFR"]
+        )
+        update_label(
+            table="robots", column=4, row=num + 1, val=bot.robots[emi]["CAPITAL"]
+        )
+        update_label(
+            table="robots", column=5, row=num + 1, val=bot.robots[emi]["STATUS"]
+        )
+        update_label(table="robots", column=6, row=num + 1, val=bot.robots[emi]["VOL"])
+        update_label(table="robots", column=7, row=num + 1, val=bot.robots[emi]["PNL"])
+        update_label(
+            table="robots",
+            column=8,
+            row=num + 1,
+            val=volume(qty=bot.robots[emi]["POS"], symbol=symbol),
         )
         bot.robots[emi]["y_position"] = num + 1
+        if bot.robots[emi]["POS"] != bot.robot_pos[emi]:
+            if bot.robots[emi]["STATUS"] == "RESERVED":
+                if bot.robots[emi]["POS"] != 0:
+                    disp.labels["robots"][5][num + 1]["fg"] = "red"
+                else:
+                    disp.labels["robots"][5][num + 1]["fg"] = "#212121"
+            bot.robot_pos[emi] = bot.robots[emi]["POS"]
+
+        '''if bot.robot_status[emi] != bot.robots[emi]["STATUS"]:
+            if bot.robots[emi]["STATUS"] == "OFF"
+
         if bot.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
             bot.robots[emi]["STATUS"] == "RESERVED" and bot.robots[emi]["POS"] != 0
         ):
-            disp.label_robots[5][num + 1]["fg"] = "red"
+            disp.labels["robots"][5][num + 1]["fg"] = "red"
         else:
-            disp.label_robots[5][num + 1]["fg"] = "#212121"
+            disp.labels["robots"][5][num + 1]["fg"] = "#212121"'''
 
     # Refresh Account table
 
@@ -1172,24 +1200,42 @@ def refresh_tables() -> None:
                 )
                 exit(1)
     for num, cur in enumerate(var.currencies):
-        disp.label_account[0][1 + num]["text"] = cur
-        disp.label_account[1][1 + num]["text"] = format_number(
-            number=var.accounts[cur]["MARGINBAL"]
+        update_label(table="account", column=0, row=num + 1, val=cur)
+        update_label(
+            table="account",
+            column=1,
+            row=num + 1,
+            val=format_number(number=var.accounts[cur]["MARGINBAL"]),
         )
-        disp.label_account[2][1 + num]["text"] = format_number(
-            number=var.accounts[cur]["AVAILABLE"]
+        update_label(
+            table="account",
+            column=2,
+            row=num + 1,
+            val=format_number(number=var.accounts[cur]["AVAILABLE"]),
         )
-        disp.label_account[3][1 + num]["text"] = "{:.3f}".format(
-            var.accounts[cur]["LEVERAGE"]
+        update_label(
+            table="account",
+            column=3,
+            row=num + 1,
+            val="{:.3f}".format(var.accounts[cur]["LEVERAGE"]),
         )
-        disp.label_account[4][1 + num]["text"] = format_number(
-            number=var.accounts[cur]["RESULT"]
+        update_label(
+            table="account",
+            column=4,
+            row=num + 1,
+            val=format_number(number=var.accounts[cur]["RESULT"]),
         )
-        disp.label_account[5][1 + num]["text"] = format_number(
-            number=-var.accounts[cur]["COMMISS"]
+        update_label(
+            table="account",
+            column=5,
+            row=num + 1,
+            val=format_number(number=-var.accounts[cur]["COMMISS"]),
         )
-        disp.label_account[6][1 + num]["text"] = format_number(
-            number=-var.accounts[cur]["FUNDING"]
+        update_label(
+            table="account",
+            column=6,
+            row=num + 1,
+            val=format_number(number=-var.accounts[cur]["FUNDING"]),
         )
         number = (
             var.accounts[cur]["MARGINBAL"]
@@ -1197,7 +1243,9 @@ def refresh_tables() -> None:
             + var.accounts[cur]["COMMISS"]
             + var.accounts[cur]["FUNDING"]
         )
-        disp.label_account[7][1 + num]["text"] = format_number(number=number)
+        update_label(
+            table="account", column=7, row=num + 1, val=format_number(number=number)
+        )
 
 
 def format_number(number: float) -> str:
@@ -1435,10 +1483,13 @@ def handler_robots(event, row_position: int) -> None:
         if bot.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
 
             def callback():
+                row = bot.robots[val]["y_position"]
                 if bot.robots[emi]["STATUS"] == "WORK":
-                    bot.robots[emi]["STATUS"] = "OFF"
+                    bot.robots[emi]["STATUS"] = "OFF"                    
+                    disp.labels["robots"][5][row]["fg"] = "red"
                 else:
                     bot.robots[emi]["STATUS"] = "WORK"
+                    disp.labels["robots"][5][row]["fg"] = "#212121"
                 on_closing()
 
             def on_closing():

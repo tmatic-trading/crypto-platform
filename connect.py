@@ -47,15 +47,17 @@ def connection():
                 if isinstance(bot_init.init_timeframes(), dict):
                     common_init.load_trading_history()
                     common_init.initial_mysql(var.user_id)
-                    common_init.load_orders()
-                    display_init.load_labels()
+                    common_init.load_orders()                    
                     common_init.initial_display(var.user_id)
                     var.ticker = var.ws.get_ticker(ticker=var.ticker)
                     var.instruments = var.ws.get_instrument(var.instruments)
                     bot_init.delete_unused_robot()
+                    display_init.load_labels()
                     common_init.initial_hi_lo_ticker_values()
-                    for emi, value in bot.robots_status.items():
+                    for emi, value in bot.robot_status.items():
                         bot.robots[emi]["STATUS"] = value
+                    for emi in bot.robots:
+                        bot.robot_pos[emi] = 0
                 else:
                     print("Error during loading timeframes.")
                     var.ws.exit()
@@ -118,7 +120,7 @@ def clear_params() -> None:
     var.orders_dict = OrderedDict()
     var.orders_dict_value = 0
     for emi, values in bot.robots.items():
-        bot.robots_status[emi] = values["STATUS"]
+        bot.robot_status[emi] = values["STATUS"]
     bot.robots = OrderedDict()
     bot.frames = {}
     bot.framing = {}

@@ -22,7 +22,7 @@ class Variables:
     num_acc = len(var.currencies) + 1
     frame_state = tk.Frame()
     labels = dict()
-    labels_copy = dict()
+    labels_cache = dict()
     label_trading = tk.Label(frame_state, text="  TRADING: ")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_state = tk.Label(frame_state, text="  STATE: ")
@@ -143,15 +143,15 @@ class Variables:
     # Positions widget
 
     labels["position"] = []
-    labels_copy["position"] = []
+    labels_cache["position"] = []
     for name in var.name_pos:
         lst = []
-        copy = []
+        cache = []
         for _ in range(num_pos):
             lst.append(tk.Label(frame_positions, text=name))
-            copy.append(name)
+            cache.append(name)
         labels["position"].append(lst)
-        labels_copy["position"].append(copy)
+        labels_cache["position"].append(cache)
 
     # Trades widget
 
@@ -170,12 +170,16 @@ class Variables:
 
     # Order book table
 
-    label_book = []
+    labels["orderbook"] = []
+    labels_cache["orderbook"] = []
     for name in var.name_book:
-        tmp = []
+        lst = []
+        cache = []
         for _ in range(num_book):
-            tmp.append(tk.Label(frame_3row_3col, text=name, pady=0))
-        label_book.append(tmp)
+            lst.append(tk.Label(frame_3row_3col, text=name, pady=0))
+            cache.append(name)
+        labels["orderbook"].append(lst)
+        labels_cache["orderbook"].append(cache)
 
     # Orders widget
 
@@ -214,16 +218,21 @@ class Variables:
 
     # Account table
 
-    label_account = []
+    labels["account"] = []
+    labels_cache["account"] = []
     for name in var.name_acc:
-        tmp = []
+        lst = []
+        cache = []
         for _ in range(num_acc):
-            tmp.append(tk.Label(frame_4row_1_2_3col, text=name))
-        label_account.append(tmp)
+            lst.append(tk.Label(frame_4row_1_2_3col, text=name))
+            cache.append(name)
+        labels["account"].append(lst)
+        labels_cache["account"].append(cache)
 
     # Robots table
 
-    label_robots = []
+    labels["robots"] = []
+    labels_cache["robots"] = []
 
     refresh_var = None
     nfo_display_counter = 0

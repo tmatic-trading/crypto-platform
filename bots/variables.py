@@ -10,5 +10,6 @@ class Variables:
     framing = dict()
     emi_list = list()
     robo = dict()
-    robots_status = dict()
+    robot_pos = dict()
+    robot_status = dict()
     missing_days_number = 2
