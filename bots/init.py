@@ -199,19 +199,19 @@ def load_frames(
     # The 'frames' array is filled with timeframe data.
 
     for num, row in enumerate(res):
-        utc = datetime.strptime(
+        tm = datetime.strptime(
             row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
         ) - timedelta(minutes=robot["TIMEFR"])
         frames[timeframe].append(
             {
-                "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
-                "time": utc.hour * 10000 + utc.minute * 100,
+                "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
+                "time": tm.hour * 10000 + tm.minute * 100,
                 "bid": float(row["open"]),
                 "ask": float(row["open"]),
                 "hi": float(row["high"]),
                 "lo": float(row["low"]),
                 "funding": 0,
-                "datetime": utc,
+                "datetime": tm,
             }
         )
         if num < len(res[:-1]) - 1:
@@ -220,7 +220,7 @@ def load_frames(
                 timeframe=timeframe,
                 frame=frames[timeframe][-1],
             )
-    framing[timeframe]["time"] = utc
+    framing[timeframe]["time"] = tm
 
     message = "Downloaded missing data from the exchange for " + timeframe
     var.logger.info(message)

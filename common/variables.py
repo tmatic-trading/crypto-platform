@@ -111,3 +111,4 @@ class Variables:
         order_book_depth = "orderBook10"
     else:
         order_book_depth = "quote"
+    thread_is_active = ""

@@ -254,6 +254,7 @@ def handler_robots(y_pos):
 
 
 def on_closing(root, refresh_var):
+    var.thread_is_active = ""
     root.after_cancel(refresh_var)
     root.destroy()
 

@@ -1169,16 +1169,6 @@ def refresh_tables() -> None:
                     disp.labels["robots"][5][num + 1]["fg"] = "#212121"
             bot.robot_pos[emi] = bot.robots[emi]["POS"]
 
-        '''if bot.robot_status[emi] != bot.robots[emi]["STATUS"]:
-            if bot.robots[emi]["STATUS"] == "OFF"
-
-        if bot.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
-            bot.robots[emi]["STATUS"] == "RESERVED" and bot.robots[emi]["POS"] != 0
-        ):
-            disp.labels["robots"][5][num + 1]["fg"] = "red"
-        else:
-            disp.labels["robots"][5][num + 1]["fg"] = "#212121"'''
-
     # Refresh Account table
 
     for symbol, position in var.positions.items():
@@ -1571,7 +1561,7 @@ def save_timeframes_data(emi: str, timeframe: str, frame: dict) -> None:
         f.write(data + "\n")
 
 
-def robots_timeframes(utc: datetime) -> None:
+def robots_entry(utc: datetime) -> None:
     """
     Processing timeframes and entry point into robot algorithms
     """

@@ -1,7 +1,9 @@
 import os
+import time
 from collections import OrderedDict
 from datetime import datetime
 from time import sleep
+import threading
 
 from dotenv import load_dotenv
 
@@ -29,6 +31,7 @@ def connection():
             pass
         var.ws = None
     while not var.ws:
+        var.thread_is_active = ""
         var.ws = Connect_websocket(
             endpoint=os.getenv("EXCHANGE_API_URL"),
             symbol=var.symbol_list,
@@ -58,6 +61,9 @@ def connection():
                         bot.robots[emi]["STATUS"] = value
                     for emi in bot.robots:
                         bot.robot_pos[emi] = 0
+                    var.thread_is_active = "yes"
+                    thread = threading.Thread(target=robots_thread)
+                    thread.start()
                 else:
                     print("Error during loading timeframes.")
                     var.ws.exit()
@@ -97,7 +103,6 @@ def refresh() -> None:
         var.ticker = var.ws.get_ticker(var.ticker)
         var.instruments = var.ws.get_instrument(instruments=var.instruments)
         function.ticker_hi_lo_minute_price(utc=utc)
-        function.robots_timeframes(utc=utc)
         while var.ws.get_exec():
             function.transaction(list(var.ws.get_exec().values())[0])
             var.ws.get_exec().popitem(last=False)
@@ -124,3 +129,12 @@ def clear_params() -> None:
     bot.robots = OrderedDict()
     bot.frames = {}
     bot.framing = {}
+
+
+def robots_thread() -> None:
+    while var.thread_is_active:
+        utcnow = datetime.utcnow()
+        if bot.frames:
+            function.robots_entry(utc=utcnow)
+        rest = 1-time.time()%1
+        time.sleep(rest)
