@@ -5,7 +5,6 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
-from ws.api import Connect_websocket
 
 load_dotenv()
 
@@ -86,7 +85,6 @@ class Variables:
     for cur in currencies:
         accounts[cur] = {y: 0 for y in name_acc}
         accounts[cur]["SUMREAL"] = 0
-    ws = Connect_websocket
     connect_count = 0
     logger = None
     connect_mysql = None
@@ -100,8 +98,7 @@ class Variables:
     last_order = int((time.time() - 1591000000) * 10)
     last_database_time = datetime(1900, 1, 1, 1, 1)
     message_time = datetime.utcnow()
-    refresh = message_time
-    refresh_rate = max(min(10, int(os.getenv("REFRESH_RATE"))), 1)
+    refresh_rate = min(max(100, int(1000 / int(os.getenv("REFRESH_RATE")))), 1000)
     refresh_minute = message_time.minute
     refresh_hour = message_time.hour
     message_point = 0

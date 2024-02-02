@@ -5,6 +5,7 @@ import functions as function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
+from ws.init import Variables as ws
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
@@ -14,7 +15,7 @@ def terminal_reload(event) -> None:
     var.thread_is_active = ""
     function.info_display("Restarting...")
     disp.root.update()
-    var.ws = connect.connection()
+    connect.connection()
 
 
 def trade_state(event) -> None:
@@ -23,7 +24,7 @@ def trade_state(event) -> None:
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
         disp.messageStopped = ""
-        var.ws.logNumFatal = 0
+        ws.bitmex.logNumFatal = 0
     print(disp.f9)
 
 

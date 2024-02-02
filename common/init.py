@@ -11,6 +11,7 @@ import functions as function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
+from ws.init import Variables as ws
 
 load_dotenv()
 db = os.getenv("MYSQL_DATABASE")
@@ -67,7 +68,7 @@ def load_trading_history() -> None:
             "history.ini error. The time in the history.ini file is greater than the current time."
         )
         exit(1)
-    history = var.ws.trading_history(histCount=500, time=last_history_time)
+    history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
     if history == "error":
         var.logger.error("history.ini error")
         exit(1)
@@ -80,11 +81,11 @@ def load_trading_history() -> None:
         last_history_time = datetime.strptime(
             history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
         )
-        history = var.ws.trading_history(histCount=500, time=last_history_time)
+        history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
         if last_history_time == tmp:
             break
         tmp = last_history_time
-    if var.ws.logNumFatal == 0:
+    if ws.bitmex.logNumFatal == 0:
         with open("history.ini", "w") as f:
             f.write(str(last_history_time))
 
@@ -93,7 +94,7 @@ def load_orders() -> None:
     """
     Load Orders (if any)
     """
-    myOrders = var.ws.open_orders()
+    myOrders = ws.bitmex.open_orders()
     var.orders = OrderedDict()
     disp.text_orders.delete("1.0", "end")
     disp.text_orders.insert("1.0", " - Orders -\n")
@@ -235,10 +236,8 @@ def initial_display(account: int) -> None:
         )
 
 
-def initial_hi_lo_ticker_values() -> None:
+def initial_ticker_values() -> None:
     for symbol in var.symbol_list:
         var.ticker[symbol]["open_ask"] = var.ticker[symbol]["ask"]
         var.ticker[symbol]["open_bid"] = var.ticker[symbol]["bid"]
-        var.ticker[symbol]["hi"] = var.ticker[symbol]["ask"]
-        var.ticker[symbol]["lo"] = var.ticker[symbol]["bid"]
         var.ticker[symbol]["fundingRate"] = var.instruments[symbol]["fundingRate"]

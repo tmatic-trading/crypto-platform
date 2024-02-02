@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
+from ws.init import Variables as ws
 
 load_dotenv()
 db = os.getenv("MYSQL_DATABASE")
@@ -51,12 +52,12 @@ def add_symbol(symbol: str) -> None:
     if symbol not in bot.full_symbol_list:
         bot.full_symbol_list.append(symbol)
         if symbol not in var.instruments:
-            var.instruments = var.ws.get_additional_instrument_data(
+            var.instruments = ws.bitmex.get_additional_instrument_data(
                 symbols=symbol, instruments=var.instruments
             )
         rounding(var.instruments)
     if symbol not in var.positions:
-        var.positions = var.ws.get_additional_position_data(
+        var.positions = ws.bitmex.get_additional_position_data(
             positions=var.positions, symbol=symbol
         )
 
@@ -394,9 +395,9 @@ def del_order(clOrdID: str) -> int:
     """
     mes = "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
     var.logger.info(mes)
-    var.ws.remove_order(orderID=var.orders[clOrdID]["orderID"])
+    ws.bitmex.remove_order(orderID=var.orders[clOrdID]["orderID"])
 
-    return var.ws.logNumFatal
+    return ws.bitmex.logNumFatal
 
 
 def put_order(
@@ -419,18 +420,18 @@ def put_order(
         + str(qty)
     )
     if price != var.orders[clOrdID]["price"]:  # the price alters
-        var.ws.replace_limit(
+        ws.bitmex.replace_limit(
             quantity=qty,
             price=price,
             orderID=var.orders[clOrdID]["orderID"],
             symbol=var.orders[clOrdID]["symbol"],
         )
-        if var.ws.logNumFatal == 0:  # success
+        if ws.bitmex.logNumFatal == 0:  # success
             var.orders[clOrdID]["leavesQty"] = qty
             var.orders[clOrdID]["oldPrice"] = var.orders[clOrdID]["price"]
             var.orders[clOrdID]["price"] = price
             var.orders[clOrdID]["transactTime"] = datetime.utcnow()
-            var.orders[clOrdID]["orderID"] = var.ws.myOrderID
+            var.orders[clOrdID]["orderID"] = ws.bitmex.myOrderID
 
     return clOrdID
 
@@ -452,8 +453,8 @@ def post_order(
         qty = -qty
     var.last_order += 1
     clOrdID = str(var.last_order) + "." + emi
-    var.ws.place_limit(quantity=qty, price=price, clOrdID=clOrdID, symbol=symbol)
-    if var.ws.logNumFatal == 0:  # success
+    ws.bitmex.place_limit(quantity=qty, price=price, clOrdID=clOrdID, symbol=symbol)
+    if ws.bitmex.logNumFatal == 0:  # success
         var.orders[clOrdID] = {
             "leavesQty": abs(qty),
             "price": price,
@@ -461,7 +462,7 @@ def post_order(
             "transactTime": str(datetime.utcnow()),
             "side": side,
             "emi": emi,
-            "orderID": var.ws.myOrderID,
+            "orderID": ws.bitmex.myOrderID,
             "oldPrice": 0,
         }
     else:
@@ -480,36 +481,10 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
     return res
 
 
-def ticker_hi_lo_minute_price(utc: datetime) -> None:
-    """
-    Minimum and maximum minute ticker prices
-    """
-    for symbol in var.symbol_list:
-        if (
-            utc.minute != var.ticker[symbol]["time"].minute
-            and var.instruments[symbol]["state"] == "Open"
-        ):
-            if utc.hour == var.ticker[symbol]["time"].hour:
-                var.ticker[symbol]["fundingRate"] = var.instruments[symbol][
-                    "fundingRate"
-                ]
-            var.ticker[symbol]["hi"] = var.ticker[symbol]["ask"]
-            var.ticker[symbol]["lo"] = var.ticker[symbol]["bid"]
-            var.ticker[symbol]["open_ask"] = var.ticker[symbol]["ask"]
-            var.ticker[symbol]["open_bid"] = var.ticker[symbol]["bid"]
-            var.ticker[symbol]["time"] = utc
-        else:
-            if var.ticker[symbol]["ask"] > var.ticker[symbol]["hi"]:
-                var.ticker[symbol]["hi"] = var.ticker[symbol]["ask"]
-            if var.ticker[symbol]["bid"] < var.ticker[symbol]["lo"]:
-                var.ticker[symbol]["lo"] = var.ticker[symbol]["bid"]
-
-
-def refresh_on_screen(utc: datetime, rate: int) -> None:
+def refresh_on_screen(utc: datetime) -> None:
     """
     Refresh information on screen
     """
-    var.refresh = utc + timedelta(microseconds=int(1000000 / rate))
     # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
     if utc.hour != var.refresh_hour:
         var.cursor_mysql.execute("select count(*) from " + db + ".robots")
@@ -523,20 +498,20 @@ def refresh_on_screen(utc: datetime, rate: int) -> None:
         disp.label_f9.config(bg="green3")
     else:
         disp.label_f9.config(bg="orange red")
-    if var.ws.logNumFatal == 0:
+    if ws.bitmex.logNumFatal == 0:
         if utc > var.message_time + timedelta(seconds=10):
-            if var.ws.message_counter == var.message_point:
+            if ws.bitmex.message_counter == var.message_point:
                 info_display("No data within 10 sec")
                 disp.label_online["text"] = "NO DATA"
                 disp.label_online.config(bg="yellow2")
-                var.ws.urgent_announcement()
+                ws.bitmex.urgent_announcement()
             var.message_time = utc
-            var.message_point = var.ws.message_counter
-    if var.ws.message_counter != var.message_point:
+            var.message_point = ws.bitmex.message_counter
+    if ws.bitmex.message_counter != var.message_point:
         disp.label_online["text"] = "ONLINE"
         disp.label_online.config(bg="green3")
-    if var.ws.logNumFatal != 0:
-        disp.label_online["text"] = "error " + str(var.ws.logNumFatal)
+    if ws.bitmex.logNumFatal != 0:
+        disp.label_online["text"] = "error " + str(ws.bitmex.logNumFatal)
         disp.label_online.config(bg="orange red")
     refresh_tables()
 
@@ -558,7 +533,7 @@ def handler_order(event, order_number: int) -> None:
             info_display(mes)
             var.logger.info(mes)
             return
-        if var.ws.logNumFatal == 0:
+        if ws.bitmex.logNumFatal == 0:
             del_order(clOrdID=clOrdID)
         else:
             info_display("The operation failed. Websocket closed!")
@@ -580,7 +555,7 @@ def handler_order(event, order_number: int) -> None:
         except KeyError:
             info_display("Price must be numeric!")
             return
-        if var.ws.logNumFatal == 0:
+        if ws.bitmex.logNumFatal == 0:
             roundSide = var.orders[clOrdID]["leavesQty"]
             if var.orders[clOrdID]["side"] == "Sell":
                 roundSide = -roundSide
@@ -919,7 +894,7 @@ def refresh_tables() -> None:
 
     # Get funds
 
-    funds = var.ws.get_funds()
+    funds = ws.bitmex.get_funds()
     for cur in var.accounts:
         for fund in funds:
             if cur == fund["currency"]:
@@ -1110,7 +1085,7 @@ def refresh_tables() -> None:
                     update_label(table="orderbook", column=2, row=row + 1, val="")
                     disp.labels["orderbook"][2][row + 1]["bg"] = disp.bg_color
     else:
-        val = var.ws.market_depth10()[(("symbol", var.symbol),)]
+        val = ws.bitmex.market_depth10()[(("symbol", var.symbol),)]
         display_order_book_values(
             val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
         )
@@ -1152,22 +1127,22 @@ def refresh_tables() -> None:
         update_label(
             table="robots", column=5, row=num + 1, val=bot.robots[emi]["STATUS"]
         )
-        update_label(table="robots", column=6, row=num + 1, val=bot.robots[emi]["VOL"])
-        update_label(table="robots", column=7, row=num + 1, val=bot.robots[emi]["PNL"])
-        update_label(
-            table="robots",
-            column=8,
-            row=num + 1,
-            val=volume(qty=bot.robots[emi]["POS"], symbol=symbol),
-        )
-        bot.robots[emi]["y_position"] = num + 1
-        if bot.robots[emi]["POS"] != bot.robot_pos[emi]:
+        update_label(table="robots", column=6, row=num + 1, val=humanFormat(bot.robots[emi]["VOL"]))
+        update_label(table="robots", column=7, row=num + 1, val="{:.8f}".format(bot.robots[emi]["PNL"]))        
+        val = volume(qty=bot.robots[emi]["POS"], symbol=symbol,)
+        if disp.labels_cache["robots"][8][num + 1] != val:
             if bot.robots[emi]["STATUS"] == "RESERVED":
                 if bot.robots[emi]["POS"] != 0:
                     disp.labels["robots"][5][num + 1]["fg"] = "red"
                 else:
                     disp.labels["robots"][5][num + 1]["fg"] = "#212121"
-            bot.robot_pos[emi] = bot.robots[emi]["POS"]
+        update_label(
+            table="robots",
+            column=8,
+            row=num + 1,
+            val=val,
+        )
+        bot.robots[emi]["y_position"] = num + 1
 
     # Refresh Account table
 
@@ -1538,7 +1513,7 @@ def format_price(number: float, symbol: str) -> str:
     return number
 
 
-def save_timeframes_data(emi: str, timeframe: str, frame: dict) -> None:
+def save_timeframes_data(emi: str, symbol: str, timefr: str, frame: dict) -> None:
     zero = (6 - len(str(frame["time"]))) * "0"
     data = (
         str(frame["date"])
@@ -1554,10 +1529,8 @@ def save_timeframes_data(emi: str, timeframe: str, frame: dict) -> None:
         + ";"
         + str(frame["lo"])
         + ";"
-        + str(frame["funding"])
-        + ";"
     )
-    with open("data/" + timeframe + "_EMI" + emi + ".txt", "a") as f:
+    with open("data/" + symbol + timefr + "_EMI" + emi + ".txt", "a") as f:
         f.write(data + "\n")
 
 
@@ -1565,60 +1538,41 @@ def robots_entry(utc: datetime) -> None:
     """
     Processing timeframes and entry point into robot algorithms
     """
-    for timeframe in bot.framing:
-        if utc > bot.framing[timeframe]["time"] + timedelta(
-            minutes=bot.framing[timeframe]["timefr"]
-        ):
-            for emi in bot.framing[timeframe]["robots"]:
-                if bot.robots[emi]["STATUS"] == "WORK" and disp.f9 == "ON" and bot.robo:
-                    # Robots entry point
-                    bot.robo[emi](
-                        robot=bot.robots[emi],
-                        frame=bot.frames[timeframe],
-                        ticker=var.ticker[bot.robots[emi]["SYMBOL"]],
-                        instrument=var.instruments[bot.robots[emi]["SYMBOL"]],
+    var.ticker = ws.bitmex.get_ticker(var.ticker)
+    for symbol, timeframes in bot.frames.items():
+        for timefr, values in timeframes.items():
+            if utc > values["time"] + timedelta(
+                minutes=timefr
+            ):
+                for emi in values["robots"]:
+                    if bot.robots[emi]["STATUS"] == "WORK" and disp.f9 == "ON" and bot.robo:
+                        # Robots entry point                        
+                        bot.robo[emi](
+                            robot=bot.robots[emi],
+                            frame=values["data"],
+                            ticker=var.ticker[symbol],
+                            instrument=var.instruments[symbol],
+                        )
+                    save_timeframes_data(
+                        emi=emi, symbol=symbol, timefr=str(timefr), frame=values["data"][-1]
                     )
-                save_timeframes_data(
-                    emi=emi, timeframe=timeframe, frame=bot.frames[timeframe][-1]
+                next_minute = int(utc.minute / timefr) * timefr
+                dt_now = datetime(utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0)
+                values["data"].append(
+                    {
+                        "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
+                        "time": utc.hour * 10000 + utc.minute * 100,
+                        "bid": var.ticker[symbol]["bid"],
+                        "ask": var.ticker[symbol]["ask"],
+                        "hi": var.ticker[symbol]["ask"],
+                        "lo": var.ticker[symbol]["bid"],
+                        "funding": var.ticker[symbol][
+                            "fundingRate"
+                        ],
+                        "datetime": dt_now,
+                    }
                 )
-            next_minute = (
-                int(utc.minute / bot.framing[timeframe]["timefr"])
-                * bot.framing[timeframe]["timefr"]
-            )
-            dt_now = datetime(utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0)
-            bot.frames[timeframe].append(
-                {
-                    "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
-                    "time": utc.hour * 10000 + utc.minute * 100,
-                    "bid": var.ticker[bot.framing[timeframe]["symbol"]]["bid"],
-                    "ask": var.ticker[bot.framing[timeframe]["symbol"]]["ask"],
-                    "hi": var.ticker[bot.framing[timeframe]["symbol"]]["ask"],
-                    "lo": var.ticker[bot.framing[timeframe]["symbol"]]["bid"],
-                    "funding": var.ticker[bot.framing[timeframe]["symbol"]][
-                        "fundingRate"
-                    ],
-                    "datetime": dt_now,
-                }
-            )
-            bot.framing[timeframe]["time"] = dt_now
-        else:
-            if (
-                var.ticker[bot.framing[timeframe]["symbol"]]["ask"]
-                > bot.frames[timeframe][-1]["hi"]
-            ):
-                bot.frames[timeframe][-1]["hi"] = var.ticker[
-                    bot.framing[timeframe]["symbol"]
-                ]["ask"]
-            if (
-                var.ticker[bot.framing[timeframe]["symbol"]]["bid"]
-                < bot.frames[timeframe][-1]["lo"]
-            ):
-                bot.frames[timeframe][-1]["lo"] = var.ticker[
-                    bot.framing[timeframe]["symbol"]
-                ]["bid"]
-            bot.frames[timeframe][-1]["funding"] = var.ticker[
-                bot.framing[timeframe]["symbol"]
-            ]["fundingRate"]
+                values["time"] = dt_now
 
 
 def change_color(color: str, container=None) -> None:
