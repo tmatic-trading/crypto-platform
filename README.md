@@ -74,6 +74,13 @@ pip3 install python-dotenv
 pip3 install websocket-client
 pip3 install requests
 ```
+
+*or use the command:*
+
+```
+pip3 install -r requirements.txt
+```
+
 4. Install the MySQL database on your local computer by following the instructions according to your operating system.
 5. Install your favorite visual tool like MySQL Workbench or something else if you need to.
 6. Create a database, for example "my_db".
