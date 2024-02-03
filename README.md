@@ -363,7 +363,7 @@ def order_search(emi: int, side: str) -> str:
 
 
 def delete_orders(emi: int, side: str) -> None:
-    for clOrdID, order in var.orders.items():
+    for clOrdID, order in var.orders.copy().items():
         if order["emi"] == emi and order["side"] == side:
             function.del_order(clOrdID)
 ```
