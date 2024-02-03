@@ -4,12 +4,14 @@ import tkinter as tk
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from random import randint
+from typing import Union
 
 from dotenv import load_dotenv
 
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
+from ws.init import Variables as ws
 
 load_dotenv()
 db = os.getenv("MYSQL_DATABASE")
@@ -50,12 +52,12 @@ def add_symbol(symbol: str) -> None:
     if symbol not in bot.full_symbol_list:
         bot.full_symbol_list.append(symbol)
         if symbol not in var.instruments:
-            var.instruments = var.ws.get_additional_instrument_data(
+            var.instruments = ws.bitmex.get_additional_instrument_data(
                 symbols=symbol, instruments=var.instruments
             )
         rounding(var.instruments)
     if symbol not in var.positions:
-        var.positions = var.ws.get_additional_position_data(
+        var.positions = ws.bitmex.get_additional_position_data(
             positions=var.positions, symbol=symbol
         )
 
@@ -122,12 +124,31 @@ def orders_processing(row: dict, info: str = "") -> None:
             del var.orders[clOrdID]
     else:
         if row["execType"] == "New":
+            if "clOrdID" in row:
+                dot = row["clOrdID"].find(".")
+                if dot == -1:
+                    emi = row["symbol"]
+                else:
+                    emi = row["clOrdID"][dot + 1 :]
+                var.orders[clOrdID] = {
+                    "leavesQty": row["leavesQty"],
+                    "price": row["price"],
+                    "symbol": row["symbol"],
+                    "transactTime": str(datetime.utcnow()),
+                    "side": row["side"],
+                    "emi": emi,
+                    "orderID": row["orderID"],
+                }
             info_p = price
             info_q = row["orderQty"]
         elif row["execType"] == "Trade":
             info_p = row["lastPx"]
             info_q = row["lastQty"]
         elif row["execType"] == "Replaced":
+            var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+            var.orders[clOrdID]["price"] = row["price"]
+            var.orders[clOrdID]["transactTime"] = datetime.utcnow()
+            var.orders[clOrdID]["orderID"] = row["orderID"]
             info_p = price
             info_q = row["leavesQty"]
         if (
@@ -393,9 +414,9 @@ def del_order(clOrdID: str) -> int:
     """
     mes = "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
     var.logger.info(mes)
-    var.ws.remove_order(orderID=var.orders[clOrdID]["orderID"])
+    ws.bitmex.remove_order(orderID=var.orders[clOrdID]["orderID"])
 
-    return var.ws.logNumFatal
+    return ws.bitmex.logNumFatal
 
 
 def put_order(
@@ -406,9 +427,7 @@ def put_order(
     """
     Replace orders
     """
-    info_p = format_price(
-        number=price, symbol=var.orders[clOrdID]["symbol"]
-    )
+    info_p = format_price(number=price, symbol=var.orders[clOrdID]["symbol"])
     var.logger.info(
         "Putting orderID="
         + var.orders[clOrdID]["orderID"]
@@ -420,18 +439,12 @@ def put_order(
         + str(qty)
     )
     if price != var.orders[clOrdID]["price"]:  # the price alters
-        var.ws.replace_limit(
+        ws.bitmex.replace_limit(
             quantity=qty,
             price=price,
             orderID=var.orders[clOrdID]["orderID"],
             symbol=var.orders[clOrdID]["symbol"],
         )
-        if var.ws.logNumFatal == 0:  # success
-            var.orders[clOrdID]["leavesQty"] = qty
-            var.orders[clOrdID]["oldPrice"] = var.orders[clOrdID]["price"]
-            var.orders[clOrdID]["price"] = price
-            var.orders[clOrdID]["transactTime"] = datetime.utcnow()
-            var.orders[clOrdID]["orderID"] = var.ws.myOrderID
 
     return clOrdID
 
@@ -444,7 +457,7 @@ def post_order(
     qty: int,
 ) -> str:
     """
-    This function adds a new order
+    This function sends a new order
     """
     info_p = format_price(number=price, symbol=symbol)
     var.logger.info("Posting side=" + side + " price=" + info_p + " qty=" + str(qty))
@@ -453,20 +466,7 @@ def post_order(
         qty = -qty
     var.last_order += 1
     clOrdID = str(var.last_order) + "." + emi
-    var.ws.place_limit(quantity=qty, price=price, clOrdID=clOrdID, symbol=symbol)
-    if var.ws.logNumFatal == 0:  # success
-        var.orders[clOrdID] = {
-            "leavesQty": abs(qty),
-            "price": price,
-            "symbol": symbol,
-            "transactTime": str(datetime.utcnow()),
-            "side": side,
-            "emi": emi,
-            "orderID": var.ws.myOrderID,
-            "oldPrice": 0,
-        }
-    else:
-        clOrdID = ""
+    ws.bitmex.place_limit(quantity=qty, price=price, clOrdID=clOrdID, symbol=symbol)
 
     return clOrdID
 
@@ -481,36 +481,10 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
     return res
 
 
-def ticker_hi_lo_minute_price(utc: datetime) -> None:
-    """
-    Minimum and maximum minute ticker prices
-    """
-    for symbol in var.symbol_list:
-        if (
-            utc.minute != var.ticker[symbol]["time"].minute
-            and var.instruments[symbol]["state"] == "Open"
-        ):
-            if utc.hour == var.ticker[symbol]["time"].hour:
-                var.ticker[symbol]["fundingRate"] = var.instruments[symbol][
-                    "fundingRate"
-                ]
-            var.ticker[symbol]["hi"] = var.ticker[symbol]["ask"]
-            var.ticker[symbol]["lo"] = var.ticker[symbol]["bid"]
-            var.ticker[symbol]["open_ask"] = var.ticker[symbol]["ask"]
-            var.ticker[symbol]["open_bid"] = var.ticker[symbol]["bid"]
-            var.ticker[symbol]["time"] = utc
-        else:
-            if var.ticker[symbol]["ask"] > var.ticker[symbol]["hi"]:
-                var.ticker[symbol]["hi"] = var.ticker[symbol]["ask"]
-            if var.ticker[symbol]["bid"] < var.ticker[symbol]["lo"]:
-                var.ticker[symbol]["lo"] = var.ticker[symbol]["bid"]
-
-
-def refresh_on_screen(utc: datetime, rate: int) -> None:
+def refresh_on_screen(utc: datetime) -> None:
     """
     Refresh information on screen
     """
-    var.refresh = utc + timedelta(microseconds=int(1000000 / rate))
     # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
     if utc.hour != var.refresh_hour:
         var.cursor_mysql.execute("select count(*) from " + db + ".robots")
@@ -524,20 +498,20 @@ def refresh_on_screen(utc: datetime, rate: int) -> None:
         disp.label_f9.config(bg="green3")
     else:
         disp.label_f9.config(bg="orange red")
-    if var.ws.logNumFatal == 0:
+    if ws.bitmex.logNumFatal == 0:
         if utc > var.message_time + timedelta(seconds=10):
-            if var.ws.message_counter == var.message_point:
+            if ws.bitmex.message_counter == var.message_point:
                 info_display("No data within 10 sec")
                 disp.label_online["text"] = "NO DATA"
                 disp.label_online.config(bg="yellow2")
-                var.ws.urgent_announcement()
+                ws.bitmex.urgent_announcement()
             var.message_time = utc
-            var.message_point = var.ws.message_counter
-    if var.ws.message_counter != var.message_point:
+            var.message_point = ws.bitmex.message_counter
+    if ws.bitmex.message_counter != var.message_point:
         disp.label_online["text"] = "ONLINE"
         disp.label_online.config(bg="green3")
-    if var.ws.logNumFatal != 0:
-        disp.label_online["text"] = "error " + str(var.ws.logNumFatal)
+    if ws.bitmex.logNumFatal != 0:
+        disp.label_online["text"] = "error " + str(ws.bitmex.logNumFatal)
         disp.label_online.config(bg="orange red")
     refresh_tables()
 
@@ -559,7 +533,7 @@ def handler_order(event, order_number: int) -> None:
             info_display(mes)
             var.logger.info(mes)
             return
-        if var.ws.logNumFatal == 0:
+        if ws.bitmex.logNumFatal == 0:
             del_order(clOrdID=clOrdID)
         else:
             info_display("The operation failed. Websocket closed!")
@@ -581,7 +555,7 @@ def handler_order(event, order_number: int) -> None:
         except KeyError:
             info_display("Price must be numeric!")
             return
-        if var.ws.logNumFatal == 0:
+        if ws.bitmex.logNumFatal == 0:
             roundSide = var.orders[clOrdID]["leavesQty"]
             if var.orders[clOrdID]["side"] == "Sell":
                 roundSide = -roundSide
@@ -905,6 +879,14 @@ def volume(qty: int, symbol: str) -> str:
     return qty
 
 
+def update_label(
+    table: str, column: int, row: int, val: Union[str, int, float]
+) -> None:
+    if disp.labels_cache[table][column][row] != val:
+        disp.labels_cache[table][column][row] = val
+        disp.labels[table][column][row]["text"] = val
+
+
 def refresh_tables() -> None:
     """
     Update tkinter labels in the tables
@@ -912,7 +894,7 @@ def refresh_tables() -> None:
 
     # Get funds
 
-    funds = var.ws.get_funds()
+    funds = ws.bitmex.get_funds()
     for cur in var.accounts:
         for fund in funds:
             if cur == fund["currency"]:
@@ -939,40 +921,62 @@ def refresh_tables() -> None:
         var.positions[symbol]["FUND"] = round(
             var.instruments[symbol]["fundingRate"] * 100, 6
         )
-        disp.label_pos[0][num + 1]["text"] = symbol
+        update_label(table="position", column=0, row=num + 1, val=symbol)
         if var.positions[symbol]["POS"]:
             pos = volume(qty=var.positions[symbol]["POS"], symbol=symbol)
         else:
             pos = "0"
-        disp.label_pos[1][num + 1]["text"] = pos
-        disp.label_pos[2][num + 1]["text"] = (
-            format_price(
-                number=var.positions[symbol]["ENTRY"],
-                symbol=var.symbol,
-            )
-            if var.positions[symbol]["ENTRY"] is not None
-            else 0
+        update_label(table="position", column=1, row=num + 1, val=pos)
+        update_label(
+            table="position",
+            column=2,
+            row=num + 1,
+            val=(
+                format_price(
+                    number=var.positions[symbol]["ENTRY"],
+                    symbol=symbol,
+                )
+                if var.positions[symbol]["ENTRY"] is not None
+                else 0
+            ),
         )
-        disp.label_pos[3][num + 1]["text"] = (
-            var.positions[symbol]["PNL"]
-            if var.positions[symbol]["PNL"] is not None
-            else 0
+        update_label(
+            table="position",
+            column=3,
+            row=num + 1,
+            val=(
+                var.positions[symbol]["PNL"]
+                if var.positions[symbol]["PNL"] is not None
+                else 0
+            ),
         )
-        disp.label_pos[4][num + 1]["text"] = (
-            str(var.positions[symbol]["MCALL"]).replace("100000000", "inf")
-            if var.positions[symbol]["MCALL"] is not None
-            else 0
+        update_label(
+            table="position",
+            column=4,
+            row=num + 1,
+            val=(
+                str(var.positions[symbol]["MCALL"]).replace("100000000", "inf")
+                if var.positions[symbol]["MCALL"] is not None
+                else 0
+            ),
         )
-        disp.label_pos[5][num + 1]["text"] = var.positions[symbol]["STATE"]
-        disp.label_pos[6][num + 1]["text"] = humanFormat(
-            var.positions[symbol]["VOL24h"]
+        update_label(
+            table="position", column=5, row=num + 1, val=var.positions[symbol]["STATE"]
+        )
+        update_label(
+            table="position",
+            column=6,
+            row=num + 1,
+            val=humanFormat(var.positions[symbol]["VOL24h"]),
         )
         if isinstance(var.instruments[symbol]["expiry"], datetime):
             tm = var.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
         else:
             tm = var.instruments[symbol]["expiry"]
-        disp.label_pos[7][num + 1]["text"] = tm
-        disp.label_pos[8][num + 1]["text"] = var.positions[symbol]["FUND"]
+        update_label(table="position", column=7, row=num + 1, val=tm)
+        update_label(
+            table="position", column=8, row=num + 1, val=var.positions[symbol]["FUND"]
+        )
 
     # Refresh Orderbook table
 
@@ -992,9 +996,7 @@ def refresh_tables() -> None:
             price = ""
             qty = 0
             if len(val[side]) > count:
-                price = format_price(
-                    number=val[side][count][0], symbol=var.symbol
-                )
+                price = format_price(number=val[side][count][0], symbol=var.symbol)
                 vlm = volume(qty=val[side][count][1], symbol=var.symbol)
                 if var.orders:
                     qty = volume(
@@ -1002,31 +1004,36 @@ def refresh_tables() -> None:
                         symbol=var.symbol,
                     )
             if str(qty) != "0":
-                disp.label_book[col_qty][row]["text"] = qty
-                disp.label_book[col_qty][row]["bg"] = color
+                update_label(table="orderbook", column=col_qty, row=row, val=qty)
+                disp.labels["orderbook"][col_qty][row]["bg"] = color
             else:
-                disp.label_book[col_qty][row]["text"] = ""
-                disp.label_book[col_qty][row]["bg"] = disp.bg_color
-            disp.label_book[col][row]["text"] = vlm
-            disp.label_book[1][row]["text"] = price
+                update_label(table="orderbook", column=col_qty, row=row, val="")
+                disp.labels["orderbook"][col_qty][row]["bg"] = disp.bg_color
+            update_label(table="orderbook", column=col, row=row, val=vlm)
+            update_label(table="orderbook", column=1, row=row, val=price)
             count += 1
 
     num = int(disp.num_book / 2)
     if var.order_book_depth == "quote":
         if var.ticker[var.symbol]["askSize"]:
-            disp.label_book[2][num]["text"] = volume(
-                qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol
+            update_label(
+                table="orderbook",
+                column=2,
+                row=num,
+                val=volume(qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol),
             )
         else:
-            disp.label_book[2][num]["text"] = ""
+            update_label(table="orderbook", column=2, row=num, val="")
         if var.ticker[var.symbol]["bidSize"]:
-            disp.label_book[0][num + 1]["text"] = volume(
-                qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol
+            update_label(
+                table="orderbook",
+                column=0,
+                row=num + 1,
+                val=volume(qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol),
             )
         else:
-            disp.label_book[0][num + 1]["text"] = ""
-        disp.label_book[2][num]["fg"] = "black"
-        disp.label_book[0][num + 1]["fg"] = "black"
+            update_label(table="orderbook", column=0, row=num + 1, val="")
+        disp.labels["orderbook"][0][num + 1]["fg"] = "black"
         first_price_sell = (
             var.ticker[var.symbol]["ask"]
             + (num - 1) * var.instruments[var.symbol]["tickSize"]
@@ -1045,18 +1052,16 @@ def refresh_tables() -> None:
                         symbol=var.symbol,
                     )
                 if var.ticker[var.symbol]["ask"]:
-                    price = format_price(
-                        number=price, symbol=var.symbol
-                    )
+                    price = format_price(number=price, symbol=var.symbol)
                 else:
                     price = ""
-                disp.label_book[1][row + 1]["text"] = price
+                update_label(table="orderbook", column=1, row=row + 1, val=price)
                 if str(qty) != "0":
-                    disp.label_book[0][row + 1]["text"] = qty
+                    update_label(table="orderbook", column=0, row=row + 1, val=qty)
                     disp.label_book[0][row + 1]["bg"] = "orange red"
                 else:
-                    disp.label_book[0][row + 1]["text"] = ""
-                    disp.label_book[0][row + 1]["bg"] = disp.bg_color
+                    update_label(table="orderbook", column=0, row=row + 1, val="")
+                    disp.labels["orderbook"][0][row + 1]["bg"] = disp.bg_color
             else:
                 price = round(
                     first_price_buy
@@ -1069,22 +1074,18 @@ def refresh_tables() -> None:
                         qty=find_order(price, qty, symbol=var.symbol), symbol=var.symbol
                     )
                 if price > 0:
-                    price = format_price(
-                        number=price, symbol=var.symbol
-                    )
+                    price = format_price(number=price, symbol=var.symbol)
                 else:
                     price = ""
-                disp.label_book[1][row + 1]["text"] = price
+                update_label(table="orderbook", column=1, row=row + 1, val=price)
                 if str(qty) != "0":
-                    disp.label_book[2][row + 1]["text"] = qty
-                    disp.label_book[2][row + 1]["bg"] = "green2"
+                    update_label(table="orderbook", column=2, row=row + 1, val=qty)
+                    disp.labels["orderbook"][2][row + 1]["bg"] = "green2"
                 else:
-                    disp.label_book[2][row + 1]["text"] = ""
-                    disp.label_book[2][row + 1]["bg"] = disp.bg_color
+                    update_label(table="orderbook", column=2, row=row + 1, val="")
+                    disp.labels["orderbook"][2][row + 1]["bg"] = disp.bg_color
     else:
-        for val in var.ws.market_depth10():
-            if val["symbol"] == var.symbol:
-                break
+        val = ws.bitmex.market_depth10()[(("symbol", var.symbol),)]
         display_order_book_values(
             val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
         )
@@ -1109,24 +1110,52 @@ def refresh_tables() -> None:
                 - bot.robots[emi]["COMMISS"]
             )
         symbol = bot.robots[emi]["SYMBOL"]
-        disp.label_robots[0][num + 1]["text"] = emi
-        disp.label_robots[1][num + 1]["text"] = symbol
-        disp.label_robots[2][num + 1]["text"] = var.instruments[symbol]["settlCurrency"]
-        disp.label_robots[3][num + 1]["text"] = str(bot.robots[emi]["TIMEFR"])
-        disp.label_robots[4][num + 1]["text"] = str(bot.robots[emi]["CAPITAL"])
-        disp.label_robots[5][num + 1]["text"] = bot.robots[emi]["STATUS"]
-        disp.label_robots[6][num + 1]["text"] = humanFormat(bot.robots[emi]["VOL"])
-        disp.label_robots[7][num + 1]["text"] = "{:.8f}".format(bot.robots[emi]["PNL"])
-        disp.label_robots[8][num + 1]["text"] = volume(
-            qty=bot.robots[emi]["POS"], symbol=symbol
+        update_label(table="robots", column=0, row=num + 1, val=emi)
+        update_label(table="robots", column=1, row=num + 1, val=symbol)
+        update_label(
+            table="robots",
+            column=2,
+            row=num + 1,
+            val=var.instruments[symbol]["settlCurrency"],
+        )
+        update_label(
+            table="robots", column=3, row=num + 1, val=bot.robots[emi]["TIMEFR"]
+        )
+        update_label(
+            table="robots", column=4, row=num + 1, val=bot.robots[emi]["CAPITAL"]
+        )
+        update_label(
+            table="robots", column=5, row=num + 1, val=bot.robots[emi]["STATUS"]
+        )
+        update_label(
+            table="robots",
+            column=6,
+            row=num + 1,
+            val=humanFormat(bot.robots[emi]["VOL"]),
+        )
+        update_label(
+            table="robots",
+            column=7,
+            row=num + 1,
+            val="{:.8f}".format(bot.robots[emi]["PNL"]),
+        )
+        val = volume(
+            qty=bot.robots[emi]["POS"],
+            symbol=symbol,
+        )
+        if disp.labels_cache["robots"][8][num + 1] != val:
+            if bot.robots[emi]["STATUS"] == "RESERVED":
+                if bot.robots[emi]["POS"] != 0:
+                    disp.labels["robots"][5][num + 1]["fg"] = "red"
+                else:
+                    disp.labels["robots"][5][num + 1]["fg"] = "#212121"
+        update_label(
+            table="robots",
+            column=8,
+            row=num + 1,
+            val=val,
         )
         bot.robots[emi]["y_position"] = num + 1
-        if bot.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
-            bot.robots[emi]["STATUS"] == "RESERVED" and bot.robots[emi]["POS"] != 0
-        ):
-            disp.label_robots[5][num + 1]["fg"] = "red"
-        else:
-            disp.label_robots[5][num + 1]["fg"] = "#212121"
 
     # Refresh Account table
 
@@ -1149,24 +1178,42 @@ def refresh_tables() -> None:
                 )
                 exit(1)
     for num, cur in enumerate(var.currencies):
-        disp.label_account[0][1 + num]["text"] = cur
-        disp.label_account[1][1 + num]["text"] = format_number(
-            number=var.accounts[cur]["MARGINBAL"]
+        update_label(table="account", column=0, row=num + 1, val=cur)
+        update_label(
+            table="account",
+            column=1,
+            row=num + 1,
+            val=format_number(number=var.accounts[cur]["MARGINBAL"]),
         )
-        disp.label_account[2][1 + num]["text"] = format_number(
-            number=var.accounts[cur]["AVAILABLE"]
+        update_label(
+            table="account",
+            column=2,
+            row=num + 1,
+            val=format_number(number=var.accounts[cur]["AVAILABLE"]),
         )
-        disp.label_account[3][1 + num]["text"] = "{:.3f}".format(
-            var.accounts[cur]["LEVERAGE"]
+        update_label(
+            table="account",
+            column=3,
+            row=num + 1,
+            val="{:.3f}".format(var.accounts[cur]["LEVERAGE"]),
         )
-        disp.label_account[4][1 + num]["text"] = format_number(
-            number=var.accounts[cur]["RESULT"]
+        update_label(
+            table="account",
+            column=4,
+            row=num + 1,
+            val=format_number(number=var.accounts[cur]["RESULT"]),
         )
-        disp.label_account[5][1 + num]["text"] = format_number(
-            number=-var.accounts[cur]["COMMISS"]
+        update_label(
+            table="account",
+            column=5,
+            row=num + 1,
+            val=format_number(number=-var.accounts[cur]["COMMISS"]),
         )
-        disp.label_account[6][1 + num]["text"] = format_number(
-            number=-var.accounts[cur]["FUNDING"]
+        update_label(
+            table="account",
+            column=6,
+            row=num + 1,
+            val=format_number(number=-var.accounts[cur]["FUNDING"]),
         )
         number = (
             var.accounts[cur]["MARGINBAL"]
@@ -1174,7 +1221,9 @@ def refresh_tables() -> None:
             + var.accounts[cur]["COMMISS"]
             + var.accounts[cur]["FUNDING"]
         )
-        disp.label_account[7][1 + num]["text"] = format_number(number=number)
+        update_label(
+            table="account", column=7, row=num + 1, val=format_number(number=number)
+        )
 
 
 def format_number(number: float) -> str:
@@ -1394,12 +1443,12 @@ def handler_pos(event, row_position: int) -> None:
         row_position = len(var.symbol_list)
     var.symbol = var.symbol_list[row_position - 1]
     for row in enumerate(var.symbol_list):
-        for column in enumerate(disp.label_pos):
+        for column in enumerate(disp.labels["position"]):
             if row[0] + 1 == row_position:
-                disp.label_pos[column[0]][row[0] + 1]["bg"] = "yellow"
+                disp.labels["position"][column[0]][row[0] + 1]["bg"] = "yellow"
             else:
                 if row[0] + 1 > 0:
-                    disp.label_pos[column[0]][row[0] + 1]["bg"] = disp.bg_color
+                    disp.labels["position"][column[0]][row[0] + 1]["bg"] = disp.bg_color
 
 
 def handler_robots(event, row_position: int) -> None:
@@ -1412,10 +1461,13 @@ def handler_robots(event, row_position: int) -> None:
         if bot.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
 
             def callback():
+                row = bot.robots[val]["y_position"]
                 if bot.robots[emi]["STATUS"] == "WORK":
                     bot.robots[emi]["STATUS"] = "OFF"
+                    disp.labels["robots"][5][row]["fg"] = "red"
                 else:
                     bot.robots[emi]["STATUS"] = "WORK"
+                    disp.labels["robots"][5][row]["fg"] = "#212121"
                 on_closing()
 
             def on_closing():
@@ -1474,7 +1526,7 @@ def format_price(number: float, symbol: str) -> str:
     return number
 
 
-def save_timeframes_data(emi: str, timeframe: str, frame: dict) -> None:
+def save_timeframes_data(emi: str, symbol: str, timefr: str, frame: dict) -> None:
     zero = (6 - len(str(frame["time"]))) * "0"
     data = (
         str(frame["date"])
@@ -1490,71 +1542,55 @@ def save_timeframes_data(emi: str, timeframe: str, frame: dict) -> None:
         + ";"
         + str(frame["lo"])
         + ";"
-        + str(frame["funding"])
-        + ";"
     )
-    with open("data/" + timeframe + "_EMI" + emi + ".txt", "a") as f:
+    with open("data/" + symbol + timefr + "_EMI" + emi + ".txt", "a") as f:
         f.write(data + "\n")
 
 
-def robots_timeframes(utc: datetime) -> None:
+def robots_entry(utc: datetime) -> None:
     """
     Processing timeframes and entry point into robot algorithms
     """
-    for timeframe in bot.framing:
-        if utc > bot.framing[timeframe]["time"] + timedelta(
-            minutes=bot.framing[timeframe]["timefr"]
-        ):
-            for emi in bot.framing[timeframe]["robots"]:
-                if bot.robots[emi]["STATUS"] == "WORK" and disp.f9 == "ON" and bot.robo:
-                    # Robots entry point
-                    bot.robo[emi](
-                        robot=bot.robots[emi],
-                        frame=bot.frames[timeframe],
-                        ticker=var.ticker[bot.robots[emi]["SYMBOL"]],
-                        instrument=var.instruments[bot.robots[emi]["SYMBOL"]],
+    var.ticker = ws.bitmex.get_ticker(var.ticker)
+    for symbol, timeframes in bot.frames.items():
+        for timefr, values in timeframes.items():
+            if utc > values["time"] + timedelta(minutes=timefr):
+                for emi in values["robots"]:
+                    if (
+                        bot.robots[emi]["STATUS"] == "WORK"
+                        and disp.f9 == "ON"
+                        and bot.robo
+                    ):
+                        # Robots entry point
+                        bot.robo[emi](
+                            robot=bot.robots[emi],
+                            frame=values["data"],
+                            ticker=var.ticker[symbol],
+                            instrument=var.instruments[symbol],
+                        )
+                    save_timeframes_data(
+                        emi=emi,
+                        symbol=symbol,
+                        timefr=str(timefr),
+                        frame=values["data"][-1],
                     )
-                save_timeframes_data(
-                    emi=emi, timeframe=timeframe, frame=bot.frames[timeframe][-1]
+                next_minute = int(utc.minute / timefr) * timefr
+                dt_now = datetime(
+                    utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0
                 )
-            next_minute = (
-                int(utc.minute / bot.framing[timeframe]["timefr"])
-                * bot.framing[timeframe]["timefr"]
-            )
-            dt_now = datetime(utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0)
-            bot.frames[timeframe].append(
-                {
-                    "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
-                    "time": utc.hour * 10000 + utc.minute * 100,
-                    "bid": var.ticker[bot.framing[timeframe]["symbol"]]["bid"],
-                    "ask": var.ticker[bot.framing[timeframe]["symbol"]]["ask"],
-                    "hi": var.ticker[bot.framing[timeframe]["symbol"]]["ask"],
-                    "lo": var.ticker[bot.framing[timeframe]["symbol"]]["bid"],
-                    "funding": var.ticker[bot.framing[timeframe]["symbol"]][
-                        "fundingRate"
-                    ],
-                    "datetime": dt_now,
-                }
-            )
-            bot.framing[timeframe]["time"] = dt_now
-        else:
-            if (
-                var.ticker[bot.framing[timeframe]["symbol"]]["ask"]
-                > bot.frames[timeframe][-1]["hi"]
-            ):
-                bot.frames[timeframe][-1]["hi"] = var.ticker[
-                    bot.framing[timeframe]["symbol"]
-                ]["ask"]
-            if (
-                var.ticker[bot.framing[timeframe]["symbol"]]["bid"]
-                < bot.frames[timeframe][-1]["lo"]
-            ):
-                bot.frames[timeframe][-1]["lo"] = var.ticker[
-                    bot.framing[timeframe]["symbol"]
-                ]["bid"]
-            bot.frames[timeframe][-1]["funding"] = var.ticker[
-                bot.framing[timeframe]["symbol"]
-            ]["fundingRate"]
+                values["data"].append(
+                    {
+                        "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
+                        "time": utc.hour * 10000 + utc.minute * 100,
+                        "bid": var.ticker[symbol]["bid"],
+                        "ask": var.ticker[symbol]["ask"],
+                        "hi": var.ticker[symbol]["ask"],
+                        "lo": var.ticker[symbol]["bid"],
+                        "funding": var.ticker[symbol]["fundingRate"],
+                        "datetime": dt_now,
+                    }
+                )
+                values["time"] = dt_now
 
 
 def change_color(color: str, container=None) -> None:

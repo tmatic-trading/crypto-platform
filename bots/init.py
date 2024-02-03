@@ -4,6 +4,7 @@ from typing import Tuple, Union
 import functions as function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
+from ws.init import Variables as ws
 
 
 def load_robots(db: str) -> dict:
@@ -90,8 +91,8 @@ def load_robots(db: str) -> dict:
                     "POS": pos,
                     "EMI": symbol,
                     "STATUS": "RESERVED",
-                    "TIMEFR": None,
-                    "CAPITAL": None,
+                    "TIMEFR": "None",
+                    "CAPITAL": "None",
                 }
 
     # Loading all transactions and calculating financial results for each robot
@@ -123,9 +124,6 @@ def load_robots(db: str) -> dict:
                         str(bot.robots[emi][col]), "%Y-%m-%d %H:%M:%S"
                     )
         bot.robots[emi]["PNL"] = 0
-        bot.robots[emi]["FRAME"] = bot.robots[emi]["SYMBOL"] + str(
-            bot.robots[emi]["TIMEFR"]
-        )
         bot.robots[emi]["lotSize"] = (
             var.instruments[bot.robots[emi]["SYMBOL"]]["lotSize"]
             / var.instruments[bot.robots[emi]["SYMBOL"]]["myMultiplier"]
@@ -141,7 +139,7 @@ def download_data(
 ) -> Tuple[Union[list, None], Union[datetime, None]]:
     res = list()
     while target > time:
-        data = var.ws.trade_bucketed(symbol=symbol, time=time, timeframe=timeframe)
+        data = ws.bitmex.trade_bucketed(symbol=symbol, time=time, timeframe=timeframe)
         if data:
             last = time
             time = datetime.strptime(
@@ -163,20 +161,28 @@ def download_data(
             )
             var.logger.error(message)
             return None, None
-    var.ws.logNumFatal = 0
+    ws.bitmex.logNumFatal = 0
 
     return res, time
 
 
 def load_frames(
-    robot: dict, frames: dict, framing: dict, timeframe: str
+    robot: dict,
+    frames: dict,
 ) -> Union[dict, None]:
     """
     Loading usual candlestick data from the exchange server. Data is recorded
     in files for each algorithm. Every time you reboot the files are
     overwritten.
     """
-    filename = "data/" + timeframe + "_EMI" + robot["EMI"] + ".txt"
+    filename = (
+        "data/"
+        + robot["SYMBOL"]
+        + str(robot["TIMEFR"])
+        + "_EMI"
+        + robot["EMI"]
+        + ".txt"
+    )
     with open(filename, "w"):
         pass
     target = datetime.utcnow()
@@ -190,7 +196,7 @@ def load_frames(
     res, time = download_data(
         time=time,
         target=target,
-        symbol=framing[timeframe]["symbol"],
+        symbol=robot["SYMBOL"],
         timeframe=var.timefrs[robot["TIMEFR"]],
     )
     if not res:
@@ -199,30 +205,35 @@ def load_frames(
     # The 'frames' array is filled with timeframe data.
 
     for num, row in enumerate(res):
-        utc = datetime.strptime(
-            row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
-        ) - timedelta(minutes=robot["TIMEFR"])
-        frames[timeframe].append(
+        tm = datetime.strptime(row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S") - timedelta(
+            minutes=robot["TIMEFR"]
+        )
+        frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
             {
-                "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
-                "time": utc.hour * 10000 + utc.minute * 100,
+                "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
+                "time": tm.hour * 10000 + tm.minute * 100,
                 "bid": float(row["open"]),
                 "ask": float(row["open"]),
                 "hi": float(row["high"]),
                 "lo": float(row["low"]),
-                "funding": 0,
-                "datetime": utc,
+                "datetime": tm,
             }
         )
         if num < len(res[:-1]) - 1:
             function.save_timeframes_data(
                 emi=robot["EMI"],
-                timeframe=timeframe,
-                frame=frames[timeframe][-1],
+                symbol=robot["SYMBOL"],
+                timefr=str(robot["TIMEFR"]),
+                frame=frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"][-1],
             )
-    framing[timeframe]["time"] = utc
+    frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
 
-    message = "Downloaded missing data from the exchange for " + timeframe
+    message = (
+        "Downloaded missing data from the exchange for symbol="
+        + robot["SYMBOL"]
+        + " TIMEFR="
+        + str(robot["TIMEFR"])
+    )
     var.logger.info(message)
     function.info_display(message)
 
@@ -231,40 +242,36 @@ def load_frames(
 
 def init_timeframes() -> Union[dict, None]:
     for emi in bot.robots:
-        # Initialize candlestick timeframe data using 'TIMEFR' fields 
+        # Initialize candlestick timeframe data using 'TIMEFR' fields
         # expressed in minutes.
-        if bot.robots[emi]["TIMEFR"]:
+        if bot.robots[emi]["TIMEFR"] != "None":
             time = datetime.utcnow()
+            symbol = bot.robots[emi]["SYMBOL"]
+            timefr = bot.robots[emi]["TIMEFR"]
             try:
-                bot.frames[bot.robots[emi]["FRAME"]]
-                bot.framing[bot.robots[emi]["FRAME"]]["robots"].append(emi)
+                bot.frames[symbol]
             except KeyError:
-                bot.frames[bot.robots[emi]["FRAME"]] = []
-                bot.framing[bot.robots[emi]["FRAME"]] = {
-                    "symbol": bot.robots[emi]["SYMBOL"],
-                    "timefr": bot.robots[emi]["TIMEFR"],
-                    "time": time,
-                    "robots": [],
-                    "open": 0,
-                    "trigger": 0,
-                }
-                bot.framing[bot.robots[emi]["FRAME"]]["robots"].append(emi)
-                for num, symbol in enumerate(var.symbol_list):
-                    if symbol == bot.framing[bot.robots[emi]["FRAME"]]["symbol"]:
-                        bot.framing[bot.robots[emi]["FRAME"]]["SYMBOL"] = num
-                        break
-                res = load_frames(
-                    robot=bot.robots[emi],
-                    frames=bot.frames,
-                    framing=bot.framing,
-                    timeframe=bot.robots[emi]["FRAME"],
-                )
-                if not res:
-                    message = (
-                        "The emi " + emi + " candle timeframe data was not loaded!"
+                bot.frames[symbol] = dict()
+                try:
+                    bot.frames[symbol][timefr]
+                except KeyError:
+                    bot.frames[symbol][timefr] = {
+                        "time": time,
+                        "robots": [],
+                        "open": 0,
+                        "data": [],
+                    }
+                    bot.frames[symbol][timefr]["robots"].append(emi)
+                    res = load_frames(
+                        robot=bot.robots[emi],
+                        frames=bot.frames,
                     )
-                    var.logger.error(message)
-                    return None
+                    if not res:
+                        message = (
+                            "The emi " + emi + " candle timeframe data was not loaded!"
+                        )
+                        var.logger.error(message)
+                        return None
 
     return bot.frames
 

@@ -5,7 +5,7 @@ from display.variables import Variables as disp
 from display.variables import on_closing
 
 var.logger = common_init.setup_logger()
-var.ws = connect.connection()
+connect.connection()
 
 
 def refresh():
@@ -13,7 +13,7 @@ def refresh():
     Main loop refresh
     """
     connect.refresh()
-    disp.root.after(10, refresh)
+    disp.root.after(var.refresh_rate, refresh)
 
 
 disp.refresh_var = disp.root.after_idle(refresh)

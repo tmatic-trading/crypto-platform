@@ -74,6 +74,13 @@ pip3 install python-dotenv
 pip3 install websocket-client
 pip3 install requests
 ```
+
+*or use the command:*
+
+```
+pip3 install -r requirements.txt
+```
+
 4. Install the MySQL database on your local computer by following the instructions according to your operating system.
 5. Install your favorite visual tool like MySQL Workbench or something else if you need to.
 6. Create a database, for example "my_db".
@@ -276,7 +283,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     quantaty = (
         robot["lotSize"]
         * robot["CAPITAL"]
-        * instrument["underlyingToPositionMultiplier"]
+        * instrument["myMultiplier"]
     )
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
@@ -356,7 +363,7 @@ def order_search(emi: int, side: str) -> str:
 
 
 def delete_orders(emi: int, side: str) -> None:
-    for clOrdID, order in var.orders.items():
+    for clOrdID, order in var.orders.copy().items():
         if order["emi"] == emi and order["side"] == side:
             function.del_order(clOrdID)
 ```

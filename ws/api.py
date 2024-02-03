@@ -12,10 +12,12 @@ from urllib.parse import urlparse, urlunparse
 import requests
 import websocket
 
+import functions as function
+from bots.variables import Variables as bot
 from ws.api_auth import API_auth, generate_signature
 
 
-class Connect_websocket:
+class Connect:
     def __init__(
         self,
         endpoint=None,
@@ -25,7 +27,7 @@ class Connect_websocket:
         info_display=None,
         order_book_depth=None,
         instruments=None,
-        format_price=None
+        format_price=None,
     ):
         """
         Initialize and connect to websocket.
@@ -274,7 +276,7 @@ class Connect_websocket:
         Gets market depth (orderbook), 10 lines deep.
         """
 
-        return self.data["orderBook10"].values()
+        return self.data["orderBook10"]
 
     def get_additional_instrument_data(
         self, symbol: list, instruments: OrderedDict
@@ -519,6 +521,7 @@ class Connect_websocket:
                             1,
                         )  # impossible situation => stop trading
                     elif "insufficient available balance" in message:
+                        self.info_display(error["message"])
                         info_warn_err(
                             "ERROR",
                             error["message"]
@@ -753,7 +756,7 @@ class Connect_websocket:
                     self.data[table] = OrderedDict()
                 if action == "partial":  # table snapshot
                     self.logger.debug("%s: partial" % table)
-                    self.keys[table] = message["keys"]                    
+                    self.keys[table] = message["keys"]
                     if table == "quote":
                         self.keys[table] = ["symbol"]
                     elif table == "trade":
@@ -768,18 +771,19 @@ class Connect_websocket:
                             key = generate_key(self.keys[table], val)
                             self.data[table][key] = val
                 elif action == "insert":
-                    if table == "quote":
-                        for val in message["data"]:
-                            key = generate_key(self.keys[table], val)
+                    for val in message["data"]:
+                        key = generate_key(self.keys[table], val)
+                        if table == "quote":
                             if "bidPrice" in val:
                                 self.data[table][key]["bidPrice"] = val["bidPrice"]
                                 self.data[table][key]["bidSize"] = val["bidSize"]
                             if "askPrice" in val:
                                 self.data[table][key]["askPrice"] = val["askPrice"]
                                 self.data[table][key]["askSize"] = val["askSize"]
-                    else:
-                        for val in message["data"]:
-                            key = generate_key(self.keys[table], val)
+                            self.frames_hi_lo_values(data=self.data[table][key])
+                        elif table == "execution":
+                            function.transaction(row=val)
+                        else:
                             self.data[table][key] = val
                 elif action == "update":
                     for val in message["data"]:
@@ -787,6 +791,8 @@ class Connect_websocket:
                         if key not in self.data[table]:
                             return  # No key to update
                         self.data[table][key].update(val)
+                        if table == "orderBook10":
+                            self.frames_hi_lo_values(data=self.data[table][key])
                         # Removes cancelled or filled orders
                         if table == "order" and self.data[table][key]["leavesQty"] <= 0:
                             self.data[table].pop(key)
@@ -823,3 +829,22 @@ class Connect_websocket:
         """
         self.data = {}
         self.keys = {}
+
+    def frames_hi_lo_values(self, data: dict) -> None:
+        if data["symbol"] in bot.frames:
+            for timeframe in bot.frames[data["symbol"]].values():
+                if timeframe["data"]:
+                    if self.depth == "orderBook10":
+                        if data["asks"]:
+                            if data["asks"][0][0] > timeframe["data"][-1]["hi"]:
+                                timeframe["data"][-1]["hi"] = data["asks"][0][0]
+                        if data["bids"]:
+                            if data["bids"][0][0] < timeframe["data"][-1]["lo"]:
+                                timeframe["data"][-1]["lo"] = data["bids"][0][0]
+                    else:
+                        if "askPrice" in data:
+                            if data["askPrice"] > timeframe["data"][-1]["hi"]:
+                                timeframe["data"][-1]["hi"] = data["askPrice"]
+                        if "bidPrice" in data:
+                            if data["bidPrice"] < timeframe["data"][-1]["lo"]:
+                                timeframe["data"][-1]["lo"] = data["bidPrice"]
