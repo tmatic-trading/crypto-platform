@@ -10,5 +10,5 @@ abstract: >-
   This software is designed for trading on the Bitmex.com
   marketplace and allows you to control trade balances and
   make transactions manually and automatically.
-version: 24.1.0
-date-released: '2024-01-27'
+version: 24.2.0
+date-released: '2024-02-03'
