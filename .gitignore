@@ -2,6 +2,4 @@
 venv/
 .env
 .pre-commit-config.yaml
-description.md
 logfile.log
-sa.py

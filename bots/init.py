@@ -167,14 +167,22 @@ def download_data(
 
 
 def load_frames(
-    robot: dict, frames: dict,
+    robot: dict,
+    frames: dict,
 ) -> Union[dict, None]:
     """
     Loading usual candlestick data from the exchange server. Data is recorded
     in files for each algorithm. Every time you reboot the files are
     overwritten.
     """
-    filename = "data/" + robot["SYMBOL"] + str(robot["TIMEFR"]) + "_EMI" + robot["EMI"] + ".txt"
+    filename = (
+        "data/"
+        + robot["SYMBOL"]
+        + str(robot["TIMEFR"])
+        + "_EMI"
+        + robot["EMI"]
+        + ".txt"
+    )
     with open(filename, "w"):
         pass
     target = datetime.utcnow()
@@ -197,9 +205,9 @@ def load_frames(
     # The 'frames' array is filled with timeframe data.
 
     for num, row in enumerate(res):
-        tm = datetime.strptime(
-            row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
-        ) - timedelta(minutes=robot["TIMEFR"])
+        tm = datetime.strptime(row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S") - timedelta(
+            minutes=robot["TIMEFR"]
+        )
         frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
             {
                 "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
@@ -220,7 +228,12 @@ def load_frames(
             )
     frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
 
-    message = "Downloaded missing data from the exchange for symbol=" + robot["SYMBOL"] + " TIMEFR=" + str(robot["TIMEFR"])
+    message = (
+        "Downloaded missing data from the exchange for symbol="
+        + robot["SYMBOL"]
+        + " TIMEFR="
+        + str(robot["TIMEFR"])
+    )
     var.logger.info(message)
     function.info_display(message)
 
@@ -229,7 +242,7 @@ def load_frames(
 
 def init_timeframes() -> Union[dict, None]:
     for emi in bot.robots:
-        # Initialize candlestick timeframe data using 'TIMEFR' fields 
+        # Initialize candlestick timeframe data using 'TIMEFR' fields
         # expressed in minutes.
         if bot.robots[emi]["TIMEFR"] != "None":
             time = datetime.utcnow()
@@ -243,11 +256,11 @@ def init_timeframes() -> Union[dict, None]:
                     bot.frames[symbol][timefr]
                 except KeyError:
                     bot.frames[symbol][timefr] = {
-                    "time": time,
-                    "robots": [],
-                    "open": 0,
-                    "data": [],
-                    }       
+                        "time": time,
+                        "robots": [],
+                        "open": 0,
+                        "data": [],
+                    }
                     bot.frames[symbol][timefr]["robots"].append(emi)
                     res = load_frames(
                         robot=bot.robots[emi],

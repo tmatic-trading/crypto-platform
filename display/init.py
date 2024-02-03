@@ -29,7 +29,6 @@ def trade_state(event) -> None:
 
 
 def load_labels() -> None:
-
     # Robots table
 
     rows = max(disp.num_robots, len(bot.robots) + 1)
@@ -57,7 +56,8 @@ def load_labels() -> None:
             disp.frame_robots.grid_columnconfigure(column, weight=1)
     for row, emi in enumerate(bot.robots):
         if bot.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
-            bot.robots[emi]["STATUS"] == "RESERVED" and bot.robots[emi]["POS"] != 0):
+            bot.robots[emi]["STATUS"] == "RESERVED" and bot.robots[emi]["POS"] != 0
+        ):
             disp.labels["robots"][5][row + 1]["fg"] = "red"
         else:
             disp.labels["robots"][5][row + 1]["fg"] = "#212121"

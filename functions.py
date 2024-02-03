@@ -124,12 +124,31 @@ def orders_processing(row: dict, info: str = "") -> None:
             del var.orders[clOrdID]
     else:
         if row["execType"] == "New":
+            if "clOrdID" in row:
+                dot = row["clOrdID"].find(".")
+                if dot == -1:
+                    emi = row["symbol"]
+                else:
+                    emi = row["clOrdID"][dot + 1 :]
+                var.orders[clOrdID] = {
+                    "leavesQty": row["leavesQty"],
+                    "price": row["price"],
+                    "symbol": row["symbol"],
+                    "transactTime": str(datetime.utcnow()),
+                    "side": row["side"],
+                    "emi": emi,
+                    "orderID": row["orderID"],
+                }
             info_p = price
             info_q = row["orderQty"]
         elif row["execType"] == "Trade":
             info_p = row["lastPx"]
             info_q = row["lastQty"]
         elif row["execType"] == "Replaced":
+            var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+            var.orders[clOrdID]["price"] = row["price"]
+            var.orders[clOrdID]["transactTime"] = datetime.utcnow()
+            var.orders[clOrdID]["orderID"] = row["orderID"]
             info_p = price
             info_q = row["leavesQty"]
         if (
@@ -426,12 +445,6 @@ def put_order(
             orderID=var.orders[clOrdID]["orderID"],
             symbol=var.orders[clOrdID]["symbol"],
         )
-        if ws.bitmex.logNumFatal == 0:  # success
-            var.orders[clOrdID]["leavesQty"] = qty
-            var.orders[clOrdID]["oldPrice"] = var.orders[clOrdID]["price"]
-            var.orders[clOrdID]["price"] = price
-            var.orders[clOrdID]["transactTime"] = datetime.utcnow()
-            var.orders[clOrdID]["orderID"] = ws.bitmex.myOrderID
 
     return clOrdID
 
@@ -444,7 +457,7 @@ def post_order(
     qty: int,
 ) -> str:
     """
-    This function adds a new order
+    This function sends a new order
     """
     info_p = format_price(number=price, symbol=symbol)
     var.logger.info("Posting side=" + side + " price=" + info_p + " qty=" + str(qty))
@@ -454,19 +467,6 @@ def post_order(
     var.last_order += 1
     clOrdID = str(var.last_order) + "." + emi
     ws.bitmex.place_limit(quantity=qty, price=price, clOrdID=clOrdID, symbol=symbol)
-    if ws.bitmex.logNumFatal == 0:  # success
-        var.orders[clOrdID] = {
-            "leavesQty": abs(qty),
-            "price": price,
-            "symbol": symbol,
-            "transactTime": str(datetime.utcnow()),
-            "side": side,
-            "emi": emi,
-            "orderID": ws.bitmex.myOrderID,
-            "oldPrice": 0,
-        }
-    else:
-        clOrdID = ""
 
     return clOrdID
 
@@ -1127,9 +1127,22 @@ def refresh_tables() -> None:
         update_label(
             table="robots", column=5, row=num + 1, val=bot.robots[emi]["STATUS"]
         )
-        update_label(table="robots", column=6, row=num + 1, val=humanFormat(bot.robots[emi]["VOL"]))
-        update_label(table="robots", column=7, row=num + 1, val="{:.8f}".format(bot.robots[emi]["PNL"]))        
-        val = volume(qty=bot.robots[emi]["POS"], symbol=symbol,)
+        update_label(
+            table="robots",
+            column=6,
+            row=num + 1,
+            val=humanFormat(bot.robots[emi]["VOL"]),
+        )
+        update_label(
+            table="robots",
+            column=7,
+            row=num + 1,
+            val="{:.8f}".format(bot.robots[emi]["PNL"]),
+        )
+        val = volume(
+            qty=bot.robots[emi]["POS"],
+            symbol=symbol,
+        )
         if disp.labels_cache["robots"][8][num + 1] != val:
             if bot.robots[emi]["STATUS"] == "RESERVED":
                 if bot.robots[emi]["POS"] != 0:
@@ -1450,7 +1463,7 @@ def handler_robots(event, row_position: int) -> None:
             def callback():
                 row = bot.robots[val]["y_position"]
                 if bot.robots[emi]["STATUS"] == "WORK":
-                    bot.robots[emi]["STATUS"] = "OFF"                    
+                    bot.robots[emi]["STATUS"] = "OFF"
                     disp.labels["robots"][5][row]["fg"] = "red"
                 else:
                     bot.robots[emi]["STATUS"] = "WORK"
@@ -1541,12 +1554,14 @@ def robots_entry(utc: datetime) -> None:
     var.ticker = ws.bitmex.get_ticker(var.ticker)
     for symbol, timeframes in bot.frames.items():
         for timefr, values in timeframes.items():
-            if utc > values["time"] + timedelta(
-                minutes=timefr
-            ):
+            if utc > values["time"] + timedelta(minutes=timefr):
                 for emi in values["robots"]:
-                    if bot.robots[emi]["STATUS"] == "WORK" and disp.f9 == "ON" and bot.robo:
-                        # Robots entry point                        
+                    if (
+                        bot.robots[emi]["STATUS"] == "WORK"
+                        and disp.f9 == "ON"
+                        and bot.robo
+                    ):
+                        # Robots entry point
                         bot.robo[emi](
                             robot=bot.robots[emi],
                             frame=values["data"],
@@ -1554,10 +1569,15 @@ def robots_entry(utc: datetime) -> None:
                             instrument=var.instruments[symbol],
                         )
                     save_timeframes_data(
-                        emi=emi, symbol=symbol, timefr=str(timefr), frame=values["data"][-1]
+                        emi=emi,
+                        symbol=symbol,
+                        timefr=str(timefr),
+                        frame=values["data"][-1],
                     )
                 next_minute = int(utc.minute / timefr) * timefr
-                dt_now = datetime(utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0)
+                dt_now = datetime(
+                    utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0
+                )
                 values["data"].append(
                     {
                         "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
@@ -1566,9 +1586,7 @@ def robots_entry(utc: datetime) -> None:
                         "ask": var.ticker[symbol]["ask"],
                         "hi": var.ticker[symbol]["ask"],
                         "lo": var.ticker[symbol]["bid"],
-                        "funding": var.ticker[symbol][
-                            "fundingRate"
-                        ],
+                        "funding": var.ticker[symbol]["fundingRate"],
                         "datetime": dt_now,
                     }
                 )

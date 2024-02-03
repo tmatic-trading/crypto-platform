@@ -283,7 +283,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     quantaty = (
         robot["lotSize"]
         * robot["CAPITAL"]
-        * instrument["underlyingToPositionMultiplier"]
+        * instrument["myMultiplier"]
     )
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]

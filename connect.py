@@ -1,9 +1,9 @@
 import os
+import threading
 import time
 from collections import OrderedDict
 from datetime import datetime
 from time import sleep
-import threading
 
 from dotenv import load_dotenv
 
@@ -41,7 +41,7 @@ def connection():
             info_display=function.info_display,
             order_book_depth=var.order_book_depth,
             instruments=var.instruments,
-            format_price = function.format_price,
+            format_price=function.format_price,
         )
         if ws.bitmex.logNumFatal == 0:
             common_init.setup_database_connecion()
@@ -51,7 +51,7 @@ def connection():
                 if isinstance(bot_init.init_timeframes(), dict):
                     common_init.load_trading_history()
                     common_init.initial_mysql(var.user_id)
-                    common_init.load_orders()                    
+                    common_init.load_orders()
                     common_init.initial_display(var.user_id)
                     var.ticker = ws.bitmex.get_ticker(ticker=var.ticker)
                     var.instruments = ws.bitmex.get_instrument(var.instruments)
@@ -99,10 +99,6 @@ def refresh() -> None:
             disp.f9 = "OFF"
         var.ticker = ws.bitmex.get_ticker(var.ticker)
         var.instruments = ws.bitmex.get_instrument(instruments=var.instruments)
-        while ws.bitmex.get_exec():
-            print("+++++++++++++++++", list(ws.bitmex.get_exec().values())[0])
-            function.transaction(list(ws.bitmex.get_exec().values())[0])
-            ws.bitmex.get_exec().popitem(last=False)
         var.positions = ws.bitmex.get_position(positions=var.positions)
         function.refresh_on_screen(utc=utc)
 
@@ -124,7 +120,11 @@ def clear_params() -> None:
         bot.robot_status[emi] = values["STATUS"]
     bot.robots = OrderedDict()
     bot.frames = {}
-    bot.framing = {}
+    var.symbol = var.symbol_list[0]
+    for values in disp.labels_cache.values():
+        for column in values:
+            for row in range(len(column)):
+                column[row] = ""
 
 
 def robots_thread() -> None:
@@ -132,5 +132,5 @@ def robots_thread() -> None:
         utcnow = datetime.utcnow()
         if bot.frames:
             function.robots_entry(utc=utcnow)
-        rest = 1-time.time()%1
+        rest = 1 - time.time() % 1
         time.sleep(rest)

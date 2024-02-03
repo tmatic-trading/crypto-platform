@@ -12,11 +12,9 @@ from urllib.parse import urlparse, urlunparse
 import requests
 import websocket
 
-from ws.api_auth import API_auth, generate_signature
-
-from bots.variables import Variables as bot
-from common.variables import Variables as var
 import functions as function
+from bots.variables import Variables as bot
+from ws.api_auth import API_auth, generate_signature
 
 
 class Connect:
@@ -523,6 +521,7 @@ class Connect:
                             1,
                         )  # impossible situation => stop trading
                     elif "insufficient available balance" in message:
+                        self.info_display(error["message"])
                         info_warn_err(
                             "ERROR",
                             error["message"]
@@ -757,7 +756,7 @@ class Connect:
                     self.data[table] = OrderedDict()
                 if action == "partial":  # table snapshot
                     self.logger.debug("%s: partial" % table)
-                    self.keys[table] = message["keys"]                    
+                    self.keys[table] = message["keys"]
                     if table == "quote":
                         self.keys[table] = ["symbol"]
                     elif table == "trade":
@@ -771,7 +770,7 @@ class Connect:
                         else:
                             key = generate_key(self.keys[table], val)
                             self.data[table][key] = val
-                elif action == "insert":                    
+                elif action == "insert":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val)
                         if table == "quote":
@@ -849,4 +848,3 @@ class Connect:
                         if "bidPrice" in data:
                             if data["bidPrice"] < timeframe["data"][-1]["lo"]:
                                 timeframe["data"][-1]["lo"] = data["bidPrice"]
-
