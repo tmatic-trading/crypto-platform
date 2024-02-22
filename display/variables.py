@@ -17,9 +17,9 @@ class Variables:
     num_robots = 15
     bg_color = "gray98"
     title_color = "gray83"
-    num_pos = max(5, len(var.symbol_list) + 1)
+    num_pos = max(5, var.position_rows + 1)
     num_book = 21  # Must be odd
-    num_acc = len(var.currencies) + 1
+    num_acc = var.account_rows + 1
     frame_state = tk.Frame()
     labels = dict()
     labels_cache = dict()
@@ -254,7 +254,7 @@ def handler_robots(y_pos):
 
 
 def on_closing(root, refresh_var):
-    var.thread_is_active = ""
+    var.robots_thread_is_active = ""
     root.after_cancel(refresh_var)
     root.destroy()
 

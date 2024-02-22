@@ -6,6 +6,7 @@ from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
 from ws.init import Variables as ws
+from datetime import datetime
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
@@ -131,3 +132,31 @@ def load_labels() -> None:
                 disp.labels["account"][column][row]["bg"] = disp.bg_color
             disp.labels["account"][column][row].grid(row=row, column=column)
             disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)
+
+
+def noll(val: str, length: int) -> str:
+    r = ""
+    for _ in range(length - len(val)):
+        r = r + "0"
+
+    return r + val
+
+
+def info_display(name: str, message: str) -> None:
+    t = datetime.utcnow()
+    disp.text_info.insert(
+        "1.0",
+        noll(str(t.hour), 2)
+        + ":"
+        + noll(str(t.minute), 2)
+        + ":"
+        + noll(str(t.second), 2)
+        + "."
+        + noll(str(int(t.microsecond / 1000)), 3)
+        + " "
+        + message
+        + "\n",
+    )
+    disp.info_display_counter += 1
+    if disp.info_display_counter > 40:
+        disp.text_info.delete("41.0", "end")
