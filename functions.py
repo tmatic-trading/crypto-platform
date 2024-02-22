@@ -6,60 +6,60 @@ from datetime import datetime, timedelta
 from random import randint
 from typing import Union
 
-from dotenv import load_dotenv
-
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
 from ws.init import Variables as ws
 
-load_dotenv()
-db = os.getenv("MYSQL_DATABASE")
+from api.variables import Variables
 
 
-def calculate(symbol: str, price: float, qty: float, rate: int, fund: int) -> dict:
-    """
-    Calculate sumreal and commission
-    """
-    coef = abs(
-        var.instruments[symbol]["multiplier"]
-        / var.currency_divisor[var.instruments[symbol]["settlCurrency"]]
-    )
-    if var.instruments[symbol]["isInverse"]:
-        sumreal = qty / price * coef * fund
-        commiss = abs(qty) / price * coef * rate
-        funding = qty / price * coef * rate
-    else:
-        sumreal = -qty * price * coef * fund
-        commiss = abs(qty) * price * coef * rate
-        funding = qty * price * coef * rate
+db = var.env["MYSQL_DATABASE"]
 
-    return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
-
-
-def rounding(instruments: OrderedDict) -> None:
-    for symbol, instrument in instruments.items():
-        tickSize = str(instrument["tickSize"])
-        if tickSize.find(".") > 0:
-            disp.price_rounding[symbol] = len(tickSize) - 1 - tickSize.find(".")
-        elif tickSize.find("e-") > 0:
-            disp.price_rounding[symbol] = int(tickSize[tickSize.find("e-") + 2 :])
-        else:
-            disp.price_rounding[symbol] = 0
-
-
-def add_symbol(symbol: str) -> None:
-    if symbol not in bot.full_symbol_list:
-        bot.full_symbol_list.append(symbol)
-        if symbol not in var.instruments:
-            var.instruments = ws.bitmex.get_additional_instrument_data(
-                symbols=symbol, instruments=var.instruments
-            )
-        rounding(var.instruments)
-    if symbol not in var.positions:
-        var.positions = ws.bitmex.get_additional_position_data(
-            positions=var.positions, symbol=symbol
+class Function(Variables):
+    def calculate(self, symbol: str, price: float, qty: float, rate: int, fund: int) -> dict:
+        """
+        Calculate sumreal and commission
+        """
+        coef = abs(
+            self.instruments[symbol]["multiplier"]
+            / var.currency_divisor[self.instruments[symbol]["settlCurrency"]]
         )
+        if self.instruments[symbol]["isInverse"]:
+            sumreal = qty / price * coef * fund
+            commiss = abs(qty) / price * coef * rate
+            funding = qty / price * coef * rate
+        else:
+            sumreal = -qty * price * coef * fund
+            commiss = abs(qty) * price * coef * rate
+            funding = qty * price * coef * rate
+
+        return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
+    
+    def add_symbol(self, symbol: str) -> None:
+        if symbol not in self.full_symbol_list:
+            self.full_symbol_list.append(symbol)
+            if symbol not in self.instruments:
+                self.instruments = self.get_instrument_data(
+                    symbol=symbol,
+                )
+            Function.rounding(self)
+        if symbol not in self.positions:
+            self.positions = self.get_position_data(
+                positions=self.positions, symbol=symbol
+            )
+
+    def rounding(self) -> None:
+        if self.name not in disp.price_rounding:
+            disp.price_rounding[self.name] = OrderedDict()
+        for symbol, instrument in self.instruments.items():
+            tickSize = str(instrument["tickSize"])
+            if tickSize.find(".") > 0:
+                disp.price_rounding[self.name][symbol] = len(tickSize) - 1 - tickSize.find(".")
+            elif tickSize.find("e-") > 0:
+                disp.price_rounding[self.name][symbol] = int(tickSize[tickSize.find("e-") + 2 :])
+            else:
+                disp.price_rounding[self.name][symbol] = 0
 
 
 def read_database(execID: str, user_id: int) -> list:
@@ -181,7 +181,7 @@ def orders_processing(row: dict, info: str = "") -> None:
     orders_display(clOrdID=clOrdID)
 
 
-def transaction(row: dict, info: str = "") -> None:
+def transaction(exchange, row: dict, info: str = "") -> None:
     """
     Trades and funding processing
     """
@@ -1380,34 +1380,6 @@ def funding_display(value: dict) -> None:
     disp.funding_display_counter += 1
     if disp.funding_display_counter > 120:
         disp.text_funding.delete("121.0", "end")
-
-
-def noll(val: str, length: int) -> str:
-    r = ""
-    for _ in range(length - len(val)):
-        r = r + "0"
-
-    return r + val
-
-
-def info_display(message: str) -> None:
-    t = datetime.utcnow()
-    disp.text_info.insert(
-        "1.0",
-        noll(str(t.hour), 2)
-        + ":"
-        + noll(str(t.minute), 2)
-        + ":"
-        + noll(str(t.second), 2)
-        + "."
-        + noll(str(int(t.microsecond / 1000)), 3)
-        + " "
-        + message
-        + "\n",
-    )
-    disp.info_display_counter += 1
-    if disp.info_display_counter > 40:
-        disp.text_info.delete("41.0", "end")
 
 
 def warning_window(message: str) -> None:

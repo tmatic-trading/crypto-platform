@@ -8,41 +8,103 @@ from time import sleep
 from dotenv import load_dotenv
 
 import algo.init as algo_init
-import bots.init as bot_init
+from bots.init import Init as bot_init
 import common.init as common_init
 import display.init as display_init
-import functions as function
+from functions import Function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-from ws.api import Connect
-from ws.init import Variables as ws
+from api.api import Websockets
+
+from api.variables import Variables
+
+
 
 load_dotenv()
+
+
+#from API.variables import Variables as API
+
+from api.api import WS
+
+
+class Loads(Variables):
+    def load_robots(self):
+        Loads.clear_params(self)
+        bot_init.load_robots(self)
+
+
+    def clear_params(self) -> None:
+        self.connect_count += 1
+        account = self.get_user()
+        if account:
+            self.user_id = account["id"]
+        else:
+            print("A user ID was requested from the exchange but was not received.")
+            exit(1)
+        for emi, values in self.robots.items():
+            self.robot_status[emi] = values["STATUS"]
+        self.robots = OrderedDict()
+        Function.rounding(self)
+        self.frames = dict()
+
+def clear_common_params():
+    var.orders = OrderedDict()
+    var.orders_dict = OrderedDict()  
+    var.current_exchange = var.exchange_list[0]
+    var.symbol = var.env[var.current_exchange]["SYMBOLS"][0]
+    for values in disp.labels_cache.values():
+        for column in values:
+            for row in range(len(column)):
+                column[row] = ""
+        pass
+
 
 
 def connection():
     """
     Websocket connection
     """
-    if ws.bitmex:
-        try:
-            ws.bitmex.exit()
-        except Exception:
-            pass
-        ws.bitmex = None
+    clear_common_params()
+    common_init.setup_database_connecion()
+    for name, ws in Websockets.connect.items():
+        if name in var.exchange_list:
+            while ws.logNumFatal: 
+                ws.start_ws(name)
+                if ws.logNumFatal:
+                    sleep(3)
+            Loads.load_robots(ws)
+            #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
+
+    exit(0)
+
+
+    '''while True:
+        for name, ws in Websockets.connect.items():
+            print(name)
+            for k, val in ws.data.items():
+                if k == "orderBook10":
+                    print(k)
+                    print(val)
+                else:
+                    print(k)
+            print("  ")
+        sleep(1)'''
+
+    common_init.setup_database_connecion()
+    bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"))
+
+
+    exit(0)
+
+    ws.select["Bitmex"].exit()
+    ws.bitmex = None
     while not ws.bitmex:
-        var.thread_is_active = ""
-        ws.bitmex = Connect(
-            endpoint=os.getenv("EXCHANGE_API_URL"),
-            symbol=var.symbol_list,
-            api_key=os.getenv("EXCHANGE_API_KEY"),
-            api_secret=os.getenv("EXCHANGE_API_SECRET"),
-            info_display=function.info_display,
-            order_book_depth=var.order_book_depth,
-            instruments=var.instruments,
-            format_price=function.format_price,
-        )
+        var.robots_thread_is_active = ""        
+        #ws.bitmex.start_ws("Bitmex")
+        print(ws.bitmex.logNumFatal)
+        exit(0)
         if ws.bitmex.logNumFatal == 0:
             common_init.setup_database_connecion()
             clear_params()
@@ -115,7 +177,7 @@ def clear_params() -> None:
     function.rounding(ws.bitmex.get_instrument(var.instruments))
     var.orders = OrderedDict()
     var.orders_dict = OrderedDict()
-    var.orders_dict_value = 0
+    #var.orders_dict_value = 0
     for emi, values in bot.robots.items():
         bot.robot_status[emi] = values["STATUS"]
     bot.robots = OrderedDict()
@@ -128,7 +190,7 @@ def clear_params() -> None:
 
 
 def robots_thread() -> None:
-    while var.thread_is_active:
+    while var.robots_thread_is_active:
         utcnow = datetime.utcnow()
         if bot.frames:
             function.robots_entry(utc=utcnow)
