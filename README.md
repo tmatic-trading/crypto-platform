@@ -1,6 +1,6 @@
 ![](https://img.shields.io/badge/Python-3.5+-blue) ![](https://img.shields.io/badge/MySQL-latest-167d7d)
 
-# Trading platform designed for automated trading on the Bitmex crypto exchange
+# Trading platform designed for automated trading on the Bitmex crypto exchange (dev)
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/SampleTmatic.gif)
 
