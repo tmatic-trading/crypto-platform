@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta
 from typing import Tuple, Union
 
-#import functions as function
+# from ws.init import Variables as ws
+from api.api import WS
+
+# import functions as function
 from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from functions import Function
-#from ws.init import Variables as ws
 
 
-class Init(Variables):
+class Init(WS, Variables):
     def load_robots(self) -> dict:
         """
         This function loads robot settings from the SQL database from the 'robots'
@@ -46,7 +48,10 @@ class Init(Variables):
             emi = robot["EMI"]
             self.robots[emi] = robot
             self.robots[emi]["STATUS"] = "WORK"
-            self.robots[emi]["SYMBCAT"] = (self.robots[emi]["SYMBOL"], self.robots[emi]["CATEGORY"])
+            self.robots[emi]["SYMBCAT"] = (
+                self.robots[emi]["SYMBOL"],
+                self.robots[emi]["CATEGORY"],
+            )
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
         qwr = (
@@ -81,9 +86,9 @@ class Init(Variables):
                     "POS": int(defunct["POS"]),
                     "EMI": defunct["EMI"],
                     "STATUS": status,
-                    "TIMEFR": None,
-                    "CAPITAL": None,
-                    "SYMBCAT": (defunct["SYMBOL"], defunct["CATEGORY"])
+                    "TIMEFR": "None",
+                    "CAPITAL": "None",
+                    "SYMBCAT": (defunct["SYMBOL"], defunct["CATEGORY"]),
                 }
 
         # Adding RESERVED robots
@@ -129,7 +134,7 @@ class Init(Variables):
                     "STATUS": "RESERVED",
                     "TIMEFR": "None",
                     "CAPITAL": "None",
-                    "SYMBCAT": (symbol[0], symbol[1])
+                    "SYMBCAT": (symbol[0], symbol[1]),
                 }
 
         # Loading all transactions and calculating financial results for each robot
@@ -149,7 +154,7 @@ class Init(Variables):
                 + db
                 + ".coins WHERE EMI = %s AND ACCOUNT = %s AND CATEGORY = %s) aa",
                 (_emi, self.user_id, val["CATEGORY"]),
-            )                
+            )
             data = var.cursor_mysql.fetchall()
             for row in data:
                 for col in row:
@@ -170,17 +175,15 @@ class Init(Variables):
             if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
 
-        exit(0)
-
-        return self.robots  
+        return self.robots
 
     def download_data(
-        time: datetime, target: datetime, symbol: str, timeframe: str
+        self, time: datetime, target: datetime, symbol: tuple, timeframe: str
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
         while target > time:
-            data = ws.bitmex.trade_bucketed(
-                symbol=symbol, time=time, timeframe=timeframe
+            data = self.trade_bucketed(
+                name=self.name, symbol=symbol, time=time, timeframe=timeframe
             )
             if data:
                 last = time
@@ -203,11 +206,12 @@ class Init(Variables):
                 )
                 var.logger.error(message)
                 return None, None
-        ws.bitmex.logNumFatal = 0
+        self.logNumFatal = 0
 
         return res, time
 
     def load_frames(
+        self,
         robot: dict,
         frames: dict,
     ) -> Union[dict, None]:
@@ -216,15 +220,10 @@ class Init(Variables):
         in files for each algorithm. Every time you reboot the files are
         overwritten.
         """
-        filename = (
-            "data/"
-            + robot["SYMBOL"]
-            + str(robot["TIMEFR"])
-            + "_EMI"
-            + robot["EMI"]
-            + ".txt"
+        self.filename = Function.timeframes_data_filename(
+            self, emi=robot["EMI"], symbol=robot["SYMBCAT"], timefr=robot["TIMEFR"]
         )
-        with open(filename, "w"):
+        with open(self.filename, "w"):
             pass
         target = datetime.utcnow()
         time = target - timedelta(days=bot.missing_days_number)
@@ -234,10 +233,11 @@ class Init(Variables):
 
         # Loading timeframe data
 
-        res, time = download_data(
+        res, time = Init.download_data(
+            self,
             time=time,
             target=target,
-            symbol=robot["SYMBOL"],
+            symbol=robot["SYMBCAT"],
             timeframe=var.timefrs[robot["TIMEFR"]],
         )
         if not res:
@@ -261,10 +261,8 @@ class Init(Variables):
                 }
             )
             if num < len(res[:-1]) - 1:
-                function.save_timeframes_data(
-                    emi=robot["EMI"],
-                    symbol=robot["SYMBOL"],
-                    timefr=str(robot["TIMEFR"]),
+                Function.save_timeframes_data(
+                    self,
                     frame=frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"][-1],
                 )
         frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
@@ -276,35 +274,36 @@ class Init(Variables):
             + str(robot["TIMEFR"])
         )
         var.logger.info(message)
-        function.info_display(message)
+        Function.info_display(self, message)
 
         return frames
 
-    def init_timeframes() -> Union[dict, None]:
-        for emi in bot.robots:
+    def init_timeframes(self) -> Union[dict, None]:
+        for emi in self.robots:
             # Initialize candlestick timeframe data using 'TIMEFR' fields
             # expressed in minutes.
-            if bot.robots[emi]["TIMEFR"] != "None":
+            if self.robots[emi]["TIMEFR"] != "None":
                 time = datetime.utcnow()
-                symbol = bot.robots[emi]["SYMBOL"]
-                timefr = bot.robots[emi]["TIMEFR"]
+                symbol = self.robots[emi]["SYMBOL"]
+                timefr = self.robots[emi]["TIMEFR"]
                 try:
-                    bot.frames[symbol]
+                    self.frames[symbol]
                 except KeyError:
-                    bot.frames[symbol] = dict()
+                    self.frames[symbol] = dict()
                     try:
-                        bot.frames[symbol][timefr]
+                        self.frames[symbol][timefr]
                     except KeyError:
-                        bot.frames[symbol][timefr] = {
+                        self.frames[symbol][timefr] = {
                             "time": time,
                             "robots": [],
                             "open": 0,
                             "data": [],
                         }
-                        bot.frames[symbol][timefr]["robots"].append(emi)
-                        res = load_frames(
-                            robot=bot.robots[emi],
-                            frames=bot.frames,
+                        self.frames[symbol][timefr]["robots"].append(emi)
+                        res = Init.load_frames(
+                            self,
+                            robot=self.robots[emi],
+                            frames=self.frames,
                         )
                         if not res:
                             message = (
@@ -315,7 +314,7 @@ class Init(Variables):
                             var.logger.error(message)
                             return None
 
-        return bot.frames
+        return self.frames
 
     def delete_unused_robot() -> None:
         """

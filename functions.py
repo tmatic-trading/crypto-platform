@@ -6,20 +6,22 @@ from datetime import datetime, timedelta
 from random import randint
 from typing import Union
 
+from api.api import WS
+from api.variables import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-#from ws.init import Variables as ws
 
-from api.variables import Variables
+# from ws.init import Variables as ws
 
-from api.api import WS
 
 db = var.env["MYSQL_DATABASE"]
 
 
 class Function(WS, Variables):
-    def calculate(self, symbol: str, price: float, qty: float, rate: int, fund: int) -> dict:
+    def calculate(
+        self, symbol: str, price: float, qty: float, rate: int, fund: int
+    ) -> dict:
         """
         Calculate sumreal and commission
         """
@@ -37,7 +39,7 @@ class Function(WS, Variables):
             funding = qty * price * coef * rate
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
-    
+
     def add_symbol(self, symbol: tuple) -> None:
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
@@ -45,9 +47,7 @@ class Function(WS, Variables):
                 self.get_instrument(name=self.name, symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
-            self.get_position(name=self.name, 
-                symbol=symbol
-            )
+            self.get_position(name=self.name, symbol=symbol)
 
     def rounding(self) -> None:
         if self.name not in disp.price_rounding:
@@ -55,11 +55,64 @@ class Function(WS, Variables):
         for symbol, instrument in self.instruments.items():
             tickSize = str(instrument["tickSize"])
             if tickSize.find(".") > 0:
-                disp.price_rounding[self.name][symbol] = len(tickSize) - 1 - tickSize.find(".")
+                disp.price_rounding[self.name][symbol] = (
+                    len(tickSize) - 1 - tickSize.find(".")
+                )
             elif tickSize.find("e-") > 0:
-                disp.price_rounding[self.name][symbol] = int(tickSize[tickSize.find("e-") + 2 :])
+                disp.price_rounding[self.name][symbol] = int(
+                    tickSize[tickSize.find("e-") + 2 :]
+                )
             else:
                 disp.price_rounding[self.name][symbol] = 0
+
+    def timeframes_data_filename(self, emi: str, symbol: tuple, timefr: str) -> str:
+        return "data/" + symbol[0] + symbol[1] + str(timefr) + "_EMI" + emi + ".txt"
+
+    def save_timeframes_data(self, frame: dict) -> None:
+        zero = (6 - len(str(frame["time"]))) * "0"
+        data = (
+            str(frame["date"])
+            + ";"
+            + str(zero)
+            + str(frame["time"])
+            + ";"
+            + str(frame["bid"])
+            + ";"
+            + str(frame["ask"])
+            + ";"
+            + str(frame["hi"])
+            + ";"
+            + str(frame["lo"])
+            + ";"
+        )
+        with open(self.filename, "a") as f:
+            f.write(data + "\n")
+
+    def info_display(self, message: str) -> None:
+        t = datetime.utcnow()
+        disp.text_info.insert(
+            "1.0",
+            Function.noll(self, val=str(t.hour), length=2)
+            + ":"
+            + Function.noll(self, val=str(t.minute), length=2)
+            + ":"
+            + Function.noll(self, val=str(t.second), length=2)
+            + "."
+            + Function.noll(self, val=str(int(t.microsecond / 1000)), length=3)
+            + " "
+            + message
+            + "\n",
+        )
+        disp.info_display_counter += 1
+        if disp.info_display_counter > 40:
+            disp.text_info.delete("41.0", "end")
+
+    def noll(self, val: str, length: int) -> str:
+        r = ""
+        for _ in range(length - len(val)):
+            r = r + "0"
+
+        return r + val
 
 
 def read_database(execID: str, user_id: int) -> list:
@@ -1496,27 +1549,6 @@ def format_price(number: float, symbol: str) -> str:
         number = number + "0"
 
     return number
-
-
-def save_timeframes_data(emi: str, symbol: str, timefr: str, frame: dict) -> None:
-    zero = (6 - len(str(frame["time"]))) * "0"
-    data = (
-        str(frame["date"])
-        + ";"
-        + str(zero)
-        + str(frame["time"])
-        + ";"
-        + str(frame["bid"])
-        + ";"
-        + str(frame["ask"])
-        + ";"
-        + str(frame["hi"])
-        + ";"
-        + str(frame["lo"])
-        + ";"
-    )
-    with open("data/" + symbol + timefr + "_EMI" + emi + ".txt", "a") as f:
-        f.write(data + "\n")
 
 
 def robots_entry(utc: datetime) -> None:

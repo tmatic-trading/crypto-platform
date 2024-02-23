@@ -15,3 +15,6 @@ class Agent:
 
     def get_position(self):
         print("---get_position---")
+
+    def trade_bucketed(self):
+        print("---trade_bucketed---")

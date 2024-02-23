@@ -3,6 +3,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 #from api.api import WS
+import logging
 
 from dotenv import dotenv_values
 
@@ -87,7 +88,7 @@ class Variables:
         "FUNDING",
         "CONTROL",
     ]
-    logger = None
+    logger = logging
     connect_mysql = None
     cursor_mysql = None
     #orders_dict_value = 0
