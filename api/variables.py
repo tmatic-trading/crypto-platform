@@ -36,6 +36,7 @@ class Variables:
     maxRetryRest = (3)
     symbol_category = ""
     currency_divisor = dict()
+    filename = ""
 
     # Bots data
     robots = OrderedDict()

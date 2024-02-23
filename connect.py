@@ -63,9 +63,6 @@ def connection():
     """
     clear_common_params()
     common_init.setup_database_connecion()
-    #ws = Websockets.connect["Bybit"].start_ws("Bybit")
-    #Websockets.connect["Bybit"].get_active_instruments()
-    #exit(0)
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             while ws.logNumFatal: 
@@ -73,22 +70,14 @@ def connection():
                 if ws.logNumFatal:
                     sleep(3)
             Loads.load_robots(ws)
+        if isinstance(bot_init.init_timeframes(ws), dict):
+            pass
+
+    algo_init.init_algo()
             #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
 
     exit(0)
 
-
-    '''while True:
-        for name, ws in Websockets.connect.items():
-            print(name)
-            for k, val in ws.data.items():
-                if k == "orderBook10":
-                    print(k)
-                    print(val)
-                else:
-                    print(k)
-            print("  ")
-        sleep(1)'''
 
     common_init.setup_database_connecion()
     bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"))
