@@ -7,11 +7,11 @@ import pymysql
 import pymysql.cursors
 from dotenv import load_dotenv
 
-import functions as function
+#import functions as function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-from ws.init import Variables as ws
+#from ws.init import Variables as ws
 
 load_dotenv()
 db = os.getenv("MYSQL_DATABASE")

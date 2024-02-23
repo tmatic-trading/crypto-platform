@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from typing import Tuple, Union
 
-import functions as function
+#import functions as function
 from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from functions import Function
-from ws.init import Variables as ws
+#from ws.init import Variables as ws
 
 
 class Init(Variables):
@@ -46,6 +46,7 @@ class Init(Variables):
             emi = robot["EMI"]
             self.robots[emi] = robot
             self.robots[emi]["STATUS"] = "WORK"
+            self.robots[emi]["SYMBCAT"] = (self.robots[emi]["SYMBOL"], self.robots[emi]["CATEGORY"])
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
         qwr = (
@@ -82,6 +83,7 @@ class Init(Variables):
                     "STATUS": status,
                     "TIMEFR": None,
                     "CAPITAL": None,
+                    "SYMBCAT": (defunct["SYMBOL"], defunct["CATEGORY"])
                 }
 
         # Adding RESERVED robots
@@ -127,15 +129,16 @@ class Init(Variables):
                     "STATUS": "RESERVED",
                     "TIMEFR": "None",
                     "CAPITAL": "None",
+                    "SYMBCAT": (symbol[0], symbol[1])
                 }
-        for k, v in self.robots.items():
-            print(k)
-            print(v)
-        exit(0)
 
         # Loading all transactions and calculating financial results for each robot
-        for emi in self.robots:
-            Function.add_symbol(self, symbol=self.robots[emi]["SYMBOL"])
+        for emi, val in self.robots.items():
+            Function.add_symbol(self, symbol=self.robots[emi]["SYMBCAT"])
+            if isinstance(emi, tuple):
+                _emi = emi[0]
+            else:
+                _emi = emi
             var.cursor_mysql.execute(
                 "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) \
                     POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) \
@@ -144,31 +147,32 @@ class Init(Variables):
                                 WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, \
                                     COMMISS, TTIME FROM "
                 + db
-                + ".coins WHERE EMI = %s \
-                                        AND ACCOUNT = %s) aa",
-                (emi, var.user_id),
-            )
+                + ".coins WHERE EMI = %s AND ACCOUNT = %s AND CATEGORY = %s) aa",
+                (_emi, self.user_id, val["CATEGORY"]),
+            )                
             data = var.cursor_mysql.fetchall()
             for row in data:
                 for col in row:
                     self.robots[emi][col] = row[col]
                     if col == "POS" or col == "VOL":
-                        bot.robots[emi][col] = int(bot.robots[emi][col])
+                        self.robots[emi][col] = int(self.robots[emi][col])
                     if col == "COMMISS" or col == "SUMREAL":
-                        bot.robots[emi][col] = float(bot.robots[emi][col])
+                        self.robots[emi][col] = float(self.robots[emi][col])
                     if col == "LTIME":
-                        bot.robots[emi][col] = datetime.strptime(
-                            str(bot.robots[emi][col]), "%Y-%m-%d %H:%M:%S"
+                        self.robots[emi][col] = datetime.strptime(
+                            str(self.robots[emi][col]), "%Y-%m-%d %H:%M:%S"
                         )
-            bot.robots[emi]["PNL"] = 0
-            bot.robots[emi]["lotSize"] = (
-                var.instruments[bot.robots[emi]["SYMBOL"]]["lotSize"]
-                / var.instruments[bot.robots[emi]["SYMBOL"]]["myMultiplier"]
+            self.robots[emi]["PNL"] = 0
+            self.robots[emi]["lotSize"] = (
+                self.instruments[self.robots[emi]["SYMBCAT"]]["lotSize"]
+                / self.instruments[self.robots[emi]["SYMBCAT"]]["myMultiplier"]
             )
-            if bot.robots[emi]["SYMBOL"] not in bot.full_symbol_list:
-                bot.full_symbol_list.append(bot.robots[emi]["SYMBOL"])
+            if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
+                self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
 
-        return bot.robots
+        exit(0)
+
+        return self.robots  
 
     def download_data(
         time: datetime, target: datetime, symbol: str, timeframe: str

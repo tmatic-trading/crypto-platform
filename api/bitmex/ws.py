@@ -32,6 +32,7 @@ class Bitmex(Variables):
             self.depth,
         }
         self.name = "Bitmex"
+        self.qwe = 1
         self.agent = Agent
         Setup.variables(self)
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}

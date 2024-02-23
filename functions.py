@@ -9,14 +9,16 @@ from typing import Union
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-from ws.init import Variables as ws
+#from ws.init import Variables as ws
 
 from api.variables import Variables
 
+from api.api import WS
 
 db = var.env["MYSQL_DATABASE"]
 
-class Function(Variables):
+
+class Function(WS, Variables):
     def calculate(self, symbol: str, price: float, qty: float, rate: int, fund: int) -> dict:
         """
         Calculate sumreal and commission
@@ -36,17 +38,15 @@ class Function(Variables):
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
     
-    def add_symbol(self, symbol: str) -> None:
+    def add_symbol(self, symbol: tuple) -> None:
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
             if symbol not in self.instruments:
-                self.instruments = self.get_instrument_data(
-                    symbol=symbol,
-                )
+                self.get_instrument(name=self.name, symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
-            self.positions = self.get_position_data(
-                positions=self.positions, symbol=symbol
+            self.get_position(name=self.name, 
+                symbol=symbol
             )
 
     def rounding(self) -> None:

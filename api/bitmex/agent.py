@@ -12,7 +12,7 @@ class Agent(Variables):
         result = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not self.logNumFatal:
             for instrument in result:
-                category = Agent.fill_instrument_data(self,
+                category = Agent.fill_instrument(self,
                     instrument=instrument,
                 )
                 self.symbol_category[instrument["symbol"]] = category
@@ -35,10 +35,18 @@ class Agent(Variables):
    
         return Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
     
-    def get_instrument_data(self, symbol: str):
-        pass    
+    def get_instrument(self, symbol: tuple):
+        """
+        Adds fields such as: isInverse, multiplier...
+        """
+        path = Listing.GET_INSTRUMENT_DATA.format(SYMBOL=symbol[0])
+        instrument = Send.request(self, path=path, verb="GET")[0]
+        category = Agent.fill_instrument(self, 
+            instrument=instrument
+        )
+        self.symbol_category[instrument["symbol"]] = category
 
-    def fill_instrument_data(self, instrument: dict) -> OrderedDict:
+    def fill_instrument(self, instrument: dict) -> OrderedDict:
         """
         Filling the instruments dictionary with data
         """
@@ -93,5 +101,23 @@ class Agent(Variables):
             self.instruments[symbol]["expiry"] = "Perpetual"            
 
 
-        return category
+        return category    
+
+    def get_position(
+        self, symbol: tuple
+    ) -> OrderedDict:
+        """
+        Gets instrument position when instrument is not in the symbol_list
+        """
+        path = Listing.GET_POSITION.format(SYMBOL=symbol[0])
+        data = Send.request(self, path=path, verb="GET")
+        if isinstance(data, list):
+            if data:
+                self.positions[symbol] = {"POS": data[0]["currentQty"]}
+            else:
+                self.positions[symbol] = {"POS": 0}
+            self.logger.info(str(symbol) + " has been added to the positions dictionary for " + self.name)
+        else:
+            self.logger.info(str(symbol) + " not found in get_position()")
+
 

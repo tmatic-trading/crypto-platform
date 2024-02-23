@@ -5,9 +5,8 @@ from collections import OrderedDict
 from datetime import datetime
 from time import sleep
 
-from dotenv import load_dotenv
-
 import algo.init as algo_init
+
 from bots.init import Init as bot_init
 import common.init as common_init
 import display.init as display_init
@@ -15,18 +14,15 @@ from functions import Function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-from api.api import Websockets
+from api.websockets import Websockets
 
 from api.variables import Variables
 
 
 
-load_dotenv()
-
-
 #from API.variables import Variables as API
 
-from api.api import WS
+#from api.api import WS
 
 
 class Loads(Variables):
@@ -34,10 +30,9 @@ class Loads(Variables):
         Loads.clear_params(self)
         bot_init.load_robots(self)
 
-
     def clear_params(self) -> None:
         self.connect_count += 1
-        account = self.get_user()
+        account = self.get_user(self.name)
         if account:
             self.user_id = account["id"]
         else:
@@ -68,6 +63,9 @@ def connection():
     """
     clear_common_params()
     common_init.setup_database_connecion()
+    #ws = Websockets.connect["Bybit"].start_ws("Bybit")
+    #Websockets.connect["Bybit"].get_active_instruments()
+    #exit(0)
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             while ws.logNumFatal: 
