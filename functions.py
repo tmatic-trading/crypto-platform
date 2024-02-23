@@ -6,20 +6,22 @@ from datetime import datetime, timedelta
 from random import randint
 from typing import Union
 
+from api.api import WS
+from api.variables import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-#from ws.init import Variables as ws
 
-from api.variables import Variables
+# from ws.init import Variables as ws
 
-from api.api import WS
 
 db = var.env["MYSQL_DATABASE"]
 
 
 class Function(WS, Variables):
-    def calculate(self, symbol: str, price: float, qty: float, rate: int, fund: int) -> dict:
+    def calculate(
+        self, symbol: str, price: float, qty: float, rate: int, fund: int
+    ) -> dict:
         """
         Calculate sumreal and commission
         """
@@ -37,7 +39,7 @@ class Function(WS, Variables):
             funding = qty * price * coef * rate
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
-    
+
     def add_symbol(self, symbol: tuple) -> None:
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
@@ -45,9 +47,7 @@ class Function(WS, Variables):
                 self.get_instrument(name=self.name, symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
-            self.get_position(name=self.name, 
-                symbol=symbol
-            )
+            self.get_position(name=self.name, symbol=symbol)
 
     def rounding(self) -> None:
         if self.name not in disp.price_rounding:
@@ -55,16 +55,20 @@ class Function(WS, Variables):
         for symbol, instrument in self.instruments.items():
             tickSize = str(instrument["tickSize"])
             if tickSize.find(".") > 0:
-                disp.price_rounding[self.name][symbol] = len(tickSize) - 1 - tickSize.find(".")
+                disp.price_rounding[self.name][symbol] = (
+                    len(tickSize) - 1 - tickSize.find(".")
+                )
             elif tickSize.find("e-") > 0:
-                disp.price_rounding[self.name][symbol] = int(tickSize[tickSize.find("e-") + 2 :])
+                disp.price_rounding[self.name][symbol] = int(
+                    tickSize[tickSize.find("e-") + 2 :]
+                )
             else:
                 disp.price_rounding[self.name][symbol] = 0
 
     def timeframes_data_filename(self, emi: str, symbol: tuple, timefr: str) -> str:
         return "data/" + symbol[0] + symbol[1] + str(timefr) + "_EMI" + emi + ".txt"
-    
-    def save_timeframes_data(self, emi: str, symbol: tuple, timefr: str, frame: dict) -> None:
+
+    def save_timeframes_data(self, frame: dict) -> None:
         zero = (6 - len(str(frame["time"]))) * "0"
         data = (
             str(frame["date"])
@@ -81,7 +85,6 @@ class Function(WS, Variables):
             + str(frame["lo"])
             + ";"
         )
-        #self.timefr_filename = Function.timeframes_data_filename(self, emi=emi, symbol=symbol, timefr=timefr)
         with open(self.filename, "a") as f:
             f.write(data + "\n")
 

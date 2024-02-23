@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Tuple, Union
 
-#import functions as function
+# from ws.init import Variables as ws
+from api.api import WS
+
+# import functions as function
 from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from functions import Function
-#from ws.init import Variables as ws
-from api.api import WS
 
 
 class Init(WS, Variables):
@@ -47,7 +48,10 @@ class Init(WS, Variables):
             emi = robot["EMI"]
             self.robots[emi] = robot
             self.robots[emi]["STATUS"] = "WORK"
-            self.robots[emi]["SYMBCAT"] = (self.robots[emi]["SYMBOL"], self.robots[emi]["CATEGORY"])
+            self.robots[emi]["SYMBCAT"] = (
+                self.robots[emi]["SYMBOL"],
+                self.robots[emi]["CATEGORY"],
+            )
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
         qwr = (
@@ -84,7 +88,7 @@ class Init(WS, Variables):
                     "STATUS": status,
                     "TIMEFR": "None",
                     "CAPITAL": "None",
-                    "SYMBCAT": (defunct["SYMBOL"], defunct["CATEGORY"])
+                    "SYMBCAT": (defunct["SYMBOL"], defunct["CATEGORY"]),
                 }
 
         # Adding RESERVED robots
@@ -130,7 +134,7 @@ class Init(WS, Variables):
                     "STATUS": "RESERVED",
                     "TIMEFR": "None",
                     "CAPITAL": "None",
-                    "SYMBCAT": (symbol[0], symbol[1])
+                    "SYMBCAT": (symbol[0], symbol[1]),
                 }
 
         # Loading all transactions and calculating financial results for each robot
@@ -150,7 +154,7 @@ class Init(WS, Variables):
                 + db
                 + ".coins WHERE EMI = %s AND ACCOUNT = %s AND CATEGORY = %s) aa",
                 (_emi, self.user_id, val["CATEGORY"]),
-            )                
+            )
             data = var.cursor_mysql.fetchall()
             for row in data:
                 for col in row:
@@ -171,10 +175,10 @@ class Init(WS, Variables):
             if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
 
-        return self.robots  
+        return self.robots
 
-    def download_data( self, 
-        time: datetime, target: datetime, symbol: tuple, timeframe: str
+    def download_data(
+        self, time: datetime, target: datetime, symbol: tuple, timeframe: str
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
         while target > time:
@@ -206,7 +210,8 @@ class Init(WS, Variables):
 
         return res, time
 
-    def load_frames(self, 
+    def load_frames(
+        self,
         robot: dict,
         frames: dict,
     ) -> Union[dict, None]:
@@ -215,7 +220,9 @@ class Init(WS, Variables):
         in files for each algorithm. Every time you reboot the files are
         overwritten.
         """
-        self.filename = Function.timeframes_data_filename(self, emi=robot["EMI"], symbol=robot["SYMBCAT"], timefr=robot["TIMEFR"])
+        self.filename = Function.timeframes_data_filename(
+            self, emi=robot["EMI"], symbol=robot["SYMBCAT"], timefr=robot["TIMEFR"]
+        )
         with open(self.filename, "w"):
             pass
         target = datetime.utcnow()
@@ -226,7 +233,8 @@ class Init(WS, Variables):
 
         # Loading timeframe data
 
-        res, time = Init.download_data(self, 
+        res, time = Init.download_data(
+            self,
             time=time,
             target=target,
             symbol=robot["SYMBCAT"],
@@ -255,9 +263,6 @@ class Init(WS, Variables):
             if num < len(res[:-1]) - 1:
                 Function.save_timeframes_data(
                     self,
-                    emi=robot["EMI"],
-                    symbol=robot["SYMBCAT"],
-                    timefr=str(robot["TIMEFR"]),
                     frame=frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"][-1],
                 )
         frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
@@ -295,7 +300,8 @@ class Init(WS, Variables):
                             "data": [],
                         }
                         self.frames[symbol][timefr]["robots"].append(emi)
-                        res = Init.load_frames(self, 
+                        res = Init.load_frames(
+                            self,
                             robot=self.robots[emi],
                             frames=self.frames,
                         )
