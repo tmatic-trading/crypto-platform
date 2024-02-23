@@ -2,13 +2,15 @@ import logging
 from collections import OrderedDict
 from datetime import datetime
 
-import functions as function
+#import functions as function
 from common.variables import Variables as var
 import requests
 
 
+
 class Variables:
     name = ""
+    qwe = 0
     testnet = True
     api_key = ""
     api_secret = ""
@@ -46,12 +48,14 @@ class Variables:
     session.headers.update({"content-type": "application/json"})
     session.headers.update({"accept": "application/json"})
 
-    # HTTP functions
+    '''# HTTP functions
     get_active_instruments = None
     get_user = None
     get_instrument_data = None
+    get_position_data = None'''
 
-    # Exchenge functions
+    # Exchange functions
     transaction = None
     format_price = None
     add_symbol = None
+
