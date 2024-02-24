@@ -7,7 +7,7 @@ import pymysql
 import pymysql.cursors
 #from dotenv import load_dotenv
 
-#import functions as function
+from functions import Function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
@@ -26,39 +26,38 @@ class Init(WS, Variables):
         """
         Load trading history (if any)
         """
-        print("tr h")
-        exit(0)
         tm = datetime.utcnow()
         with open("history.ini", "r") as f:
             lst = list(f)
         if not lst or len(lst) < 1:
-            var.logger.error("history.ini error. No data in history.ini")
-            exit(1)
+            message = "history.ini error. No data in history.ini"
+            var.logger.error(message)
+            raise Exception(message)
         lst = [x.replace("\n", "") for x in lst]
         last_history_time = datetime.strptime(lst[0], "%Y-%m-%d %H:%M:%S")
         if last_history_time > tm:
-            var.logger.error(
-                "history.ini error. The time in the history.ini file is greater than the current time."
-            )
-            exit(1)
-        history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
+            message = "history.ini error. The time in the history.ini file is \
+                greater than the current time."
+            var.logger.error(message)
+            raise Exception(message)
+        history = self.trading_history(name=self.name, histCount=500, time=last_history_time)
         if history == "error":
             var.logger.error("history.ini error")
             exit(1)
         tmp = datetime(2000, 1, 1)
         while history:
             for row in history:
-                data = function.read_database(execID=row["execID"], user_id=var.user_id)
+                data = Function.read_database(self, execID=row["execID"], user_id=self.user_id)
                 if not data:
-                    function.transaction(row=row, info=" History ")
+                    Function.transaction(self, row=row, info=" History ")
             last_history_time = datetime.strptime(
                 history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
             )
-            history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
+            history = self.trading_history(name=self.name, histCount=500, time=last_history_time)
             if last_history_time == tmp:
                 break
             tmp = last_history_time
-        if ws.bitmex.logNumFatal == 0:
+        if self.logNumFatal == 0:
             with open("history.ini", "w") as f:
                 f.write(str(last_history_time))
 

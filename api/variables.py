@@ -49,12 +49,6 @@ class Variables:
     session.headers.update({"content-type": "application/json"})
     session.headers.update({"accept": "application/json"})
 
-    '''# HTTP functions
-    get_active_instruments = None
-    get_user = None
-    get_instrument_data = None
-    get_position_data = None'''
-
     # Exchange functions
     transaction = None
     format_price = None

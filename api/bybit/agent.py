@@ -18,3 +18,7 @@ class Agent:
 
     def trade_bucketed(self):
         print("---trade_bucketed---")
+
+    def trading_history(
+            self, histCount: int, time=None) -> Union[list, None]:
+        print("---trading_histor---")

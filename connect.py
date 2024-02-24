@@ -6,12 +6,12 @@ from collections import OrderedDict
 from datetime import datetime
 from time import sleep
 
-import algo.init as algo_init
+import algo.init as algo
+import bots.init as bots
+import common.init as common
+import display.init as display
 
-from bots.init import Init as bot_init
 
-import common.init as common_init
-import display.init as display_init
 from functions import Function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
@@ -30,7 +30,7 @@ from api.variables import Variables
 class Loads(Variables):
     def load_robots(self):
         Loads.clear_params(self)
-        bot_init.load_robots(self)
+        bots.Init.load_robots(self)
 
     def clear_params(self) -> None:
         self.connect_count += 1
@@ -64,7 +64,7 @@ def connection():
     Websocket connection
     """
     clear_common_params()
-    common_init.setup_database_connecion()
+    common.setup_database_connecion()
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             while ws.logNumFatal: 
@@ -72,12 +72,11 @@ def connection():
                 if ws.logNumFatal:
                     sleep(3)
             Loads.load_robots(ws)
-        if isinstance(bot_init.init_timeframes(ws), dict):
-            pass
-            #common_init.load_trading_history()
+        if isinstance(bots.Init.init_timeframes(ws), dict):
+            common.Init.load_trading_history(ws)
 
 
-    algo_init.init_algo()
+    algo.init_algo()
             #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
 
     exit(0)
