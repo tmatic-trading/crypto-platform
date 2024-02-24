@@ -78,7 +78,8 @@ class Init(WS, Variables):
                     status = "NOT DEFINED"
                 else:
                     status = "NOT IN LIST"
-                self.robots[symbol] = {
+                emi = ".".join(symbol)
+                self.robots[emi] = {
                     "SYMBOL": defunct["SYMBOL"],
                     "CATEGORY": defunct["CATEGORY"],
                     "EXCHANGE": self.name,
@@ -118,22 +119,23 @@ class Init(WS, Variables):
         reserved = var.cursor_mysql.fetchall()
         for symbol in self.symbol_list:
             for res in reserved:
-                if symbol == (res["EMI"], res["CATEGORY"]):
+                if symbol == (res["SYMBOL"], res["CATEGORY"]):
                     pos = int(reserved[0]["POS"])
                     break
             else:
                 pos = 0
             if symbol in self.symbol_list or pos != 0:
-                self.robots[symbol] = {
+                emi = ".".join(symbol)
+                self.robots[emi] = {
+                    "EMI": emi,
                     "SYMBOL": symbol[0],
                     "CATEGORY": symbol[1],
                     "EXCHANGE": self.name,
                     "POS": pos,
-                    "EMI": symbol[0],
                     "STATUS": "RESERVED",
                     "TIMEFR": "None",
                     "CAPITAL": "None",
-                    "SYMBCAT": (symbol[0], symbol[1]),
+                    "SYMBCAT": symbol,
                 }
 
         # Loading all transactions and calculating financial results for each robot

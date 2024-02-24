@@ -5,20 +5,22 @@ from datetime import datetime
 
 import pymysql
 import pymysql.cursors
-#from dotenv import load_dotenv
 
-from functions import Function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-#from ws.init import Variables as ws
+from functions import Function
 
-#load_dotenv()
+# from dotenv import load_dotenv
+
+# from ws.init import Variables as ws
+
+# load_dotenv()
 db = var.env["MYSQL_DATABASE"]
 
 
-from api.init import Variables
 from api.api import WS
+from api.init import Variables
 
 
 class Init(WS, Variables):
@@ -40,23 +42,39 @@ class Init(WS, Variables):
                 greater than the current time."
             var.logger.error(message)
             raise Exception(message)
-        history = self.trading_history(name=self.name, histCount=500, time=last_history_time)
+        count_val = 500
+        history = self.trading_history(
+            name=self.name, histCount=count_val, time=last_history_time
+        )
         if history == "error":
             var.logger.error("history.ini error")
             exit(1)
         tmp = datetime(2000, 1, 1)
+        tmp1 = ""
+        """
+        A premature exit from the loop is possible due to a small count_val
+        value. This will happen in the case of a large number of trades or
+        funding with the same time greater than or equal to count_val, when
+        the first and last line will have the same transactTime accurate to 
+        the second.
+        """
         while history:
             for row in history:
-                data = Function.read_database(self, execID=row["execID"], user_id=self.user_id)
+                data = Function.read_database(
+                    self, execID=row["execID"], user_id=self.user_id
+                )
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
             last_history_time = datetime.strptime(
                 history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
             )
-            history = self.trading_history(name=self.name, histCount=500, time=last_history_time)
+            history = self.trading_history(
+                name=self.name, histCount=count_val, time=last_history_time
+            )
             if last_history_time == tmp:
                 break
             tmp = last_history_time
+            tmp1 = history[-1]["execID"]
         if self.logNumFatal == 0:
             with open("history.ini", "w") as f:
                 f.write(str(last_history_time))
@@ -154,7 +172,6 @@ def load_orders() -> None:
             var.orders[clOrdID]["symbol"] = val["symbol"]
             var.orders[clOrdID]["side"] = val["side"]
             var.orders[clOrdID]["orderID"] = val["orderID"]
-            var.orders[clOrdID]["oldPrice"] = 0
             function.orders_display(clOrdID=clOrdID)
 
 

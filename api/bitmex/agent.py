@@ -144,6 +144,7 @@ class Agent(Variables):
         self, histCount: int, time=None) -> Union[list, str]:
         if time:
             path = Listing.TRADING_HISTORY.format(HISTCOUNT=histCount, TIME=time)
+            print(path)
             result =  Send.request(
                 self, 
                 path=path, 
