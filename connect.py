@@ -74,6 +74,8 @@ def connection():
             Loads.load_robots(ws)
         if isinstance(bot_init.init_timeframes(ws), dict):
             pass
+            #common_init.load_trading_history()
+
 
     algo_init.init_algo()
             #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)

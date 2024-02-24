@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pymysql
 import pymysql.cursors
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 #import functions as function
 from bots.variables import Variables as bot
@@ -13,8 +13,54 @@ from common.variables import Variables as var
 from display.variables import Variables as disp
 #from ws.init import Variables as ws
 
-load_dotenv()
-db = os.getenv("MYSQL_DATABASE")
+#load_dotenv()
+db = var.env["MYSQL_DATABASE"]
+
+
+from api.init import Variables
+from api.api import WS
+
+
+class Init(WS, Variables):
+    def load_trading_history(self) -> None:
+        """
+        Load trading history (if any)
+        """
+        print("tr h")
+        exit(0)
+        tm = datetime.utcnow()
+        with open("history.ini", "r") as f:
+            lst = list(f)
+        if not lst or len(lst) < 1:
+            var.logger.error("history.ini error. No data in history.ini")
+            exit(1)
+        lst = [x.replace("\n", "") for x in lst]
+        last_history_time = datetime.strptime(lst[0], "%Y-%m-%d %H:%M:%S")
+        if last_history_time > tm:
+            var.logger.error(
+                "history.ini error. The time in the history.ini file is greater than the current time."
+            )
+            exit(1)
+        history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
+        if history == "error":
+            var.logger.error("history.ini error")
+            exit(1)
+        tmp = datetime(2000, 1, 1)
+        while history:
+            for row in history:
+                data = function.read_database(execID=row["execID"], user_id=var.user_id)
+                if not data:
+                    function.transaction(row=row, info=" History ")
+            last_history_time = datetime.strptime(
+                history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
+            )
+            history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
+            if last_history_time == tmp:
+                break
+            tmp = last_history_time
+        if ws.bitmex.logNumFatal == 0:
+            with open("history.ini", "w") as f:
+                f.write(str(last_history_time))
 
 
 def setup_logger():
@@ -37,57 +83,18 @@ def setup_logger():
 def setup_database_connecion() -> None:
     try:
         var.connect_mysql = pymysql.connect(
-            host=os.getenv("MYSQL_HOST"),
-            user=os.getenv("MYSQL_USER"),
-            password=os.getenv("MYSQL_PASSWORD"),
-            database=os.getenv("MYSQL_DATABASE"),
+            host=var.env["MYSQL_HOST"],
+            user=var.env["MYSQL_USER"],
+            password=var.env["MYSQL_PASSWORD"],
+            database=var.env["MYSQL_DATABASE"],
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
         )
         var.cursor_mysql = var.connect_mysql.cursor()
 
-    except Exception:
-        var.logger.error("No connection to mySQL database")
-        exit(1)
-
-
-def load_trading_history() -> None:
-    """
-    Load trading history (if any)
-    """
-    tm = datetime.utcnow()
-    with open("history.ini", "r") as f:
-        lst = list(f)
-    if not lst or len(lst) < 1:
-        var.logger.error("history.ini error. No data in history.ini")
-        exit(1)
-    lst = [x.replace("\n", "") for x in lst]
-    last_history_time = datetime.strptime(lst[0], "%Y-%m-%d %H:%M:%S")
-    if last_history_time > tm:
-        var.logger.error(
-            "history.ini error. The time in the history.ini file is greater than the current time."
-        )
-        exit(1)
-    history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
-    if history == "error":
-        var.logger.error("history.ini error")
-        exit(1)
-    tmp = datetime(2000, 1, 1)
-    while history:
-        for row in history:
-            data = function.read_database(execID=row["execID"], user_id=var.user_id)
-            if not data:
-                function.transaction(row=row, info=" History ")
-        last_history_time = datetime.strptime(
-            history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
-        )
-        history = ws.bitmex.trading_history(histCount=500, time=last_history_time)
-        if last_history_time == tmp:
-            break
-        tmp = last_history_time
-    if ws.bitmex.logNumFatal == 0:
-        with open("history.ini", "w") as f:
-            f.write(str(last_history_time))
+    except Exception as error:
+        var.logger.error(error)
+        raise
 
 
 def load_orders() -> None:
