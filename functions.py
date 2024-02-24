@@ -20,7 +20,7 @@ db = var.env["MYSQL_DATABASE"]
 
 class Function(WS, Variables):
     def calculate(
-        self, symbol: str, price: float, qty: float, rate: int, fund: int
+        self, symbol: tuple, price: float, qty: float, rate: int, fund: int
     ) -> dict:
         """
         Calculate sumreal and commission
@@ -113,267 +113,231 @@ class Function(WS, Variables):
             r = r + "0"
 
         return r + val
+    
+    def read_database(self, execID: str, user_id: int) -> list:
+        """
+        Load a row by execID from the database
+        """
+        var.cursor_mysql.execute(
+            "select EXECID from " + db + ".coins where EXECID=%s and account=%s",
+            (execID, user_id),
+        )
+        data = var.cursor_mysql.fetchall()
 
+        return data
+    
+    def insert_database(self, values: list) -> None:
+        """
+        Insert row into database
+        """
+        var.cursor_mysql.execute(
+            "insert into "
+            + db
+            + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,EXCHANGE,\
+                SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
+                    CLORDID,TTIME,ACCOUNT) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
+                        %s,%s,%s,%s,%s,%s,%s,%s)",
+            values,
+        )
+        var.connect_mysql.commit()
+    
+    def transaction(self, row: dict, info: str = "") -> None:
+        """
+        Trades and funding processing
+        """
+        Function.add_symbol(self, symbol=row["symbol"])
+        time_struct = datetime.strptime(row["transactTime"][:-1], "%Y-%m-%dT%H:%M:%S.%f")
 
-def read_database(execID: str, user_id: int) -> list:
-    """
-    Load a row by execID from the database
-    """
-    var.cursor_mysql.execute(
-        "select EXECID from " + db + ".coins where EXECID=%s and account=%s",
-        (execID, user_id),
-    )
-    data = var.cursor_mysql.fetchall()
+        # Trade
 
-    return data
-
-
-def insert_database(values: list) -> None:
-    """
-    Insert row into database
-    """
-    var.cursor_mysql.execute(
-        "insert into "
-        + db
-        + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,SIDE,QTY,\
-            QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
-                CLORDID,TTIME,ACCOUNT) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
-                    %s,%s,%s,%s,%s,%s)",
-        values,
-    )
-    var.connect_mysql.commit()
-
-
-def orders_processing(row: dict, info: str = "") -> None:
-    """
-    Orders processing <-- transaction()<--( trading_history() or get_exec() )
-    """
-    if "clOrdID" in row:
-        if row["clOrdID"]:
-            clOrdID = row["clOrdID"]
-        else:
-            clOrdID = "Retrieved from Trading history"
-    else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
-        # through the exchange web interface.
-        for clOrdID in var.orders:
-            if var.orders[clOrdID]["orderID"] == row["orderID"]:
-                break
-        else:
-            clOrdID = "Empty clOrdID. The order was not sent via Tmatic."
-            print(clOrdID)
-    if "orderID" not in row:  # orderID is missing when text='Closed to
-        # conform to lot size', last time 2021-05-31
-        row["orderID"] = row["text"]
-    price = row["price"]
-    if row["execType"] == "Canceled":
-        info_p = price
-        info_q = row["orderQty"] - row["cumQty"]
-        if clOrdID in var.orders:
-            del var.orders[clOrdID]
-    elif row["leavesQty"] == 0:
-        info_p = row["lastPx"]
-        info_q = row["lastQty"]
-        if clOrdID in var.orders:
-            del var.orders[clOrdID]
-    else:
-        if row["execType"] == "New":
+        if row["execType"] == "Trade":
             if "clOrdID" in row:
                 dot = row["clOrdID"].find(".")
-                if dot == -1:
+                if dot == -1:  # The transaction was done from the exchange web interface,
+                    # the clOrdID field is missing or clOrdID has no EMI number
                     emi = row["symbol"]
+                    refer = ""
+                    if row["clOrdID"] == "":
+                        clientID = 0
+                    else:
+                        clientID = int(row["clOrdID"])
                 else:
                     emi = row["clOrdID"][dot + 1 :]
-                var.orders[clOrdID] = {
-                    "leavesQty": row["leavesQty"],
-                    "price": row["price"],
-                    "symbol": row["symbol"],
-                    "transactTime": str(datetime.utcnow()),
-                    "side": row["side"],
-                    "emi": emi,
-                    "orderID": row["orderID"],
-                }
-            info_p = price
-            info_q = row["orderQty"]
-        elif row["execType"] == "Trade":
-            info_p = row["lastPx"]
-            info_q = row["lastQty"]
-        elif row["execType"] == "Replaced":
-            var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-            var.orders[clOrdID]["price"] = row["price"]
-            var.orders[clOrdID]["transactTime"] = datetime.utcnow()
-            var.orders[clOrdID]["orderID"] = row["orderID"]
-            info_p = price
-            info_q = row["leavesQty"]
-        if (
-            clOrdID in var.orders
-        ):  # var.orders might be empty if we are here from trading_history()
-            var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-            var.orders[clOrdID]["price"] = price
-    info_q = volume(qty=info_q, symbol=row["symbol"])
-    info_p = format_price(number=info_p, symbol=row["symbol"])
-    info_display(
-        info
-        + row["execType"]
-        + " "
-        + row["side"]
-        + ": "
-        + clOrdID
-        + " price="
-        + str(info_p)
-        + " qty="
-        + info_q
-    )
-    var.logger.info(
-        info + row["execType"] + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
-        row["side"],
-        row["orderID"],
-        clOrdID,
-        str(info_p),
-        info_q,
-    )
-    orders_display(clOrdID=clOrdID)
-
-
-def transaction(exchange, row: dict, info: str = "") -> None:
-    """
-    Trades and funding processing
-    """
-    add_symbol(symbol=row["symbol"])
-    time_struct = datetime.strptime(row["transactTime"][:-1], "%Y-%m-%dT%H:%M:%S.%f")
-
-    # Trade
-
-    if row["execType"] == "Trade":
-        if "clOrdID" in row:
-            dot = row["clOrdID"].find(".")
-            if dot == -1:  # The transaction was done from the exchange web interface,
-                # the clOrdID field is missing or clOrdID has no EMI number
-                emi = row["symbol"]
-                refer = ""
-                if row["clOrdID"] == "":
-                    clientID = 0
-                else:
-                    clientID = int(row["clOrdID"])
+                    clientID = row["clOrdID"][:dot]
+                    refer = emi
             else:
-                emi = row["clOrdID"][dot + 1 :]
-                clientID = row["clOrdID"][:dot]
-                refer = emi
-        else:
-            emi = row["symbol"]
-            clientID = 0
-            refer = ""
-        if emi not in bot.robots:
-            emi = row["symbol"]
-            if emi not in bot.robots:
-                if row["symbol"] in var.symbol_list:
-                    status = "RESERVED"
+                emi = row["symbol"]
+                clientID = 0
+                refer = ""
+            if emi not in self.robots:
+                emi = row["symbol"]
+                if emi not in self.robots:
+                    if row["symbol"] in self.symbol_list:
+                        status = "RESERVED"
+                    else:
+                        status = "NOT IN LIST"
+                    self.robots[emi] = {
+                        "STATUS": status,
+                        "TIMEFR": None,
+                        "EMI": emi,
+                        "SYMBOL": row["symbol"][0],
+                        "CATEGORY": row["symbol"][1],
+                        "EXCHANGE": self.name,
+                        "POS": 0,
+                        "VOL": 0,
+                        "COMMISS": 0,
+                        "SUMREAL": 0,
+                        "LTIME": time_struct,
+                        "PNL": 0,
+                        "CAPITAL": None,
+                    }
+                    message = "Robot EMI=" + emi + ". Adding to 'robots' with STATUS=" + status
+                    Function.info_display(self, message)
+                    var.logger.info(message)
+            data = Function.read_database(self, execID=row["execID"], user_id=self.user_id)
+            if not data:
+                side = 0
+                lastQty = row["lastQty"]
+                if row["side"] == "Sell":
+                    lastQty = -row["lastQty"]
+                    side = 1
+                calc = Function.calculate(
+                    self, 
+                    symbol=row["symbol"],
+                    price=row["lastPx"],
+                    qty=float(lastQty),
+                    rate=row["commission"],
+                    fund=1,
+                )
+                self.robots[emi]["POS"] += lastQty
+                self.robots[emi]["VOL"] += abs(lastQty)
+                self.robots[emi]["COMMISS"] += calc["commiss"]
+                self.robots[emi]["SUMREAL"] += calc["sumreal"]
+                self.robots[emi]["LTIME"] = time_struct
+                self.accounts[row["settlCurrency"]]["COMMISS"] += calc["commiss"]
+                self.accounts[row["settlCurrency"]]["SUMREAL"] += calc["sumreal"]
+                if isinstance(emi, tuple):
+                    _emi = emi[0]
                 else:
-                    status = "NOT IN LIST"
-                bot.robots[emi] = {
-                    "STATUS": status,
-                    "TIMEFR": None,
-                    "EMI": emi,
+                    _emi = emi
+                values = [
+                    row["execID"],
+                    _emi,
+                    refer,
+                    row["settlCurrency"],
+                    row["symbol"][0],
+                    row["symbol"][1],
+                    self.name,
+                    side,
+                    abs(lastQty),
+                    row["leavesQty"],
+                    row["price"],
+                    0,
+                    row["lastPx"],
+                    calc["sumreal"],
+                    calc["commiss"],
+                    clientID,
+                    time_struct,
+                    self.user_id,
+                ]
+                Function.insert_database(self, values=values)
+                message = {
                     "SYMBOL": row["symbol"],
-                    "POS": 0,
-                    "VOL": 0,
-                    "COMMISS": 0,
-                    "SUMREAL": 0,
-                    "LTIME": time_struct,
-                    "PNL": 0,
-                    "CAPITAL": None,
+                    "TTIME": row["transactTime"],
+                    "SIDE": side,
+                    "TRADE_PRICE": row["lastPx"],
+                    "QTY": abs(lastQty),
+                    "EMI": emi,
                 }
-                mes = "Robot EMI=" + emi + ". Adding to 'robots' with STATUS=" + status
-                info_display(mes)
-                var.logger.info(mes)
-        data = read_database(execID=row["execID"], user_id=var.user_id)
-        if not data:
-            side = 0
-            lastQty = row["lastQty"]
-            if row["side"] == "Sell":
-                lastQty = -row["lastQty"]
-                side = 1
-            calc = calculate(
-                symbol=row["symbol"],
-                price=row["lastPx"],
-                qty=float(lastQty),
-                rate=row["commission"],
-                fund=1,
-            )
-            bot.robots[emi]["POS"] += lastQty
-            bot.robots[emi]["VOL"] += abs(lastQty)
-            bot.robots[emi]["COMMISS"] += calc["commiss"]
-            bot.robots[emi]["SUMREAL"] += calc["sumreal"]
-            bot.robots[emi]["LTIME"] = time_struct
-            var.accounts[row["settlCurrency"]]["COMMISS"] += calc["commiss"]
-            var.accounts[row["settlCurrency"]]["SUMREAL"] += calc["sumreal"]
-            values = [
-                row["execID"],
-                emi,
-                refer,
-                row["settlCurrency"],
-                row["symbol"],
-                side,
-                abs(lastQty),
-                row["leavesQty"],
-                row["price"],
-                0,
-                row["lastPx"],
-                calc["sumreal"],
-                calc["commiss"],
-                clientID,
-                time_struct,
-                var.user_id,
-            ]
-            insert_database(values=values)
+                Function.trades_display(self, message)
+                Function.orders_processing(self, row=row, info=info)
+                exit(0)
+
+        # Funding
+
+        elif row["execType"] == "Funding":
             message = {
                 "SYMBOL": row["symbol"],
                 "TTIME": row["transactTime"],
-                "SIDE": side,
-                "TRADE_PRICE": row["lastPx"],
-                "QTY": abs(lastQty),
-                "EMI": emi,
+                "PRICE": row["price"],
             }
-            trades_display(message)
-            orders_processing(row=row, info=info)
-
-    # Funding
-
-    elif row["execType"] == "Funding":
-        message = {
-            "SYMBOL": row["symbol"],
-            "TTIME": row["transactTime"],
-            "PRICE": row["price"],
-        }
-        p = 0
-        true_position = row["lastQty"]
-        true_funding = row["commission"]
-        if row["foreignNotional"] > 0:
-            true_position = -true_position
-            true_funding = -true_funding
-        for emi in bot.robots:
+            p = 0
+            true_position = row["lastQty"]
+            true_funding = row["commission"]
+            if row["foreignNotional"] > 0:
+                true_position = -true_position
+                true_funding = -true_funding
+            for emi in self.robots:
+                if (
+                    self.robots[emi]["SYMBOL"] == row["symbol"]
+                    and self.robots[emi]["POS"] != 0
+                ):
+                    p += self.robots[emi]["POS"]
+                    calc = Function.calculate(
+                        self, 
+                        symbol=row["symbol"],
+                        price=row["price"],
+                        qty=float(self.robots[emi]["POS"]),
+                        rate=true_funding,
+                        fund=0,
+                    )
+                    message["EMI"] = self.robots[emi]["EMI"]
+                    message["QTY"] = self.robots[emi]["POS"]
+                    message["COMMISS"] = calc["funding"]
+                    values = [
+                        row["execID"],
+                        self.robots[emi]["EMI"],
+                        "",
+                        row["settlCurrency"],
+                        row["symbol"],
+                        -1,
+                        self.robots[emi]["POS"],
+                        0,
+                        row["price"],
+                        0,
+                        row["price"],
+                        calc["sumreal"],
+                        calc["funding"],
+                        0,
+                        time_struct,
+                        self.user_id,
+                    ]
+                    Function.insert_database(self, values=values)
+                    self.robots[emi]["COMMISS"] += calc["funding"]
+                    self.robots[emi]["LTIME"] = time_struct
+                    self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
+                    Function.funding_display(self, message)
+            diff = true_position - p
             if (
-                bot.robots[emi]["SYMBOL"] == row["symbol"]
-                and bot.robots[emi]["POS"] != 0
-            ):
-                p += bot.robots[emi]["POS"]
-                calc = calculate(
+                diff != 0
+            ):  # robots with open positions have been taken, but some quantity is still left
+                calc = Function.calculate(
+                    self, 
                     symbol=row["symbol"],
                     price=row["price"],
-                    qty=float(bot.robots[emi]["POS"]),
+                    qty=float(diff),
                     rate=true_funding,
                     fund=0,
                 )
-                message["EMI"] = bot.robots[emi]["EMI"]
-                message["QTY"] = bot.robots[emi]["POS"]
+                emi = row["symbol"]
+                if emi not in bot.robots:
+                    var.logger.error(
+                        "Funding could not appear until the EMI="
+                        + emi
+                        + " was traded. View your trading history."
+                    )
+                    exit(1)
+                message["EMI"] = self.robots[emi]["EMI"]
+                message["QTY"] = diff
                 message["COMMISS"] = calc["funding"]
                 values = [
                     row["execID"],
-                    bot.robots[emi]["EMI"],
+                    self.robots[emi]["EMI"],
                     "",
                     row["settlCurrency"],
                     row["symbol"],
                     -1,
-                    bot.robots[emi]["POS"],
+                    diff,
                     0,
                     row["price"],
                     0,
@@ -382,83 +346,297 @@ def transaction(exchange, row: dict, info: str = "") -> None:
                     calc["funding"],
                     0,
                     time_struct,
-                    var.user_id,
+                    self.user_id,
                 ]
-                insert_database(values=values)
-                bot.robots[emi]["COMMISS"] += calc["funding"]
-                bot.robots[emi]["LTIME"] = time_struct
-                var.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
-                funding_display(message)
-        diff = true_position - p
-        if (
-            diff != 0
-        ):  # robots with open positions have been taken, but some quantity is still left
-            calc = calculate(
-                symbol=row["symbol"],
-                price=row["price"],
-                qty=float(diff),
-                rate=true_funding,
-                fund=0,
-            )
-            emi = row["symbol"]
-            if emi not in bot.robots:
-                var.logger.error(
-                    "Funding could not appear until the EMI="
-                    + emi
-                    + " was traded. View your trading history."
-                )
-                exit(1)
-            message["EMI"] = bot.robots[emi]["EMI"]
-            message["QTY"] = diff
-            message["COMMISS"] = calc["funding"]
-            values = [
-                row["execID"],
-                bot.robots[emi]["EMI"],
-                "",
-                row["settlCurrency"],
-                row["symbol"],
-                -1,
-                diff,
-                0,
-                row["price"],
-                0,
-                row["price"],
-                calc["sumreal"],
-                calc["funding"],
-                0,
-                time_struct,
-                var.user_id,
-            ]
-            insert_database(values=values)
-            bot.robots[emi]["COMMISS"] += calc["funding"]
-            bot.robots[emi]["LTIME"] = time_struct
-            var.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
-            funding_display(message)
+                Function.insert_database(self, values=values)
+                self.robots[emi]["COMMISS"] += calc["funding"]
+                self.robots[emi]["LTIME"] = time_struct
+                self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
+                Function.funding_display(self, message)
 
-    # New order
+        # New order
 
-    elif row["execType"] == "New":
-        if "clOrdID" not in row:  # The order was placed from the exchange web interface
-            var.last_order += 1
-            clOrdID = str(var.last_order) + "." + row["symbol"]
-            var.orders[clOrdID] = {
-                "leavesQty": row["leavesQty"],
-                "price": row["price"],
-                "symbol": row["symbol"],
-                "transactTime": row["transactTime"],
-                "side": row["side"],
-                "emi": row["symbol"],
-                "orderID": row["orderID"],
-                "oldPrice": 0,
-            }
-            info = "Outside placement: "
+        elif row["execType"] == "New":
+            if "clOrdID" not in row:  # The order was placed from the exchange web interface
+                var.last_order += 1
+                clOrdID = str(var.last_order) + "." + row["symbol"]
+                var.orders[clOrdID] = {
+                    "leavesQty": row["leavesQty"],
+                    "price": row["price"],
+                    "symbol": row["symbol"],
+                    "transactTime": row["transactTime"],
+                    "side": row["side"],
+                    "emi": row["symbol"],
+                    "orderID": row["orderID"],
+                    "oldPrice": 0,
+                }
+                info = "Outside placement: "
+            else:
+                info = ""
+            Function.orders_processing(self, row=row, info=info)
+        elif row["execType"] == "Canceled":
+            Function.orders_processing(self, row=row)
+        elif row["execType"] == "Replaced":
+            Function.orders_processing(self, row=row)
+
+
+    def orders_processing(self, row: dict, info: str = "") -> None:
+        """
+        Orders processing <-- transaction()<--( trading_history() or get_exec() )
+        """
+        if "clOrdID" in row:
+            if row["clOrdID"]:
+                clOrdID = row["clOrdID"]
+            else:
+                clOrdID = "Retrieved from Trading history"
+        else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
+            # through the exchange web interface.
+            for clOrdID in var.orders:
+                if var.orders[clOrdID]["orderID"] == row["orderID"]:
+                    break
+            else:
+                clOrdID = "Empty clOrdID. The order was not sent via Tmatic."
+                print(clOrdID)
+        if "orderID" not in row:  # orderID is missing when text='Closed to
+            # conform to lot size', last time 2021-05-31
+            row["orderID"] = row["text"]
+        price = row["price"]
+        if row["execType"] == "Canceled":
+            info_p = price
+            info_q = row["orderQty"] - row["cumQty"]
+            if clOrdID in var.orders:
+                del var.orders[clOrdID]
+        elif row["leavesQty"] == 0:
+            info_p = row["lastPx"]
+            info_q = row["lastQty"]
+            if clOrdID in var.orders:
+                del var.orders[clOrdID]
         else:
-            info = ""
-        orders_processing(row=row, info=info)
-    elif row["execType"] == "Canceled":
-        orders_processing(row=row)
-    elif row["execType"] == "Replaced":
-        orders_processing(row=row)
+            if row["execType"] == "New":
+                if "clOrdID" in row:
+                    dot = row["clOrdID"].find(".")
+                    if dot == -1:
+                        emi = row["symbol"]
+                    else:
+                        emi = row["clOrdID"][dot + 1 :]
+                    if isinstance(emi, tuple):
+                        _emi = emi[0]
+                    else:
+                        _emi = emi
+                    var.orders[clOrdID] = {
+                        "leavesQty": row["leavesQty"],
+                        "price": row["price"],
+                        "symbol": row["symbol"][0],
+                        "category": row["symbol"][1],
+                        "exchange": self.name,
+                        "transactTime": str(datetime.utcnow()),
+                        "side": row["side"],
+                        "emi": _emi,
+                        "orderID": row["orderID"],
+                        "symbcat": row["symbol"],
+                    }
+                info_p = price
+                info_q = row["orderQty"]
+            elif row["execType"] == "Trade":
+                info_p = row["lastPx"]
+                info_q = row["lastQty"]
+            elif row["execType"] == "Replaced":
+                var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+                var.orders[clOrdID]["price"] = row["price"]
+                var.orders[clOrdID]["transactTime"] = datetime.utcnow()
+                var.orders[clOrdID]["orderID"] = row["orderID"]
+                info_p = price
+                info_q = row["leavesQty"]
+            if (
+                clOrdID in var.orders
+            ):  # var.orders might be empty if we are here from trading_history()
+                var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+                var.orders[clOrdID]["price"] = price
+        info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
+        info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
+        Function.info_display(
+            self, 
+            info
+            + row["execType"]
+            + " "
+            + row["side"]
+            + ": "
+            + clOrdID
+            + " price="
+            + str(info_p)
+            + " qty="
+            + info_q
+        )
+        var.logger.info(
+            info + row["execType"] + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
+            row["side"],
+            row["orderID"],
+            clOrdID,
+            str(info_p),
+            info_q,
+        )
+        Function.orders_display(self, clOrdID=clOrdID)
+
+    def trades_display(self, value: dict) -> None:
+        """
+        Update trades widget
+        """
+        t = str(value["TTIME"])
+        time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:19]
+        disp.text_trades.insert(
+            "2.0",
+            time
+            + gap(val=str(value["SYMBOL"]), peak=8)
+            + gap(
+                val=Function.format_price(
+                    self, 
+                    number=value["TRADE_PRICE"],
+                    symbol=value["SYMBOL"],
+                ),
+                peak=7,
+            )
+            + gap(val="(" + str(value["EMI"]) + ")", peak=9)
+            + " "
+            + Function.volume(self, qty=value["QTY"], symbol=value["SYMBOL"])
+            + "\n",
+        )
+        if value["SIDE"] == 1:
+            name = "red"
+            disp.text_trades.tag_add(name, "2.0", "2.60")
+            disp.text_trades.tag_config(name, foreground="red")
+        elif value["SIDE"] == 0:
+            name = "green"
+            disp.text_trades.tag_add(name, "2.0", "2.60")
+            disp.text_trades.tag_config(name, foreground="forest green")
+        disp.trades_display_counter += 1
+        if disp.trades_display_counter > 150:
+            disp.text_trades.delete("151.0", "end")
+
+    def funding_display(self, value: dict) -> None:
+        """
+        Update funding widgwt
+        """
+        space = ""
+        if value["COMMISS"] > 0:
+            space = " "
+        t = str(value["TTIME"])
+        time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:16]
+        disp.text_funding.insert(
+            "2.0",
+            time
+            + gap(val=str(value["SYMBOL"]), peak=8)
+            + gap(val=str(float(value["PRICE"])), peak=8)
+            + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
+            + gap(val="(" + str(value["EMI"]) + ")", peak=9)
+            + " "
+            + Function.volume(self, qty=value["QTY"], symbol=value["SYMBOL"])
+            + "\n",
+        )
+        disp.funding_display_counter += 1
+        if disp.funding_display_counter > 120:
+            disp.text_funding.delete("121.0", "end")
+
+    def orders_display(self, clOrdID: str) -> None:
+        """
+        Update Orders widget
+        """
+        if clOrdID in var.orders_dict:
+            myNum = 0
+            for i, myClOrd in enumerate(var.orders_dict):
+                if myClOrd == clOrdID:
+                    myNum = i
+            ordDictPos = abs(myNum + 1 - len(var.orders_dict)) + 1
+            disp.text_orders.delete(str(ordDictPos + 1) + ".0", str(ordDictPos + 2) + ".0")
+            del var.orders_dict[clOrdID]
+        if clOrdID in var.orders:
+            emi = var.orders[clOrdID]["emi"]
+            var.orders_dict[clOrdID] = {
+                "num": disp.orders_dict_value,
+                "emi": emi,
+            }
+            t = str(var.orders[clOrdID]["transactTime"])
+            time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:23]
+            text_insert = (
+                time
+                + gap(val=var.orders[clOrdID]["symbol"], peak=8)
+                + gap(
+                    val=Function.format_price(
+                        self,
+                        number=var.orders[clOrdID]["price"],
+                        symbol=var.orders[clOrdID]["symbol"],
+                    ),
+                    peak=9,
+                )
+                + gap(val="(" + var.orders[clOrdID]["emi"] + ")", peak=11)
+                + " "
+                + Function.volume(
+                    self,
+                    qty=var.orders[clOrdID]["leavesQty"], symbol=self.robots[emi]["SYMBOL"]
+                )
+                + "\n"
+            )
+            disp.text_orders.insert("2.0", text_insert)
+            found_name = 0
+            if var.orders[clOrdID]["side"] == "Sell":
+                name = "red" + str(disp.orders_dict_value)
+                # in order to prevent memory leak we use this construction for
+                # tag_bind, that activates only once for every string by number
+                # and color
+                for tag in disp.text_orders.tag_names():
+                    if tag == name:
+                        found_name = 1
+                if found_name == 0:
+                    disp.text_orders.tag_bind(
+                        name,
+                        "<Button-1>",
+                        lambda event, y=disp.orders_dict_value: handler_order(event, y),
+                    )
+                disp.text_orders.tag_add(name, "2.0", "2.60")
+                disp.text_orders.tag_config(name, foreground="red")
+            elif var.orders[clOrdID]["side"] == "Buy":
+                name = "green" + str(disp.orders_dict_value)
+                # in order to prevent memory leak we use this construction for
+                # tag_bind, that activates only once for every string by number
+                # and color
+                for tag in disp.text_orders.tag_names():
+                    if tag == name:
+                        found_name = 1
+                if found_name == 0:
+                    disp.text_orders.tag_bind(
+                        name,
+                        "<Button-1>",
+                        lambda event, y=disp.orders_dict_value: handler_order(event, y),
+                    )
+                disp.text_orders.tag_add(name, "2.0", "2.60")
+                disp.text_orders.tag_config(name, foreground="forest green")
+            disp.orders_dict_value += 1
+
+    def volume(self, qty: int, symbol: str) -> str:
+        if qty == 0:
+            qty = "0"
+        else:
+            qty /= self.instruments[symbol]["myMultiplier"]
+            num = len(str(self.instruments[symbol]["myMultiplier"])) - len(
+                str(self.instruments[symbol]["lotSize"])
+            )
+            if num > 0:
+                qty = "{:.{precision}f}".format(qty, precision=num)
+            else:
+                qty = "{:.{precision}f}".format(qty, precision=0)
+
+        return qty
+    
+    def format_price(self, number: float, symbol: tuple) -> str:
+        rounding = disp.price_rounding[self.name][symbol]
+        number = "{:.{precision}f}".format(number, precision=rounding)
+        dot = number.find(".")
+        if dot == -1:
+            number = number + "."
+        n = len(number) - 1 - number.find(".")
+        for _ in range(rounding - n):
+            number = number + "0"
+
+        return number
 
 
 def del_order(clOrdID: str) -> int:
@@ -916,22 +1094,6 @@ def close_price(symbol: str, pos: int) -> float:
     return close
 
 
-def volume(qty: int, symbol: str) -> str:
-    if qty == 0:
-        qty = "0"
-    else:
-        qty /= var.instruments[symbol]["myMultiplier"]
-        num = len(str(var.instruments[symbol]["myMultiplier"])) - len(
-            str(var.instruments[symbol]["lotSize"])
-        )
-        if num > 0:
-            qty = "{:.{precision}f}".format(qty, precision=num)
-        else:
-            qty = "{:.{precision}f}".format(qty, precision=0)
-
-    return qty
-
-
 def update_label(
     table: str, column: int, row: int, val: Union[str, int, float]
 ) -> None:
@@ -1301,140 +1463,6 @@ def gap(val: str, peak: int) -> str:
     return res
 
 
-def orders_display(clOrdID: str) -> None:
-    """
-    Update Orders widget
-    """
-    if clOrdID in var.orders_dict:
-        myNum = 0
-        for i, myClOrd in enumerate(var.orders_dict):
-            if myClOrd == clOrdID:
-                myNum = i
-        ordDictPos = abs(myNum + 1 - len(var.orders_dict)) + 1
-        disp.text_orders.delete(str(ordDictPos + 1) + ".0", str(ordDictPos + 2) + ".0")
-        del var.orders_dict[clOrdID]
-    if clOrdID in var.orders:
-        emi = var.orders[clOrdID]["emi"]
-        var.orders_dict[clOrdID] = {
-            "num": disp.orders_dict_value,
-            "emi": emi,
-        }
-        t = str(var.orders[clOrdID]["transactTime"])
-        time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:23]
-        text_insert = (
-            time
-            + gap(val=var.orders[clOrdID]["symbol"], peak=8)
-            + gap(
-                val=format_price(
-                    number=var.orders[clOrdID]["price"],
-                    symbol=var.orders[clOrdID]["symbol"],
-                ),
-                peak=9,
-            )
-            + gap(val="(" + var.orders[clOrdID]["emi"] + ")", peak=11)
-            + " "
-            + volume(
-                qty=var.orders[clOrdID]["leavesQty"], symbol=bot.robots[emi]["SYMBOL"]
-            )
-            + "\n"
-        )
-        disp.text_orders.insert("2.0", text_insert)
-        found_name = 0
-        if var.orders[clOrdID]["side"] == "Sell":
-            name = "red" + str(disp.orders_dict_value)
-            # in order to prevent memory leak we use this construction for
-            # tag_bind, that activates only once for every string by number
-            # and color
-            for tag in disp.text_orders.tag_names():
-                if tag == name:
-                    found_name = 1
-            if found_name == 0:
-                disp.text_orders.tag_bind(
-                    name,
-                    "<Button-1>",
-                    lambda event, y=disp.orders_dict_value: handler_order(event, y),
-                )
-            disp.text_orders.tag_add(name, "2.0", "2.60")
-            disp.text_orders.tag_config(name, foreground="red")
-        elif var.orders[clOrdID]["side"] == "Buy":
-            name = "green" + str(disp.orders_dict_value)
-            # in order to prevent memory leak we use this construction for
-            # tag_bind, that activates only once for every string by number
-            # and color
-            for tag in disp.text_orders.tag_names():
-                if tag == name:
-                    found_name = 1
-            if found_name == 0:
-                disp.text_orders.tag_bind(
-                    name,
-                    "<Button-1>",
-                    lambda event, y=disp.orders_dict_value: handler_order(event, y),
-                )
-            disp.text_orders.tag_add(name, "2.0", "2.60")
-            disp.text_orders.tag_config(name, foreground="forest green")
-        disp.orders_dict_value += 1
-
-
-def trades_display(value: dict) -> None:
-    """
-    Update trades widget
-    """
-    t = str(value["TTIME"])
-    time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:19]
-    disp.text_trades.insert(
-        "2.0",
-        time
-        + gap(val=value["SYMBOL"], peak=8)
-        + gap(
-            val=format_price(
-                number=value["TRADE_PRICE"],
-                symbol=value["SYMBOL"],
-            ),
-            peak=7,
-        )
-        + gap(val="(" + value["EMI"] + ")", peak=9)
-        + " "
-        + volume(qty=value["QTY"], symbol=value["SYMBOL"])
-        + "\n",
-    )
-    if value["SIDE"] == 1:
-        name = "red"
-        disp.text_trades.tag_add(name, "2.0", "2.60")
-        disp.text_trades.tag_config(name, foreground="red")
-    elif value["SIDE"] == 0:
-        name = "green"
-        disp.text_trades.tag_add(name, "2.0", "2.60")
-        disp.text_trades.tag_config(name, foreground="forest green")
-    disp.trades_display_counter += 1
-    if disp.trades_display_counter > 150:
-        disp.text_trades.delete("151.0", "end")
-
-
-def funding_display(value: dict) -> None:
-    """
-    Update funding widgwt
-    """
-    space = ""
-    if value["COMMISS"] > 0:
-        space = " "
-    t = str(value["TTIME"])
-    time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:16]
-    disp.text_funding.insert(
-        "2.0",
-        time
-        + gap(val=value["SYMBOL"], peak=8)
-        + gap(val=str(float(value["PRICE"])), peak=8)
-        + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
-        + gap(val="(" + value["EMI"] + ")", peak=9)
-        + " "
-        + volume(qty=value["QTY"], symbol=value["SYMBOL"])
-        + "\n",
-    )
-    disp.funding_display_counter += 1
-    if disp.funding_display_counter > 120:
-        disp.text_funding.delete("121.0", "end")
-
-
 def warning_window(message: str) -> None:
     def on_closing() -> None:
         warn_window.destroy()
@@ -1536,19 +1564,6 @@ def find_order(price: float, qty: int, symbol: str) -> int:
             qty += var.orders[clOrdID]["leavesQty"]
 
     return qty
-
-
-def format_price(number: float, symbol: str) -> str:
-    rounding = disp.price_rounding[symbol]
-    number = "{:.{precision}f}".format(number, precision=rounding)
-    dot = number.find(".")
-    if dot == -1:
-        number = number + "."
-    n = len(number) - 1 - number.find(".")
-    for _ in range(rounding - n):
-        number = number + "0"
-
-    return number
 
 
 def robots_entry(utc: datetime) -> None:

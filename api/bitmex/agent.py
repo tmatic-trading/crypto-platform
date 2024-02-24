@@ -139,3 +139,18 @@ class Agent(Variables):
         )
 
         return Send.request(self, path=path, verb="GET")
+
+    def trading_history(
+        self, histCount: int, time=None) -> Union[list, str]:
+        if time:
+            path = Listing.TRADING_HISTORY.format(HISTCOUNT=histCount, TIME=time)
+            result =  Send.request(
+                self, 
+                path=path, 
+                verb="GET",
+            )
+            for row in result:
+                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])
+            return result
+        else:
+            return "error"

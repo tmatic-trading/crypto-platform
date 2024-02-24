@@ -9,7 +9,8 @@ class Listing(str, Enum):
     TRADE_BUCKETED = "trade/bucketed?binSize={TIMEFRAME}&count=1000&reverse=\
         false&partial=true&symbol={SYMBOL}&columns=open%2C%20high%2C%20low%2C\
             %20close&startTime={TIME}"
-
+    TRADING_HISTORY = "execution/tradeHistory?count={HISTCOUNT}&reverse=false&\
+        startTime={TIME}"
 
 
     '''GET_WALLET_BALANCE = "/v5/account/wallet-balance"

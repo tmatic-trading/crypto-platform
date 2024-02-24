@@ -126,7 +126,7 @@ class Init(WS, Variables):
             if symbol in self.symbol_list or pos != 0:
                 self.robots[symbol] = {
                     "SYMBOL": symbol[0],
-                    "CATEGORY": symbol[1],  # Не забыть категорию
+                    "CATEGORY": symbol[1],
                     "EXCHANGE": self.name,
                     "POS": pos,
                     "EMI": symbol[0],
