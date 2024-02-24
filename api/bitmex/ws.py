@@ -10,7 +10,7 @@ import websocket
 
 from api.init import Setup
 from api.variables import Variables
-from bots.variables import Variables as bot
+#from bots.variables import Variables as bot
 from ws.api_auth import generate_signature
 from .agent import Agent
 

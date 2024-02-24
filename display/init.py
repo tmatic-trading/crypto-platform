@@ -1,11 +1,12 @@
 import tkinter as tk
 
 import connect
-import functions as function
+#import functions as function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
-from ws.init import Variables as ws
+
+#from ws.init import Variables as ws
 from datetime import datetime
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))

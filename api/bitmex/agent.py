@@ -66,7 +66,7 @@ class Agent(Variables):
             minimumTradeAmount = instrument["lotSize"]
             category = "quanto"
         else:  # Linear
-            if instrument["underlyingToPositionMultiplier"]:
+            if "underlyingToPositionMultiplier" in instrument:
                 valueOfOneContract = 1 / instrument["underlyingToPositionMultiplier"]
             elif instrument["underlyingToSettleMultiplier"]:
                 valueOfOneContract = (

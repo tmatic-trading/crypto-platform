@@ -3,7 +3,6 @@ from typing import Tuple, Union
 
 # from ws.init import Variables as ws
 from api.api import WS
-
 # import functions as function
 from api.init import Variables
 from bots.variables import Variables as bot
