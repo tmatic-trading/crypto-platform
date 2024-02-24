@@ -65,15 +65,16 @@ def connection():
     """
     clear_common_params()
     common.setup_database_connecion()
-    for name, ws in Websockets.connect.items():
+    for name, websocket in Websockets.connect.items():
         if name in var.exchange_list:
-            while ws.logNumFatal: 
-                ws.start_ws(name)
-                if ws.logNumFatal:
+            while websocket.logNumFatal: 
+                websocket.start_ws(name)
+                if websocket.logNumFatal:
                     sleep(3)
-            Loads.load_robots(ws)
-            if isinstance(bots.Init.init_timeframes(ws), dict):
-                common.Init.load_trading_history(ws)
+            Loads.load_robots(websocket)
+            if isinstance(bots.Init.init_timeframes(websocket), dict):
+                common.Init.load_trading_history(websocket)
+                common.Init.account_balances(websocket)
 
 
     algo.init_algo()
