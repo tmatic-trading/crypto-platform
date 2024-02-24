@@ -1,7 +1,7 @@
 CREATE TABLE `coins` (
   `ID` int NOT NULL AUTO_INCREMENT,
   `EXECID` varchar(45) DEFAULT NULL,
-  `EMI` varchar(20) DEFAULT NULL,
+  `EMI` varchar(25) DEFAULT NULL,
   `REFER` varchar(20) DEFAULT NULL,
   `EXCHANGE` varchar(20) DEFAULT NULL,
   `CURRENCY` varchar(10) DEFAULT NULL,

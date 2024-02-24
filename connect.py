@@ -72,8 +72,8 @@ def connection():
                 if ws.logNumFatal:
                     sleep(3)
             Loads.load_robots(ws)
-        if isinstance(bots.Init.init_timeframes(ws), dict):
-            common.Init.load_trading_history(ws)
+            if isinstance(bots.Init.init_timeframes(ws), dict):
+                common.Init.load_trading_history(ws)
 
 
     algo.init_algo()
@@ -86,15 +86,12 @@ def connection():
     bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"))
 
 
-    exit(0)
 
     ws.select["Bitmex"].exit()
     ws.bitmex = None
     while not ws.bitmex:
         var.robots_thread_is_active = ""        
         #ws.bitmex.start_ws("Bitmex")
-        print(ws.bitmex.logNumFatal)
-        exit(0)
         if ws.bitmex.logNumFatal == 0:
             common_init.setup_database_connecion()
             clear_params()

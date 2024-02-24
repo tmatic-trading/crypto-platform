@@ -154,8 +154,8 @@ class Function(WS, Variables):
             if "clOrdID" in row:
                 dot = row["clOrdID"].find(".")
                 if dot == -1:  # The transaction was done from the exchange web interface,
-                    # the clOrdID field is missing or clOrdID has no EMI number
-                    emi = row["symbol"]
+                    # the clOrdID field is missing or clOrdID does not have EMI number
+                    emi = ".".join(row["symbol"]) 
                     refer = ""
                     if row["clOrdID"] == "":
                         clientID = 0
@@ -166,11 +166,11 @@ class Function(WS, Variables):
                     clientID = row["clOrdID"][:dot]
                     refer = emi
             else:
-                emi = row["symbol"]
+                emi = ".".join(row["symbol"])
                 clientID = 0
                 refer = ""
             if emi not in self.robots:
-                emi = row["symbol"]
+                emi = ".".join(row["symbol"])
                 if emi not in self.robots:
                     if row["symbol"] in self.symbol_list:
                         status = "RESERVED"
@@ -190,8 +190,9 @@ class Function(WS, Variables):
                         "LTIME": time_struct,
                         "PNL": 0,
                         "CAPITAL": None,
+                        "SYMBCAT": row["symbol"]
                     }
-                    message = "Robot EMI=" + emi + ". Adding to 'robots' with STATUS=" + status
+                    message = "Robot EMI=" + str(emi) + ". Adding to 'robots' with STATUS=" + status
                     Function.info_display(self, message)
                     var.logger.info(message)
             data = Function.read_database(self, execID=row["execID"], user_id=self.user_id)
@@ -216,13 +217,9 @@ class Function(WS, Variables):
                 self.robots[emi]["LTIME"] = time_struct
                 self.accounts[row["settlCurrency"]]["COMMISS"] += calc["commiss"]
                 self.accounts[row["settlCurrency"]]["SUMREAL"] += calc["sumreal"]
-                if isinstance(emi, tuple):
-                    _emi = emi[0]
-                else:
-                    _emi = emi
                 values = [
                     row["execID"],
-                    _emi,
+                    emi,
                     refer,
                     row["settlCurrency"],
                     row["symbol"][0],
@@ -251,7 +248,6 @@ class Function(WS, Variables):
                 }
                 Function.trades_display(self, message)
                 Function.orders_processing(self, row=row, info=info)
-                exit(0)
 
         # Funding
 
@@ -261,7 +257,7 @@ class Function(WS, Variables):
                 "TTIME": row["transactTime"],
                 "PRICE": row["price"],
             }
-            p = 0
+            position = 0
             true_position = row["lastQty"]
             true_funding = row["commission"]
             if row["foreignNotional"] > 0:
@@ -272,7 +268,7 @@ class Function(WS, Variables):
                     self.robots[emi]["SYMBOL"] == row["symbol"]
                     and self.robots[emi]["POS"] != 0
                 ):
-                    p += self.robots[emi]["POS"]
+                    position += self.robots[emi]["POS"]
                     calc = Function.calculate(
                         self, 
                         symbol=row["symbol"],
@@ -289,7 +285,9 @@ class Function(WS, Variables):
                         self.robots[emi]["EMI"],
                         "",
                         row["settlCurrency"],
-                        row["symbol"],
+                        row["symbol"][0],
+                        row["symbol"][1],
+                        self.name,
                         -1,
                         self.robots[emi]["POS"],
                         0,
@@ -307,7 +305,7 @@ class Function(WS, Variables):
                     self.robots[emi]["LTIME"] = time_struct
                     self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
                     Function.funding_display(self, message)
-            diff = true_position - p
+            diff = true_position - position
             if (
                 diff != 0
             ):  # robots with open positions have been taken, but some quantity is still left
@@ -319,8 +317,8 @@ class Function(WS, Variables):
                     rate=true_funding,
                     fund=0,
                 )
-                emi = row["symbol"]
-                if emi not in bot.robots:
+                emi = ".".join(row["symbol"])
+                if emi not in self.robots:
                     var.logger.error(
                         "Funding could not appear until the EMI="
                         + emi
@@ -335,7 +333,9 @@ class Function(WS, Variables):
                     self.robots[emi]["EMI"],
                     "",
                     row["settlCurrency"],
-                    row["symbol"],
+                    row["symbol"][0],
+                    row["symbol"][1],
+                    self.name,
                     -1,
                     diff,
                     0,
@@ -363,12 +363,14 @@ class Function(WS, Variables):
                 var.orders[clOrdID] = {
                     "leavesQty": row["leavesQty"],
                     "price": row["price"],
-                    "symbol": row["symbol"],
+                    "symbol": row["symbol"][0],
+                    "category": row["symbol"][1],
+                    "exchange": self.name,
                     "transactTime": row["transactTime"],
                     "side": row["side"],
                     "emi": row["symbol"],
                     "orderID": row["orderID"],
-                    "oldPrice": 0,
+                    "symbcat": row["symbol"],
                 }
                 info = "Outside placement: "
             else:
