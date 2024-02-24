@@ -79,6 +79,60 @@ class Init(WS, Variables):
             with open("history.ini", "w") as f:
                 f.write(str(last_history_time))
 
+    def account_balances(self) -> None:
+        """
+        Calculates the account by currency according to data from the MySQL 
+        'coins' table.
+        """
+        sql = "select SYMBOL, CATEGORY from " + db + ".coins where ACCOUNT=%s \
+            and EXCHANGE=%s group by SYMBOL, CATEGORY"
+        var.cursor_mysql.execute(sql, (self.user_id, self.name))
+        data = var.cursor_mysql.fetchall()
+        symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"]), data))
+        for symbol in symbols:
+            Function.add_symbol(self, symbol=symbol)        
+        for currency in self.currencies:
+            union = ""
+            sql = "select sum(commiss) commiss, sum(sumreal) sumreal, \
+                sum(funding) funding from ("
+            for symbol in symbols:
+                sql += (
+                    union 
+                    + "select IFNULL(sum(COMMISS),0.0) commiss, \
+                IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select \
+                sum(COMMISS) from "
+                    + db
+                    + ".coins where SIDE < 0 and ACCOUNT = "
+                    + str(self.user_id)
+                    + " and EXCHANGE = '"
+                    + self.name
+                    + "' and CURRENCY = '"
+                    + currency
+                    + "' and SYMBOL = '"
+                    + symbol[0]
+                    + "' and CATEGORY = '"
+                    + symbol[1]
+                    + "'),0.0) funding from "
+                    + db
+                    + ".coins where SIDE >= 0 and ACCOUNT = "
+                    + str(self.user_id)
+                    + " and EXCHANGE = '"
+                    + self.name
+                    + "' and CURRENCY = '"
+                    + currency
+                    + "' and SYMBOL = '"
+                    + symbol[0]
+                    + "' and CATEGORY = '"
+                    + symbol[1]
+                    + "'"
+                )
+                union = "union "
+            sql += ") T"
+            var.cursor_mysql.execute(sql)
+            data = var.cursor_mysql.fetchall()
+            self.accounts[currency]["COMMISS"] = float(data[0]["commiss"])
+            self.accounts[currency]["SUMREAL"] = float(data[0]["sumreal"])
+            self.accounts[currency]["FUNDING"] = float(data[0]["funding"])
 
 def setup_logger():
     logger = logging.getLogger()
@@ -173,44 +227,6 @@ def load_orders() -> None:
             var.orders[clOrdID]["side"] = val["side"]
             var.orders[clOrdID]["orderID"] = val["orderID"]
             function.orders_display(clOrdID=clOrdID)
-
-
-def initial_mysql(account: int) -> None:
-    """
-    Calculate and load account results from mySQL
-    """
-    sql = "select distinct(SYMBOL) from " + db + ".coins where ACCOUNT=%s"
-    var.cursor_mysql.execute(sql, (account))
-    data = var.cursor_mysql.fetchall()
-    symbols = list(map(lambda x: x["SYMBOL"], data))
-    for symbol in symbols:
-        function.add_symbol(symbol)
-    for cur in var.currencies:
-        symbols = ["no symbols yet"]
-        for val in var.instruments.values():
-            if val["settlCurrency"] == cur:
-                symbols.append(val["symbol"])
-        in_p = ", ".join(list(map(lambda x: "%s", symbols)))
-        sql = (
-            "select IFNULL(sum(COMMISS),0.0) commiss, IFNULL(sum(SUMREAL),0.0) \
-                sumreal, IFNULL((select sum(COMMISS) from "
-            + db
-            + ".coins where SIDE \
-                < 0 and ACCOUNT = %s and SYMBOL in ("
-            + in_p
-            + ")),0.0) funding from "
-            + db
-            + ".coins where SIDE >= 0 and ACCOUNT \
-                    = %s and SYMBOL in ("
-            + in_p
-            + ")"
-        )
-        args = [account] + symbols + [account] + symbols
-        var.cursor_mysql.execute(sql, args)
-        data = var.cursor_mysql.fetchall()
-        var.accounts[cur]["COMMISS"] = float(data[0]["commiss"])
-        var.accounts[cur]["SUMREAL"] = float(data[0]["sumreal"])
-        var.accounts[cur]["FUNDING"] = float(data[0]["funding"])
 
 
 def initial_display(account: int) -> None:
