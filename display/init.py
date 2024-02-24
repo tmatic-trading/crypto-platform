@@ -1,6 +1,6 @@
 import tkinter as tk
 
-import connect
+#import connect
 #import functions as function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
