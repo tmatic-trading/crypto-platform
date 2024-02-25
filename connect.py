@@ -74,6 +74,9 @@ def connection():
                 common.Init.load_trading_history(websocket)
                 common.Init.account_balances(websocket)
                 common.Init.load_orders(websocket)
+                websocket.ticker = websocket.get_ticker(name)
+                print(websocket.ticker)
+    common.Init.initial_display(websocket)
 
 
     algo.init_algo()

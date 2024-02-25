@@ -162,3 +162,22 @@ class Agent(Variables):
             order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]])
 
         return orders
+    
+    def get_ticker(self) -> OrderedDict:
+        for symbol, val in self.data[self.depth].items():
+            if self.depth == "quote":
+                if "bidPrice" in val:
+                    self.ticker[symbol]["bid"] = val["bidPrice"]
+                    self.ticker[symbol]["bidSize"] = val["bidSize"]
+                if "askPrice" in val:
+                    self.ticker[symbol]["ask"] = val["askPrice"]
+                    self.ticker[symbol]["askSize"] = val["askSize"]
+            else:
+                if val["bids"]:
+                    self.ticker[symbol]["bid"] = val["bids"][0][0]
+                    self.ticker[symbol]["bidSize"] = val["bids"][0][1]
+                if val["asks"]:
+                    self.ticker[symbol]["ask"] = val["asks"][0][0]
+                    self.ticker[symbol]["askSize"] = val["asks"][0][1]
+
+        return self.ticker
