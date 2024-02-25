@@ -31,6 +31,10 @@ class WS(Bitmex, Bybit):
         "Bitmex": BitmexAgent.trading_history,
         "Bybit": BybitAgent.trading_history,
     }
+    open_orders_agent = {
+        "Bitmex": BitmexAgent.open_orders,
+        "Bybit": BybitAgent.open_orders,
+    }
 
     def start_ws(self, name) -> None:
         self.select_ws[name](self)
@@ -74,10 +78,17 @@ class WS(Bitmex, Bybit):
             self, symbol=symbol, time=time, timeframe=timeframe
         )
 
-    def trading_history(self, name: str, histCount: int, time: datetime):
+    def trading_history(self, name: str, histCount: int, time: datetime) -> list:
         """
         Gets all trades and funding from the exchange for the period starting
         from 'time'
         """
 
         return self.trading_history_agent[name](self, histCount=histCount, time=time)
+    
+    def open_orders(self, name: str) -> list:
+        """
+        Gets open orders.
+        """
+
+        return self.open_orders_agent[name](self)
