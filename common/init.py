@@ -134,6 +134,73 @@ class Init(WS, Variables):
             self.accounts[currency]["SUMREAL"] = float(data[0]["sumreal"])
             self.accounts[currency]["FUNDING"] = float(data[0]["funding"])
 
+    def load_orders(self) -> None:
+        """
+        Load Orders (if any)
+        """
+        myOrders = self.open_orders(self.name)
+        var.orders = OrderedDict()
+        disp.text_orders.delete("1.0", "end")
+        disp.text_orders.insert("1.0", " - Orders -\n")
+        for val in myOrders:
+            if val["leavesQty"] != 0:
+                emi = ".".join(val["symbol"])
+                if "clOrdID" not in val:
+                    # The order was placed from the exchange interface
+                    var.last_order += 1
+                    clOrdID = str(var.last_order) + "." + emi
+                    Function.info_display(
+                        self, 
+                        "Outside placement: price="
+                        + str(val["price"])
+                        + " side="
+                        + val["side"]
+                        + ". Assigned clOrdID="
+                        + clOrdID
+                    )
+                else:
+                    clOrdID = val["clOrdID"]
+                    s = clOrdID.split(".")
+                    emi = s[1]
+                    if emi not in self.robots:
+                        self.robots[emi] = {
+                            "STATUS": "NOT DEFINED",
+                            "TIMEFR": None,
+                            "EMI": emi,
+                            "SYMBOL": val["symbol"][0],
+                            "CATEGORY": val["symbol"][1],
+                            "EXCHANGE": self.name,
+                            "POS": 0,
+                            "VOL": 0,
+                            "COMMISS": 0,
+                            "SUMREAL": 0,
+                            "LTIME": datetime.strptime(
+                                val["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
+                            ),
+                            "PNL": 0,
+                            "CAPITAL": None,
+                            "SYMBCAT": val["symbol"]
+                        }
+                        message = (
+                            "Robot EMI="
+                            + emi
+                            + ". Adding to 'robots' with STATUS='NOT DEFINED'"
+                        )
+                        Function.info_display(self, message)
+                        var.logger.info(message)
+                var.orders[clOrdID] = {}
+                var.orders[clOrdID]["emi"] = emi
+                var.orders[clOrdID]["leavesQty"] = val["leavesQty"]
+                var.orders[clOrdID]["transactTime"] = val["transactTime"]
+                var.orders[clOrdID]["price"] = val["price"]
+                var.orders[clOrdID]["symbol"] = val["symbol"][0]
+                var.orders[clOrdID]["category"] = val["symbol"][1]
+                var.orders[clOrdID]["exchange"] = self.name
+                var.orders[clOrdID]["side"] = val["side"]
+                var.orders[clOrdID]["orderID"] = val["orderID"]
+                var.orders[clOrdID]["symbcat"] = val["symbol"]
+                Function.orders_display(self, clOrdID=clOrdID)
+
 def setup_logger():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -166,67 +233,6 @@ def setup_database_connecion() -> None:
     except Exception as error:
         var.logger.error(error)
         raise
-
-
-def load_orders() -> None:
-    """
-    Load Orders (if any)
-    """
-    myOrders = ws.bitmex.open_orders()
-    var.orders = OrderedDict()
-    disp.text_orders.delete("1.0", "end")
-    disp.text_orders.insert("1.0", " - Orders -\n")
-    for val in myOrders:
-        if val["leavesQty"] != 0:
-            emi = val["symbol"]
-            if "clOrdID" not in val:
-                # The order was placed from the exchange
-                var.last_order += 1
-                clOrdID = str(var.last_order) + "." + emi
-                function.info_display(
-                    "Outside placement: price="
-                    + str(val["price"])
-                    + " side="
-                    + val["side"]
-                    + ". Assigned clOrdID="
-                    + clOrdID
-                )
-            else:
-                clOrdID = val["clOrdID"]
-                s = clOrdID.split(".")
-                emi = s[1]
-                if emi not in bot.robots:
-                    bot.robots[emi] = {
-                        "STATUS": "NOT DEFINED",
-                        "TIMEFR": None,
-                        "EMI": emi,
-                        "SYMBOL": val["symbol"],
-                        "POS": 0,
-                        "VOL": 0,
-                        "COMMISS": 0,
-                        "SUMREAL": 0,
-                        "LTIME": datetime.strptime(
-                            val["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
-                        ),
-                        "PNL": 0,
-                        "CAPITAL": None,
-                    }
-                    mes = (
-                        "Robot EMI="
-                        + emi
-                        + ". Adding to 'robots' with STATUS='NOT DEFINED'"
-                    )
-                    function.info_display(mes)
-                    var.logger.info(mes)
-            var.orders[clOrdID] = {}
-            var.orders[clOrdID]["emi"] = emi
-            var.orders[clOrdID]["leavesQty"] = val["leavesQty"]
-            var.orders[clOrdID]["transactTime"] = val["transactTime"]
-            var.orders[clOrdID]["price"] = val["price"]
-            var.orders[clOrdID]["symbol"] = val["symbol"]
-            var.orders[clOrdID]["side"] = val["side"]
-            var.orders[clOrdID]["orderID"] = val["orderID"]
-            function.orders_display(clOrdID=clOrdID)
 
 
 def initial_display(account: int) -> None:

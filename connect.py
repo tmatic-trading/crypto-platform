@@ -46,6 +46,7 @@ class Loads(Variables):
         Function.rounding(self)
         self.frames = dict()
 
+
 def clear_common_params():
     var.orders = OrderedDict()
     var.orders_dict = OrderedDict()  
@@ -60,9 +61,6 @@ def clear_common_params():
 
 
 def connection():
-    """
-    Websocket connection
-    """
     clear_common_params()
     common.setup_database_connecion()
     for name, websocket in Websockets.connect.items():
@@ -75,6 +73,7 @@ def connection():
             if isinstance(bots.Init.init_timeframes(websocket), dict):
                 common.Init.load_trading_history(websocket)
                 common.Init.account_balances(websocket)
+                common.Init.load_orders(websocket)
 
 
     algo.init_algo()

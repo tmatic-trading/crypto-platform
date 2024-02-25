@@ -155,3 +155,10 @@ class Agent(Variables):
             return result
         else:
             return "error"
+        
+    def open_orders(self) -> list:
+        orders = self.data["order"].values()
+        for order in orders:
+            order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]])
+
+        return orders
