@@ -35,6 +35,10 @@ class WS(Bitmex, Bybit):
         "Bitmex": BitmexAgent.open_orders,
         "Bybit": BybitAgent.open_orders,
     }
+    get_ticker_agent = {
+        "Bitmex": BitmexAgent.get_ticker,
+        "Bybit": BybitAgent.get_ticker,
+    }
 
     def start_ws(self, name) -> None:
         self.select_ws[name](self)
@@ -92,3 +96,10 @@ class WS(Bitmex, Bybit):
         """
 
         return self.open_orders_agent[name](self)
+    
+    def get_ticker(self, name: str) -> OrderedDict:
+        """
+        Returns the best bid/ask price.
+        """
+
+        return self.get_ticker_agent[name](self)

@@ -25,3 +25,6 @@ class Agent:
 
     def open_orders(self) -> list:
         print("___open_orders")
+
+    def get_ticker(self) -> OrderedDict:
+        print("___get_ticker")
