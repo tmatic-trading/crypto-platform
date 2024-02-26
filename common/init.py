@@ -209,6 +209,13 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["symbcat"] = val["symbol"]
                 Function.orders_display(self, clOrdID=clOrdID)
 
+    def initial_ticker_values(self) -> None:
+        for symbol in self.symbol_list:
+            self.ticker[symbol]["open_ask"] = self.ticker[symbol]["ask"]
+            self.ticker[symbol]["open_bid"] = self.ticker[symbol]["bid"]
+            self.ticker[symbol]["fundingRate"] = self.instruments[symbol]["fundingRate"]
+
+
 def initial_display() -> None:
     """
     Download the latest trades and funding data from the database (if any)
@@ -286,10 +293,3 @@ def setup_database_connecion() -> None:
     except Exception as error:
         var.logger.error(error)
         raise
-
-
-def initial_ticker_values() -> None:
-    for symbol in var.symbol_list:
-        var.ticker[symbol]["open_ask"] = var.ticker[symbol]["ask"]
-        var.ticker[symbol]["open_bid"] = var.ticker[symbol]["bid"]
-        var.ticker[symbol]["fundingRate"] = var.instruments[symbol]["fundingRate"]

@@ -45,6 +45,7 @@ def connection():
                 common.Init.load_orders(ws)
                 ws.ticker = ws.get_ticker(name)
                 bots.Init.delete_unused_robot(ws)
+                common.Init.initial_ticker_values(ws)
     common.initial_display()
     display.load_labels()
     algo.init_algo()
