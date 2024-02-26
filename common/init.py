@@ -24,6 +24,14 @@ from api.init import Variables
 
 
 class Init(WS, Variables):
+    def clear_params(self) -> None:
+        self.connect_count += 1
+        for emi, values in self.robots.items():
+            self.robot_status[emi] = values["STATUS"]
+        self.robots = OrderedDict()
+        Function.rounding(self)
+        self.frames = dict()
+
     def load_trading_history(self) -> None:
         """
         Load trading history (if any)
@@ -201,50 +209,50 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["symbcat"] = val["symbol"]
                 Function.orders_display(self, clOrdID=clOrdID)
 
-    def initial_display(self) -> None:
-        """
-        Download the latest trades and funding data from the database (if any)
-        """
-        return
-        var.cursor_mysql.execute(
-            "select EMI, SYMBOL, SIDE, QTY, PRICE, TTIME, COMMISS from "
-                + db
-                + ".coins where SIDE=-1 AND ACCOUNT=%s order by id desc limit 121",
-            account
-        )
-        data = var.cursor_mysql.fetchall()
-        disp.funding_display_counter = 0
-        disp.text_funding.delete("1.0", "end")
-        disp.text_funding.insert("1.0", " - Funding -\n")
-        for val in reversed(data):
-            function.add_symbol(symbol=val["SYMBOL"])
-            function.funding_display(val)
-
-        var.cursor_mysql.execute(
-            "select EMI, SYMBOL, SIDE, QTY, TRADE_PRICE, TTIME, COMMISS, SUMREAL \
-                from "
+def initial_display() -> None:
+    """
+    Download the latest trades and funding data from the database (if any)
+    """
+    return
+    var.cursor_mysql.execute(
+        "select EMI, SYMBOL, SIDE, QTY, PRICE, TTIME, COMMISS from "
             + db
-            + ".coins where SIDE<>-1 AND account=%s order by id desc \
-                    limit 151",
-            account,
-        )
-        data = var.cursor_mysql.fetchall()
-        disp.trades_display_counter = 0
-        disp.text_trades.delete("1.0", "end")
-        disp.text_trades.insert("1.0", " - Trades -\n")
-        for val in reversed(data):
-            function.add_symbol(symbol=val["SYMBOL"])
-            function.trades_display(value=val)
+            + ".coins where SIDE=-1 AND ACCOUNT=%s order by id desc limit 121",
+        account
+    )
+    data = var.cursor_mysql.fetchall()
+    disp.funding_display_counter = 0
+    disp.text_funding.delete("1.0", "end")
+    disp.text_funding.insert("1.0", " - Funding -\n")
+    for val in reversed(data):
+        function.add_symbol(symbol=val["SYMBOL"])
+        function.funding_display(val)
 
-        var.cursor_mysql.execute(
-            "select max(TTIME) TTIME from " + db + ".coins where account=%s AND SIDE=-1",
-            account,
+    var.cursor_mysql.execute(
+        "select EMI, SYMBOL, SIDE, QTY, TRADE_PRICE, TTIME, COMMISS, SUMREAL \
+            from "
+        + db
+        + ".coins where SIDE<>-1 AND account=%s order by id desc \
+                limit 151",
+        account,
+    )
+    data = var.cursor_mysql.fetchall()
+    disp.trades_display_counter = 0
+    disp.text_trades.delete("1.0", "end")
+    disp.text_trades.insert("1.0", " - Trades -\n")
+    for val in reversed(data):
+        function.add_symbol(symbol=val["SYMBOL"])
+        function.trades_display(value=val)
+
+    var.cursor_mysql.execute(
+        "select max(TTIME) TTIME from " + db + ".coins where account=%s AND SIDE=-1",
+        account,
+    )
+    data = var.cursor_mysql.fetchall()
+    if data[0]["TTIME"]:
+        var.last_database_time = datetime.strptime(
+            str(data[0]["TTIME"]), "%Y-%m-%d %H:%M:%S"
         )
-        data = var.cursor_mysql.fetchall()
-        if data[0]["TTIME"]:
-            var.last_database_time = datetime.strptime(
-                str(data[0]["TTIME"]), "%Y-%m-%d %H:%M:%S"
-            )
 
 def setup_logger():
     logger = logging.getLogger()

@@ -10,6 +10,7 @@ from api.bybit.ws import Bybit
 
 class WS(Bitmex, Bybit):
     select_ws = {"Bitmex": Bitmex.start, "Bybit": Bybit.start}
+    exit_agent = {"Bitmex": BitmexAgent.exit, "Bybit": BybitAgent.exit}
     get_active_instruments_agent = {
         "Bitmex": BitmexAgent.get_active_instruments,
         "Bybit": BybitAgent.get_active_instruments,
@@ -42,6 +43,13 @@ class WS(Bitmex, Bybit):
 
     def start_ws(self, name) -> None:
         self.select_ws[name](self)
+
+    def exit(self, name) -> None:
+        """
+        Closes websocket
+        """
+
+        self.exit_agent[name](self)
 
     def get_active_instruments(self, name) -> OrderedDict:
         """

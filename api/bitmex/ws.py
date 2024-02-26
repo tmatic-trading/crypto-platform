@@ -32,7 +32,7 @@ class Bitmex(Variables):
             self.depth,
         }
         self.name = "Bitmex"
-        self.qwe = 1
+        self.count = 0
         self.agent = Agent
         Setup.variables(self)
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
@@ -224,6 +224,8 @@ class Bitmex(Variables):
                         self.data[table][key].update(val)
                         if table == "orderBook10":
                             self.frames_hi_lo_values(data=self.data[table][key])
+                        elif table == "instrument":
+                            self.instruments[key].update(val)
                         # Removes cancelled or filled orders
                         if table == "order" and self.data[table][key]["leavesQty"] <= 0:
                             self.data[table].pop(key)
@@ -279,3 +281,12 @@ class Bitmex(Variables):
                         if "bidPrice" in data:
                             if data["bidPrice"] < timeframe["data"][-1]["lo"]:
                                 timeframe["data"][-1]["lo"] = data["bidPrice"]
+
+    def exit(self):
+        """
+        Closes websocket
+        """
+        try:
+            self.ws.close()
+        except Exception:
+            pass
