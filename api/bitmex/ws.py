@@ -193,7 +193,7 @@ class Bitmex(Variables):
                         self.keys[table].append("category")
                     for val in message["data"]:
                         for key in self.keys[table]:
-                            if key is not "category":
+                            if key != "category":
                                 if key not in val:
                                     break
                         else:
@@ -203,8 +203,7 @@ class Bitmex(Variables):
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)                    
                         if table == "quote":
-                            val["category"] = self.symbol_category[val["symbol"]]
-                            
+                            val["category"] = self.symbol_category[val["symbol"]]                            
                             if "bidPrice" in val:
                                 self.data[table][key]["bidPrice"] = val["bidPrice"]
                                 self.data[table][key]["bidSize"] = val["bidSize"]

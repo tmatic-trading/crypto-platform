@@ -107,7 +107,9 @@ class Agent(Variables):
         else:
             self.instruments[symbol]["expiry"] = "Perpetual"
         if "fundingRate" not in instrument:
-            self.instruments[symbol]["fundingRate"] = 0
+            self.instruments[symbol]["fundingRate"] = None
+        else:
+            self.instruments[symbol]["fundingRate"] = instrument["fundingRate"]
 
         return category
 
@@ -146,7 +148,6 @@ class Agent(Variables):
         self, histCount: int, time=None) -> Union[list, str]:
         if time:
             path = Listing.TRADING_HISTORY.format(HISTCOUNT=histCount, TIME=time)
-            print(path)
             result =  Send.request(
                 self, 
                 path=path, 
