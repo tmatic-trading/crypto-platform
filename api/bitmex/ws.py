@@ -14,7 +14,7 @@ from api.variables import Variables
 from ws.api_auth import generate_signature
 from .agent import Agent
 
-from display.init import info_display
+from display.function import info_display
 
 
 class Bitmex(Variables):
