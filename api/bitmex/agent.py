@@ -106,6 +106,8 @@ class Agent(Variables):
             )
         else:
             self.instruments[symbol]["expiry"] = "Perpetual"
+        if "fundingRate" not in instrument:
+            self.instruments[symbol]["fundingRate"] = 0
 
         return category
 
@@ -181,3 +183,14 @@ class Agent(Variables):
                     self.ticker[symbol]["askSize"] = val["asks"][0][1]
 
         return self.ticker
+    
+
+    def exit(self):
+        """
+        Closes websocket
+        """        
+        try:
+            self.logNumFatal = -1
+            self.ws.close()
+        except Exception:
+            pass

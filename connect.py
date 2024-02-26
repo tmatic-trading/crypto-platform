@@ -21,33 +21,35 @@ from api.websockets import Websockets
 from api.variables import Variables
 
 
-
-#from API.variables import Variables as API
-
-#from api.api import WS
-
-
-class Loads(Variables):
-    def load_robots(self):
-        Loads.clear_params(self)
-        bots.Init.load_robots(self)
-
-    def clear_params(self) -> None:
-        self.connect_count += 1
-        account = self.get_user(self.name)
-        if account:
-            self.user_id = account["id"]
-        else:
-            print("A user ID was requested from the exchange but was not received.")
-            exit(1)
-        for emi, values in self.robots.items():
-            self.robot_status[emi] = values["STATUS"]
-        self.robots = OrderedDict()
-        Function.rounding(self)
-        self.frames = dict()
-
-
-def clear_common_params():
+def connection():
+    clear_params()
+    common.setup_database_connecion()
+    for name, ws in Websockets.connect.items():
+        if name in var.exchange_list:
+            while ws.logNumFatal:
+                ws.start_ws(name)
+                if ws.logNumFatal:
+                    ws.exit(name)
+                    sleep(3)
+            account = ws.get_user(name)            
+            if account:
+                ws.user_id = account["id"]
+            else:
+                raise Exception("A user ID was requested from the exchange \
+                                but was not received.")
+            common.Init.clear_params(ws)
+            bots.Init.load_robots(ws)
+            if isinstance(bots.Init.init_timeframes(ws), dict):
+                common.Init.load_trading_history(ws)
+                common.Init.account_balances(ws)
+                common.Init.load_orders(ws)
+                ws.ticker = ws.get_ticker(name)
+    common.initial_display()
+    algo.init_algo()
+    #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
+    sleep(100)
+    
+def clear_params():
     var.orders = OrderedDict()
     var.orders_dict = OrderedDict()  
     var.current_exchange = var.exchange_list[0]
@@ -60,31 +62,7 @@ def clear_common_params():
 
 
 
-def connection():
-    clear_common_params()
-    common.setup_database_connecion()
-    for name, websocket in Websockets.connect.items():
-        if name in var.exchange_list:
-            while websocket.logNumFatal: 
-                websocket.start_ws(name)
-                if websocket.logNumFatal:
-                    sleep(3)
-            Loads.load_robots(websocket)
-            if isinstance(bots.Init.init_timeframes(websocket), dict):
-                common.Init.load_trading_history(websocket)
-                common.Init.account_balances(websocket)
-                common.Init.load_orders(websocket)
-                websocket.ticker = websocket.get_ticker(name)
-                print(websocket.ticker)
-    common.Init.initial_display(websocket)
-
-
-    algo.init_algo()
-            #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
-
-    exit(0)
-
-
+'''
     common_init.setup_database_connecion()
     bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"))
 
@@ -185,4 +163,4 @@ def robots_thread() -> None:
         if bot.frames:
             function.robots_entry(utc=utcnow)
         rest = 1 - time.time() % 1
-        time.sleep(rest)
+        time.sleep(rest)'''

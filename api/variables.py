@@ -25,7 +25,7 @@ class Variables:
     data = dict()
     full_symbol_list = list()
     logger = logging
-    logNumFatal = 401
+    logNumFatal = -1
     depth = var.order_book_depth
     message_counter = 0
     connect_count = 0

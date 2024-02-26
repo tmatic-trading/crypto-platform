@@ -28,3 +28,6 @@ class Agent:
 
     def get_ticker(self) -> OrderedDict:
         print("___get_ticker")
+
+    def exit(self):
+        print("___exit")
