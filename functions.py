@@ -12,6 +12,8 @@ from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
 
+from api.websockets import Websockets
+
 # from ws.init import Variables as ws
 
 
@@ -1506,46 +1508,6 @@ def handler_pos(event, row_position: int) -> None:
                     disp.labels["position"][column[0]][row[0] + 1]["bg"] = disp.bg_color
 
 
-def handler_robots(event, row_position: int) -> None:
-    emi = None
-    for val in bot.robots:
-        if bot.robots[val]["y_position"] == row_position:
-            emi = val
-            break
-    if emi:
-        if bot.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
-
-            def callback():
-                row = bot.robots[val]["y_position"]
-                if bot.robots[emi]["STATUS"] == "WORK":
-                    bot.robots[emi]["STATUS"] = "OFF"
-                    disp.labels["robots"][5][row]["fg"] = "red"
-                else:
-                    bot.robots[emi]["STATUS"] = "WORK"
-                    disp.labels["robots"][5][row]["fg"] = "#212121"
-                on_closing()
-
-            def on_closing():
-                disp.robots_window_trigger = "off"
-                robot_window.destroy()
-
-            if disp.robots_window_trigger == "off":
-                disp.robots_window_trigger = "on"
-                robot_window = tk.Toplevel(disp.root, padx=30, pady=8)
-                cx = disp.root.winfo_pointerx()
-                cy = disp.root.winfo_pointery()
-                robot_window.geometry("+{}+{}".format(cx - 90, cy - 10))
-                robot_window.title("EMI=" + emi)
-                robot_window.protocol("WM_DELETE_WINDOW", on_closing)
-                robot_window.attributes("-topmost", 1)
-                text = emi + " - Disable"
-                if bot.robots[emi]["STATUS"] == "OFF":
-                    text = emi + " - Enable"
-                status = tk.Button(robot_window, text=text, command=callback)
-                status.pack()
-                change_color(color=disp.title_color, container=robot_window)
-
-
 def humanFormat(volNow: int) -> str:
     if volNow > 1000000000:
         volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
@@ -1612,6 +1574,46 @@ def robots_entry(utc: datetime) -> None:
                     }
                 )
                 values["time"] = dt_now
+
+def handler_robots(event, row_position: int) -> None:
+    emi = None
+    for ws in Websockets.connect.values():
+        for val in ws.robots:
+            if ws.robots[val]["y_position"] == row_position:
+                emi = val
+                break
+    if emi:
+        if ws.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
+
+            def callback():
+                row = ws.robots[val]["y_position"]
+                if ws.robots[emi]["STATUS"] == "WORK":
+                    ws.robots[emi]["STATUS"] = "OFF"
+                    disp.labels["robots"][5][row]["fg"] = "red"
+                else:
+                    ws.robots[emi]["STATUS"] = "WORK"
+                    disp.labels["robots"][5][row]["fg"] = "#212121"
+                on_closing()
+
+            def on_closing():
+                disp.robots_window_trigger = "off"
+                robot_window.destroy()
+
+            if disp.robots_window_trigger == "off":
+                disp.robots_window_trigger = "on"
+                robot_window = tk.Toplevel(disp.root, padx=30, pady=8)
+                cx = disp.root.winfo_pointerx()
+                cy = disp.root.winfo_pointery()
+                robot_window.geometry("+{}+{}".format(cx - 90, cy - 10))
+                robot_window.title("EMI=" + emi)
+                robot_window.protocol("WM_DELETE_WINDOW", on_closing)
+                robot_window.attributes("-topmost", 1)
+                text = emi + " - Disable"
+                if ws.robots[emi]["STATUS"] == "OFF":
+                    text = emi + " - Enable"
+                status = tk.Button(robot_window, text=text, command=callback)
+                status.pack()
+                change_color(color=disp.title_color, container=robot_window)
 
 
 def change_color(color: str, container=None) -> None:

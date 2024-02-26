@@ -317,18 +317,18 @@ class Init(WS, Variables):
 
         return self.frames
 
-    def delete_unused_robot() -> None:
+    def delete_unused_robot(self) -> None:
         """
         Deleting unused robots (if any)
         """
         emi_in_orders = set()
         for val in var.orders.values():
             emi_in_orders.add(val["emi"])
-        for emi in bot.robots.copy():
-            if bot.robots[emi]["STATUS"] in ("WORK", "OFF"):
+        for emi in self.robots.copy():
+            if self.robots[emi]["STATUS"] in ("WORK", "OFF"):
                 pass
-            elif emi in var.symbol_list:
-                bot.robots[emi]["STATUS"] = "RESERVED"
-            elif bot.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
-                function.info_display("Robot EMI=" + emi + ". Deleting from 'robots'")
-                del bot.robots[emi]
+            elif emi in self.symbol_list:
+                self.robots[emi]["STATUS"] = "RESERVED"
+            elif self.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
+                Function.info_display(self, "Robot EMI=" + emi + ". Deleting from 'robots'")
+                del self.robots[emi]

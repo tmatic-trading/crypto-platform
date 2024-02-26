@@ -2,7 +2,6 @@ from datetime import datetime
 
 from api.variables import Variables
 from common.variables import Variables as var
-import requests
 
 
 class Setup(Variables):

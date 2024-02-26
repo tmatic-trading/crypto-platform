@@ -111,3 +111,4 @@ class WS(Bitmex, Bybit):
         """
 
         return self.get_ticker_agent[name](self)
+

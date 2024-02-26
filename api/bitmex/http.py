@@ -6,7 +6,7 @@ import time
 import requests
 from datetime import datetime
 
-from display.init import info_display
+from display.function import info_display
 
 
 class Send(Variables):
