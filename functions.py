@@ -641,6 +641,52 @@ class Function(WS, Variables):
             number = number + "0"
 
         return number
+    
+    def robots_entry(self, utc: datetime) -> None:
+        """
+        Processing timeframes and entry point into robot algorithms
+        """
+        self.ticker = self.get_ticker(self.ticker)
+        for symbol, timeframes in self.frames.items():
+            for timefr, values in timeframes.items():
+                if utc > values["time"] + timedelta(minutes=timefr):
+                    for emi in values["robots"]:
+                        if (
+                            self.robots[emi]["STATUS"] == "WORK"
+                            and disp.f9 == "ON"
+                            and bot.robo
+                        ):
+                            # Robots entry point
+                            bot.robo[emi](
+                                robot=self.robots[emi],
+                                frame=values["data"],
+                                ticker=self.ticker[symbol],
+                                instrument=self.instruments[symbol],
+                            )
+                        Function.save_timeframes_data(
+                            self, 
+                            emi=emi,
+                            symbol=symbol,
+                            timefr=str(timefr),
+                            frame=values["data"][-1],
+                        )
+                    next_minute = int(utc.minute / timefr) * timefr
+                    dt_now = datetime(
+                        utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0
+                    )
+                    values["data"].append(
+                        {
+                            "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
+                            "time": utc.hour * 10000 + utc.minute * 100,
+                            "bid": self.ticker[symbol]["bid"],
+                            "ask": self.ticker[symbol]["ask"],
+                            "hi": self.ticker[symbol]["ask"],
+                            "lo": self.ticker[symbol]["bid"],
+                            "funding": self.ticker[symbol]["fundingRate"],
+                            "datetime": dt_now,
+                        }
+                    )
+                    values["time"] = dt_now
 
 
 def del_order(clOrdID: str) -> int:
@@ -1529,51 +1575,6 @@ def find_order(price: float, qty: int, symbol: str) -> int:
 
     return qty
 
-
-def robots_entry(utc: datetime) -> None:
-    """
-    Processing timeframes and entry point into robot algorithms
-    """
-    var.ticker = ws.bitmex.get_ticker(var.ticker)
-    for symbol, timeframes in bot.frames.items():
-        for timefr, values in timeframes.items():
-            if utc > values["time"] + timedelta(minutes=timefr):
-                for emi in values["robots"]:
-                    if (
-                        bot.robots[emi]["STATUS"] == "WORK"
-                        and disp.f9 == "ON"
-                        and bot.robo
-                    ):
-                        # Robots entry point
-                        bot.robo[emi](
-                            robot=bot.robots[emi],
-                            frame=values["data"],
-                            ticker=var.ticker[symbol],
-                            instrument=var.instruments[symbol],
-                        )
-                    save_timeframes_data(
-                        emi=emi,
-                        symbol=symbol,
-                        timefr=str(timefr),
-                        frame=values["data"][-1],
-                    )
-                next_minute = int(utc.minute / timefr) * timefr
-                dt_now = datetime(
-                    utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0
-                )
-                values["data"].append(
-                    {
-                        "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
-                        "time": utc.hour * 10000 + utc.minute * 100,
-                        "bid": var.ticker[symbol]["bid"],
-                        "ask": var.ticker[symbol]["ask"],
-                        "hi": var.ticker[symbol]["ask"],
-                        "lo": var.ticker[symbol]["bid"],
-                        "funding": var.ticker[symbol]["fundingRate"],
-                        "datetime": dt_now,
-                    }
-                )
-                values["time"] = dt_now
 
 def handler_robots(event, row_position: int) -> None:
     emi = None
