@@ -18,8 +18,6 @@ from common.variables import Variables as var
 from display.variables import Variables as disp
 from api.websockets import Websockets
 
-from api.variables import Variables
-
 
 def connection():
     clear_params()
@@ -31,24 +29,30 @@ def connection():
                 ws.start_ws(name)
                 if ws.logNumFatal:
                     ws.exit(name)
-                    sleep(3)
-            account = ws.get_user(name)            
-            if account:
-                ws.user_id = account["id"]
-            else:
-                raise Exception("A user ID was requested from the exchange \
-                                but was not received.")
-            common.Init.clear_params(ws)
-            bots.Init.load_robots(ws)
-            if isinstance(bots.Init.init_timeframes(ws), dict):
-                common.Init.load_trading_history(ws)
-                common.Init.account_balances(ws)
-                common.Init.load_orders(ws)
-                ws.ticker = ws.get_ticker(name)
-                bots.Init.delete_unused_robot(ws)
-                common.Init.initial_ticker_values(ws)
-                for emi, value in ws.robot_status.items():
-                    ws.robots[emi]["STATUS"] = value
+                    sleep(2)
+                else:
+                    account = ws.get_user(name)            
+                    if account:
+                        ws.user_id = account["id"]
+                    else:
+                        raise Exception("A user ID was requested from the \
+                                        exchange but was not received.")
+                    common.Init.clear_params(ws)
+                    bots.Init.load_robots(ws)
+                    if isinstance(bots.Init.init_timeframes(ws), dict):
+                        common.Init.load_trading_history(ws)
+                        common.Init.account_balances(ws)
+                        common.Init.load_orders(ws)
+                        ws.ticker = ws.get_ticker(name)
+                        bots.Init.delete_unused_robot(ws)
+                        common.Init.initial_ticker_values(ws)
+                        for emi, value in ws.robot_status.items():
+                            ws.robots[emi]["STATUS"] = value
+                    else:
+                        print("Error during loading timeframes.")
+                        ws.exit(name)
+                        ws.logNumFatal = -1
+                        sleep(2)
     common.initial_display()
     display.load_labels()
     algo.init_algo()
