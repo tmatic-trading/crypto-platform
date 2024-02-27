@@ -52,9 +52,9 @@ def connection():
     common.initial_display()
     display.load_labels()
     algo.init_algo()
-    var.thread_is_active = "yes"
+    var.robots_thread_is_active = "yes"
     thread = threading.Thread(target=robots_thread)
-    #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
+    thread.start()
     sleep(100)
 
     
@@ -72,10 +72,11 @@ def clear_params():
 
 def robots_thread() -> None:
     while var.robots_thread_is_active:
-        utcnow = datetime.utcnow()
+        utcnow = datetime.utcnow()        
         for name, ws in Websockets.connect.items():
-            if ws.frames:
-                Function.robots_entry(ws, utc=utcnow)
+            if name in var.exchange_list:
+                if ws.frames:
+                    Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
 
@@ -109,7 +110,7 @@ def robots_thread() -> None:
                     common_init.initial_ticker_values()
                     for emi, value in bot.robot_status.items():
                         bot.robots[emi]["STATUS"] = value
-                    var.thread_is_active = "yes"
+                    var.robots_thread_is_active = "yes"
                     thread = threading.Thread(target=robots_thread)
                     thread.start()
                 else:
