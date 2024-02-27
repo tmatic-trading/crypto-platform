@@ -12,50 +12,89 @@ import common.init as common
 import display.init as display
 
 
+import functions
 from functions import Function
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
 from api.websockets import Websockets
 
-from api.variables import Variables
+from api.api import WS
 
 
-def connection():
+def setup():
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = ""
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
-            while ws.logNumFatal:
-                ws.start_ws(name)
-                if ws.logNumFatal:
-                    ws.exit(name)
-                    sleep(3)
+            setup_exchange(ws, name=name)
+    common.initial_display()
+    display.load_labels()
+    algo.init_algo()
+    var.robots_thread_is_active = "yes"
+    thread = threading.Thread(target=robots_thread)
+    thread.start()
+
+
+def setup_exchange(ws: WS, name: str):
+    while ws.logNumFatal:
+        ws.start_ws(name)
+        if ws.logNumFatal:
+            ws.exit(name)
+            sleep(2)
+        else:
             account = ws.get_user(name)            
             if account:
                 ws.user_id = account["id"]
             else:
-                raise Exception("A user ID was requested from the exchange \
-                                but was not received.")
+                raise Exception("A user ID was requested from the \
+                                exchange but was not received.")
             common.Init.clear_params(ws)
-            bots.Init.load_robots(ws)
-            if isinstance(bots.Init.init_timeframes(ws), dict):
-                common.Init.load_trading_history(ws)
-                common.Init.account_balances(ws)
-                common.Init.load_orders(ws)
-                ws.ticker = ws.get_ticker(name)
-                bots.Init.delete_unused_robot(ws)
-                common.Init.initial_ticker_values(ws)
-                for emi, value in ws.robot_status.items():
-                    ws.robots[emi]["STATUS"] = value
-    common.initial_display()
-    display.load_labels()
-    algo.init_algo()
-    var.thread_is_active = "yes"
-    thread = threading.Thread(target=robots_thread)
-    #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
-    sleep(100)
+            if bots.Init.load_robots(ws):
+                if isinstance(bots.Init.init_timeframes(ws), dict):
+                    common.Init.load_trading_history(ws)
+                    common.Init.account_balances(ws)
+                    common.Init.load_orders(ws)
+                    ws.ticker = ws.get_ticker(name)
+                    bots.Init.delete_unused_robot(ws)
+                    common.Init.initial_ticker_values(ws)
+                    for emi, value in ws.robot_status.items():
+                        ws.robots[emi]["STATUS"] = value
+                else:
+                    print("Error during loading timeframes.")
+                    ws.exit(name)
+                    ws.logNumFatal = -1
+                    sleep(2)
+            else:
+                var.logger.info("No robots loaded.")
+    sleep(1000)
+
+
+def refresh() -> None:
+    for name, ws in Websockets.connect.items():
+        utc = datetime.utcnow()
+        if ws.logNumFatal > 2000:
+            if ws.message2000 == "":
+                ws.message2000 = (
+                    "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
+                )
+                Function.info_display(ws, ws.message2000)
+            sleep(1)
+        elif ws.logNumFatal > 1000 or ws.timeoutOccurred != "":  # reload
+            setup_exchange(ws=ws, name=name)
+        else:
+            if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
+                if ws.messageStopped == "":
+                    ws.messageStopped = (
+                        "Error=" + str(ws.logNumFatal) + ". Trading stopped"
+                    )
+                    Function.info_display(ws, ws.messageStopped)
+                    if ws.logNumFatal == 2:
+                        Function.info_display(ws, "Insufficient available balance!")
+                disp.f9 = "OFF"
+            ws.ticker = ws.get_ticker(ws.ticker)
+            functions.refresh_on_screen(utc=utc)
 
     
 def clear_params():
@@ -72,10 +111,11 @@ def clear_params():
 
 def robots_thread() -> None:
     while var.robots_thread_is_active:
-        utcnow = datetime.utcnow()
+        utcnow = datetime.utcnow()        
         for name, ws in Websockets.connect.items():
-            if ws.frames:
-                Function.robots_entry(ws, utc=utcnow)
+            if name in var.exchange_list:
+                if ws.frames:
+                    Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
 
@@ -109,7 +149,7 @@ def robots_thread() -> None:
                     common_init.initial_ticker_values()
                     for emi, value in bot.robot_status.items():
                         bot.robots[emi]["STATUS"] = value
-                    var.thread_is_active = "yes"
+                    var.robots_thread_is_active = "yes"
                     thread = threading.Thread(target=robots_thread)
                     thread.start()
                 else:

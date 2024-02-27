@@ -18,7 +18,7 @@ disp.root.bind("<F9>", lambda event: trade_state(event))
 
 
 def terminal_reload(event) -> None:
-    var.thread_is_active = ""
+    var.robots_thread_is_active = ""
     function.info_display("Restarting...")
     disp.root.update()
     connect.connection()

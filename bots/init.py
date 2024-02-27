@@ -250,7 +250,7 @@ class Init(WS, Variables):
             tm = datetime.strptime(
                 row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
             ) - timedelta(minutes=robot["TIMEFR"])
-            frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
+            frames[robot["SYMBCAT"]][robot["TIMEFR"]]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
                     "time": tm.hour * 10000 + tm.minute * 100,
@@ -264,9 +264,9 @@ class Init(WS, Variables):
             if num < len(res[:-1]) - 1:
                 Function.save_timeframes_data(
                     self,
-                    frame=frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"][-1],
+                    frame=frames[robot["SYMBCAT"]][robot["TIMEFR"]]["data"][-1],
                 )
-        frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
+        frames[robot["SYMBCAT"]][robot["TIMEFR"]]["time"] = tm
 
         message = (
             "Downloaded missing data from the exchange for symbol="
@@ -285,7 +285,7 @@ class Init(WS, Variables):
             # expressed in minutes.
             if self.robots[emi]["TIMEFR"] != "None":
                 time = datetime.utcnow()
-                symbol = self.robots[emi]["SYMBOL"]
+                symbol = self.robots[emi]["SYMBCAT"]
                 timefr = self.robots[emi]["TIMEFR"]
                 try:
                     self.frames[symbol]

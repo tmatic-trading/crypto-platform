@@ -646,7 +646,7 @@ class Function(WS, Variables):
         """
         Processing timeframes and entry point into robot algorithms
         """
-        self.ticker = self.get_ticker(self.ticker)
+        self.ticker = self.get_ticker(self.name)
         for symbol, timeframes in self.frames.items():
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
@@ -665,9 +665,6 @@ class Function(WS, Variables):
                             )
                         Function.save_timeframes_data(
                             self, 
-                            emi=emi,
-                            symbol=symbol,
-                            timefr=str(timefr),
                             frame=values["data"][-1],
                         )
                     next_minute = int(utc.minute / timefr) * timefr
