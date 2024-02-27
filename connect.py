@@ -24,6 +24,7 @@ from api.variables import Variables
 def connection():
     clear_params()
     common.setup_database_connecion()
+    var.robots_thread_is_active = ""
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             while ws.logNumFatal:
@@ -46,11 +47,16 @@ def connection():
                 ws.ticker = ws.get_ticker(name)
                 bots.Init.delete_unused_robot(ws)
                 common.Init.initial_ticker_values(ws)
+                for emi, value in ws.robot_status.items():
+                    ws.robots[emi]["STATUS"] = value
     common.initial_display()
     display.load_labels()
     algo.init_algo()
+    var.thread_is_active = "yes"
+    thread = threading.Thread(target=robots_thread)
     #bot_init.load_robots(db=os.getenv("MYSQL_DATABASE"), symbol_list=ws.symbol_list, exchange=name)
     sleep(100)
+
     
 def clear_params():
     var.orders = OrderedDict()
@@ -62,6 +68,16 @@ def clear_params():
             for row in range(len(column)):
                 column[row] = ""
         pass
+
+
+def robots_thread() -> None:
+    while var.robots_thread_is_active:
+        utcnow = datetime.utcnow()
+        for name, ws in Websockets.connect.items():
+            if ws.frames:
+                Function.robots_entry(ws, utc=utcnow)
+        rest = 1 - time.time() % 1
+        time.sleep(rest)
 
 
 
