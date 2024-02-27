@@ -26,6 +26,7 @@ class Variables:
     full_symbol_list = list()
     logger = logging
     logNumFatal = -1
+    timeoutOccurred = ""
     depth = var.order_book_depth
     message_counter = 0
     connect_count = 0

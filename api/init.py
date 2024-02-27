@@ -20,7 +20,6 @@ class Setup(Variables):
         self.currencies = var.env[self.name]["CURRENCIES"]
         self.full_symbol_list = self.symbol_list.copy()        
         tmp_pos = {y: 0 for y in var.name_pos}
-        #tmp_instr = {y: 0 for y in var.name_instruments}
         for symbol in self.symbol_list:
             self.ticker[symbol] = {
                 "bid": 0,
@@ -34,7 +33,7 @@ class Setup(Variables):
                 "time": tm,
             }
             self.positions[symbol] = tmp_pos.copy()
-            #self.instruments[symbol] = tmp_instr.copy()
+            self.positions[symbol]["SYMB"] = symbol
         for cur in self.currencies:
             self.accounts[cur] = {y: 0 for y in var.name_acc}
             self.accounts[cur]["SUMREAL"] = 0

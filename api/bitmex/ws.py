@@ -225,8 +225,10 @@ class Bitmex(Variables):
                             self.frames_hi_lo_values(data=self.data[table][key])
                         elif table == "instrument":
                             self.instruments[key].update(val)
+                        elif table == "position":
+                            self.positions_update(val=val)
                         # Removes cancelled or filled orders
-                        if table == "order" and self.data[table][key]["leavesQty"] <= 0:
+                        elif table == "order" and self.data[table][key]["leavesQty"] <= 0:
                             self.data[table].pop(key)
                 elif action == "delete":
                     for val in message["data"]:
@@ -280,6 +282,26 @@ class Bitmex(Variables):
                         if "bidPrice" in data:
                             if data["bidPrice"] < timeframe["data"][-1]["lo"]:
                                 timeframe["data"][-1]["lo"] = data["bidPrice"]
+
+    def positions_update(self, val: dict) -> None:
+        """
+        Updates the positions variable for subscribed instruments each time 
+        information from "position" table is received from the websocket.
+        """
+        symbol = (val["symbol"], val["category"])
+        self.positions[symbol]["POS"] = val["currentQty"]
+        if "avgEntryPrice" in val:
+            self.positions[symbol]["ENTRY"] = val["avgEntryPrice"]
+        else:
+            self.positions[symbol]["ENTRY"] = 0
+        if "marginCallPrice" in val:
+            self.positions[symbol]["MCALL"] = val["marginCallPrice"]
+        else:
+            self.positions[symbol]["MCALL"] = 0
+        if "unrealisedPnl" in val:
+            self.positions[symbol]["PNL"] = val["unrealisedPnl"]
+        else:
+            self.positions[symbol]["PNL"] = 0
 
     def exit(self):
         """
