@@ -528,12 +528,12 @@ class Function(WS, Variables):
         disp.text_funding.insert(
             "2.0",
             time
-            + gap(val=str(value["SYMBOL"]), peak=8)
+            + gap(val=value["SYMBOL"]+"."+value["CATEGORY"][0], peak=10)
             + gap(val=str(float(value["PRICE"])), peak=8)
             + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
-            + gap(val="(" + str(value["EMI"]) + ")", peak=9)
+            + gap(val=value["EMI"][:9], peak=10)
             + " "
-            + Function.volume(self, qty=value["QTY"], symbol=value["SYMBOL"])
+            + Function.volume(self, qty=value["QTY"], symbol=(value["SYMBOL"], value["CATEGORY"]))
             + "\n",
         )
         disp.funding_display_counter += 1
@@ -615,7 +615,7 @@ class Function(WS, Variables):
                 disp.text_orders.tag_config(name, foreground="forest green")
             disp.orders_dict_value += 1
 
-    def volume(self, qty: int, symbol: str) -> str:
+    def volume(self, qty: int, symbol: tuple) -> str:
         if qty == 0:
             qty = "0"
         else:
@@ -756,7 +756,7 @@ class Function(WS, Variables):
             self.positions[symbol]["FUND"] = round(
                 self.instruments[symbol]["fundingRate"] * 100, 6
             )
-            update_label(table="position", column=0, row=num + 1, val=symbol)
+            update_label(table="position", column=0, row=num + 1, val=".".join(symbol))
             if self.positions[symbol]["POS"]:
                 pos = Function.volume(qty=self.positions[symbol]["POS"], symbol=symbol)
             else:
