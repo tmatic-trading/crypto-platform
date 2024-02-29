@@ -98,5 +98,4 @@ class Variables:
     last_database_time = datetime(1900, 1, 1, 1, 1)
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
     refresh_hour = datetime.utcnow().hour
-    message_point = 0
     robots_thread_is_active = ""

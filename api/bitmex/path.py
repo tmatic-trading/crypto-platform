@@ -10,6 +10,7 @@ class Listing(str, Enum):
         false&partial=true&symbol={SYMBOL}&columns=open%2C%20high%2C%20low%2C\
             %20close&startTime={TIME}"
     TRADING_HISTORY = "execution/tradeHistory?count={HISTCOUNT}&reverse=false&startTime={TIME}"
+    URGENT_ANNOUNCEMENT = "announcement/urgent"
 
 
     '''GET_WALLET_BALANCE = "/v5/account/wallet-balance"

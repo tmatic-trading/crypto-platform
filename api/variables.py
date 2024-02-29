@@ -29,6 +29,7 @@ class Variables:
     timeoutOccurred = ""
     depth = var.order_book_depth
     message_counter = 0
+    message_point = 0
     connect_count = 0
     user_id = None
     message_time = datetime.utcnow()
@@ -49,9 +50,4 @@ class Variables:
     session.headers.update({"user-agent": "Tmatic"})
     session.headers.update({"content-type": "application/json"})
     session.headers.update({"accept": "application/json"})
-
-    # Exchange functions
-    transaction = None
-    format_price = None
-    add_symbol = None
 

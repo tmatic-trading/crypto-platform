@@ -68,11 +68,11 @@ def setup_exchange(ws: WS, name: str):
                     sleep(2)
             else:
                 var.logger.info("No robots loaded.")
-    sleep(1000)
 
 
 def refresh() -> None:
-    for name, ws in Websockets.connect.items():
+    for name in var.exchange_list:
+        ws = Websockets.connect[name]
         utc = datetime.utcnow()
         if ws.logNumFatal > 2000:
             if ws.message2000 == "":
@@ -93,8 +93,8 @@ def refresh() -> None:
                     if ws.logNumFatal == 2:
                         Function.info_display(ws, "Insufficient available balance!")
                 disp.f9 = "OFF"
-            ws.ticker = ws.get_ticker(ws.ticker)
-            functions.refresh_on_screen(utc=utc)
+            ws.ticker = ws.get_ticker(name=name)
+            Function.refresh_on_screen(ws, utc=utc)
 
     
 def clear_params():

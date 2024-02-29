@@ -685,6 +685,401 @@ class Function(WS, Variables):
                     )
                     values["time"] = dt_now
 
+    def refresh_on_screen(self, utc: datetime) -> None:
+        """
+        Refresh information on screen
+        """
+        # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
+        if utc.hour != var.refresh_hour:
+            var.cursor_mysql.execute("select count(*) from " + db + ".robots")
+            var.cursor_mysql.fetchall()
+            var.refresh_hour = utc.hour
+            var.logger.info("Emboldening MySQL")
+
+        disp.label_time["text"] = "(" + str(self.connect_count) + ")  " + time.ctime()
+        disp.label_f9["text"] = str(disp.f9)
+        if disp.f9 == "ON":
+            disp.label_f9.config(bg="green3")
+        else:
+            disp.label_f9.config(bg="orange red")
+        if self.logNumFatal == 0:
+            if utc > self.message_time + timedelta(seconds=10):
+                if self.message_counter == self.message_point:
+                    Function.info_display(self, "No data within 10 sec")
+                    disp.label_online["text"] = "NO DATA"
+                    disp.label_online.config(bg="yellow2")
+                    self.urgent_announcement()
+                self.message_time = utc
+                self.message_point = self.message_counter
+        if self.message_counter != self.message_point:
+            disp.label_online["text"] = "ONLINE"
+            disp.label_online.config(bg="green3")
+        if self.logNumFatal != 0:
+            disp.label_online["text"] = "error " + str(self.logNumFatal)
+            disp.label_online.config(bg="orange red")
+        Function.refresh_tables(self)
+
+    def refresh_tables(self) -> None:
+        """
+        Update tkinter labels in the tables
+        """
+
+        # Get funds
+
+        funds = self.get_funds()
+        for currency in self.accounts:
+            for fund in funds:
+                if currency == fund["currency"]:
+                    self.accounts[currency]["ACCOUNT"] = fund["account"]
+                    self.accounts[currency]["MARGINBAL"] = (
+                        float(fund["marginBalance"]) / var.currency_divisor[currency]
+                    )
+                    self.accounts[currency]["AVAILABLE"] = (
+                        float(fund["availableMargin"]) / var.currency_divisor[currency]
+                    )
+                    if "marginLeverage" in fund:
+                        self.accounts[currency]["LEVERAGE"] = fund["marginLeverage"]
+                    else:
+                        self.accounts[currency]["LEVERAGE"] = 0
+                    self.accounts[currency]["RESULT"] = self.accounts[currency]["SUMREAL"]
+                    break
+            else:
+                message = "Currency " + str(currency) + " not found."
+                var.logger.error(message)
+                exit(1)
+
+        # Refresh Positions table
+
+        for num, symbol in enumerate(self.symbol_list):
+            self.positions[symbol]["STATE"] = self.instruments[symbol]["state"]
+            self.positions[symbol]["VOL24h"] = self.instruments[symbol]["volume24h"]
+            self.positions[symbol]["FUND"] = round(
+                self.instruments[symbol]["fundingRate"] * 100, 6
+            )
+            update_label(table="position", column=0, row=num + 1, val=symbol)
+            if self.positions[symbol]["POS"]:
+                pos = Function.volume(qty=self.positions[symbol]["POS"], symbol=symbol)
+            else:
+                pos = "0"
+            update_label(table="position", column=1, row=num + 1, val=pos)
+            update_label(
+                table="position",
+                column=2,
+                row=num + 1,
+                val=(
+                    Function.format_price(
+                        self, 
+                        number=self.positions[symbol]["ENTRY"],
+                        symbol=symbol,
+                    )
+                    if self.positions[symbol]["ENTRY"] is not None
+                    else 0
+                ),
+            )
+            update_label(
+                table="position",
+                column=3,
+                row=num + 1,
+                val=(
+                    self.positions[symbol]["PNL"]
+                    if self.positions[symbol]["PNL"] is not None
+                    else 0
+                ),
+            )
+            update_label(
+                table="position",
+                column=4,
+                row=num + 1,
+                val=(
+                    str(self.positions[symbol]["MCALL"]).replace("100000000", "inf")
+                    if self.positions[symbol]["MCALL"] is not None
+                    else 0
+                ),
+            )
+            update_label(
+                table="position", column=5, row=num + 1, val=self.positions[symbol]["STATE"]
+            )
+            update_label(
+                table="position",
+                column=6,
+                row=num + 1,
+                val=humanFormat(self.positions[symbol]["VOL24h"]),
+            )
+            if isinstance(self.instruments[symbol]["expiry"], datetime):
+                tm = self.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
+            else:
+                tm = self.instruments[symbol]["expiry"]
+            update_label(table="position", column=7, row=num + 1, val=tm)
+            update_label(
+                table="position", column=8, row=num + 1, val=self.positions[symbol]["FUND"]
+            )
+
+        # Refresh Orderbook table
+
+        def display_order_book_values(
+            val: dict, start: int, end: int, direct: int, side: str
+        ) -> None:
+            count = 0
+            if side == "asks":
+                col = 2
+                color = "orange red"
+            else:
+                col = 0
+                color = "green2"
+            col_qty = abs(col - 2)
+            for row in range(start, end, direct):
+                vlm = ""
+                price = ""
+                qty = 0
+                if len(val[side]) > count:
+                    price = Function.format_price(self, number=val[side][count][0], symbol=var.symbol)
+                    vlm = Function.volume(self, qty=val[side][count][1], symbol=var.symbol)
+                    if var.orders:
+                        qty = Function.volume(
+                            self, 
+                            qty=find_order(float(price), qty, symbol=var.symbol),
+                            symbol=var.symbol,
+                        )
+                if str(qty) != "0":
+                    update_label(table="orderbook", column=col_qty, row=row, val=qty)
+                    disp.labels["orderbook"][col_qty][row]["bg"] = color
+                else:
+                    update_label(table="orderbook", column=col_qty, row=row, val="")
+                    disp.labels["orderbook"][col_qty][row]["bg"] = disp.bg_color
+                update_label(table="orderbook", column=col, row=row, val=vlm)
+                update_label(table="orderbook", column=1, row=row, val=price)
+                count += 1
+
+        num = int(disp.num_book / 2)
+        if var.order_book_depth == "quote":
+            if self.ticker[var.symbol]["askSize"]:
+                update_label(
+                    table="orderbook",
+                    column=2,
+                    row=num,
+                    val=Function.volume(self, qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol),
+                )
+            else:
+                update_label(table="orderbook", column=2, row=num, val="")
+            if var.ticker[var.symbol]["bidSize"]:
+                update_label(
+                    table="orderbook",
+                    column=0,
+                    row=num + 1,
+                    val=Function.volume(self, qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol),
+                )
+            else:
+                update_label(table="orderbook", column=0, row=num + 1, val="")
+            disp.labels["orderbook"][0][num + 1]["fg"] = "black"
+            first_price_sell = (
+                self.ticker[var.symbol]["ask"]
+                + (num - 1) * var.instruments[var.symbol]["tickSize"]
+            )
+            first_price_buy = var.ticker[var.symbol]["bid"]
+            for row in range(disp.num_book - 1):
+                if row < num:
+                    price = round(
+                        first_price_sell - row * self.instruments[var.symbol]["tickSize"],
+                        disp.price_rounding[var.symbol],
+                    )
+                    qty = 0
+                    if var.orders:
+                        qty = Function.volume(
+                            self, 
+                            qty=find_order(float(price), qty, symbol=var.symbol),
+                            symbol=var.symbol,
+                        )
+                    if var.ticker[var.symbol]["ask"]:
+                        price = Function.format_price(self, number=price, symbol=var.symbol)
+                    else:
+                        price = ""
+                    update_label(table="orderbook", column=1, row=row + 1, val=price)
+                    if str(qty) != "0":
+                        update_label(table="orderbook", column=0, row=row + 1, val=qty)
+                        disp.label_book[0][row + 1]["bg"] = "orange red"
+                    else:
+                        update_label(table="orderbook", column=0, row=row + 1, val="")
+                        disp.labels["orderbook"][0][row + 1]["bg"] = disp.bg_color
+                else:
+                    price = round(
+                        first_price_buy
+                        - (row - num) * self.instruments[var.symbol]["tickSize"],
+                        disp.price_rounding[var.symbol],
+                    )
+                    qty = 0
+                    if var.orders:
+                        qty = Function.volume(
+                            self, 
+                            qty=find_order(price, qty, symbol=var.symbol), symbol=var.symbol
+                        )
+                    if price > 0:
+                        price = Function.format_price(self, number=price, symbol=var.symbol)
+                    else:
+                        price = ""
+                    update_label(table="orderbook", column=1, row=row + 1, val=price)
+                    if str(qty) != "0":
+                        update_label(table="orderbook", column=2, row=row + 1, val=qty)
+                        disp.labels["orderbook"][2][row + 1]["bg"] = "green2"
+                    else:
+                        update_label(table="orderbook", column=2, row=row + 1, val="")
+                        disp.labels["orderbook"][2][row + 1]["bg"] = disp.bg_color
+        else:
+            val = self.market_depth10()[var.symbol]
+            display_order_book_values(
+                val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
+            )
+            display_order_book_values(val=val, start=num, end=0, direct=-1, side="asks")
+
+        # Update Robots table
+
+        for num, emi in enumerate(self.robots):
+            symbol = self.robots[emi]["SYMBCAT"]
+            price = Function.close_price(self, symbol=symbol, pos=self.robots[emi]["POS"])
+            if price:
+                calc = Function.calculate(
+                    self, 
+                    symbol=symbol,
+                    price=price,
+                    qty=-float(self.robots[emi]["POS"]),
+                    rate=0,
+                    fund=1,
+                )
+                self.robots[emi]["PNL"] = (
+                    self.robots[emi]["SUMREAL"]
+                    + calc["sumreal"]
+                    - self.robots[emi]["COMMISS"]
+                )
+            symbol = self.robots[emi]["SYMBCAT"]
+            update_label(table="robots", column=0, row=num + 1, val=emi)
+            update_label(table="robots", column=1, row=num + 1, val=symbol)
+            update_label(
+                table="robots",
+                column=2,
+                row=num + 1,
+                val=self.instruments[symbol]["settlCurrency"],
+            )
+            update_label(
+                table="robots", column=3, row=num + 1, val=self.robots[emi]["TIMEFR"]
+            )
+            update_label(
+                table="robots", column=4, row=num + 1, val=self.robots[emi]["CAPITAL"]
+            )
+            update_label(
+                table="robots", column=5, row=num + 1, val=self.robots[emi]["STATUS"]
+            )
+            update_label(
+                table="robots",
+                column=6,
+                row=num + 1,
+                val=humanFormat(self.robots[emi]["VOL"]),
+            )
+            update_label(
+                table="robots",
+                column=7,
+                row=num + 1,
+                val="{:.8f}".format(self.robots[emi]["PNL"]),
+            )
+            val = Function.volume(
+                self, 
+                qty=self.robots[emi]["POS"],
+                symbol=symbol,
+            )
+            if disp.labels_cache["robots"][8][num + 1] != val:
+                if self.robots[emi]["STATUS"] == "RESERVED":
+                    if self.robots[emi]["POS"] != 0:
+                        disp.labels["robots"][5][num + 1]["fg"] = "red"
+                    else:
+                        disp.labels["robots"][5][num + 1]["fg"] = "#212121"
+            update_label(
+                table="robots",
+                column=8,
+                row=num + 1,
+                val=val,
+            )
+            self.robots[emi]["y_position"] = num + 1
+
+        # Refresh Account table
+
+        for symbol, position in self.positions.items():
+            if position["POS"] != 0:
+                calc = Function.calculate(
+                    self, 
+                    symbol=symbol,
+                    price=Function.close_price(self, symbol=symbol, pos=position["POS"]),
+                    qty=-position["POS"],
+                    rate=0,
+                    fund=1,
+                )
+                settlCurrency = self.instruments[symbol]["settlCurrency"]
+                if settlCurrency in self.accounts:
+                    self.accounts[settlCurrency]["RESULT"] += calc["sumreal"]
+                else:
+                    var.logger.error(
+                        settlCurrency
+                        + " not found. See the CURRENCIES variable in the .env file."
+                    )
+                    exit(1)
+        for num, cur in enumerate(self.currencies):
+            update_label(table="account", column=0, row=num + 1, val=cur)
+            update_label(
+                table="account",
+                column=1,
+                row=num + 1,
+                val=format_number(number=self.accounts[cur]["MARGINBAL"]),
+            )
+            update_label(
+                table="account",
+                column=2,
+                row=num + 1,
+                val=format_number(number=self.accounts[cur]["AVAILABLE"]),
+            )
+            update_label(
+                table="account",
+                column=3,
+                row=num + 1,
+                val="{:.3f}".format(self.accounts[cur]["LEVERAGE"]),
+            )
+            update_label(
+                table="account",
+                column=4,
+                row=num + 1,
+                val=format_number(number=self.accounts[cur]["RESULT"]),
+            )
+            update_label(
+                table="account",
+                column=5,
+                row=num + 1,
+                val=format_number(number=-self.accounts[cur]["COMMISS"]),
+            )
+            update_label(
+                table="account",
+                column=6,
+                row=num + 1,
+                val=format_number(number=-self.accounts[cur]["FUNDING"]),
+            )
+            number = (
+                self.accounts[cur]["MARGINBAL"]
+                - self.accounts[cur]["RESULT"]
+                + self.accounts[cur]["COMMISS"]
+                + self.accounts[cur]["FUNDING"]
+            )
+            update_label(
+                table="account", column=7, row=num + 1, val=format_number(number=number)
+            )
+
+    def close_price(self, symbol: tuple, pos: int) -> float:
+        if symbol in self.ticker:
+            close = self.ticker[symbol]["bid"] if pos > 0 else self.ticker[symbol]["ask"]
+        else:
+            close = (
+                self.instruments[symbol]["bidPrice"]
+                if pos > 0
+                else self.instruments[symbol]["askPrice"]
+            )
+
+        return close
+
+
 
 def del_order(clOrdID: str) -> int:
     """
@@ -757,41 +1152,6 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
     res = round(price * arg, 0) / arg
 
     return res
-
-
-def refresh_on_screen(utc: datetime) -> None:
-    """
-    Refresh information on screen
-    """
-    # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
-    if utc.hour != var.refresh_hour:
-        var.cursor_mysql.execute("select count(*) from " + db + ".robots")
-        var.cursor_mysql.fetchall()
-        var.refresh_hour = utc.hour
-        var.logger.info("Emboldening MySQL")
-
-    disp.label_time["text"] = "(" + str(var.connect_count) + ")  " + time.ctime()
-    disp.label_f9["text"] = str(disp.f9)
-    if disp.f9 == "ON":
-        disp.label_f9.config(bg="green3")
-    else:
-        disp.label_f9.config(bg="orange red")
-    if ws.bitmex.logNumFatal == 0:
-        if utc > var.message_time + timedelta(seconds=10):
-            if ws.bitmex.message_counter == var.message_point:
-                info_display("No data within 10 sec")
-                disp.label_online["text"] = "NO DATA"
-                disp.label_online.config(bg="yellow2")
-                ws.bitmex.urgent_announcement()
-            var.message_time = utc
-            var.message_point = ws.bitmex.message_counter
-    if ws.bitmex.message_counter != var.message_point:
-        disp.label_online["text"] = "ONLINE"
-        disp.label_online.config(bg="green3")
-    if ws.bitmex.logNumFatal != 0:
-        disp.label_online["text"] = "error " + str(ws.bitmex.logNumFatal)
-        disp.label_online.config(bg="orange red")
-    refresh_tables()
 
 
 def handler_order(event, order_number: int) -> None:
@@ -1128,364 +1488,12 @@ def handler_book(row_position: int) -> None:
         refresh_var = book_window.after_idle(refresh)
 
 
-def close_price(symbol: str, pos: int) -> float:
-    if symbol in var.ticker:
-        close = var.ticker[symbol]["bid"] if pos > 0 else var.ticker[symbol]["ask"]
-    else:
-        close = (
-            var.instruments[symbol]["bidPrice"]
-            if pos > 0
-            else var.instruments[symbol]["askPrice"]
-        )
-
-    return close
-
-
 def update_label(
     table: str, column: int, row: int, val: Union[str, int, float]
 ) -> None:
     if disp.labels_cache[table][column][row] != val:
         disp.labels_cache[table][column][row] = val
         disp.labels[table][column][row]["text"] = val
-
-
-def refresh_tables() -> None:
-    """
-    Update tkinter labels in the tables
-    """
-
-    # Get funds
-
-    funds = ws.bitmex.get_funds()
-    for cur in var.accounts:
-        for fund in funds:
-            if cur == fund["currency"]:
-                var.accounts[cur]["ACCOUNT"] = fund["account"]
-                var.accounts[cur]["MARGINBAL"] = (
-                    float(fund["marginBalance"]) / var.currency_divisor[cur]
-                )
-                var.accounts[cur]["AVAILABLE"] = (
-                    float(fund["availableMargin"]) / var.currency_divisor[cur]
-                )
-                var.accounts[cur]["LEVERAGE"] = fund["marginLeverage"]
-                var.accounts[cur]["RESULT"] = var.accounts[cur]["SUMREAL"]
-                break
-        else:
-            mes = "Currency " + str(cur) + " not found."
-            var.logger.error(mes)
-            exit(1)
-
-    # Refresh Positions table
-
-    for num, symbol in enumerate(var.symbol_list):
-        var.positions[symbol]["STATE"] = var.instruments[symbol]["state"]
-        var.positions[symbol]["VOL24h"] = var.instruments[symbol]["volume24h"]
-        var.positions[symbol]["FUND"] = round(
-            var.instruments[symbol]["fundingRate"] * 100, 6
-        )
-        update_label(table="position", column=0, row=num + 1, val=symbol)
-        if var.positions[symbol]["POS"]:
-            pos = volume(qty=var.positions[symbol]["POS"], symbol=symbol)
-        else:
-            pos = "0"
-        update_label(table="position", column=1, row=num + 1, val=pos)
-        update_label(
-            table="position",
-            column=2,
-            row=num + 1,
-            val=(
-                format_price(
-                    number=var.positions[symbol]["ENTRY"],
-                    symbol=symbol,
-                )
-                if var.positions[symbol]["ENTRY"] is not None
-                else 0
-            ),
-        )
-        update_label(
-            table="position",
-            column=3,
-            row=num + 1,
-            val=(
-                var.positions[symbol]["PNL"]
-                if var.positions[symbol]["PNL"] is not None
-                else 0
-            ),
-        )
-        update_label(
-            table="position",
-            column=4,
-            row=num + 1,
-            val=(
-                str(var.positions[symbol]["MCALL"]).replace("100000000", "inf")
-                if var.positions[symbol]["MCALL"] is not None
-                else 0
-            ),
-        )
-        update_label(
-            table="position", column=5, row=num + 1, val=var.positions[symbol]["STATE"]
-        )
-        update_label(
-            table="position",
-            column=6,
-            row=num + 1,
-            val=humanFormat(var.positions[symbol]["VOL24h"]),
-        )
-        if isinstance(var.instruments[symbol]["expiry"], datetime):
-            tm = var.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
-        else:
-            tm = var.instruments[symbol]["expiry"]
-        update_label(table="position", column=7, row=num + 1, val=tm)
-        update_label(
-            table="position", column=8, row=num + 1, val=var.positions[symbol]["FUND"]
-        )
-
-    # Refresh Orderbook table
-
-    def display_order_book_values(
-        val: dict, start: int, end: int, direct: int, side: str
-    ) -> None:
-        count = 0
-        if side == "asks":
-            col = 2
-            color = "orange red"
-        else:
-            col = 0
-            color = "green2"
-        col_qty = abs(col - 2)
-        for row in range(start, end, direct):
-            vlm = ""
-            price = ""
-            qty = 0
-            if len(val[side]) > count:
-                price = format_price(number=val[side][count][0], symbol=var.symbol)
-                vlm = volume(qty=val[side][count][1], symbol=var.symbol)
-                if var.orders:
-                    qty = volume(
-                        qty=find_order(float(price), qty, symbol=var.symbol),
-                        symbol=var.symbol,
-                    )
-            if str(qty) != "0":
-                update_label(table="orderbook", column=col_qty, row=row, val=qty)
-                disp.labels["orderbook"][col_qty][row]["bg"] = color
-            else:
-                update_label(table="orderbook", column=col_qty, row=row, val="")
-                disp.labels["orderbook"][col_qty][row]["bg"] = disp.bg_color
-            update_label(table="orderbook", column=col, row=row, val=vlm)
-            update_label(table="orderbook", column=1, row=row, val=price)
-            count += 1
-
-    num = int(disp.num_book / 2)
-    if var.order_book_depth == "quote":
-        if var.ticker[var.symbol]["askSize"]:
-            update_label(
-                table="orderbook",
-                column=2,
-                row=num,
-                val=volume(qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol),
-            )
-        else:
-            update_label(table="orderbook", column=2, row=num, val="")
-        if var.ticker[var.symbol]["bidSize"]:
-            update_label(
-                table="orderbook",
-                column=0,
-                row=num + 1,
-                val=volume(qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol),
-            )
-        else:
-            update_label(table="orderbook", column=0, row=num + 1, val="")
-        disp.labels["orderbook"][0][num + 1]["fg"] = "black"
-        first_price_sell = (
-            var.ticker[var.symbol]["ask"]
-            + (num - 1) * var.instruments[var.symbol]["tickSize"]
-        )
-        first_price_buy = var.ticker[var.symbol]["bid"]
-        for row in range(disp.num_book - 1):
-            if row < num:
-                price = round(
-                    first_price_sell - row * var.instruments[var.symbol]["tickSize"],
-                    disp.price_rounding[var.symbol],
-                )
-                qty = 0
-                if var.orders:
-                    qty = volume(
-                        qty=find_order(float(price), qty, symbol=var.symbol),
-                        symbol=var.symbol,
-                    )
-                if var.ticker[var.symbol]["ask"]:
-                    price = format_price(number=price, symbol=var.symbol)
-                else:
-                    price = ""
-                update_label(table="orderbook", column=1, row=row + 1, val=price)
-                if str(qty) != "0":
-                    update_label(table="orderbook", column=0, row=row + 1, val=qty)
-                    disp.label_book[0][row + 1]["bg"] = "orange red"
-                else:
-                    update_label(table="orderbook", column=0, row=row + 1, val="")
-                    disp.labels["orderbook"][0][row + 1]["bg"] = disp.bg_color
-            else:
-                price = round(
-                    first_price_buy
-                    - (row - num) * var.instruments[var.symbol]["tickSize"],
-                    disp.price_rounding[var.symbol],
-                )
-                qty = 0
-                if var.orders:
-                    qty = volume(
-                        qty=find_order(price, qty, symbol=var.symbol), symbol=var.symbol
-                    )
-                if price > 0:
-                    price = format_price(number=price, symbol=var.symbol)
-                else:
-                    price = ""
-                update_label(table="orderbook", column=1, row=row + 1, val=price)
-                if str(qty) != "0":
-                    update_label(table="orderbook", column=2, row=row + 1, val=qty)
-                    disp.labels["orderbook"][2][row + 1]["bg"] = "green2"
-                else:
-                    update_label(table="orderbook", column=2, row=row + 1, val="")
-                    disp.labels["orderbook"][2][row + 1]["bg"] = disp.bg_color
-    else:
-        val = ws.bitmex.market_depth10()[(("symbol", var.symbol),)]
-        display_order_book_values(
-            val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
-        )
-        display_order_book_values(val=val, start=num, end=0, direct=-1, side="asks")
-
-    # Update Robots table
-
-    for num, emi in enumerate(bot.robots):
-        symbol = bot.robots[emi]["SYMBOL"]
-        price = close_price(symbol=symbol, pos=bot.robots[emi]["POS"])
-        if price:
-            calc = calculate(
-                symbol=symbol,
-                price=price,
-                qty=-float(bot.robots[emi]["POS"]),
-                rate=0,
-                fund=1,
-            )
-            bot.robots[emi]["PNL"] = (
-                bot.robots[emi]["SUMREAL"]
-                + calc["sumreal"]
-                - bot.robots[emi]["COMMISS"]
-            )
-        symbol = bot.robots[emi]["SYMBOL"]
-        update_label(table="robots", column=0, row=num + 1, val=emi)
-        update_label(table="robots", column=1, row=num + 1, val=symbol)
-        update_label(
-            table="robots",
-            column=2,
-            row=num + 1,
-            val=var.instruments[symbol]["settlCurrency"],
-        )
-        update_label(
-            table="robots", column=3, row=num + 1, val=bot.robots[emi]["TIMEFR"]
-        )
-        update_label(
-            table="robots", column=4, row=num + 1, val=bot.robots[emi]["CAPITAL"]
-        )
-        update_label(
-            table="robots", column=5, row=num + 1, val=bot.robots[emi]["STATUS"]
-        )
-        update_label(
-            table="robots",
-            column=6,
-            row=num + 1,
-            val=humanFormat(bot.robots[emi]["VOL"]),
-        )
-        update_label(
-            table="robots",
-            column=7,
-            row=num + 1,
-            val="{:.8f}".format(bot.robots[emi]["PNL"]),
-        )
-        val = volume(
-            qty=bot.robots[emi]["POS"],
-            symbol=symbol,
-        )
-        if disp.labels_cache["robots"][8][num + 1] != val:
-            if bot.robots[emi]["STATUS"] == "RESERVED":
-                if bot.robots[emi]["POS"] != 0:
-                    disp.labels["robots"][5][num + 1]["fg"] = "red"
-                else:
-                    disp.labels["robots"][5][num + 1]["fg"] = "#212121"
-        update_label(
-            table="robots",
-            column=8,
-            row=num + 1,
-            val=val,
-        )
-        bot.robots[emi]["y_position"] = num + 1
-
-    # Refresh Account table
-
-    for symbol, position in var.positions.items():
-        if position["POS"] != 0:
-            calc = calculate(
-                symbol=symbol,
-                price=close_price(symbol=symbol, pos=position["POS"]),
-                qty=-position["POS"],
-                rate=0,
-                fund=1,
-            )
-            settlCurrency = var.instruments[symbol]["settlCurrency"]
-            if settlCurrency in var.accounts:
-                var.accounts[settlCurrency]["RESULT"] += calc["sumreal"]
-            else:
-                var.logger.error(
-                    settlCurrency
-                    + " not found. See the CURRENCIES variable in the .env file."
-                )
-                exit(1)
-    for num, cur in enumerate(var.currencies):
-        update_label(table="account", column=0, row=num + 1, val=cur)
-        update_label(
-            table="account",
-            column=1,
-            row=num + 1,
-            val=format_number(number=var.accounts[cur]["MARGINBAL"]),
-        )
-        update_label(
-            table="account",
-            column=2,
-            row=num + 1,
-            val=format_number(number=var.accounts[cur]["AVAILABLE"]),
-        )
-        update_label(
-            table="account",
-            column=3,
-            row=num + 1,
-            val="{:.3f}".format(var.accounts[cur]["LEVERAGE"]),
-        )
-        update_label(
-            table="account",
-            column=4,
-            row=num + 1,
-            val=format_number(number=var.accounts[cur]["RESULT"]),
-        )
-        update_label(
-            table="account",
-            column=5,
-            row=num + 1,
-            val=format_number(number=-var.accounts[cur]["COMMISS"]),
-        )
-        update_label(
-            table="account",
-            column=6,
-            row=num + 1,
-            val=format_number(number=-var.accounts[cur]["FUNDING"]),
-        )
-        number = (
-            var.accounts[cur]["MARGINBAL"]
-            - var.accounts[cur]["RESULT"]
-            + var.accounts[cur]["COMMISS"]
-            + var.accounts[cur]["FUNDING"]
-        )
-        update_label(
-            table="account", column=7, row=num + 1, val=format_number(number=number)
-        )
 
 
 def format_number(number: float) -> str:
@@ -1539,10 +1547,11 @@ def round_price(symbol: str, price: float, rside: int) -> float:
 
 
 def handler_pos(event, row_position: int) -> None:
-    if row_position > len(var.symbol_list):
-        row_position = len(var.symbol_list)
-    var.symbol = var.symbol_list[row_position - 1]
-    for row in enumerate(var.symbol_list):
+    ws = Websockets.connect[var.current_exchange]
+    if row_position > len(ws.symbol_list):
+        row_position = len(ws.symbol_list)
+    var.symbol = ws.symbol_list[row_position - 1]
+    for row in enumerate(ws.symbol_list):
         for column in enumerate(disp.labels["position"]):
             if row[0] + 1 == row_position:
                 disp.labels["position"][column[0]][row[0] + 1]["bg"] = "yellow"
