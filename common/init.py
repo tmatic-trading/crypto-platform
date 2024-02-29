@@ -11,6 +11,8 @@ from common.variables import Variables as var
 from display.variables import Variables as disp
 from functions import Function
 
+from api.websockets import Websockets
+
 # from dotenv import load_dotenv
 
 # from ws.init import Variables as ws
@@ -216,49 +218,61 @@ class Init(WS, Variables):
             self.ticker[symbol]["fundingRate"] = self.instruments[symbol]["fundingRate"]
 
 
-def initial_display() -> None:
-    """
-    Download the latest trades and funding data from the database (if any)
-    """
-    return
-    var.cursor_mysql.execute(
-        "select EMI, SYMBOL, SIDE, QTY, PRICE, TTIME, COMMISS from "
+    def initial_display(self) -> None:
+        """
+        Download the latest trades and funding data from the database (if any)
+        """
+        sql = "select * from("
+        union = ""
+        for name in var.exchange_list:
+            user_id = Websockets.connect[name].user_id
+            sql += (
+                union
+                + "select ID, EMI, SYMBOL, CATEGORY, EXCHANGE, SIDE, QTY, \
+            PRICE, TTIME, COMMISS from "
+                + db
+                + ".coins where SIDE = -1 and ACCOUNT = "
+                + str(user_id)
+                + " and exchange = '"
+                + name 
+                + "' "
+            )
+            union = "union "
+        sql += ") T order by id desc limit 121"
+        var.cursor_mysql.execute(sql)
+        data = var.cursor_mysql.fetchall()
+        disp.funding_display_counter = 0
+        disp.text_funding.delete("1.0", "end")
+        disp.text_funding.insert("1.0", " - Funding -\n")
+        for val in reversed(data):
+            Function.add_symbol(self, symbol=(val["SYMBOL"], val["CATEGORY"]))
+            Function.funding_display(self, val)
+        return
+
+        var.cursor_mysql.execute(
+            "select EMI, SYMBOL, SIDE, QTY, TRADE_PRICE, TTIME, COMMISS, SUMREAL \
+                from "
             + db
-            + ".coins where SIDE=-1 AND ACCOUNT=%s order by id desc limit 121",
-        account
-    )
-    data = var.cursor_mysql.fetchall()
-    disp.funding_display_counter = 0
-    disp.text_funding.delete("1.0", "end")
-    disp.text_funding.insert("1.0", " - Funding -\n")
-    for val in reversed(data):
-        function.add_symbol(symbol=val["SYMBOL"])
-        function.funding_display(val)
+            + ".coins where SIDE<>-1 AND account=%s order by id desc \
+                    limit 151",
+            account,
+        )
+        data = var.cursor_mysql.fetchall()
+        disp.trades_display_counter = 0
+        disp.text_trades.delete("1.0", "end")
+        disp.text_trades.insert("1.0", " - Trades -\n")
+        for val in reversed(data):
+            function.add_symbol(symbol=val["SYMBOL"])
+            function.trades_display(value=val)
 
-    var.cursor_mysql.execute(
-        "select EMI, SYMBOL, SIDE, QTY, TRADE_PRICE, TTIME, COMMISS, SUMREAL \
-            from "
-        + db
-        + ".coins where SIDE<>-1 AND account=%s order by id desc \
-                limit 151",
-        account,
-    )
-    data = var.cursor_mysql.fetchall()
-    disp.trades_display_counter = 0
-    disp.text_trades.delete("1.0", "end")
-    disp.text_trades.insert("1.0", " - Trades -\n")
-    for val in reversed(data):
-        function.add_symbol(symbol=val["SYMBOL"])
-        function.trades_display(value=val)
-
-    var.cursor_mysql.execute(
-        "select max(TTIME) TTIME from " + db + ".coins where account=%s AND SIDE=-1",
-        account,
-    )
-    data = var.cursor_mysql.fetchall()
-    if data[0]["TTIME"]:
-        var.last_database_time = datetime.strptime(
-            str(data[0]["TTIME"]), "%Y-%m-%d %H:%M:%S"
+        var.cursor_mysql.execute(
+            "select max(TTIME) TTIME from " + db + ".coins where account=%s AND SIDE=-1",
+            account,
+        )
+        data = var.cursor_mysql.fetchall()
+        if data[0]["TTIME"]:
+            var.last_database_time = datetime.strptime(
+                str(data[0]["TTIME"]), "%Y-%m-%d %H:%M:%S"
         )
 
 def setup_logger():

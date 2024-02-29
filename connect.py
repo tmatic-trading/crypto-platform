@@ -29,7 +29,7 @@ def setup():
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             setup_exchange(ws, name=name)
-    common.initial_display()
+    common.Init.initial_display(ws)
     display.load_labels()
     algo.init_algo()
     var.robots_thread_is_active = "yes"
