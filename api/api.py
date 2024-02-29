@@ -40,6 +40,10 @@ class WS(Bitmex, Bybit):
         "Bitmex": BitmexAgent.get_ticker,
         "Bybit": BybitAgent.get_ticker,
     }
+    urgent_announcement_agent = {
+        "Bitmex": BitmexAgent.urgent_announcement,
+        "Bybit": BybitAgent.urgent_announcement,
+    }
 
     def start_ws(self, name) -> None:
         self.select_ws[name](self)
@@ -111,4 +115,24 @@ class WS(Bitmex, Bybit):
         """
 
         return self.get_ticker_agent[name](self)
+    
+    def urgent_announcement(self, name: str) -> list:
+        """
+        Public announcements of the exchange
+        """
 
+        return self.urgent_announcement_agent[name](self)
+    
+    def get_funds(self) -> list:
+        """
+        Cash in the account
+        """
+
+        return self.data["margin"].values()
+
+    def market_depth10(self) -> list:
+        """
+        Gets market depth (orderbook), 10 lines deep.
+        """
+
+        return self.data["orderBook10"]

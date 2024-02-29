@@ -31,3 +31,6 @@ class Agent:
 
     def exit(self):
         print("___exit")
+
+    def urgent_announcement(self):
+        print("___urgent_announcement")

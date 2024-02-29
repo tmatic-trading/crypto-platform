@@ -91,6 +91,8 @@ class Agent(Variables):
             self.instruments[symbol]["settlCurrency"] = None
         self.instruments[symbol]["tickSize"] = instrument["tickSize"]
         self.instruments[symbol]["lotSize"] = instrument["lotSize"]
+        self.instruments[symbol]["state"] = instrument["state"]
+        self.instruments[symbol]["volume24h"] = instrument["volume24h"]
         if "bidPrice" in instrument:
             self.instruments[symbol]["bidPrice"] = instrument["bidPrice"]
         else:
@@ -107,7 +109,7 @@ class Agent(Variables):
         else:
             self.instruments[symbol]["expiry"] = "Perpetual"
         if "fundingRate" not in instrument:
-            self.instruments[symbol]["fundingRate"] = None
+            self.instruments[symbol]["fundingRate"] = 0
         else:
             self.instruments[symbol]["fundingRate"] = instrument["fundingRate"]
 
@@ -185,6 +187,13 @@ class Agent(Variables):
 
         return self.ticker
     
+    def urgent_announcement(self) -> list:
+        """
+        Public announcements of the exchange
+        """
+        path = Listing.URGENT_ANNOUNCEMENT
+
+        return Send.request(self, path=path, verb="GET")
 
     def exit(self):
         """

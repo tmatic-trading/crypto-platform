@@ -30,8 +30,9 @@ def trade_state(event) -> None:
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
         disp.messageStopped = ""
-        ws.bitmex.logNumFatal = 0
-    print(disp.f9)
+        ws = Websockets.connect[var.current_exchange]
+        ws.logNumFatal = 0
+    print(var.current_exchange, disp.f9)
 
 
 def load_labels() -> None:
@@ -90,7 +91,7 @@ def load_labels() -> None:
                 disp.labels["position"][column][row]["bg"] = color
                 disp.labels["position"][column][row].bind(
                     "<Button-1>",
-                    lambda event, row_position=row: function.handler_pos(
+                    lambda event, row_position=row: functions.handler_pos(
                         event, row_position
                     ),
                 )
