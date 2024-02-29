@@ -905,7 +905,10 @@ def refresh_tables() -> None:
                 var.accounts[cur]["AVAILABLE"] = (
                     float(fund["availableMargin"]) / var.currency_divisor[cur]
                 )
-                var.accounts[cur]["LEVERAGE"] = fund["marginLeverage"]
+                if "marginLeverage" in fund:
+                    var.accounts[cur]["LEVERAGE"] = fund["marginLeverage"]
+                else:
+                    var.accounts[cur]["LEVERAGE"] = 0
                 var.accounts[cur]["RESULT"] = var.accounts[cur]["SUMREAL"]
                 break
         else:
