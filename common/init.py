@@ -247,23 +247,32 @@ class Init(WS, Variables):
         for val in reversed(data):
             Function.add_symbol(self, symbol=(val["SYMBOL"], val["CATEGORY"]))
             Function.funding_display(self, val)
-        return
-
-        var.cursor_mysql.execute(
-            "select EMI, SYMBOL, SIDE, QTY, TRADE_PRICE, TTIME, COMMISS, SUMREAL \
-                from "
-            + db
-            + ".coins where SIDE<>-1 AND account=%s order by id desc \
-                    limit 151",
-            account,
-        )
+        sql = "select * from("
+        union = ""
+        for name in var.exchange_list:
+            user_id = Websockets.connect[name].user_id
+            sql += (
+                union
+                + "select ID, EMI, SYMBOL, CATEGORY, EXCHANGE, SIDE, QTY, \
+            TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
+                + db
+                + ".coins where SIDE <> -1 and ACCOUNT = "
+                + str(user_id)
+                + " and exchange = '"
+                + name 
+                + "' "
+            )
+            union = "union "
+        sql += ") T order by id desc limit 151"
+        var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         disp.trades_display_counter = 0
         disp.text_trades.delete("1.0", "end")
         disp.text_trades.insert("1.0", " - Trades -\n")
         for val in reversed(data):
-            function.add_symbol(symbol=val["SYMBOL"])
-            function.trades_display(value=val)
+            Function.add_symbol(self, symbol=(val["SYMBOL"], val["CATEGORY"]))
+            Function.trades_display(self, value=val)
+        return
 
         var.cursor_mysql.execute(
             "select max(TTIME) TTIME from " + db + ".coins where account=%s AND SIDE=-1",

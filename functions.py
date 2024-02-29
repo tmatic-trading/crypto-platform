@@ -490,18 +490,18 @@ class Function(WS, Variables):
         disp.text_trades.insert(
             "2.0",
             time
-            + gap(val=str(value["SYMBOL"]), peak=8)
+            + gap(val=value["SYMBOL"]+"."+value["CATEGORY"][0], peak=10)
             + gap(
                 val=Function.format_price(
                     self, 
                     number=value["TRADE_PRICE"],
-                    symbol=value["SYMBOL"],
+                    symbol=(value["SYMBOL"], value["CATEGORY"]),
                 ),
                 peak=7,
             )
-            + gap(val="(" + str(value["EMI"]) + ")", peak=9)
+            + gap(val=value["EMI"][:10], peak=10)
             + " "
-            + Function.volume(self, qty=value["QTY"], symbol=value["SYMBOL"])
+            + Function.volume(self, qty=value["QTY"], symbol=(value["SYMBOL"], value["CATEGORY"]))
             + "\n",
         )
         if value["SIDE"] == 1:
@@ -708,7 +708,7 @@ class Function(WS, Variables):
                     Function.info_display(self, "No data within 10 sec")
                     disp.label_online["text"] = "NO DATA"
                     disp.label_online.config(bg="yellow2")
-                    self.urgent_announcement()
+                    self.urgent_announcement(self.name)
                 self.message_time = utc
                 self.message_point = self.message_counter
         if self.message_counter != self.message_point:
