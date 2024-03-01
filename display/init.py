@@ -121,7 +121,7 @@ def load_labels() -> None:
                 disp.labels["orderbook"][column][row]["height"] = 1
                 disp.labels["orderbook"][column][row].bind(
                     "<Button-1>",
-                    lambda row_position=row: function.handler_book(row_position),
+                    lambda row_position=row: functions.handler_orderbook(row_position),
                 )
             disp.labels["orderbook"][column][row].grid(row=row, column=column)
             disp.frame_3row_3col.grid_columnconfigure(column, weight=1)

@@ -325,9 +325,11 @@ class Init(WS, Variables):
         for val in var.orders.values():
             emi_in_orders.add(val["emi"])
         for emi in self.robots.copy():
+            symbol = tuple(emi.split("."))
+            print(symbol)
             if self.robots[emi]["STATUS"] in ("WORK", "OFF"):
                 pass
-            elif emi in self.symbol_list:
+            elif symbol in self.symbol_list:
                 self.robots[emi]["STATUS"] = "RESERVED"
             elif self.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
                 Function.info_display(self, "Robot EMI=" + emi + ". Deleting from 'robots'")
