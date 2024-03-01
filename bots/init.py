@@ -326,7 +326,6 @@ class Init(WS, Variables):
             emi_in_orders.add(val["emi"])
         for emi in self.robots.copy():
             symbol = tuple(emi.split("."))
-            print(symbol)
             if self.robots[emi]["STATUS"] in ("WORK", "OFF"):
                 pass
             elif symbol in self.symbol_list:

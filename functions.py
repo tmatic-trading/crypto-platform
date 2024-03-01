@@ -1591,11 +1591,11 @@ def find_order(price: float, qty: int, symbol: str) -> int:
 
 def handler_robots(event, row_position: int) -> None:
     emi = None
-    for ws in Websockets.connect.values():
-        for val in ws.robots:
-            if ws.robots[val]["y_position"] == row_position:
-                emi = val
-                break
+    ws = Websockets.connect[var.current_exchange]
+    for val in ws.robots:
+        if ws.robots[val]["y_position"] == row_position:
+            emi = val
+            break
     if emi:
         if ws.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
 
