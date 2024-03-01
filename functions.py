@@ -1261,8 +1261,9 @@ def handler_order(event, order_number: int) -> None:
         change_color(color=disp.title_color, container=order_window)
 
 
-def handler_book(row_position: int) -> None:
+def handler_orderbook(row_position: int) -> None:
     disp.symb_book = var.symbol
+    ws = Websockets.connect[var.current_exchange]
 
     def refresh() -> None:
         book_window.title(var.symbol)
@@ -1270,31 +1271,33 @@ def handler_book(row_position: int) -> None:
             entry_price_ask.delete(0, "end")
             entry_price_ask.insert(
                 0,
-                format_price(
-                    number=var.ticker[var.symbol]["ask"],
+                Function.format_price(
+                    ws, 
+                    number=ws.ticker[var.symbol]["ask"],
                     symbol=var.symbol,
                 ),
             )
             entry_price_bid.delete(0, "end")
             entry_price_bid.insert(
                 0,
-                format_price(
-                    number=var.ticker[var.symbol]["bid"],
+                Function.format_price(
+                    ws, 
+                    number=ws.ticker[var.symbol]["bid"],
                     symbol=var.symbol,
                 ),
             )
             entry_quantity.delete(0, "end")
             entry_quantity.insert(
-                0, volume(qty=var.instruments[var.symbol]["lotSize"], symbol=var.symbol)
+                0, Function.volume(ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol)
             )
             option_robots["menu"].delete(0, "end")
             options = list()
-            for emi in bot.robots:
+            for emi in ws.robots:
                 if (
-                    bot.robots[emi]["SYMBOL"] in var.symbol_list
-                    and bot.robots[emi]["SYMBOL"] == var.symbol
+                    ws.robots[emi]["SYMBOL"] in ws.symbol_list
+                    and ws.robots[emi]["SYMBOL"] == var.symbol
                 ):
-                    options.append(bot.robots[emi]["EMI"])
+                    options.append(ws.robots[emi]["EMI"])
             for option in options:
                 option_robots["menu"].add_command(
                     label=option, command=lambda v=emi_number, optn=option: v.set(optn)
@@ -1314,32 +1317,33 @@ def handler_book(row_position: int) -> None:
                 qnt = abs(
                     int(
                         float(quantity.get())
-                        * var.instruments[var.symbol]["myMultiplier"]
+                        * ws.instruments[var.symbol]["myMultiplier"]
                     )
                 )
                 price = float(price_ask.get())
                 res = "yes"
             except Exception:
-                info_display(
+                Function.info_display(
+                    ws, 
                     "Fields must be numbers! quantity: int or float, price: float"
                 )
                 res = "no"
             if res == "yes" and qnt != 0:
                 price = round_price(symbol=var.symbol, price=price, rside=-qnt)
                 if price <= 0:
-                    mes = "The price must be above zero."
-                    info_display(mes)
-                    warning_window(mes)
+                    message = "The price must be above zero."
+                    Function.info_display(ws, message)
+                    warning_window(message)
                     return
-                if qnt % var.instruments[var.symbol]["lotSize"] != 0:
-                    mes = (
+                if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
+                    message = (
                         "The "
                         + str(var.symbol)
                         + " quantity must be multiple to "
-                        + str(var.instruments[var.symbol]["lotSize"])
+                        + str(ws.instruments[var.symbol]["lotSize"])
                     )
-                    info_display(mes)
-                    warning_window(mes)
+                    Function.info_display(ws, message)
+                    warning_window(message)
                     return
                 post_order(
                     symbol=var.symbol,
@@ -1349,7 +1353,7 @@ def handler_book(row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            info_display("Some of the fields are empty!")
+            Function.info_display(ws, "Some of the fields are empty!")
 
     def callback_buy_limit() -> None:
         if quantity.get() and price_bid.get() and emi_number.get():
@@ -1357,32 +1361,33 @@ def handler_book(row_position: int) -> None:
                 qnt = abs(
                     int(
                         float(quantity.get())
-                        * var.instruments[var.symbol]["myMultiplier"]
+                        * ws.instruments[var.symbol]["myMultiplier"]
                     )
                 )
                 price = float(price_bid.get())
                 res = "yes"
             except Exception:
-                info_display(
+                Function.info_display(
+                    ws, 
                     "Fields must be numbers! quantity: int or float, price: float"
                 )
                 res = "no"
             if res == "yes" and qnt != 0:
                 price = round_price(symbol=var.symbol, price=price, rside=qnt)
                 if price <= 0:
-                    mes = "The price must be above zero."
-                    info_display(mes)
-                    warning_window(mes)
+                    message = "The price must be above zero."
+                    Function.info_display(message)
+                    warning_window(message)
                     return
-                if qnt % var.instruments[var.symbol]["lotSize"] != 0:
+                if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
                     mes = (
                         "The "
                         + str(var.symbol)
                         + " quantity must be multiple to "
-                        + str(var.instruments[var.symbol]["lotSize"])
+                        + str(ws.instruments[var.symbol]["lotSize"])
                     )
-                    info_display(mes)
-                    warning_window(mes)
+                    Function.info_display(message)
+                    warning_window(message)
                     return
                 post_order(
                     symbol=var.symbol,
@@ -1392,7 +1397,7 @@ def handler_book(row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            info_display("Some of the fields are empty!")
+            Function.info_display(self, "Some of the fields are empty!")
 
     if disp.book_window_trigger == "off" and disp.f9 == "OFF":
         disp.book_window_trigger = "on"
@@ -1428,15 +1433,17 @@ def handler_book(row_position: int) -> None:
         )
         entry_price_ask.insert(
             0,
-            format_price(
-                number=var.ticker[var.symbol]["ask"],
+            Function.format_price(
+                ws, 
+                number=ws.ticker[var.symbol]["ask"],
                 symbol=var.symbol,
             ),
         )
         entry_price_bid.insert(
             0,
-            format_price(
-                number=var.ticker[var.symbol]["bid"],
+            Function.format_price(
+                ws, 
+                number=ws.ticker[var.symbol]["bid"],
                 symbol=var.symbol,
             ),
         )
@@ -1444,7 +1451,7 @@ def handler_book(row_position: int) -> None:
             frame_quantity, width=6, bg="white", textvariable=quantity
         )
         entry_quantity.insert(
-            0, volume(qty=var.instruments[var.symbol]["lotSize"], symbol=var.symbol)
+            0, Function.volume(ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol)
         )
         label_ask = tk.Label(frame_market_ask, text="Price:")
         label_bid = tk.Label(frame_market_bid, text="Price:")
@@ -1454,12 +1461,12 @@ def handler_book(row_position: int) -> None:
         label_robots = tk.Label(frame_robots, text="EMI:")
         emi_number = tk.StringVar()
         options = list()
-        for emi in bot.robots:
+        for emi in ws.robots:
             if (
-                bot.robots[emi]["SYMBOL"] in var.symbol_list
-                and bot.robots[emi]["SYMBOL"] == var.symbol
+                ws.robots[emi]["SYMBCAT"] in ws.symbol_list
+                and ws.robots[emi]["SYMBCAT"] == var.symbol
             ):
-                options.append(bot.robots[emi]["EMI"])
+                options.append(ws.robots[emi]["EMI"])
         option_robots = tk.OptionMenu(frame_robots, emi_number, *options)
         frame_robots.grid(
             row=1, column=0, sticky="N" + "S" + "W" + "E", columnspan=2, padx=10, pady=0
