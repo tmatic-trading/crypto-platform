@@ -6,13 +6,11 @@ from datetime import datetime, timedelta
 from random import randint
 from typing import Union
 
-from api.api import WS
 from api.variables import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
 
-from api.websockets import Websockets
 
 # from ws.init import Variables as ws
 
@@ -20,7 +18,7 @@ from api.websockets import Websockets
 db = var.env["MYSQL_DATABASE"]
 
 
-class Function(WS, Variables):
+class Function(Variables):
     def calculate(
         self, symbol: tuple, price: float, qty: float, rate: int, fund: int
     ) -> dict:
@@ -41,15 +39,6 @@ class Function(WS, Variables):
             funding = qty * price * coef * rate
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
-
-    def add_symbol(self, symbol: tuple) -> None:
-        if symbol not in self.full_symbol_list:
-            self.full_symbol_list.append(symbol)
-            if symbol not in self.instruments:
-                self.get_instrument(name=self.name, symbol=symbol)
-            Function.rounding(self)
-        if symbol not in self.positions:
-            self.get_position(name=self.name, symbol=symbol)
 
     def rounding(self) -> None:
         if self.name not in disp.price_rounding:
@@ -248,7 +237,7 @@ class Function(WS, Variables):
                     "QTY": abs(lastQty),
                     "EMI": emi,
                 }
-                Function.trades_display(self, message=message)
+                Function.trades_display(self, message)
                 Function.orders_processing(self, row=row, info=info)
 
         # Funding
@@ -481,34 +470,34 @@ class Function(WS, Variables):
         )
         Function.orders_display(self, clOrdID=clOrdID)
 
-    def trades_display(self, message: dict) -> None:
+    def trades_display(self, value: dict) -> None:
         """
         Update trades widget
         """
-        t = str(message["TTIME"])
+        t = str(value["TTIME"])
         time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:19]
         disp.text_trades.insert(
             "2.0",
             time
-            + gap(val=".".join(message["SYMBOL"]), peak=10)
+            + gap(val=value["SYMBOL"]+"."+value["CATEGORY"][0], peak=10)
             + gap(
                 val=Function.format_price(
                     self, 
-                    number=message["TRADE_PRICE"],
-                    symbol=message["SYMBOL"],
+                    number=value["TRADE_PRICE"],
+                    symbol=(value["SYMBOL"], value["CATEGORY"]),
                 ),
                 peak=7,
             )
-            + gap(val=message["EMI"][:10], peak=10)
+            + gap(val=value["EMI"][:10], peak=10)
             + " "
-            + Function.volume(self, qty=message["QTY"], symbol=message["SYMBOL"])
+            + Function.volume(self, qty=value["QTY"], symbol=(value["SYMBOL"], value["CATEGORY"]))
             + "\n",
         )
-        if message["SIDE"] == 1:
+        if value["SIDE"] == 1:
             name = "red"
             disp.text_trades.tag_add(name, "2.0", "2.60")
             disp.text_trades.tag_config(name, foreground="red")
-        elif message["SIDE"] == 0:
+        elif value["SIDE"] == 0:
             name = "green"
             disp.text_trades.tag_add(name, "2.0", "2.60")
             disp.text_trades.tag_config(name, foreground="forest green")
@@ -1643,6 +1632,3 @@ def change_color(color: str, container=None) -> None:
             child.config(bg=color)
         elif type(child) is tk.Button:
             child.config(bg=color)
-
-
-WS.transaction = Function.transaction

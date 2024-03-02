@@ -2,7 +2,7 @@ import logging
 from collections import OrderedDict
 from datetime import datetime
 
-#import functions as function
+#from functions import Function
 from common.variables import Variables as var
 import requests
 

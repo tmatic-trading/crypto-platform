@@ -44,6 +44,10 @@ class WS(Bitmex, Bybit):
         "Bitmex": BitmexAgent.urgent_announcement,
         "Bybit": BybitAgent.urgent_announcement,
     }
+    place_limit_agent = {
+        "Bitmex": BitmexAgent.place_limit,
+        "Bybit": BybitAgent.place_limit,
+    }
 
     def start_ws(self, name) -> None:
         self.select_ws[name](self)
@@ -136,3 +140,12 @@ class WS(Bitmex, Bybit):
         """
 
         return self.data["orderBook10"]
+    
+    def place_limit(
+        self, name: str, quantity: int, price: float, clOrdID: str, symbol: tuple
+    ) -> Union[dict, None]:
+        """
+        Places a limit order
+        """
+
+        return self.place_limit_agent[name](self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol)
