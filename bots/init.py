@@ -47,7 +47,7 @@ class Init(WS, Variables):
             emi = robot["EMI"]
             self.robots[emi] = robot
             self.robots[emi]["STATUS"] = "WORK"
-            self.robots[emi]["SYMBCAT"] = (
+            self.robots[emi]["SYMBOL"] = (
                 self.robots[emi]["SYMBOL"],
                 self.robots[emi]["CATEGORY"],
             )
@@ -80,7 +80,7 @@ class Init(WS, Variables):
                     status = "NOT IN LIST"
                 emi = ".".join(symbol)
                 self.robots[emi] = {
-                    "SYMBOL": defunct["SYMBOL"],
+                    "SYMBOL": symbol,
                     "CATEGORY": defunct["CATEGORY"],
                     "EXCHANGE": self.name,
                     "POS": int(defunct["POS"]),
@@ -88,7 +88,6 @@ class Init(WS, Variables):
                     "STATUS": status,
                     "TIMEFR": "None",
                     "CAPITAL": "None",
-                    "SYMBCAT": (defunct["SYMBOL"], defunct["CATEGORY"]),
                 }
 
         # Adding RESERVED robots
@@ -128,19 +127,18 @@ class Init(WS, Variables):
                 emi = ".".join(symbol)
                 self.robots[emi] = {
                     "EMI": emi,
-                    "SYMBOL": symbol[0],
+                    "SYMBOL": symbol,
                     "CATEGORY": symbol[1],
                     "EXCHANGE": self.name,
                     "POS": pos,
                     "STATUS": "RESERVED",
                     "TIMEFR": "None",
                     "CAPITAL": "None",
-                    "SYMBCAT": symbol,
                 }
 
         # Loading all transactions and calculating financial results for each robot
         for emi, val in self.robots.items():
-            Function.add_symbol(self, symbol=self.robots[emi]["SYMBCAT"])
+            Function.add_symbol(self, symbol=self.robots[emi]["SYMBOL"])
             if isinstance(emi, tuple):
                 _emi = emi[0]
             else:
@@ -170,8 +168,8 @@ class Init(WS, Variables):
                         )
             self.robots[emi]["PNL"] = 0
             self.robots[emi]["lotSize"] = (
-                self.instruments[self.robots[emi]["SYMBCAT"]]["lotSize"]
-                / self.instruments[self.robots[emi]["SYMBCAT"]]["myMultiplier"]
+                self.instruments[self.robots[emi]["SYMBOL"]]["lotSize"]
+                / self.instruments[self.robots[emi]["SYMBOL"]]["myMultiplier"]
             )
             if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
@@ -222,7 +220,7 @@ class Init(WS, Variables):
         overwritten.
         """
         self.filename = Function.timeframes_data_filename(
-            self, emi=robot["EMI"], symbol=robot["SYMBCAT"], timefr=robot["TIMEFR"]
+            self, emi=robot["EMI"], symbol=robot["SYMBOL"], timefr=robot["TIMEFR"]
         )
         with open(self.filename, "w"):
             pass
@@ -238,7 +236,7 @@ class Init(WS, Variables):
             self,
             time=time,
             target=target,
-            symbol=robot["SYMBCAT"],
+            symbol=robot["SYMBOL"],
             timeframe=var.timefrs[robot["TIMEFR"]],
         )
         if not res:
@@ -250,7 +248,7 @@ class Init(WS, Variables):
             tm = datetime.strptime(
                 row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
             ) - timedelta(minutes=robot["TIMEFR"])
-            frames[robot["SYMBCAT"]][robot["TIMEFR"]]["data"].append(
+            frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
                     "time": tm.hour * 10000 + tm.minute * 100,
@@ -264,13 +262,13 @@ class Init(WS, Variables):
             if num < len(res[:-1]) - 1:
                 Function.save_timeframes_data(
                     self,
-                    frame=frames[robot["SYMBCAT"]][robot["TIMEFR"]]["data"][-1],
+                    frame=frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"][-1],
                 )
-        frames[robot["SYMBCAT"]][robot["TIMEFR"]]["time"] = tm
+        frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
 
         message = (
             "Downloaded missing data from the exchange for symbol="
-            + robot["SYMBOL"]
+            + str(robot["SYMBOL"])
             + " TIMEFR="
             + str(robot["TIMEFR"])
         )
@@ -285,7 +283,7 @@ class Init(WS, Variables):
             # expressed in minutes.
             if self.robots[emi]["TIMEFR"] != "None":
                 time = datetime.utcnow()
-                symbol = self.robots[emi]["SYMBCAT"]
+                symbol = self.robots[emi]["SYMBOL"]
                 timefr = self.robots[emi]["TIMEFR"]
                 try:
                     self.frames[symbol]

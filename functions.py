@@ -182,7 +182,7 @@ class Function(WS, Variables):
                         "STATUS": status,
                         "TIMEFR": None,
                         "EMI": emi,
-                        "SYMBOL": row["symbol"][0],
+                        "SYMBOL": row["symbol"],
                         "CATEGORY": row["symbol"][1],
                         "EXCHANGE": self.name,
                         "POS": 0,
@@ -192,7 +192,6 @@ class Function(WS, Variables):
                         "LTIME": time_struct,
                         "PNL": 0,
                         "CAPITAL": None,
-                        "SYMBCAT": row["symbol"]
                     }
                     message = "Robot EMI=" + str(emi) + ". Adding to 'robots' with STATUS=" + status
                     Function.info_display(self, message)
@@ -365,14 +364,13 @@ class Function(WS, Variables):
                 var.orders[clOrdID] = {
                     "leavesQty": row["leavesQty"],
                     "price": row["price"],
-                    "symbol": row["symbol"][0],
+                    "symbol": row["symbol"],
                     "category": row["symbol"][1],
                     "exchange": self.name,
                     "transactTime": row["transactTime"],
                     "side": row["side"],
                     "emi": row["symbol"],
                     "orderID": row["orderID"],
-                    "symbcat": row["symbol"],
                 }
                 info = "Outside placement: "
             else:
@@ -430,14 +428,13 @@ class Function(WS, Variables):
                     var.orders[clOrdID] = {
                         "leavesQty": row["leavesQty"],
                         "price": row["price"],
-                        "symbol": row["symbol"][0],
+                        "symbol": row["symbol"],
                         "category": row["symbol"][1],
                         "exchange": self.name,
                         "transactTime": str(datetime.utcnow()),
                         "side": row["side"],
                         "emi": _emi,
                         "orderID": row["orderID"],
-                        "symbcat": row["symbol"],
                     }
                 info_p = price
                 info_q = row["orderQty"]
@@ -562,12 +559,12 @@ class Function(WS, Variables):
             time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:23]
             text_insert = (
                 time
-                + gap(val=var.orders[clOrdID]["symbol"], peak=8)
+                + gap(val=".".join(var.orders[clOrdID]["symbol"]), peak=8)
                 + gap(
                     val=Function.format_price(
                         self,
                         number=var.orders[clOrdID]["price"],
-                        symbol=var.orders[clOrdID]["symbcat"],
+                        symbol=var.orders[clOrdID]["symbol"],
                     ),
                     peak=9,
                 )
@@ -575,7 +572,7 @@ class Function(WS, Variables):
                 + " "
                 + Function.volume(
                     self,
-                    qty=var.orders[clOrdID]["leavesQty"], symbol=self.robots[emi]["SYMBCAT"]
+                    qty=var.orders[clOrdID]["leavesQty"], symbol=self.robots[emi]["SYMBOL"]
                 )
                 + "\n"
             )
@@ -933,7 +930,7 @@ class Function(WS, Variables):
         # Update Robots table
 
         for num, emi in enumerate(self.robots):
-            symbol = self.robots[emi]["SYMBCAT"]
+            symbol = self.robots[emi]["SYMBOL"]
             price = Function.close_price(self, symbol=symbol, pos=self.robots[emi]["POS"])
             if price:
                 calc = Function.calculate(
@@ -949,7 +946,7 @@ class Function(WS, Variables):
                     + calc["sumreal"]
                     - self.robots[emi]["COMMISS"]
                 )
-            symbol = self.robots[emi]["SYMBCAT"]
+            symbol = self.robots[emi]["SYMBOL"]
             update_label(table="robots", column=0, row=num + 1, val=emi)
             update_label(table="robots", column=1, row=num + 1, val=symbol)
             update_label(
@@ -1480,8 +1477,8 @@ def handler_orderbook(row_position: int) -> None:
         options = list()
         for emi in ws.robots:
             if (
-                ws.robots[emi]["SYMBCAT"] in ws.symbol_list
-                and ws.robots[emi]["SYMBCAT"] == var.symbol
+                ws.robots[emi]["SYMBOL"] in ws.symbol_list
+                and ws.robots[emi]["SYMBOL"] == var.symbol
             ):
                 options.append(ws.robots[emi]["EMI"])
         option_robots = tk.OptionMenu(frame_robots, emi_number, *options)
