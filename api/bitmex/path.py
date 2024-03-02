@@ -11,7 +11,7 @@ class Listing(str, Enum):
             %20close&startTime={TIME}"
     TRADING_HISTORY = "execution/tradeHistory?count={HISTCOUNT}&reverse=false&startTime={TIME}"
     URGENT_ANNOUNCEMENT = "announcement/urgent"
-    PLACE_LIMIT = "order"
+    ORDER_ACTIONS = "order"
 
 
     '''GET_WALLET_BALANCE = "/v5/account/wallet-balance"

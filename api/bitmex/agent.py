@@ -201,7 +201,7 @@ class Agent(Variables):
         """
         Places a limit order
         """
-        path = Listing.PLACE_LIMIT
+        path = Listing.ORDER_ACTIONS
         postData = {
             "symbol": symbol[0],
             "orderQty": quantity,
@@ -219,7 +219,7 @@ class Agent(Variables):
         """
         Moves a limit order
         """
-        path = Listing.PLACE_LIMIT
+        path = Listing.ORDER_ACTIONS
         postData = {
             "symbol": symbol,
             "price": price,
@@ -229,6 +229,15 @@ class Agent(Variables):
         }
 
         return Send.request(self, path=path, postData=postData, verb="PUT")
+    
+    def remove_order(self, orderID: str) -> Union[list, None]:
+        """
+        Deletes an order
+        """
+        path = Listing.ORDER_ACTIONS
+        postData = {"orderID": orderID}
+
+        return Send.request(self, path=path, postData=postData, verb="DELETE")
 
     def exit(self):
         """

@@ -39,3 +39,6 @@ class Agent:
 
     def replace_limit(self):
         print("___replace_limit")
+
+    def remove_order(self):
+        print("___remove_order")

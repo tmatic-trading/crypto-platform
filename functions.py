@@ -1192,15 +1192,15 @@ class Function(WS, Variables):
         return clOrdID
 
 
-def del_order(clOrdID: str) -> int:
-    """
-    Del_order() function cancels orders
-    """
-    mes = "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
-    var.logger.info(mes)
-    ws.bitmex.remove_order(orderID=var.orders[clOrdID]["orderID"])
+    def del_order(self, clOrdID: str) -> int:
+        """
+        Del_order() function cancels orders
+        """
+        message = "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
+        var.logger.info(message)
+        self.remove_order(name=self.name, orderID=var.orders[clOrdID]["orderID"])
 
-    return ws.bitmex.logNumFatal
+        return self.logNumFatal
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
@@ -1232,7 +1232,7 @@ def handler_order(event, order_number: int) -> None:
             var.logger.info(message)
             return
         if ws.logNumFatal == 0:
-            del_order(clOrdID=clOrdID)
+            Function.del_order(ws, clOrdID=clOrdID)
         else:
             info_display("The operation failed. Websocket closed!")
         on_closing()

@@ -52,6 +52,10 @@ class WS(Bitmex, Bybit):
         "Bitmex": BitmexAgent.replace_limit,
         "Bybit": BybitAgent.replace_limit,
     }
+    remove_order_agent = {
+        "Bitmex": BitmexAgent.remove_order,
+        "Bybit": BybitAgent.remove_order,
+    }
 
     def start_ws(self, name) -> None:
         self.select_ws[name](self)
@@ -166,3 +170,10 @@ class WS(Bitmex, Bybit):
         return self.replace_limit_agent[name](
             self, quantity=quantity, price=price, orderID=orderID, symbol=symbol
         )
+
+    def remove_order(self, name: str, orderID: str) -> Union[list, None]:
+        """
+        Deletes an order
+        """
+
+        return self.remove_order_agent[name](self, orderID=orderID)
