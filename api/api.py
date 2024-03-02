@@ -109,28 +109,28 @@ class WS(Bitmex, Bybit):
         """
 
         return self.trading_history_agent[name](self, histCount=histCount, time=time)
-    
+
     def open_orders(self, name: str) -> list:
         """
         Gets open orders.
         """
 
         return self.open_orders_agent[name](self)
-    
+
     def get_ticker(self, name: str) -> OrderedDict:
         """
         Returns the best bid/ask price.
         """
 
         return self.get_ticker_agent[name](self)
-    
+
     def urgent_announcement(self, name: str) -> list:
         """
         Public announcements of the exchange
         """
 
         return self.urgent_announcement_agent[name](self)
-    
+
     def get_funds(self) -> list:
         """
         Cash in the account
@@ -144,7 +144,7 @@ class WS(Bitmex, Bybit):
         """
 
         return self.data["orderBook10"]
-    
+
     def place_limit(
         self, name: str, quantity: int, price: float, clOrdID: str, symbol: tuple
     ) -> Union[dict, None]:
@@ -152,20 +152,17 @@ class WS(Bitmex, Bybit):
         Places a limit order
         """
 
-        return self.place_limit_agent[name](self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol)
-    
+        return self.place_limit_agent[name](
+            self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
+        )
+
     def replace_limit(
         self, name: str, quantity: int, price: float, orderID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
         Moves a limit order
         """
-        postData = {
-            "symbol": symbol,
-            "price": price,
-            "orderID": orderID,
-            "leavesQty": abs(quantity),
-            "ordType": "Limit",
-        }
 
-        return self.replace_limit_agent(self,  quantity=quantity, price=price, orderID=orderID, symbol=symbol)
+        return self.replace_limit_agent[name](
+            self, quantity=quantity, price=price, orderID=orderID, symbol=symbol
+        )
