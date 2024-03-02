@@ -1,4 +1,3 @@
-import os
 import time
 import tkinter as tk
 from collections import OrderedDict
@@ -8,14 +7,11 @@ from typing import Union
 
 from api.api import WS
 from api.variables import Variables
+from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
-from display.variables import Variables as disp
-
-from api.websockets import Websockets
-
 from display.function import info_display
-
+from display.variables import Variables as disp
 
 db = var.env["MYSQL_DATABASE"]
 
@@ -90,7 +86,7 @@ class Function(WS, Variables):
         with open(self.filename, "a") as f:
             f.write(data + "\n")
 
-    '''def info_display(self, message: str) -> None:
+    """def info_display(self, message: str) -> None:
         t = datetime.utcnow()
         disp.text_info.insert(
             "1.0",
@@ -107,7 +103,7 @@ class Function(WS, Variables):
         )
         disp.info_display_counter += 1
         if disp.info_display_counter > 40:
-            disp.text_info.delete("41.0", "end")'''
+            disp.text_info.delete("41.0", "end")"""
 
     def noll(self, val: str, length: int) -> str:
         r = ""
@@ -115,7 +111,7 @@ class Function(WS, Variables):
             r = r + "0"
 
         return r + val
-    
+
     def read_database(self, execID: str, user_id: int) -> list:
         """
         Load a row by execID from the database
@@ -127,7 +123,7 @@ class Function(WS, Variables):
         data = var.cursor_mysql.fetchall()
 
         return data
-    
+
     def insert_database(self, values: list) -> None:
         """
         Insert row into database
@@ -142,22 +138,26 @@ class Function(WS, Variables):
             values,
         )
         var.connect_mysql.commit()
-    
+
     def transaction(self, row: dict, info: str = "") -> None:
         """
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        time_struct = datetime.strptime(row["transactTime"][:-1], "%Y-%m-%dT%H:%M:%S.%f")
+        time_struct = datetime.strptime(
+            row["transactTime"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+        )
 
         # Trade
 
         if row["execType"] == "Trade":
             if "clOrdID" in row:
                 dot = row["clOrdID"].find(".")
-                if dot == -1:  # The transaction was done from the exchange web interface,
+                if (
+                    dot == -1
+                ):  # The transaction was done from the exchange web interface,
                     # the clOrdID field is missing or clOrdID does not have EMI number
-                    emi = ".".join(row["symbol"]) 
+                    emi = ".".join(row["symbol"])
                     refer = ""
                     if row["clOrdID"] == "":
                         clientID = 0
@@ -193,10 +193,17 @@ class Function(WS, Variables):
                         "PNL": 0,
                         "CAPITAL": None,
                     }
-                    message = "Robot EMI=" + str(emi) + ". Adding to 'robots' with STATUS=" + status
+                    message = (
+                        "Robot EMI="
+                        + str(emi)
+                        + ". Adding to 'robots' with STATUS="
+                        + status
+                    )
                     info_display(self.name, message)
                     var.logger.info(message)
-            data = Function.read_database(self, execID=row["execID"], user_id=self.user_id)
+            data = Function.read_database(
+                self, execID=row["execID"], user_id=self.user_id
+            )
             if not data:
                 side = 0
                 lastQty = row["lastQty"]
@@ -204,7 +211,7 @@ class Function(WS, Variables):
                     lastQty = -row["lastQty"]
                     side = 1
                 calc = Function.calculate(
-                    self, 
+                    self,
                     symbol=row["symbol"],
                     price=row["lastPx"],
                     qty=float(lastQty),
@@ -271,7 +278,7 @@ class Function(WS, Variables):
                 ):
                     position += self.robots[emi]["POS"]
                     calc = Function.calculate(
-                        self, 
+                        self,
                         symbol=row["symbol"],
                         price=row["price"],
                         qty=float(self.robots[emi]["POS"]),
@@ -311,7 +318,7 @@ class Function(WS, Variables):
                 diff != 0
             ):  # robots with open positions have been taken, but some quantity is still left
                 calc = Function.calculate(
-                    self, 
+                    self,
                     symbol=row["symbol"],
                     price=row["price"],
                     qty=float(diff),
@@ -358,7 +365,9 @@ class Function(WS, Variables):
         # New order
 
         elif row["execType"] == "New":
-            if "clOrdID" not in row:  # The order was placed from the exchange web interface
+            if (
+                "clOrdID" not in row
+            ):  # The order was placed from the exchange web interface
                 var.last_order += 1
                 clOrdID = str(var.last_order) + "." + row["symbol"]
                 var.orders[clOrdID] = {
@@ -380,7 +389,6 @@ class Function(WS, Variables):
             Function.orders_processing(self, row=row)
         elif row["execType"] == "Replaced":
             Function.orders_processing(self, row=row)
-
 
     def orders_processing(self, row: dict, info: str = "") -> None:
         """
@@ -456,7 +464,7 @@ class Function(WS, Variables):
         info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
         info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
         info_display(
-            self.name, 
+            self.name,
             info
             + row["execType"]
             + " "
@@ -466,7 +474,7 @@ class Function(WS, Variables):
             + " price="
             + str(info_p)
             + " qty="
-            + info_q
+            + info_q,
         )
         var.logger.info(
             info + row["execType"] + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
@@ -490,7 +498,7 @@ class Function(WS, Variables):
             + gap(val=".".join(message["SYMBOL"]), peak=10)
             + gap(
                 val=Function.format_price(
-                    self, 
+                    self,
                     number=message["TRADE_PRICE"],
                     symbol=message["SYMBOL"],
                 ),
@@ -525,12 +533,14 @@ class Function(WS, Variables):
         disp.text_funding.insert(
             "2.0",
             time
-            + gap(val=value["SYMBOL"]+"."+value["CATEGORY"][0], peak=10)
+            + gap(val=value["SYMBOL"] + "." + value["CATEGORY"][0], peak=10)
             + gap(val=str(float(value["PRICE"])), peak=8)
             + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
             + gap(val=value["EMI"][:9], peak=10)
             + " "
-            + Function.volume(self, qty=value["QTY"], symbol=(value["SYMBOL"], value["CATEGORY"]))
+            + Function.volume(
+                self, qty=value["QTY"], symbol=(value["SYMBOL"], value["CATEGORY"])
+            )
             + "\n",
         )
         disp.funding_display_counter += 1
@@ -547,7 +557,9 @@ class Function(WS, Variables):
                 if myClOrd == clOrdID:
                     myNum = i
             ordDictPos = abs(myNum + 1 - len(var.orders_dict)) + 1
-            disp.text_orders.delete(str(ordDictPos + 1) + ".0", str(ordDictPos + 2) + ".0")
+            disp.text_orders.delete(
+                str(ordDictPos + 1) + ".0", str(ordDictPos + 2) + ".0"
+            )
             del var.orders_dict[clOrdID]
         if clOrdID in var.orders:
             emi = var.orders[clOrdID]["emi"]
@@ -572,7 +584,8 @@ class Function(WS, Variables):
                 + " "
                 + Function.volume(
                     self,
-                    qty=var.orders[clOrdID]["leavesQty"], symbol=self.robots[emi]["SYMBOL"]
+                    qty=var.orders[clOrdID]["leavesQty"],
+                    symbol=self.robots[emi]["SYMBOL"],
                 )
                 + "\n"
             )
@@ -626,7 +639,7 @@ class Function(WS, Variables):
                 qty = "{:.{precision}f}".format(qty, precision=0)
 
         return qty
-    
+
     def format_price(self, number: float, symbol: tuple) -> str:
         rounding = disp.price_rounding[self.name][symbol]
         number = "{:.{precision}f}".format(number, precision=rounding)
@@ -638,7 +651,7 @@ class Function(WS, Variables):
             number = number + "0"
 
         return number
-    
+
     def robots_entry(self, utc: datetime) -> None:
         """
         Processing timeframes and entry point into robot algorithms
@@ -661,7 +674,7 @@ class Function(WS, Variables):
                                 instrument=self.instruments[symbol],
                             )
                         Function.save_timeframes_data(
-                            self, 
+                            self,
                             frame=values["data"][-1],
                         )
                     next_minute = int(utc.minute / timefr) * timefr
@@ -670,7 +683,9 @@ class Function(WS, Variables):
                     )
                     values["data"].append(
                         {
-                            "date": (utc.year - 2000) * 10000 + utc.month * 100 + utc.day,
+                            "date": (utc.year - 2000) * 10000
+                            + utc.month * 100
+                            + utc.day,
                             "time": utc.hour * 10000 + utc.minute * 100,
                             "bid": self.ticker[symbol]["bid"],
                             "ask": self.ticker[symbol]["ask"],
@@ -738,7 +753,9 @@ class Function(WS, Variables):
                         self.accounts[currency]["LEVERAGE"] = fund["marginLeverage"]
                     else:
                         self.accounts[currency]["LEVERAGE"] = 0
-                    self.accounts[currency]["RESULT"] = self.accounts[currency]["SUMREAL"]
+                    self.accounts[currency]["RESULT"] = self.accounts[currency][
+                        "SUMREAL"
+                    ]
                     break
             else:
                 message = "Currency " + str(currency) + " not found."
@@ -765,7 +782,7 @@ class Function(WS, Variables):
                 row=num + 1,
                 val=(
                     Function.format_price(
-                        self, 
+                        self,
                         number=self.positions[symbol]["ENTRY"],
                         symbol=symbol,
                     )
@@ -794,7 +811,10 @@ class Function(WS, Variables):
                 ),
             )
             update_label(
-                table="position", column=5, row=num + 1, val=self.positions[symbol]["STATE"]
+                table="position",
+                column=5,
+                row=num + 1,
+                val=self.positions[symbol]["STATE"],
             )
             update_label(
                 table="position",
@@ -808,7 +828,10 @@ class Function(WS, Variables):
                 tm = self.instruments[symbol]["expiry"]
             update_label(table="position", column=7, row=num + 1, val=tm)
             update_label(
-                table="position", column=8, row=num + 1, val=self.positions[symbol]["FUND"]
+                table="position",
+                column=8,
+                row=num + 1,
+                val=self.positions[symbol]["FUND"],
             )
 
         # Refresh Orderbook table
@@ -829,11 +852,15 @@ class Function(WS, Variables):
                 price = ""
                 qty = 0
                 if len(val[side]) > count:
-                    price = Function.format_price(self, number=val[side][count][0], symbol=var.symbol)
-                    vlm = Function.volume(self, qty=val[side][count][1], symbol=var.symbol)
+                    price = Function.format_price(
+                        self, number=val[side][count][0], symbol=var.symbol
+                    )
+                    vlm = Function.volume(
+                        self, qty=val[side][count][1], symbol=var.symbol
+                    )
                     if var.orders:
                         qty = Function.volume(
-                            self, 
+                            self,
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
@@ -854,7 +881,9 @@ class Function(WS, Variables):
                     table="orderbook",
                     column=2,
                     row=num,
-                    val=Function.volume(self, qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol),
+                    val=Function.volume(
+                        self, qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol
+                    ),
                 )
             else:
                 update_label(table="orderbook", column=2, row=num, val="")
@@ -863,7 +892,9 @@ class Function(WS, Variables):
                     table="orderbook",
                     column=0,
                     row=num + 1,
-                    val=Function.volume(self, qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol),
+                    val=Function.volume(
+                        self, qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol
+                    ),
                 )
             else:
                 update_label(table="orderbook", column=0, row=num + 1, val="")
@@ -876,18 +907,21 @@ class Function(WS, Variables):
             for row in range(disp.num_book - 1):
                 if row < num:
                     price = round(
-                        first_price_sell - row * self.instruments[var.symbol]["tickSize"],
+                        first_price_sell
+                        - row * self.instruments[var.symbol]["tickSize"],
                         disp.price_rounding[var.symbol],
                     )
                     qty = 0
                     if var.orders:
                         qty = Function.volume(
-                            self, 
+                            self,
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
                     if var.ticker[var.symbol]["ask"]:
-                        price = Function.format_price(self, number=price, symbol=var.symbol)
+                        price = Function.format_price(
+                            self, number=price, symbol=var.symbol
+                        )
                     else:
                         price = ""
                     update_label(table="orderbook", column=1, row=row + 1, val=price)
@@ -906,11 +940,14 @@ class Function(WS, Variables):
                     qty = 0
                     if var.orders:
                         qty = Function.volume(
-                            self, 
-                            qty=find_order(price, qty, symbol=var.symbol), symbol=var.symbol
+                            self,
+                            qty=find_order(price, qty, symbol=var.symbol),
+                            symbol=var.symbol,
                         )
                     if price > 0:
-                        price = Function.format_price(self, number=price, symbol=var.symbol)
+                        price = Function.format_price(
+                            self, number=price, symbol=var.symbol
+                        )
                     else:
                         price = ""
                     update_label(table="orderbook", column=1, row=row + 1, val=price)
@@ -931,10 +968,12 @@ class Function(WS, Variables):
 
         for num, emi in enumerate(self.robots):
             symbol = self.robots[emi]["SYMBOL"]
-            price = Function.close_price(self, symbol=symbol, pos=self.robots[emi]["POS"])
+            price = Function.close_price(
+                self, symbol=symbol, pos=self.robots[emi]["POS"]
+            )
             if price:
                 calc = Function.calculate(
-                    self, 
+                    self,
                     symbol=symbol,
                     price=price,
                     qty=-float(self.robots[emi]["POS"]),
@@ -977,7 +1016,7 @@ class Function(WS, Variables):
                 val="{:.8f}".format(self.robots[emi]["PNL"]),
             )
             val = Function.volume(
-                self, 
+                self,
                 qty=self.robots[emi]["POS"],
                 symbol=symbol,
             )
@@ -1000,9 +1039,11 @@ class Function(WS, Variables):
         for symbol, position in self.positions.items():
             if position["POS"] != 0:
                 calc = Function.calculate(
-                    self, 
+                    self,
                     symbol=symbol,
-                    price=Function.close_price(self, symbol=symbol, pos=position["POS"]),
+                    price=Function.close_price(
+                        self, symbol=symbol, pos=position["POS"]
+                    ),
                     qty=-position["POS"],
                     rate=0,
                     fund=1,
@@ -1066,7 +1107,9 @@ class Function(WS, Variables):
 
     def close_price(self, symbol: tuple, pos: int) -> float:
         if symbol in self.ticker:
-            close = self.ticker[symbol]["bid"] if pos > 0 else self.ticker[symbol]["ask"]
+            close = (
+                self.ticker[symbol]["bid"] if pos > 0 else self.ticker[symbol]["ask"]
+            )
         else:
             close = (
                 self.instruments[symbol]["bidPrice"]
@@ -1075,7 +1118,7 @@ class Function(WS, Variables):
             )
 
         return close
-    
+
     def round_price(self, symbol: tuple, price: float, rside: int) -> float:
         """
         Round_price() returns rounded price: buy price goes down, sell price
@@ -1087,10 +1130,10 @@ class Function(WS, Variables):
             result += self.instruments[symbol]["tickSize"]
 
         return result
-    
+
     def post_order(
-        self, 
-        name: str, 
+        self,
+        name: str,
         symbol: tuple,
         emi: str,
         side: str,
@@ -1101,16 +1144,52 @@ class Function(WS, Variables):
         This function sends a new order
         """
         price_str = Function.format_price(self, number=price, symbol=symbol)
-        var.logger.info("Posting side=" + side + " price=" + price_str + " qty=" + str(qty))
+        var.logger.info(
+            "Posting side=" + side + " price=" + price_str + " qty=" + str(qty)
+        )
         clOrdID = ""
         if side == "Sell":
             qty = -qty
         var.last_order += 1
         clOrdID = str(var.last_order) + "." + emi
-        self.place_limit(name=name, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol)
+        self.place_limit(
+            name=name, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
+        )
 
         return clOrdID
 
+    def put_order(
+        self,
+        clOrdID: str,
+        price: float,
+        qty: int,
+    ) -> str:
+        """
+        Replace orders
+        """
+        price_str = Function.format_price(
+            self, number=price, symbol=var.orders[clOrdID]["symbol"]
+        )
+        var.logger.info(
+            "Putting orderID="
+            + var.orders[clOrdID]["orderID"]
+            + " clOrdID="
+            + clOrdID
+            + " price="
+            + price_str
+            + " qty="
+            + str(qty)
+        )
+        if price != var.orders[clOrdID]["price"]:  # the price alters
+            self.replace_limit(
+                name=self.name,
+                quantity=qty,
+                price=price_str,
+                orderID=var.orders[clOrdID]["orderID"],
+                symbol=var.orders[clOrdID]["symbol"],
+            )
+
+        return clOrdID
 
 
 def del_order(clOrdID: str) -> int:
@@ -1122,36 +1201,6 @@ def del_order(clOrdID: str) -> int:
     ws.bitmex.remove_order(orderID=var.orders[clOrdID]["orderID"])
 
     return ws.bitmex.logNumFatal
-
-
-def put_order(
-    clOrdID: str,
-    price: float,
-    qty: int,
-) -> str:
-    """
-    Replace orders
-    """
-    price_str = Function.format_price(number=price, symbol=var.orders[clOrdID]["symbol"])
-    var.logger.info(
-        "Putting orderID="
-        + var.orders[clOrdID]["orderID"]
-        + " clOrdID="
-        + clOrdID
-        + " price="
-        + price_str
-        + " qty="
-        + str(qty)
-    )
-    if price != var.orders[clOrdID]["price"]:  # the price alters
-        ws.bitmex.replace_limit(
-            quantity=qty,
-            price=price_str,
-            orderID=var.orders[clOrdID]["orderID"],
-            symbol=var.orders[clOrdID]["symbol"],
-        )
-
-    return clOrdID
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
@@ -1209,7 +1258,7 @@ def handler_order(event, order_number: int) -> None:
             if var.orders[clOrdID]["side"] == "Sell":
                 roundSide = -roundSide
             price = Function.round_price(
-                ws, 
+                ws,
                 symbol=var.orders[clOrdID]["symbol"],
                 price=float(price_replace.get()),
                 rside=roundSide,
@@ -1217,7 +1266,8 @@ def handler_order(event, order_number: int) -> None:
             if price == var.orders[clOrdID]["price"]:
                 info_display("Price is the same but must be different!")
                 return
-            clOrdID = put_order(
+            clOrdID = Function.put_order(
+                ws,
                 clOrdID=clOrdID,
                 price=price,
                 qty=var.orders[clOrdID]["leavesQty"],
@@ -1249,7 +1299,7 @@ def handler_order(event, order_number: int) -> None:
             + clOrdID
             + "\nprice\t"
             + Function.format_price(
-                ws, 
+                ws,
                 number=var.orders[clOrdID]["price"],
                 symbol=var.orders[clOrdID]["symbol"],
             )
@@ -1285,7 +1335,7 @@ def handler_orderbook(row_position: int) -> None:
             entry_price_ask.insert(
                 0,
                 Function.format_price(
-                    ws, 
+                    ws,
                     number=ws.ticker[var.symbol]["ask"],
                     symbol=var.symbol,
                 ),
@@ -1294,14 +1344,17 @@ def handler_orderbook(row_position: int) -> None:
             entry_price_bid.insert(
                 0,
                 Function.format_price(
-                    ws, 
+                    ws,
                     number=ws.ticker[var.symbol]["bid"],
                     symbol=var.symbol,
                 ),
             )
             entry_quantity.delete(0, "end")
             entry_quantity.insert(
-                0, Function.volume(ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol)
+                0,
+                Function.volume(
+                    ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol
+                ),
             )
             option_robots["menu"].delete(0, "end")
             options = list()
@@ -1337,12 +1390,14 @@ def handler_orderbook(row_position: int) -> None:
                 res = "yes"
             except Exception:
                 info_display(
-                    ws.name, 
-                    "Fields must be numbers! quantity: int or float, price: float"
+                    ws.name,
+                    "Fields must be numbers! quantity: int or float, price: float",
                 )
                 res = "no"
             if res == "yes" and qnt != 0:
-                price = Function.round_price(ws, symbol=var.symbol, price=price, rside=-qnt)
+                price = Function.round_price(
+                    ws, symbol=var.symbol, price=price, rside=-qnt
+                )
                 if price <= 0:
                     message = "The price must be above zero."
                     info_display(ws.name, message)
@@ -1359,8 +1414,8 @@ def handler_orderbook(row_position: int) -> None:
                     warning_window(message)
                     return
                 Function.post_order(
-                    ws, 
-                    name = ws.name, 
+                    ws,
+                    name=ws.name,
                     symbol=var.symbol,
                     emi=emi_number.get(),
                     side="Sell",
@@ -1383,19 +1438,21 @@ def handler_orderbook(row_position: int) -> None:
                 res = "yes"
             except Exception:
                 info_display(
-                    ws.name, 
-                    "Fields must be numbers! quantity: int or float, price: float"
+                    ws.name,
+                    "Fields must be numbers! quantity: int or float, price: float",
                 )
                 res = "no"
             if res == "yes" and qnt != 0:
-                price = Function.round_price(ws, symbol=var.symbol, price=price, rside=qnt)
+                price = Function.round_price(
+                    ws, symbol=var.symbol, price=price, rside=qnt
+                )
                 if price <= 0:
                     message = "The price must be above zero."
                     info_display(ws.name, message)
                     warning_window(message)
                     return
                 if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
-                    mes = (
+                    message = (
                         "The "
                         + str(var.symbol)
                         + " quantity must be multiple to "
@@ -1405,8 +1462,8 @@ def handler_orderbook(row_position: int) -> None:
                     warning_window(message)
                     return
                 Function.post_order(
-                    ws, 
-                    name=ws.name, 
+                    ws,
+                    name=ws.name,
                     symbol=var.symbol,
                     emi=emi_number.get(),
                     side="Buy",
@@ -1451,7 +1508,7 @@ def handler_orderbook(row_position: int) -> None:
         entry_price_ask.insert(
             0,
             Function.format_price(
-                ws, 
+                ws,
                 number=ws.ticker[var.symbol]["ask"],
                 symbol=var.symbol,
             ),
@@ -1459,7 +1516,7 @@ def handler_orderbook(row_position: int) -> None:
         entry_price_bid.insert(
             0,
             Function.format_price(
-                ws, 
+                ws,
                 number=ws.ticker[var.symbol]["bid"],
                 symbol=var.symbol,
             ),
@@ -1468,7 +1525,10 @@ def handler_orderbook(row_position: int) -> None:
             frame_quantity, width=6, bg="white", textvariable=quantity
         )
         entry_quantity.insert(
-            0, Function.volume(ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol)
+            0,
+            Function.volume(
+                ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol
+            ),
         )
         label_ask = tk.Label(frame_market_ask, text="Price:")
         label_bid = tk.Label(frame_market_bid, text="Price:")
