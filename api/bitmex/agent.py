@@ -211,6 +211,24 @@ class Agent(Variables):
         }
 
         return Send.request(self, path=path, postData=postData, verb="POST")
+    
+
+    def replace_limit(
+        self, quantity: int, price: float, orderID: str, symbol: tuple
+    ) -> Union[dict, None]:
+        """
+        Moves a limit order
+        """
+        path = Listing.PLACE_LIMIT
+        postData = {
+            "symbol": symbol,
+            "price": price,
+            "orderID": orderID,
+            "leavesQty": abs(quantity),
+            "ordType": "Limit",
+        }
+
+        return Send.request(self, path=path, postData=postData, verb="PUT")
 
     def exit(self):
         """
