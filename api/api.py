@@ -48,6 +48,10 @@ class WS(Bitmex, Bybit):
         "Bitmex": BitmexAgent.place_limit,
         "Bybit": BybitAgent.place_limit,
     }
+    replace_limit_agent = {
+        "Bitmex": BitmexAgent.replace_limit,
+        "Bybit": BybitAgent.replace_limit,
+    }
 
     def start_ws(self, name) -> None:
         self.select_ws[name](self)
@@ -149,3 +153,19 @@ class WS(Bitmex, Bybit):
         """
 
         return self.place_limit_agent[name](self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol)
+    
+    def replace_limit(
+        self, name: str, quantity: int, price: float, orderID: str, symbol: tuple
+    ) -> Union[dict, None]:
+        """
+        Moves a limit order
+        """
+        postData = {
+            "symbol": symbol,
+            "price": price,
+            "orderID": orderID,
+            "leavesQty": abs(quantity),
+            "ordType": "Limit",
+        }
+
+        return self.replace_limit_agent(self,  quantity=quantity, price=price, orderID=orderID, symbol=symbol)

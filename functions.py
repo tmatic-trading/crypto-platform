@@ -14,7 +14,7 @@ from display.variables import Variables as disp
 
 from api.websockets import Websockets
 
-# from ws.init import Variables as ws
+from display.function import info_display
 
 
 db = var.env["MYSQL_DATABASE"]
@@ -90,7 +90,7 @@ class Function(WS, Variables):
         with open(self.filename, "a") as f:
             f.write(data + "\n")
 
-    def info_display(self, message: str) -> None:
+    '''def info_display(self, message: str) -> None:
         t = datetime.utcnow()
         disp.text_info.insert(
             "1.0",
@@ -107,7 +107,7 @@ class Function(WS, Variables):
         )
         disp.info_display_counter += 1
         if disp.info_display_counter > 40:
-            disp.text_info.delete("41.0", "end")
+            disp.text_info.delete("41.0", "end")'''
 
     def noll(self, val: str, length: int) -> str:
         r = ""
@@ -194,7 +194,7 @@ class Function(WS, Variables):
                         "CAPITAL": None,
                     }
                     message = "Robot EMI=" + str(emi) + ". Adding to 'robots' with STATUS=" + status
-                    Function.info_display(self, message)
+                    info_display(self.name, message)
                     var.logger.info(message)
             data = Function.read_database(self, execID=row["execID"], user_id=self.user_id)
             if not data:
@@ -455,8 +455,8 @@ class Function(WS, Variables):
                 var.orders[clOrdID]["price"] = price
         info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
         info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
-        Function.info_display(
-            self, 
+        info_display(
+            self.name, 
             info
             + row["execType"]
             + " "
@@ -702,7 +702,7 @@ class Function(WS, Variables):
         if self.logNumFatal == 0:
             if utc > self.message_time + timedelta(seconds=10):
                 if self.message_counter == self.message_point:
-                    Function.info_display(self, "No data within 10 sec")
+                    info_display(self.name, "No data within 10 sec")
                     disp.label_online["text"] = "NO DATA"
                     disp.label_online.config(bg="yellow2")
                     self.urgent_announcement(self.name)
@@ -1165,6 +1165,7 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
 
 
 def handler_order(event, order_number: int) -> None:
+    ws = Websockets.connect[var.current_exchange]
     for clOrdID in var.orders_dict:
         if var.orders_dict[clOrdID]["num"] == order_number:
             break
@@ -1177,11 +1178,11 @@ def handler_order(event, order_number: int) -> None:
         try:
             var.orders[clOrdID]
         except KeyError:
-            mes = "Order " + clOrdID + " does not exist!"
-            info_display(mes)
-            var.logger.info(mes)
+            message = "Order " + clOrdID + " does not exist!"
+            info_display(ws.name, message)
+            var.logger.info(message)
             return
-        if ws.bitmex.logNumFatal == 0:
+        if ws.logNumFatal == 0:
             del_order(clOrdID=clOrdID)
         else:
             info_display("The operation failed. Websocket closed!")
@@ -1194,20 +1195,21 @@ def handler_order(event, order_number: int) -> None:
         try:
             var.orders[clOrdID]
         except KeyError:
-            mes = "Order " + clOrdID + " does not exist!"
-            info_display(mes)
-            var.logger.info(mes)
+            message = "Order " + clOrdID + " does not exist!"
+            info_display(ws.name, message)
+            var.logger.info(message)
             return
         try:
             float(price_replace.get())
         except KeyError:
             info_display("Price must be numeric!")
             return
-        if ws.bitmex.logNumFatal == 0:
+        if ws.logNumFatal == 0:
             roundSide = var.orders[clOrdID]["leavesQty"]
             if var.orders[clOrdID]["side"] == "Sell":
                 roundSide = -roundSide
-            price = round_price(
+            price = Function.round_price(
+                ws, 
                 symbol=var.orders[clOrdID]["symbol"],
                 price=float(price_replace.get()),
                 rside=roundSide,
@@ -1240,13 +1242,14 @@ def handler_order(event, order_number: int) -> None:
             "number\t"
             + str(order_number)
             + "\nsymbol\t"
-            + var.orders[clOrdID]["symbol"]
+            + ".".join(var.orders[clOrdID]["symbol"])
             + "\nside\t"
             + var.orders[clOrdID]["side"]
             + "\nclOrdID\t"
             + clOrdID
             + "\nprice\t"
-            + format_price(
+            + Function.format_price(
+                ws, 
                 number=var.orders[clOrdID]["price"],
                 symbol=var.orders[clOrdID]["symbol"],
             )
@@ -1333,8 +1336,8 @@ def handler_orderbook(row_position: int) -> None:
                 price = float(price_ask.get())
                 res = "yes"
             except Exception:
-                Function.info_display(
-                    ws, 
+                info_display(
+                    ws.name, 
                     "Fields must be numbers! quantity: int or float, price: float"
                 )
                 res = "no"
@@ -1342,7 +1345,7 @@ def handler_orderbook(row_position: int) -> None:
                 price = Function.round_price(ws, symbol=var.symbol, price=price, rside=-qnt)
                 if price <= 0:
                     message = "The price must be above zero."
-                    Function.info_display(ws, message)
+                    info_display(ws.name, message)
                     warning_window(message)
                     return
                 if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
@@ -1352,7 +1355,7 @@ def handler_orderbook(row_position: int) -> None:
                         + " quantity must be multiple to "
                         + str(ws.instruments[var.symbol]["lotSize"])
                     )
-                    Function.info_display(ws, message)
+                    info_display(ws.name, message)
                     warning_window(message)
                     return
                 Function.post_order(
@@ -1365,7 +1368,7 @@ def handler_orderbook(row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            Function.info_display(ws, "Some of the fields are empty!")
+            info_display(ws.name, "Some of the fields are empty!")
 
     def callback_buy_limit() -> None:
         if quantity.get() and price_bid.get() and emi_number.get():
@@ -1379,8 +1382,8 @@ def handler_orderbook(row_position: int) -> None:
                 price = float(price_bid.get())
                 res = "yes"
             except Exception:
-                Function.info_display(
-                    ws, 
+                info_display(
+                    ws.name, 
                     "Fields must be numbers! quantity: int or float, price: float"
                 )
                 res = "no"
@@ -1388,7 +1391,7 @@ def handler_orderbook(row_position: int) -> None:
                 price = Function.round_price(ws, symbol=var.symbol, price=price, rside=qnt)
                 if price <= 0:
                     message = "The price must be above zero."
-                    Function.info_display(message)
+                    info_display(ws.name, message)
                     warning_window(message)
                     return
                 if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
@@ -1398,7 +1401,7 @@ def handler_orderbook(row_position: int) -> None:
                         + " quantity must be multiple to "
                         + str(ws.instruments[var.symbol]["lotSize"])
                     )
-                    Function.info_display(message)
+                    info_display(ws.name, message)
                     warning_window(message)
                     return
                 Function.post_order(
@@ -1411,7 +1414,7 @@ def handler_orderbook(row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            Function.info_display(ws, "Some of the fields are empty!")
+            info_display(ws.name, "Some of the fields are empty!")
 
     if disp.book_window_trigger == "off" and disp.f9 == "OFF":
         disp.book_window_trigger = "on"

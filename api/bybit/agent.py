@@ -19,8 +19,7 @@ class Agent:
     def trade_bucketed(self):
         print("___trade_bucketed")
 
-    def trading_history(
-            self, histCount: int, time=None) -> Union[list, None]:
+    def trading_history(self):
         print("___trading_histor")
 
     def open_orders(self) -> list:
@@ -37,3 +36,6 @@ class Agent:
 
     def place_limit(self):
         print("___place_limit")
+
+    def replace_limit(self):
+        print("___replace_limit")

@@ -8,6 +8,7 @@ from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from functions import Function
+from display.function import info_display
 
 
 class Init(WS, Variables):
@@ -273,7 +274,7 @@ class Init(WS, Variables):
             + str(robot["TIMEFR"])
         )
         var.logger.info(message)
-        Function.info_display(self, message)
+        info_display(self.name, message)
 
         return frames
 
@@ -329,5 +330,5 @@ class Init(WS, Variables):
             elif symbol in self.symbol_list:
                 self.robots[emi]["STATUS"] = "RESERVED"
             elif self.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
-                Function.info_display(self, "Robot EMI=" + emi + ". Deleting from 'robots'")
+                info_display(self.name, "Robot EMI=" + emi + ". Deleting from 'robots'")
                 del self.robots[emi]

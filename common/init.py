@@ -13,7 +13,7 @@ from functions import Function
 
 from api.websockets import Websockets
 
-# from dotenv import load_dotenv
+from display.function import info_display
 
 # from ws.init import Variables as ws
 
@@ -157,8 +157,8 @@ class Init(WS, Variables):
                     # The order was placed from the exchange interface
                     var.last_order += 1
                     clOrdID = str(var.last_order) + "." + emi
-                    Function.info_display(
-                        self, 
+                    info_display(
+                        self.name, 
                         "Outside placement: price="
                         + str(val["price"])
                         + " side="
@@ -193,7 +193,7 @@ class Init(WS, Variables):
                             + emi
                             + ". Adding to 'robots' with STATUS='NOT DEFINED'"
                         )
-                        Function.info_display(self, message)
+                        info_display(self.name, message)
                         var.logger.info(message)
                 var.orders[clOrdID] = {}
                 var.orders[clOrdID]["emi"] = emi
