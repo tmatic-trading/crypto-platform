@@ -175,7 +175,7 @@ class Init(WS, Variables):
                             "STATUS": "NOT DEFINED",
                             "TIMEFR": None,
                             "EMI": emi,
-                            "SYMBOL": val["symbol"][0],
+                            "SYMBOL": val["symbol"],
                             "CATEGORY": val["symbol"][1],
                             "EXCHANGE": self.name,
                             "POS": 0,
@@ -187,7 +187,6 @@ class Init(WS, Variables):
                             ),
                             "PNL": 0,
                             "CAPITAL": None,
-                            "SYMBCAT": val["symbol"]
                         }
                         message = (
                             "Robot EMI="
@@ -201,12 +200,11 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["leavesQty"] = val["leavesQty"]
                 var.orders[clOrdID]["transactTime"] = val["transactTime"]
                 var.orders[clOrdID]["price"] = val["price"]
-                var.orders[clOrdID]["symbol"] = val["symbol"][0]
+                var.orders[clOrdID]["symbol"] = val["symbol"]
                 var.orders[clOrdID]["category"] = val["symbol"][1]
                 var.orders[clOrdID]["exchange"] = self.name
                 var.orders[clOrdID]["side"] = val["side"]
                 var.orders[clOrdID]["orderID"] = val["orderID"]
-                var.orders[clOrdID]["symbcat"] = val["symbol"]
                 Function.orders_display(self, clOrdID=clOrdID)
 
     def initial_ticker_values(self) -> None:
