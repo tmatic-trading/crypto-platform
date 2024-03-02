@@ -79,7 +79,7 @@ class Agent(Variables):
         symbol = (instrument["symbol"], category)
         if symbol not in self.instruments:
             self.instruments[symbol] = dict()
-        self.instruments[symbol]["myMultiplier"] = myMultiplier
+        self.instruments[symbol]["myMultiplier"] = int(myMultiplier)
         self.instruments[symbol]["category"] = category
         if symbol not in self.instruments:
             self.instruments[symbol] = dict()
@@ -194,6 +194,23 @@ class Agent(Variables):
         path = Listing.URGENT_ANNOUNCEMENT
 
         return Send.request(self, path=path, verb="GET")
+    
+    def place_limit(
+        self, quantity: int, price: float, clOrdID: str, symbol: tuple
+    ) -> Union[dict, None]:
+        """
+        Places a limit order
+        """
+        path = Listing.PLACE_LIMIT
+        postData = {
+            "symbol": symbol[0],
+            "orderQty": quantity,
+            "price": price,
+            "clOrdID": clOrdID,
+            "ordType": "Limit",
+        }
+
+        return Send.request(self, path=path, postData=postData, verb="POST")
 
     def exit(self):
         """

@@ -8,6 +8,10 @@ from datetime import datetime
 
 from display.function import info_display
 
+#from functions import Function
+
+#s = Function.transaction
+
 
 class Send(Variables):
     def request(
@@ -35,14 +39,16 @@ class Send(Variables):
             stop_retries = cur_retries
             # Makes the request
             response = None
-            if isinstance(postData, dict):
+            '''if isinstance(postData, dict):
                 tmp = postData.copy()
+                print(tmp)
+                exit(0)
                 if "price" in tmp:
-                    tmp["price"] = self.format_price(
-                        number=tmp["price"], symbol=tmp["symbol"]
+                    tmp["price"] = Function.format_price(
+                        self, number=tmp["price"], symbol=tmp["symbol"]
                     )
             else:
-                tmp = postData
+                tmp = postData'''
             try:
                 if theorPrice is None:
                     info_warn_err(
@@ -54,7 +60,7 @@ class Send(Variables):
                         + url[3]
                         + url[4]
                         + ") sending %s to %s: %s"
-                        % (verb, path, json.dumps(tmp or "")),
+                        % (verb, path, json.dumps(postData or "")),
                     )
                 else:
                     info_warn_err(

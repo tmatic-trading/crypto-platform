@@ -34,3 +34,6 @@ class Agent:
 
     def urgent_announcement(self):
         print("___urgent_announcement")
+
+    def place_limit(self):
+        print("___place_limit")

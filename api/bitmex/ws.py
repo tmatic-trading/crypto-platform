@@ -212,6 +212,7 @@ class Bitmex(Variables):
                                 self.data[table][key]["askSize"] = val["askSize"]
                             self.frames_hi_lo_values(data=self.data[table][key])
                         elif table == "execution":
+                            val["symbol"] = (val["symbol"], self.symbol_category[val["symbol"]])
                             self.transaction(row=val)
                         else:
                             self.data[table][key] = val
@@ -311,3 +312,10 @@ class Bitmex(Variables):
             self.ws.close()
         except Exception:
             pass
+
+    def transaction(self, **kwargs):
+        """
+        This function is replaced by transaction() from functions.py after the 
+        application is launched.
+        """
+        pass

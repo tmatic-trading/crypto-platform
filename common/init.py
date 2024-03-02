@@ -60,7 +60,6 @@ class Init(WS, Variables):
             var.logger.error("history.ini error")
             exit(1)
         tmp = datetime(2000, 1, 1)
-        tmp1 = ""
         """
         A premature exit from the loop is possible due to a small count_val
         value. This will happen in the case of a large number of trades or
@@ -84,7 +83,6 @@ class Init(WS, Variables):
             if last_history_time == tmp:
                 break
             tmp = last_history_time
-            tmp1 = history[-1]["execID"]
         if self.logNumFatal == 0:
             with open("history.ini", "w") as f:
                 f.write(str(last_history_time))
@@ -270,8 +268,9 @@ class Init(WS, Variables):
         disp.text_trades.delete("1.0", "end")
         disp.text_trades.insert("1.0", " - Trades -\n")
         for val in reversed(data):
-            Function.add_symbol(self, symbol=(val["SYMBOL"], val["CATEGORY"]))
-            Function.trades_display(self, value=val)
+            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
+            Function.add_symbol(self, symbol=val["SYMBOL"])
+            Function.trades_display(self, message=val)
         return
 
         var.cursor_mysql.execute(
