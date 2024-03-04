@@ -22,6 +22,9 @@ def info_display(name: str, message: str) -> None:
         + "."
         + noll(str(int(t.microsecond / 1000)), 3)
         + " "
+        + " "
+        + name
+        + " "
         + message
         + "\n",
     )

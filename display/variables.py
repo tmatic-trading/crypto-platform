@@ -14,7 +14,7 @@ class Variables:
     root = tk.Tk()
     root.title("COIN DEALER")
     root.geometry("+50+50")  # 1360x850
-    num_robots = 15
+    num_robots = 1
     bg_color = "gray98"
     title_color = "gray83"
     num_pos = max(5, var.position_rows + 1)
@@ -144,14 +144,15 @@ class Variables:
 
     labels["position"] = []
     labels_cache["position"] = []
-    for name in var.name_pos:
+
+    '''for name in var.name_pos:
         lst = []
         cache = []
         for _ in range(num_pos):
             lst.append(tk.Label(frame_positions, text=name))
             cache.append(name)
         labels["position"].append(lst)
-        labels_cache["position"].append(cache)
+        labels_cache["position"].append(cache)'''
 
     # Trades widget
 

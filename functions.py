@@ -10,7 +10,7 @@ from api.variables import Variables
 from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
-from display.function import info_display
+from display.functions import info_display
 from display.variables import Variables as disp
 
 db = var.env["MYSQL_DATABASE"]
@@ -533,7 +533,7 @@ class Function(WS, Variables):
         disp.text_funding.insert(
             "2.0",
             time
-            + gap(val=value["SYMBOL"] + "." + value["CATEGORY"][0], peak=10)
+            + gap(val=".".join(value["SYMBOL"]), peak=10)
             + gap(val=str(float(value["PRICE"])), peak=8)
             + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
             + gap(val=value["EMI"][:9], peak=10)
@@ -772,7 +772,7 @@ class Function(WS, Variables):
             )
             update_label(table="position", column=0, row=num + 1, val=".".join(symbol))
             if self.positions[symbol]["POS"]:
-                pos = Function.volume(qty=self.positions[symbol]["POS"], symbol=symbol)
+                pos = Function.volume(self, qty=self.positions[symbol]["POS"], symbol=symbol)
             else:
                 pos = "0"
             update_label(table="position", column=1, row=num + 1, val=pos)
@@ -836,7 +836,7 @@ class Function(WS, Variables):
 
         # Refresh Orderbook table
 
-        def display_order_book_values(
+        '''def display_order_book_values(
             val: dict, start: int, end: int, direct: int, side: str
         ) -> None:
             count = 0
@@ -882,18 +882,18 @@ class Function(WS, Variables):
                     column=2,
                     row=num,
                     val=Function.volume(
-                        self, qty=var.ticker[var.symbol]["askSize"], symbol=var.symbol
+                        self, qty=self.ticker[var.symbol]["askSize"], symbol=var.symbol
                     ),
                 )
             else:
                 update_label(table="orderbook", column=2, row=num, val="")
-            if var.ticker[var.symbol]["bidSize"]:
+            if self.ticker[var.symbol]["bidSize"]:
                 update_label(
                     table="orderbook",
                     column=0,
                     row=num + 1,
                     val=Function.volume(
-                        self, qty=var.ticker[var.symbol]["bidSize"], symbol=var.symbol
+                        self, qty=self.ticker[var.symbol]["bidSize"], symbol=var.symbol
                     ),
                 )
             else:
@@ -901,15 +901,15 @@ class Function(WS, Variables):
             disp.labels["orderbook"][0][num + 1]["fg"] = "black"
             first_price_sell = (
                 self.ticker[var.symbol]["ask"]
-                + (num - 1) * var.instruments[var.symbol]["tickSize"]
+                + (num - 1) * self.instruments[var.symbol]["tickSize"]
             )
-            first_price_buy = var.ticker[var.symbol]["bid"]
+            first_price_buy = self.ticker[var.symbol]["bid"]
             for row in range(disp.num_book - 1):
                 if row < num:
                     price = round(
                         first_price_sell
                         - row * self.instruments[var.symbol]["tickSize"],
-                        disp.price_rounding[var.symbol],
+                        disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
                     if var.orders:
@@ -918,7 +918,7 @@ class Function(WS, Variables):
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
-                    if var.ticker[var.symbol]["ask"]:
+                    if self.ticker[var.symbol]["ask"]:
                         price = Function.format_price(
                             self, number=price, symbol=var.symbol
                         )
@@ -935,7 +935,7 @@ class Function(WS, Variables):
                     price = round(
                         first_price_buy
                         - (row - num) * self.instruments[var.symbol]["tickSize"],
-                        disp.price_rounding[var.symbol],
+                        disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
                     if var.orders:
@@ -962,7 +962,7 @@ class Function(WS, Variables):
             display_order_book_values(
                 val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
             )
-            display_order_book_values(val=val, start=num, end=0, direct=-1, side="asks")
+            display_order_book_values(val=val, start=num, end=0, direct=-1, side="asks")'''
 
         # Update Robots table
 
@@ -1020,12 +1020,12 @@ class Function(WS, Variables):
                 qty=self.robots[emi]["POS"],
                 symbol=symbol,
             )
-            if disp.labels_cache["robots"][8][num + 1] != val:
+            if disp.labels_cache["robots"][num + 1][8] != val:
                 if self.robots[emi]["STATUS"] == "RESERVED":
                     if self.robots[emi]["POS"] != 0:
-                        disp.labels["robots"][5][num + 1]["fg"] = "red"
+                        disp.labels["robots"][num + 1][5]["fg"] = "red"
                     else:
-                        disp.labels["robots"][5][num + 1]["fg"] = "#212121"
+                        disp.labels["robots"][num + 1][5]["fg"] = "#212121"
             update_label(
                 table="robots",
                 column=8,
@@ -1036,7 +1036,7 @@ class Function(WS, Variables):
 
         # Refresh Account table
 
-        for symbol, position in self.positions.items():
+        '''for symbol, position in self.positions.items():
             if position["POS"] != 0:
                 calc = Function.calculate(
                     self,
@@ -1103,7 +1103,7 @@ class Function(WS, Variables):
             )
             update_label(
                 table="account", column=7, row=num + 1, val=format_number(number=number)
-            )
+            )'''
 
     def close_price(self, symbol: tuple, pos: int) -> float:
         if symbol in self.ticker:
@@ -1575,9 +1575,9 @@ def handler_orderbook(row_position: int) -> None:
 def update_label(
     table: str, column: int, row: int, val: Union[str, int, float]
 ) -> None:
-    if disp.labels_cache[table][column][row] != val:
-        disp.labels_cache[table][column][row] = val
-        disp.labels[table][column][row]["text"] = val
+    if disp.labels_cache[table][row][column] != val:
+        disp.labels_cache[table][row][column] = val
+        disp.labels[table][row][column]["text"] = val
 
 
 def format_number(number: float) -> str:
@@ -1623,12 +1623,13 @@ def handler_pos(event, row_position: int) -> None:
         row_position = len(ws.symbol_list)
     var.symbol = ws.symbol_list[row_position - 1]
     for row in enumerate(ws.symbol_list):
-        for column in enumerate(disp.labels["position"]):
+        #for column in enumerate(disp.labels["position"]):
+        for column in range(len(var.name_pos)):
             if row[0] + 1 == row_position:
-                disp.labels["position"][column[0]][row[0] + 1]["bg"] = "yellow"
+                disp.labels["position"][row[0] + 1][column]["bg"] = "yellow"
             else:
                 if row[0] + 1 > 0:
-                    disp.labels["position"][column[0]][row[0] + 1]["bg"] = disp.bg_color
+                    disp.labels["position"][row[0] + 1][column]["bg"] = disp.bg_color
 
 
 def humanFormat(volNow: int) -> str:
@@ -1694,6 +1695,15 @@ def handler_robots(event, row_position: int) -> None:
                 change_color(color=disp.title_color, container=robot_window)
 
 
+def clear_labels_cache():
+    #disp.labels["robots"] = []
+    disp.labels_cache["robots"] = []
+    for values in disp.labels_cache.values():
+        for column in values:
+            for row in range(len(column)):
+                column[row] = ""
+
+
 def change_color(color: str, container=None) -> None:
     container.config(bg=color)
     for child in container.winfo_children():
@@ -1704,5 +1714,3 @@ def change_color(color: str, container=None) -> None:
         elif type(child) is tk.Button:
             child.config(bg=color)
 
-
-WS.transaction = Function.transaction
