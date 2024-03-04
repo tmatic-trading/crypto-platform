@@ -8,7 +8,7 @@ from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from functions import Function
-from display.function import info_display
+from display.functions import info_display
 
 
 class Init(WS, Variables):
@@ -90,7 +90,7 @@ class Init(WS, Variables):
                     "TIMEFR": "None",
                     "CAPITAL": "None",
                 }
-
+                
         # Adding RESERVED robots
         union = ""
         qwr = "select * from ("

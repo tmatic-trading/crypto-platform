@@ -6,7 +6,7 @@ import time
 import requests
 from datetime import datetime
 
-from display.function import info_display
+from display.functions import info_display
 
 #from functions import Function
 
@@ -224,7 +224,7 @@ class Send(Variables):
                     % (e, url, json.dumps(postData or "")),
                     1002,
                 )
-                info_display("Websocket. Unable to contact API")
+                info_display(self.name,  "Websocket. Unable to contact API")
                 cur_retries += 1
             if postData:  # trading orders (POST, PUT, DELETE)
                 if cur_retries == stop_retries:  # means no errors
@@ -240,7 +240,7 @@ class Send(Variables):
             else:
                 if cur_retries > self.maxRetryRest:
                     info_warn_err("ERROR", "Max retries hit. Reboot", 1003)
-                    info_display("ERROR, Max retries hit. Reboot")
+                    info_display(self.name, "ERROR, Max retries hit. Reboot")
                     break
                 if cur_retries == stop_retries:  # means no errors
                     if self.logNumFatal < 1000:

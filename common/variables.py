@@ -13,6 +13,10 @@ if not os.path.isfile(".env"):
     exit(1)
 
 class Variables:
+
+    tmm = 0
+
+
     orders = OrderedDict()
     orders_dict = OrderedDict()
     position_rows = 0

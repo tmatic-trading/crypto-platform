@@ -13,7 +13,7 @@ from functions import Function
 
 from api.websockets import Websockets
 
-from display.function import info_display
+from display.functions import info_display
 
 # from ws.init import Variables as ws
 
@@ -169,7 +169,7 @@ class Init(WS, Variables):
                 else:
                     clOrdID = val["clOrdID"]
                     s = clOrdID.split(".")
-                    emi = s[1]
+                    emi = ".".join(s[1:])
                     if emi not in self.robots:
                         self.robots[emi] = {
                             "STATUS": "NOT DEFINED",
@@ -269,17 +269,7 @@ class Init(WS, Variables):
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
             Function.add_symbol(self, symbol=val["SYMBOL"])
             Function.trades_display(self, message=val)
-        return
 
-        var.cursor_mysql.execute(
-            "select max(TTIME) TTIME from " + db + ".coins where account=%s AND SIDE=-1",
-            account,
-        )
-        data = var.cursor_mysql.fetchall()
-        if data[0]["TTIME"]:
-            var.last_database_time = datetime.strptime(
-                str(data[0]["TTIME"]), "%Y-%m-%d %H:%M:%S"
-        )
 
 def setup_logger():
     logger = logging.getLogger()
