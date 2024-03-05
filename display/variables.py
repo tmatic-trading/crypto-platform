@@ -129,7 +129,7 @@ class Variables:
         "<Leave>", lambda event, canvas=canvas_robots: on_leave(event, canvas)
     )
 
-    # Pack service labels
+    # Packing service labels
 
     frame_state.grid(row=0, column=0, sticky="W")
     label_state.pack(side="left")
@@ -268,6 +268,11 @@ class Variables:
     labels["robots"] = []
     labels_cache["robots"] = []
 
+    # Exchange table
+    
+    labels["exchange"] = []
+    labels_cache["exchange"] = []
+
     refresh_var = None
     nfo_display_counter = 0
     f9 = "OFF"
@@ -281,8 +286,6 @@ class Variables:
     price_rounding = OrderedDict()
     orders_dict_value = 0
     order_window_trigger = "off"
-
-    # Exchange table
 
 
 def handler_robots(y_pos):

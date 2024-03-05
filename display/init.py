@@ -1,17 +1,11 @@
 import tkinter as tk
 
-#import connect
-#import _functions
-#from functions import Function
+from datetime import datetime
+
 import functions
-from bots.variables import Variables as bot
+from api.websockets import Websockets
 from common.variables import Variables as var
 from display.variables import Variables as disp
-
-#from ws.init import Variables as ws
-from datetime import datetime
-from api.websockets import Websockets
-
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
@@ -19,7 +13,7 @@ disp.root.bind("<F9>", lambda event: trade_state(event))
 
 def terminal_reload(event) -> None:
     var.robots_thread_is_active = ""
-    function.info_display("Restarting...")
+    functions.info_display("Restarting...")
     disp.root.update()
     connect.connection()
 
@@ -37,11 +31,11 @@ def trade_state(event) -> None:
 
 def reconfigure_table(widget: tk.Frame, table: str, action: str, number: int):
     """
-    Depending on the exchange, you may need a different number of rows in the 
-    tables, since, for example, you may be subscribed to a different number of 
-    instruments. Therefore, the number of rows in tables must change 
-    dynamically. Calling this function changes the number of rows in a 
-    particular table.
+    Depending on the exchange, you may need a different number of rows in the
+    tables, since, for example, you may be subscribed to a different number of
+    instruments. Therefore, the number of rows in tables: "account",
+    "position", "robots" must change  dynamically. Calling this function
+    changes the number of rows in a particular table.
 
     Input parameters:
 
@@ -69,15 +63,24 @@ def reconfigure_table(widget: tk.Frame, table: str, action: str, number: int):
                 break
 
 
-def create_robot_grid(row: int) -> None:
+def create_labels(widget: tk.Frame, table: str, names: list, row: int) -> None:
+    """
+    Generates labels for a table row.
+    """
     lst = []
     cache = []
-    if len(disp.labels["robots"]) <= row:
-        for name in var.name_robots:
-            lst.append(tk.Label(disp.frame_robots, text=name, pady=0))
-            cache.append(name+str(row))
-        disp.labels["robots"].append(lst)
-        disp.labels_cache["robots"].append(cache)
+    if len(disp.labels[table]) <= row:
+        for name in names:
+            lst.append(tk.Label(widget, text=name, pady=0))
+            cache.append(name + str(row))
+        disp.labels[table].append(lst)
+        disp.labels_cache[table].append(cache)
+
+
+def create_robot_grid(row: int) -> None:
+    create_labels(
+        widget=disp.frame_robots, table="robots", names=var.name_robots, row=row
+    )
     for column in range(len(var.name_robots)):
         if row > 0:
             disp.labels["robots"][row][column].bind(
@@ -93,13 +96,9 @@ def create_robot_grid(row: int) -> None:
 
 
 def create_position_grid(row: int) -> None:
-    lst = []
-    cache = []
-    for name in var.name_pos:
-        lst.append(tk.Label(disp.frame_positions, text=name, pady=0))
-        cache.append(name+str(row))
-    disp.labels["position"].append(lst)
-    disp.labels_cache["position"].append(cache)
+    create_labels(
+        widget=disp.frame_positions, table="position", names=var.name_pos, row=row
+    )
     for column in range(len(var.name_pos)):
         if row == 0:
             disp.labels["position"][row][column].grid(
@@ -119,16 +118,12 @@ def create_position_grid(row: int) -> None:
                 ),
             )
         disp.frame_positions.grid_columnconfigure(column, weight=1)
-        
+
 
 def create_account_grid(row: int):
-    lst = []
-    cache = []
-    for name in var.name_acc:
-        lst.append(tk.Label(disp.frame_4row_1_2_3col, text=name))
-        cache.append(name+str(row))
-    disp.labels["account"].append(lst)
-    disp.labels_cache["account"].append(cache)
+    create_labels(
+        widget=disp.frame_4row_1_2_3col, table="account", names=var.name_acc, row=row
+    )
     for column in range(len(var.name_acc)):
         if row == 0:
             disp.labels["account"][row][column].grid(
@@ -145,7 +140,6 @@ def create_account_grid(row: int):
 
 
 def load_labels() -> None:
-    
     # Robots table
 
     ws = Websockets.connect[var.current_exchange]
@@ -163,10 +157,9 @@ def load_labels() -> None:
     functions.change_color(color=disp.title_color, container=disp.root)
 
     # Positions table
-        
+
     for row in range(disp.num_pos):
         create_position_grid(row=row)
-
 
     # Order book table
 
@@ -197,16 +190,19 @@ def load_labels() -> None:
             disp.labels["orderbook"][row][column].grid(row=row, column=column)
             disp.frame_3row_3col.grid_columnconfigure(column, weight=1)
 
-
     # Account table
-            
+
     for row in range(disp.num_acc):
         create_account_grid(row=row)
 
+    # Exchange table
+
+    # for row in range(len(var.exchange_list)):
+    #    create_account_grid(row=row)
 
 
-'''def load_robots():
-    
+"""def load_robots():
+
     # Robots table
 
     print(disp.num_robots)
@@ -222,7 +218,7 @@ def load_labels() -> None:
             disp.labels["robots"][3][3].grid(
                     row=2, column=column, sticky="N" + "S" + "W" + "E"
               )
-    else: 
+    else:
     #if  disp.frame_robots.grid_slaves(row=2):
         for r in disp.frame_robots.grid_slaves(row=2):
             r.grid_forget()
@@ -262,4 +258,4 @@ def load_labels() -> None:
                 disp.labels["robots"][5][row + 1]["fg"] = "red"
             else:
                 disp.labels["robots"][5][row + 1]["fg"] = "#212121"
-    print(datetime.utcnow() - tm)'''
+    print(datetime.utcnow() - tm)"""
