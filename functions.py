@@ -6,6 +6,7 @@ from random import randint
 from typing import Union
 
 from api.api import WS
+from api.websockets import Websockets
 from api.variables import Variables
 from api.websockets import Websockets
 from bots.variables import Variables as bot
@@ -1086,6 +1087,38 @@ class Function(WS, Variables):
                 table="account", column=7, row=num + 1, val=format_number(number=number)
             )
 
+        # Refresh Exchange table
+            
+        for row, name in enumerate(var.exchange_list):
+            ws = Websockets.connect[name]
+            update_label(
+                table="exchange",
+                column=0,
+                row=row + 1,
+                val=name,
+            )
+            update_label(
+                table="exchange",
+                column=1,
+                row=row + 1,
+                val=ws.connect_count,
+            )
+            update_label(
+                table="exchange",
+                column=1,
+                row=row + 1,
+                val=ws.logNumFatal,
+            )
+            message = "ONLINE"
+            if ws.logNumFatal != 0:
+                message = "error " + str(ws.logNumFatal)
+            update_label(
+                table="exchange",
+                column=2,
+                row=row + 1,
+                val=message,
+            )
+
     def close_price(self, symbol: tuple, pos: int) -> float:
         if symbol in self.ticker:
             close = (
@@ -1604,13 +1637,26 @@ def handler_pos(event, row_position: int) -> None:
         row_position = len(ws.symbol_list)
     var.symbol = ws.symbol_list[row_position - 1]
     for row in enumerate(ws.symbol_list):
-        #for column in enumerate(disp.labels["position"]):
         for column in range(len(var.name_pos)):
             if row[0] + 1 == row_position:
                 disp.labels["position"][row[0] + 1][column]["bg"] = "yellow"
             else:
                 if row[0] + 1 > 0:
                     disp.labels["position"][row[0] + 1][column]["bg"] = disp.bg_color
+
+
+def handler_exchange(event, row_position: int) -> None:
+    ws = Websockets.connect[var.current_exchange]
+    if row_position > len(var.exchange_list):
+        row_position = len(var.exchange_list)
+    var.current_exchange = var.exchange_list[row_position - 1]
+    for row in enumerate(var.exchange_list):
+        for column in range(len(var.name_exchange)):
+            if row[0] + 1 == row_position:
+                disp.labels["exchange"][row[0] + 1][column]["bg"] = "yellow"
+            else:
+                if row[0] + 1 > 0:
+                    disp.labels["exchange"][row[0] + 1][column]["bg"] = disp.bg_color
 
 
 def humanFormat(volNow: int) -> str:

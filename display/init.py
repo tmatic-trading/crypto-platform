@@ -45,7 +45,6 @@ def reconfigure_table(widget: tk.Frame, table: str, action: str, number: int):
     number - number of lines to add or remove
     """
     row = widget.grid_size()[1]
-    print(row)
     if action == "new":
         while number:
             if table == "robots":
@@ -139,7 +138,33 @@ def create_account_grid(row: int):
         disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)
 
 
+def create_exchange_grid(row: int):
+    create_labels(
+        widget=disp.frame_exchange, table="exchange", names=var.name_exchange, row=row
+    )
+    for column in range(len(var.name_exchange)):
+        if row == 0:
+            disp.labels["exchange"][row][column].grid(
+                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
+            )
+        else:
+            disp.labels["exchange"][row][column].grid(
+                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
+            )
+            color = "yellow" if row == 1 else disp.bg_color
+            disp.labels["exchange"][row][column]["text"] = ""
+            disp.labels["exchange"][row][column]["bg"] = color
+            disp.labels["exchange"][row][column].bind(
+                "<Button-1>",
+                lambda event, row_position=row: functions.handler_exchange(
+                    event, row_position
+                ),
+            )
+        disp.frame_exchange.grid_columnconfigure(column, weight=1)
+
+
 def load_labels() -> None:
+    
     # Robots table
 
     ws = Websockets.connect[var.current_exchange]
@@ -197,8 +222,8 @@ def load_labels() -> None:
 
     # Exchange table
 
-    # for row in range(len(var.exchange_list)):
-    #    create_account_grid(row=row)
+    for row in range(len(var.exchange_list)+1):
+        create_exchange_grid(row=row)
 
 
 """def load_robots():
