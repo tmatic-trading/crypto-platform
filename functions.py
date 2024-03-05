@@ -86,25 +86,6 @@ class Function(WS, Variables):
         with open(self.filename, "a") as f:
             f.write(data + "\n")
 
-    """def info_display(self, message: str) -> None:
-        t = datetime.utcnow()
-        disp.text_info.insert(
-            "1.0",
-            Function.noll(self, val=str(t.hour), length=2)
-            + ":"
-            + Function.noll(self, val=str(t.minute), length=2)
-            + ":"
-            + Function.noll(self, val=str(t.second), length=2)
-            + "."
-            + Function.noll(self, val=str(int(t.microsecond / 1000)), length=3)
-            + " "
-            + message
-            + "\n",
-        )
-        disp.info_display_counter += 1
-        if disp.info_display_counter > 40:
-            disp.text_info.delete("41.0", "end")"""
-
     def noll(self, val: str, length: int) -> str:
         r = ""
         for _ in range(length - len(val)):
@@ -533,13 +514,13 @@ class Function(WS, Variables):
         disp.text_funding.insert(
             "2.0",
             time
-            + gap(val=".".join(value["SYMBOL"]), peak=10)
+            + gap(val=".".join((value["symbol"])), peak=10)
             + gap(val=str(float(value["PRICE"])), peak=8)
             + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
             + gap(val=value["EMI"][:9], peak=10)
             + " "
             + Function.volume(
-                self, qty=value["QTY"], symbol=(value["SYMBOL"], value["CATEGORY"])
+                self, qty=value["QTY"], symbol=(value["symbol"])
             )
             + "\n",
         )
@@ -836,7 +817,7 @@ class Function(WS, Variables):
 
         # Refresh Orderbook table
 
-        '''def display_order_book_values(
+        def display_order_book_values(
             val: dict, start: int, end: int, direct: int, side: str
         ) -> None:
             count = 0
@@ -866,10 +847,10 @@ class Function(WS, Variables):
                         )
                 if str(qty) != "0":
                     update_label(table="orderbook", column=col_qty, row=row, val=qty)
-                    disp.labels["orderbook"][col_qty][row]["bg"] = color
+                    disp.labels["orderbook"][row][col_qty]["bg"] = color
                 else:
                     update_label(table="orderbook", column=col_qty, row=row, val="")
-                    disp.labels["orderbook"][col_qty][row]["bg"] = disp.bg_color
+                    disp.labels["orderbook"][row][col_qty]["bg"] = disp.bg_color
                 update_label(table="orderbook", column=col, row=row, val=vlm)
                 update_label(table="orderbook", column=1, row=row, val=price)
                 count += 1
@@ -962,7 +943,7 @@ class Function(WS, Variables):
             display_order_book_values(
                 val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
             )
-            display_order_book_values(val=val, start=num, end=0, direct=-1, side="asks")'''
+            display_order_book_values(val=val, start=num, end=0, direct=-1, side="asks")
 
         # Update Robots table
 
@@ -1036,7 +1017,7 @@ class Function(WS, Variables):
 
         # Refresh Account table
 
-        '''for symbol, position in self.positions.items():
+        for symbol, position in self.positions.items():
             if position["POS"] != 0:
                 calc = Function.calculate(
                     self,
@@ -1103,7 +1084,7 @@ class Function(WS, Variables):
             )
             update_label(
                 table="account", column=7, row=num + 1, val=format_number(number=number)
-            )'''
+            )
 
     def close_price(self, symbol: tuple, pos: int) -> float:
         if symbol in self.ticker:
