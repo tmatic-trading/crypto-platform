@@ -1,5 +1,6 @@
 import platform
 import tkinter as tk
+from tkinter import ttk
 from collections import OrderedDict
 
 from common.variables import Variables as var
@@ -12,7 +13,7 @@ if platform.system() == "Windows":
 
 class Variables:
     root = tk.Tk()
-    root.title("COIN DEALER")
+    root.title("Tmatic")
     root.geometry("+50+50")  # 1360x850
     num_robots = 1
     bg_color = "gray98"
@@ -147,7 +148,7 @@ class Variables:
 
     # Trades widget
 
-    scroll_trades = tk.Scrollbar(frame_3row_1col)
+    '''scroll_trades = tk.Scrollbar(frame_3row_1col)
     text_trades = tk.Text(
         frame_3row_1col,
         height=5,
@@ -158,7 +159,7 @@ class Variables:
     scroll_trades.config(command=text_trades.yview)
     text_trades.config(yscrollcommand=scroll_trades.set)
     scroll_trades.pack(side="right", fill="y")
-    text_trades.pack(side="right", fill="both", expand="yes")
+    text_trades.pack(side="right", fill="both", expand="yes")'''
 
     # Order book table
 
@@ -191,9 +192,31 @@ class Variables:
     scroll_orders.pack(side="right", fill="y")
     text_orders.pack(side="right", fill="both", expand="yes")
 
-    # Funding widget
+    # Trades/Funding widget
 
-    frame_funding = tk.Frame(frame_3row_4col)
+    notebook = ttk.Notebook(frame_3row_4col, padding=0)
+    style = ttk.Style()
+    style.configure("TNotebook", borderwidth=0)
+    style.configure("TNotebook.Tab", background=title_color) 
+    style.map("TNotebook.Tab", background=[("selected", bg_color)]) 
+    notebook.pack(expand=1, fill="both")
+
+    frame_trades = ttk.Frame(notebook)
+    frame_trades.pack(fill="both", expand="yes")
+    scroll_trades = tk.Scrollbar(frame_trades)
+    text_trades = tk.Text(
+        frame_trades,
+        height=5,
+        width=52,
+        bg=bg_color,
+        highlightthickness=0,
+    )
+    scroll_trades.config(command=text_trades.yview)
+    text_trades.config(yscrollcommand=scroll_trades.set)
+    scroll_trades.pack(side="right", fill="y")
+    text_trades.pack(side="right", fill="both", expand="yes")
+
+    frame_funding = tk.Frame(notebook)
     frame_funding.pack(fill="both", expand="yes")
     scroll_funding = tk.Scrollbar(frame_funding)
     text_funding = tk.Text(
@@ -207,6 +230,9 @@ class Variables:
     text_funding.config(yscrollcommand=scroll_funding.set)
     scroll_funding.pack(side="right", fill="y")
     text_funding.pack(side="right", fill="both", expand="yes")
+
+    notebook.add(frame_trades, text='Trades')
+    notebook.add(frame_funding, text='Funding')
 
     # Account table
 

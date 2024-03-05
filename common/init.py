@@ -149,7 +149,7 @@ class Init(WS, Variables):
         myOrders = self.open_orders(self.name)
         var.orders = OrderedDict()
         disp.text_orders.delete("1.0", "end")
-        disp.text_orders.insert("1.0", " - Orders -\n")
+        disp.text_orders.insert("1.0", " - Orders - \n")
         for val in myOrders:
             if val["leavesQty"] != 0:
                 emi = ".".join(val["symbol"])

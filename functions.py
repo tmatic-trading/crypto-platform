@@ -1686,7 +1686,8 @@ def clear_labels_cache():
 
 
 def change_color(color: str, container=None) -> None:
-    container.config(bg=color)
+    if "notebook" not in str(container):
+        container.config(bg=color)
     for child in container.winfo_children():
         if child.winfo_children():
             change_color(color, child)

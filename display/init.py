@@ -91,6 +91,7 @@ def create_robot_grid(row: int) -> None:
         )
         disp.frame_robots.grid_columnconfigure(column, weight=1)
 
+
 def create_position_grid(row: int) -> None:
     lst = []
     cache = []
@@ -118,6 +119,7 @@ def create_position_grid(row: int) -> None:
                 ),
             )
         disp.frame_positions.grid_columnconfigure(column, weight=1)
+        
 
 def create_account_grid(row: int):
     lst = []
@@ -140,10 +142,6 @@ def create_account_grid(row: int):
             disp.labels["account"][row][column]["bg"] = disp.bg_color
         disp.labels["account"][row][column].grid(row=row, column=column)
         disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)
-
-
-
-
 
 
 def load_labels() -> None:
