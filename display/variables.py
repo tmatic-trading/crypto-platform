@@ -60,29 +60,43 @@ class Variables:
         "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
     )
 
-    # Frame for the exchange table
+    # Frame for the exchange table and the order entry
     frame_3row_1col = tk.Frame()
-    '''frame_exchange = tk.Frame(canvas_positions)
-    positions_id = canvas_positions.create_window(
-        (0, 0), window=frame_positions, anchor="nw"
+    frame_exchange_sub = tk.Frame(frame_3row_1col)
+    frame_exchange_sub.pack(fill="both", expand=True)
+    canvas_exchange = tk.Canvas(frame_exchange_sub, height=210, highlightthickness=0)
+    v_exchange = tk.Scrollbar(frame_exchange_sub, orient="vertical")
+    v_exchange.pack(side="right", fill="y")
+    v_exchange.config(command=canvas_exchange.yview)
+    canvas_exchange.config(yscrollcommand=v_exchange.set)
+    canvas_exchange.pack(fill="both", expand=True)
+    frame_exchange = tk.Frame(canvas_exchange)
+    exchange_id = canvas_exchange.create_window(
+        (0, 0), window=frame_exchange, anchor="nw"
     )
-    canvas_positions.bind(
+    canvas_exchange.bind(
         "<Configure>",
-        lambda event, id=positions_id, pos=canvas_positions: event_width(
+        lambda event, id=exchange_id, pos=canvas_exchange: event_width(
             event, id, pos
         ),
     )
-    frame_positions.bind(
-        "<Configure>", lambda event, pos=canvas_positions: event_config(event, pos)
+    frame_exchange.bind(
+        "<Configure>", lambda event, pos=canvas_exchange: event_config(event, pos)
     )
-    canvas_positions.bind(
-        "<Enter>", lambda event, canvas=canvas_positions: on_enter(event, canvas)
+    canvas_exchange.bind(
+        "<Enter>", lambda event, canvas=canvas_exchange: on_enter(event, canvas)
     )
-    canvas_positions.bind(
-        "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
-    )'''
+    canvas_exchange.bind(
+        "<Leave>", lambda event, canvas=canvas_exchange: on_leave(event, canvas)
+    )
 
-    # frame for order book
+    # Frame fo the order entry
+    frame_entry = tk.Frame(frame_3row_1col)
+    frame_entry.pack(fill="both", expand=True)
+    label_test = tk.Label(frame_entry, text="Enter orders here")
+    label_test.pack()
+
+    # Frame for the order book
     frame_3row_3col = tk.Frame(padx=0, pady=2)
 
     # Frame for orders and funding
@@ -114,6 +128,8 @@ class Variables:
     canvas_robots.bind(
         "<Leave>", lambda event, canvas=canvas_robots: on_leave(event, canvas)
     )
+
+    # Pack service labels
 
     frame_state.grid(row=0, column=0, sticky="W")
     label_state.pack(side="left")
