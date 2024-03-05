@@ -31,15 +31,15 @@ class Variables:
     label_time = tk.Label()
     frame_2row_1_2_3col = tk.Frame()
     frame_information = tk.Frame(frame_2row_1_2_3col)
-    frame_positions_sub = tk.Frame(frame_2row_1_2_3col)
 
+    # Frame for position table
+    frame_positions_sub = tk.Frame(frame_2row_1_2_3col)
     canvas_positions = tk.Canvas(frame_positions_sub, height=50, highlightthickness=0)
     v_positions = tk.Scrollbar(frame_positions_sub, orient="vertical")
     v_positions.pack(side="right", fill="y")
     v_positions.config(command=canvas_positions.yview)
     canvas_positions.config(yscrollcommand=v_positions.set)
     canvas_positions.pack(fill="both", expand=True)
-    # Frame for position table
     frame_positions = tk.Frame(canvas_positions)
     positions_id = canvas_positions.create_window(
         (0, 0), window=frame_positions, anchor="nw"
@@ -60,16 +60,53 @@ class Variables:
         "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
     )
 
-    # Frame for trades
+    # Frame for the exchange table and the order entry
     frame_3row_1col = tk.Frame()
-    # frame for order book
+    frame_exchange_sub = tk.Frame(frame_3row_1col)
+    frame_exchange_sub.pack(fill="both", expand=True)
+    canvas_exchange = tk.Canvas(frame_exchange_sub, height=210, highlightthickness=0)
+    v_exchange = tk.Scrollbar(frame_exchange_sub, orient="vertical")
+    v_exchange.pack(side="right", fill="y")
+    v_exchange.config(command=canvas_exchange.yview)
+    canvas_exchange.config(yscrollcommand=v_exchange.set)
+    canvas_exchange.pack(fill="both", expand=True)
+    frame_exchange = tk.Frame(canvas_exchange)
+    exchange_id = canvas_exchange.create_window(
+        (0, 0), window=frame_exchange, anchor="nw"
+    )
+    canvas_exchange.bind(
+        "<Configure>",
+        lambda event, id=exchange_id, pos=canvas_exchange: event_width(
+            event, id, pos
+        ),
+    )
+    frame_exchange.bind(
+        "<Configure>", lambda event, pos=canvas_exchange: event_config(event, pos)
+    )
+    canvas_exchange.bind(
+        "<Enter>", lambda event, canvas=canvas_exchange: on_enter(event, canvas)
+    )
+    canvas_exchange.bind(
+        "<Leave>", lambda event, canvas=canvas_exchange: on_leave(event, canvas)
+    )
+
+    # Frame fo the order entry
+    frame_entry = tk.Frame(frame_3row_1col)
+    frame_entry.pack(fill="both", expand=True)
+    label_test = tk.Label(frame_entry, text="Enter orders here")
+    label_test.pack()
+
+    # Frame for the order book
     frame_3row_3col = tk.Frame(padx=0, pady=2)
+
     # Frame for orders and funding
     frame_3row_4col = tk.Frame()
+
     # Frame for the account table
     frame_4row_1_2_3col = tk.Frame()
-    frame_5row_1_2_3_4col = tk.Frame()
 
+    # Frame for the robots table
+    frame_5row_1_2_3_4col = tk.Frame()
     canvas_robots = tk.Canvas(frame_5row_1_2_3_4col, height=210, highlightthickness=0)
     v_robots = tk.Scrollbar(frame_5row_1_2_3_4col, orient="vertical")
     v_robots.pack(side="right", fill="y")
@@ -91,6 +128,8 @@ class Variables:
     canvas_robots.bind(
         "<Leave>", lambda event, canvas=canvas_robots: on_leave(event, canvas)
     )
+
+    # Packing service labels
 
     frame_state.grid(row=0, column=0, sticky="W")
     label_state.pack(side="left")
@@ -145,21 +184,6 @@ class Variables:
 
     labels["position"] = []
     labels_cache["position"] = []
-
-    # Trades widget
-
-    '''scroll_trades = tk.Scrollbar(frame_3row_1col)
-    text_trades = tk.Text(
-        frame_3row_1col,
-        height=5,
-        width=38,
-        bg=bg_color,
-        highlightthickness=0,
-    )
-    scroll_trades.config(command=text_trades.yview)
-    text_trades.config(yscrollcommand=scroll_trades.set)
-    scroll_trades.pack(side="right", fill="y")
-    text_trades.pack(side="right", fill="both", expand="yes")'''
 
     # Order book table
 
@@ -243,6 +267,11 @@ class Variables:
 
     labels["robots"] = []
     labels_cache["robots"] = []
+
+    # Exchange table
+    
+    labels["exchange"] = []
+    labels_cache["exchange"] = []
 
     refresh_var = None
     nfo_display_counter = 0
