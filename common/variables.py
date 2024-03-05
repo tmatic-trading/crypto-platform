@@ -14,7 +14,26 @@ if not os.path.isfile(".env"):
 
 class Variables:
 
+
+
+
+
+
+
+    
+
     tmm = 0
+
+
+
+
+
+
+
+
+
+
+
 
 
     orders = OrderedDict()
