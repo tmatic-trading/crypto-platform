@@ -241,7 +241,8 @@ class Init(WS, Variables):
         disp.text_funding.delete("1.0", "end")
         disp.text_funding.insert("1.0", " - Funding -\n")
         for val in reversed(data):
-            Function.add_symbol(self, symbol=(val["SYMBOL"], val["CATEGORY"]))
+            val["symbol"] = (val["SYMBOL"], val["CATEGORY"])
+            Function.add_symbol(self, symbol=val["symbol"])
             Function.funding_display(self, val)
         sql = "select * from("
         union = ""

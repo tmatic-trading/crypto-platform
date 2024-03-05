@@ -145,15 +145,6 @@ class Variables:
     labels["position"] = []
     labels_cache["position"] = []
 
-    '''for name in var.name_pos:
-        lst = []
-        cache = []
-        for _ in range(num_pos):
-            lst.append(tk.Label(frame_positions, text=name))
-            cache.append(name)
-        labels["position"].append(lst)
-        labels_cache["position"].append(cache)'''
-
     # Trades widget
 
     scroll_trades = tk.Scrollbar(frame_3row_1col)
@@ -172,13 +163,13 @@ class Variables:
     # Order book table
 
     labels["orderbook"] = []
-    labels_cache["orderbook"] = []
-    for name in var.name_book:
+    labels_cache["orderbook"] = []    
+    for row in range(num_book):
         lst = []
         cache = []
-        for _ in range(num_book):
+        for name in var.name_book:
             lst.append(tk.Label(frame_3row_3col, text=name, pady=0))
-            cache.append(name)
+            cache.append(name+str(row))
         labels["orderbook"].append(lst)
         labels_cache["orderbook"].append(cache)
 
@@ -221,14 +212,6 @@ class Variables:
 
     labels["account"] = []
     labels_cache["account"] = []
-    for name in var.name_acc:
-        lst = []
-        cache = []
-        for _ in range(num_acc):
-            lst.append(tk.Label(frame_4row_1_2_3col, text=name))
-            cache.append(name)
-        labels["account"].append(lst)
-        labels_cache["account"].append(cache)
 
     # Robots table
 
