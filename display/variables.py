@@ -31,15 +31,15 @@ class Variables:
     label_time = tk.Label()
     frame_2row_1_2_3col = tk.Frame()
     frame_information = tk.Frame(frame_2row_1_2_3col)
-    frame_positions_sub = tk.Frame(frame_2row_1_2_3col)
 
+    # Frame for position table
+    frame_positions_sub = tk.Frame(frame_2row_1_2_3col)
     canvas_positions = tk.Canvas(frame_positions_sub, height=50, highlightthickness=0)
     v_positions = tk.Scrollbar(frame_positions_sub, orient="vertical")
     v_positions.pack(side="right", fill="y")
     v_positions.config(command=canvas_positions.yview)
     canvas_positions.config(yscrollcommand=v_positions.set)
     canvas_positions.pack(fill="both", expand=True)
-    # Frame for position table
     frame_positions = tk.Frame(canvas_positions)
     positions_id = canvas_positions.create_window(
         (0, 0), window=frame_positions, anchor="nw"
@@ -60,16 +60,39 @@ class Variables:
         "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
     )
 
-    # Frame for trades
+    # Frame for the exchange table
     frame_3row_1col = tk.Frame()
+    '''frame_exchange = tk.Frame(canvas_positions)
+    positions_id = canvas_positions.create_window(
+        (0, 0), window=frame_positions, anchor="nw"
+    )
+    canvas_positions.bind(
+        "<Configure>",
+        lambda event, id=positions_id, pos=canvas_positions: event_width(
+            event, id, pos
+        ),
+    )
+    frame_positions.bind(
+        "<Configure>", lambda event, pos=canvas_positions: event_config(event, pos)
+    )
+    canvas_positions.bind(
+        "<Enter>", lambda event, canvas=canvas_positions: on_enter(event, canvas)
+    )
+    canvas_positions.bind(
+        "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
+    )'''
+
     # frame for order book
     frame_3row_3col = tk.Frame(padx=0, pady=2)
+
     # Frame for orders and funding
     frame_3row_4col = tk.Frame()
+
     # Frame for the account table
     frame_4row_1_2_3col = tk.Frame()
-    frame_5row_1_2_3_4col = tk.Frame()
 
+    # Frame for the robots table
+    frame_5row_1_2_3_4col = tk.Frame()
     canvas_robots = tk.Canvas(frame_5row_1_2_3_4col, height=210, highlightthickness=0)
     v_robots = tk.Scrollbar(frame_5row_1_2_3_4col, orient="vertical")
     v_robots.pack(side="right", fill="y")
@@ -145,21 +168,6 @@ class Variables:
 
     labels["position"] = []
     labels_cache["position"] = []
-
-    # Trades widget
-
-    '''scroll_trades = tk.Scrollbar(frame_3row_1col)
-    text_trades = tk.Text(
-        frame_3row_1col,
-        height=5,
-        width=38,
-        bg=bg_color,
-        highlightthickness=0,
-    )
-    scroll_trades.config(command=text_trades.yview)
-    text_trades.config(yscrollcommand=scroll_trades.set)
-    scroll_trades.pack(side="right", fill="y")
-    text_trades.pack(side="right", fill="both", expand="yes")'''
 
     # Order book table
 
@@ -257,6 +265,8 @@ class Variables:
     price_rounding = OrderedDict()
     orders_dict_value = 0
     order_window_trigger = "off"
+
+    # Exchange table
 
 
 def handler_robots(y_pos):
