@@ -17,7 +17,7 @@ class Variables:
     orders_dict = OrderedDict()
     position_rows = 0
     account_rows = 0
-    env = dotenv_values(".env.New")
+    env = dotenv_values(".env")
     exchange_list = env["EXCHANGE_LIST"].replace(",", " ").split()
     CATEGORIES = {
     "LINEAR": "linear", 

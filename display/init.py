@@ -121,7 +121,7 @@ def create_position_grid(row: int) -> None:
 
 def create_account_grid(row: int):
     create_labels(
-        widget=disp.frame_4row_1_2_3col, table="account", names=var.name_acc, row=row
+        widget=disp.main_col0_row1, table="account", names=var.name_acc, row=row
     )
     for column in range(len(var.name_acc)):
         if row == 0:
@@ -135,7 +135,7 @@ def create_account_grid(row: int):
             disp.labels["account"][row][column]["text"] = ""
             disp.labels["account"][row][column]["bg"] = disp.bg_color
         disp.labels["account"][row][column].grid(row=row, column=column)
-        disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)
+        disp.main_col0_row1.grid_columnconfigure(column, weight=1)
 
 
 def create_exchange_grid(row: int):
@@ -213,7 +213,7 @@ def load_labels() -> None:
                     lambda row_position=row: functions.handler_orderbook(row_position),
                 )
             disp.labels["orderbook"][row][column].grid(row=row, column=column)
-            disp.frame_3row_3col.grid_columnconfigure(column, weight=1)
+            disp.main_col0_row0_col1.grid_columnconfigure(column, weight=1)
 
     # Account table
 
