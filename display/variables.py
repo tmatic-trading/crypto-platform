@@ -26,8 +26,8 @@ class Variables:
     labels_cache = dict()
     label_trading = tk.Label(frame_state, text="  TRADING: ")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
-    label_state = tk.Label(frame_state, text="  STATE: ")
-    label_online = tk.Label(frame_state, fg="white")
+    #label_state = tk.Label(frame_state, text="  STATE: ")
+    #label_online = tk.Label(frame_state, fg="white")
     label_time = tk.Label()
     frame_2row_1_2_3col = tk.Frame()
     frame_information = tk.Frame(frame_2row_1_2_3col)
@@ -60,12 +60,15 @@ class Variables:
         "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
     )
 
-    # Frame for the exchange table and the order entry
-    frame_3row_1col = tk.Frame()
-    frame_exchange_sub = tk.Frame(frame_3row_1col)
-    frame_exchange_sub.pack(fill="both", expand=True)
-    canvas_exchange = tk.Canvas(frame_exchange_sub, height=210, highlightthickness=0)
-    v_exchange = tk.Scrollbar(frame_exchange_sub, orient="vertical")
+    # Frame for the exchange table
+    frame_3row_1col = tk.Frame(root)
+    #frame_exchange_sub = tk.Frame(frame_3row_1col)
+    #frame_exchange_sub.pack(fill="both", expand=True)
+    #frame_exchange_sub.grid(fill="both", expand=True)
+    #canvas_exchange = tk.Canvas(frame_exchange_sub, highlightthickness=0, width=10)
+    #v_exchange = tk.Scrollbar(frame_exchange_sub, orient="vertical")
+    canvas_exchange = tk.Canvas(frame_3row_1col, highlightthickness=0, width=10)
+    v_exchange = tk.Scrollbar(frame_3row_1col, orient="vertical")
     v_exchange.pack(side="right", fill="y")
     v_exchange.config(command=canvas_exchange.yview)
     canvas_exchange.config(yscrollcommand=v_exchange.set)
@@ -90,14 +93,23 @@ class Variables:
         "<Leave>", lambda event, canvas=canvas_exchange: on_leave(event, canvas)
     )
 
-    # Frame fo the order entry
-    frame_entry = tk.Frame(frame_3row_1col)
-    frame_entry.pack(fill="both", expand=True)
-    label_test = tk.Label(frame_entry, text="Enter orders here")
-    label_test.pack()
+    # Frame for the order entry
+    #frame_entry = tk.Frame(frame_3row_1col)
+    #frame_entry.pack() # fill="both", expand=True
+    #label_test = tk.Label(frame_entry, text="Enter orders here")
+    #label_test.pack()
 
     # Frame for the order book
-    frame_3row_3col = tk.Frame(padx=0, pady=2)
+    frame_3row_3col = tk.Frame(padx=0, pady=0)
+    orderbook = tk.Frame(frame_3row_3col, padx=0, pady=2)
+    orderbook_sub2 = tk.Frame(frame_3row_3col, padx=0, pady=0, bg=bg_color)
+    orderbook.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
+    orderbook_sub2.grid(row=1, column=0, sticky="N" + "S" + "W" + "E")
+    #orderbook.grid_columnconfigure(0, weight=1)
+    #orderbook_sub2.grid_columnconfigure(0, weight=1)
+    frame_3row_3col.grid_columnconfigure(0, weight=1)
+    frame_3row_3col.grid_columnconfigure(0, weight=1)
+    frame_3row_3col.grid_rowconfigure(1, weight=200)
 
     # Frame for orders and funding
     frame_3row_4col = tk.Frame()
@@ -112,7 +124,7 @@ class Variables:
     v_robots.pack(side="right", fill="y")
     v_robots.config(command=canvas_robots.yview)
     canvas_robots.config(yscrollcommand=v_robots.set)
-    canvas_robots.pack(fill="both", expand=True)
+    canvas_robots.pack(fill="both", expand=True, side="left")
     frame_robots = tk.Frame(canvas_robots)
     robots_id = canvas_robots.create_window((0, 0), window=frame_robots, anchor="nw")
     canvas_robots.bind(
@@ -132,8 +144,8 @@ class Variables:
     # Packing service labels
 
     frame_state.grid(row=0, column=0, sticky="W")
-    label_state.pack(side="left")
-    label_online.pack(side="left")
+    #label_state.pack(side="left")
+    #label_online.pack(side="left")
     label_trading.pack(side="left")
     label_f9.pack(side="left")
 
@@ -149,9 +161,9 @@ class Variables:
     )
     frame_3row_1col.grid(row=2, column=0, sticky="N" + "S" + "W" + "E")
     frame_3row_3col.grid(row=2, column=1, sticky="N" + "S" + "W" + "E")
-    frame_3row_4col.grid(row=2, column=2, sticky="N" + "S" + "W" + "E", rowspan=2)
+    frame_3row_4col.grid(row=2, column=2, sticky="N" + "S" + "W" + "E")
     frame_4row_1_2_3col.grid(
-        row=3, column=0, sticky="S" + "W" + "E", columnspan=2, padx=0, pady=0
+        row=3, column=0, sticky="S" + "W" + "E", columnspan=3, padx=0, pady=0
     )
     frame_5row_1_2_3_4col.grid(
         row=4, column=0, sticky="N" + "S" + "W" + "E", columnspan=3
@@ -161,9 +173,22 @@ class Variables:
 
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
-    root.grid_columnconfigure(2, weight=1)
+    root.grid_columnconfigure(2, weight=20)
+    
     frame_2row_1_2_3col.grid_columnconfigure(0, weight=1)
     frame_2row_1_2_3col.grid_columnconfigure(1, weight=1)
+
+    root.grid_rowconfigure(2, weight=200)
+    root.grid_rowconfigure(3, weight=1)
+    
+
+
+    #frame_3row_1col.grid_rowconfigure(0, weight=20)
+    #frame_3row_3col.grid_rowconfigure(0, weight=20)
+    #frame_3row_4col.grid_rowconfigure(0, weight=20)
+    #frame_exchange.grid_rowconfigure(0, weight=20)
+    #frame_exchange_sub.grid_rowconfigure(0, weight=20)
+    frame_positions_sub.grid_rowconfigure(0, weight=20)
 
     # Information widget
 
@@ -194,7 +219,7 @@ class Variables:
         lst = []
         cache = []
         for name in var.name_book:
-            lst.append(tk.Label(frame_3row_3col, text=name, pady=0))
+            lst.append(tk.Label(orderbook, text=name, pady=0))
             cache.append(name+str(row))
         labels["orderbook"].append(lst)
         labels_cache["orderbook"].append(cache)

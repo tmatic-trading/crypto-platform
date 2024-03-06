@@ -17,7 +17,7 @@ class Variables:
     orders_dict = OrderedDict()
     position_rows = 0
     account_rows = 0
-    env = dotenv_values(".env")
+    env = dotenv_values(".env.New")
     exchange_list = env["EXCHANGE_LIST"].replace(",", " ").split()
     CATEGORIES = {
     "LINEAR": "linear", 
@@ -90,8 +90,6 @@ class Variables:
     ]
     name_exchange = [
         "EXCHANGE",
-        "RELOADS",
-        "STATUS",
     ]
     logger = logging
     connect_mysql = None

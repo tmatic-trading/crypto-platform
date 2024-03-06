@@ -700,17 +700,17 @@ class Function(WS, Variables):
             if utc > self.message_time + timedelta(seconds=10):
                 if self.message_counter == self.message_point:
                     info_display(self.name, "No data within 10 sec")
-                    disp.label_online["text"] = "NO DATA"
-                    disp.label_online.config(bg="yellow2")
+                    #disp.label_online["text"] = "NO DATA"
+                    #disp.label_online.config(bg="yellow2")
                     self.urgent_announcement(self.name)
                 self.message_time = utc
                 self.message_point = self.message_counter
-        if self.message_counter != self.message_point:
+        '''if self.message_counter != self.message_point:
             disp.label_online["text"] = "ONLINE"
             disp.label_online.config(bg="green3")
         if self.logNumFatal != 0:
             disp.label_online["text"] = "error " + str(self.logNumFatal)
-            disp.label_online.config(bg="orange red")
+            disp.label_online.config(bg="orange red")'''
         Function.refresh_tables(self)
 
     def refresh_tables(self) -> None:
@@ -752,7 +752,8 @@ class Function(WS, Variables):
             self.positions[symbol]["FUND"] = round(
                 self.instruments[symbol]["fundingRate"] * 100, 6
             )
-            update_label(table="position", column=0, row=num + 1, val=".".join(symbol))
+            symb = symbol[0] + "." + self.instruments[symbol]["category"][0]
+            update_label(table="position", column=0, row=num + 1, val=symb)
             if self.positions[symbol]["POS"]:
                 pos = Function.volume(self, qty=self.positions[symbol]["POS"], symbol=symbol)
             else:
@@ -1091,34 +1092,15 @@ class Function(WS, Variables):
             
         for row, name in enumerate(var.exchange_list):
             ws = Websockets.connect[name]
-            update_label(
-                table="exchange",
-                column=0,
-                row=row + 1,
-                val=name,
-            )
-            update_label(
-                table="exchange",
-                column=1,
-                row=row + 1,
-                val=ws.connect_count,
-            )
-            update_label(
-                table="exchange",
-                column=1,
-                row=row + 1,
-                val=ws.logNumFatal,
-            )
             message = "ONLINE"
             if ws.logNumFatal != 0:
                 message = "error " + str(ws.logNumFatal)
             update_label(
                 table="exchange",
-                column=2,
+                column=0,
                 row=row + 1,
-                val=message,
+                val=name + "\nAcc." + str(ws.user_id) + "\n" + message,
             )
-
     def close_price(self, symbol: tuple, pos: int) -> float:
         if symbol in self.ticker:
             close = (

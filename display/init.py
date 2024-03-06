@@ -213,7 +213,7 @@ def load_labels() -> None:
                     lambda row_position=row: functions.handler_orderbook(row_position),
                 )
             disp.labels["orderbook"][row][column].grid(row=row, column=column)
-            disp.frame_3row_3col.grid_columnconfigure(column, weight=1)
+            disp.orderbook.grid_columnconfigure(column, weight=1)
 
     # Account table
 
