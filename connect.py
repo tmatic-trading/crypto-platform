@@ -30,6 +30,7 @@ def setup():
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             setup_exchange(ws, name=name)
+    ws = Websockets.connect[var.current_exchange]
     common.Init.initial_display(ws)
     display.load_labels()
     algo.init_algo()

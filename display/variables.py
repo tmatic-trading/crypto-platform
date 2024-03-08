@@ -30,11 +30,29 @@ class Variables:
     #label_online = tk.Label(frame_state, fg="white")
     label_time = tk.Label()
     frame_2row_1_2_3col = tk.Frame()
+
+    # Tables 
+
+    position = None
+
+
+
+
+
+
+
+
+
+
+
+
+
     frame_information = tk.Frame(frame_2row_1_2_3col)
 
     # Frame for position table
-    frame_positions_sub = tk.Frame(frame_2row_1_2_3col)
-    canvas_positions = tk.Canvas(frame_positions_sub, height=50, highlightthickness=0)
+    position_frame = tk.Frame(frame_2row_1_2_3col)
+    position_frame.grid(row=0, column=1, sticky="N" + "S" + "W" + "E")
+    '''canvas_positions = tk.Canvas(frame_positions_sub, height=50, highlightthickness=0)
     v_positions = tk.Scrollbar(frame_positions_sub, orient="vertical")
     v_positions.pack(side="right", fill="y")
     v_positions.config(command=canvas_positions.yview)
@@ -58,7 +76,7 @@ class Variables:
     )
     canvas_positions.bind(
         "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
-    )
+    )'''
 
     # Frame for the exchange table
     frame_3row_1col = tk.Frame(root)
@@ -156,9 +174,9 @@ class Variables:
         row=1, column=0, sticky="N" + "S" + "W" + "E", columnspan=3
     )
     frame_information.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
-    frame_positions_sub.grid(
+    '''frame_positions_sub.grid(
         row=0, column=1, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-    )
+    )'''
     frame_3row_1col.grid(row=2, column=0, sticky="N" + "S" + "W" + "E")
     frame_3row_3col.grid(row=2, column=1, sticky="N" + "S" + "W" + "E")
     frame_3row_4col.grid(row=2, column=2, sticky="N" + "S" + "W" + "E")
@@ -188,7 +206,7 @@ class Variables:
     #frame_3row_4col.grid_rowconfigure(0, weight=20)
     #frame_exchange.grid_rowconfigure(0, weight=20)
     #frame_exchange_sub.grid_rowconfigure(0, weight=20)
-    frame_positions_sub.grid_rowconfigure(0, weight=20)
+    #frame_positions_sub.grid_rowconfigure(0, weight=20)
 
     # Information widget
 
@@ -321,6 +339,92 @@ class Variables:
     price_rounding = OrderedDict()
     orders_dict_value = 0
     order_window_trigger = "off"
+
+class Table(Variables):
+    """
+    The table contains a grid with one row in each column in which a Listbox 
+    is inserted. The contents of table rows are managed through Listbox tools 
+    in accordance with the row index.
+    """
+    def __init__(self, frame: tk.Frame, title: list, size: int, bind=None, expand=None) -> None:
+        self.title = title
+        self.height = 1
+        self.active_row = 1
+        if expand:
+            frame.grid_rowconfigure(0, weight=1)
+        canvas = tk.Canvas(frame, height=50, highlightthickness=0)
+        scroll = tk.Scrollbar(frame, orient="vertical")
+        scroll.pack(side="right", fill="y")
+        scroll.config(command=canvas.yview)
+        canvas.config(yscrollcommand=scroll.set)
+        canvas.pack(fill="both", expand=True)
+        self.sub = tk.Frame(canvas, pady=2)
+        id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
+        canvas.bind(
+            "<Configure>",
+            lambda event, id=id, can=canvas: event_width(event, id, can),
+        )
+        self.sub.bind(
+            "<Configure>", lambda event, can=canvas: event_config(event, can)
+        )
+        canvas.bind(
+            "<Enter>", lambda event, canvas=canvas: on_enter(event, canvas)
+        )
+        canvas.bind(
+            "<Leave>", lambda event, canvas=canvas: on_leave(event, canvas)
+        )
+        self.listboxes = []
+        for column, name in enumerate(title):
+            vars = tk.Variable(value=[name,])
+            self.listboxes.append(
+                tk.Listbox(
+                    self.sub,
+                    listvariable=vars,
+                    bd=0,
+                    background=self.bg_color,
+                    highlightthickness=0,
+                    selectbackground=self.bg_color,
+                    selectforeground="Black",
+                    activestyle="none",
+                    justify='center',
+                    height=self.height,
+                    width=0,
+                    #selectmode=tk.SINGLE,
+                )
+            )
+            self.listboxes[column].itemconfig(0, bg=self.title_color)           
+            self.listboxes[column].grid(row=0, padx=1, column=column, sticky="N" + "S" + "W" + "E")            
+            self.sub.grid_columnconfigure(column, weight=1)
+            self.sub.grid_rowconfigure(0, weight=1)
+            if bind:
+                self.listboxes[column].bind(
+                    "<<ListboxSelect>>", bind)
+        for _ in range(size):
+            lst = ["" for _ in range(len(self.title))]
+            self.insert(elements=lst, row=1)
+
+    def insert(self, row: int, elements: list) -> None:
+        self.height += 1
+        for column, listbox in enumerate(self.listboxes):
+            text = elements[column]
+            listbox.config(height=self.height)   
+            listbox.insert(row, text) 
+
+    def delete(self, row: int) -> None:
+        self.height -= 1
+        for listbox in self.listboxes:            
+            listbox.config(height=self.height)
+            listbox.delete(row)
+
+    def paint(self, row: int, color: str) -> None:
+        for listbox in self.listboxes:    
+            listbox.itemconfig(row, bg=color)
+
+    def update(self, row: int, elements: list) -> None:
+        color = self.listboxes[0].itemcget(row, "background")
+        self.delete(row)
+        self.insert(row, elements)
+        self.paint(row, color)
 
 
 def handler_robots(y_pos):

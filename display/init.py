@@ -1,10 +1,10 @@
 import tkinter as tk
-
 from datetime import datetime
 
 import functions
 from api.websockets import Websockets
 from common.variables import Variables as var
+from display.variables import Table
 from display.variables import Variables as disp
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
@@ -164,7 +164,26 @@ def create_exchange_grid(row: int):
 
 
 def load_labels() -> None:
-    
+
+
+
+
+    disp.position = Table(
+        frame=disp.position_frame, title=var.name_pos, bind=functions.handler_pos, size=5
+    )
+    disp.position.paint(row=1, color="yellow")
+
+
+
+
+
+
+
+
+
+
+
+
     # Robots table
 
     ws = Websockets.connect[var.current_exchange]
@@ -183,8 +202,8 @@ def load_labels() -> None:
 
     # Positions table
 
-    for row in range(disp.num_pos):
-        create_position_grid(row=row)
+    """for row in range(disp.num_pos):
+        create_position_grid(row=row)"""
 
     # Order book table
 
@@ -222,7 +241,7 @@ def load_labels() -> None:
 
     # Exchange table
 
-    for row in range(len(var.exchange_list)+1):
+    for row in range(len(var.exchange_list) + 1):
         create_exchange_grid(row=row)
 
 
