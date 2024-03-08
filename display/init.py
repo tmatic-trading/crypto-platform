@@ -94,7 +94,7 @@ def create_robot_grid(row: int) -> None:
         disp.frame_robots.grid_columnconfigure(column, weight=1)
 
 
-def create_position_grid(row: int) -> None:
+'''def create_position_grid(row: int) -> None:
     create_labels(
         widget=disp.frame_positions, table="position", names=var.name_pos, row=row
     )
@@ -135,7 +135,7 @@ def create_account_grid(row: int):
             disp.labels["account"][row][column]["text"] = ""
             disp.labels["account"][row][column]["bg"] = disp.bg_color
         disp.labels["account"][row][column].grid(row=row, column=column)
-        disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)
+        disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)'''
 
 
 def create_exchange_grid(row: int):
@@ -164,10 +164,6 @@ def create_exchange_grid(row: int):
 
 
 def load_labels() -> None:
-
-
-
-
     disp.position = Table(
         frame=disp.position_frame, title=var.name_pos, bind=functions.handler_pos, size=5
     )
@@ -236,8 +232,12 @@ def load_labels() -> None:
 
     # Account table
 
-    for row in range(disp.num_acc):
-        create_account_grid(row=row)
+    disp.account = Table(
+        frame=disp.frame_4row_1_2_3col, title=var.name_acc, size=2
+    )
+
+    #for row in range(disp.num_acc):
+    #    create_account_grid(row=row)
 
     # Exchange table
 

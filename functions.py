@@ -1011,7 +1011,30 @@ class Function(WS, Variables):
                     )
                     exit(1)
         for num, cur in enumerate(self.currencies):
-            update_label(table="account", column=0, row=num + 1, val=cur)
+            margin = format_number(number=self.accounts[cur]["MARGINBAL"])
+            available = format_number(number=self.accounts[cur]["AVAILABLE"])
+            leverage = "{:.3f}".format(self.accounts[cur]["LEVERAGE"])
+            result = format_number(number=self.accounts[cur]["RESULT"])
+            commiss = format_number(number=-self.accounts[cur]["COMMISS"])
+            funding = format_number(number=-self.accounts[cur]["FUNDING"])
+            number = (
+                self.accounts[cur]["MARGINBAL"]
+                - self.accounts[cur]["RESULT"]
+                + self.accounts[cur]["COMMISS"]
+                + self.accounts[cur]["FUNDING"]
+            )
+            control = format_number(number=number)
+            lst = [cur, margin, available, leverage, result, commiss, funding, control]
+            disp.account.update(row=num+1, elements=lst)
+
+
+
+
+
+
+
+
+            '''update_label(table="account", column=0, row=num + 1, val=cur)
             update_label(
                 table="account",
                 column=1,
@@ -1056,7 +1079,7 @@ class Function(WS, Variables):
             )
             update_label(
                 table="account", column=7, row=num + 1, val=format_number(number=number)
-            )
+            )'''
 
         # Refresh Exchange table
             

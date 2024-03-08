@@ -34,7 +34,7 @@ class Variables:
     # Tables 
 
     position = None
-
+    account = None
 
 
 
@@ -226,8 +226,8 @@ class Variables:
 
     # Positions widget
 
-    labels["position"] = []
-    labels_cache["position"] = []
+    #labels["position"] = []
+    #labels_cache["position"] = []
 
     # Order book table
 
@@ -352,7 +352,7 @@ class Table(Variables):
         self.active_row = 1
         if expand:
             frame.grid_rowconfigure(0, weight=1)
-        canvas = tk.Canvas(frame, height=50, highlightthickness=0)
+        canvas = tk.Canvas(frame, height=62, highlightthickness=0)
         scroll = tk.Scrollbar(frame, orient="vertical")
         scroll.pack(side="right", fill="y")
         scroll.config(command=canvas.yview)
@@ -406,9 +406,8 @@ class Table(Variables):
     def insert(self, row: int, elements: list) -> None:
         self.height += 1
         for column, listbox in enumerate(self.listboxes):
-            text = elements[column]
             listbox.config(height=self.height)   
-            listbox.insert(row, text) 
+            listbox.insert(row, elements[column]) 
 
     def delete(self, row: int) -> None:
         self.height -= 1
