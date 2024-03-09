@@ -115,7 +115,7 @@ class Variables:
 
     # Frame for the robots table
     frame_5row_1_2_3_4col = tk.Frame()
-    canvas_robots = tk.Canvas(frame_5row_1_2_3_4col, height=210, highlightthickness=0)
+    '''canvas_robots = tk.Canvas(frame_5row_1_2_3_4col, height=210, highlightthickness=0)
     v_robots = tk.Scrollbar(frame_5row_1_2_3_4col, orient="vertical")
     v_robots.pack(side="right", fill="y")
     v_robots.config(command=canvas_robots.yview)
@@ -135,7 +135,7 @@ class Variables:
     )
     canvas_robots.bind(
         "<Leave>", lambda event, canvas=canvas_robots: on_leave(event, canvas)
-    )
+    )'''
 
     # Packing service labels
 
@@ -289,16 +289,6 @@ class Variables:
     pw_orders_trades.add(notebook)
     pw_orders_trades.bind("<Configure>", lambda event: resize_row(event, Variables.pw_orders_trades, 2))
 
-    # Account table
-
-    labels["account"] = []
-    labels_cache["account"] = []
-
-    # Robots table
-
-    labels["robots"] = []
-    labels_cache["robots"] = []
-
     # Exchange table
     
     labels["exchange"] = []
@@ -323,7 +313,7 @@ class GridTable(Variables):
         self.color = color
         self.labels[name] = []
         self.labels_cache[name] = []
-        canvas = tk.Canvas(frame, height=65, highlightthickness=0)
+        canvas = tk.Canvas(frame, height=size*21, highlightthickness=0)
         scroll = tk.Scrollbar(frame, orient="vertical")
         scroll.pack(side="right", fill="y")
         scroll.config(command=canvas.yview)
