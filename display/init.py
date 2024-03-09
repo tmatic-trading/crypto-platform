@@ -4,7 +4,7 @@ from datetime import datetime
 import functions
 from api.websockets import Websockets
 from common.variables import Variables as var
-from display.variables import Table
+from display.variables import GridTable
 from display.variables import Variables as disp
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
@@ -94,48 +94,19 @@ def create_robot_grid(row: int) -> None:
         disp.frame_robots.grid_columnconfigure(column, weight=1)
 
 
-'''def create_position_grid(row: int) -> None:
-    create_labels(
-        widget=disp.frame_positions, table="position", names=var.name_pos, row=row
-    )
-    for column in range(len(var.name_pos)):
-        if row == 0:
-            disp.labels["position"][row][column].grid(
-                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-            )
-        else:
-            disp.labels["position"][row][column].grid(
-                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-            )
-            color = "yellow" if row == 1 else disp.bg_color
-            disp.labels["position"][row][column]["text"] = ""
-            disp.labels["position"][row][column]["bg"] = color
-            disp.labels["position"][row][column].bind(
-                "<Button-1>",
-                lambda event, row_position=row: functions.handler_pos(
-                    event, row_position
-                ),
-            )
-        disp.frame_positions.grid_columnconfigure(column, weight=1)
-
-
 def create_account_grid(row: int):
     create_labels(
         widget=disp.frame_4row_1_2_3col, table="account", names=var.name_acc, row=row
     )
     for column in range(len(var.name_acc)):
-        if row == 0:
-            disp.labels["account"][row][column].grid(
-                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-            )
-        else:
-            disp.labels["account"][row][column].grid(
-                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-            )
+        disp.labels["account"][row][column].grid(
+            row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
+        )
+        if row > 0:
             disp.labels["account"][row][column]["text"] = ""
             disp.labels["account"][row][column]["bg"] = disp.bg_color
-        disp.labels["account"][row][column].grid(row=row, column=column)
-        disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)'''
+        # disp.labels["account"][row][column].grid(row=row, column=column)
+        disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)
 
 
 def create_exchange_grid(row: int):
@@ -163,22 +134,24 @@ def create_exchange_grid(row: int):
         disp.frame_exchange.grid_columnconfigure(column, weight=1)
 
 
+class Table:
+    functions.change_color(color=disp.title_color, container=disp.root)
+    position = GridTable(
+        frame=disp.position_frame,
+        name="position",
+        title=var.name_pos,
+        size=max(5, var.position_rows + 1),
+        bind=functions.handler_pos,
+        color=disp.bg_color,
+        select=True,
+    )
+
+
 def load_labels() -> None:
-    disp.position = Table(
+    """disp.position = Table(
         frame=disp.position_frame, title=var.name_pos, bind=functions.handler_pos, size=5
     )
-    disp.position.paint(row=1, color="yellow")
-
-
-
-
-
-
-
-
-
-
-
+    disp.position.paint(row=1, color="yellow")"""
 
     # Robots table
 
@@ -194,12 +167,11 @@ def load_labels() -> None:
         else:
             disp.labels["robots"][row + 1][5]["fg"] = "#212121"
 
-    functions.change_color(color=disp.title_color, container=disp.root)
 
     # Positions table
 
-    """for row in range(disp.num_pos):
-        create_position_grid(row=row)"""
+    # for row in range(disp.num_pos):
+    #    create_position_grid(row=row)
 
     # Order book table
 
@@ -232,12 +204,12 @@ def load_labels() -> None:
 
     # Account table
 
-    disp.account = Table(
+    """disp.account = Table(
         frame=disp.frame_4row_1_2_3col, title=var.name_acc, size=2
-    )
+    )"""
 
-    #for row in range(disp.num_acc):
-    #    create_account_grid(row=row)
+    for row in range(disp.num_acc):
+        create_account_grid(row=row)
 
     # Exchange table
 
