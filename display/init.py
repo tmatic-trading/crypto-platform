@@ -48,7 +48,8 @@ def reconfigure_table(widget: tk.Frame, table: str, action: str, number: int):
     if action == "new":
         while number:
             if table == "robots":
-                create_robot_grid(widget=widget, table=table, row=row)
+                pass
+                #create_robot_grid(widget=widget, table=table, row=row)
             row += 1
             number -= 1
     elif action == "delete":
@@ -76,24 +77,6 @@ def create_labels(widget: tk.Frame, table: str, names: list, row: int) -> None:
         disp.labels_cache[table].append(cache)
 
 
-def create_robot_grid(row: int) -> None:
-    create_labels(
-        widget=disp.frame_robots, table="robots", names=var.name_robots, row=row
-    )
-    for column in range(len(var.name_robots)):
-        if row > 0:
-            disp.labels["robots"][row][column].bind(
-                "<Button-1>",
-                lambda event, row_position=row: functions.handler_robots(
-                    event, row_position
-                ),
-            )
-        disp.labels["robots"][row][column].grid(
-            row=row, column=column, sticky="N" + "S" + "W" + "E"
-        )
-        disp.frame_robots.grid_columnconfigure(column, weight=1)
-
-
 def create_exchange_grid(row: int):
     create_labels(
         widget=disp.frame_exchange, table="exchange", names=var.name_exchange, row=row
@@ -119,9 +102,10 @@ def create_exchange_grid(row: int):
         disp.frame_exchange.grid_columnconfigure(column, weight=1)
 
 
-class Table:
+def load_labels() -> None:
     functions.change_color(color=disp.title_color, container=disp.root)
-    position = GridTable(
+    ws = Websockets.connect[var.current_exchange]
+    GridTable(
         frame=disp.position_frame,
         name="position",
         title=var.name_pos,
@@ -130,28 +114,21 @@ class Table:
         color=disp.bg_color,
         select=True,
     )
-    account = GridTable(
+    GridTable(
         frame=disp.frame_4row_1_2_3col,
         name="account",
         title=var.name_acc,
         size=var.account_rows + 1,
         color=disp.bg_color,
     )
-
-
-
-
-
-
-
-def load_labels() -> None:
-
-    # Robots table
-
-    ws = Websockets.connect[var.current_exchange]
-    rows = max(disp.num_robots, len(ws.robots) + 1)
-    for row in range(rows):
-        create_robot_grid(row=row)
+    GridTable(
+        frame=disp.frame_5row_1_2_3_4col,
+        name="robots",
+        title=var.name_robots,
+        size=max(disp.num_robots, len(ws.robots) + 1),
+        bind=functions.handler_robots,
+        color=disp.title_color,
+    )
     for row, emi in enumerate(ws.robots):
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
             ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
