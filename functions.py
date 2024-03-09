@@ -752,6 +752,74 @@ class Function(WS, Variables):
             self.positions[symbol]["FUND"] = round(
                 self.instruments[symbol]["fundingRate"] * 100, 6
             )
+            update_label(table="position", column=0, row=num + 1, val=".".join(symbol))
+            if self.positions[symbol]["POS"]:
+                pos = Function.volume(self, qty=self.positions[symbol]["POS"], symbol=symbol)
+            else:
+                pos = "0"
+            update_label(table="position", column=1, row=num + 1, val=pos)
+            update_label(
+                table="position",
+                column=2,
+                row=num + 1,
+                val=(
+                    Function.format_price(
+                        self,
+                        number=self.positions[symbol]["ENTRY"],
+                        symbol=symbol,
+                    )
+                    if self.positions[symbol]["ENTRY"] is not None
+                    else 0
+                ),
+            )
+            update_label(
+                table="position",
+                column=3,
+                row=num + 1,
+                val=(
+                    self.positions[symbol]["PNL"]
+                    if self.positions[symbol]["PNL"] is not None
+                    else 0
+                ),
+            )
+            update_label(
+                table="position",
+                column=4,
+                row=num + 1,
+                val=(
+                    str(self.positions[symbol]["MCALL"]).replace("100000000", "inf")
+                    if self.positions[symbol]["MCALL"] is not None
+                    else 0
+                ),
+            )
+            update_label(
+                table="position",
+                column=5,
+                row=num + 1,
+                val=self.positions[symbol]["STATE"],
+            )
+            update_label(
+                table="position",
+                column=6,
+                row=num + 1,
+                val=humanFormat(self.positions[symbol]["VOL24h"]),
+            )
+            if isinstance(self.instruments[symbol]["expiry"], datetime):
+                tm = self.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
+            else:
+                tm = self.instruments[symbol]["expiry"]
+            update_label(table="position", column=7, row=num + 1, val=tm)
+            update_label(
+                table="position",
+                column=8,
+                row=num + 1,
+                val=self.positions[symbol]["FUND"],
+            )
+            '''self.positions[symbol]["STATE"] = self.instruments[symbol]["state"]
+            self.positions[symbol]["VOL24h"] = self.instruments[symbol]["volume24h"]
+            self.positions[symbol]["FUND"] = round(
+                self.instruments[symbol]["fundingRate"] * 100, 6
+            )
             symb = symbol[0] + "." + self.instruments[symbol]["category"][0]
             if self.positions[symbol]["POS"]:
                 pos = Function.volume(self, qty=self.positions[symbol]["POS"], symbol=symbol)
@@ -778,14 +846,13 @@ class Function(WS, Variables):
                 )
             state = self.positions[symbol]["STATE"]
             vol24h = humanFormat(self.positions[symbol]["VOL24h"])
-            position = self.positions[symbol]["STATE"]
             if isinstance(self.instruments[symbol]["expiry"], datetime):
                 expiry = self.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
             else:
                 expiry = self.instruments[symbol]["expiry"]
             fund = self.positions[symbol]["FUND"]
             lst = [symb, pos, entry, pnl, mcall, state, vol24h, expiry, fund]
-            disp.position.update(row=num+1, elements=lst)
+            disp.position.update(row=num+1, elements=lst)'''
 
         # Refresh Orderbook table
 
@@ -988,7 +1055,7 @@ class Function(WS, Variables):
             self.robots[emi]["y_position"] = num + 1
 
         # Refresh Account table
-
+            
         for symbol, position in self.positions.items():
             if position["POS"] != 0:
                 calc = Function.calculate(
@@ -1010,31 +1077,8 @@ class Function(WS, Variables):
                         + " not found. See the CURRENCIES variable in the .env file."
                     )
                     exit(1)
-        for num, cur in enumerate(self.currencies):
-            margin = format_number(number=self.accounts[cur]["MARGINBAL"])
-            available = format_number(number=self.accounts[cur]["AVAILABLE"])
-            leverage = "{:.3f}".format(self.accounts[cur]["LEVERAGE"])
-            result = format_number(number=self.accounts[cur]["RESULT"])
-            commiss = format_number(number=-self.accounts[cur]["COMMISS"])
-            funding = format_number(number=-self.accounts[cur]["FUNDING"])
-            number = (
-                self.accounts[cur]["MARGINBAL"]
-                - self.accounts[cur]["RESULT"]
-                + self.accounts[cur]["COMMISS"]
-                + self.accounts[cur]["FUNDING"]
-            )
-            control = format_number(number=number)
-            lst = [cur, margin, available, leverage, result, commiss, funding, control]
-            disp.account.update(row=num+1, elements=lst)
-
-
-
-
-
-
-
-
-            '''update_label(table="account", column=0, row=num + 1, val=cur)
+        '''for num, cur in enumerate(self.currencies):
+            update_label(table="account", column=0, row=num + 1, val=cur)
             update_label(
                 table="account",
                 column=1,
@@ -1080,6 +1124,43 @@ class Function(WS, Variables):
             update_label(
                 table="account", column=7, row=num + 1, val=format_number(number=number)
             )'''
+        '''for symbol, position in self.positions.items():
+            if position["POS"] != 0:
+                calc = Function.calculate(
+                    self,
+                    symbol=symbol,
+                    price=Function.close_price(
+                        self, symbol=symbol, pos=position["POS"]
+                    ),
+                    qty=-position["POS"],
+                    rate=0,
+                    fund=1,
+                )
+                settlCurrency = self.instruments[symbol]["settlCurrency"]
+                if settlCurrency in self.accounts:
+                    self.accounts[settlCurrency]["RESULT"] += calc["sumreal"]
+                else:
+                    var.logger.error(
+                        settlCurrency
+                        + " not found. See the CURRENCIES variable in the .env file."
+                    )
+                    exit(1)
+        for num, cur in enumerate(self.currencies):
+            margin = format_number(number=self.accounts[cur]["MARGINBAL"])
+            available = format_number(number=self.accounts[cur]["AVAILABLE"])
+            leverage = "{:.3f}".format(self.accounts[cur]["LEVERAGE"])
+            result = format_number(number=self.accounts[cur]["RESULT"])
+            commiss = format_number(number=-self.accounts[cur]["COMMISS"])
+            funding = format_number(number=-self.accounts[cur]["FUNDING"])
+            number = (
+                self.accounts[cur]["MARGINBAL"]
+                - self.accounts[cur]["RESULT"]
+                + self.accounts[cur]["COMMISS"]
+                + self.accounts[cur]["FUNDING"]
+            )
+            control = format_number(number=number)
+            lst = [cur, margin, available, leverage, result, commiss, funding, control]
+            disp.account.update(row=num+1, elements=lst)'''
 
         # Refresh Exchange table
             
@@ -1606,7 +1687,19 @@ def warning_window(message: str) -> None:
     tex.pack(expand=1)
 
 
-def handler_pos(event) -> None:
+def handler_pos(event, row_position: int) -> None:
+    ws = Websockets.connect[var.current_exchange]
+    if row_position > len(ws.symbol_list):
+        row_position = len(ws.symbol_list)
+    var.symbol = ws.symbol_list[row_position - 1]
+    for row in enumerate(ws.symbol_list):
+        for column in range(len(var.name_pos)):
+            if row[0] + 1 == row_position:
+                disp.labels["position"][row[0] + 1][column]["bg"] = "yellow"
+            else:
+                if row[0] + 1 > 0:
+                    disp.labels["position"][row[0] + 1][column]["bg"] = disp.bg_color
+'''def handler_pos(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
         row_position = row_position[0]
@@ -1617,7 +1710,7 @@ def handler_pos(event) -> None:
 
         disp.position.paint(row=disp.position.active_row, color=disp.bg_color)
         disp.position.active_row = row_position
-        disp.position.paint(row=row_position, color="yellow")
+        disp.position.paint(row=row_position, color="yellow")'''
 
 
 def handler_exchange(event, row_position: int) -> None:

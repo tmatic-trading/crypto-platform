@@ -33,8 +33,8 @@ class Variables:
 
     # Tables 
 
-    position = None
-    account = None
+    #position = None
+    #account = None
 
 
 
@@ -51,32 +51,7 @@ class Variables:
 
     # Frame for position table
     position_frame = tk.Frame(frame_2row_1_2_3col)
-    position_frame.grid(row=0, column=1, sticky="N" + "S" + "W" + "E")
-    '''canvas_positions = tk.Canvas(frame_positions_sub, height=50, highlightthickness=0)
-    v_positions = tk.Scrollbar(frame_positions_sub, orient="vertical")
-    v_positions.pack(side="right", fill="y")
-    v_positions.config(command=canvas_positions.yview)
-    canvas_positions.config(yscrollcommand=v_positions.set)
-    canvas_positions.pack(fill="both", expand=True)
-    frame_positions = tk.Frame(canvas_positions)
-    positions_id = canvas_positions.create_window(
-        (0, 0), window=frame_positions, anchor="nw"
-    )
-    canvas_positions.bind(
-        "<Configure>",
-        lambda event, id=positions_id, pos=canvas_positions: event_width(
-            event, id, pos
-        ),
-    )
-    frame_positions.bind(
-        "<Configure>", lambda event, pos=canvas_positions: event_config(event, pos)
-    )
-    canvas_positions.bind(
-        "<Enter>", lambda event, canvas=canvas_positions: on_enter(event, canvas)
-    )
-    canvas_positions.bind(
-        "<Leave>", lambda event, canvas=canvas_positions: on_leave(event, canvas)
-    )'''
+
 
     # Frame for the exchange table
     frame_3row_1col = tk.Frame(root)
@@ -340,7 +315,66 @@ class Variables:
     orders_dict_value = 0
     order_window_trigger = "off"
 
-class Table(Variables):
+class GridTable(Variables):
+    def __init__(self, frame: tk.Frame, name: str, title: list, size: int, bind=None, color=None, select=None) -> None:
+        self.color = color
+        self.labels[name] = []
+        self.labels_cache[name] = []
+        frame.grid(row=0, column=1, sticky="N" + "S" + "W" + "E")
+        canvas = tk.Canvas(frame, height=50, highlightthickness=0)
+        scroll = tk.Scrollbar(frame, orient="vertical")
+        scroll.pack(side="right", fill="y")
+        scroll.config(command=canvas.yview)
+        canvas.config(yscrollcommand=scroll.set)
+        canvas.pack(fill="both", expand=True)
+        sub = tk.Frame(canvas)
+        positions_id = canvas.create_window(
+            (0, 0), window=sub, anchor="nw"
+        )
+        canvas.bind(
+            "<Configure>",
+            lambda event, id=positions_id, pos=canvas: event_width(
+                event, id, pos
+            ),
+        )
+        sub.bind(
+            "<Configure>", lambda event, pos=canvas: event_config(event, pos)
+        )
+        canvas.bind(
+            "<Enter>", lambda event, canvas=canvas: on_enter(event, canvas)
+        )
+        canvas.bind(
+            "<Leave>", lambda event, canvas=canvas: on_leave(event, canvas)
+        )
+        for row in range(size):
+            lst = []
+            cache = []
+            if len(self.labels[name]) <= row:
+                for title_name in title:
+                    lst.append(tk.Label(sub, text=title_name, pady=0))
+                    cache.append(title_name + str(row))
+                self.labels[name].append(lst)
+                self.labels_cache[name].append(cache)
+            for column in range(len(var.name_pos)):
+                self.labels["position"][row][column].grid(
+                        row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
+                    )
+                if row > 0:
+                    if select:
+                        color = "yellow" if row == 1 else self.color
+                    else:
+                        color = self.color
+                    self.labels["position"][row][column]["text"] = ""
+                    self.labels["position"][row][column]["bg"] = color
+                    self.labels["position"][row][column].bind(
+                        "<Button-1>",
+                        lambda event, row_position=row: bind(
+                            event, row_position
+                        ),
+                    )
+                sub.grid_columnconfigure(column, weight=1)
+
+class ListBoxTable(Variables):
     """
     The table contains a grid with one row in each column in which a Listbox 
     is inserted. The contents of table rows are managed through Listbox tools 
