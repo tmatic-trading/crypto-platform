@@ -62,46 +62,6 @@ def reconfigure_table(widget: tk.Frame, table: str, action: str, number: int):
             if row == 0:
                 break
 
-
-def create_labels(widget: tk.Frame, table: str, names: list, row: int) -> None:
-    """
-    Generates labels for a table row.
-    """
-    lst = []
-    cache = []
-    if len(disp.labels[table]) <= row:
-        for name in names:
-            lst.append(tk.Label(widget, text=name, pady=0))
-            cache.append(name + str(row))
-        disp.labels[table].append(lst)
-        disp.labels_cache[table].append(cache)
-
-
-def create_exchange_grid(row: int):
-    create_labels(
-        widget=disp.frame_exchange, table="exchange", names=var.name_exchange, row=row
-    )
-    for column in range(len(var.name_exchange)):
-        if row == 0:
-            disp.labels["exchange"][row][column].grid(
-                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-            )
-        else:
-            disp.labels["exchange"][row][column].grid(
-                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-            )
-            color = "yellow" if row == 1 else disp.bg_color
-            disp.labels["exchange"][row][column]["text"] = ""
-            disp.labels["exchange"][row][column]["bg"] = color
-            disp.labels["exchange"][row][column].bind(
-                "<Button-1>",
-                lambda event, row_position=row: functions.handler_exchange(
-                    event, row_position
-                ),
-            )
-        disp.frame_exchange.grid_columnconfigure(column, weight=1)
-
-
 def load_labels() -> None:
     functions.change_color(color=disp.title_color, container=disp.root)
     ws = Websockets.connect[var.current_exchange]
@@ -110,6 +70,7 @@ def load_labels() -> None:
         name="position",
         title=var.name_pos,
         size=max(5, var.position_rows + 1),
+        canvas_height=65, 
         bind=functions.handler_pos,
         color=disp.bg_color,
         select=True,
@@ -119,15 +80,25 @@ def load_labels() -> None:
         name="account",
         title=var.name_acc,
         size=var.account_rows + 1,
+        canvas_height=60, 
         color=disp.bg_color,
     )
     GridTable(
-        frame=disp.frame_5row_1_2_3_4col,
+        frame=disp.frame_5row_1_2_3col,
         name="robots",
         title=var.name_robots,
         size=max(disp.num_robots, len(ws.robots) + 1),
+        canvas_height=150, 
         bind=functions.handler_robots,
         color=disp.title_color,
+    )
+    GridTable(
+        frame=disp.frame_3row_1col,
+        name="exchange",
+        title=var.name_exchange,
+        size=2,
+        color=disp.title_color,
+        select=True,
     )
     for row, emi in enumerate(ws.robots):
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
@@ -136,38 +107,24 @@ def load_labels() -> None:
             disp.labels["robots"][row + 1][5]["fg"] = "red"
         else:
             disp.labels["robots"][row + 1][5]["fg"] = "#212121"
-
-    # Order book table
-
+    GridTable(
+        frame=disp.orderbook_frame,
+        name="orderbook",
+        title=var.name_book,
+        size=disp.num_book,
+        canvas_height=440, 
+        bind=functions.handler_orderbook,
+        color=disp.bg_color,
+    )
     num = int(disp.num_book / 2)
     for row in range(disp.num_book):
         for column in range(len(var.name_book)):
-            if row == 0:
-                disp.labels["orderbook"][row][column].grid(
-                    row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1
-                )
-            else:
+            if row > 0:
                 if (row <= num and column == 0) or (row > num and column == 2):
                     disp.labels["orderbook"][row][column]["fg"] = disp.bg_color
                 if row <= num and column == 2:
                     disp.labels["orderbook"][row][column]["anchor"] = "w"
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
-                disp.labels["orderbook"][row][column].grid(
-                    row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1
-                )
-                disp.labels["orderbook"][row][column]["text"] = ""
-                disp.labels["orderbook"][row][column]["bg"] = disp.bg_color
-                disp.labels["orderbook"][row][column]["height"] = 1
-                disp.labels["orderbook"][row][column].bind(
-                    "<Button-1>",
-                    lambda row_position=row: functions.handler_orderbook(row_position),
-                )
-            disp.labels["orderbook"][row][column].grid(row=row, column=column)
-            disp.orderbook.grid_columnconfigure(column, weight=1)
 
-    # Exchange table
-
-    for row in range(len(var.exchange_list) + 1):
-        create_exchange_grid(row=row)
 
