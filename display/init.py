@@ -94,21 +94,6 @@ def create_robot_grid(row: int) -> None:
         disp.frame_robots.grid_columnconfigure(column, weight=1)
 
 
-def create_account_grid(row: int):
-    create_labels(
-        widget=disp.frame_4row_1_2_3col, table="account", names=var.name_acc, row=row
-    )
-    for column in range(len(var.name_acc)):
-        disp.labels["account"][row][column].grid(
-            row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-        )
-        if row > 0:
-            disp.labels["account"][row][column]["text"] = ""
-            disp.labels["account"][row][column]["bg"] = disp.bg_color
-        # disp.labels["account"][row][column].grid(row=row, column=column)
-        disp.frame_4row_1_2_3col.grid_columnconfigure(column, weight=1)
-
-
 def create_exchange_grid(row: int):
     create_labels(
         widget=disp.frame_exchange, table="exchange", names=var.name_exchange, row=row
@@ -145,13 +130,21 @@ class Table:
         color=disp.bg_color,
         select=True,
     )
+    account = GridTable(
+        frame=disp.frame_4row_1_2_3col,
+        name="account",
+        title=var.name_acc,
+        size=var.account_rows + 1,
+        color=disp.bg_color,
+    )
+
+
+
+
+
 
 
 def load_labels() -> None:
-    """disp.position = Table(
-        frame=disp.position_frame, title=var.name_pos, bind=functions.handler_pos, size=5
-    )
-    disp.position.paint(row=1, color="yellow")"""
 
     # Robots table
 
@@ -166,12 +159,6 @@ def load_labels() -> None:
             disp.labels["robots"][row + 1][5]["fg"] = "red"
         else:
             disp.labels["robots"][row + 1][5]["fg"] = "#212121"
-
-
-    # Positions table
-
-    # for row in range(disp.num_pos):
-    #    create_position_grid(row=row)
 
     # Order book table
 
@@ -202,76 +189,8 @@ def load_labels() -> None:
             disp.labels["orderbook"][row][column].grid(row=row, column=column)
             disp.orderbook.grid_columnconfigure(column, weight=1)
 
-    # Account table
-
-    """disp.account = Table(
-        frame=disp.frame_4row_1_2_3col, title=var.name_acc, size=2
-    )"""
-
-    for row in range(disp.num_acc):
-        create_account_grid(row=row)
-
     # Exchange table
 
     for row in range(len(var.exchange_list) + 1):
         create_exchange_grid(row=row)
 
-
-"""def load_robots():
-
-    # Robots table
-
-    print(disp.num_robots)
-    rows = 0
-    for ws in Websockets.connect.values():
-        rows += len(ws.robots)
-    rows = max(disp.num_robots, rows + 1)
-    print(rows)
-    disp.labels["robots"][3][3]["text"] = "LLLL"
-    if not disp.frame_robots.grid_slaves(row=2):
-        print("+++++++++++++++")
-        for column in range(len(var.name_robots)):
-            disp.labels["robots"][3][3].grid(
-                    row=2, column=column, sticky="N" + "S" + "W" + "E"
-              )
-    else:
-    #if  disp.frame_robots.grid_slaves(row=2):
-        for r in disp.frame_robots.grid_slaves(row=2):
-            r.grid_forget()
-    print(disp.frame_robots.grid_slaves(row=2))
-    tm = datetime.utcnow()
-    #disp.frame_robots.pack_forget()
-    for name in var.name_robots:
-        lst = []
-        cache = []
-        for _ in range(rows):
-            lst.append(tk.Label(disp.frame_robots, text="name", pady=0))
-            cache.append("name")
-        #print(lst)
-        #print(" ")
-        disp.labels["robots"].append(lst)
-        disp.labels_cache["robots"].append(cache)
-
-    for row in range(rows):
-        for column in range(len(var.name_robots)):
-            if row > 0:
-                disp.labels["robots"][column][row]["text"] = ""
-                disp.labels["robots"][column][row].bind(
-                    "<Button-1>",
-                    lambda event, row_position=row: functions.handler_robots(
-                        event, row_position
-                    ),
-                )
-            disp.labels["robots"][column][row].grid(
-                row=row, column=column, sticky="N" + "S" + "W" + "E"
-            )
-            #disp.frame_robots.grid_columnconfigure(column, weight=1)
-    for ws in Websockets.connect.values():
-        for row, emi in enumerate(ws.robots):
-            if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
-                ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
-            ):
-                disp.labels["robots"][5][row + 1]["fg"] = "red"
-            else:
-                disp.labels["robots"][5][row + 1]["fg"] = "#212121"
-    print(datetime.utcnow() - tm)"""

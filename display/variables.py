@@ -18,9 +18,7 @@ class Variables:
     num_robots = 1
     bg_color = "gray98"
     title_color = "gray83"
-    num_pos = max(5, var.position_rows + 1)
     num_book = 21  # Must be odd
-    num_acc = var.account_rows + 1
     frame_state = tk.Frame()
     labels = dict()
     labels_cache = dict()
@@ -51,6 +49,8 @@ class Variables:
 
     # Frame for position table
     position_frame = tk.Frame(frame_2row_1_2_3col)
+    position_frame.grid(row=0, column=1, sticky="N" + "S" + "W" + "E")
+    
 
 
     # Frame for the exchange table
@@ -109,6 +109,9 @@ class Variables:
 
     # Frame for the account table
     frame_4row_1_2_3col = tk.Frame()
+    frame_4row_1_2_3col.grid(
+        row=3, column=0, sticky="S" + "W" + "E", columnspan=3, padx=0, pady=0
+    )
 
     # Frame for the robots table
     frame_5row_1_2_3_4col = tk.Frame()
@@ -320,8 +323,7 @@ class GridTable(Variables):
         self.color = color
         self.labels[name] = []
         self.labels_cache[name] = []
-        frame.grid(row=0, column=1, sticky="N" + "S" + "W" + "E")
-        canvas = tk.Canvas(frame, height=50, highlightthickness=0)
+        canvas = tk.Canvas(frame, height=65, highlightthickness=0)
         scroll = tk.Scrollbar(frame, orient="vertical")
         scroll.pack(side="right", fill="y")
         scroll.config(command=canvas.yview)
@@ -355,8 +357,8 @@ class GridTable(Variables):
                     cache.append(title_name + str(row))
                 self.labels[name].append(lst)
                 self.labels_cache[name].append(cache)
-            for column in range(len(var.name_pos)):
-                self.labels["position"][row][column].grid(
+            for column in range(len(title)):
+                self.labels[name][row][column].grid(
                         row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
                     )
                 if row > 0:
@@ -364,14 +366,15 @@ class GridTable(Variables):
                         color = "yellow" if row == 1 else self.color
                     else:
                         color = self.color
-                    self.labels["position"][row][column]["text"] = ""
-                    self.labels["position"][row][column]["bg"] = color
-                    self.labels["position"][row][column].bind(
-                        "<Button-1>",
-                        lambda event, row_position=row: bind(
-                            event, row_position
-                        ),
-                    )
+                    self.labels[name][row][column]["text"] = ""
+                    self.labels[name][row][column]["bg"] = color
+                    if bind:
+                        self.labels[name][row][column].bind(
+                            "<Button-1>",
+                            lambda event, row_position=row: bind(
+                                event, row_position
+                            ),
+                        )
                 sub.grid_columnconfigure(column, weight=1)
 
 class ListBoxTable(Variables):
