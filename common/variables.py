@@ -88,6 +88,15 @@ class Variables:
         "FUNDING",
         "CONTROL",
     ]
+    name_trade = [
+        "TIME",
+        "SYMBOL",
+        "CATEGORY", 
+        "SIDE",
+        "PRICE",
+        "QTY",
+        "EMI",
+    ]
     name_exchange = [
         "EXCHANGE",
     ]
