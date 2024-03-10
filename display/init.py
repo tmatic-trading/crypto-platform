@@ -4,7 +4,7 @@ from datetime import datetime
 import functions
 from api.websockets import Websockets
 from common.variables import Variables as var
-from display.variables import GridTable
+from display.variables import GridTable, ListBoxTable
 from display.variables import Variables as disp
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
@@ -28,39 +28,6 @@ def trade_state(event) -> None:
         ws.logNumFatal = 0
     print(var.current_exchange, disp.f9)
 
-
-def reconfigure_table(widget: tk.Frame, table: str, action: str, number: int):
-    """
-    Depending on the exchange, you may need a different number of rows in the
-    tables, since, for example, you may be subscribed to a different number of
-    instruments. Therefore, the number of rows in tables: "account",
-    "position", "robots" must change  dynamically. Calling this function
-    changes the number of rows in a particular table.
-
-    Input parameters:
-
-    widget - Tkinter object responsible for the table
-    table - the name of the table in the the labels array
-    action - "new" - add new lines, "delete" - remove lines
-    number - number of lines to add or remove
-    """
-    row = widget.grid_size()[1]
-    if action == "new":
-        while number:
-            if table == "robots":
-                pass
-                #create_robot_grid(widget=widget, table=table, row=row)
-            row += 1
-            number -= 1
-    elif action == "delete":
-        row -= 1
-        while number:
-            for r in widget.grid_slaves(row=row):
-                r.grid_forget()
-            number -= 1
-            row -= 1
-            if row == 0:
-                break
 
 def load_labels() -> None:
     functions.change_color(color=disp.title_color, container=disp.root)
@@ -126,5 +93,7 @@ def load_labels() -> None:
                     disp.labels["orderbook"][row][column]["anchor"] = "w"
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
+
+trades = ListBoxTable(frame=disp.frame_trades, title=var.name_trade, size=0, expand=True)
 
 

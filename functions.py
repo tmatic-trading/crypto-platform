@@ -6,12 +6,12 @@ from random import randint
 from typing import Union
 
 from api.api import WS
-from api.websockets import Websockets
 from api.variables import Variables
 from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
+from display.init import trades
 from display.variables import Variables as disp
 
 db = var.env["MYSQL_DATABASE"]
@@ -468,11 +468,31 @@ class Function(WS, Variables):
         )
         Function.orders_display(self, clOrdID=clOrdID)
 
-    def trades_display(self, message: dict) -> None:
+    def trades_display(self, val: dict) -> None:
         """
         Update trades widget
         """
-        t = str(message["TTIME"])
+        val["TTIME"] = str(val["TTIME"])[2:]
+        val["TTIME"] = val["TTIME"].replace(val["TTIME"][2], "")
+        if val["SIDE"] == 0:
+            val["SIDE"] = "buy"
+        else:
+            val["SIDE"] = "sell"
+        message = [
+            val["TTIME"],
+            val["SYMBOL"][0],
+            val["CATEGORY"],
+            val["SIDE"],
+            Function.format_price(
+                self,
+                number=float(val["TRADE_PRICE"]),
+                symbol=val["SYMBOL"],
+            ),
+            val["QTY"],
+            val["EMI"],
+        ]
+        trades.insert(row=1, elements=message)
+        """t = str(message["TTIME"])
         time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:19]
         disp.text_trades.insert(
             "2.0",
@@ -501,7 +521,7 @@ class Function(WS, Variables):
             disp.text_trades.tag_config(name, foreground="forest green")
         disp.trades_display_counter += 1
         if disp.trades_display_counter > 150:
-            disp.text_trades.delete("151.0", "end")
+            disp.text_trades.delete("151.0", "end")"""
 
     def funding_display(self, value: dict) -> None:
         """
@@ -520,9 +540,7 @@ class Function(WS, Variables):
             + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
             + gap(val=value["EMI"][:9], peak=10)
             + " "
-            + Function.volume(
-                self, qty=value["QTY"], symbol=(value["symbol"])
-            )
+            + Function.volume(self, qty=value["QTY"], symbol=(value["symbol"]))
             + "\n",
         )
         disp.funding_display_counter += 1
@@ -700,17 +718,17 @@ class Function(WS, Variables):
             if utc > self.message_time + timedelta(seconds=10):
                 if self.message_counter == self.message_point:
                     info_display(self.name, "No data within 10 sec")
-                    #disp.label_online["text"] = "NO DATA"
-                    #disp.label_online.config(bg="yellow2")
+                    # disp.label_online["text"] = "NO DATA"
+                    # disp.label_online.config(bg="yellow2")
                     self.urgent_announcement(self.name)
                 self.message_time = utc
                 self.message_point = self.message_counter
-        '''if self.message_counter != self.message_point:
+        """if self.message_counter != self.message_point:
             disp.label_online["text"] = "ONLINE"
             disp.label_online.config(bg="green3")
         if self.logNumFatal != 0:
             disp.label_online["text"] = "error " + str(self.logNumFatal)
-            disp.label_online.config(bg="orange red")'''
+            disp.label_online.config(bg="orange red")"""
         Function.refresh_tables(self)
 
     def refresh_tables(self) -> None:
@@ -754,7 +772,9 @@ class Function(WS, Variables):
             )
             update_label(table="position", column=0, row=num + 1, val=".".join(symbol))
             if self.positions[symbol]["POS"]:
-                pos = Function.volume(self, qty=self.positions[symbol]["POS"], symbol=symbol)
+                pos = Function.volume(
+                    self, qty=self.positions[symbol]["POS"], symbol=symbol
+                )
             else:
                 pos = "0"
             update_label(table="position", column=1, row=num + 1, val=pos)
@@ -1017,7 +1037,7 @@ class Function(WS, Variables):
             self.robots[emi]["y_position"] = num + 1
 
         # Refresh Account table
-            
+
         for symbol, position in self.positions.items():
             if position["POS"] != 0:
                 calc = Function.calculate(
@@ -1088,7 +1108,7 @@ class Function(WS, Variables):
             )
 
         # Refresh Exchange table
-            
+
         for row, name in enumerate(var.exchange_list):
             ws = Websockets.connect[name]
             message = "ONLINE"
@@ -1100,6 +1120,7 @@ class Function(WS, Variables):
                 row=row + 1,
                 val=name + "\nAcc." + str(ws.user_id) + "\n" + message,
             )
+
     def close_price(self, symbol: tuple, pos: int) -> float:
         if symbol in self.ticker:
             close = (
@@ -1186,12 +1207,13 @@ class Function(WS, Variables):
 
         return clOrdID
 
-
     def del_order(self, clOrdID: str) -> int:
         """
         Del_order() function cancels orders
         """
-        message = "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
+        message = (
+            "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
+        )
         var.logger.info(message)
         self.remove_order(name=self.name, orderID=var.orders[clOrdID]["orderID"])
 
@@ -1624,7 +1646,9 @@ def handler_pos(event, row_position: int) -> None:
             else:
                 if row[0] + 1 > 0:
                     disp.labels["position"][row[0] + 1][column]["bg"] = disp.bg_color
-'''def handler_pos(event) -> None:
+
+
+"""def handler_pos(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
         row_position = row_position[0]
@@ -1635,7 +1659,7 @@ def handler_pos(event, row_position: int) -> None:
 
         disp.position.paint(row=disp.position.active_row, color=disp.bg_color)
         disp.position.active_row = row_position
-        disp.position.paint(row=row_position, color="yellow")'''
+        disp.position.paint(row=row_position, color="yellow")"""
 
 
 def handler_exchange(event, row_position: int) -> None:
@@ -1716,7 +1740,7 @@ def handler_robots(event, row_position: int) -> None:
 
 
 def clear_labels_cache():
-    #disp.labels["robots"] = []
+    # disp.labels["robots"] = []
     disp.labels_cache["robots"] = []
     for values in disp.labels_cache.values():
         for column in values:
@@ -1734,4 +1758,3 @@ def change_color(color: str, container=None) -> None:
             child.config(bg=color)
         elif type(child) is tk.Button:
             child.config(bg=color)
-

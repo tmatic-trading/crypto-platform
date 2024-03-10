@@ -264,12 +264,12 @@ class Init(WS, Variables):
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         disp.trades_display_counter = 0
-        disp.text_trades.delete("1.0", "end")
-        disp.text_trades.insert("1.0", " - Trades -\n")
+        #disp.text_trades.delete("1.0", "end")
+        #disp.text_trades.insert("1.0", " - Trades -\n")
         for val in reversed(data):
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
-            Function.add_symbol(self, symbol=val["SYMBOL"])
-            Function.trades_display(self, message=val)
+            Function.add_symbol(self, symbol=val["SYMBOL"])         
+            Function.trades_display(self, val=val)
 
 
 def setup_logger():

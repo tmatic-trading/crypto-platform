@@ -1,7 +1,7 @@
 import platform
 import tkinter as tk
-from tkinter import ttk
 from collections import OrderedDict
+from tkinter import ttk
 
 from common.variables import Variables as var
 
@@ -27,10 +27,10 @@ class Variables:
     label_trading.pack(side="left")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_f9.pack(side="left")
-    #label_state = tk.Label(frame_state, text="  STATE: ")
-    #label_state.pack(side="left")
-    #label_online = tk.Label(frame_state, fg="white")
-    #label_online.pack(side="left")
+    # label_state = tk.Label(frame_state, text="  STATE: ")
+    # label_state.pack(side="left")
+    # label_online = tk.Label(frame_state, fg="white")
+    # label_online.pack(side="left")
     label_time = tk.Label()
     label_time.grid(row=0, column=1, sticky="E", columnspan=2)
 
@@ -39,7 +39,7 @@ class Variables:
         row=1, column=0, sticky="N" + "S" + "W" + "E", columnspan=3
     )
     frame_information = tk.Frame(frame_2row_1_2_3col)
-    frame_information.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")   
+    frame_information.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
     position_frame = tk.Frame(frame_2row_1_2_3col)
     position_frame.grid(row=0, column=1, sticky="N" + "S" + "W" + "E")
     frame_2row_1_2_3col.grid_columnconfigure(0, weight=1)
@@ -56,10 +56,10 @@ class Variables:
     frame_3row_3col.grid_columnconfigure(0, weight=1)
     frame_3row_3col.grid_rowconfigure(0, weight=1)
 
-    #frame_3row_3col.grid_rowconfigure(1, weight=200)
+    # frame_3row_3col.grid_rowconfigure(1, weight=200)
     orderbook_frame = tk.Frame(frame_3row_3col, padx=0, pady=2)
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
-    orderbook_sub2 = tk.Frame(frame_3row_3col, padx=0, pady=0, bg=bg_color)    
+    orderbook_sub2 = tk.Frame(frame_3row_3col, padx=0, pady=0, bg=bg_color)
     orderbook_sub2.grid(row=1, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
@@ -77,16 +77,15 @@ class Variables:
     frame_5row_1_2_3col.grid(
         row=4, column=0, sticky="N" + "S" + "W" + "E", columnspan=3, padx=0, pady=0
     )
-    
+
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
-    root.grid_columnconfigure(2, weight=10) 
+    root.grid_columnconfigure(2, weight=10)
     root.grid_rowconfigure(0, weight=1)
     root.grid_rowconfigure(1, weight=1)
     root.grid_rowconfigure(2, weight=200)
     root.grid_rowconfigure(3, weight=1)
     root.grid_rowconfigure(4, weight=1)
-    
 
     # Information widget
 
@@ -106,7 +105,9 @@ class Variables:
 
     # Orders widget
 
-    pw_orders_trades = tk.PanedWindow(frame_3row_4col, orient="vertical", sashrelief="raised", bd=0)
+    pw_orders_trades = tk.PanedWindow(
+        frame_3row_4col, orient="vertical", sashrelief="raised", bd=0
+    )
     pw_orders_trades.pack(fill="both", expand=True)
 
     frame_orders = tk.Frame(pw_orders_trades)
@@ -131,13 +132,13 @@ class Variables:
     notebook = ttk.Notebook(pw_orders_trades, padding=0)
     style = ttk.Style()
     style.configure("TNotebook", borderwidth=0)
-    style.configure("TNotebook.Tab", background=title_color) 
-    style.map("TNotebook.Tab", background=[("selected", bg_color)]) 
+    style.configure("TNotebook.Tab", background=title_color)
+    style.map("TNotebook.Tab", background=[("selected", bg_color)])
     notebook.pack(expand=1, fill="both")
 
     frame_trades = ttk.Frame(notebook)
     frame_trades.pack(fill="both", expand="yes")
-    scroll_trades = tk.Scrollbar(frame_trades)
+    '''scroll_trades = tk.Scrollbar(frame_trades)
     text_trades = tk.Text(
         frame_trades,
         height=5,
@@ -149,7 +150,7 @@ class Variables:
     scroll_trades.config(command=text_trades.yview)
     text_trades.config(yscrollcommand=scroll_trades.set)
     scroll_trades.pack(side="right", fill="y")
-    text_trades.pack(side="right", fill="both", expand="yes")
+    text_trades.pack(side="right", fill="both", expand="yes")'''
 
     frame_funding = tk.Frame(notebook)
     frame_funding.pack(fill="both", expand="yes")
@@ -167,16 +168,13 @@ class Variables:
     scroll_funding.pack(side="right", fill="y")
     text_funding.pack(side="right", fill="both", expand="yes")
 
-    notebook.add(frame_trades, text='Trades')
-    notebook.add(frame_funding, text='Funding')
+    notebook.add(frame_trades, text="Trades")
+    notebook.add(frame_funding, text="Funding")
     pw_orders_trades.add(frame_orders)
     pw_orders_trades.add(notebook)
-    pw_orders_trades.bind("<Configure>", lambda event: resize_row(event, Variables.pw_orders_trades, 2))
-
-    # Exchange table
-    
-    labels["exchange"] = []
-    labels_cache["exchange"] = []
+    pw_orders_trades.bind(
+        "<Configure>", lambda event: resize_row(event, Variables.pw_orders_trades, 2)
+    )
 
     refresh_var = None
     nfo_display_counter = 0
@@ -192,37 +190,41 @@ class Variables:
     orders_dict_value = 0
     order_window_trigger = "off"
 
+
 class GridTable(Variables):
-    def __init__(self, frame: tk.Frame, name: str, title: list, size: int, canvas_height=None, bind=None, color=None, select=None, scroll=None) -> None:
+    def __init__(
+        self,
+        frame: tk.Frame,
+        name: str,
+        title: list,
+        size: int,
+        canvas_height=None,
+        bind=None,
+        color=None,
+        select=None,
+        scroll=None,
+    ) -> None:
         self.color = color
         self.labels[name] = []
         self.labels_cache[name] = []
         width = len(title) * 70
-        canvas = tk.Canvas(frame, highlightthickness=0, height=canvas_height, width=width)
+        canvas = tk.Canvas(
+            frame, highlightthickness=0, height=canvas_height, width=width
+        )
         scroll = tk.Scrollbar(frame, orient="vertical")
         scroll.pack(side="right", fill="y")
         scroll.config(command=canvas.yview)
         canvas.config(yscrollcommand=scroll.set)
         canvas.pack(fill="both", expand=True)
         sub = tk.Frame(canvas)
-        positions_id = canvas.create_window(
-            (0, 0), window=sub, anchor="nw"
-        )
+        positions_id = canvas.create_window((0, 0), window=sub, anchor="nw")
         canvas.bind(
             "<Configure>",
-            lambda event, id=positions_id, pos=canvas: event_width(
-                event, id, pos
-            ),
+            lambda event, id=positions_id, pos=canvas: event_width(event, id, pos),
         )
-        sub.bind(
-            "<Configure>", lambda event, pos=canvas: event_config(event, pos)
-        )
-        canvas.bind(
-            "<Enter>", lambda event, canvas=canvas: on_enter(event, canvas)
-        )
-        canvas.bind(
-            "<Leave>", lambda event, canvas=canvas: on_leave(event, canvas)
-        )
+        sub.bind("<Configure>", lambda event, pos=canvas: event_config(event, pos))
+        canvas.bind("<Enter>", lambda event, canvas=canvas: on_enter(event, canvas))
+        canvas.bind("<Leave>", lambda event, canvas=canvas: on_leave(event, canvas))
         for row in range(size):
             lst = []
             cache = []
@@ -234,8 +236,8 @@ class GridTable(Variables):
                 self.labels_cache[name].append(cache)
             for column in range(len(title)):
                 self.labels[name][row][column].grid(
-                        row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
-                    )
+                    row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
+                )
                 if row > 0:
                     if select:
                         color = "yellow" if row == 1 else self.color
@@ -246,19 +248,54 @@ class GridTable(Variables):
                     if bind:
                         self.labels[name][row][column].bind(
                             "<Button-1>",
-                            lambda event, row_position=row: bind(
-                                event, row_position
-                            ),
+                            lambda event, row_position=row: bind(event, row_position),
                         )
                 sub.grid_columnconfigure(column, weight=1)
 
+    def reconfigure_table(self, widget: tk.Frame, table: str, action: str, number: int):
+        """
+        Depending on the exchange, you may need a different number of rows in the
+        tables, since, for example, you may be subscribed to a different number of
+        instruments. Therefore, the number of rows in tables: "account",
+        "position", "robots" must change  dynamically. Calling this function
+        changes the number of rows in a particular table.
+
+        Input parameters:
+
+        widget - Tkinter object responsible for the table
+        table - the name of the table in the the labels array
+        action - "new" - add new lines, "delete" - remove lines
+        number - number of lines to add or remove
+        """
+        row = widget.grid_size()[1]
+        if action == "new":
+            while number:
+                if table == "robots":
+                    pass
+                    # create_robot_grid(widget=widget, table=table, row=row)
+                row += 1
+                number -= 1
+        elif action == "delete":
+            row -= 1
+            while number:
+                for r in widget.grid_slaves(row=row):
+                    r.grid_forget()
+                number -= 1
+                row -= 1
+                if row == 0:
+                    break
+
+
 class ListBoxTable(Variables):
     """
-    The table contains a grid with one row in each column in which a Listbox 
-    is inserted. The contents of table rows are managed through Listbox tools 
+    The table contains a grid with one row in each column in which a Listbox
+    is inserted. The contents of table rows are managed through Listbox tools
     in accordance with the row index.
     """
-    def __init__(self, frame: tk.Frame, title: list, size: int, bind=None, expand=None) -> None:
+
+    def __init__(
+        self, frame: tk.Frame, title: list, size: int, bind=None, expand=None
+    ) -> None:
         self.title = title
         self.height = 1
         self.active_row = 1
@@ -276,18 +313,16 @@ class ListBoxTable(Variables):
             "<Configure>",
             lambda event, id=id, can=canvas: event_width(event, id, can),
         )
-        self.sub.bind(
-            "<Configure>", lambda event, can=canvas: event_config(event, can)
-        )
-        canvas.bind(
-            "<Enter>", lambda event, canvas=canvas: on_enter(event, canvas)
-        )
-        canvas.bind(
-            "<Leave>", lambda event, canvas=canvas: on_leave(event, canvas)
-        )
+        self.sub.bind("<Configure>", lambda event, can=canvas: event_config(event, can))
+        canvas.bind("<Enter>", lambda event, canvas=canvas: on_enter(event, canvas))
+        canvas.bind("<Leave>", lambda event, canvas=canvas: on_leave(event, canvas))
         self.listboxes = []
         for column, name in enumerate(title):
-            vars = tk.Variable(value=[name,])
+            vars = tk.Variable(
+                value=[
+                    name,
+                ]
+            )
             self.listboxes.append(
                 tk.Listbox(
                     self.sub,
@@ -298,19 +333,20 @@ class ListBoxTable(Variables):
                     selectbackground=self.bg_color,
                     selectforeground="Black",
                     activestyle="none",
-                    justify='center',
+                    justify="center",
                     height=self.height,
                     width=0,
-                    #selectmode=tk.SINGLE,
+                    # selectmode=tk.SINGLE,
                 )
             )
-            self.listboxes[column].itemconfig(0, bg=self.title_color)           
-            self.listboxes[column].grid(row=0, padx=1, column=column, sticky="N" + "S" + "W" + "E")            
+            self.listboxes[column].itemconfig(0, bg=self.title_color)
+            self.listboxes[column].grid(
+                row=0, padx=1, column=column, sticky="N" + "S" + "W" + "E"
+            )
             self.sub.grid_columnconfigure(column, weight=1)
             self.sub.grid_rowconfigure(0, weight=1)
             if bind:
-                self.listboxes[column].bind(
-                    "<<ListboxSelect>>", bind)
+                self.listboxes[column].bind("<<ListboxSelect>>", bind)
         for _ in range(size):
             lst = ["" for _ in range(len(self.title))]
             self.insert(elements=lst, row=1)
@@ -318,17 +354,17 @@ class ListBoxTable(Variables):
     def insert(self, row: int, elements: list) -> None:
         self.height += 1
         for column, listbox in enumerate(self.listboxes):
-            listbox.config(height=self.height)   
-            listbox.insert(row, elements[column]) 
+            listbox.config(height=self.height)
+            listbox.insert(row, elements[column])
 
     def delete(self, row: int) -> None:
         self.height -= 1
-        for listbox in self.listboxes:            
+        for listbox in self.listboxes:
             listbox.config(height=self.height)
             listbox.delete(row)
 
     def paint(self, row: int, color: str) -> None:
-        for listbox in self.listboxes:    
+        for listbox in self.listboxes:
             listbox.itemconfig(row, bg=color)
 
     def update(self, row: int, elements: list) -> None:
@@ -395,7 +431,11 @@ def robots_on_mousewheel(event, canvas_event):
 
 def text_ignore(event):
     return "break"  # Prevents further handling of the event
+
+
 def resize_col(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], width=pw.winfo_width() // ratio)
+
+
 def resize_row(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], height=pw.winfo_height() // ratio)
