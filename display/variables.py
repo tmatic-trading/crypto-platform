@@ -138,23 +138,10 @@ class Variables:
 
     frame_trades = ttk.Frame(notebook)
     frame_trades.pack(fill="both", expand="yes")
-    '''scroll_trades = tk.Scrollbar(frame_trades)
-    text_trades = tk.Text(
-        frame_trades,
-        height=5,
-        width=52,
-        bg=bg_color,
-        highlightthickness=0,
-    )
-    text_trades.bind("<Key>", lambda event: text_ignore(event))
-    scroll_trades.config(command=text_trades.yview)
-    text_trades.config(yscrollcommand=scroll_trades.set)
-    scroll_trades.pack(side="right", fill="y")
-    text_trades.pack(side="right", fill="both", expand="yes")'''
 
     frame_funding = tk.Frame(notebook)
     frame_funding.pack(fill="both", expand="yes")
-    scroll_funding = tk.Scrollbar(frame_funding)
+    '''scroll_funding = tk.Scrollbar(frame_funding)
     text_funding = tk.Text(
         frame_funding,
         height=5,
@@ -166,7 +153,7 @@ class Variables:
     scroll_funding.config(command=text_funding.yview)
     text_funding.config(yscrollcommand=scroll_funding.set)
     scroll_funding.pack(side="right", fill="y")
-    text_funding.pack(side="right", fill="both", expand="yes")
+    text_funding.pack(side="right", fill="both", expand="yes")'''
 
     notebook.add(frame_trades, text="Trades")
     notebook.add(frame_funding, text="Funding")
@@ -417,7 +404,7 @@ def on_leave(event, canvas_event):
         canvas_event.unbind_all("<MouseWheel>")
 
 
-def robots_on_mousewheel(event, canvas_event):
+def on_mousewheel(event, canvas_event):
     if platform.system() == "Windows":
         canvas_event.yview_scroll(int(-1 * (event.delta / 120)), "units")
     elif platform.system() == "Darwin":

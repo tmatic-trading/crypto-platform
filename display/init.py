@@ -87,13 +87,12 @@ def load_labels() -> None:
     for row in range(disp.num_book):
         for column in range(len(var.name_book)):
             if row > 0:
-                if (row <= num and column == 0) or (row > num and column == 2):
-                    disp.labels["orderbook"][row][column]["fg"] = disp.bg_color
                 if row <= num and column == 2:
                     disp.labels["orderbook"][row][column]["anchor"] = "w"
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
 
 trades = ListBoxTable(frame=disp.frame_trades, title=var.name_trade, size=0, expand=True)
+funding = ListBoxTable(frame=disp.frame_funding, title=var.name_funding, size=0, expand=True)
 
 
