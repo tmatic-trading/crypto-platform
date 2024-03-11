@@ -11,7 +11,8 @@ from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
-from display.init import trades
+from display.init import Tables as table
+from display.init import trades, funding
 from display.variables import Variables as disp
 
 db = var.env["MYSQL_DATABASE"]
@@ -497,7 +498,6 @@ class Function(WS, Variables):
         """
         Update funding widgwt
         """
-        print(val)
         val["TTIME"] = str(val["TTIME"])[2:]
         val["TTIME"] = val["TTIME"].replace(val["TTIME"][2], "")
         elements = [
@@ -509,29 +509,11 @@ class Function(WS, Variables):
                 number=float(val["PRICE"]),
                 symbol=val["SYMBOL"],
             ),
-            val["COMMISS"],
+            "{:.7f}".format(val["COMMISS"]),
             val["QTY"], 
             val["EMI"],
         ]
-        '''space = ""
-        if value["COMMISS"] > 0:
-            space = " "
-        t = str(value["TTIME"])
-        time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:16]
-        disp.text_funding.insert(
-            "2.0",
-            time
-            + gap(val=".".join((value["symbol"])), peak=10)
-            + gap(val=str(float(value["PRICE"])), peak=8)
-            + gap(val=space + "{:.7f}".format(value["COMMISS"]), peak=10)
-            + gap(val=value["EMI"][:9], peak=10)
-            + " "
-            + Function.volume(self, qty=value["QTY"], symbol=(value["symbol"]))
-            + "\n",
-        )
-        disp.funding_display_counter += 1
-        if disp.funding_display_counter > 120:
-            disp.text_funding.delete("121.0", "end")'''
+        funding.insert(row=1, elements=elements)
 
     def orders_display(self, clOrdID: str) -> None:
         """
@@ -750,24 +732,25 @@ class Function(WS, Variables):
 
         # Refresh Positions table
 
+        mod = table.position.mod
         for num, symbol in enumerate(self.symbol_list):
             self.positions[symbol]["STATE"] = self.instruments[symbol]["state"]
             self.positions[symbol]["VOL24h"] = self.instruments[symbol]["volume24h"]
             self.positions[symbol]["FUND"] = round(
                 self.instruments[symbol]["fundingRate"] * 100, 6
             )
-            update_label(table="position", column=0, row=num + 1, val=".".join(symbol))
+            update_label(table="position", column=0, row=num + mod, val=".".join(symbol))
             if self.positions[symbol]["POS"]:
                 pos = Function.volume(
                     self, qty=self.positions[symbol]["POS"], symbol=symbol
                 )
             else:
                 pos = "0"
-            update_label(table="position", column=1, row=num + 1, val=pos)
+            update_label(table="position", column=1, row=num + mod, val=pos)
             update_label(
                 table="position",
                 column=2,
-                row=num + 1,
+                row=num + mod,
                 val=(
                     Function.format_price(
                         self,
@@ -781,7 +764,7 @@ class Function(WS, Variables):
             update_label(
                 table="position",
                 column=3,
-                row=num + 1,
+                row=num + mod,
                 val=(
                     self.positions[symbol]["PNL"]
                     if self.positions[symbol]["PNL"] is not None
@@ -791,7 +774,7 @@ class Function(WS, Variables):
             update_label(
                 table="position",
                 column=4,
-                row=num + 1,
+                row=num + mod,
                 val=(
                     str(self.positions[symbol]["MCALL"]).replace("100000000", "inf")
                     if self.positions[symbol]["MCALL"] is not None
@@ -801,24 +784,24 @@ class Function(WS, Variables):
             update_label(
                 table="position",
                 column=5,
-                row=num + 1,
+                row=num + mod,
                 val=self.positions[symbol]["STATE"],
             )
             update_label(
                 table="position",
                 column=6,
-                row=num + 1,
+                row=num + mod,
                 val=humanFormat(self.positions[symbol]["VOL24h"]),
             )
             if isinstance(self.instruments[symbol]["expiry"], datetime):
                 tm = self.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
             else:
                 tm = self.instruments[symbol]["expiry"]
-            update_label(table="position", column=7, row=num + 1, val=tm)
+            update_label(table="position", column=7, row=num + mod, val=tm)
             update_label(
                 table="position",
                 column=8,
-                row=num + 1,
+                row=num + mod,
                 val=self.positions[symbol]["FUND"],
             )
 
@@ -862,7 +845,8 @@ class Function(WS, Variables):
                 update_label(table="orderbook", column=1, row=row, val=price)
                 count += 1
 
-        num = int(disp.num_book / 2)
+        mod = 1 - table.orderbook.mod
+        num = int(disp.num_book / 2) - mod
         if var.order_book_depth == "quote":
             if self.ticker[var.symbol]["askSize"]:
                 update_label(
@@ -885,7 +869,7 @@ class Function(WS, Variables):
                     ),
                 )
             else:
-                update_label(table="orderbook", column=0, row=num + 1, val="")
+                update_label(table="orderbook", column=0, row=num + mod, val="")
             disp.labels["orderbook"][0][num + 1]["fg"] = "black"
             first_price_sell = (
                 self.ticker[var.symbol]["ask"]
@@ -912,12 +896,12 @@ class Function(WS, Variables):
                         )
                     else:
                         price = ""
-                    update_label(table="orderbook", column=1, row=row + 1, val=price)
+                    update_label(table="orderbook", column=1, row=row + mod, val=price)
                     if str(qty) != "0":
-                        update_label(table="orderbook", column=0, row=row + 1, val=qty)
+                        update_label(table="orderbook", column=0, row=row + mod, val=qty)
                         disp.label_book[0][row + 1]["bg"] = "orange red"
                     else:
-                        update_label(table="orderbook", column=0, row=row + 1, val="")
+                        update_label(table="orderbook", column=0, row=row + mod, val="")
                         disp.labels["orderbook"][0][row + 1]["bg"] = disp.bg_color
                 else:
                     price = round(
@@ -938,22 +922,23 @@ class Function(WS, Variables):
                         )
                     else:
                         price = ""
-                    update_label(table="orderbook", column=1, row=row + 1, val=price)
+                    update_label(table="orderbook", column=1, row=row + mod, val=price)
                     if str(qty) != "0":
-                        update_label(table="orderbook", column=2, row=row + 1, val=qty)
+                        update_label(table="orderbook", column=2, row=row + mod, val=qty)
                         disp.labels["orderbook"][2][row + 1]["bg"] = "green2"
                     else:
-                        update_label(table="orderbook", column=2, row=row + 1, val="")
+                        update_label(table="orderbook", column=2, row=row + mod, val="")
                         disp.labels["orderbook"][2][row + 1]["bg"] = disp.bg_color
         else:
             val = self.market_depth10()[var.symbol]
             display_order_book_values(
-                val=val, start=num + 1, end=disp.num_book, direct=1, side="bids"
+                val=val, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
             )
-            display_order_book_values(val=val, start=num, end=0, direct=-1, side="asks")
+            display_order_book_values(val=val, start=num, end=0 - mod, direct=-1, side="asks")
 
         # Update Robots table
 
+        mod = table.robots.mod
         for num, emi in enumerate(self.robots):
             symbol = self.robots[emi]["SYMBOL"]
             price = Function.close_price(
@@ -974,33 +959,33 @@ class Function(WS, Variables):
                     - self.robots[emi]["COMMISS"]
                 )
             symbol = self.robots[emi]["SYMBOL"]
-            update_label(table="robots", column=0, row=num + 1, val=emi)
-            update_label(table="robots", column=1, row=num + 1, val=symbol)
+            update_label(table="robots", column=0, row=num + mod, val=emi)
+            update_label(table="robots", column=1, row=num + mod, val=symbol)
             update_label(
                 table="robots",
                 column=2,
-                row=num + 1,
+                row=num + mod,
                 val=self.instruments[symbol]["settlCurrency"],
             )
             update_label(
-                table="robots", column=3, row=num + 1, val=self.robots[emi]["TIMEFR"]
+                table="robots", column=3, row=num + mod, val=self.robots[emi]["TIMEFR"]
             )
             update_label(
-                table="robots", column=4, row=num + 1, val=self.robots[emi]["CAPITAL"]
+                table="robots", column=4, row=num + mod, val=self.robots[emi]["CAPITAL"]
             )
             update_label(
-                table="robots", column=5, row=num + 1, val=self.robots[emi]["STATUS"]
+                table="robots", column=5, row=num + mod, val=self.robots[emi]["STATUS"]
             )
             update_label(
                 table="robots",
                 column=6,
-                row=num + 1,
+                row=num + mod,
                 val=humanFormat(self.robots[emi]["VOL"]),
             )
             update_label(
                 table="robots",
                 column=7,
-                row=num + 1,
+                row=num + mod,
                 val="{:.8f}".format(self.robots[emi]["PNL"]),
             )
             val = Function.volume(
@@ -1008,22 +993,23 @@ class Function(WS, Variables):
                 qty=self.robots[emi]["POS"],
                 symbol=symbol,
             )
-            if disp.labels_cache["robots"][num + 1][8] != val:
+            if disp.labels_cache["robots"][num + mod][8] != val:
                 if self.robots[emi]["STATUS"] == "RESERVED":
                     if self.robots[emi]["POS"] != 0:
-                        disp.labels["robots"][num + 1][5]["fg"] = "red"
+                        disp.labels["robots"][num + mod][5]["fg"] = "red"
                     else:
-                        disp.labels["robots"][num + 1][5]["fg"] = "#212121"
+                        disp.labels["robots"][num + mod][5]["fg"] = "#212121"
             update_label(
                 table="robots",
                 column=8,
-                row=num + 1,
+                row=num + mod,
                 val=val,
             )
-            self.robots[emi]["y_position"] = num + 1
+            self.robots[emi]["y_position"] = num + mod
 
         # Refresh Account table
 
+        mod = table.account.mod
         for symbol, position in self.positions.items():
             if position["POS"] != 0:
                 calc = Function.calculate(
@@ -1046,41 +1032,41 @@ class Function(WS, Variables):
                     )
                     exit(1)
         for num, cur in enumerate(self.currencies):
-            update_label(table="account", column=0, row=num + 1, val=cur)
+            update_label(table="account", column=0, row=num + mod, val=cur)
             update_label(
                 table="account",
                 column=1,
-                row=num + 1,
+                row=num + mod,
                 val=format_number(number=self.accounts[cur]["MARGINBAL"]),
             )
             update_label(
                 table="account",
                 column=2,
-                row=num + 1,
+                row=num + mod,
                 val=format_number(number=self.accounts[cur]["AVAILABLE"]),
             )
             update_label(
                 table="account",
                 column=3,
-                row=num + 1,
+                row=num + table.account.mod,
                 val="{:.3f}".format(self.accounts[cur]["LEVERAGE"]),
             )
             update_label(
                 table="account",
                 column=4,
-                row=num + 1,
+                row=num + mod,
                 val=format_number(number=self.accounts[cur]["RESULT"]),
             )
             update_label(
                 table="account",
                 column=5,
-                row=num + 1,
+                row=num + mod,
                 val=format_number(number=-self.accounts[cur]["COMMISS"]),
             )
             update_label(
                 table="account",
                 column=6,
-                row=num + 1,
+                row=num + mod,
                 val=format_number(number=-self.accounts[cur]["FUNDING"]),
             )
             number = (
@@ -1090,11 +1076,12 @@ class Function(WS, Variables):
                 + self.accounts[cur]["FUNDING"]
             )
             update_label(
-                table="account", column=7, row=num + 1, val=format_number(number=number)
+                table="account", column=7, row=num + mod, val=format_number(number=number)
             )
 
         # Refresh Exchange table
 
+        mod = table.exchange.mod
         for row, name in enumerate(var.exchange_list):
             ws = Websockets.connect[name]
             message = "ONLINE"
@@ -1103,7 +1090,7 @@ class Function(WS, Variables):
             update_label(
                 table="exchange",
                 column=0,
-                row=row + 1,
+                row=row + mod,
                 val=name + "\nAcc." + str(ws.user_id) + "\n" + message,
             )
 
@@ -1625,27 +1612,14 @@ def handler_pos(event, row_position: int) -> None:
     if row_position > len(ws.symbol_list):
         row_position = len(ws.symbol_list)
     var.symbol = ws.symbol_list[row_position - 1]
-    for row in enumerate(ws.symbol_list):
+    mod = table.position.mod
+    for num in range(len(ws.symbol_list)):
         for column in range(len(var.name_pos)):
-            if row[0] + 1 == row_position:
-                disp.labels["position"][row[0] + 1][column]["bg"] = "yellow"
+            if num + mod == row_position:
+                disp.labels["position"][num + mod][column]["bg"] = "yellow"
             else:
-                if row[0] + 1 > 0:
-                    disp.labels["position"][row[0] + 1][column]["bg"] = disp.bg_color
-
-
-"""def handler_pos(event) -> None:
-    row_position = event.widget.curselection()
-    if row_position:
-        row_position = row_position[0]
-        ws = Websockets.connect[var.current_exchange]
-        if row_position > len(ws.symbol_list):
-            row_position = len(ws.symbol_list)
-        var.symbol = ws.symbol_list[row_position - 1]
-
-        disp.position.paint(row=disp.position.active_row, color=disp.bg_color)
-        disp.position.active_row = row_position
-        disp.position.paint(row=row_position, color="yellow")"""
+                if num + mod >= 0:
+                    disp.labels["position"][num + mod][column]["bg"] = disp.bg_color
 
 
 def handler_exchange(event, row_position: int) -> None:
