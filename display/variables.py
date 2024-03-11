@@ -10,6 +10,13 @@ if platform.system() == "Windows":
 
     windll.shcore.SetProcessDpiAwareness(1)
 
+class AutoScrollbar(tk.Scrollbar):
+    def set(self, low, high):
+        if float(low) <= 0.0 and float(high) >= 1.0:
+            self.tk.call("grid", "remove", self)
+        else:
+            self.grid()
+        tk.Scrollbar.set(self, low, high)
 
 class Variables:
     root = tk.Tk()
@@ -57,10 +64,10 @@ class Variables:
     frame_3row_3col.grid_rowconfigure(0, weight=1)
 
     # frame_3row_3col.grid_rowconfigure(1, weight=200)
-    orderbook_frame = tk.Frame(frame_3row_3col, padx=0, pady=2)
+    orderbook_frame = tk.Frame(frame_3row_3col, padx=2, pady=0)
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
-    orderbook_sub2 = tk.Frame(frame_3row_3col, padx=0, pady=0, bg=bg_color)
-    orderbook_sub2.grid(row=1, column=0, sticky="N" + "S" + "W" + "E")
+    #orderbook_sub2 = tk.Frame(frame_3row_3col, padx=0, pady=0, bg=bg_color)
+    #orderbook_sub2.grid(row=1, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
     frame_3row_4col = tk.Frame()
@@ -195,23 +202,29 @@ class GridTable(Variables):
         self.labels[name] = []
         self.labels_cache[name] = []
         width = len(title) * 70
+        my_bg = self.bg_color if name != "robots" and name != "exchange" else self.title_color
         canvas = tk.Canvas(
-            frame, highlightthickness=0, height=canvas_height, width=width
+            frame, highlightthickness=0, height=canvas_height, width=width, bg=my_bg
         )
-        scroll = tk.Scrollbar(frame, orient="vertical")
-        scroll.pack(side="right", fill="y")
+        canvas.grid(row=0, column=0, sticky="NSEW") # new
+        frame.grid_rowconfigure(0, weight=1) # new
+        frame.grid_columnconfigure(0, weight=1) # new
+        #scroll = tk.Scrollbar(frame, orient="vertical")
+        scroll = AutoScrollbar(frame, orient="vertical") # new
+        #scroll.pack(side="right", fill="y")
         scroll.config(command=canvas.yview)
+        scroll.grid(row=0, column=1, sticky="NS") # new
         canvas.config(yscrollcommand=scroll.set)
-        canvas.pack(fill="both", expand=True)
-        sub = tk.Frame(canvas)
+        #canvas.pack(fill="both", expand=True)
+        sub = tk.Frame(canvas, bg=self.bg_color)
         positions_id = canvas.create_window((0, 0), window=sub, anchor="nw")
         canvas.bind(
             "<Configure>",
             lambda event, id=positions_id, pos=canvas: event_width(event, id, pos),
         )
-        sub.bind("<Configure>", lambda event, pos=canvas: event_config(event, pos))
-        canvas.bind("<Enter>", lambda event, canvas=canvas: on_enter(event, canvas))
-        canvas.bind("<Leave>", lambda event, canvas=canvas: on_leave(event, canvas))
+        sub.bind("<Configure>", lambda event: event_config(event, canvas))
+        canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
+        canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
         for row in range(size):
             lst = []
             cache = []
@@ -223,7 +236,7 @@ class GridTable(Variables):
                 self.labels_cache[name].append(cache)
             for column in range(len(title)):
                 self.labels[name][row][column].grid(
-                    row=row, column=column, sticky="N" + "S" + "W" + "E", padx=1, pady=0
+                    row=row, column=column, sticky="N" + "S" + "W" + "E", padx=0, pady=0
                 )
                 if row > 0:
                     if select:
@@ -288,21 +301,25 @@ class ListBoxTable(Variables):
         self.active_row = 1
         if expand:
             frame.grid_rowconfigure(0, weight=1)
-        canvas = tk.Canvas(frame, height=62, highlightthickness=0)
-        scroll = tk.Scrollbar(frame, orient="vertical")
-        scroll.pack(side="right", fill="y")
+        canvas = tk.Canvas(frame, height=62, highlightthickness=0, bg=self.bg_color)
+        canvas.grid(row=0, column=0, sticky="NSEW") # new
+        frame.grid_columnconfigure(0, weight=1) # new
+        #scroll = tk.Scrollbar(frame, orient="vertical")
+        scroll = AutoScrollbar(frame, orient="vertical") # new
+        #scroll.pack(side="right", fill="y")
         scroll.config(command=canvas.yview)
+        scroll.grid(row=0, column=1, sticky="NS") # new
         canvas.config(yscrollcommand=scroll.set)
-        canvas.pack(fill="both", expand=True)
-        self.sub = tk.Frame(canvas, pady=2)
+        #canvas.pack(fill="both", expand=True)
+        self.sub = tk.Frame(canvas, pady=0, bg=self.bg_color)
         id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
         canvas.bind(
             "<Configure>",
             lambda event, id=id, can=canvas: event_width(event, id, can),
         )
-        self.sub.bind("<Configure>", lambda event, can=canvas: event_config(event, can))
-        canvas.bind("<Enter>", lambda event, canvas=canvas: on_enter(event, canvas))
-        canvas.bind("<Leave>", lambda event, canvas=canvas: on_leave(event, canvas))
+        self.sub.bind("<Configure>", lambda event: event_config(event, canvas))
+        canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
+        canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
         self.listboxes = []
         for column, name in enumerate(title):
             vars = tk.Variable(
@@ -328,7 +345,7 @@ class ListBoxTable(Variables):
             )
             self.listboxes[column].itemconfig(0, bg=self.title_color)
             self.listboxes[column].grid(
-                row=0, padx=1, column=column, sticky="N" + "S" + "W" + "E"
+                row=0, padx=0, column=column, sticky="N" + "S" + "W" + "E"
             )
             self.sub.grid_columnconfigure(column, weight=1)
             self.sub.grid_rowconfigure(0, weight=1)
@@ -337,6 +354,8 @@ class ListBoxTable(Variables):
         for _ in range(size):
             lst = ["" for _ in range(len(self.title))]
             self.insert(elements=lst, row=1)
+
+        #frame.update_idletasks() # new
 
     def insert(self, row: int, elements: list) -> None:
         self.height += 1
@@ -379,41 +398,43 @@ def event_config(event, canvas_event):
     canvas_event.configure(scrollregion=canvas_event.bbox("all"))
 
 
-def on_enter(event, canvas_event):
+def on_enter(event, canvas, scroll):
     if platform.system() == "Linux":
-        canvas_event.bind_all(
+        canvas.bind_all(
             "<Button-4>",
-            lambda event, canvas=canvas_event: robots_on_mousewheel(event, canvas),
+            lambda event: on_mousewheel(event, canvas, scroll),
         )
-        canvas_event.bind_all(
+        canvas.bind_all(
             "<Button-5>",
-            lambda event, canvas=canvas_event: robots_on_mousewheel(event, canvas),
+            lambda event: on_mousewheel(event, canvas, scroll),
         )
     else:
-        canvas_event.bind_all(
+        canvas.bind_all(
             "<MouseWheel>",
-            lambda event, canvas=canvas_event: robots_on_mousewheel(event, canvas),
+            lambda event: on_mousewheel(event, canvas, scroll),
         )
 
 
-def on_leave(event, canvas_event):
+def on_leave(event, canvas):
     if platform.system() == "Linux":
-        canvas_event.unbind_all("<Button-4>")
-        canvas_event.unbind_all("<Button-5>")
+        canvas.unbind_all("<Button-4>")
+        canvas.unbind_all("<Button-5>")
     else:
-        canvas_event.unbind_all("<MouseWheel>")
+        canvas.unbind_all("<MouseWheel>")
 
 
-def on_mousewheel(event, canvas_event):
-    if platform.system() == "Windows":
-        canvas_event.yview_scroll(int(-1 * (event.delta / 120)), "units")
-    elif platform.system() == "Darwin":
-        canvas_event.yview_scroll(int(-1 * event.delta), "units")
-    else:
-        if event.num == 4:
-            canvas_event.yview_scroll(-1, "units")
-        elif event.num == 5:
-            canvas_event.yview_scroll(1, "units")
+def on_mousewheel(event, canvas, scroll):
+    slider_position = scroll.get()
+    if slider_position != (0.0, 1.0): # Scrollbar is not full
+        if platform.system() == "Windows":
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        elif platform.system() == "Darwin":
+            canvas.yview_scroll(int(-1 * event.delta), "units")
+        else:
+            if event.num == 4:
+                canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                canvas.yview_scroll(1, "units")
 
 
 def text_ignore(event):
