@@ -215,7 +215,7 @@ class Send(Variables):
                     "Timed out on request. %s: %s" % (url, json.dumps(postData or "")),
                     errCode,
                 )
-                info_display("Websocket. Timed out on request")
+                info_display(self, "Websocket. Timed out on request")
 
             except requests.exceptions.ConnectionError as e:
                 info_warn_err(

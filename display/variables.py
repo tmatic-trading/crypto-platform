@@ -148,19 +148,6 @@ class Variables:
 
     frame_funding = tk.Frame(notebook)
     frame_funding.pack(fill="both", expand="yes")
-    '''scroll_funding = tk.Scrollbar(frame_funding)
-    text_funding = tk.Text(
-        frame_funding,
-        height=5,
-        width=52,
-        bg=bg_color,
-        highlightthickness=0,
-    )
-    text_funding.bind("<Key>", lambda event: text_ignore(event))
-    scroll_funding.config(command=text_funding.yview)
-    text_funding.config(yscrollcommand=scroll_funding.set)
-    scroll_funding.pack(side="right", fill="y")
-    text_funding.pack(side="right", fill="both", expand="yes")'''
 
     notebook.add(frame_trades, text="Trades")
     notebook.add(frame_funding, text="Funding")
@@ -190,32 +177,34 @@ class GridTable(Variables):
         self,
         frame: tk.Frame,
         name: str,
-        title: list,
         size: int,
-        canvas_height=None,
-        bind=None,
-        color=None,
-        select=None,
-        scroll=None,
+        title: list,
+        title_on: bool = True, 
+        canvas_height: int = None,
+        bind = None,
+        color: str = None,
+        select: bool = None,
     ) -> None:
         self.color = color
+        self.title_on = title_on
+        self.mod = 1
         self.labels[name] = []
         self.labels_cache[name] = []
         width = len(title) * 70
+        if not title_on:
+            self.mod = 0
+            size -= 1
         my_bg = self.bg_color if name != "robots" and name != "exchange" else self.title_color
         canvas = tk.Canvas(
             frame, highlightthickness=0, height=canvas_height, width=width, bg=my_bg
         )
-        canvas.grid(row=0, column=0, sticky="NSEW") # new
-        frame.grid_rowconfigure(0, weight=1) # new
-        frame.grid_columnconfigure(0, weight=1) # new
-        #scroll = tk.Scrollbar(frame, orient="vertical")
-        scroll = AutoScrollbar(frame, orient="vertical") # new
-        #scroll.pack(side="right", fill="y")
+        canvas.grid(row=0, column=0, sticky="NSEW")
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+        scroll = AutoScrollbar(frame, orient="vertical")
         scroll.config(command=canvas.yview)
-        scroll.grid(row=0, column=1, sticky="NS") # new
+        scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
-        #canvas.pack(fill="both", expand=True)
         sub = tk.Frame(canvas, bg=self.bg_color)
         positions_id = canvas.create_window((0, 0), window=sub, anchor="nw")
         canvas.bind(
@@ -238,9 +227,9 @@ class GridTable(Variables):
                 self.labels[name][row][column].grid(
                     row=row, column=column, sticky="N" + "S" + "W" + "E", padx=0, pady=0
                 )
-                if row > 0:
+                if row > self.mod - 1:
                     if select:
-                        color = "yellow" if row == 1 else self.color
+                        color = "yellow" if row == self.mod else self.color
                     else:
                         color = self.color
                     self.labels[name][row][column]["text"] = ""
@@ -294,23 +283,21 @@ class ListBoxTable(Variables):
     """
 
     def __init__(
-        self, frame: tk.Frame, title: list, size: int, bind=None, expand=None
+        self, frame: tk.Frame, size: int, title: list, title_on: bool = True, bind=None, expand: bool = None
     ) -> None:
         self.title = title
-        self.height = 1
+        self.title_on = title_on
+        self.height = 1 if title_on else 0
         self.active_row = 1
         if expand:
             frame.grid_rowconfigure(0, weight=1)
-        canvas = tk.Canvas(frame, height=62, highlightthickness=0, bg=self.bg_color)
-        canvas.grid(row=0, column=0, sticky="NSEW") # new
-        frame.grid_columnconfigure(0, weight=1) # new
-        #scroll = tk.Scrollbar(frame, orient="vertical")
-        scroll = AutoScrollbar(frame, orient="vertical") # new
-        #scroll.pack(side="right", fill="y")
+        canvas = tk.Canvas(frame, highlightthickness=0, bg=self.bg_color)
+        canvas.grid(row=0, column=0, sticky="NSEW")
+        frame.grid_columnconfigure(0, weight=1)
+        scroll = AutoScrollbar(frame, orient="vertical")
         scroll.config(command=canvas.yview)
-        scroll.grid(row=0, column=1, sticky="NS") # new
+        scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
-        #canvas.pack(fill="both", expand=True)
         self.sub = tk.Frame(canvas, pady=0, bg=self.bg_color)
         id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
         canvas.bind(
@@ -322,11 +309,8 @@ class ListBoxTable(Variables):
         canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
         self.listboxes = []
         for column, name in enumerate(title):
-            vars = tk.Variable(
-                value=[
-                    name,
-                ]
-            )
+            value = [name,] if title_on else ["",]        
+            vars = tk.Variable(value=value)
             self.listboxes.append(
                 tk.Listbox(
                     self.sub,
@@ -343,7 +327,8 @@ class ListBoxTable(Variables):
                     # selectmode=tk.SINGLE,
                 )
             )
-            self.listboxes[column].itemconfig(0, bg=self.title_color)
+            if title_on:
+                self.listboxes[column].itemconfig(0, bg=self.title_color)
             self.listboxes[column].grid(
                 row=0, padx=0, column=column, sticky="N" + "S" + "W" + "E"
             )
@@ -351,29 +336,37 @@ class ListBoxTable(Variables):
             self.sub.grid_rowconfigure(0, weight=1)
             if bind:
                 self.listboxes[column].bind("<<ListboxSelect>>", bind)
-        for _ in range(size):
-            lst = ["" for _ in range(len(self.title))]
-            self.insert(elements=lst, row=1)
+            for _ in range(size):
+                lst = ["" for _ in range(len(self.title))]
+                self.insert(elements=lst, row=1)
 
         #frame.update_idletasks() # new
 
     def insert(self, row: int, elements: list) -> None:
+        if not self.title_on:
+            row -= 1
         self.height += 1
         for column, listbox in enumerate(self.listboxes):
             listbox.config(height=self.height)
             listbox.insert(row, elements[column])
 
     def delete(self, row: int) -> None:
+        if not self.title_on:
+            row -= 1
         self.height -= 1
         for listbox in self.listboxes:
             listbox.config(height=self.height)
             listbox.delete(row)
 
     def paint(self, row: int, color: str) -> None:
+        if not self.title_on:
+            row -= 1
         for listbox in self.listboxes:
             listbox.itemconfig(row, bg=color)
 
     def update(self, row: int, elements: list) -> None:
+        if not self.title_on:
+            row -= 1        
         color = self.listboxes[0].itemcget(row, "background")
         self.delete(row)
         self.insert(row, elements)
