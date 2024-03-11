@@ -97,6 +97,15 @@ class Variables:
         "QTY",
         "EMI",
     ]
+    name_funding = [
+        "TIME",
+        "SYMBOL",
+        "CATEGORY", 
+        "PRICE",
+        "PNL",
+        "QTY"
+        "EMI",
+    ]
     name_exchange = [
         "EXCHANGE",
     ]

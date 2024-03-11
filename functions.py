@@ -471,14 +471,14 @@ class Function(WS, Variables):
     def trades_display(self, val: dict) -> None:
         """
         Update trades widget
-        """
+        """       
         val["TTIME"] = str(val["TTIME"])[2:]
         val["TTIME"] = val["TTIME"].replace(val["TTIME"][2], "")
         if val["SIDE"] == 0:
             val["SIDE"] = "buy"
         else:
             val["SIDE"] = "sell"
-        message = [
+        elements = [
             val["TTIME"],
             val["SYMBOL"][0],
             val["CATEGORY"],
@@ -491,43 +491,29 @@ class Function(WS, Variables):
             val["QTY"],
             val["EMI"],
         ]
-        trades.insert(row=1, elements=message)
-        """t = str(message["TTIME"])
-        time = t[2:4] + t[5:7] + t[8:10] + " " + t[11:19]
-        disp.text_trades.insert(
-            "2.0",
-            time
-            + gap(val=".".join(message["SYMBOL"]), peak=10)
-            + gap(
-                val=Function.format_price(
-                    self,
-                    number=message["TRADE_PRICE"],
-                    symbol=message["SYMBOL"],
-                ),
-                peak=7,
-            )
-            + gap(val=message["EMI"][:10], peak=10)
-            + " "
-            + Function.volume(self, qty=message["QTY"], symbol=message["SYMBOL"])
-            + "\n",
-        )
-        if message["SIDE"] == 1:
-            name = "red"
-            disp.text_trades.tag_add(name, "2.0", "2.60")
-            disp.text_trades.tag_config(name, foreground="red")
-        elif message["SIDE"] == 0:
-            name = "green"
-            disp.text_trades.tag_add(name, "2.0", "2.60")
-            disp.text_trades.tag_config(name, foreground="forest green")
-        disp.trades_display_counter += 1
-        if disp.trades_display_counter > 150:
-            disp.text_trades.delete("151.0", "end")"""
+        trades.insert(row=1, elements=elements)
 
-    def funding_display(self, value: dict) -> None:
+    def funding_display(self, val: dict) -> None:
         """
         Update funding widgwt
         """
-        space = ""
+        print(val)
+        val["TTIME"] = str(val["TTIME"])[2:]
+        val["TTIME"] = val["TTIME"].replace(val["TTIME"][2], "")
+        elements = [
+            val["TTIME"],
+            val["SYMBOL"][0],
+            val["CATEGORY"],
+            Function.format_price(
+                self,
+                number=float(val["PRICE"]),
+                symbol=val["SYMBOL"],
+            ),
+            val["COMMISS"],
+            val["QTY"], 
+            val["EMI"],
+        ]
+        '''space = ""
         if value["COMMISS"] > 0:
             space = " "
         t = str(value["TTIME"])
@@ -545,7 +531,7 @@ class Function(WS, Variables):
         )
         disp.funding_display_counter += 1
         if disp.funding_display_counter > 120:
-            disp.text_funding.delete("121.0", "end")
+            disp.text_funding.delete("121.0", "end")'''
 
     def orders_display(self, clOrdID: str) -> None:
         """

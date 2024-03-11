@@ -238,11 +238,9 @@ class Init(WS, Variables):
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         disp.funding_display_counter = 0
-        disp.text_funding.delete("1.0", "end")
-        disp.text_funding.insert("1.0", " - Funding -\n")
         for val in reversed(data):
-            val["symbol"] = (val["SYMBOL"], val["CATEGORY"])
-            Function.add_symbol(self, symbol=val["symbol"])
+            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
+            Function.add_symbol(self, symbol=val["SYMBOL"])
             Function.funding_display(self, val)
         sql = "select * from("
         union = ""
@@ -264,8 +262,6 @@ class Init(WS, Variables):
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         disp.trades_display_counter = 0
-        #disp.text_trades.delete("1.0", "end")
-        #disp.text_trades.insert("1.0", " - Trades -\n")
         for val in reversed(data):
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
             Function.add_symbol(self, symbol=val["SYMBOL"])         
