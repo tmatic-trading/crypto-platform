@@ -148,8 +148,6 @@ class Init(WS, Variables):
         """
         myOrders = self.open_orders(self.name)
         var.orders = OrderedDict()
-        print("________")
-        print(myOrders)
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
                 emi = ".".join(val["symbol"])
@@ -205,8 +203,8 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["exchange"] = self.name
                 var.orders[clOrdID]["side"] = val["side"]
                 var.orders[clOrdID]["orderID"] = val["orderID"]
-        for clOrdID in reversed(var.orders):
-            Function.orders_display(self, clOrdID=clOrdID)
+        for clOrdID in var.orders:
+            Function.orders_display(self, clOrdID=clOrdID, execType="New")
 
     def initial_ticker_values(self) -> None:
         for symbol in self.symbol_list:
