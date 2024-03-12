@@ -240,13 +240,14 @@ class Function(WS, Variables):
                 Function.insert_database(self, values=values)
                 message = {
                     "SYMBOL": row["symbol"],
+                    "CATEGORY": row["symbol"][1], 
                     "TTIME": row["transactTime"],
                     "SIDE": side,
                     "TRADE_PRICE": row["lastPx"],
                     "QTY": abs(lastQty),
                     "EMI": emi,
                 }
-                Function.trades_display(self, message=message)
+                Function.trades_display(self, val=message)
                 Function.orders_processing(self, row=row, info=info)
 
         # Funding
@@ -419,6 +420,7 @@ class Function(WS, Variables):
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in var.orders:
+                orders.delete(row=Function.order_number(self, clOrdID))
                 del var.orders[clOrdID]
         else:
             if row["execType"] == "New":
@@ -494,6 +496,7 @@ class Function(WS, Variables):
         """       
         val["TTIME"] = str(val["TTIME"])[2:]
         val["TTIME"] = val["TTIME"].replace("-", "")
+        val["TTIME"] = val["TTIME"].replace("T", " ")[:15]
         if val["SIDE"] == 0:
             val["SIDE"] = "buy"
         else:
@@ -511,7 +514,7 @@ class Function(WS, Variables):
             val["QTY"],
             val["EMI"],
         ]
-        trades.insert(row=1, elements=elements)
+        trades.insert(row=0, elements=elements)
 
     def funding_display(self, val: dict) -> None:
         """
@@ -519,6 +522,7 @@ class Function(WS, Variables):
         """
         val["TTIME"] = str(val["TTIME"])[2:]
         val["TTIME"] = val["TTIME"].replace("-", "")
+        val["TTIME"] = val["TTIME"].replace("T", " ")[:15]
         elements = [
             val["TTIME"],
             val["SYMBOL"][0],
@@ -532,7 +536,7 @@ class Function(WS, Variables):
             val["QTY"], 
             val["EMI"],
         ]
-        funding.insert(row=1, elements=elements)
+        funding.insert(row=0, elements=elements)
 
     def orders_display(self, clOrdID: str, execType: str) -> None:
         """
@@ -540,9 +544,9 @@ class Function(WS, Variables):
         """
         if clOrdID in var.orders:
             emi = var.orders[clOrdID]["emi"]
-            time = str(var.orders[clOrdID]["transactTime"])[2:]
-            time = time.replace("-", "")
-            time = time.replace("T", " ")[:15]
+            tm = str(var.orders[clOrdID]["transactTime"])[2:]
+            tm = tm.replace("-", "")
+            tm = tm.replace("T", " ")[:15]
             elements = [
                 time, 
                 var.orders[clOrdID]["symbol"][0],

@@ -10,6 +10,7 @@ if platform.system() == "Windows":
 
     windll.shcore.SetProcessDpiAwareness(1)
 
+
 class AutoScrollbar(tk.Scrollbar):
     def set(self, low, high):
         if float(low) <= 0.0 and float(high) >= 1.0:
@@ -17,6 +18,7 @@ class AutoScrollbar(tk.Scrollbar):
         else:
             self.grid()
         tk.Scrollbar.set(self, low, high)
+
 
 class Variables:
     root = tk.Tk()
@@ -158,9 +160,9 @@ class GridTable(Variables):
         name: str,
         size: int,
         title: list,
-        title_on: bool = True, 
+        title_on: bool = True,
         canvas_height: int = None,
-        bind = None,
+        bind=None,
         color: str = None,
         select: bool = None,
     ) -> None:
@@ -173,7 +175,11 @@ class GridTable(Variables):
         if not title_on:
             self.mod = 0
             size -= 1
-        my_bg = self.bg_color if name != "robots" and name != "exchange" else self.title_color
+        my_bg = (
+            self.bg_color
+            if name != "robots" and name != "exchange"
+            else self.title_color
+        )
         canvas = tk.Canvas(
             frame, highlightthickness=0, height=canvas_height, width=width, bg=my_bg
         )
@@ -262,11 +268,18 @@ class ListBoxTable(Variables):
     """
 
     def __init__(
-        self, frame: tk.Frame, size: int, title: list, title_on: bool = True, bind=None, expand: bool = None
+        self,
+        frame: tk.Frame,
+        size: int,
+        title: list,
+        title_on: bool = True,
+        bind=None,
+        expand: bool = None,
     ) -> None:
         self.title = title
         self.title_on = title_on
         self.mod = 1
+        self.max_rows = 200
         if title_on:
             self.height = 1
         else:
@@ -283,22 +296,30 @@ class ListBoxTable(Variables):
         scroll.config(command=canvas.yview)
         scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
-        self.sub = tk.Frame(canvas, pady=0, bg=self.bg_color)
-        id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
+        sub = tk.Frame(canvas, pady=0, bg=self.bg_color)
+        id = canvas.create_window((0, 0), window=sub, anchor="nw")
         canvas.bind(
             "<Configure>",
             lambda event, id=id, can=canvas: event_width(event, id, can),
         )
-        self.sub.bind("<Configure>", lambda event: event_config(event, canvas))
+        sub.bind("<Configure>", lambda event: event_config(event, canvas))
         canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
         canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
         self.listboxes = []
         for column, name in enumerate(title):
-            value = [name,] if title_on else ["",]        
+            value = (
+                [
+                    name,
+                ]
+                if title_on
+                else [
+                    "",
+                ]
+            )
             vars = tk.Variable(value=value)
             self.listboxes.append(
                 tk.Listbox(
-                    self.sub,
+                    sub,
                     listvariable=vars,
                     bd=0,
                     background=self.bg_color,
@@ -317,8 +338,8 @@ class ListBoxTable(Variables):
             self.listboxes[column].grid(
                 row=0, padx=0, column=column, sticky="N" + "S" + "W" + "E"
             )
-            self.sub.grid_columnconfigure(column, weight=1)
-            self.sub.grid_rowconfigure(0, weight=1)
+            sub.grid_columnconfigure(column, weight=1)
+            sub.grid_rowconfigure(0, weight=1)
             if bind:
                 self.listboxes[column].bind("<<ListboxSelect>>", bind)
             for _ in range(size):
@@ -330,6 +351,8 @@ class ListBoxTable(Variables):
         for column, listbox in enumerate(self.listboxes):
             listbox.config(height=self.height)
             listbox.insert(row + self.mod, elements[column])
+        if self.height > self.max_rows:
+            self.delete(row=self.height)
 
     def delete(self, row: int) -> None:
         self.height -= 1
@@ -337,9 +360,13 @@ class ListBoxTable(Variables):
             listbox.config(height=self.height)
             listbox.delete(row + self.mod)
 
+    def clear_all(self) -> None:
+        self.height = 1 if self.title_on else 0
+        for listbox in self.listboxes:
+            listbox.config(height=self.height)
+            listbox.delete(self.height, tk.END)
+
     def update(self, row: int, elements: list) -> None:
-        #if not self.title_on:
-        #    row -= 1        
         color = self.listboxes[0].itemcget(row + self.mod, "background")
         self.delete(row + self.mod)
         self.insert(row + self.mod, elements)
@@ -395,7 +422,7 @@ def on_leave(event, canvas):
 
 def on_mousewheel(event, canvas, scroll):
     slider_position = scroll.get()
-    if slider_position != (0.0, 1.0): # Scrollbar is not full
+    if slider_position != (0.0, 1.0):  # Scrollbar is not full
         if platform.system() == "Windows":
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         elif platform.system() == "Darwin":

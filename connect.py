@@ -117,6 +117,9 @@ def clear_params():
     var.current_exchange = var.exchange_list[0]
     var.symbol = var.env[var.current_exchange]["SYMBOLS"][0]
     functions.clear_labels_cache()
+    functions.trades.clear_all()
+    functions.funding.clear_all()
+    functions.orders.clear_all()
 
 
 def robots_thread() -> None:
