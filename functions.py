@@ -383,6 +383,11 @@ class Function(WS, Variables):
         elif row["execType"] == "Replaced":
             Function.orders_processing(self, row=row)
 
+    def order_number(self, clOrdID: str) -> int:
+        for number, id in enumerate(var.orders):
+            if id == clOrdID:
+                return number
+
     def orders_processing(self, row: dict, info: str = "") -> None:
         """
         Orders processing <-- transaction()<--( trading_history() or get_exec() )
@@ -408,6 +413,7 @@ class Function(WS, Variables):
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in var.orders:
+                orders.delete(row=Function.order_number(self, clOrdID))
                 del var.orders[clOrdID]
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
@@ -450,6 +456,8 @@ class Function(WS, Variables):
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
+                orders.delete(row=Function.order_number(self, clOrdID))
+                var.orders.move_to_end(clOrdID, last=False)
             if (
                 clOrdID in var.orders
             ):  # var.orders might be empty if we are here from trading_history()
@@ -478,7 +486,7 @@ class Function(WS, Variables):
             str(info_p),
             info_q,
         )
-        Function.orders_display(self, clOrdID=clOrdID)
+        Function.orders_display(self, clOrdID=clOrdID, execType=row["execType"])
 
     def trades_display(self, val: dict) -> None:
         """
@@ -526,13 +534,13 @@ class Function(WS, Variables):
         ]
         funding.insert(row=1, elements=elements)
 
-    def orders_display(self, clOrdID: str) -> None:
+    def orders_display(self, clOrdID: str, execType: str) -> None:
         """
         Update Orders widget
         """
         if clOrdID in var.orders:
             emi = var.orders[clOrdID]["emi"]
-            time = var.orders[clOrdID]["transactTime"][2:]
+            time = str(var.orders[clOrdID]["transactTime"])[2:]
             time = time.replace("-", "")
             time = time.replace("T", " ")[:15]
             elements = [
@@ -548,7 +556,7 @@ class Function(WS, Variables):
                 var.orders[clOrdID]["leavesQty"], 
                 emi,
             ]
-            orders.insert(row=1, elements=elements)
+            orders.insert(row=0, elements=elements)
 
     def volume(self, qty: int, symbol: tuple) -> str:
         if qty == 0:
@@ -1164,7 +1172,7 @@ def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
         ws = Websockets.connect[var.current_exchange]
-        for num, clOrdID in enumerate(var.orders):
+        for num, clOrdID in enumerate(var.orders):            
             if num == row_position[0] - orders.mod:
                 break
 
@@ -1172,7 +1180,7 @@ def handler_order(event) -> None:
             disp.order_window_trigger = "off"
             order_window.destroy()
 
-        def delete() -> None:
+        def delete(clOrdID) -> None:
             try:
                 var.orders[clOrdID]
             except KeyError:
@@ -1182,15 +1190,12 @@ def handler_order(event) -> None:
                 return
             if ws.logNumFatal == 0:
                 Function.del_order(ws, clOrdID=clOrdID)
-                orders.delete(row_position)
+                #orders.delete(row_position)
             else:
-                info_display(ws, "The operation failed. Websocket closed!")
+                info_display(ws.name, "The operation failed. Websocket closed!")
             on_closing()
 
-        def replace() -> None:
-            for clOrdID in var.orders_dict:
-                if var.orders_dict[clOrdID]["num"] == row_position:
-                    break
+        def replace(clOrdID) -> None:
             try:
                 var.orders[clOrdID]
             except KeyError:
@@ -1201,7 +1206,7 @@ def handler_order(event) -> None:
             try:
                 float(price_replace.get())
             except KeyError:
-                info_display("Price must be numeric!")
+                info_display(ws.name, "Price must be numeric!")
                 return
             if ws.logNumFatal == 0:
                 roundSide = var.orders[clOrdID]["leavesQty"]
@@ -1214,7 +1219,7 @@ def handler_order(event) -> None:
                     rside=roundSide,
                 )
                 if price == var.orders[clOrdID]["price"]:
-                    info_display("Price is the same but must be different!")
+                    info_display(ws.name, "Price is the same but must be different!")
                     return
                 clOrdID = Function.put_order(
                     ws,
@@ -1223,7 +1228,7 @@ def handler_order(event) -> None:
                     qty=var.orders[clOrdID]["leavesQty"],
                 )
             else:
-                info_display("The operation failed. Websocket closed!")
+                info_display(ws.name, "The operation failed. Websocket closed!")
             on_closing()
 
         if disp.order_window_trigger == "off":
@@ -1259,12 +1264,12 @@ def handler_order(event) -> None:
             label_price = tk.Label(frame_dn)
             label_price["text"] = "Price "
             label1.pack(side="left")
-            button = tk.Button(frame_dn, text="Delete order", command=delete)
+            button = tk.Button(frame_dn, text="Delete order", command=lambda id=clOrdID: delete(id))
             price_replace = tk.StringVar()
             entry_price = tk.Entry(
                 frame_dn, width=10, bg="white", textvariable=price_replace
             )
-            button_replace = tk.Button(frame_dn, text="Replace", command=replace)
+            button_replace = tk.Button(frame_dn, text="Replace", command=lambda id=clOrdID: replace(id))
             button.pack(side="right")
             label_price.pack(side="left")
             entry_price.pack(side="left")

@@ -81,7 +81,7 @@ class Variables:
 
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
-    root.grid_columnconfigure(2, weight=10)
+    root.grid_columnconfigure(2, weight=20)
     root.grid_rowconfigure(0, weight=1)
     root.grid_rowconfigure(1, weight=1)
     root.grid_rowconfigure(2, weight=200)
@@ -326,34 +326,28 @@ class ListBoxTable(Variables):
                 self.insert(elements=lst, row=1)
 
     def insert(self, row: int, elements: list) -> None:
-        if not self.title_on:
-            row -= 1
         self.height += 1
         for column, listbox in enumerate(self.listboxes):
             listbox.config(height=self.height)
-            listbox.insert(row, elements[column])
+            listbox.insert(row + self.mod, elements[column])
 
     def delete(self, row: int) -> None:
-        if not self.title_on:
-            row -= 1
         self.height -= 1
         for listbox in self.listboxes:
             listbox.config(height=self.height)
-            listbox.delete(row)
+            listbox.delete(row + self.mod)
 
     def update(self, row: int, elements: list) -> None:
-        if not self.title_on:
-            row -= 1        
-        color = self.listboxes[0].itemcget(row, "background")
-        self.delete(row)
-        self.insert(row, elements)
-        self.paint(row, color)
+        #if not self.title_on:
+        #    row -= 1        
+        color = self.listboxes[0].itemcget(row + self.mod, "background")
+        self.delete(row + self.mod)
+        self.insert(row + self.mod, elements)
+        self.paint(row + self.mod, color)
 
     def paint(self, row: int, color: str) -> None:
-        if not self.title_on:
-            row -= 1
         for listbox in self.listboxes:
-            listbox.itemconfig(row, bg=color)
+            listbox.itemconfig(row + self.mod, bg=color)
 
 
 def handler_robots(y_pos):

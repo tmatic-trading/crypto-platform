@@ -113,8 +113,7 @@ def refresh() -> None:
 
     
 def clear_params():
-    var.orders = OrderedDict()
-    var.orders_dict = OrderedDict()  
+    var.orders = OrderedDict() 
     var.current_exchange = var.exchange_list[0]
     var.symbol = var.env[var.current_exchange]["SYMBOLS"][0]
     functions.clear_labels_cache()
