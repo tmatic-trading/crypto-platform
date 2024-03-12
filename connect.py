@@ -32,7 +32,7 @@ def setup():
             setup_exchange(ws, name=name)
     ws = Websockets.connect[var.current_exchange]
     common.Init.initial_display(ws)
-    display.load_labels()
+    functions.load_labels()
     algo.init_algo()
     var.robots_thread_is_active = "yes"
     thread = threading.Thread(target=robots_thread)

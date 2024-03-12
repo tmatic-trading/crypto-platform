@@ -14,7 +14,6 @@ if not os.path.isfile(".env"):
 
 class Variables:
     orders = OrderedDict()
-    orders_dict = OrderedDict()
     position_rows = 0
     account_rows = 0
     env = dotenv_values(".env")
@@ -103,7 +102,7 @@ class Variables:
         "CATEGORY", 
         "PRICE",
         "PNL",
-        "QTY"
+        "QTY", 
         "EMI",
     ]
     name_exchange = [
@@ -112,7 +111,6 @@ class Variables:
     logger = logging
     connect_mysql = None
     cursor_mysql = None
-    #orders_dict_value = 0
     timefrs = {1: "1m", 5: "5m", 60: "1h"}
     currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
     last_order = int((time.time() - 1591000000) * 10)

@@ -34,10 +34,6 @@ class Variables:
     label_trading.pack(side="left")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_f9.pack(side="left")
-    # label_state = tk.Label(frame_state, text="  STATE: ")
-    # label_state.pack(side="left")
-    # label_online = tk.Label(frame_state, fg="white")
-    # label_online.pack(side="left")
     label_time = tk.Label()
     label_time.grid(row=0, column=1, sticky="E", columnspan=2)
 
@@ -66,8 +62,6 @@ class Variables:
     # frame_3row_3col.grid_rowconfigure(1, weight=200)
     orderbook_frame = tk.Frame(frame_3row_3col, padx=2, pady=0)
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
-    #orderbook_sub2 = tk.Frame(frame_3row_3col, padx=0, pady=0, bg=bg_color)
-    #orderbook_sub2.grid(row=1, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
     frame_3row_4col = tk.Frame()
@@ -119,20 +113,6 @@ class Variables:
 
     frame_orders = tk.Frame(pw_orders_trades)
     frame_orders.pack(fill="both", expand="yes")
-    scroll_orders = tk.Scrollbar(frame_orders)
-    text_orders = tk.Text(
-        frame_orders,
-        height=5,
-        width=52,
-        bg=bg_color,
-        cursor="arrow",
-        highlightthickness=0,
-    )
-    text_orders.bind("<Key>", lambda event: text_ignore(event))
-    scroll_orders.config(command=text_orders.yview)
-    text_orders.config(yscrollcommand=scroll_orders.set)
-    scroll_orders.pack(side="right", fill="y")
-    text_orders.pack(side="right", fill="both", expand="yes")
 
     # Trades/Funding widget
 
@@ -168,7 +148,6 @@ class Variables:
     symb_book = ""
     book_window_trigger = "off"
     price_rounding = OrderedDict()
-    orders_dict_value = 0
     order_window_trigger = "off"
 
 
@@ -287,8 +266,14 @@ class ListBoxTable(Variables):
     ) -> None:
         self.title = title
         self.title_on = title_on
-        self.height = 1 if title_on else 0
+        self.mod = 1
+        if title_on:
+            self.height = 1
+        else:
+            self.height = 0
+            self.mod = 0
         self.active_row = 1
+        self.mod = 1
         if expand:
             frame.grid_rowconfigure(0, weight=1)
         canvas = tk.Canvas(frame, highlightthickness=0, bg=self.bg_color)
@@ -340,8 +325,6 @@ class ListBoxTable(Variables):
                 lst = ["" for _ in range(len(self.title))]
                 self.insert(elements=lst, row=1)
 
-        #frame.update_idletasks() # new
-
     def insert(self, row: int, elements: list) -> None:
         if not self.title_on:
             row -= 1
@@ -358,12 +341,6 @@ class ListBoxTable(Variables):
             listbox.config(height=self.height)
             listbox.delete(row)
 
-    def paint(self, row: int, color: str) -> None:
-        if not self.title_on:
-            row -= 1
-        for listbox in self.listboxes:
-            listbox.itemconfig(row, bg=color)
-
     def update(self, row: int, elements: list) -> None:
         if not self.title_on:
             row -= 1        
@@ -371,6 +348,12 @@ class ListBoxTable(Variables):
         self.delete(row)
         self.insert(row, elements)
         self.paint(row, color)
+
+    def paint(self, row: int, color: str) -> None:
+        if not self.title_on:
+            row -= 1
+        for listbox in self.listboxes:
+            listbox.itemconfig(row, bg=color)
 
 
 def handler_robots(y_pos):
