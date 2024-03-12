@@ -1,10 +1,6 @@
-import tkinter as tk
-from datetime import datetime
-
 import functions
 from api.websockets import Websockets
 from common.variables import Variables as var
-from display.variables import GridTable, ListBoxTable
 from display.variables import Variables as disp
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
@@ -28,7 +24,8 @@ def trade_state(event) -> None:
         ws.logNumFatal = 0
     print(var.current_exchange, disp.f9)
 
-class Tables:
+
+'''class Tables:
     position: GridTable
     account: GridTable
     robots: GridTable
@@ -43,8 +40,8 @@ def load_labels() -> None:
         frame=disp.position_frame,
         name="position",
         size=max(5, var.position_rows + 1),
-        title=var.name_pos,     
-        canvas_height=65, 
+        title=var.name_pos,
+        canvas_height=65,
         bind=functions.handler_pos,
         color=disp.bg_color,
         select=True,
@@ -53,16 +50,16 @@ def load_labels() -> None:
         frame=disp.frame_4row_1_2_3col,
         name="account",
         size=var.account_rows + 1,
-        title=var.name_acc,      
-        canvas_height=60, 
+        title=var.name_acc,
+        canvas_height=60,
         color=disp.bg_color,
     )
     Tables.robots = GridTable(
         frame=disp.frame_5row_1_2_3col,
         name="robots",
         size=max(disp.num_robots, len(ws.robots) + 1),
-        title=var.name_robots,      
-        canvas_height=150, 
+        title=var.name_robots,
+        canvas_height=150,
         bind=functions.handler_robots,
         color=disp.title_color,
     )
@@ -71,7 +68,7 @@ def load_labels() -> None:
         name="exchange",
         size=2,
         title=var.name_exchange,
-        title_on=False,  
+        title_on=False,
         color=disp.title_color,
         select=True,
     )
@@ -87,8 +84,8 @@ def load_labels() -> None:
         frame=disp.orderbook_frame,
         name="orderbook",
         size=disp.num_book,
-        title=var.name_book,       
-        canvas_height=440, 
+        title=var.name_book,
+        canvas_height=440,
         bind=functions.handler_orderbook,
         color=disp.bg_color,
     )
@@ -102,7 +99,17 @@ def load_labels() -> None:
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
 
-trades = ListBoxTable(frame=disp.frame_trades, title=var.name_trade, size=0, expand=True)
-funding = ListBoxTable(frame=disp.frame_funding, title=var.name_funding, size=0, expand=True)
 
-
+trades = ListBoxTable(
+    frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
+)
+funding = ListBoxTable(
+    frame=disp.frame_funding, title=var.name_funding, size=0, expand=True
+)
+orders = ListBoxTable(
+    frame=disp.frame_orders,
+    title=var.name_trade,
+    bind=handlers.handler_order,
+    size=0,
+    expand=True,
+)'''
