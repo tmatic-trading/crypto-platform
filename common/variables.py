@@ -43,10 +43,11 @@ class Variables:
         order_book_depth = "quote"
     current_exchange = exchange_list[0]
     symbol = env[current_exchange]["SYMBOLS"][0]
-    name_book = ["    QTY   ", "   PRICE    ", "    QTY    "]
+    name_book = ["QTY", "PRICE", "QTY"]
     name_robots = [
         "EMI",
-        "SYMB",
+        "SYMBOL",
+        "CATEGORY", 
         "CURRENCY",
         "TIMEFR",
         "CAPITAL",
@@ -66,8 +67,9 @@ class Variables:
         "volume24h",
         "lotSize",
     ]
-    name_pos = [
-        "SYMB",
+    name_position = [
+        "SYMBOL",
+        "CAT", 
         "POS",
         "ENTRY",
         "PNL",
@@ -77,7 +79,7 @@ class Variables:
         "EXPIRY",
         "FUND",
     ]
-    name_acc = [
+    name_account = [
         "CURR",
         "MARGINBAL",
         "AVAILABLE",
@@ -90,7 +92,8 @@ class Variables:
     name_trade = [
         "TIME",
         "SYMBOL",
-        "CATEGORY", 
+        "CAT", 
+        "EXCH", 
         "SIDE",
         "PRICE",
         "QTY",
@@ -99,7 +102,8 @@ class Variables:
     name_funding = [
         "TIME",
         "SYMBOL",
-        "CATEGORY", 
+        "CAT", 
+        "EXCH", 
         "PRICE",
         "PNL",
         "QTY", 
