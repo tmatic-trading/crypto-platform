@@ -6,10 +6,10 @@ from api.websockets import Websockets
 
 def init_algo():
     pass
-    '''ws = Websockets.connect["Bitmex"]
+    ws = Websockets.connect["Bitmex"]
     bot.robo["Super"] = algo.strategy.algo
     algo.strategy.init_variables(robot=ws.robots["Super"])
     bot.robo["2"] = algo.strategy.algo
     algo.strategy.init_variables(robot=ws.robots["2"])
     bot.robo["Eth"] = algo.strategy.algo
-    algo.strategy.init_variables(robot=ws.robots["Eth"])'''
+    algo.strategy.init_variables(robot=ws.robots["Eth"])
