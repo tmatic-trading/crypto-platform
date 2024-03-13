@@ -10,6 +10,7 @@ from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
 from functions import Function
+from functions import orders
 
 from api.websockets import Websockets
 
@@ -147,7 +148,10 @@ class Init(WS, Variables):
         Load Orders (if any)
         """
         myOrders = self.open_orders(self.name)
-        var.orders = OrderedDict()
+        copy = var.orders.copy()
+        for clOrdID, order in copy.items():
+            if order["exchange"] == self.name:
+                del var.orders[clOrdID]
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
                 emi = ".".join(val["symbol"])
@@ -202,9 +206,14 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["category"] = val["symbol"][1]
                 var.orders[clOrdID]["exchange"] = self.name
                 var.orders[clOrdID]["side"] = val["side"]
-                var.orders[clOrdID]["orderID"] = val["orderID"]
-        for clOrdID in var.orders:
-            Function.orders_display(self, clOrdID=clOrdID, execType="New")
+                var.orders[clOrdID]["orderID"] = val["orderID"]        
+        for clOrdID, order in var.orders.items():
+            order["clOrdID"] = clOrdID
+        values = list(var.orders.values())
+        values.sort(key=lambda x: x["transactTime"])
+        orders.clear_all()
+        for val in values:
+            Function.orders_display(self, clOrdID=val["clOrdID"], execType="New")
 
     def initial_ticker_values(self) -> None:
         for symbol in self.symbol_list:

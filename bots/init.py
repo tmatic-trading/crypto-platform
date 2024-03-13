@@ -267,7 +267,7 @@ class Init(WS, Variables):
         frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
 
         message = (
-            "Downloaded missing data from the exchange for symbol="
+            "Downloaded missing data, symbol="
             + str(robot["SYMBOL"])
             + " TIMEFR="
             + str(robot["TIMEFR"])

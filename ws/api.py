@@ -168,22 +168,23 @@ class Connect:
         """
         Returns a ticker entity.
         """
-        for key, val in self.data[self.depth].items():
-            symbol = key[0][1]
-            if self.depth == "quote":
-                if "bidPrice" in val:
-                    ticker[symbol]["bid"] = val["bidPrice"]
-                    ticker[symbol]["bidSize"] = val["bidSize"]
-                if "askPrice" in val:
-                    ticker[symbol]["ask"] = val["askPrice"]
-                    ticker[symbol]["askSize"] = val["askSize"]
-            else:
-                if val["bids"]:
-                    ticker[symbol]["bid"] = val["bids"][0][0]
-                    ticker[symbol]["bidSize"] = val["bids"][0][1]
-                if val["asks"]:
-                    ticker[symbol]["ask"] = val["asks"][0][0]
-                    ticker[symbol]["askSize"] = val["asks"][0][1]
+        if self.depth in self.data:
+            for key, val in self.data[self.depth].items():
+                symbol = key[0][1]
+                if self.depth == "quote":
+                    if "bidPrice" in val:
+                        ticker[symbol]["bid"] = val["bidPrice"]
+                        ticker[symbol]["bidSize"] = val["bidSize"]
+                    if "askPrice" in val:
+                        ticker[symbol]["ask"] = val["askPrice"]
+                        ticker[symbol]["askSize"] = val["askSize"]
+                else:
+                    if val["bids"]:
+                        ticker[symbol]["bid"] = val["bids"][0][0]
+                        ticker[symbol]["bidSize"] = val["bids"][0][1]
+                    if val["asks"]:
+                        ticker[symbol]["ask"] = val["asks"][0][0]
+                        ticker[symbol]["askSize"] = val["asks"][0][1]
 
         return ticker
 
