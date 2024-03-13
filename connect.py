@@ -54,6 +54,7 @@ def setup_exchange(ws: WS, name: str):
                                 exchange but was not received.")
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
+                algo.init_algo()
                 if isinstance(bots.Init.init_timeframes(ws), dict):
                     common.Init.load_trading_history(ws)
                     common.Init.account_balances(ws)

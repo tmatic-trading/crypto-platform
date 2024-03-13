@@ -244,6 +244,10 @@ class Init(WS, Variables):
 
         # The 'frames' array is filled with timeframe data.
 
+        f = datetime.strptime(res[0]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S")
+        l = datetime.strptime(res[-1]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S")
+        if f > l:
+            res.reverse()
         for num, row in enumerate(res):
             tm = datetime.strptime(
                 row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
@@ -275,7 +279,6 @@ class Init(WS, Variables):
         var.logger.info(message)
         info_display(self.name, message)
 
-        print("_________", frames.keys())
         return frames
 
     def init_timeframes(self) -> Union[dict, None]:
