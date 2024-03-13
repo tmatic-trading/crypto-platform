@@ -158,8 +158,9 @@ class GridTable(Variables):
         self,
         frame: tk.Frame,
         name: str,
-        size: int,
+        size: int,        
         title: list,
+        column_width: int = 70, 
         title_on: bool = True,
         canvas_height: int = None,
         bind=None,
@@ -171,7 +172,7 @@ class GridTable(Variables):
         self.mod = 1
         self.labels[name] = []
         self.labels_cache[name] = []
-        width = len(title) * 70
+        width = len(title) * column_width
         if not title_on:
             self.mod = 0
             size -= 1

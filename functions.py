@@ -241,6 +241,7 @@ class Function(WS, Variables):
                 message = {
                     "SYMBOL": row["symbol"],
                     "CATEGORY": row["symbol"][1], 
+                    "EXCHANGE": row["exchange"], 
                     "TTIME": row["transactTime"],
                     "SIDE": side,
                     "TRADE_PRICE": row["lastPx"],
@@ -278,6 +279,7 @@ class Function(WS, Variables):
                         rate=true_funding,
                         fund=0,
                     )
+                    message["EXCHANGE"] = self.robots[emi]["EXCHANGE"]
                     message["EMI"] = self.robots[emi]["EMI"]
                     message["QTY"] = self.robots[emi]["POS"]
                     message["COMMISS"] = calc["funding"]
@@ -326,6 +328,7 @@ class Function(WS, Variables):
                         + " was traded. View your trading history."
                     )
                     exit(1)
+                message["EXCHANGE"] = self.robots[emi]["EXCHANGE"]
                 message["EMI"] = self.robots[emi]["EMI"]
                 message["QTY"] = diff
                 message["COMMISS"] = calc["funding"]
@@ -505,6 +508,7 @@ class Function(WS, Variables):
             val["TTIME"],
             val["SYMBOL"][0],
             val["CATEGORY"],
+            val["EXCHANGE"], 
             val["SIDE"],
             Function.format_price(
                 self,
@@ -527,6 +531,7 @@ class Function(WS, Variables):
             val["TTIME"],
             val["SYMBOL"][0],
             val["CATEGORY"],
+            val["EXCHANGE"], 
             Function.format_price(
                 self,
                 number=float(val["PRICE"]),
@@ -708,17 +713,18 @@ class Function(WS, Variables):
             self.positions[symbol]["FUND"] = round(
                 self.instruments[symbol]["fundingRate"] * 100, 6
             )
-            update_label(table="position", column=0, row=num + mod, val=".".join(symbol))
+            update_label(table="position", column=0, row=num + mod, val=symbol[0])
+            update_label(table="position", column=1, row=num + mod, val=symbol[1])
             if self.positions[symbol]["POS"]:
                 pos = Function.volume(
                     self, qty=self.positions[symbol]["POS"], symbol=symbol
                 )
             else:
                 pos = "0"
-            update_label(table="position", column=1, row=num + mod, val=pos)
+            update_label(table="position", column=2, row=num + mod, val=pos)
             update_label(
                 table="position",
-                column=2,
+                column=3,
                 row=num + mod,
                 val=(
                     Function.format_price(
@@ -732,7 +738,7 @@ class Function(WS, Variables):
             )
             update_label(
                 table="position",
-                column=3,
+                column=4,
                 row=num + mod,
                 val=(
                     self.positions[symbol]["PNL"]
@@ -742,7 +748,7 @@ class Function(WS, Variables):
             )
             update_label(
                 table="position",
-                column=4,
+                column=5,
                 row=num + mod,
                 val=(
                     str(self.positions[symbol]["MCALL"]).replace("100000000", "inf")
@@ -752,13 +758,13 @@ class Function(WS, Variables):
             )
             update_label(
                 table="position",
-                column=5,
+                column=6,
                 row=num + mod,
                 val=self.positions[symbol]["STATE"],
             )
             update_label(
                 table="position",
-                column=6,
+                column=7,
                 row=num + mod,
                 val=humanFormat(self.positions[symbol]["VOL24h"]),
             )
@@ -766,10 +772,10 @@ class Function(WS, Variables):
                 tm = self.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
             else:
                 tm = self.instruments[symbol]["expiry"]
-            update_label(table="position", column=7, row=num + mod, val=tm)
+            update_label(table="position", column=8, row=num + mod, val=tm)
             update_label(
                 table="position",
-                column=8,
+                column=9,
                 row=num + mod,
                 val=self.positions[symbol]["FUND"],
             )
@@ -929,31 +935,32 @@ class Function(WS, Variables):
                 )
             symbol = self.robots[emi]["SYMBOL"]
             update_label(table="robots", column=0, row=num + mod, val=emi)
-            update_label(table="robots", column=1, row=num + mod, val=symbol)
+            update_label(table="robots", column=1, row=num + mod, val=symbol[0])
+            update_label(table="robots", column=2, row=num + mod, val=symbol[1])
             update_label(
                 table="robots",
-                column=2,
+                column=3,
                 row=num + mod,
                 val=self.instruments[symbol]["settlCurrency"],
             )
             update_label(
-                table="robots", column=3, row=num + mod, val=self.robots[emi]["TIMEFR"]
+                table="robots", column=4, row=num + mod, val=self.robots[emi]["TIMEFR"]
             )
             update_label(
-                table="robots", column=4, row=num + mod, val=self.robots[emi]["CAPITAL"]
+                table="robots", column=5, row=num + mod, val=self.robots[emi]["CAPITAL"]
             )
             update_label(
-                table="robots", column=5, row=num + mod, val=self.robots[emi]["STATUS"]
+                table="robots", column=6, row=num + mod, val=self.robots[emi]["STATUS"]
             )
             update_label(
                 table="robots",
-                column=6,
+                column=7,
                 row=num + mod,
                 val=humanFormat(self.robots[emi]["VOL"]),
             )
             update_label(
                 table="robots",
-                column=7,
+                column=8,
                 row=num + mod,
                 val="{:.8f}".format(self.robots[emi]["PNL"]),
             )
@@ -962,15 +969,15 @@ class Function(WS, Variables):
                 qty=self.robots[emi]["POS"],
                 symbol=symbol,
             )
-            if disp.labels_cache["robots"][num + mod][8] != val:
+            if disp.labels_cache["robots"][num + mod][9] != val:
                 if self.robots[emi]["STATUS"] == "RESERVED":
                     if self.robots[emi]["POS"] != 0:
-                        disp.labels["robots"][num + mod][5]["fg"] = "red"
+                        disp.labels["robots"][num + mod][6]["fg"] = "red"
                     else:
-                        disp.labels["robots"][num + mod][5]["fg"] = "#212121"
+                        disp.labels["robots"][num + mod][6]["fg"] = "#212121"
             update_label(
                 table="robots",
-                column=8,
+                column=9,
                 row=num + mod,
                 val=val,
             )
@@ -1583,7 +1590,7 @@ def handler_pos(event, row_position: int) -> None:
     var.symbol = ws.symbol_list[row_position - 1]
     mod = Tables.position.mod
     for num in range(len(ws.symbol_list)):
-        for column in range(len(var.name_pos)):
+        for column in range(len(var.name_position)):
             if num + mod == row_position:
                 disp.labels["position"][num + mod][column]["bg"] = "yellow"
             else:
@@ -1695,7 +1702,8 @@ def load_labels() -> None:
         frame=disp.position_frame,
         name="position",
         size=max(5, var.position_rows + 1),
-        title=var.name_pos,
+        title=var.name_position,
+        column_width = 40, 
         canvas_height=65,
         bind=handler_pos,
         color=disp.bg_color,
@@ -1705,7 +1713,7 @@ def load_labels() -> None:
         frame=disp.frame_4row_1_2_3col,
         name="account",
         size=var.account_rows + 1,
-        title=var.name_acc,
+        title=var.name_account,
         canvas_height=60,
         color=disp.bg_color,
     )
@@ -1732,9 +1740,9 @@ def load_labels() -> None:
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
             ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
         ):
-            disp.labels["robots"][row + mod][5]["fg"] = "red"
+            disp.labels["robots"][row + mod][6]["fg"] = "red"
         else:
-            disp.labels["robots"][row + mod][5]["fg"] = "#212121"
+            disp.labels["robots"][row + mod][6]["fg"] = "#212121"
     Tables.orderbook = GridTable(
         frame=disp.orderbook_frame,
         name="orderbook",
