@@ -27,16 +27,17 @@ class Variables:
     num_robots = 1
     bg_color = "gray98"
     title_color = "gray83"
+    fg_color = "black"
     num_book = 21  # Must be odd
     frame_state = tk.Frame()
     frame_state.grid(row=0, column=0, sticky="W")
     labels = dict()
     labels_cache = dict()
-    label_trading = tk.Label(frame_state, text="  TRADING: ")
+    label_trading = tk.Label(frame_state, text="  TRADING: ", foreground=fg_color)
     label_trading.pack(side="left")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_f9.pack(side="left")
-    label_time = tk.Label()
+    label_time = tk.Label(foreground=fg_color)
     label_time.grid(row=0, column=1, sticky="E", columnspan=2)
 
     frame_2row_1_2_3col = tk.Frame()
@@ -62,7 +63,7 @@ class Variables:
     frame_3row_3col.grid_rowconfigure(0, weight=1)
 
     # frame_3row_3col.grid_rowconfigure(1, weight=200)
-    orderbook_frame = tk.Frame(frame_3row_3col, padx=2, pady=0)
+    orderbook_frame = tk.Frame(frame_3row_3col, padx=0, pady=0, background=title_color)
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
@@ -98,6 +99,7 @@ class Variables:
         height=6,
         width=30,
         bg=bg_color,
+        fg=fg_color,
         highlightthickness=0,
     )
     text_info.bind("<Key>", lambda event: text_ignore(event))
@@ -118,7 +120,11 @@ class Variables:
 
     # Trades/Funding widget
 
-    notebook = ttk.Notebook(pw_orders_trades, padding=0)
+    if platform.system() == "Darwin":
+        notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
+    else:
+        notebook = ttk.Notebook(pw_orders_trades, padding=0)
+    #print("platform:", root.tk.call('tk', 'windowingsystem'), platform.system()) # aqua, Darwin
     style = ttk.Style()
     style.configure("TNotebook", borderwidth=0)
     style.configure("TNotebook.Tab", background=title_color)
@@ -205,7 +211,7 @@ class GridTable(Variables):
             cache = []
             if len(self.labels[name]) <= row:
                 for title_name in title:
-                    lst.append(tk.Label(sub, text=title_name, pady=0))
+                    lst.append(tk.Label(sub, text=title_name, pady=0, background=self.title_color, foreground=self.fg_color))
                     cache.append(title_name + str(row))
                 self.labels[name].append(lst)
                 self.labels_cache[name].append(cache)
@@ -324,9 +330,10 @@ class ListBoxTable(Variables):
                     listvariable=vars,
                     bd=0,
                     background=self.bg_color,
+                    fg=self.fg_color,
                     highlightthickness=0,
                     selectbackground=self.bg_color,
-                    selectforeground="Black",
+                    selectforeground=self.fg_color,
                     activestyle="none",
                     justify="center",
                     height=self.height,
@@ -335,7 +342,7 @@ class ListBoxTable(Variables):
                 )
             )
             if title_on:
-                self.listboxes[column].itemconfig(0, bg=self.title_color)
+                self.listboxes[column].itemconfig(0, bg=self.title_color, fg=self.fg_color)
             self.listboxes[column].grid(
                 row=0, padx=0, column=column, sticky="N" + "S" + "W" + "E"
             )
