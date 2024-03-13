@@ -1,5 +1,4 @@
 
-import os
 import threading
 import time
 from collections import OrderedDict
@@ -9,7 +8,7 @@ from time import sleep
 import algo.init as algo
 import bots.init as bots
 import common.init as common
-import display.init as display
+from display.functions import info_display
 import functions
 
 
@@ -40,6 +39,7 @@ def setup():
 
 
 def setup_exchange(ws: WS, name: str):
+    ws.logNumFatal = -1
     while ws.logNumFatal:
         ws.start_ws(name)
         if ws.logNumFatal:
@@ -81,7 +81,7 @@ def refresh() -> None:
                 ws.message2000 = (
                     "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
                 )
-                Function.info_display(ws, ws.message2000)
+                info_display(ws.name, ws.message2000)
             sleep(1)
         elif ws.logNumFatal > 1000 or ws.timeoutOccurred != "":  # reload
             setup_exchange(ws=ws, name=name)
@@ -91,9 +91,9 @@ def refresh() -> None:
                     ws.messageStopped = (
                         "Error=" + str(ws.logNumFatal) + ". Trading stopped"
                     )
-                    Function.info_display(ws, ws.messageStopped)
+                    info_display(ws.name, ws.messageStopped)
                     if ws.logNumFatal == 2:
-                        Function.info_display(ws, "Insufficient available balance!")
+                        info_display(ws.name, "Insufficient available balance!")
                 disp.f9 = "OFF"
             ws.ticker = ws.get_ticker(name=name)            
             '''disp.num_robots -= 1
@@ -131,3 +131,25 @@ def robots_thread() -> None:
                     Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
+
+
+disp.root.bind("<F3>", lambda event: terminal_reload(event))
+disp.root.bind("<F9>", lambda event: trade_state(event))
+
+
+def terminal_reload(event) -> None:
+    var.robots_thread_is_active = ""
+    functions.info_display("Tmatic", "Restarting...")
+    disp.root.update()
+    setup()
+
+
+def trade_state(event) -> None:
+    if disp.f9 == "ON":
+        disp.f9 = "OFF"
+    elif disp.f9 == "OFF":
+        disp.f9 = "ON"
+        disp.messageStopped = ""
+        ws = Websockets.connect[var.current_exchange]
+        ws.logNumFatal = 0
+    print(var.current_exchange, disp.f9)
