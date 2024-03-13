@@ -275,6 +275,7 @@ class Init(WS, Variables):
         var.logger.info(message)
         info_display(self.name, message)
 
+        print("_________", frames.keys())
         return frames
 
     def init_timeframes(self) -> Union[dict, None]:
