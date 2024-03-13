@@ -27,7 +27,6 @@ class Init(WS, Variables):
         such robots is 'RESERVED'.
         """
         db = var.env["MYSQL_DATABASE"]
-        # d symbol_list = list(map(lambda x: x[0], self.symbol_list))
         union = ""
         qwr = "select * from ("
         for symbol in self.symbol_list:

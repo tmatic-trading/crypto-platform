@@ -158,7 +158,7 @@ class Send(Variables):
                             1,
                         )  # impossible situation => stop trading
                     elif "insufficient available balance" in message:
-                        info_display(error["message"])
+                        info_display(self.name, error["message"])
                         info_warn_err(
                             "ERROR",
                             error["message"]
@@ -215,7 +215,7 @@ class Send(Variables):
                     "Timed out on request. %s: %s" % (url, json.dumps(postData or "")),
                     errCode,
                 )
-                info_display(self, "Websocket. Timed out on request")
+                info_display(self.name, "Websocket. Timed out on request")
 
             except requests.exceptions.ConnectionError as e:
                 info_warn_err(

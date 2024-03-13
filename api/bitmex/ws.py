@@ -44,7 +44,7 @@ class Bitmex(Variables):
             self.logger = logging.getLogger(__name__)
             if self.logNumFatal == 0:
                 self.logger.info("Connected to websocket.")
-                info_display(name=self.name, message="Connected to websocket.")
+                info_display(self.name, "Connected to websocket.")
                 self.__wait_for_tables()
                 if self.logNumFatal == 0:
                     self.logger.info("Data received. Continuing.")

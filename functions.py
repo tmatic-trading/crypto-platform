@@ -553,10 +553,11 @@ class Function(WS, Variables):
             tm = tm.replace("-", "")
             tm = tm.replace("T", " ")[:15]
             elements = [
-                time, 
+                tm, 
                 var.orders[clOrdID]["symbol"][0],
                 var.orders[clOrdID]["category"], 
-                "side", 
+                var.orders[clOrdID]["exchange"], 
+                var.orders[clOrdID]["side"],
                 Function.format_price(
                         self,
                         number=var.orders[clOrdID]["price"],
