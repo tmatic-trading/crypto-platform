@@ -39,16 +39,6 @@ class Send(Variables):
             stop_retries = cur_retries
             # Makes the request
             response = None
-            '''if isinstance(postData, dict):
-                tmp = postData.copy()
-                print(tmp)
-                exit(0)
-                if "price" in tmp:
-                    tmp["price"] = Function.format_price(
-                        self, number=tmp["price"], symbol=tmp["symbol"]
-                    )
-            else:
-                tmp = postData'''
             try:
                 if theorPrice is None:
                     info_warn_err(
