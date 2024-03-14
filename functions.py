@@ -512,9 +512,9 @@ class Function(WS, Variables):
         val["TTIME"] = val["TTIME"].replace("-", "")
         val["TTIME"] = val["TTIME"].replace("T", " ")[:15]
         if val["SIDE"] == 0:
-            val["SIDE"] = "buy"
+            val["SIDE"] = "Buy"
         else:
-            val["SIDE"] = "sell"
+            val["SIDE"] = "Sell"
         elements = [
             val["TTIME"],
             val["SYMBOL"][0],
@@ -530,6 +530,10 @@ class Function(WS, Variables):
             val["EMI"],
         ]
         trades.insert(row=0, elements=elements)
+        if val["SIDE"] == "Buy":
+            trades.paint(row=0, color=disp.buy_color)
+        else:
+            trades.paint(row=0, color=disp.sell_color)
 
     def funding_display(self, val: dict) -> None:
         """
@@ -578,6 +582,10 @@ class Function(WS, Variables):
                 emi,
             ]
             orders.insert(row=0, elements=elements)
+            if var.orders[clOrdID]["side"] == "Buy":
+                orders.paint(row=0, color=disp.buy_color)
+            else:
+                orders.paint(row=0, color=disp.sell_color)
 
         print("---------orders---------")
         print(var.orders.keys(), sep = "\n")
@@ -669,9 +677,9 @@ class Function(WS, Variables):
         disp.label_time["text"] = "(" + str(self.connect_count) + ")  " + time.ctime()
         disp.label_f9["text"] = str(disp.f9)
         if disp.f9 == "ON":
-            disp.label_f9.config(bg="green3")
+            disp.label_f9.config(bg=disp.dark_green_color)
         else:
-            disp.label_f9.config(bg="orange red")
+            disp.label_f9.config(bg=disp.dark_red_color)
         if self.logNumFatal == 0:
             if utc > self.message_time + timedelta(seconds=10):
                 if self.message_counter == self.message_point:
@@ -804,10 +812,10 @@ class Function(WS, Variables):
             count = 0
             if side == "asks":
                 col = 2
-                color = "orange red"
+                color = disp.sell_color_dark
             else:
                 col = 0
-                color = "green2"
+                color = disp.buy_color
             col_qty = abs(col - 2)
             for row in range(start, end, direct):
                 vlm = ""
@@ -988,9 +996,9 @@ class Function(WS, Variables):
             if disp.labels_cache["robots"][num + mod][9] != val:
                 if self.robots[emi]["STATUS"] == "RESERVED":
                     if self.robots[emi]["POS"] != 0:
-                        disp.labels["robots"][num + mod][6]["fg"] = "red"
+                        disp.labels["robots"][num + mod][6]["fg"] = disp.dark_red_color
                     else:
-                        disp.labels["robots"][num + mod][6]["fg"] = "#212121"
+                        disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
             update_label(
                 table="robots",
                 column=9,
@@ -1608,7 +1616,7 @@ def handler_pos(event, row_position: int) -> None:
     for num in range(len(ws.symbol_list)):
         for column in range(len(var.name_position)):
             if num + mod == row_position:
-                disp.labels["position"][num + mod][column]["bg"] = "yellow"
+                disp.labels["position"][num + mod][column]["bg"] = disp.yellow_color
             else:
                 if num + mod >= 0:
                     disp.labels["position"][num + mod][column]["bg"] = disp.bg_color

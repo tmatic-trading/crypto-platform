@@ -206,7 +206,7 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["category"] = val["symbol"][1]
                 var.orders[clOrdID]["exchange"] = self.name
                 var.orders[clOrdID]["side"] = val["side"]
-                var.orders[clOrdID]["orderID"] = val["orderID"]        
+                var.orders[clOrdID]["orderID"] = val["orderID"]    
         for clOrdID, order in var.orders.items():
             order["clOrdID"] = clOrdID
             order["datetime"] = datetime.strptime(

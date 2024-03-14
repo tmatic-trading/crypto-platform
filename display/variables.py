@@ -27,6 +27,12 @@ class Variables:
     num_robots = 1
     bg_color = "gray98"
     title_color = "gray83"
+    buy_color = "DarkSeaGreen1"
+    sell_color = "MistyRose"
+    sell_color_dark = "RosyBrown1"
+    dark_red_color = "firebrick2"
+    dark_green_color = "MediumSeaGreen"
+    yellow_color = "khaki1"
     fg_color = "black"
     num_book = 21  # Must be odd
     frame_state = tk.Frame()
@@ -221,7 +227,7 @@ class GridTable(Variables):
                 )
                 if row > self.mod - 1:
                     if select:
-                        color = "yellow" if row == self.mod else self.color
+                        color = self.yellow_color if row == self.mod else self.color
                     else:
                         color = self.color
                     self.labels[name][row][column]["text"] = ""
