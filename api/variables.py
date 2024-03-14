@@ -39,6 +39,7 @@ class Variables:
     symbol_category = ""
     currency_divisor = dict()
     filename = ""
+    api_is_active = False
 
     # Bots data
     robots = OrderedDict()

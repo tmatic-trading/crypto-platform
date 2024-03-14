@@ -213,7 +213,7 @@ class Bitmex(Variables):
                             self.frames_hi_lo_values(data=self.data[table][key])
                         elif table == "execution":
                             val["symbol"] = (val["symbol"], self.symbol_category[val["symbol"]])
-                            val["exchange"] = "Bitmex"
+                            val["exchange"] = self.name
                             self.transaction(row=val)
                         else:
                             self.data[table][key] = val

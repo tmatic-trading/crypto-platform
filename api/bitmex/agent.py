@@ -41,9 +41,13 @@ class Agent(Variables):
         Adds fields such as: isInverse, multiplier...
         """
         path = Listing.GET_INSTRUMENT_DATA.format(SYMBOL=symbol[0])
-        instrument = Send.request(self, path=path, verb="GET")[0]
-        category = Agent.fill_instrument(self, instrument=instrument)
-        self.symbol_category[instrument["symbol"]] = category
+        res = Send.request(self, path=path, verb="GET")
+        if res:
+            instrument = res[0]
+            category = Agent.fill_instrument(self, instrument=instrument)
+            self.symbol_category[instrument["symbol"]] = category
+        else:
+            self.logger.info(str(symbol) + " not found in get_instrument()")
 
     def fill_instrument(self, instrument: dict) -> OrderedDict:
         """
@@ -156,7 +160,9 @@ class Agent(Variables):
                 verb="GET",
             )
             for row in result:
-                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])
+                row["CATEGORY"] = self.symbol_category[row["symbol"]]
+                row["exchange"] = self.name
+                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])                
             return result
         else:
             return "error"

@@ -258,6 +258,7 @@ class Function(WS, Variables):
                 "SYMBOL": row["symbol"],
                 "TTIME": row["transactTime"],
                 "PRICE": row["price"],
+                "CATEGORY": row["CATEGORY"], 
             }
             position = 0
             true_position = row["lastQty"]
