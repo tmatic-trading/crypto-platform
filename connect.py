@@ -25,7 +25,7 @@ def setup():
     WS.transaction = Function.transaction
     clear_params()
     common.setup_database_connecion()
-    #var.robots_thread_is_active = ""
+    var.robots_thread_is_active = False
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             setup_exchange(ws, name=name)
@@ -33,7 +33,7 @@ def setup():
     common.Init.initial_display(ws)
     functions.load_labels()
     algo.init_algo()
-    var.robots_thread_is_active = "yes"
+    var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
 
@@ -41,6 +41,7 @@ def setup():
 def setup_exchange(ws: WS, name: str):
     ws.logNumFatal = -1
     ws.api_is_active = False
+    ws.exit(name)
     while ws.logNumFatal:
         ws.start_ws(name)
         if ws.logNumFatal:
