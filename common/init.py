@@ -209,9 +209,15 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["orderID"] = val["orderID"]        
         for clOrdID, order in var.orders.items():
             order["clOrdID"] = clOrdID
-        values = list(var.orders.values())
-        values.sort(key=lambda x: x["transactTime"])
+            order["datetime"] = datetime.strptime(
+                    order["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
+            )
         orders.clear_all()
+        values = list(var.orders.values())
+        values.sort(key=lambda x: x["datetime"])
+        var.orders = OrderedDict()
+        for val in reversed(values):
+            var.orders[val["clOrdID"]] = val
         for val in values:
             Function.orders_display(self, clOrdID=val["clOrdID"], execType="New")
 

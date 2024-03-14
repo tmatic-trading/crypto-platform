@@ -133,7 +133,9 @@ def robots_thread() -> None:
             if name in var.exchange_list:
                 if ws.api_is_active:
                     if ws.frames:
-                        print("active")
+                        '''print("------------------------------------")
+                        for k, v in var.orders.items():
+                            print(k, v)'''
                         Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)

@@ -455,6 +455,8 @@ class Function(WS, Variables):
             elif row["execType"] == "Trade":
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
+                if clOrdID in var.orders:
+                    orders.delete(row=Function.order_number(self, clOrdID))
             elif row["execType"] == "Replaced":
                 var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 var.orders[clOrdID]["price"] = row["price"]
@@ -462,6 +464,8 @@ class Function(WS, Variables):
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
+                print("----------number------------")
+                print(Function.order_number(self, clOrdID), clOrdID)
                 orders.delete(row=Function.order_number(self, clOrdID))
                 var.orders.move_to_end(clOrdID, last=False)
             if (
@@ -471,6 +475,12 @@ class Function(WS, Variables):
                 var.orders[clOrdID]["price"] = price
         info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
         info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
+        try:
+            t = clOrdID.split(".")
+            int(t[0])
+            emi = ".".join(t[1:])
+        except ValueError:
+            emi = clOrdID
         info_display(
             self.name,
             info
@@ -478,10 +488,10 @@ class Function(WS, Variables):
             + " "
             + row["side"]
             + ": "
-            + clOrdID
-            + " price="
+            + emi
+            + " p="
             + str(info_p)
-            + " qty="
+            + " q="
             + info_q,
         )
         var.logger.info(
@@ -568,6 +578,10 @@ class Function(WS, Variables):
                 emi,
             ]
             orders.insert(row=0, elements=elements)
+
+        print("---------orders---------")
+        print(var.orders.keys(), sep = "\n")
+
 
     def volume(self, qty: int, symbol: tuple) -> str:
         if qty == 0:

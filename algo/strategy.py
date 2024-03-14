@@ -22,9 +22,9 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
         price=(ticker["bid"] - indent), ticksize=instrument["tickSize"]
     )
     if frame[-1]["ask"] > frame[-1 - period]["ask"]:
-        print(emi, period, "buy", frame[-1]["ask"], frame[-1 - period]["ask"])
+        '''print(emi, period, "buy", frame[-1]["ask"], frame[-1 - period]["ask"])
         for n in range(-11, 0):
-            print(frame[n])
+            print(frame[n])'''
         buy_quantaty = quantaty - robot["POS"]
         clOrdID = order_search(emi=emi, side="Buy")
         # Move an existing order
@@ -54,9 +54,9 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
                 )
                 delete_orders(ws, emi=emi, side="Sell")
     elif frame[-1]["bid"] <= frame[-1 - period]["bid"]:
-        print(emi, period, "sell", frame[-1]["bid"], frame[-1 - period]["bid"])
+        '''print(emi, period, "sell", frame[-1]["bid"], frame[-1 - period]["bid"])
         for n in range(-11, 0):
-            print(frame[n])
+            print(frame[n])'''
         sell_quantaty = quantaty + robot["POS"]
         clOrdID = order_search(emi=emi, side="Sell")
         # Move an existing order
