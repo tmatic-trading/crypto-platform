@@ -25,7 +25,7 @@ def setup():
     WS.transaction = Function.transaction
     clear_params()
     common.setup_database_connecion()
-    var.robots_thread_is_active = ""
+    #var.robots_thread_is_active = ""
     for name, ws in Websockets.connect.items():
         if name in var.exchange_list:
             setup_exchange(ws, name=name)
@@ -40,6 +40,7 @@ def setup():
 
 def setup_exchange(ws: WS, name: str):
     ws.logNumFatal = -1
+    ws.api_is_active = False
     while ws.logNumFatal:
         ws.start_ws(name)
         if ws.logNumFatal:
@@ -71,6 +72,7 @@ def setup_exchange(ws: WS, name: str):
                     sleep(2)
             else:
                 var.logger.info("No robots loaded.")
+    ws.api_is_active = True
 
 
 def refresh() -> None:
@@ -125,11 +127,13 @@ def clear_params():
 
 def robots_thread() -> None:
     while var.robots_thread_is_active:
-        utcnow = datetime.utcnow()        
+        utcnow = datetime.utcnow()   
         for name, ws in Websockets.connect.items():
             if name in var.exchange_list:
-                if ws.frames:
-                    Function.robots_entry(ws, utc=utcnow)
+                if ws.api_is_active:
+                    if ws.frames:
+                        print("active")
+                        Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
 

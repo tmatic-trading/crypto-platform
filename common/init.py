@@ -74,7 +74,6 @@ class Init(WS, Variables):
                     self, execID=row["execID"], user_id=self.user_id
                 )
                 if not data:
-                    row["exchange"] = self.name
                     Function.transaction(self, row=row, info=" History ")
             last_history_time = datetime.strptime(
                 history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
