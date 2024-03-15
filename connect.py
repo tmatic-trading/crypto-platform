@@ -87,7 +87,8 @@ def refresh() -> None:
                 )
                 info_display(ws.name, ws.message2000)
             sleep(1)
-        elif ws.logNumFatal > 1000 or ws.timeoutOccurred != "":  # reload
+        elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
+            Function.exchange_status(ws, "RESTARTING...")
             setup_exchange(ws=ws, name=name)
         else:
             if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
@@ -100,19 +101,6 @@ def refresh() -> None:
                         info_display(ws.name, "Insufficient available balance!")
                 disp.f9 = "OFF"
             ws.ticker = ws.get_ticker(name=name)            
-            '''disp.num_robots -= 1
-            #if disp.num_robots != 100:
-            #    disp.num_robots = 100
-            from datetime import timedelta
-            tm = datetime.utcnow()
-            if not var.tmm:
-                var.tmm = tm
-            if tm - var.tmm > timedelta(seconds=1):
-            #if not var.tmm:
-                print(tm.second, tm.second%5)
-                functions.clear_labels_cache()
-                display.load_robots()
-                var.tmm = tm'''
             Function.refresh_on_screen(ws, utc=utc)
 
     
@@ -133,9 +121,6 @@ def robots_thread() -> None:
             if name in var.exchange_list:
                 if ws.api_is_active:
                     if ws.frames:
-                        '''print("------------------------------------")
-                        for k, v in var.orders.items():
-                            print(k, v)'''
                         Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
