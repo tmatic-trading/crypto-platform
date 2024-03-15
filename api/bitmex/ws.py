@@ -294,6 +294,7 @@ class Bitmex(Variables):
         self.positions[symbol]["POS"] = val["currentQty"]
         if "avgEntryPrice" in val:
             self.positions[symbol]["ENTRY"] = val["avgEntryPrice"]
+            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", val["avgEntryPrice"])
         else:
             self.positions[symbol]["ENTRY"] = 0
         if "marginCallPrice" in val:

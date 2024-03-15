@@ -674,7 +674,7 @@ class Function(WS, Variables):
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening MySQL")
 
-        disp.label_time["text"] = "(" + str(self.connect_count) + ")  " + time.ctime()
+        disp.label_time["text"] = time.ctime()
         disp.label_f9["text"] = str(disp.f9)
         if disp.f9 == "ON":
             disp.label_f9.config(bg=disp.dark_green_color)
@@ -689,12 +689,6 @@ class Function(WS, Variables):
                     self.urgent_announcement(self.name)
                 self.message_time = utc
                 self.message_point = self.message_counter
-        """if self.message_counter != self.message_point:
-            disp.label_online["text"] = "ONLINE"
-            disp.label_online.config(bg="green3")
-        if self.logNumFatal != 0:
-            disp.label_online["text"] = "error " + str(self.logNumFatal)
-            disp.label_online.config(bg="orange red")"""
         Function.refresh_tables(self)
 
     def refresh_tables(self) -> None:
@@ -1084,14 +1078,14 @@ class Function(WS, Variables):
         mod = Tables.exchange.mod
         for row, name in enumerate(var.exchange_list):
             ws = Websockets.connect[name]
-            message = "ONLINE"
+            status = "ONLINE"
             if ws.logNumFatal != 0:
-                message = "error " + str(ws.logNumFatal)
+                status = "error " + str(ws.logNumFatal)
             update_label(
                 table="exchange",
                 column=0,
                 row=row + mod,
-                val=name + "\nAcc." + str(ws.user_id) + "\n" + message,
+                val=name + "\nAcc." + str(ws.user_id) + "\n" + str(self.connect_count) + " " + status,
             )
 
     def close_price(self, symbol: tuple, pos: int) -> float:
@@ -1191,6 +1185,16 @@ class Function(WS, Variables):
         self.remove_order(name=self.name, orderID=var.orders[clOrdID]["orderID"])
 
         return self.logNumFatal
+    
+    def exchange_status(self, status: str) -> None:
+            mod = Tables.exchange.mod
+            row = var.exchange_list.index(self.name)
+            update_label(
+                table="exchange",
+                column=0,
+                row=row + mod,
+                val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
+            )
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
@@ -1727,7 +1731,7 @@ def load_labels() -> None:
         name="position",
         size=max(5, var.position_rows + 1),
         title=var.name_position,
-        column_width = 40, 
+        column_width = 45, 
         canvas_height=65,
         bind=handler_pos,
         color=disp.bg_color,

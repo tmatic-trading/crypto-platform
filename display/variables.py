@@ -27,11 +27,11 @@ class Variables:
     num_robots = 1
     bg_color = "gray98"
     title_color = "gray83"
-    buy_color = "DarkSeaGreen1"
-    sell_color = "MistyRose"
-    sell_color_dark = "RosyBrown1"
-    dark_red_color = "firebrick2"
-    dark_green_color = "MediumSeaGreen"
+    buy_color = "#e3f3cf"##"DarkSeaGreen1"
+    sell_color = "#feede0"#"MistyRose"
+    sell_color_dark =  "#ffe5d1"#"RosyBrown1"
+    dark_red_color = "#da5e00"#"firebrick2"
+    dark_green_color = "#319d30"#"MediumSeaGreen"
     yellow_color = "khaki1"
     fg_color = "black"
     num_book = 21  # Must be odd
