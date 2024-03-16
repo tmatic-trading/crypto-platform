@@ -20,11 +20,11 @@ db = var.env["MYSQL_DATABASE"]
 
 
 class Tables:
-    position: GridTable
-    account: GridTable
-    robots: GridTable
-    exchange: GridTable
-    orderbook: GridTable
+    position = GridTable
+    account = GridTable
+    robots = GridTable
+    market = GridTable
+    orderbook = GridTable
 
 
 class Function(WS, Variables):
@@ -123,7 +123,7 @@ class Function(WS, Variables):
         var.cursor_mysql.execute(
             "insert into "
             + db
-            + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,EXCHANGE,\
+            + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
                 SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
                     CLORDID,TTIME,ACCOUNT) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
                         %s,%s,%s,%s,%s,%s,%s,%s)",
@@ -176,7 +176,7 @@ class Function(WS, Variables):
                         "EMI": emi,
                         "SYMBOL": row["symbol"],
                         "CATEGORY": row["symbol"][1],
-                        "EXCHANGE": self.name,
+                        "MARKET": self.name,
                         "POS": 0,
                         "VOL": 0,
                         "COMMISS": 0,
@@ -241,7 +241,7 @@ class Function(WS, Variables):
                 message = {
                     "SYMBOL": row["symbol"],
                     "CATEGORY": row["symbol"][1], 
-                    "EXCHANGE": row["exchange"], 
+                    "MARKET": row["market"], 
                     "TTIME": row["transactTime"],
                     "SIDE": side,
                     "TRADE_PRICE": row["lastPx"],
@@ -258,7 +258,6 @@ class Function(WS, Variables):
                 "SYMBOL": row["symbol"],
                 "TTIME": row["transactTime"],
                 "PRICE": row["price"],
-                "CATEGORY": row["CATEGORY"], 
             }
             position = 0
             true_position = row["lastQty"]
@@ -280,7 +279,7 @@ class Function(WS, Variables):
                         rate=true_funding,
                         fund=0,
                     )
-                    message["EXCHANGE"] = self.robots[emi]["EXCHANGE"]
+                    message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
                     message["QTY"] = self.robots[emi]["POS"]
                     message["COMMISS"] = calc["funding"]
@@ -329,7 +328,7 @@ class Function(WS, Variables):
                         + " was traded. View your trading history."
                     )
                     exit(1)
-                message["EXCHANGE"] = self.robots[emi]["EXCHANGE"]
+                message["MARKET"] = self.robots[emi]["MARKET"]
                 message["EMI"] = self.robots[emi]["EMI"]
                 message["QTY"] = diff
                 message["COMMISS"] = calc["funding"]
@@ -372,7 +371,7 @@ class Function(WS, Variables):
                     "price": row["price"],
                     "symbol": row["symbol"],
                     "category": row["symbol"][1],
-                    "exchange": self.name,
+                    "market": self.name,
                     "transactTime": row["transactTime"],
                     "side": row["side"],
                     "emi": row["symbol"],
@@ -443,7 +442,7 @@ class Function(WS, Variables):
                         "price": row["price"],
                         "symbol": row["symbol"],
                         "category": row["symbol"][1],
-                        "exchange": self.name,
+                        "market": self.name,
                         "transactTime": str(datetime.utcnow()),
                         "side": row["side"],
                         "emi": _emi,
@@ -518,8 +517,8 @@ class Function(WS, Variables):
         elements = [
             val["TTIME"],
             val["SYMBOL"][0],
-            val["CATEGORY"],
-            val["EXCHANGE"], 
+            val["SYMBOL"][1],
+            val["MARKET"], 
             val["SIDE"],
             Function.format_price(
                 self,
@@ -545,8 +544,8 @@ class Function(WS, Variables):
         elements = [
             val["TTIME"],
             val["SYMBOL"][0],
-            val["CATEGORY"],
-            val["EXCHANGE"], 
+            val["SYMBOL"][1],
+            val["MARKET"], 
             Function.format_price(
                 self,
                 number=float(val["PRICE"]),
@@ -571,7 +570,7 @@ class Function(WS, Variables):
                 tm, 
                 var.orders[clOrdID]["symbol"][0],
                 var.orders[clOrdID]["category"], 
-                var.orders[clOrdID]["exchange"], 
+                var.orders[clOrdID]["market"], 
                 var.orders[clOrdID]["side"],
                 Function.format_price(
                         self,
@@ -1075,14 +1074,14 @@ class Function(WS, Variables):
 
         # Refresh Exchange table
 
-        mod = Tables.exchange.mod
-        for row, name in enumerate(var.exchange_list):
+        mod = Tables.market.mod
+        for row, name in enumerate(var.market_list):
             ws = Websockets.connect[name]
             status = "ONLINE"
             if ws.logNumFatal != 0:
                 status = "error " + str(ws.logNumFatal)
             update_label(
-                table="exchange",
+                table="market",
                 column=0,
                 row=row + mod,
                 val=name + "\nAcc." + str(ws.user_id) + "\n" + str(self.connect_count) + " " + status,
@@ -1186,11 +1185,11 @@ class Function(WS, Variables):
 
         return self.logNumFatal
     
-    def exchange_status(self, status: str) -> None:
-            mod = Tables.exchange.mod
-            row = var.exchange_list.index(self.name)
+    def market_status(self, status: str) -> None:
+            mod = Tables.market.mod
+            row = var.market_list.index(self.name)
             update_label(
-                table="exchange",
+                table="market",
                 column=0,
                 row=row + mod,
                 val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
@@ -1210,7 +1209,7 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
 def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
-        ws = Websockets.connect[var.current_exchange]
+        ws = Websockets.connect[var.current_market]
         for num, clOrdID in enumerate(var.orders):            
             if num == row_position[0] - orders.mod:
                 break
@@ -1320,7 +1319,7 @@ def handler_order(event) -> None:
 
 def handler_orderbook(event, row_position: int) -> None:
     disp.symb_book = var.symbol
-    ws = Websockets.connect[var.current_exchange]
+    ws = Websockets.connect[var.current_market]
 
     def refresh() -> None:
         book_window.title(var.symbol)
@@ -1612,7 +1611,7 @@ def warning_window(message: str) -> None:
 
 
 def handler_pos(event, row_position: int) -> None:
-    ws = Websockets.connect[var.current_exchange]
+    ws = Websockets.connect[var.current_market]
     if row_position > len(ws.symbol_list):
         row_position = len(ws.symbol_list)
     var.symbol = ws.symbol_list[row_position - 1]
@@ -1626,18 +1625,18 @@ def handler_pos(event, row_position: int) -> None:
                     disp.labels["position"][num + mod][column]["bg"] = disp.bg_color
 
 
-def handler_exchange(event, row_position: int) -> None:
-    ws = Websockets.connect[var.current_exchange]
-    if row_position > len(var.exchange_list):
-        row_position = len(var.exchange_list)
-    var.current_exchange = var.exchange_list[row_position - 1]
-    for row in enumerate(var.exchange_list):
-        for column in range(len(var.name_exchange)):
+def handler_market(event, row_position: int) -> None:
+    ws = Websockets.connect[var.current_market]
+    if row_position > len(var.market_list):
+        row_position = len(var.market_list)
+    var.current_market = var.market_list[row_position - 1]
+    for row in enumerate(var.market_list):
+        for column in range(len(var.name_market)):
             if row[0] + 1 == row_position:
-                disp.labels["exchange"][row[0] + 1][column]["bg"] = "yellow"
+                disp.labels["market"][row[0] + 1][column]["bg"] = "yellow"
             else:
                 if row[0] + 1 > 0:
-                    disp.labels["exchange"][row[0] + 1][column]["bg"] = disp.bg_color
+                    disp.labels["market"][row[0] + 1][column]["bg"] = disp.bg_color
 
 
 def humanFormat(volNow: int) -> str:
@@ -1713,7 +1712,7 @@ def clear_labels_cache():
 
 
 def change_color(color: str, container=None) -> None:
-    if "notebook" not in str(container):
+    if "notebook" not in str(container.__dict__):
         container.config(bg=color)
     for child in container.winfo_children():
         if child.winfo_children():
@@ -1725,7 +1724,7 @@ def change_color(color: str, container=None) -> None:
 
 
 def load_labels() -> None:
-    ws = Websockets.connect[var.current_exchange]
+    ws = Websockets.connect[var.current_market]
     Tables.position = GridTable(
         frame=disp.position_frame,
         name="position",
@@ -1754,11 +1753,12 @@ def load_labels() -> None:
         bind=handler_robots,
         color=disp.title_color,
     )
-    Tables.exchange = GridTable(
+    Tables.market = GridTable(
         frame=disp.frame_3row_1col,
-        name="exchange",
+        name="market",
         size=2,
-        title=var.name_exchange,
+        title=var.name_market,
+        column_width = 110, 
         title_on=False,
         color=disp.title_color,
         select=True,
@@ -1768,9 +1768,9 @@ def load_labels() -> None:
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
             ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
         ):
-            disp.labels["robots"][row + mod][6]["fg"] = "red"
+            disp.labels["robots"][row + mod][6]["fg"] = disp.dark_red_color
         else:
-            disp.labels["robots"][row + mod][6]["fg"] = "#212121"
+            disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color
     Tables.orderbook = GridTable(
         frame=disp.orderbook_frame,
         name="orderbook",

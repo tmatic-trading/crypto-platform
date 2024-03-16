@@ -11,7 +11,7 @@ import websocket
 from api.init import Setup
 from api.variables import Variables
 #from bots.variables import Variables as bot
-from ws.api_auth import generate_signature
+from .api_auth import generate_signature
 from .agent import Agent
 
 from display.functions import info_display
@@ -213,7 +213,7 @@ class Bitmex(Variables):
                             self.frames_hi_lo_values(data=self.data[table][key])
                         elif table == "execution":
                             val["symbol"] = (val["symbol"], self.symbol_category[val["symbol"]])
-                            val["exchange"] = self.name
+                            val["market"] = self.name
                             self.transaction(row=val)
                         else:
                             self.data[table][key] = val
@@ -294,7 +294,6 @@ class Bitmex(Variables):
         self.positions[symbol]["POS"] = val["currentQty"]
         if "avgEntryPrice" in val:
             self.positions[symbol]["ENTRY"] = val["avgEntryPrice"]
-            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", val["avgEntryPrice"])
         else:
             self.positions[symbol]["ENTRY"] = 0
         if "marginCallPrice" in val:

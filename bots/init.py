@@ -41,7 +41,7 @@ class Init(WS, Variables):
                 + "' "
             )
             union = "union "
-        qwr += ") T where EXCHANGE = '" + self.name + "' order by SORT"
+        qwr += ") T where MARKET = '" + self.name + "' order by SORT"
         var.cursor_mysql.execute(qwr)
         for robot in var.cursor_mysql.fetchall():
             emi = robot["EMI"]
@@ -58,7 +58,7 @@ class Init(WS, Variables):
                 sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
                     -QTY ELSE 0 END) POS from "
             + db
-            + ".coins where EXCHANGE = '"
+            + ".coins where MARKET = '"
             + self.name
             + "' and \
                         account = "
@@ -82,7 +82,7 @@ class Init(WS, Variables):
                 self.robots[emi] = {
                     "SYMBOL": symbol,
                     "CATEGORY": defunct["CATEGORY"],
-                    "EXCHANGE": self.name,
+                    "MARKET": self.name,
                     "POS": int(defunct["POS"]),
                     "EMI": defunct["EMI"],
                     "STATUS": status,
@@ -96,12 +96,12 @@ class Init(WS, Variables):
         for symbol in self.symbol_list:
             qwr += (
                 union
-                + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, EXCHANGE, \
+                + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, \
             sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
             -QTY ELSE 0 END) POS from "
                 + db
                 + ".coins where SIDE <> -1 group by EMI, SYMBOL, CATEGORY, \
-            ACCOUNT, EXCHANGE) res where EMI = '"
+            ACCOUNT, MARKET) res where EMI = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
                 + symbol[1]
@@ -109,7 +109,7 @@ class Init(WS, Variables):
             )
             union = "union "
         qwr += (
-            ") T where EXCHANGE = '"
+            ") T where MARKET = '"
             + self.name
             + "' and ACCOUNT = "
             + str(self.user_id)
@@ -129,7 +129,7 @@ class Init(WS, Variables):
                     "EMI": emi,
                     "SYMBOL": symbol,
                     "CATEGORY": symbol[1],
-                    "EXCHANGE": self.name,
+                    "MARKET": self.name,
                     "POS": pos,
                     "STATUS": "RESERVED",
                     "TIMEFR": "None",

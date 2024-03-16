@@ -94,7 +94,7 @@ class Init(WS, Variables):
         'coins' table.
         """
         sql = "select SYMBOL, CATEGORY from " + db + ".coins where ACCOUNT=%s \
-            and EXCHANGE=%s group by SYMBOL, CATEGORY"
+            and MARKET=%s group by SYMBOL, CATEGORY"
         var.cursor_mysql.execute(sql, (self.user_id, self.name))
         data = var.cursor_mysql.fetchall()
         symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"]), data))
@@ -113,7 +113,7 @@ class Init(WS, Variables):
                     + db
                     + ".coins where SIDE < 0 and ACCOUNT = "
                     + str(self.user_id)
-                    + " and EXCHANGE = '"
+                    + " and MARKET = '"
                     + self.name
                     + "' and CURRENCY = '"
                     + currency
@@ -125,7 +125,7 @@ class Init(WS, Variables):
                     + db
                     + ".coins where SIDE >= 0 and ACCOUNT = "
                     + str(self.user_id)
-                    + " and EXCHANGE = '"
+                    + " and MARKET = '"
                     + self.name
                     + "' and CURRENCY = '"
                     + currency
@@ -150,7 +150,7 @@ class Init(WS, Variables):
         myOrders = self.open_orders(self.name)
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
-            if order["exchange"] == self.name:
+            if order["market"] == self.name:
                 del var.orders[clOrdID]
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
@@ -179,7 +179,7 @@ class Init(WS, Variables):
                             "EMI": emi,
                             "SYMBOL": val["symbol"],
                             "CATEGORY": val["symbol"][1],
-                            "EXCHANGE": self.name,
+                            "MARKET": self.name,
                             "POS": 0,
                             "VOL": 0,
                             "COMMISS": 0,
@@ -204,7 +204,7 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["price"] = val["price"]
                 var.orders[clOrdID]["symbol"] = val["symbol"]
                 var.orders[clOrdID]["category"] = val["symbol"][1]
-                var.orders[clOrdID]["exchange"] = self.name
+                var.orders[clOrdID]["market"] = self.name
                 var.orders[clOrdID]["side"] = val["side"]
                 var.orders[clOrdID]["orderID"] = val["orderID"]    
         for clOrdID, order in var.orders.items():
@@ -234,16 +234,16 @@ class Init(WS, Variables):
         """
         sql = "select * from("
         union = ""
-        for name in var.exchange_list:
+        for name in var.market_list:
             user_id = Websockets.connect[name].user_id
             sql += (
                 union
-                + "select ID, EMI, SYMBOL, CATEGORY, EXCHANGE, SIDE, QTY, \
+                + "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, \
             PRICE, TTIME, COMMISS from "
                 + db
                 + ".coins where SIDE = -1 and ACCOUNT = "
                 + str(user_id)
-                + " and exchange = '"
+                + " and MARKET = '"
                 + name 
                 + "' "
             )
@@ -258,16 +258,16 @@ class Init(WS, Variables):
             Function.funding_display(self, val)
         sql = "select * from("
         union = ""
-        for name in var.exchange_list:
+        for name in var.market_list:
             user_id = Websockets.connect[name].user_id
             sql += (
                 union
-                + "select ID, EMI, SYMBOL, CATEGORY, EXCHANGE, SIDE, QTY, \
+                + "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, \
             TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
                 + db
                 + ".coins where SIDE <> -1 and ACCOUNT = "
                 + str(user_id)
-                + " and exchange = '"
+                + " and MARKET = '"
                 + name 
                 + "' "
             )
