@@ -160,8 +160,7 @@ class Agent(Variables):
                 verb="GET",
             )
             for row in result:
-                row["CATEGORY"] = self.symbol_category[row["symbol"]]
-                row["exchange"] = self.name
+                row["market"] = self.name
                 row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])                
             return result
         else:

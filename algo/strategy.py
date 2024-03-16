@@ -5,7 +5,7 @@ from api.websockets import Websockets
 
 
 def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
-    ws = Websockets.connect[robot["EXCHANGE"]]
+    ws = Websockets.connect[robot["MARKET"]]
     period = robot["PERIOD"]
     quantaty = (
         robot["lotSize"]
@@ -21,10 +21,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     buy_price = function.ticksize_rounding(
         price=(ticker["bid"] - indent), ticksize=instrument["tickSize"]
     )
-    if frame[-1]["ask"] > frame[-1 - period]["ask"]:
-        '''print(emi, period, "buy", frame[-1]["ask"], frame[-1 - period]["ask"])
-        for n in range(-11, 0):
-            print(frame[n])'''
+    if frame[-1]["ask"] < frame[-1 - period]["ask"]:
         buy_quantaty = quantaty - robot["POS"]
         clOrdID = order_search(emi=emi, side="Buy")
         # Move an existing order
@@ -45,7 +42,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
             if robot["POS"] < quantaty:
                 clOrdID = Function.post_order(
                     ws, 
-                    name=robot["EXCHANGE"], 
+                    name=robot["MARKET"], 
                     symbol=symbol,
                     emi=emi,
                     side="Buy",
@@ -53,10 +50,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
                     qty=buy_quantaty,
                 )
                 delete_orders(ws, emi=emi, side="Sell")
-    elif frame[-1]["bid"] <= frame[-1 - period]["bid"]:
-        '''print(emi, period, "sell", frame[-1]["bid"], frame[-1 - period]["bid"])
-        for n in range(-11, 0):
-            print(frame[n])'''
+    elif frame[-1]["bid"] >= frame[-1 - period]["bid"]:
         sell_quantaty = quantaty + robot["POS"]
         clOrdID = order_search(emi=emi, side="Sell")
         # Move an existing order
@@ -77,7 +71,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
             if robot["POS"] > -quantaty:
                 clOrdID = Function.post_order(
                     ws, 
-                    name=robot["EXCHANGE"], 
+                    name=robot["MARKET"], 
                     symbol=symbol,
                     emi=emi,
                     side="Sell",

@@ -22,14 +22,16 @@ from api.api import WS
 
 
 def setup():
+    disp.root.bind("<F3>", lambda event: terminal_reload(event))
+    disp.root.bind("<F9>", lambda event: trade_state(event))
     WS.transaction = Function.transaction
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = False
     for name, ws in Websockets.connect.items():
-        if name in var.exchange_list:
-            setup_exchange(ws, name=name)
-    ws = Websockets.connect[var.current_exchange]
+        if name in var.market_list:
+            setup_market(ws, name=name)
+    ws = Websockets.connect[var.current_market]
     common.Init.initial_display(ws)
     functions.load_labels()
     algo.init_algo()
@@ -38,7 +40,7 @@ def setup():
     thread.start()
 
 
-def setup_exchange(ws: WS, name: str):
+def setup_market(ws: WS, name: str):
     ws.logNumFatal = -1
     ws.api_is_active = False
     ws.exit(name)
@@ -77,7 +79,7 @@ def setup_exchange(ws: WS, name: str):
 
 
 def refresh() -> None:
-    for name in var.exchange_list:
+    for name in var.market_list:
         ws = Websockets.connect[name]
         utc = datetime.utcnow()
         if ws.logNumFatal > 2000:
@@ -88,8 +90,8 @@ def refresh() -> None:
                 info_display(ws.name, ws.message2000)
             sleep(1)
         elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-            Function.exchange_status(ws, "RESTARTING...")
-            setup_exchange(ws=ws, name=name)
+            Function.market_status(ws, "RESTARTING...")
+            setup_market(ws=ws, name=name)
         else:
             if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
                 if ws.messageStopped == "":
@@ -106,8 +108,8 @@ def refresh() -> None:
     
 def clear_params():
     var.orders = OrderedDict() 
-    var.current_exchange = var.exchange_list[0]
-    var.symbol = var.env[var.current_exchange]["SYMBOLS"][0]
+    var.current_market = var.market_list[0]
+    var.symbol = var.env[var.current_market]["SYMBOLS"][0]
     functions.clear_labels_cache()
     functions.trades.clear_all()
     functions.funding.clear_all()
@@ -118,16 +120,13 @@ def robots_thread() -> None:
     while var.robots_thread_is_active:
         utcnow = datetime.utcnow()   
         for name, ws in Websockets.connect.items():
-            if name in var.exchange_list:
+            if name in var.market_list:
                 if ws.api_is_active:
                     if ws.frames:
                         Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
-
-
-disp.root.bind("<F3>", lambda event: terminal_reload(event))
-disp.root.bind("<F9>", lambda event: trade_state(event))
+        print("active")
 
 
 def terminal_reload(event) -> None:
@@ -143,6 +142,6 @@ def trade_state(event) -> None:
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
         disp.messageStopped = ""
-        ws = Websockets.connect[var.current_exchange]
+        ws = Websockets.connect[var.current_market]
         ws.logNumFatal = 0
-    print(var.current_exchange, disp.f9)
+    print(var.current_market, disp.f9)

@@ -17,7 +17,7 @@ class Variables:
     position_rows = 0
     account_rows = 0
     env = dotenv_values(".env")
-    exchange_list = env["EXCHANGE_LIST"].replace(",", " ").split()
+    market_list = env["MARKET_LIST"].replace(",", " ").split()
     CATEGORIES = {
     "LINEAR": "linear", 
     "INVERSE": "inverse",
@@ -25,24 +25,24 @@ class Variables:
     "SPOT": "spot",
     "OPTION": "option",
     }
-    for exchange_name in exchange_list:
-        env[exchange_name] = dotenv_values(".env." + exchange_name)
-        env[exchange_name]["SYMBOLS"] = list()
+    for market_name in market_list:
+        env[market_name] = dotenv_values(".env." + market_name)
+        env[market_name]["SYMBOLS"] = list()
         for CATEGORY, category in CATEGORIES.items():
             tmp = CATEGORY+"_SYMBOLS"
-            if tmp in env[exchange_name]:
-                tmp_list = env[exchange_name][tmp].replace(",", " ").split()
+            if tmp in env[market_name]:
+                tmp_list = env[market_name][tmp].replace(",", " ").split()
             for symbol in tmp_list:
-                env[exchange_name]["SYMBOLS"] += [(symbol, category)]
-        env[exchange_name]["CURRENCIES"] = env[exchange_name]["CURRENCIES"].replace(",", " ").split()
-        position_rows += len(env[exchange_name]["SYMBOLS"])
-        account_rows += len(env[exchange_name]["CURRENCIES"])
+                env[market_name]["SYMBOLS"] += [(symbol, category)]
+        env[market_name]["CURRENCIES"] = env[market_name]["CURRENCIES"].replace(",", " ").split()
+        position_rows += len(env[market_name]["SYMBOLS"])
+        account_rows += len(env[market_name]["CURRENCIES"])
     if env["ORDER_BOOK_DEPTH"] == "orderBook10":
         order_book_depth = "orderBook10"
     else:
         order_book_depth = "quote"
-    current_exchange = exchange_list[0]
-    symbol = env[current_exchange]["SYMBOLS"][0]
+    current_market = market_list[0]
+    symbol = env[current_market]["SYMBOLS"][0]
     name_book = ["QTY", "PRICE", "QTY"]
     name_robots = [
         "EMI",
@@ -109,8 +109,8 @@ class Variables:
         "QTY", 
         "EMI",
     ]
-    name_exchange = [
-        "EXCHANGE",
+    name_market = [
+        "MARKET",
     ]
     logger = logging
     connect_mysql = None

@@ -35,8 +35,8 @@ class Variables:
     yellow_color = "khaki1"
     fg_color = "black"
     num_book = 21  # Must be odd
-    frame_state = tk.Frame()
-    frame_state.grid(row=0, column=0, sticky="W")
+    frame_state = tk.Frame(padx=10)
+    frame_state.grid(row=0, column=0, sticky="W", columnspan=2)
     labels = dict()
     labels_cache = dict()
     label_trading = tk.Label(frame_state, text="  TRADING: ", foreground=fg_color)
@@ -44,7 +44,7 @@ class Variables:
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_f9.pack(side="left")
     label_time = tk.Label(foreground=fg_color)
-    label_time.grid(row=0, column=1, sticky="E", columnspan=2)
+    label_time.grid(row=0, column=2, sticky="E")
 
     frame_2row_1_2_3col = tk.Frame()
     frame_2row_1_2_3col.grid(
@@ -117,7 +117,7 @@ class Variables:
     # Orders widget
 
     pw_orders_trades = tk.PanedWindow(
-        frame_3row_4col, orient="vertical", sashrelief="raised", bd=0
+        frame_3row_4col, orient=tk.VERTICAL, sashrelief="raised", bd=0
     )
     pw_orders_trades.pack(fill="both", expand=True)
 
@@ -133,8 +133,8 @@ class Variables:
     #print("platform:", root.tk.call('tk', 'windowingsystem'), platform.system()) # aqua, Darwin
     style = ttk.Style()
     style.configure("TNotebook", borderwidth=0)
-    style.configure("TNotebook.Tab", background=title_color)
-    style.map("TNotebook.Tab", background=[("selected", bg_color)])
+    style.configure("TNotebook.Tab", background="gray90")
+    style.map("TNotebook.Tab", background=[("selected", title_color)])
     notebook.pack(expand=1, fill="both")
 
     frame_trades = ttk.Frame(notebook)
@@ -190,7 +190,7 @@ class GridTable(Variables):
             size -= 1
         my_bg = (
             self.bg_color
-            if name != "robots" and name != "exchange"
+            if name != "robots" and name != "market"
             else self.title_color
         )
         canvas = tk.Canvas(
