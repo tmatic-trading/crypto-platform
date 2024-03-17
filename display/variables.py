@@ -24,26 +24,26 @@ class Variables:
     root = tk.Tk()
     root.title("Tmatic")
     root.geometry("+50+50")  # 1360x850
+
+    if platform.system() == "Windows":
+        ostype = "Windows"
+    elif platform.system() == "Darwin":
+        ostype = "Mac"
+    else:
+        ostype = "Linux"
+
     num_robots = 1
-    bg_color = "gray98"
-    title_color = "gray83"
-    buy_color = "#e3f3cf"##"DarkSeaGreen1"
-    sell_color = "#feede0"#"MistyRose"
-    sell_color_dark =  "#ffe5d1"#"RosyBrown1"
-    dark_red_color = "#da5e00"#"firebrick2"
-    dark_green_color = "#319d30"#"MediumSeaGreen"
-    yellow_color = "khaki1"
-    fg_color = "black"
+    #yellow_color = "khaki1"
     num_book = 21  # Must be odd
     frame_state = tk.Frame(padx=10)
     frame_state.grid(row=0, column=0, sticky="W", columnspan=2)
     labels = dict()
     labels_cache = dict()
-    label_trading = tk.Label(frame_state, text="  TRADING: ", foreground=fg_color)
+    label_trading = tk.Label(frame_state, text="  TRADING: ")#, foreground=fg_color)
     label_trading.pack(side="left")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_f9.pack(side="left")
-    label_time = tk.Label(foreground=fg_color)
+    label_time = tk.Label()#foreground=fg_color
     label_time.grid(row=0, column=2, sticky="E")
 
     frame_2row_1_2_3col = tk.Frame()
@@ -69,7 +69,7 @@ class Variables:
     frame_3row_3col.grid_rowconfigure(0, weight=1)
 
     # frame_3row_3col.grid_rowconfigure(1, weight=200)
-    orderbook_frame = tk.Frame(frame_3row_3col, padx=0, pady=0, background=title_color)
+    orderbook_frame = tk.Frame(frame_3row_3col, padx=0, pady=0)#, background=title_color)
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
@@ -104,8 +104,8 @@ class Variables:
         frame_information,
         height=6,
         width=30,
-        bg=bg_color,
-        fg=fg_color,
+        #bg=bg_color,
+        #fg=fg_color,
         highlightthickness=0,
     )
     text_info.bind("<Key>", lambda event: text_ignore(event))
@@ -113,6 +113,33 @@ class Variables:
     text_info.config(yscrollcommand=scroll_info.set)
     scroll_info.pack(side="right", fill="y")
     text_info.pack(side="right", fill="both", expand="yes")
+
+    # color map
+
+    if ostype == "Mac":
+        green_color = "#07b66e" #"lime green"#"#319d30"#"MediumSeaGreen"
+        red_color = "#f53661" #"brown1"#"#da5e00"#"firebrick2"
+        title_color = label_trading["background"]#"gray83"
+        bg_color = text_info["background"]#"gray98"
+        fg_color = label_trading["foreground"]
+        bg_buy_color = bg_color#"forest green"#"lime green"# "#e3f3cf"##"DarkSeaGreen1"
+        bg_sell_color = bg_color#"#feede0"#"MistyRose"
+        fg_buy_color = green_color#"lime green"#"lime green"#"forest green"#"lime green"# "#e3f3cf"##"DarkSeaGreen1"
+        fg_sell_color = red_color#"brown1"#"#feede0"#"MistyRose"
+        bg_select_color = "systemSelectedTextBackgroundColor"#"dark turquoise"# "deep sky blue"
+        fg_select_color = fg_color
+    else:
+        green_color = "lime green"
+        red_color = "brown1"
+        title_color = label_trading["background"]
+        bg_color = text_info["background"]
+        fg_color = label_trading["foreground"]
+        bg_buy_color = bg_color
+        bg_sell_color = bg_color
+        fg_buy_color = green_color
+        fg_sell_color = red_color
+        bg_select_color = "yellow"
+        fg_select_color = fg_color
 
     # Orders widget
 
@@ -126,7 +153,7 @@ class Variables:
 
     # Trades/Funding widget
 
-    if platform.system() == "Darwin":
+    if ostype == "Mac":
         notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
@@ -217,7 +244,7 @@ class GridTable(Variables):
             cache = []
             if len(self.labels[name]) <= row:
                 for title_name in title:
-                    lst.append(tk.Label(sub, text=title_name, pady=0, background=self.title_color, foreground=self.fg_color))
+                    lst.append(tk.Label(sub, text=title_name, pady=0, background=self.title_color))#, foreground=self.fg_color))
                     cache.append(title_name + str(row))
                 self.labels[name].append(lst)
                 self.labels_cache[name].append(cache)
@@ -227,11 +254,19 @@ class GridTable(Variables):
                 )
                 if row > self.mod - 1:
                     if select:
-                        color = self.yellow_color if row == self.mod else self.color
+                        if row == self.mod:
+                            color_bg = self.bg_select_color
+                            color_fg = self.fg_select_color
+                        else:
+                            color_bg = self.color
+                            color_fg = self.fg_color
                     else:
-                        color = self.color
+                        color_bg = self.color
+                        color_fg = self.fg_color
+                        
                     self.labels[name][row][column]["text"] = ""
-                    self.labels[name][row][column]["bg"] = color
+                    self.labels[name][row][column]["bg"] = color_bg
+                    self.labels[name][row][column]["fg"] = color_fg
                     if bind:
                         self.labels[name][row][column].bind(
                             "<Button-1>",
@@ -336,10 +371,10 @@ class ListBoxTable(Variables):
                     listvariable=vars,
                     bd=0,
                     background=self.bg_color,
-                    fg=self.fg_color,
+                    #fg=self.fg_color,
                     highlightthickness=0,
-                    selectbackground=self.bg_color,
-                    selectforeground=self.fg_color,
+                    #selectbackground=self.title_color,
+                    #selectforeground=self.fg_color,
                     activestyle="none",
                     justify="center",
                     height=self.height,
@@ -348,7 +383,7 @@ class ListBoxTable(Variables):
                 )
             )
             if title_on:
-                self.listboxes[column].itemconfig(0, bg=self.title_color, fg=self.fg_color)
+                self.listboxes[column].itemconfig(0, bg=self.title_color)#, fg=self.fg_color)
             self.listboxes[column].grid(
                 row=0, padx=0, column=column, sticky="N" + "S" + "W" + "E"
             )
@@ -382,13 +417,20 @@ class ListBoxTable(Variables):
 
     def update(self, row: int, elements: list) -> None:
         color = self.listboxes[0].itemcget(row + self.mod, "background")
+        color_fg = self.listboxes[0].itemcget(row + self.mod, "foreground")
         self.delete(row + self.mod)
         self.insert(row + self.mod, elements)
-        self.paint(row + self.mod, color)
+        self.paint(row + self.mod, color, color_fg, "???")
 
-    def paint(self, row: int, color: str) -> None:
+    def paint(self, row: int, color: str, color_fg: str, dir: str) -> None:
+        num = 0
         for listbox in self.listboxes:
-            listbox.itemconfig(row + self.mod, bg=color)
+            if dir == "buy":
+                listbox.itemconfig(row + self.mod, bg=color, fg=color_fg, selectbackground=self.bg_buy_color, selectforeground=self.fg_buy_color)
+            elif dir == "sell":
+                listbox.itemconfig(row + self.mod, bg=color, fg=color_fg, selectbackground=self.bg_sell_color, selectforeground=self.fg_sell_color)
+            else:
+                listbox.itemconfig(row + self.mod, bg=color, fg=color_fg)
 
 
 def handler_robots(y_pos):
@@ -410,7 +452,7 @@ def event_config(event, canvas_event):
 
 
 def on_enter(event, canvas, scroll):
-    if platform.system() == "Linux":
+    if Variables.ostype == "Linux":
         canvas.bind_all(
             "<Button-4>",
             lambda event: on_mousewheel(event, canvas, scroll),
@@ -427,7 +469,7 @@ def on_enter(event, canvas, scroll):
 
 
 def on_leave(event, canvas):
-    if platform.system() == "Linux":
+    if Variables.ostype == "Linux":
         canvas.unbind_all("<Button-4>")
         canvas.unbind_all("<Button-5>")
     else:
@@ -437,9 +479,9 @@ def on_leave(event, canvas):
 def on_mousewheel(event, canvas, scroll):
     slider_position = scroll.get()
     if slider_position != (0.0, 1.0):  # Scrollbar is not full
-        if platform.system() == "Windows":
+        if Variables.ostype == "Windows":
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        elif platform.system() == "Darwin":
+        elif Variables.ostype == "Mac":
             canvas.yview_scroll(int(-1 * event.delta), "units")
         else:
             if event.num == 4:
