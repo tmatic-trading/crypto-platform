@@ -530,9 +530,9 @@ class Function(WS, Variables):
         ]
         trades.insert(row=0, elements=elements)
         if val["SIDE"] == "Buy":
-            trades.paint(row=0, color=disp.buy_color)
+            trades.paint(row=0, color=disp.bg_buy_color, color_fg=disp.fg_buy_color, dir="buy")
         else:
-            trades.paint(row=0, color=disp.sell_color)
+            trades.paint(row=0, color=disp.bg_sell_color, color_fg=disp.fg_sell_color, dir="sell")
 
     def funding_display(self, val: dict) -> None:
         """
@@ -582,9 +582,9 @@ class Function(WS, Variables):
             ]
             orders.insert(row=0, elements=elements)
             if var.orders[clOrdID]["side"] == "Buy":
-                orders.paint(row=0, color=disp.buy_color)
+                orders.paint(row=0, color=disp.bg_buy_color, color_fg=disp.fg_buy_color, dir="buy")
             else:
-                orders.paint(row=0, color=disp.sell_color)
+                orders.paint(row=0, color=disp.bg_sell_color, color_fg=disp.fg_sell_color, dir="sell")
 
         print("---------orders---------")
         print(var.orders.keys(), sep = "\n")
@@ -676,9 +676,9 @@ class Function(WS, Variables):
         disp.label_time["text"] = time.ctime()
         disp.label_f9["text"] = str(disp.f9)
         if disp.f9 == "ON":
-            disp.label_f9.config(bg=disp.dark_green_color)
+            disp.label_f9.config(bg=disp.green_color)
         else:
-            disp.label_f9.config(bg=disp.dark_red_color)
+            disp.label_f9.config(bg=disp.red_color)
         if self.logNumFatal == 0:
             if utc > self.message_time + timedelta(seconds=10):
                 if self.message_counter == self.message_point:
@@ -805,10 +805,10 @@ class Function(WS, Variables):
             count = 0
             if side == "asks":
                 col = 2
-                color = disp.sell_color_dark
+                color = disp.red_color
             else:
                 col = 0
-                color = disp.buy_color
+                color = disp.green_color
             col_qty = abs(col - 2)
             for row in range(start, end, direct):
                 vlm = ""
@@ -830,9 +830,11 @@ class Function(WS, Variables):
                 if str(qty) != "0":
                     update_label(table="orderbook", column=col_qty, row=row, val=qty)
                     disp.labels["orderbook"][row][col_qty]["bg"] = color
+                    disp.labels["orderbook"][row][col_qty]["fg"] = "white"
                 else:
                     update_label(table="orderbook", column=col_qty, row=row, val="")
                     disp.labels["orderbook"][row][col_qty]["bg"] = disp.bg_color
+                    disp.labels["orderbook"][row][col_qty]["fg"] = disp.fg_color
                 update_label(table="orderbook", column=col, row=row, val=vlm)
                 update_label(table="orderbook", column=1, row=row, val=price)
                 count += 1
@@ -989,7 +991,7 @@ class Function(WS, Variables):
             if disp.labels_cache["robots"][num + mod][9] != val:
                 if self.robots[emi]["STATUS"] == "RESERVED":
                     if self.robots[emi]["POS"] != 0:
-                        disp.labels["robots"][num + mod][6]["fg"] = disp.dark_red_color
+                        disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
                     else:
                         disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
             update_label(
@@ -1305,7 +1307,7 @@ def handler_order(event) -> None:
             button = tk.Button(frame_dn, text="Delete order", command=lambda id=clOrdID: delete(id))
             price_replace = tk.StringVar()
             entry_price = tk.Entry(
-                frame_dn, width=10, bg="white", textvariable=price_replace
+                frame_dn, width=10, bg=disp.bg_color, textvariable=price_replace
             )
             button_replace = tk.Button(frame_dn, text="Replace", command=lambda id=clOrdID: replace(id))
             button.pack(side="right")
@@ -1493,10 +1495,10 @@ def handler_orderbook(event, row_position: int) -> None:
         price_ask = tk.StringVar()
         price_bid = tk.StringVar()
         entry_price_ask = tk.Entry(
-            frame_market_ask, width=10, bg="white", textvariable=price_ask
+            frame_market_ask, width=10, bg=disp.bg_color, textvariable=price_ask
         )
         entry_price_bid = tk.Entry(
-            frame_market_bid, width=10, bg="white", textvariable=price_bid
+            frame_market_bid, width=10, bg=disp.bg_color, textvariable=price_bid
         )
         entry_price_ask.insert(
             0,
@@ -1515,7 +1517,7 @@ def handler_orderbook(event, row_position: int) -> None:
             ),
         )
         entry_quantity = tk.Entry(
-            frame_quantity, width=6, bg="white", textvariable=quantity
+            frame_quantity, width=6, bg=disp.bg_color, textvariable=quantity
         )
         entry_quantity.insert(
             0,
@@ -1619,10 +1621,12 @@ def handler_pos(event, row_position: int) -> None:
     for num in range(len(ws.symbol_list)):
         for column in range(len(var.name_position)):
             if num + mod == row_position:
-                disp.labels["position"][num + mod][column]["bg"] = disp.yellow_color
+                disp.labels["position"][num + mod][column]["bg"] = disp.bg_select_color
+                disp.labels["position"][num + mod][column]["fg"] = disp.fg_select_color
             else:
                 if num + mod >= 0:
                     disp.labels["position"][num + mod][column]["bg"] = disp.bg_color
+                    disp.labels["position"][num + mod][column]["fg"] = disp.fg_color
 
 
 def handler_market(event, row_position: int) -> None:
@@ -1741,7 +1745,7 @@ def load_labels() -> None:
         name="account",
         size=var.account_rows + 1,
         title=var.name_account,
-        canvas_height=60,
+        canvas_height=63,
         color=disp.bg_color,
     )
     Tables.robots = GridTable(
@@ -1768,7 +1772,7 @@ def load_labels() -> None:
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
             ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
         ):
-            disp.labels["robots"][row + mod][6]["fg"] = disp.dark_red_color
+            disp.labels["robots"][row + mod][6]["fg"] = disp.red_color
         else:
             disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color
     Tables.orderbook = GridTable(
