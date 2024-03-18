@@ -60,8 +60,8 @@ def setup_market(ws: WS, name: str):
             if bots.Init.load_robots(ws):
                 algo.init_algo()
                 if isinstance(bots.Init.init_timeframes(ws), dict):
-                    trades.reload_columns(name=ws.name)
-                    funding.reload_columns(name=ws.name)
+                    trades.clear_columns(name=ws.name)
+                    funding.clear_columns(name=ws.name)
                     common.Init.load_database(ws)
                     common.Init.load_trading_history(ws)
                     trades.insert_columns()
