@@ -102,20 +102,28 @@ class Variables:
 
     # Information widget
 
+    if ostype == "Mac":
+        text_info = tk.Text(
+            frame_information,
+            height=6,
+            width=30,
+            highlightthickness=0,
+        )
+    else:
+         text_info = tk.Text(
+            frame_information,
+            height=6,
+            width=30,
+            bg="gray98",
+            highlightthickness=0,
+        )       
     scroll_info = tk.Scrollbar(frame_information)
-    text_info = tk.Text(
-        frame_information,
-        height=6,
-        width=30,
-        bg="gray98",
-        highlightthickness=0,
-    )
     text_info.bind("<Key>", lambda event: text_ignore(event))
     scroll_info.config(command=text_info.yview)
     text_info.config(yscrollcommand=scroll_info.set)
     scroll_info.pack(side="right", fill="y")
     text_info.pack(side="right", fill="both", expand="yes")
-
+    
     # color map
 
     if ostype == "Mac":
@@ -370,8 +378,8 @@ class ListBoxTable(Variables):
                     background=self.bg_color,
                     # fg=self.fg_color,
                     highlightthickness=0,
-                    # selectbackground=self.title_color,
-                    # selectforeground=self.fg_color,
+                    selectbackground=self.title_color,
+                    selectforeground=self.fg_color,
                     activestyle="none",
                     justify="center",
                     height=self.height,
@@ -479,7 +487,7 @@ class ListBoxTable(Variables):
                     selectforeground=self.fg_list_box[side],
                 )
 
-    def reload_columns(self, name: str) -> None:
+    def clear_columns(self, name: str) -> None:
         for num, listbox in enumerate(self.listboxes):
             self.columns[num] = list(listbox.get(self.mod, tk.END))
         col = self.title.index("EXCH")
