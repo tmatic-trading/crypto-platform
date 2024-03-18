@@ -10,7 +10,7 @@ import bots.init as bots
 import common.init as common
 from display.functions import info_display
 import functions
-
+from functions import orders, funding, trades
 
 from functions import Function
 from bots.variables import Variables as bot
@@ -19,6 +19,8 @@ from display.variables import Variables as disp
 from api.websockets import Websockets
 
 from api.api import WS
+
+import tkinter as tk 
 
 
 def setup():
@@ -30,9 +32,7 @@ def setup():
     var.robots_thread_is_active = False
     for name, ws in Websockets.connect.items():
         if name in var.market_list:
-            setup_market(ws, name=name)
-    ws = Websockets.connect[var.current_market]
-    common.Init.initial_display(ws)
+            setup_market(ws, name=name)    
     functions.load_labels()
     algo.init_algo()
     var.robots_thread_is_active = True
@@ -60,7 +60,12 @@ def setup_market(ws: WS, name: str):
             if bots.Init.load_robots(ws):
                 algo.init_algo()
                 if isinstance(bots.Init.init_timeframes(ws), dict):
+                    trades.reload_columns(name=ws.name)
+                    funding.reload_columns(name=ws.name)
+                    common.Init.load_database(ws)
                     common.Init.load_trading_history(ws)
+                    trades.insert_columns()
+                    funding.insert_columns()
                     common.Init.account_balances(ws)
                     common.Init.load_orders(ws)
                     ws.ticker = ws.get_ticker(name)
@@ -110,10 +115,10 @@ def clear_params():
     var.orders = OrderedDict() 
     var.current_market = var.market_list[0]
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
-    functions.clear_labels_cache()
-    functions.trades.clear_all()
-    functions.funding.clear_all()
-    functions.orders.clear_all()
+    #functions.clear_labels_cache()
+    #functions.trades.clear_all()
+    #functions.funding.clear_all()
+    #functions.orders.clear_all()
 
 
 def robots_thread() -> None:
@@ -126,7 +131,7 @@ def robots_thread() -> None:
                         Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
-        print("active")
+        #print("active")
 
 
 def terminal_reload(event) -> None:

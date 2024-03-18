@@ -248,7 +248,10 @@ class Function(WS, Variables):
                     "QTY": abs(lastQty),
                     "EMI": emi,
                 }
-                Function.trades_display(self, val=message)
+                if info:
+                    Function.fill_columns(self, func=Function.trades_display, table=trades, data=data)
+                else:
+                    Function.trades_display(self, val=message)
                 Function.orders_processing(self, row=row, info=info)
 
         # Funding
@@ -307,7 +310,10 @@ class Function(WS, Variables):
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = time_struct
                     self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
-                    Function.funding_display(self, message)
+                    if info:
+                        Function.fill_columns(self, func=Function.funding_display, table=funding, data=message)
+                    else:
+                        Function.funding_display(self, message)
             diff = true_position - position
             if (
                 diff != 0
@@ -356,7 +362,10 @@ class Function(WS, Variables):
                 self.robots[emi]["COMMISS"] += calc["funding"]
                 self.robots[emi]["LTIME"] = time_struct
                 self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
-                Function.funding_display(self, message)
+                if info:
+                    Function.fill_columns(self, func=Function.funding_display, table=funding, data=data)
+                else:
+                    Function.funding_display(self, message)
 
         # New order
 
@@ -503,7 +512,7 @@ class Function(WS, Variables):
         )
         Function.orders_display(self, clOrdID=clOrdID, execType=row["execType"])
 
-    def trades_display(self, val: dict) -> None:
+    def trades_display(self, val: dict, init=False) -> Union[None, list]:
         """
         Update trades widget
         """       
@@ -528,13 +537,13 @@ class Function(WS, Variables):
             val["QTY"],
             val["EMI"],
         ]
+        if init:
+            return elements
         trades.insert(row=0, elements=elements)
-        if val["SIDE"] == "Buy":
-            trades.paint(row=0, color=disp.bg_buy_color, color_fg=disp.fg_buy_color, dir="buy")
-        else:
-            trades.paint(row=0, color=disp.bg_sell_color, color_fg=disp.fg_sell_color, dir="sell")
+        trades.paint(row=0, color=disp.bg_list_box[val["SIDE"]], color_fg=disp.fg_list_box[val["SIDE"]])
 
-    def funding_display(self, val: dict) -> None:
+
+    def funding_display(self, val: dict, init=False) -> Union[None, list]:
         """
         Update funding widgwt
         """
@@ -555,6 +564,8 @@ class Function(WS, Variables):
             val["QTY"], 
             val["EMI"],
         ]
+        if init:
+            return elements
         funding.insert(row=0, elements=elements)
 
     def orders_display(self, clOrdID: str, execType: str) -> None:
@@ -581,10 +592,9 @@ class Function(WS, Variables):
                 emi,
             ]
             orders.insert(row=0, elements=elements)
-            if var.orders[clOrdID]["side"] == "Buy":
-                orders.paint(row=0, color=disp.bg_buy_color, color_fg=disp.fg_buy_color, dir="buy")
-            else:
-                orders.paint(row=0, color=disp.bg_sell_color, color_fg=disp.fg_sell_color, dir="sell")
+            side = var.orders[clOrdID]["side"]
+            orders.paint(row=0, color=disp.bg_list_box[side], color_fg=disp.fg_list_box[side])
+
 
         print("---------orders---------")
         print(var.orders.keys(), sep = "\n")
@@ -1196,6 +1206,15 @@ class Function(WS, Variables):
                 row=row + mod,
                 val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
             )
+
+    def fill_columns(self, func, table: ListBoxTable, data: list) -> None:
+        for val in data:
+            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
+            Function.add_symbol(self, symbol=val["SYMBOL"])
+            elements = func(self, val=val, init=True)
+            for num, element in enumerate(elements):
+                table.columns[num].append(element)        
+        return table.columns
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
