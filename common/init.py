@@ -10,7 +10,7 @@ from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.variables import Variables as disp
 from functions import Function
-from functions import orders
+from functions import orders, trades, funding
 
 from api.websockets import Websockets
 
@@ -228,7 +228,7 @@ class Init(WS, Variables):
             self.ticker[symbol]["fundingRate"] = self.instruments[symbol]["fundingRate"]
 
 
-    def initial_display(self) -> None:
+    def load_database(self) -> None:
         """
         Download the latest trades and funding data from the database (if any)
         """
@@ -248,14 +248,10 @@ class Init(WS, Variables):
                 + "' "
             )
             union = "union "
-        sql += ") T order by id desc limit 121"
+        sql += ") T order by id desc limit " + str(disp.table_limit)
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
-        disp.funding_display_counter = 0
-        for val in reversed(data):
-            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
-            Function.add_symbol(self, symbol=val["SYMBOL"])
-            Function.funding_display(self, val)
+        Function.fill_columns(self, func=Function.funding_display, table=funding, data=data)
         sql = "select * from("
         union = ""
         for name in var.market_list:
@@ -272,14 +268,10 @@ class Init(WS, Variables):
                 + "' "
             )
             union = "union "
-        sql += ") T order by id desc limit 151"
+        sql += ") T order by id desc limit " + str(disp.table_limit)
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
-        disp.trades_display_counter = 0
-        for val in reversed(data):
-            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
-            Function.add_symbol(self, symbol=val["SYMBOL"])         
-            Function.trades_display(self, val=val)
+        Function.fill_columns(self, func=Function.trades_display, table=trades, data=data)
 
 
 def setup_logger():

@@ -1,6 +1,7 @@
 import platform
 import tkinter as tk
 from collections import OrderedDict
+from datetime import datetime
 from tkinter import ttk
 
 from common.variables import Variables as var
@@ -33,17 +34,17 @@ class Variables:
         ostype = "Linux"
 
     num_robots = 1
-    #yellow_color = "khaki1"
+    # yellow_color = "khaki1"
     num_book = 21  # Must be odd
     frame_state = tk.Frame(padx=10)
     frame_state.grid(row=0, column=0, sticky="W", columnspan=2)
     labels = dict()
     labels_cache = dict()
-    label_trading = tk.Label(frame_state, text="  TRADING: ")#, foreground=fg_color)
+    label_trading = tk.Label(frame_state, text="  TRADING: ")  # , foreground=fg_color)
     label_trading.pack(side="left")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_f9.pack(side="left")
-    label_time = tk.Label()#foreground=fg_color
+    label_time = tk.Label()  # foreground=fg_color
     label_time.grid(row=0, column=2, sticky="E")
 
     frame_2row_1_2_3col = tk.Frame()
@@ -69,7 +70,9 @@ class Variables:
     frame_3row_3col.grid_rowconfigure(0, weight=1)
 
     # frame_3row_3col.grid_rowconfigure(1, weight=200)
-    orderbook_frame = tk.Frame(frame_3row_3col, padx=0, pady=0)#, background=title_color)
+    orderbook_frame = tk.Frame(
+        frame_3row_3col, padx=0, pady=0
+    )  # , background=title_color)
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
@@ -104,8 +107,7 @@ class Variables:
         frame_information,
         height=6,
         width=30,
-        #bg=bg_color,
-        #fg=fg_color,
+        bg="gray98",
         highlightthickness=0,
     )
     text_info.bind("<Key>", lambda event: text_ignore(event))
@@ -117,29 +119,22 @@ class Variables:
     # color map
 
     if ostype == "Mac":
-        green_color = "#07b66e" #"lime green"#"#319d30"#"MediumSeaGreen"
-        red_color = "#f53661" #"brown1"#"#da5e00"#"firebrick2"
-        title_color = label_trading["background"]#"gray83"
-        bg_color = text_info["background"]#"gray98"
-        fg_color = label_trading["foreground"]
-        bg_buy_color = bg_color#"forest green"#"lime green"# "#e3f3cf"##"DarkSeaGreen1"
-        bg_sell_color = bg_color#"#feede0"#"MistyRose"
-        fg_buy_color = green_color#"lime green"#"lime green"#"forest green"#"lime green"# "#e3f3cf"##"DarkSeaGreen1"
-        fg_sell_color = red_color#"brown1"#"#feede0"#"MistyRose"
-        bg_select_color = "systemSelectedTextBackgroundColor"#"dark turquoise"# "deep sky blue"
-        fg_select_color = fg_color
+        green_color = "#07b66e"
+        red_color = "#f53661"
+        title_color = label_trading["background"]
+        bg_select_color = "systemSelectedTextBackgroundColor"
     else:
         green_color = "lime green"
         red_color = "brown1"
         title_color = label_trading["background"]
-        bg_color = text_info["background"]
-        fg_color = label_trading["foreground"]
-        bg_buy_color = bg_color
-        bg_sell_color = bg_color
-        fg_buy_color = green_color
-        fg_sell_color = red_color
         bg_select_color = "yellow"
-        fg_select_color = fg_color
+
+    title_color = label_trading["background"]
+    bg_color = text_info["background"]
+    fg_color = label_trading["foreground"]
+    bg_list_box = {"Buy": bg_color, "Sell": bg_color}
+    fg_list_box = {"Buy": green_color, "Sell": red_color}
+    fg_select_color = fg_color
 
     # Orders widget
 
@@ -157,7 +152,7 @@ class Variables:
         notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
-    #print("platform:", root.tk.call('tk', 'windowingsystem'), platform.system()) # aqua, Darwin
+    # print("platform:", root.tk.call('tk', 'windowingsystem'), platform.system()) # aqua, Darwin
     style = ttk.Style()
     style.configure("TNotebook", borderwidth=0)
     style.configure("TNotebook.Tab", background="gray90")
@@ -184,12 +179,11 @@ class Variables:
     messageStopped = ""
     robots_window_trigger = "off"
     info_display_counter = 0
-    trades_display_counter = 0
-    funding_display_counter = 0
     symb_book = ""
     book_window_trigger = "off"
     price_rounding = OrderedDict()
     order_window_trigger = "off"
+    table_limit = 150
 
 
 class GridTable(Variables):
@@ -197,9 +191,9 @@ class GridTable(Variables):
         self,
         frame: tk.Frame,
         name: str,
-        size: int,        
+        size: int,
         title: list,
-        column_width: int = 70, 
+        column_width: int = 70,
         title_on: bool = True,
         canvas_height: int = None,
         bind=None,
@@ -216,9 +210,7 @@ class GridTable(Variables):
             self.mod = 0
             size -= 1
         my_bg = (
-            self.bg_color
-            if name != "robots" and name != "market"
-            else self.title_color
+            self.bg_color if name != "robots" and name != "market" else self.title_color
         )
         canvas = tk.Canvas(
             frame, highlightthickness=0, height=canvas_height, width=width, bg=my_bg
@@ -244,7 +236,11 @@ class GridTable(Variables):
             cache = []
             if len(self.labels[name]) <= row:
                 for title_name in title:
-                    lst.append(tk.Label(sub, text=title_name, pady=0, background=self.title_color))#, foreground=self.fg_color))
+                    lst.append(
+                        tk.Label(
+                            sub, text=title_name, pady=0, background=self.title_color
+                        )
+                    )  # , foreground=self.fg_color))
                     cache.append(title_name + str(row))
                 self.labels[name].append(lst)
                 self.labels_cache[name].append(cache)
@@ -263,7 +259,7 @@ class GridTable(Variables):
                     else:
                         color_bg = self.color
                         color_fg = self.fg_color
-                        
+
                     self.labels[name][row][column]["text"] = ""
                     self.labels[name][row][column]["bg"] = color_bg
                     self.labels[name][row][column]["fg"] = color_fg
@@ -335,6 +331,7 @@ class ListBoxTable(Variables):
             self.mod = 0
         self.active_row = 1
         self.mod = 1
+        self.columns = [[] for _ in title]
         if expand:
             frame.grid_rowconfigure(0, weight=1)
         canvas = tk.Canvas(frame, highlightthickness=0, bg=self.bg_color)
@@ -354,7 +351,7 @@ class ListBoxTable(Variables):
         canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
         canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
         self.listboxes = []
-        for column, name in enumerate(title):
+        for num, name in enumerate(title):
             value = (
                 [
                     name,
@@ -371,10 +368,10 @@ class ListBoxTable(Variables):
                     listvariable=vars,
                     bd=0,
                     background=self.bg_color,
-                    #fg=self.fg_color,
+                    # fg=self.fg_color,
                     highlightthickness=0,
-                    #selectbackground=self.title_color,
-                    #selectforeground=self.fg_color,
+                    # selectbackground=self.title_color,
+                    # selectforeground=self.fg_color,
                     activestyle="none",
                     justify="center",
                     height=self.height,
@@ -383,23 +380,25 @@ class ListBoxTable(Variables):
                 )
             )
             if title_on:
-                self.listboxes[column].itemconfig(0, bg=self.title_color)#, fg=self.fg_color)
-            self.listboxes[column].grid(
-                row=0, padx=0, column=column, sticky="N" + "S" + "W" + "E"
+                self.listboxes[num].itemconfig(
+                    0, bg=self.title_color
+                )  # , fg=self.fg_color)
+            self.listboxes[num].grid(
+                row=0, padx=0, column=num, sticky="N" + "S" + "W" + "E"
             )
-            sub.grid_columnconfigure(column, weight=1)
+            sub.grid_columnconfigure(num, weight=1)
             sub.grid_rowconfigure(0, weight=1)
             if bind:
-                self.listboxes[column].bind("<<ListboxSelect>>", bind)
+                self.listboxes[num].bind("<<ListboxSelect>>", bind)
             for _ in range(size):
                 lst = ["" for _ in range(len(self.title))]
                 self.insert(elements=lst, row=1)
 
     def insert(self, row: int, elements: list) -> None:
         self.height += 1
-        for column, listbox in enumerate(self.listboxes):
+        for num, listbox in enumerate(self.listboxes):
             listbox.config(height=self.height)
-            listbox.insert(row + self.mod, elements[column])
+            listbox.insert(row + self.mod, elements[num])
         if self.height > self.max_rows:
             self.delete(row=self.height)
 
@@ -410,31 +409,86 @@ class ListBoxTable(Variables):
             listbox.delete(row + self.mod)
 
     def clear_all(self) -> None:
-        self.height = 1 if self.title_on else 0
         for listbox in self.listboxes:
             listbox.config(height=self.height)
-            listbox.delete(self.height, tk.END)
+            listbox.delete(self.mod, tk.END)
 
     def update(self, row: int, elements: list) -> None:
         color = self.listboxes[0].itemcget(row + self.mod, "background")
         color_fg = self.listboxes[0].itemcget(row + self.mod, "foreground")
         self.delete(row + self.mod)
         self.insert(row + self.mod, elements)
-        self.paint(row + self.mod, color, color_fg, "???")
+        self.paint(row + self.mod, color, color_fg)
 
-    def paint(self, row: int, color: str, color_fg: str, dir: str) -> None:
-        num = 0
+    def paint(self, row: int, color: str, color_fg: str) -> None:
         for listbox in self.listboxes:
-            if dir == "buy":
-                listbox.itemconfig(row + self.mod, bg=color, fg=color_fg, selectbackground=self.bg_buy_color, selectforeground=self.fg_buy_color)
-            elif dir == "sell":
-                listbox.itemconfig(row + self.mod, bg=color, fg=color_fg, selectbackground=self.bg_sell_color, selectforeground=self.fg_sell_color)
-            else:
-                listbox.itemconfig(row + self.mod, bg=color, fg=color_fg)
+            listbox.itemconfig(
+                row + self.mod,
+                bg=color,
+                fg=color_fg,
+                selectbackground=color,
+                selectforeground=color_fg,
+            )
 
+    def insert_columns(self) -> None:
+        """
+        Because the Listbox widget is slow to perform insert operations on
+        macOS, the initial filling of tables is done column-by-column,
+        not row-by-row.
+        """
+        self.columns = zip(*self.columns)
+        self.columns = list(
+            map(
+                lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
+                self.columns,
+            )
+        )
+        self.columns.sort(key=lambda x: x[-1], reverse=True)
+        self.columns = zip(*self.columns)
+        self.columns = list(map(lambda x: list(x[: self.table_limit]), self.columns))[
+            :-1
+        ]
+        self.height = len(self.columns[0]) + 1
+        for num, listbox in enumerate(self.listboxes):
+            listbox.delete(self.mod, tk.END)
+            listbox.config(height=self.height)
+            if self.title_on:
+                self.columns[num] = [self.title[num]] + self.columns[num]
+            vars = tk.Variable(value=self.columns[num])
+            listbox.config(listvariable=vars)
+        try:
+            col = self.title.index("SIDE")
+            name = "SIDE"
+        except ValueError:
+            col = self.title.index("PNL")
+            name = "Funding"
+        self.paint_columns(col=col, name=name)
 
-def handler_robots(y_pos):
-    print(y_pos)
+    def paint_columns(self, col: int, name: str) -> None:
+        for num, column in enumerate(self.columns):
+            for row in range(self.mod, len(column)):
+                if name == "Funding":
+                    side = "Buy" if float(self.columns[col][row]) < 0 else "Sell"
+                else:
+                    side = self.columns[col][row]
+                self.listboxes[num].itemconfig(
+                    row,
+                    bg=self.bg_list_box[side],
+                    fg=self.fg_list_box[side],
+                    selectbackground=self.bg_list_box[side],
+                    selectforeground=self.fg_list_box[side],
+                )
+
+    def reload_columns(self, name: str) -> None:
+        for num, listbox in enumerate(self.listboxes):
+            self.columns[num] = list(listbox.get(self.mod, tk.END))
+        col = self.title.index("EXCH")
+        col_size = len(self.columns[col])
+        for num in range(col_size - 1, -1, -1):
+            if self.columns[col][num] == name:
+                for column in range(len(self.columns)):
+                    self.columns[column].pop(num)
+        self.clear_all()
 
 
 def on_closing(root, refresh_var):
