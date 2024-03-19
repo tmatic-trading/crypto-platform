@@ -377,12 +377,12 @@ class Function(WS, Variables):
                 var.orders[clOrdID] = {
                     "leavesQty": row["leavesQty"],
                     "price": row["price"],
-                    "symbol": row["symbol"],
-                    "category": row["symbol"][1],
-                    "market": self.name,
+                    "SYMBOL": row["symbol"],
+                    "CATEGORY": row["symbol"][1],
+                    "MARKET": self.name,
                     "transactTime": row["transactTime"],
-                    "side": row["side"],
-                    "emi": row["symbol"],
+                    "SIDE": row["side"],
+                    "EMI": row["symbol"],
                     "orderID": row["orderID"],
                 }
                 var.orders.move_to_end(clOrdID, last=False)
@@ -448,12 +448,12 @@ class Function(WS, Variables):
                     var.orders[clOrdID] = {
                         "leavesQty": row["leavesQty"],
                         "price": row["price"],
-                        "symbol": row["symbol"],
-                        "category": row["symbol"][1],
-                        "market": self.name,
+                        "SYMBOL": row["symbol"],
+                        "CATEGORY": row["symbol"][1],
+                        "MARKET": self.name,
                         "transactTime": str(datetime.utcnow()),
-                        "side": row["side"],
-                        "emi": _emi,
+                        "SIDE": row["side"],
+                        "EMI": _emi,
                         "orderID": row["orderID"],
                     }
                     var.orders.move_to_end(clOrdID, last=False)
@@ -507,7 +507,7 @@ class Function(WS, Variables):
             str(info_p),
             info_q,
         )
-        Function.orders_display(self, clOrdID=clOrdID, execType=row["execType"])
+        Function.orders_display(self, val=var.orders[clOrdID])
 
     def trades_display(self, val: dict, init=False) -> Union[None, list]:
         """
@@ -565,32 +565,33 @@ class Function(WS, Variables):
             return elements
         funding.insert(row=0, elements=elements)
 
-    def orders_display(self, clOrdID: str, execType: str) -> None:
+    def orders_display(self, val: dict, init=False) -> Union[None, list]:
         """
         Update Orders widget
         """
-        if clOrdID in var.orders:
-            emi = var.orders[clOrdID]["emi"]
-            tm = str(var.orders[clOrdID]["transactTime"])[2:]
-            tm = tm.replace("-", "")
-            tm = tm.replace("T", " ")[:15]
-            elements = [
-                tm, 
-                var.orders[clOrdID]["symbol"][0],
-                var.orders[clOrdID]["category"], 
-                var.orders[clOrdID]["market"], 
-                var.orders[clOrdID]["side"],
-                Function.format_price(
-                        self,
-                        number=var.orders[clOrdID]["price"],
-                        symbol=var.orders[clOrdID]["symbol"],
-                    ),
-                var.orders[clOrdID]["leavesQty"], 
-                emi,
-            ]
-            orders.insert(row=0, elements=elements)
-            side = var.orders[clOrdID]["side"]
-            orders.paint(row=0, color=disp.bg_list_box[side], color_fg=disp.fg_list_box[side])
+        emi = val["EMI"]
+        tm = str(val["transactTime"])[2:]
+        tm = tm.replace("-", "")
+        tm = tm.replace("T", " ")[:15]
+        elements = [
+            tm, 
+            val["SYMBOL"][0],
+            val["CATEGORY"], 
+            val["MARKET"], 
+            val["SIDE"],
+            Function.format_price(
+                    self,
+                    number=val["price"],
+                    symbol=val["SYMBOL"],
+                ),
+            val["leavesQty"], 
+            emi,
+        ]
+        if init:
+            return elements
+        orders.insert(row=0, elements=elements)
+        side = val["SIDE"]
+        orders.paint(row=0, color=disp.bg_list_box[side], color_fg=disp.fg_list_box[side])
 
 
         #print("---------orders---------")
@@ -1159,7 +1160,7 @@ class Function(WS, Variables):
         Replace orders
         """
         price_str = Function.format_price(
-            self, number=price, symbol=var.orders[clOrdID]["symbol"]
+            self, number=price, symbol=var.orders[clOrdID]["SYMBOL"]
         )
         var.logger.info(
             "Putting orderID="
@@ -1177,7 +1178,7 @@ class Function(WS, Variables):
                 quantity=qty,
                 price=price_str,
                 orderID=var.orders[clOrdID]["orderID"],
-                symbol=var.orders[clOrdID]["symbol"],
+                symbol=var.orders[clOrdID]["SYMBOL"],
             )
 
         return clOrdID
@@ -1263,11 +1264,11 @@ def handler_order(event) -> None:
                 return
             if ws.logNumFatal == 0:
                 roundSide = var.orders[clOrdID]["leavesQty"]
-                if var.orders[clOrdID]["side"] == "Sell":
+                if var.orders[clOrdID]["SIDE"] == "Sell":
                     roundSide = -roundSide
                 price = Function.round_price(
                     ws,
-                    symbol=var.orders[clOrdID]["symbol"],
+                    symbol=var.orders[clOrdID]["SYMBOL"],
                     price=float(price_replace.get()),
                     rside=roundSide,
                 )
@@ -1300,16 +1301,16 @@ def handler_order(event) -> None:
                 "number\t"
                 + str(row_position)
                 + "\nsymbol\t"
-                + ".".join(var.orders[clOrdID]["symbol"])
+                + ".".join(var.orders[clOrdID]["SYMBOL"])
                 + "\nside\t"
-                + var.orders[clOrdID]["side"]
+                + var.orders[clOrdID]["SIDE"]
                 + "\nclOrdID\t"
                 + clOrdID
                 + "\nprice\t"
                 + Function.format_price(
                     ws,
                     number=var.orders[clOrdID]["price"],
-                    symbol=var.orders[clOrdID]["symbol"],
+                    symbol=var.orders[clOrdID]["SYMBOL"],
                 )
                 + "\nquantity\t"
                 + str(var.orders[clOrdID]["leavesQty"])
@@ -1671,7 +1672,7 @@ def find_order(price: float, qty: int, symbol: str) -> int:
     for clOrdID in var.orders:
         if (
             var.orders[clOrdID]["price"] == price
-            and var.orders[clOrdID]["symbol"] == symbol
+            and var.orders[clOrdID]["SYMBOL"] == symbol
         ):
             qty += var.orders[clOrdID]["leavesQty"]
 
