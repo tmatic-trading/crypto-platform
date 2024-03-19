@@ -325,7 +325,7 @@ class Init(WS, Variables):
         """
         emi_in_orders = set()
         for val in var.orders.values():
-            emi_in_orders.add(val["emi"])
+            emi_in_orders.add(val["EMI"])
         for emi in self.robots.copy():
             symbol = tuple(emi.split("."))
             if self.robots[emi]["STATUS"] in ("WORK", "OFF"):

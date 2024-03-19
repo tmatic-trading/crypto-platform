@@ -444,18 +444,19 @@ class ListBoxTable(Variables):
         macOS, the initial filling of tables is done column-by-column,
         not row-by-row.
         """
-        self.columns = zip(*self.columns)
-        self.columns = list(
-            map(
-                lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
-                self.columns,
-            )
-        )
-        self.columns.sort(key=lambda x: x[-1], reverse=True)
-        self.columns = zip(*self.columns)
-        self.columns = list(map(lambda x: list(x[: self.table_limit]), self.columns))[
-            :-1
-        ]
+        if self.columns[0]: # bsort by time
+            self.columns = zip(*self.columns)
+            self.columns = list(
+                map(
+                    lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
+                    self.columns,
+                )
+            )   
+            self.columns.sort(key=lambda x: x[-1], reverse=True)
+            self.columns = zip(*self.columns)
+            self.columns = list(map(lambda x: list(x[: self.table_limit]), self.columns))[
+                :-1
+            ]
         self.height = len(self.columns[0]) + 1
         for num, listbox in enumerate(self.listboxes):
             listbox.delete(self.mod, tk.END)
