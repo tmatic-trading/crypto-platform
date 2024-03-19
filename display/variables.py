@@ -101,7 +101,7 @@ class Variables:
     root.grid_rowconfigure(4, weight=1)
 
     # Information widget
-
+    
     if ostype == "Mac":
         text_info = tk.Text(
             frame_information,
@@ -376,7 +376,6 @@ class ListBoxTable(Variables):
                     listvariable=vars,
                     bd=0,
                     background=self.bg_color,
-                    # fg=self.fg_color,
                     highlightthickness=0,
                     selectbackground=self.title_color,
                     selectforeground=self.fg_color,
@@ -384,13 +383,12 @@ class ListBoxTable(Variables):
                     justify="center",
                     height=self.height,
                     width=0,
-                    # selectmode=tk.SINGLE,
                 )
             )
             if title_on:
                 self.listboxes[num].itemconfig(
                     0, bg=self.title_color
-                )  # , fg=self.fg_color)
+                )
             self.listboxes[num].grid(
                 row=0, padx=0, column=num, sticky="N" + "S" + "W" + "E"
             )
