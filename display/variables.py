@@ -217,7 +217,6 @@ class GridTable(Variables):
         if not title_on:
             self.mod = 0
             size -= 1
-        print(name, self.mod)
         my_bg = (
             self.bg_color if name != "robots" and name != "market" else self.title_color
         )
