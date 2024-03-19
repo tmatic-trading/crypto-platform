@@ -251,7 +251,9 @@ class Init(WS, Variables):
         sql += ") T order by id desc limit " + str(disp.table_limit)
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
-        Function.fill_columns(self, func=Function.funding_display, table=funding, data=data)
+        for val in data:
+            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
+            Function.fill_columns(self, func=Function.funding_display, table=funding, val=val)
         sql = "select * from("
         union = ""
         for name in var.market_list:
@@ -271,7 +273,9 @@ class Init(WS, Variables):
         sql += ") T order by id desc limit " + str(disp.table_limit)
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
-        Function.fill_columns(self, func=Function.trades_display, table=trades, data=data)
+        for val in data:
+            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
+            Function.fill_columns(self, func=Function.trades_display, table=trades, val=val)
 
 
 def setup_logger():

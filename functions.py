@@ -240,7 +240,6 @@ class Function(WS, Variables):
                 Function.insert_database(self, values=values)
                 message = {
                     "SYMBOL": row["symbol"],
-                    "CATEGORY": row["symbol"][1], 
                     "MARKET": row["market"], 
                     "TTIME": row["transactTime"],
                     "SIDE": side,
@@ -249,7 +248,7 @@ class Function(WS, Variables):
                     "EMI": emi,
                 }
                 if info:
-                    Function.fill_columns(self, func=Function.trades_display, table=trades, data=data)
+                    Function.fill_columns(self, func=Function.trades_display, table=trades, val=message)
                 else:
                     Function.trades_display(self, val=message)
                 Function.orders_processing(self, row=row, info=info)
@@ -311,7 +310,7 @@ class Function(WS, Variables):
                     self.robots[emi]["LTIME"] = time_struct
                     self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
                     if info:
-                        Function.fill_columns(self, func=Function.funding_display, table=funding, data=message)
+                        Function.fill_columns(self, func=Function.funding_display, table=funding, val=message)
                     else:
                         Function.funding_display(self, message)
             diff = true_position - position
@@ -363,7 +362,7 @@ class Function(WS, Variables):
                 self.robots[emi]["LTIME"] = time_struct
                 self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
                 if info:
-                    Function.fill_columns(self, func=Function.funding_display, table=funding, data=data)
+                    Function.fill_columns(self, func=Function.funding_display, table=funding, val=message)
                 else:
                     Function.funding_display(self, message)
 
@@ -472,8 +471,6 @@ class Function(WS, Variables):
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
-                print("----------number------------")
-                print(Function.order_number(self, clOrdID), clOrdID)
                 orders.delete(row=Function.order_number(self, clOrdID))
                 var.orders.move_to_end(clOrdID, last=False)
             if (
@@ -515,16 +512,16 @@ class Function(WS, Variables):
     def trades_display(self, val: dict, init=False) -> Union[None, list]:
         """
         Update trades widget
-        """       
-        val["TTIME"] = str(val["TTIME"])[2:]
-        val["TTIME"] = val["TTIME"].replace("-", "")
-        val["TTIME"] = val["TTIME"].replace("T", " ")[:15]
+        """
+        tm = str(val["TTIME"])[2:]
+        tm = tm.replace("-", "")
+        tm = tm.replace("T", " ")[:15]
         if val["SIDE"] == 0:
             val["SIDE"] = "Buy"
         else:
             val["SIDE"] = "Sell"
         elements = [
-            val["TTIME"],
+            tm,
             val["SYMBOL"][0],
             val["SYMBOL"][1],
             val["MARKET"], 
@@ -547,11 +544,11 @@ class Function(WS, Variables):
         """
         Update funding widgwt
         """
-        val["TTIME"] = str(val["TTIME"])[2:]
-        val["TTIME"] = val["TTIME"].replace("-", "")
-        val["TTIME"] = val["TTIME"].replace("T", " ")[:15]
+        tm = str(val["TTIME"])[2:]
+        tm = tm.replace("-", "")
+        tm = tm.replace("T", " ")[:15]
         elements = [
-            val["TTIME"],
+            tm,
             val["SYMBOL"][0],
             val["SYMBOL"][1],
             val["MARKET"], 
@@ -596,8 +593,8 @@ class Function(WS, Variables):
             orders.paint(row=0, color=disp.bg_list_box[side], color_fg=disp.fg_list_box[side])
 
 
-        print("---------orders---------")
-        print(var.orders.keys(), sep = "\n")
+        #print("---------orders---------")
+        #print(var.orders.keys(), sep = "\n")
 
 
     def volume(self, qty: int, symbol: tuple) -> str:
@@ -1207,14 +1204,11 @@ class Function(WS, Variables):
                 val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
             )
 
-    def fill_columns(self, func, table: ListBoxTable, data: list) -> None:
-        for val in data:
-            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
-            Function.add_symbol(self, symbol=val["SYMBOL"])
-            elements = func(self, val=val, init=True)
-            for num, element in enumerate(elements):
-                table.columns[num].append(element)        
-        return table.columns
+    def fill_columns(self, func, table: ListBoxTable, val: dict) -> None:
+        Function.add_symbol(self, symbol=val["SYMBOL"])
+        elements = func(self, val=val, init=True)
+        for num, element in enumerate(elements):
+            table.columns[num].append(element)
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
