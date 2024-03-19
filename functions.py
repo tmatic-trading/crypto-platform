@@ -862,6 +862,7 @@ class Function(WS, Variables):
                 )
             else:
                 update_label(table="orderbook", column=2, row=num, val="")
+            disp.labels["orderbook"][num - mod][2]["fg"] = "black"
             if self.ticker[var.symbol]["bidSize"]:
                 update_label(
                     table="orderbook",
@@ -872,18 +873,18 @@ class Function(WS, Variables):
                     ),
                 )
             else:
-                update_label(table="orderbook", column=0, row=num + mod, val="")
-            disp.labels["orderbook"][0][num + 1]["fg"] = "black"
+                update_label(table="orderbook", column=0, row=num + 1, val="")
+            disp.labels["orderbook"][num + 1 - mod][0]["fg"] = "black"
             first_price_sell = (
                 self.ticker[var.symbol]["ask"]
-                + (num - 1) * self.instruments[var.symbol]["tickSize"]
+                + (num + mod) * self.instruments[var.symbol]["tickSize"]
             )
             first_price_buy = self.ticker[var.symbol]["bid"]
-            for row in range(disp.num_book - 1):
-                if row < num:
+            for row in range(1 - mod, disp.num_book - mod):
+                if row <= num:
                     price = round(
                         first_price_sell
-                        - row * self.instruments[var.symbol]["tickSize"],
+                        - (row + mod) * self.instruments[var.symbol]["tickSize"],
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -899,17 +900,17 @@ class Function(WS, Variables):
                         )
                     else:
                         price = ""
-                    update_label(table="orderbook", column=1, row=row + mod, val=price)
+                    update_label(table="orderbook", column=1, row=row, val=price)
                     if str(qty) != "0":
-                        update_label(table="orderbook", column=0, row=row + mod, val=qty)
-                        disp.label_book[0][row + 1]["bg"] = "orange red"
+                        update_label(table="orderbook", column=0, row=row, val=qty)
+                        disp.labels["orderbook"][row][0]["bg"] = "orange red"
                     else:
-                        update_label(table="orderbook", column=0, row=row + mod, val="")
-                        disp.labels["orderbook"][0][row + 1]["bg"] = disp.bg_color
+                        update_label(table="orderbook", column=0, row=row, val="")
+                        disp.labels["orderbook"][row][0]["bg"] = disp.bg_color
                 else:
                     price = round(
                         first_price_buy
-                        - (row - num) * self.instruments[var.symbol]["tickSize"],
+                        - (row - num - 1) * self.instruments[var.symbol]["tickSize"],
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -925,13 +926,13 @@ class Function(WS, Variables):
                         )
                     else:
                         price = ""
-                    update_label(table="orderbook", column=1, row=row + mod, val=price)
+                    update_label(table="orderbook", column=1, row=row, val=price)
                     if str(qty) != "0":
-                        update_label(table="orderbook", column=2, row=row + mod, val=qty)
-                        disp.labels["orderbook"][2][row + 1]["bg"] = "green2"
+                        update_label(table="orderbook", column=2, row=row, val=qty)
+                        disp.labels["orderbook"][row][2]["bg"] = "green2"
                     else:
-                        update_label(table="orderbook", column=2, row=row + mod, val="")
-                        disp.labels["orderbook"][2][row + 1]["bg"] = disp.bg_color
+                        update_label(table="orderbook", column=2, row=row, val="")
+                        disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
         else:
             val = self.market_depth10()[var.symbol]
             display_order_book_values(
