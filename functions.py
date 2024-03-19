@@ -373,7 +373,7 @@ class Function(WS, Variables):
                 "clOrdID" not in row
             ):  # The order was placed from the exchange web interface
                 var.last_order += 1
-                clOrdID = str(var.last_order) + "." + row["symbol"]
+                clOrdID = str(var.last_order) + "." + ".".join(row["symbol"])
                 var.orders[clOrdID] = {
                     "leavesQty": row["leavesQty"],
                     "price": row["price"],
@@ -1302,7 +1302,7 @@ def handler_order(event) -> None:
                 label1 = tk.Label(frame_up, justify="left")
                 label1["text"] = (
                     "number\t"
-                    + str(row_position)
+                    + str(row_position[0])
                     + "\nsymbol\t"
                     + ".".join(var.orders[clOrdID]["SYMBOL"])
                     + "\nside\t"
