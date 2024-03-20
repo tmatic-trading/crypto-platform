@@ -2,7 +2,7 @@
 
 # Trading platform designed for automated trading on the Bitmex crypto exchange
 
-![Image](https://github.com/evgrmn/tmatic/blob/prod/timatic240320.gif)
+![Image](https://github.com/evgrmn/tmatic/blob/prod/timatic240320.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.5+
 
