@@ -64,13 +64,11 @@ class Variables:
 
     # Frame for the order book
     frame_3row_3col = tk.Frame()
-    frame_3row_3col.grid(row=2, column=1, sticky="N" + "S" + "W" + "E")
+    frame_3row_3col.grid(row=2, column=1, sticky="N" + "S" + "W" + "E", padx=2)
     frame_3row_3col.grid_columnconfigure(0, weight=1)
     frame_3row_3col.grid_rowconfigure(0, weight=1)
 
-    orderbook_frame = tk.Frame(
-        frame_3row_3col, padx=0, pady=0
-    )
+    orderbook_frame = tk.Frame(frame_3row_3col, padx=0, pady=0)
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
@@ -99,7 +97,7 @@ class Variables:
     root.grid_rowconfigure(4, weight=1)
 
     # Information widget
-    
+
     if ostype == "Mac":
         text_info = tk.Text(
             frame_information,
@@ -108,20 +106,20 @@ class Variables:
             highlightthickness=0,
         )
     else:
-         text_info = tk.Text(
+        text_info = tk.Text(
             frame_information,
             height=6,
             width=30,
             bg="gray98",
             highlightthickness=0,
-        )       
+        )
     scroll_info = tk.Scrollbar(frame_information)
     text_info.bind("<Key>", lambda event: text_ignore(event))
     scroll_info.config(command=text_info.yview)
     text_info.config(yscrollcommand=scroll_info.set)
     scroll_info.pack(side="right", fill="y")
     text_info.pack(side="right", fill="both", expand="yes")
-    
+
     # color map
 
     if ostype == "Mac":
@@ -130,16 +128,14 @@ class Variables:
         title_color = label_trading["background"]
         bg_select_color = "systemSelectedTextBackgroundColor"
     else:
-        green_color = "lime green"
-        red_color = "brown1"
+        green_color = "#319d30"
+        red_color = "#da3d00"
         title_color = label_trading["background"]
         bg_select_color = "khaki1"
 
     title_color = label_trading["background"]
     bg_color = text_info["background"]
     fg_color = label_trading["foreground"]
-    bg_list_box = {"Buy": bg_color, "Sell": bg_color}
-    fg_list_box = {"Buy": green_color, "Sell": red_color}
     fg_select_color = fg_color
 
     # Orders widget
@@ -355,7 +351,37 @@ class ListBoxTable(Variables):
         sub.bind("<Configure>", lambda event: event_config(event, canvas))
         canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
         canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
-        self.listboxes = []
+        if self.ostype == "Mac":
+            self.item_color = {
+                "Buy": {
+                    "bg": self.bg_color,
+                    "fg": self.green_color,
+                    "selectbackground": self.bg_color,
+                    "selectforeground": self.green_color,
+                },
+                "Sell": {
+                    "bg": self.bg_color,
+                    "fg": self.red_color,
+                    "selectbackground": self.bg_color,
+                    "selectforeground": self.red_color,
+                },
+            }
+        else:
+            self.item_color = {
+                "Buy": {
+                    "bg": "#e3f3cf",
+                    "fg": self.fg_color,
+                    "selectbackground": "#e3f3cf",
+                    "selectforeground": self.fg_color,
+                },
+                "Sell": {
+                    "bg": "#feede0",
+                    "fg": self.fg_color,
+                    "selectbackground": "#feede0",
+                    "selectforeground": self.fg_color,
+                },
+            }
+        self.listboxes = list()
         for num, name in enumerate(title):
             value = (
                 [
@@ -383,9 +409,7 @@ class ListBoxTable(Variables):
                 )
             )
             if title_on:
-                self.listboxes[num].itemconfig(
-                    0, bg=self.title_color
-                )
+                self.listboxes[num].itemconfig(0, bg=self.title_color)
             self.listboxes[num].grid(
                 row=0, padx=0, column=num, sticky="N" + "S" + "W" + "E"
             )
@@ -417,21 +441,16 @@ class ListBoxTable(Variables):
             listbox.delete(self.mod, tk.END)
 
     def update(self, row: int, elements: list) -> None:
-        color = self.listboxes[0].itemcget(row + self.mod, "background")
+        pass
+        '''color = self.listboxes[0].itemcget(row + self.mod, "background")
         color_fg = self.listboxes[0].itemcget(row + self.mod, "foreground")
         self.delete(row + self.mod)
         self.insert(row + self.mod, elements)
-        self.paint(row + self.mod, color, color_fg)
+        self.paint(row + self.mod, color, color_fg)'''
 
-    def paint(self, row: int, color: str, color_fg: str) -> None:
+    def paint(self, row: int, side: str) -> None:
         for listbox in self.listboxes:
-            listbox.itemconfig(
-                row + self.mod,
-                bg=color,
-                fg=color_fg,
-                selectbackground=color,
-                selectforeground=color_fg,
-            )
+            listbox.itemconfig(row + self.mod, **self.item_color[side])
 
     def insert_columns(self, sort=True) -> None:
         """
@@ -440,19 +459,19 @@ class ListBoxTable(Variables):
         not row-by-row.
         """
         if sort:
-            if self.columns[0]: # sort by time
+            if self.columns[0]:  # sort by time
                 self.columns = zip(*self.columns)
                 self.columns = list(
                     map(
                         lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
                         self.columns,
                     )
-                )   
+                )
                 self.columns.sort(key=lambda x: x[-1], reverse=True)
                 self.columns = zip(*self.columns)
-                self.columns = list(map(lambda x: list(x[: self.table_limit]), self.columns))[
-                    :-1
-                ]
+                self.columns = list(
+                    map(lambda x: list(x[: self.table_limit]), self.columns)
+                )[:-1]
         self.height = len(self.columns[0]) + 1
         for num, listbox in enumerate(self.listboxes):
             listbox.delete(self.mod, tk.END)
@@ -473,16 +492,10 @@ class ListBoxTable(Variables):
         for num, column in enumerate(self.columns):
             for row in range(self.mod, len(column)):
                 if name == "Funding":
-                    side = "Buy" if float(self.columns[col][row]) < 0 else "Sell"
+                    side = "Buy" if float(self.columns[col][row]) > 0 else "Sell"
                 else:
                     side = self.columns[col][row]
-                self.listboxes[num].itemconfig(
-                    row,
-                    bg=self.bg_list_box[side],
-                    fg=self.fg_list_box[side],
-                    selectbackground=self.bg_list_box[side],
-                    selectforeground=self.fg_list_box[side],
-                )
+                self.listboxes[num].itemconfig(row, **self.item_color[side])
 
     def clear_columns(self, name: str) -> None:
         for num, listbox in enumerate(self.listboxes):
