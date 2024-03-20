@@ -595,8 +595,8 @@ class Function(WS, Variables):
         orders.paint(row=0, color=disp.bg_list_box[side], color_fg=disp.fg_list_box[side])
 
 
-        #print("---------orders---------")
-        #print(var.orders.keys(), sep = "\n")
+        print("---------orders---------")
+        print(var.orders.keys(), sep = "\n")
 
 
     def volume(self, qty: int, symbol: tuple) -> str:

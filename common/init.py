@@ -212,8 +212,15 @@ class Init(WS, Variables):
             order["datetime"] = datetime.strptime(
                     order["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
             )
+        orders.clear_all()
+        values = list(var.orders.values())
+        values.sort(key=lambda x: x["datetime"])
+        var.orders = OrderedDict()
+        for val in reversed(values):
+            var.orders[val["clOrdID"]] = val
         for val in list(var.orders.values()):
             Function.fill_columns(self, func=Function.orders_display, table=orders, val=val)
+
 
     def initial_ticker_values(self) -> None:
         for symbol in self.symbol_list:

@@ -34,7 +34,6 @@ class Variables:
         ostype = "Linux"
 
     num_robots = 1
-    # yellow_color = "khaki1"
     num_book = 21  # Must be odd
     frame_state = tk.Frame(padx=10)
     frame_state.grid(row=0, column=0, sticky="W", columnspan=2)
@@ -69,10 +68,9 @@ class Variables:
     frame_3row_3col.grid_columnconfigure(0, weight=1)
     frame_3row_3col.grid_rowconfigure(0, weight=1)
 
-    # frame_3row_3col.grid_rowconfigure(1, weight=200)
     orderbook_frame = tk.Frame(
         frame_3row_3col, padx=0, pady=0
-    )  # , background=title_color)
+    )
     orderbook_frame.grid(row=0, column=0, sticky="N" + "S" + "W" + "E")
 
     # Frame for orders and funding
@@ -135,7 +133,7 @@ class Variables:
         green_color = "lime green"
         red_color = "brown1"
         title_color = label_trading["background"]
-        bg_select_color = "yellow"
+        bg_select_color = "khaki1"
 
     title_color = label_trading["background"]
     bg_color = text_info["background"]
@@ -160,7 +158,6 @@ class Variables:
         notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
-    # print("platform:", root.tk.call('tk', 'windowingsystem'), platform.system()) # aqua, Darwin
     style = ttk.Style()
     style.configure("TNotebook", borderwidth=0)
     style.configure("TNotebook.Tab", background="gray90")
@@ -436,25 +433,26 @@ class ListBoxTable(Variables):
                 selectforeground=color_fg,
             )
 
-    def insert_columns(self) -> None:
+    def insert_columns(self, sort=True) -> None:
         """
         Because the Listbox widget is slow to perform insert operations on
         macOS, the initial filling of tables is done column-by-column,
         not row-by-row.
         """
-        if self.columns[0]: # bsort by time
-            self.columns = zip(*self.columns)
-            self.columns = list(
-                map(
-                    lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
-                    self.columns,
-                )
-            )   
-            self.columns.sort(key=lambda x: x[-1], reverse=True)
-            self.columns = zip(*self.columns)
-            self.columns = list(map(lambda x: list(x[: self.table_limit]), self.columns))[
-                :-1
-            ]
+        if sort:
+            if self.columns[0]: # sort by time
+                self.columns = zip(*self.columns)
+                self.columns = list(
+                    map(
+                        lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
+                        self.columns,
+                    )
+                )   
+                self.columns.sort(key=lambda x: x[-1], reverse=True)
+                self.columns = zip(*self.columns)
+                self.columns = list(map(lambda x: list(x[: self.table_limit]), self.columns))[
+                    :-1
+                ]
         self.height = len(self.columns[0]) + 1
         for num, listbox in enumerate(self.listboxes):
             listbox.delete(self.mod, tk.END)
