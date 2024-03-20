@@ -566,7 +566,7 @@ class Function(WS, Variables):
             return elements
         funding.insert(row=0, elements=elements)
         side = "Buy" if val["COMMISS"] < 0 else "Sell"
-        trades.paint(row=0, side=side)
+        funding.paint(row=0, side=side)
 
     def orders_display(self, val: dict, init=False) -> Union[None, list]:
         """
@@ -593,7 +593,7 @@ class Function(WS, Variables):
         if init:
             return elements
         orders.insert(row=0, elements=elements)
-        trades.paint(row=0, side=val["SIDE"])
+        orders.paint(row=0, side=val["SIDE"])
 
 
         print("---------orders---------")
@@ -1499,12 +1499,6 @@ def handler_orderbook(event, row_position: int) -> None:
         frame_market_ask = tk.Frame(book_window)
         frame_market_bid = tk.Frame(book_window)
         frame_robots = tk.Frame(book_window)
-        sell_market = tk.Button(
-            book_window, text="Sell Market", command=callback_sell_limit
-        )
-        buy_market = tk.Button(
-            book_window, text="Buy Market", command=callback_buy_limit
-        )
         sell_limit = tk.Button(
             book_window, text="Sell Limit", command=callback_sell_limit
         )
@@ -1546,8 +1540,6 @@ def handler_orderbook(event, row_position: int) -> None:
         label_ask = tk.Label(frame_market_ask, text="Price:")
         label_bid = tk.Label(frame_market_bid, text="Price:")
         label_quantity = tk.Label(frame_quantity, text="Quantity:")
-        sell_market.grid(row=0, column=0, sticky="N" + "S" + "W" + "E", pady=10)
-        buy_market.grid(row=0, column=1, sticky="N" + "S" + "W" + "E", pady=10)
         label_robots = tk.Label(frame_robots, text="EMI:")
         emi_number = tk.StringVar()
         options = list()
@@ -1752,7 +1744,7 @@ def load_labels() -> None:
         name="position",
         size=max(5, var.position_rows + 1),
         title=var.name_position,
-        column_width = 45, 
+        column_width = 35, 
         canvas_height=65,
         bind=handler_pos,
         color=disp.bg_color,

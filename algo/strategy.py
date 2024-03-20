@@ -21,7 +21,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     buy_price = function.ticksize_rounding(
         price=(ticker["bid"] - indent), ticksize=instrument["tickSize"]
     )
-    if frame[-1]["ask"] < frame[-1 - period]["ask"]:
+    if frame[-1]["ask"] > frame[-1 - period]["ask"]:
         buy_quantaty = quantaty - robot["POS"]
         clOrdID = order_search(emi=emi, side="Buy")
         # Move an existing order
@@ -50,7 +50,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
                     qty=buy_quantaty,
                 )
                 delete_orders(ws, emi=emi, side="Sell")
-    elif frame[-1]["bid"] >= frame[-1 - period]["bid"]:
+    elif frame[-1]["bid"] <= frame[-1 - period]["bid"]:
         sell_quantaty = quantaty + robot["POS"]
         clOrdID = order_search(emi=emi, side="Sell")
         # Move an existing order
@@ -88,7 +88,7 @@ def init_variables(robot: dict):
 def order_search(emi: int, side: str) -> str:
     res = ""
     for clOrdID, order in var.orders.items():
-        if order["emi"] == emi and order["side"] == side:
+        if order["EMI"] == emi and order["SIDE"] == side:
             res = clOrdID
             break
 
@@ -97,5 +97,5 @@ def order_search(emi: int, side: str) -> str:
 
 def delete_orders(ws, emi: int, side: str) -> None:
     for clOrdID, order in var.orders.copy().items():
-        if order["emi"] == emi and order["side"] == side:
+        if order["EMI"] == emi and order["SIDE"] == side:
             Function.del_order(ws, clOrdID=clOrdID)
