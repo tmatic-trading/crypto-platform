@@ -538,7 +538,7 @@ class Function(WS, Variables):
         if init:
             return elements
         trades.insert(row=0, elements=elements)
-        trades.paint(row=0, color=disp.bg_list_box[val["SIDE"]], color_fg=disp.fg_list_box[val["SIDE"]])
+        trades.paint(row=0, side=val["SIDE"])
 
 
     def funding_display(self, val: dict, init=False) -> Union[None, list]:
@@ -558,13 +558,15 @@ class Function(WS, Variables):
                 number=float(val["PRICE"]),
                 symbol=val["SYMBOL"],
             ),
-            "{:.7f}".format(val["COMMISS"]),
+            "{:.7f}".format(-val["COMMISS"]),
             val["QTY"], 
             val["EMI"],
         ]
         if init:
             return elements
         funding.insert(row=0, elements=elements)
+        side = "Buy" if val["COMMISS"] < 0 else "Sell"
+        trades.paint(row=0, side=side)
 
     def orders_display(self, val: dict, init=False) -> Union[None, list]:
         """
@@ -591,8 +593,7 @@ class Function(WS, Variables):
         if init:
             return elements
         orders.insert(row=0, elements=elements)
-        side = val["SIDE"]
-        orders.paint(row=0, color=disp.bg_list_box[side], color_fg=disp.fg_list_box[side])
+        trades.paint(row=0, side=val["SIDE"])
 
 
         print("---------orders---------")
