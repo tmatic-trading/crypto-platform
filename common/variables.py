@@ -1,16 +1,16 @@
+# from api.api import WS
+import logging
 import os
 import time
 from collections import OrderedDict
 from datetime import datetime
-#from api.api import WS
-import logging
 
 from dotenv import dotenv_values
-
 
 if not os.path.isfile(".env"):
     print("The .env file does not exist.")
     exit(1)
+
 
 class Variables:
     orders = OrderedDict()
@@ -18,23 +18,24 @@ class Variables:
     account_rows = 0
     env = dotenv_values(".env")
     market_list = env["MARKET_LIST"].replace(",", " ").split()
-    CATEGORIES = {
-    "LINEAR": "linear", 
-    "INVERSE": "inverse",
-    "QUANTO": "quanto",
-    "SPOT": "spot",
-    "OPTION": "option",
-    }
+    CATEGORIES = OrderedDict()
+    CATEGORIES["LINEAR"] = "linear"
+    CATEGORIES["INVERSE"] = "inverse"
+    CATEGORIES["QUANTO"] = "quanto"
+    CATEGORIES["SPOT"] = "spot"
+    CATEGORIES["OPTION"] = "option"
     for market_name in market_list:
         env[market_name] = dotenv_values(".env." + market_name)
         env[market_name]["SYMBOLS"] = list()
         for CATEGORY, category in CATEGORIES.items():
-            tmp = CATEGORY+"_SYMBOLS"
+            tmp = CATEGORY + "_SYMBOLS"
             if tmp in env[market_name]:
                 tmp_list = env[market_name][tmp].replace(",", " ").split()
             for symbol in tmp_list:
                 env[market_name]["SYMBOLS"] += [(symbol, category)]
-        env[market_name]["CURRENCIES"] = env[market_name]["CURRENCIES"].replace(",", " ").split()
+        env[market_name]["CURRENCIES"] = (
+            env[market_name]["CURRENCIES"].replace(",", " ").split()
+        )
         position_rows += len(env[market_name]["SYMBOLS"])
         account_rows += len(env[market_name]["CURRENCIES"])
     if env["ORDER_BOOK_DEPTH"] == "orderBook10":
@@ -47,7 +48,7 @@ class Variables:
     name_robots = [
         "EMI",
         "SYMBOL",
-        "CATEGORY", 
+        "CATEGORY",
         "CURRENCY",
         "TIMEFR",
         "CAPITAL",
@@ -69,7 +70,7 @@ class Variables:
     ]
     name_position = [
         "SYMBOL",
-        "CAT", 
+        "CAT",
         "POS",
         "ENTRY",
         "PNL",
@@ -92,8 +93,8 @@ class Variables:
     name_trade = [
         "TIME",
         "SYMBOL",
-        "CAT", 
-        "EXCH", 
+        "CAT",
+        "EXCH",
         "SIDE",
         "PRICE",
         "QTY",
@@ -102,11 +103,11 @@ class Variables:
     name_funding = [
         "TIME",
         "SYMBOL",
-        "CAT", 
-        "EXCH", 
+        "CAT",
+        "EXCH",
         "PRICE",
         "PNL",
-        "QTY", 
+        "QTY",
         "EMI",
     ]
     name_market = [

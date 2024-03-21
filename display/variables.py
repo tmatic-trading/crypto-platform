@@ -39,11 +39,11 @@ class Variables:
     frame_state.grid(row=0, column=0, sticky="W", columnspan=2)
     labels = dict()
     labels_cache = dict()
-    label_trading = tk.Label(frame_state, text="  TRADING: ")  # , foreground=fg_color)
+    label_trading = tk.Label(frame_state, text="  TRADING: ")
     label_trading.pack(side="left")
     label_f9 = tk.Label(frame_state, text="OFF", fg="white")
     label_f9.pack(side="left")
-    label_time = tk.Label()  # foreground=fg_color
+    label_time = tk.Label()
     label_time.grid(row=0, column=2, sticky="E")
 
     frame_2row_1_2_3col = tk.Frame()
@@ -130,10 +130,10 @@ class Variables:
     else:
         green_color = "#319d30"
         red_color = "#dc6537"
+        label_trading.config(bg="gray83")
         title_color = label_trading["background"]
         bg_select_color = "khaki1"
 
-    title_color = label_trading["background"]
     bg_color = text_info["background"]
     fg_color = label_trading["foreground"]
     fg_select_color = fg_color
