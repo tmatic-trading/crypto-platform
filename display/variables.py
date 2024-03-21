@@ -129,7 +129,7 @@ class Variables:
         bg_select_color = "systemSelectedTextBackgroundColor"
     else:
         green_color = "#319d30"
-        red_color = "#da3d00"
+        red_color = "#dc6537"
         title_color = label_trading["background"]
         bg_select_color = "khaki1"
 
@@ -155,7 +155,7 @@ class Variables:
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
     style = ttk.Style()
-    style.configure("TNotebook", borderwidth=0)
+    style.configure("TNotebook", borderwidth=0, background="gray90")
     style.configure("TNotebook.Tab", background="gray90")
     style.map("TNotebook.Tab", background=[("selected", title_color)])
     notebook.pack(expand=1, fill="both")

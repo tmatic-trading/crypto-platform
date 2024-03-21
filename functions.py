@@ -566,7 +566,7 @@ class Function(WS, Variables):
             return elements
         funding.insert(row=0, elements=elements)
         side = "Buy" if val["COMMISS"] < 0 else "Sell"
-        trades.paint(row=0, side=side)
+        funding.paint(row=0, side=side)
 
     def orders_display(self, val: dict, init=False) -> Union[None, list]:
         """
@@ -593,7 +593,7 @@ class Function(WS, Variables):
         if init:
             return elements
         orders.insert(row=0, elements=elements)
-        trades.paint(row=0, side=val["SIDE"])
+        orders.paint(row=0, side=val["SIDE"])
 
 
         print("---------orders---------")
@@ -941,7 +941,7 @@ class Function(WS, Variables):
             )
             display_order_book_values(val=val, start=num, end=0 - mod, direct=-1, side="asks")
 
-        # Update Robots table
+        # Refresh Robots table
 
         mod = Tables.robots.mod
         for num, emi in enumerate(self.robots):
@@ -1499,12 +1499,6 @@ def handler_orderbook(event, row_position: int) -> None:
         frame_market_ask = tk.Frame(book_window)
         frame_market_bid = tk.Frame(book_window)
         frame_robots = tk.Frame(book_window)
-        sell_market = tk.Button(
-            book_window, text="Sell Market", command=callback_sell_limit
-        )
-        buy_market = tk.Button(
-            book_window, text="Buy Market", command=callback_buy_limit
-        )
         sell_limit = tk.Button(
             book_window, text="Sell Limit", command=callback_sell_limit
         )
@@ -1546,8 +1540,6 @@ def handler_orderbook(event, row_position: int) -> None:
         label_ask = tk.Label(frame_market_ask, text="Price:")
         label_bid = tk.Label(frame_market_bid, text="Price:")
         label_quantity = tk.Label(frame_quantity, text="Quantity:")
-        sell_market.grid(row=0, column=0, sticky="N" + "S" + "W" + "E", pady=10)
-        buy_market.grid(row=0, column=1, sticky="N" + "S" + "W" + "E", pady=10)
         label_robots = tk.Label(frame_robots, text="EMI:")
         emi_number = tk.StringVar()
         options = list()
@@ -1685,7 +1677,7 @@ def find_order(price: float, qty: int, symbol: str) -> int:
 
 def handler_robots(event, row_position: int) -> None:
     emi = None
-    ws = Websockets.connect[var.current_exchange]
+    ws = Websockets.connect[var.current_market]
     for val in ws.robots:
         if ws.robots[val]["y_position"] == row_position:
             emi = val
@@ -1697,10 +1689,10 @@ def handler_robots(event, row_position: int) -> None:
                 row = ws.robots[val]["y_position"]
                 if ws.robots[emi]["STATUS"] == "WORK":
                     ws.robots[emi]["STATUS"] = "OFF"
-                    disp.labels["robots"][5][row]["fg"] = "red"
+                    disp.labels["robots"][row][6]["fg"] = disp.red_color
                 else:
                     ws.robots[emi]["STATUS"] = "WORK"
-                    disp.labels["robots"][5][row]["fg"] = "#212121"
+                    disp.labels["robots"][row][6]["fg"] = disp.fg_color
                 on_closing()
 
             def on_closing():
@@ -1752,7 +1744,7 @@ def load_labels() -> None:
         name="position",
         size=max(5, var.position_rows + 1),
         title=var.name_position,
-        column_width = 45, 
+        column_width = 35, 
         canvas_height=65,
         bind=handler_pos,
         color=disp.bg_color,
