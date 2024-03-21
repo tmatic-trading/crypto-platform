@@ -941,7 +941,7 @@ class Function(WS, Variables):
             )
             display_order_book_values(val=val, start=num, end=0 - mod, direct=-1, side="asks")
 
-        # Update Robots table
+        # Refresh Robots table
 
         mod = Tables.robots.mod
         for num, emi in enumerate(self.robots):
@@ -1677,7 +1677,7 @@ def find_order(price: float, qty: int, symbol: str) -> int:
 
 def handler_robots(event, row_position: int) -> None:
     emi = None
-    ws = Websockets.connect[var.current_exchange]
+    ws = Websockets.connect[var.current_market]
     for val in ws.robots:
         if ws.robots[val]["y_position"] == row_position:
             emi = val
@@ -1689,10 +1689,10 @@ def handler_robots(event, row_position: int) -> None:
                 row = ws.robots[val]["y_position"]
                 if ws.robots[emi]["STATUS"] == "WORK":
                     ws.robots[emi]["STATUS"] = "OFF"
-                    disp.labels["robots"][5][row]["fg"] = "red"
+                    disp.labels["robots"][row][6]["fg"] = disp.red_color
                 else:
                     ws.robots[emi]["STATUS"] = "WORK"
-                    disp.labels["robots"][5][row]["fg"] = "#212121"
+                    disp.labels["robots"][row][6]["fg"] = disp.fg_color
                 on_closing()
 
             def on_closing():
