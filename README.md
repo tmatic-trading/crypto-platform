@@ -36,7 +36,7 @@ Although the software can be used for manual trading, it is mainly intended to b
 
 You can use your local computer to run the software, but for stable 24/7 operation, it is highly recommended to use a remote server. For these purposes, it is enough to subscribe to any VPS (Virtual Private Server) with 4GB of memory and several gigabytes of free disk space after installing the operating system and the required packages. To monitor the server, you can utilize the standard capabilities provided by the VPS provider or use, for example, ssh+vncviewer tools.
 
-Python is a cross-platform programming language, so it is suitable for both Windows and Linux. It is more convenient for the server to use Linux with any current distribution at the moment, e.g. Debian 11.
+Python is a cross-platform programming language, so it is suitable for Windows, Linux and macOS. It is more convenient for the server to use Linux with any current distribution at the moment, e.g. Debian 11.
 
 Before running the program on a real account, it is strongly recommended to debug it on the test circuit [testnet.bitmex.com](https://testnet.bitmex.com). A local computer is sufficient to debug the software.
 
@@ -187,12 +187,12 @@ TESTNET_API_KEY = "your testnet API key"
 TESTNET_API_SECRET = "your testnet API secret"
 ```
 
-Check the LINEAR_SYMBOLS, INVERSE_SYMBOLS, QUANTO_SYMBOLS, SPOT_SYMBOLS, OPTION_SYMBOLS variables where there should be at least one instrument symbol, for example XBTUSD. Check the CURRENCIES variable where your account currencies should be. If your account supports multiple currencies, specify them if necessary, for example: "XBt, USDt", where XBt is Bitcoin, USDt is Tether stablecoin.
+Check the LINEAR_SYMBOLS, INVERSE_SYMBOLS, QUANTO_SYMBOLS, SPOT_SYMBOLS, OPTION_SYMBOLS variables where there should be at least one instrument symbol, for example XBTUSD for INVERSE_SYMBOLS field. Check the CURRENCIES variable where your account currencies should be. If your account supports multiple currencies, specify them if necessary, for example: "XBt, USDt", where XBt is Bitcoin, USDt is Tether stablecoin.
 
-Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date an time depending on your needs. For example, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the "coins" table. Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history.
+Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date an time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the "coins" table. Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history.
 
 Launch the program:
-- in Linux and macOS terminal ```python3 main.py```
+- in Linux or macOS terminal ```python3 main.py```
 - in Windows command prompt (cmd.exe) ```python main.py```
 
 ## How it works
@@ -383,7 +383,7 @@ def delete_orders(ws, emi: int, side: str) -> None:
             Function.del_order(ws, clOrdID=clOrdID)
 ```
 Launch the program:
-- in Linux terminal ```python3 main.py```
+- in Linux or macOS terminal ```python3 main.py```
 - in Windows command prompt (cmd.exe) ```python main.py```
 
 Press ```F9```
