@@ -2,9 +2,9 @@
 
 # Trading platform designed for automated trading on the Bitmex crypto exchange
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/SampleTmatic.gif)
+![Image](https://github.com/evgrmn/tmatic/blob/main/tmatic.png)
 
-Working condition tested on Linux and Windows, Python 3.5+
+Working condition tested on Linux, Windows and macOS, Python 3.5+
 
 This software is designed for trading on the [Bitmex.com](https://www.bitmex.com) marketplace.
 
@@ -36,36 +36,14 @@ Although the software can be used for manual trading, it is mainly intended to b
 
 You can use your local computer to run the software, but for stable 24/7 operation, it is highly recommended to use a remote server. For these purposes, it is enough to subscribe to any VPS (Virtual Private Server) with 4GB of memory and several gigabytes of free disk space after installing the operating system and the required packages. To monitor the server, you can utilize the standard capabilities provided by the VPS provider or use, for example, ssh+vncviewer tools.
 
-Python is a cross-platform programming language, so it is suitable for both Windows and Linux. It is more convenient for the server to use Linux with any current distribution at the moment, e.g. Debian 11.
+Python is a cross-platform programming language, so it is suitable for Windows, Linux and macOS. It is more convenient for the server to use Linux with any current distribution at the moment, e.g. Debian 11.
 
 Before running the program on a real account, it is strongly recommended to debug it on the test circuit [testnet.bitmex.com](https://testnet.bitmex.com). A local computer is sufficient to debug the software.
 
 ## Installation on local computer
 
-1. Create a new folder and download the program there.
-2. This is not required, but it is recommended to install and activate the venv virtual environment to avoid installing Python packages globally. So, in the new folder run the commands:
-
-*For Linux:*
-
-```
-python3 -m venv venv
-```
-```
-source venv/bin/activate
-```
-
-*For Windows:*
-
-```
-python -m venv venv
-```
-```
-.\venv\Scripts\activate
-```
-
-3. Install the packages:
-
-*For both Windows and Linux:*
+1. Create a new folder and download the program there. *This is not required, but it is recommended to install and activate the venv virtual environment to avoid installing Python packages globally.*
+2. Install the packages:
 
 ```
 pip3 install pymysql
@@ -92,10 +70,12 @@ CREATE DATABASE my_db;
 CREATE TABLE my_db.coins (
   `ID` int NOT NULL AUTO_INCREMENT,
   `EXECID` varchar(45) DEFAULT NULL,
-  `EMI` varchar(20) DEFAULT NULL,
+  `EMI` varchar(25) DEFAULT NULL,
   `REFER` varchar(20) DEFAULT NULL,
+  `MARKET` varchar(20) DEFAULT NULL,
   `CURRENCY` varchar(10) DEFAULT NULL,
   `SYMBOL` varchar(20) DEFAULT NULL,
+  `CATEGORY` varchar(10) DEFAULT NULL,
   `SIDE` tinyint DEFAULT NULL,
   `QTY` int DEFAULT NULL,
   `QTY_REST` int DEFAULT NULL,
@@ -104,7 +84,7 @@ CREATE TABLE my_db.coins (
   `TRADE_PRICE` decimal(16,8) DEFAULT NULL,
   `SUMREAL` decimal(19,12) DEFAULT NULL,
   `COMMISS` decimal(19,15) DEFAULT '0.000000000000000',
-  `TTIME` datetime NULL DEFAULT NULL,
+  `TTIME` datetime DEFAULT NULL,
   `DAT` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `CLORDID` int DEFAULT '0',
   `ACCOUNT` int DEFAULT '0',
@@ -118,6 +98,8 @@ CREATE TABLE my_db.coins (
 CREATE TABLE my_db.robots (
   `EMI` varchar(20) DEFAULT NULL,
   `SYMBOL` varchar(20) DEFAULT NULL,
+  `CATEGORY` varchar(10) DEFAULT NULL,
+  `MARKET` varchar(20) DEFAULT NULL,
   `SORT` tinyint DEFAULT NULL,
   `DAT` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `TIMEFR` tinyint DEFAULT '0',
@@ -129,10 +111,12 @@ CREATE TABLE my_db.robots (
 The "coins" table is filled with data from the ```/execution``` or ```/execution/tradeHistory``` endpoints. Explanations for the columns of the “coins” table:
 * ID - row number in the database.
 * EXECID - unique code that Bitmex assigns to any transaction.
-* EMI - identification name of a bot, the same as the EMI field of the "robots" table. This name is taken from the "clOrdID" field of ```/execution``` or ```/execution/tradeHistory``` endpoint. For example, EMI = "myBot" for ```{"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}```. If the "clOrdID" field is empty, then "symbol" value is written to the EMI field. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the "robots" table, then "symbol" value is also assigned.
+* EMI - identification name of a bot, the same as the EMI field of the "robots" table. This name is taken from the "clOrdID" field of ```/execution``` or ```/execution/tradeHistory``` endpoint. For example, EMI = ```"myBot"``` for ```{"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}```. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them, for example ```"XBTUSD.inverse"```. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the "robots" table, then "symbol" value is also assigned.
 * REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}```.
+* MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
 * SYMBOL - instrument symbol, for example "XBTUSD".
+* CATEGORY - instrument category. Possible values: "linear", "inverse", "quanto", "spot", "option".
 * SIDE - side of a transaction: 0 - "buy", 1 - "sell", -1 - "funding".
 * QTY - transaction volume.
 * QTY_REST - rest of transaction volume after partial execution.
@@ -149,6 +133,8 @@ The "coins" table is filled with data from the ```/execution``` or ```/execution
 Explanations for the columns of the "robots" table:
 * EMI - bot identity name. String format.
 * SYMBOL - instrument symbol, for example "XBTUSD".
+* CATEGORY - instrument category. Possible values: "linear", "inverse", "quanto", "spot", "option".
+* MARKET - name of the exchange.
 * SORT - allows you to do your own sorting when reading from the database.
 * DAT - time the current row was written to the database.
 * TIMEFR - timeframe that the bot uses, expressed in minutes.
@@ -164,38 +150,58 @@ Get your API key and secret code at [testnet.bitmex.com/app/apiKeys](https://tes
 Create a new file named ```.env``` in the program's root folder with your settings. The file might look like this:
 
 ```python
-SYMBOLS = "XBTUSD, ETHUSD, XBTUSDT"
-CURRENCIES = "XBt, USDt"
-EXCHANGE_API_URL = "https://testnet.bitmex.com/api/v1/"
-EXCHANGE_API_KEY = "your API key"
-EXCHANGE_API_SECRET = "your API secret"
+MARKET_LIST = "Bitmex"
 MYSQL_HOST = "localhost"
 MYSQL_USER = "root"
 MYSQL_PASSWORD = "your password"
 MYSQL_DATABASE = "your database name"
 ORDER_BOOK_DEPTH = "orderBook10"
 REFRESH_RATE = "5"
+TESTNET = "True"
 ```
+
+- MARKET_LIST currently only supports Bitmext exchange.
 
 - ORDER_BOOK_DEPTH is a choice between "orderBook10" which allows you to see the order book ten lines deep, and "quote" which shows only the best buy and sell while reducing network traffic by about 3 times.
 
 - REFRESH_RATE refers to how often the information on the screen is refreshed, ranging from 1 to 10 times per second.
 
-Check the SYMBOLS variable where there should be at least one instrument symbol, for example XBTUSD. Check the CURRENCIES variable where your account currencies should be. If your account supports multiple currencies, specify them if necessary, for example: "XBt, USDt", where XBt is Bitcoin, USDt is Tether stablecoin.
+- TESTNET - choose between the main and test networks.
 
-Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date an time depending on your needs. For example, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the "coins" table. Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history.
+Create a new file named ```.env.Bitmex`` in the root folder of the program with your settings for the Bitmex exchange. The file might look like this:
+
+```python
+LINEAR_SYMBOLS = "XBTUSDT, SOLUSDT"
+INVERSE_SYMBOLS = "XBTUSD"
+QUANTO_SYMBOLS = "ETHUSD"
+SPOT_SYMBOLS = ""
+OPTION_SYMBOLS = ""
+CURRENCIES = "XBt, USDt"
+HTTP_URL = "https://www.bitmex.com/api/v1/"
+WS_URL = "wss://ws.bitmex.com/realtime"
+API_KEY = "your API key"
+API_SECRET = "your API secret"
+TESTNET_HTTP_URL = "https://testnet.bitmex.com/api/v1/"
+TESTNET_WS_URL = "wss://testnet.bitmex.com/realtime"
+TESTNET_API_KEY = "your testnet API key"
+TESTNET_API_SECRET = "your testnet API secret"
+```
+
+Check the LINEAR_SYMBOLS, INVERSE_SYMBOLS, QUANTO_SYMBOLS, SPOT_SYMBOLS, OPTION_SYMBOLS variables where there should be at least one instrument symbol, for example XBTUSD for INVERSE_SYMBOLS field. Check the CURRENCIES variable where your account currencies should be. If your account supports multiple currencies, specify them if necessary, for example: "XBt, USDt", where XBt is Bitcoin, USDt is Tether stablecoin.
+
+Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date an time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the "coins" table. Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history.
 
 Launch the program:
-- in Linux terminal ```python3 main.py```
+- in Linux or macOS terminal ```python3 main.py```
 - in Windows command prompt (cmd.exe) ```python main.py```
 
 ## How it works
 
-Once the program is running, you can submit buy and sell orders by clicking on the order book, then cancel or move orders. However, the point of the program is the possibility of automatic trading around the clock in accordance with the established algorithms. You can use different algorithms for the same financial instrument, distributing balances and financial results separately for each algorithm or, to put it another way, for each bot. This feature is implemented in the program through the key parameter EMI, which is the bot’s identity name. When you submit an order through the program, you pass the "clOrdID" field to Bitmex, which contains the bot's EMI. Thus, after the order is executed, when you receive the transaction parameters, there will also be a “clOrdID” field from which the program finds out the order number of your internal accounting and the bot’s EMI. Consequently, the program will calculate the financial result of a particular bot, its balance and make an entry into the database. Having the entire register of transactions in the database, each time after switching on, the program can correctly recalculate the balances for each bot. The same applies to funding. Bitmex does not know anything about your internal accounting and sends funding data for the position volume for the corresponding instrument. The program distributes funding among bots in accordance with their balances.
+Once the program is running, you can submit buy and sell orders by clicking on the order book, then cancel or move orders. However, the point of the program is the possibility of automatic trading around the clock in accordance with the established algorithms. You can use different algorithms for the same financial instrument, distributing balances and financial results separately for each algorithm or, to put it another way, for each bot. This feature is implemented in the program through the key parameter EMI, which is the bot’s identity name. When you submit an order through the program, you pass the "clOrdID" field to Bitmex, which contains the bot's EMI. Thus, after the order is executed, when you receive the transaction parameters, there will also be a "clOrdID" field from which the program finds out the order number of your internal accounting and the bot’s EMI. Consequently, the program will calculate the financial result of a particular bot, its balance and make an entry into the database. Having the entire register of transactions in the database, each time after switching on, the program can correctly recalculate the balances for each bot. The same applies to funding. Bitmex does not know anything about your internal accounting and sends funding data for the position volume for the corresponding instrument. The program distributes funding among bots in accordance with their balances.
 
-EMI can be equal to the instrument symbol as the default name, for example, if you made a trade from the Bitmex web interface. When the program processes data from the ```/execution``` or ```/execution/tradeHistory``` endpoint and does not find a correspondence between the EMI from the "clOrdID" field and the field in the "robots" table, in this case the EMI may also be equal to the instrument symbol. Sometimes ignoring the "clOrdID" field can be useful when restoring trades to the "coins" table. This will be discussed below.
+EMI can be equal to the instrument symbol as the default name, for example, if you made a trade from the Bitmex web interface. In this case, the EMI may look, for example,  like ```"XBTUSD.inverse"```. When the program processes data from the ```/execution``` or ```/execution/tradeHistory``` endpoint and does not find a correspondence between the EMI from the "clOrdID" field and the field in the "robots" table, in this case the EMI may also be equal to the instrument symbol. Sometimes ignoring the "clOrdID" field can be useful when restoring trades to the "coins" table. This will be discussed below.
 
-Be careful when assigning EMI to bots. Keep in mind that the "clOrdID" field will permanently store the bot's EMI in the Bitmex registries. You can't change it. Different instruments such as XBTUSD and XBTUSDT may have different settlement currencies such as XBt and USDt. Therefore, you should not assign the same EMI to a bot that first traded XBTUSD and then started trading XBTUSDT. The program will not be able to correctly recalculate the financial result. If you once assigned EMI="110" to XBTUSD, then in the future for a bot with EMI="110" the instrument must always have the same currency, because... It is impossible to sum XBt and USDt.
+Be careful when assigning EMI to bots. Keep in mind that the "clOrdID" field will permanently store the bot's EMI in the Bitmex registries. You can't change it. Different instruments such as XBTUSD and XBTUSDT may have different settlement currencies such as XBt and USDt. Therefore, you should not assign the same EMI to a bot that first traded XBTUSD and then started trading XBTUSDT. The program will not be able to correctly recalculate the financial result. If you once assigned EMI="myBot" to XBTUSD, then in the future for a bot with EMI="myBot" the instrument must always have the same currency, because... It is impossible to sum XBt and USDt.
 
 Even if you use the same EMI for different instruments but with the same currency, when switching from one instrument to another, you must ensure that the balance is zero. Let's say you traded XBTUSD and you have 100 purchased contracts left. If you change SYMBOL from XBTUSD to ETHUSD, the program will show 100 purchased contracts, but ETHUSD, which will be an error.
 
@@ -212,7 +218,7 @@ If you have open positions in RESERVED EMI and custom EMI at the same time and y
 
 It may happen that according to your internal accounting, for example, for the XBTUSD instrument one bot has a position of -100, and the other +100. In this case, funding will not come, because... Bitmex has a position of 0 on its balance sheet. You have to come to terms with this fact.
 
-What happens if you place an order from the standard Bitmex trading web interface? Yes, you will see this order in the program with EMI equal the instrument symbol, but only if you are subscibed to a specific instrument in ```.env``` file. You will be able to cancel or move this order.
+What happens if you place an order from the standard Bitmex trading web interface? Yes, you will see this order in the program with EMI equal the instrument symbol, but only if you are subscibed to a specific instrument in ```.env.Bitmex``` file. You will be able to cancel or move this order.
 
 It may happen that you have unclosed positions or active orders on one or another EMI, and you have already removed this EMI from the "robots" table. When you reboot, the program will find EMIs with unclosed positions or orders and add them to the list of bots with the status "NOT DEFINED". Automatic trading with these bots is not possible, but positions can be closed or orders canceled manually.
 
@@ -220,7 +226,7 @@ Possible bot STATUS:
 
 * WORK - the bot is capable of performing transactions automatically. EMI is read from the "robots" table. You also can make transactions manually if trading status ```F9``` is "OFF".
 * OFF - the bot is temporarily disabled from automatic mode. You can make transactions manually.
-* RESERVED - all SYMBOLS from the ```.env``` file receive an additional bot instance with EMI equal to symbol. This status allows you to make transactions manually.
+* RESERVED - all SYMBOLS from the ```.env.Bitmex``` file receive an additional bot instance with EMI equal to symbol and category, for example, ```"XBTUSD.inverse"```. This status allows you to make transactions manually.
 * NOT DEFINED - when loading the program, a bot with a position not equal to zero or active orders was found and this bot is not in the MySQL "robots" table. Positions can be closed manually.
 * NOT IN LIST - when loading the program, a bot with a position not equal to zero was found and its symbol was not found in SYMBOLS of the ```.env``` file. You cannot make trades because you're not subscribed to the symbol in the ```.env``` file. Add symbol to SYMBOLS and restart the program.
 
@@ -244,16 +250,16 @@ Make a new database entry in the "robots" table, for example:
 
 ```SQL
 INSERT INTO my_db.robots (
-  EMI, SYMBOL, SORT, TIMEFR, CAPITAL, MARGIN
+  EMI, SYMBOL, CATEGORY, MARKET, SORT, TIMEFR, CAPITAL, MARGIN
   ) 
   values (
-    "myBot", "XBTUSDT", 1, 5, 1, 1
+    "myBot", "XBTUSDT", "linear", "Bitmex", 1, 1, 1, 1
     );
 ```
 
-*A bot will only appear if its symbol, in this case "XBTUSDT", is included in the SYMBOLS variable in the ```.env``` file.*
+*A bot will only appear if its symbol, in this case "XBTUSDT", is included in the LINEAR_SYMBOLS variable in the ```.env.Bitmex``` file.*
 
-Add the currency "USDt" to CURRENCIES in the ```.env``` file because "USDt" is the settlement currency for "XBTUSDT".
+Add the currency "USDt" to CURRENCIES in the ```.env.Bitmex``` file because "USDt" is the settlement currency for "XBTUSDT".
 
 ```Python
 CURRENCIES = "XBt, USDt"
@@ -267,24 +273,25 @@ Let's say you want to program a simple algorithm, the essence of which is as fol
 ```python
 from bots.variables import Variables as bot
 import algo.strategy
+from api.websockets import Websockets
 
 def init_algo():
+    ws = Websockets.connect["Bitmex"]
     bot.robo["myBot"] = algo.strategy.algo
-    algo.strategy.init_variables(robot=bot.robots["myBot"])
+    algo.strategy.init_variables(robot=ws.robots["myBot"])
 ```
 2. Create a file ```strategy.py``` in the ```algo``` folder:
 ```python
-from common.variables import Variables as var
 import functions as function
+from api.websockets import Websockets
+from common.variables import Variables as var
+from functions import Function
 
 
 def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
+    ws = Websockets.connect[robot["MARKET"]]
     period = robot["PERIOD"]
-    quantaty = (
-        robot["lotSize"]
-        * robot["CAPITAL"]
-        * instrument["myMultiplier"]
-    )
+    quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument["myMultiplier"]
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
     indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
@@ -294,7 +301,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     buy_price = function.ticksize_rounding(
         price=(ticker["bid"] - indent), ticksize=instrument["tickSize"]
     )
-    if frame[-1]["ask"] >= frame[-1 - period]["ask"]:
+    if frame[-1]["ask"] > frame[-1 - period]["ask"]:
         buy_quantaty = quantaty - robot["POS"]
         clOrdID = order_search(emi=emi, side="Buy")
         # Move an existing order
@@ -304,7 +311,8 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
                 or buy_quantaty != var.orders[clOrdID]["leavesQty"]
             ):
                 if robot["POS"] < quantaty:
-                    clOrdID = function.put_order(
+                    clOrdID = Function.put_order(
+                        ws,
                         clOrdID=clOrdID,
                         price=buy_price,
                         qty=buy_quantaty,
@@ -312,15 +320,17 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
         # Place a new order
         else:
             if robot["POS"] < quantaty:
-                clOrdID = function.post_order(
+                clOrdID = Function.post_order(
+                    ws,
+                    name=robot["MARKET"],
                     symbol=symbol,
                     emi=emi,
                     side="Buy",
                     price=buy_price,
                     qty=buy_quantaty,
                 )
-                delete_orders(emi=emi, side="Sell")
-    elif frame[-1]["bid"] < frame[-1 - period]["bid"]:
+                delete_orders(ws, emi=emi, side="Sell")
+    elif frame[-1]["bid"] <= frame[-1 - period]["bid"]:
         sell_quantaty = quantaty + robot["POS"]
         clOrdID = order_search(emi=emi, side="Sell")
         # Move an existing order
@@ -330,7 +340,8 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
                 or sell_quantaty != var.orders[clOrdID]["leavesQty"]
             ):
                 if robot["POS"] > -quantaty:
-                    clOrdID = function.put_order(
+                    clOrdID = Function.put_order(
+                        ws,
                         clOrdID=clOrdID,
                         price=sell_price,
                         qty=sell_quantaty,
@@ -338,14 +349,16 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
         # Place a new order
         else:
             if robot["POS"] > -quantaty:
-                clOrdID = function.post_order(
+                clOrdID = Function.post_order(
+                    ws,
+                    name=robot["MARKET"],
                     symbol=symbol,
                     emi=emi,
                     side="Sell",
                     price=sell_price,
                     qty=sell_quantaty,
                 )
-                delete_orders(emi=emi, side="Buy")
+                delete_orders(ws, emi=emi, side="Buy")
 
 
 def init_variables(robot: dict):
@@ -355,28 +368,24 @@ def init_variables(robot: dict):
 def order_search(emi: int, side: str) -> str:
     res = ""
     for clOrdID, order in var.orders.items():
-        if order["emi"] == emi and order["side"] == side:
+        if order["EMI"] == emi and order["SIDE"] == side:
             res = clOrdID
             break
 
     return res
 
 
-def delete_orders(emi: int, side: str) -> None:
+def delete_orders(ws, emi: int, side: str) -> None:
     for clOrdID, order in var.orders.copy().items():
-        if order["emi"] == emi and order["side"] == side:
-            function.del_order(clOrdID)
+        if order["EMI"] == emi and order["SIDE"] == side:
+            Function.del_order(ws, clOrdID=clOrdID)
 ```
 Launch the program:
-- in Linux terminal ```python3 main.py```
+- in Linux or macOS terminal ```python3 main.py```
 - in Windows command prompt (cmd.exe) ```python main.py```
 
 Press ```F9```
 
 ## Development
 
-Further steps to develop the project may include:
-
-- New features.
-- Code optimization.
-- Connection of other crypto exchanges.
+This project is under development. New functions and connections to other crypto exchanges may appear in the near future.

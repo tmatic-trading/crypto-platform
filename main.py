@@ -5,7 +5,8 @@ from display.variables import Variables as disp
 from display.variables import on_closing
 
 var.logger = common_init.setup_logger()
-connect.connection()
+
+connect.setup()
 
 
 def refresh():
