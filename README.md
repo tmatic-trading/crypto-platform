@@ -104,7 +104,7 @@ CREATE TABLE my_db.robots (
   `DAT` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `TIMEFR` tinyint DEFAULT '0',
   `CAPITAL` int DEFAULT '0',
-  `MARGIN` int DEFAULT '0'
+  `MARGIN` int DEFAULT '0',
   UNIQUE KEY `EMI_UNIQUE` (`EMI`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 ```
@@ -273,27 +273,25 @@ Let's say you want to program a simple algorithm, the essence of which is as fol
 ```python
 from bots.variables import Variables as bot
 import algo.strategy
+from api.websockets import Websockets
 
 def init_algo():
+    ws = Websockets.connect["Bitmex"]
     bot.robo["myBot"] = algo.strategy.algo
-    algo.strategy.init_variables(robot=bot.robots["myBot"])
+    algo.strategy.init_variables(robot=ws.robots["myBot"])
 ```
 2. Create a file ```strategy.py``` in the ```algo``` folder:
 ```python
-from common.variables import Variables as var
 import functions as function
-from functions import Function
 from api.websockets import Websockets
+from common.variables import Variables as var
+from functions import Function
 
 
 def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     ws = Websockets.connect[robot["MARKET"]]
     period = robot["PERIOD"]
-    quantaty = (
-        robot["lotSize"]
-        * robot["CAPITAL"]
-        * instrument["myMultiplier"]
-    )
+    quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument["myMultiplier"]
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
     indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
@@ -314,7 +312,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
             ):
                 if robot["POS"] < quantaty:
                     clOrdID = Function.put_order(
-                        ws, 
+                        ws,
                         clOrdID=clOrdID,
                         price=buy_price,
                         qty=buy_quantaty,
@@ -323,8 +321,8 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
         else:
             if robot["POS"] < quantaty:
                 clOrdID = Function.post_order(
-                    ws, 
-                    name=robot["MARKET"], 
+                    ws,
+                    name=robot["MARKET"],
                     symbol=symbol,
                     emi=emi,
                     side="Buy",
@@ -343,7 +341,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
             ):
                 if robot["POS"] > -quantaty:
                     clOrdID = Function.put_order(
-                        ws, 
+                        ws,
                         clOrdID=clOrdID,
                         price=sell_price,
                         qty=sell_quantaty,
@@ -352,8 +350,8 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
         else:
             if robot["POS"] > -quantaty:
                 clOrdID = Function.post_order(
-                    ws, 
-                    name=robot["MARKET"], 
+                    ws,
+                    name=robot["MARKET"],
                     symbol=symbol,
                     emi=emi,
                     side="Sell",
@@ -370,7 +368,7 @@ def init_variables(robot: dict):
 def order_search(emi: int, side: str) -> str:
     res = ""
     for clOrdID, order in var.orders.items():
-        if order["emi"] == emi and order["side"] == side:
+        if order["EMI"] == emi and order["SIDE"] == side:
             res = clOrdID
             break
 
@@ -379,7 +377,7 @@ def order_search(emi: int, side: str) -> str:
 
 def delete_orders(ws, emi: int, side: str) -> None:
     for clOrdID, order in var.orders.copy().items():
-        if order["emi"] == emi and order["side"] == side:
+        if order["EMI"] == emi and order["SIDE"] == side:
             Function.del_order(ws, clOrdID=clOrdID)
 ```
 Launch the program:

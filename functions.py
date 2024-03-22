@@ -507,7 +507,11 @@ class Function(WS, Variables):
             + info_q,
         )
         var.logger.info(
-            info + row["execType"] + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
+            self.name
+            + " "
+            + info
+            + row["execType"]
+            + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
             row["side"],
             row["orderID"],
             clOrdID,

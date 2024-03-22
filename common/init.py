@@ -243,7 +243,7 @@ class Init(WS, Variables):
                 + "' "
             )
             union = "union "
-        sql += ") T order by id desc limit " + str(disp.table_limit)
+        sql += ") T order by TTIME desc limit " + str(disp.table_limit)
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:
@@ -267,7 +267,7 @@ class Init(WS, Variables):
                 + "' "
             )
             union = "union "
-        sql += ") T order by id desc limit " + str(disp.table_limit)
+        sql += ") T order by TTIME desc limit " + str(disp.table_limit)
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:
