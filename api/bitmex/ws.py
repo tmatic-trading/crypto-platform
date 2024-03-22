@@ -10,11 +10,10 @@ import websocket
 
 from api.init import Setup
 from api.variables import Variables
-#from bots.variables import Variables as bot
-from .api_auth import generate_signature
-from .agent import Agent
-
 from display.functions import info_display
+
+from .agent import Agent
+from .api_auth import generate_signature
 
 
 class Bitmex(Variables):
@@ -144,9 +143,7 @@ class Bitmex(Variables):
                 break
             sleep(0.1)
         count2 = 0
-        while (count <= 30) and (
-            len(self.data["instrument"]) != len(self.symbol_list)
-        ):
+        while (count <= 30) and (len(self.data["instrument"]) != len(self.symbol_list)):
             count2 += 1
             if count2 > 30:  # fails after 3 seconds
                 instr_lack = self.symbol_list.copy()
@@ -167,6 +164,7 @@ class Bitmex(Variables):
         """
         Parses websocket messages.
         """
+
         def generate_key(keys: list, val: dict, table: str) -> tuple:
             if table in ["instrument", "position", "quote", "orderBook10"]:
                 val["category"] = self.symbol_category[val["symbol"]]
@@ -201,9 +199,9 @@ class Bitmex(Variables):
                             self.data[table][key] = val
                 elif action == "insert":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val, table)                    
+                        key = generate_key(self.keys[table], val, table)
                         if table == "quote":
-                            val["category"] = self.symbol_category[val["symbol"]]                            
+                            val["category"] = self.symbol_category[val["symbol"]]
                             if "bidPrice" in val:
                                 self.data[table][key]["bidPrice"] = val["bidPrice"]
                                 self.data[table][key]["bidSize"] = val["bidSize"]
@@ -212,7 +210,10 @@ class Bitmex(Variables):
                                 self.data[table][key]["askSize"] = val["askSize"]
                             self.frames_hi_lo_values(data=self.data[table][key])
                         elif table == "execution":
-                            val["symbol"] = (val["symbol"], self.symbol_category[val["symbol"]])
+                            val["symbol"] = (
+                                val["symbol"],
+                                self.symbol_category[val["symbol"]],
+                            )
                             val["market"] = self.name
                             self.transaction(row=val)
                         else:
@@ -230,7 +231,9 @@ class Bitmex(Variables):
                         elif table == "position":
                             self.positions_update(val=val)
                         # Removes cancelled or filled orders
-                        elif table == "order" and self.data[table][key]["leavesQty"] <= 0:
+                        elif (
+                            table == "order" and self.data[table][key]["leavesQty"] <= 0
+                        ):
                             self.data[table].pop(key)
                 elif action == "delete":
                     for val in message["data"]:
@@ -287,7 +290,7 @@ class Bitmex(Variables):
 
     def positions_update(self, val: dict) -> None:
         """
-        Updates the positions variable for subscribed instruments each time 
+        Updates the positions variable for subscribed instruments each time
         information from "position" table is received from the websocket.
         """
         symbol = (val["symbol"], val["category"])
@@ -316,7 +319,7 @@ class Bitmex(Variables):
 
     def transaction(self, **kwargs):
         """
-        This function is replaced by transaction() from functions.py after the 
+        This function is replaced by transaction() from functions.py after the
         application is launched.
         """
         pass

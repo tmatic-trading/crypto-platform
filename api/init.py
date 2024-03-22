@@ -18,7 +18,7 @@ class Setup(Variables):
         self.http_url = var.env[self.name][testnet + "HTTP_URL"]
         self.symbol_list = var.env[self.name]["SYMBOLS"]
         self.currencies = var.env[self.name]["CURRENCIES"]
-        self.full_symbol_list = self.symbol_list.copy()        
+        self.full_symbol_list = self.symbol_list.copy()
         tmp_pos = {y: 0 for y in var.name_position}
         for symbol in self.symbol_list:
             self.ticker[symbol] = {
@@ -37,4 +37,3 @@ class Setup(Variables):
         for cur in self.currencies:
             self.accounts[cur] = {y: 0 for y in var.name_account}
             self.accounts[cur]["SUMREAL"] = 0
-

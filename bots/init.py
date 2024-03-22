@@ -3,12 +3,13 @@ from typing import Tuple, Union
 
 # from ws.init import Variables as ws
 from api.api import WS
+
 # import functions as function
 from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
-from functions import Function
 from display.functions import info_display
+from functions import Function
 
 
 class Init(WS, Variables):
@@ -89,7 +90,7 @@ class Init(WS, Variables):
                     "TIMEFR": "None",
                     "CAPITAL": "None",
                 }
-                
+
         # Adding RESERVED robots
         union = ""
         qwr = "select * from ("
@@ -109,10 +110,7 @@ class Init(WS, Variables):
             )
             union = "union "
         qwr += (
-            ") T where MARKET = '"
-            + self.name
-            + "' and ACCOUNT = "
-            + str(self.user_id)
+            ") T where MARKET = '" + self.name + "' and ACCOUNT = " + str(self.user_id)
         )
         var.cursor_mysql.execute(qwr)
         reserved = var.cursor_mysql.fetchall()
@@ -244,9 +242,9 @@ class Init(WS, Variables):
 
         # The 'frames' array is filled with timeframe data.
 
-        f = datetime.strptime(res[0]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S")
-        l = datetime.strptime(res[-1]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S")
-        if f > l:
+        if datetime.strptime(
+            res[0]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
+        ) > datetime.strptime(res[-1]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"):
             res.reverse()
         for num, row in enumerate(res):
             tm = datetime.strptime(

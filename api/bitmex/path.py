@@ -6,26 +6,17 @@ class Listing(str, Enum):
     GET_ACCOUNT_INFO ="user"
     GET_INSTRUMENT_DATA = "instrument?symbol={SYMBOL}"
     GET_POSITION = "position?filter=%7B%22symbol%22%3A%22{SYMBOL}%22%7D"
-    TRADE_BUCKETED = "trade/bucketed?binSize={TIMEFRAME}&count=1000&reverse=\
-        false&partial=true&symbol={SYMBOL}&columns=open%2C%20high%2C%20low%2C\
-            %20close&startTime={TIME}"
-    TRADING_HISTORY = "execution/tradeHistory?count={HISTCOUNT}&reverse=false&startTime={TIME}"
+    TRADE_BUCKETED = (
+        "trade/bucketed?binSize={TIMEFRAME}&count=1000&reverse="
+        + "false&partial=true&symbol={SYMBOL}&columns=open%2C%20high%2C%20low%2C"
+        + "%20close&startTime={TIME}"
+    )
+    TRADING_HISTORY = (
+        "execution/tradeHistory?count={HISTCOUNT}&reverse=false"
+        + "&startTime={TIME}"
+    )
     URGENT_ANNOUNCEMENT = "announcement/urgent"
     ORDER_ACTIONS = "order"
-
-
-    '''GET_WALLET_BALANCE = "/v5/account/wallet-balance"
-    UPGRADE_TO_UNIFIED_ACCOUNT = "/v5/account/upgrade-to-uta"
-    GET_BORROW_HISTORY = "/v5/account/borrow-history"
-    GET_COLLATERAL_INFO = "/v5/account/collateral-info"
-    GET_COIN_GREEKS = "/v5/asset/coin-greeks"
-    GET_FEE_RATE = "/v5/account/fee-rate"
-    GET_ACCOUNT_INFO = "/v5/account/info"
-    GET_TRANSACTION_LOG = "/v5/account/transaction-log"
-    SET_MARGIN_MODE = "/v5/account/set-margin-mode"
-    SET_MMP = "/v5/account/mmp-modify"
-    RESET_MMP = "/v5/account/mmp-reset"
-    GET_MMP_STATE = "/v5/account/mmp-state"'''
 
     def __str__(self) -> str:
         return self.value
