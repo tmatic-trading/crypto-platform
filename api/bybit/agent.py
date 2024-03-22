@@ -1,4 +1,3 @@
-from .http import Send
 from collections import OrderedDict
 from typing import Union
 

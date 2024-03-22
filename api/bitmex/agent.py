@@ -150,29 +150,28 @@ class Agent(Variables):
 
         return Send.request(self, path=path, verb="GET")
 
-    def trading_history(
-        self, histCount: int, time=None) -> Union[list, str]:
+    def trading_history(self, histCount: int, time=None) -> Union[list, str]:
         if time:
             path = Listing.TRADING_HISTORY.format(HISTCOUNT=histCount, TIME=time)
-            result =  Send.request(
-                self, 
-                path=path, 
+            result = Send.request(
+                self,
+                path=path,
                 verb="GET",
             )
             for row in result:
                 row["market"] = self.name
-                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])                
+                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])
             return result
         else:
             return "error"
-        
+
     def open_orders(self) -> list:
         orders = self.data["order"].values()
         for order in orders:
             order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]])
 
         return orders
-    
+
     def get_ticker(self) -> OrderedDict:
         if self.depth in self.data:
             for symbol, val in self.data[self.depth].items():
@@ -192,7 +191,7 @@ class Agent(Variables):
                         self.ticker[symbol]["askSize"] = val["asks"][0][1]
 
         return self.ticker
-    
+
     def urgent_announcement(self) -> list:
         """
         Public announcements of the exchange
@@ -200,7 +199,7 @@ class Agent(Variables):
         path = Listing.URGENT_ANNOUNCEMENT
 
         return Send.request(self, path=path, verb="GET")
-    
+
     def place_limit(
         self, quantity: int, price: float, clOrdID: str, symbol: tuple
     ) -> Union[dict, None]:
@@ -217,7 +216,6 @@ class Agent(Variables):
         }
 
         return Send.request(self, path=path, postData=postData, verb="POST")
-    
 
     def replace_limit(
         self, quantity: int, price: float, orderID: str, symbol: tuple
@@ -235,7 +233,7 @@ class Agent(Variables):
         }
 
         return Send.request(self, path=path, postData=postData, verb="PUT")
-    
+
     def remove_order(self, orderID: str) -> Union[list, None]:
         """
         Deletes an order
@@ -248,7 +246,7 @@ class Agent(Variables):
     def exit(self):
         """
         Closes websocket
-        """        
+        """
         try:
             self.logNumFatal = -1
             self.ws.close()

@@ -1,29 +1,19 @@
 import logging
-import os
 from collections import OrderedDict
 from datetime import datetime
 
 import pymysql
 import pymysql.cursors
 
-from bots.variables import Variables as bot
-from common.variables import Variables as var
-from display.variables import Variables as disp
-from functions import Function
-from functions import orders, trades, funding
-
-from api.websockets import Websockets
-
-from display.functions import info_display
-
-# from ws.init import Variables as ws
-
-# load_dotenv()
-db = var.env["MYSQL_DATABASE"]
-
-
 from api.api import WS
 from api.init import Variables
+from api.websockets import Websockets
+from common.variables import Variables as var
+from display.functions import info_display
+from display.variables import Variables as disp
+from functions import Function, funding, orders, trades
+
+db = var.env["MYSQL_DATABASE"]
 
 
 class Init(WS, Variables):
@@ -65,7 +55,7 @@ class Init(WS, Variables):
         A premature exit from the loop is possible due to a small count_val
         value. This will happen in the case of a large number of trades or
         funding with the same time greater than or equal to count_val, when
-        the first and last line will have the same transactTime accurate to 
+        the first and last line will have the same transactTime accurate to
         the second.
         """
         while history:
@@ -90,23 +80,27 @@ class Init(WS, Variables):
 
     def account_balances(self) -> None:
         """
-        Calculates the account by currency according to data from the MySQL 
+        Calculates the account by currency according to data from the MySQL
         'coins' table.
         """
-        sql = "select SYMBOL, CATEGORY from " + db + ".coins where ACCOUNT=%s \
+        sql = (
+            "select SYMBOL, CATEGORY from "
+            + db
+            + ".coins where ACCOUNT=%s \
             and MARKET=%s group by SYMBOL, CATEGORY"
+        )
         var.cursor_mysql.execute(sql, (self.user_id, self.name))
         data = var.cursor_mysql.fetchall()
         symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"]), data))
         for symbol in symbols:
-            Function.add_symbol(self, symbol=symbol)        
+            Function.add_symbol(self, symbol=symbol)
         for currency in self.currencies:
             union = ""
             sql = "select sum(commiss) commiss, sum(sumreal) sumreal, \
                 sum(funding) funding from ("
             for symbol in symbols:
                 sql += (
-                    union 
+                    union
                     + "select IFNULL(sum(COMMISS),0.0) commiss, \
                 IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select \
                 sum(COMMISS) from "
@@ -160,13 +154,13 @@ class Init(WS, Variables):
                     var.last_order += 1
                     clOrdID = str(var.last_order) + "." + emi
                     info_display(
-                        self.name, 
+                        self.name,
                         "Outside placement: price="
                         + str(val["price"])
                         + " side="
                         + val["side"]
                         + ". Assigned clOrdID="
-                        + clOrdID
+                        + clOrdID,
                     )
                 else:
                     clOrdID = val["clOrdID"]
@@ -206,11 +200,11 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["CATEGORY"] = val["symbol"][1]
                 var.orders[clOrdID]["MARKET"] = self.name
                 var.orders[clOrdID]["SIDE"] = val["side"]
-                var.orders[clOrdID]["orderID"] = val["orderID"]    
+                var.orders[clOrdID]["orderID"] = val["orderID"]
         for clOrdID, order in var.orders.items():
             order["clOrdID"] = clOrdID
             order["datetime"] = datetime.strptime(
-                    order["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
+                order["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
             )
         orders.clear_all()
         values = list(var.orders.values())
@@ -219,15 +213,15 @@ class Init(WS, Variables):
         for val in reversed(values):
             var.orders[val["clOrdID"]] = val
         for val in list(var.orders.values()):
-            Function.fill_columns(self, func=Function.orders_display, table=orders, val=val)
-
+            Function.fill_columns(
+                self, func=Function.orders_display, table=orders, val=val
+            )
 
     def initial_ticker_values(self) -> None:
         for symbol in self.symbol_list:
             self.ticker[symbol]["open_ask"] = self.ticker[symbol]["ask"]
             self.ticker[symbol]["open_bid"] = self.ticker[symbol]["bid"]
             self.ticker[symbol]["fundingRate"] = self.instruments[symbol]["fundingRate"]
-
 
     def load_database(self) -> None:
         """
@@ -245,7 +239,7 @@ class Init(WS, Variables):
                 + ".coins where SIDE = -1 and ACCOUNT = "
                 + str(user_id)
                 + " and MARKET = '"
-                + name 
+                + name
                 + "' "
             )
             union = "union "
@@ -254,7 +248,9 @@ class Init(WS, Variables):
         data = var.cursor_mysql.fetchall()
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
-            Function.fill_columns(self, func=Function.funding_display, table=funding, val=val)
+            Function.fill_columns(
+                self, func=Function.funding_display, table=funding, val=val
+            )
         sql = "select * from("
         union = ""
         for name in var.market_list:
@@ -267,7 +263,7 @@ class Init(WS, Variables):
                 + ".coins where SIDE <> -1 and ACCOUNT = "
                 + str(user_id)
                 + " and MARKET = '"
-                + name 
+                + name
                 + "' "
             )
             union = "union "
@@ -276,7 +272,9 @@ class Init(WS, Variables):
         data = var.cursor_mysql.fetchall()
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
-            Function.fill_columns(self, func=Function.trades_display, table=trades, val=val)
+            Function.fill_columns(
+                self, func=Function.trades_display, table=trades, val=val
+            )
 
 
 def setup_logger():

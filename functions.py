@@ -11,10 +11,8 @@ from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
-#from display.init import Tables as table
-#from display.init import trades, funding, orders
-from display.variables import Variables as disp
 from display.variables import GridTable, ListBoxTable
+from display.variables import Variables as disp
 
 db = var.env["MYSQL_DATABASE"]
 
@@ -240,7 +238,7 @@ class Function(WS, Variables):
                 Function.insert_database(self, values=values)
                 message = {
                     "SYMBOL": row["symbol"],
-                    "MARKET": row["market"], 
+                    "MARKET": row["market"],
                     "TTIME": row["transactTime"],
                     "SIDE": side,
                     "TRADE_PRICE": row["lastPx"],
@@ -248,7 +246,9 @@ class Function(WS, Variables):
                     "EMI": emi,
                 }
                 if info:
-                    Function.fill_columns(self, func=Function.trades_display, table=trades, val=message)
+                    Function.fill_columns(
+                        self, func=Function.trades_display, table=trades, val=message
+                    )
                 else:
                     Function.trades_display(self, val=message)
                 Function.orders_processing(self, row=row, info=info)
@@ -310,7 +310,12 @@ class Function(WS, Variables):
                     self.robots[emi]["LTIME"] = time_struct
                     self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
                     if info:
-                        Function.fill_columns(self, func=Function.funding_display, table=funding, val=message)
+                        Function.fill_columns(
+                            self,
+                            func=Function.funding_display,
+                            table=funding,
+                            val=message,
+                        )
                     else:
                         Function.funding_display(self, message)
             diff = true_position - position
@@ -362,7 +367,9 @@ class Function(WS, Variables):
                 self.robots[emi]["LTIME"] = time_struct
                 self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
                 if info:
-                    Function.fill_columns(self, func=Function.funding_display, table=funding, val=message)
+                    Function.fill_columns(
+                        self, func=Function.funding_display, table=funding, val=message
+                    )
                 else:
                     Function.funding_display(self, message)
 
@@ -525,7 +532,7 @@ class Function(WS, Variables):
             tm,
             val["SYMBOL"][0],
             val["SYMBOL"][1],
-            val["MARKET"], 
+            val["MARKET"],
             val["SIDE"],
             Function.format_price(
                 self,
@@ -540,7 +547,6 @@ class Function(WS, Variables):
         trades.insert(row=0, elements=elements)
         trades.paint(row=0, side=val["SIDE"])
 
-
     def funding_display(self, val: dict, init=False) -> Union[None, list]:
         """
         Update funding widgwt
@@ -552,14 +558,14 @@ class Function(WS, Variables):
             tm,
             val["SYMBOL"][0],
             val["SYMBOL"][1],
-            val["MARKET"], 
+            val["MARKET"],
             Function.format_price(
                 self,
                 number=float(val["PRICE"]),
                 symbol=val["SYMBOL"],
             ),
             "{:.7f}".format(-val["COMMISS"]),
-            val["QTY"], 
+            val["QTY"],
             val["EMI"],
         ]
         if init:
@@ -577,28 +583,23 @@ class Function(WS, Variables):
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
         elements = [
-            tm, 
+            tm,
             val["SYMBOL"][0],
-            val["CATEGORY"], 
-            val["MARKET"], 
+            val["CATEGORY"],
+            val["MARKET"],
             val["SIDE"],
             Function.format_price(
-                    self,
-                    number=val["price"],
-                    symbol=val["SYMBOL"],
-                ),
-            val["leavesQty"], 
+                self,
+                number=val["price"],
+                symbol=val["SYMBOL"],
+            ),
+            val["leavesQty"],
             emi,
         ]
         if init:
             return elements
         orders.insert(row=0, elements=elements)
         orders.paint(row=0, side=val["SIDE"])
-
-
-        print("---------orders---------")
-        print(var.orders.keys(), sep = "\n")
-
 
     def volume(self, qty: int, symbol: tuple) -> str:
         if qty == 0:
@@ -939,7 +940,9 @@ class Function(WS, Variables):
             display_order_book_values(
                 val=val, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
             )
-            display_order_book_values(val=val, start=num, end=0 - mod, direct=-1, side="asks")
+            display_order_book_values(
+                val=val, start=num, end=0 - mod, direct=-1, side="asks"
+            )
 
         # Refresh Robots table
 
@@ -1082,7 +1085,10 @@ class Function(WS, Variables):
                 + self.accounts[cur]["FUNDING"]
             )
             update_label(
-                table="account", column=7, row=num + mod, val=format_number(number=number)
+                table="account",
+                column=7,
+                row=num + mod,
+                val=format_number(number=number),
             )
 
         # Refresh Exchange table
@@ -1097,7 +1103,13 @@ class Function(WS, Variables):
                 table="market",
                 column=0,
                 row=row + mod,
-                val=name + "\nAcc." + str(ws.user_id) + "\n" + str(self.connect_count) + " " + status,
+                val=name
+                + "\nAcc."
+                + str(ws.user_id)
+                + "\n"
+                + str(self.connect_count)
+                + " "
+                + status,
             )
 
     def close_price(self, symbol: tuple, pos: int) -> float:
@@ -1197,16 +1209,16 @@ class Function(WS, Variables):
         self.remove_order(name=self.name, orderID=var.orders[clOrdID]["orderID"])
 
         return self.logNumFatal
-    
+
     def market_status(self, status: str) -> None:
-            mod = Tables.market.mod
-            row = var.market_list.index(self.name)
-            update_label(
-                table="market",
-                column=0,
-                row=row + mod,
-                val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
-            )
+        mod = Tables.market.mod
+        row = var.market_list.index(self.name)
+        update_label(
+            table="market",
+            column=0,
+            row=row + mod,
+            val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
+        )
 
     def fill_columns(self, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
@@ -1230,7 +1242,7 @@ def handler_order(event) -> None:
     if row_position:
         if row_position[0] - orders.mod >= 0:
             ws = Websockets.connect[var.current_market]
-            for num, clOrdID in enumerate(var.orders):            
+            for num, clOrdID in enumerate(var.orders):
                 if num == row_position[0] - orders.mod:
                     break
 
@@ -1248,7 +1260,7 @@ def handler_order(event) -> None:
                     return
                 if ws.logNumFatal == 0:
                     Function.del_order(ws, clOrdID=clOrdID)
-                    #orders.delete(row_position)
+                    # orders.delete(row_position)
                 else:
                     info_display(ws.name, "The operation failed. Websocket closed!")
                 on_closing()
@@ -1277,7 +1289,9 @@ def handler_order(event) -> None:
                         rside=roundSide,
                     )
                     if price == var.orders[clOrdID]["price"]:
-                        info_display(ws.name, "Price is the same but must be different!")
+                        info_display(
+                            ws.name, "Price is the same but must be different!"
+                        )
                         return
                     clOrdID = Function.put_order(
                         ws,
@@ -1322,12 +1336,16 @@ def handler_order(event) -> None:
                 label_price = tk.Label(frame_dn)
                 label_price["text"] = "Price "
                 label1.pack(side="left")
-                button = tk.Button(frame_dn, text="Delete order", command=lambda id=clOrdID: delete(id))
+                button = tk.Button(
+                    frame_dn, text="Delete order", command=lambda id=clOrdID: delete(id)
+                )
                 price_replace = tk.StringVar()
                 entry_price = tk.Entry(
                     frame_dn, width=10, bg=disp.bg_color, textvariable=price_replace
                 )
-                button_replace = tk.Button(frame_dn, text="Replace", command=lambda id=clOrdID: replace(id))
+                button_replace = tk.Button(
+                    frame_dn, text="Replace", command=lambda id=clOrdID: replace(id)
+                )
                 button.pack(side="right")
                 label_price.pack(side="left")
                 entry_price.pack(side="left")
@@ -1640,7 +1658,6 @@ def handler_pos(event, row_position: int) -> None:
 
 
 def handler_market(event, row_position: int) -> None:
-    ws = Websockets.connect[var.current_market]
     if row_position > len(var.market_list):
         row_position = len(var.market_list)
     var.current_market = var.market_list[row_position - 1]
@@ -1744,7 +1761,7 @@ def load_labels() -> None:
         name="position",
         size=max(5, var.position_rows + 1),
         title=var.name_position,
-        column_width = 35, 
+        column_width=35,
         canvas_height=65,
         bind=handler_pos,
         color=disp.bg_color,
@@ -1772,7 +1789,7 @@ def load_labels() -> None:
         name="market",
         size=2,
         title=var.name_market,
-        column_width = 110, 
+        column_width=110,
         title_on=False,
         color=disp.title_color,
         select=True,
@@ -1804,6 +1821,7 @@ def load_labels() -> None:
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
 
+
 change_color(color=disp.title_color, container=disp.root)
 
 trades = ListBoxTable(
@@ -1819,6 +1837,3 @@ orders = ListBoxTable(
     size=0,
     expand=True,
 )
-
-
-

@@ -1,25 +1,29 @@
-from typing import Union
-from api.variables import Variables
 import json
-from .api_auth import API_auth, generate_signature
 import time
-import requests
 from datetime import datetime
+from typing import Union
 
+import requests
+
+from api.variables import Variables
 from display.functions import info_display
 
-#from functions import Function
-
-#s = Function.transaction
+from .api_auth import API_auth
 
 
 class Send(Variables):
     def request(
-            self, path: str = None, verb: str = None, postData=None, timeout=7, theorPrice=None
+        self,
+        path: str = None,
+        verb: str = None,
+        postData=None,
+        timeout=7,
+        theorPrice=None,
     ) -> Union[dict, list, None]:
         """
         Sends a request to the exchange
         """
+
         def info_warn_err(whatNow, textNow, codeNow=0):
             if whatNow == "INFO":
                 self.logger.info(textNow)
@@ -65,7 +69,7 @@ class Send(Variables):
                         % (
                             verb,
                             path,
-                            json.dumps(tmp or ""),
+                            json.dumps(postData or ""),
                             theorPrice,
                         ),
                     )
@@ -214,7 +218,7 @@ class Send(Variables):
                     % (e, url, json.dumps(postData or "")),
                     1002,
                 )
-                info_display(self.name,  "Websocket. Unable to contact API")
+                info_display(self.name, "Websocket. Unable to contact API")
                 cur_retries += 1
             if postData:  # trading orders (POST, PUT, DELETE)
                 if cur_retries == stop_retries:  # means no errors

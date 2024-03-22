@@ -1,17 +1,13 @@
-from common.variables import Variables as var
 import functions as function
-from functions import Function
 from api.websockets import Websockets
+from common.variables import Variables as var
+from functions import Function
 
 
 def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     ws = Websockets.connect[robot["MARKET"]]
     period = robot["PERIOD"]
-    quantaty = (
-        robot["lotSize"]
-        * robot["CAPITAL"]
-        * instrument["myMultiplier"]
-    )
+    quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument["myMultiplier"]
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
     indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
@@ -32,7 +28,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
             ):
                 if robot["POS"] < quantaty:
                     clOrdID = Function.put_order(
-                        ws, 
+                        ws,
                         clOrdID=clOrdID,
                         price=buy_price,
                         qty=buy_quantaty,
@@ -41,8 +37,8 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
         else:
             if robot["POS"] < quantaty:
                 clOrdID = Function.post_order(
-                    ws, 
-                    name=robot["MARKET"], 
+                    ws,
+                    name=robot["MARKET"],
                     symbol=symbol,
                     emi=emi,
                     side="Buy",
@@ -61,7 +57,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
             ):
                 if robot["POS"] > -quantaty:
                     clOrdID = Function.put_order(
-                        ws, 
+                        ws,
                         clOrdID=clOrdID,
                         price=sell_price,
                         qty=sell_quantaty,
@@ -70,8 +66,8 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
         else:
             if robot["POS"] > -quantaty:
                 clOrdID = Function.post_order(
-                    ws, 
-                    name=robot["MARKET"], 
+                    ws,
+                    name=robot["MARKET"],
                     symbol=symbol,
                     emi=emi,
                     side="Sell",
