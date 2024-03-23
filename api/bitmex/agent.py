@@ -30,6 +30,10 @@ class Agent(Variables):
                     exit(1)
         else:
             return OrderedDict()
+        
+        for k, v in self.instruments.items():
+            print(k, v)
+        exit(0)
 
         return self.instruments
 

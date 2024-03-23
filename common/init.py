@@ -227,7 +227,7 @@ class Init(WS, Variables):
         """
         Download the latest trades and funding data from the database (if any)
         """
-        sql = "select * from("
+        '''sql = "select * from("
         union = ""
         for name in var.market_list:
             user_id = Websockets.connect[name].user_id
@@ -243,7 +243,19 @@ class Init(WS, Variables):
                 + "' "
             )
             union = "union "
-        sql += ") T order by TTIME desc limit " + str(disp.table_limit)
+        sql += ") T order by TTIME desc limit " + str(disp.table_limit)'''
+
+        sql = (
+            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
+            + "PRICE, TTIME, COMMISS from "
+            + db
+            + ".coins where SIDE = -1 and ACCOUNT = "
+            + str(self.user_id)
+            + " and MARKET = '"
+            + self.name
+            + "' "
+            + "order by TTIME desc limit " + str(disp.table_limit)
+        )
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:
@@ -251,7 +263,7 @@ class Init(WS, Variables):
             Function.fill_columns(
                 self, func=Function.funding_display, table=funding, val=val
             )
-        sql = "select * from("
+        '''sql = "select * from("
         union = ""
         for name in var.market_list:
             user_id = Websockets.connect[name].user_id
@@ -267,7 +279,18 @@ class Init(WS, Variables):
                 + "' "
             )
             union = "union "
-        sql += ") T order by TTIME desc limit " + str(disp.table_limit)
+        sql += ") T order by TTIME desc limit " + str(disp.table_limit)'''
+        sql = (
+            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
+            + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
+            + db
+            + ".coins where SIDE <> -1 and ACCOUNT = "
+            + str(self.user_id)
+            + " and MARKET = '"
+            + self.name
+            + "' "
+            + "order by TTIME desc limit " + str(disp.table_limit)
+        )
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:

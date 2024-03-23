@@ -4,11 +4,10 @@ from datetime import datetime
 
 #from functions import Function
 from common.variables import Variables as var
-import requests
 
 
 
-class Variables:
+class Variables():
     name = ""
     qwe = 0
     testnet = True
@@ -17,6 +16,7 @@ class Variables:
     ws_url = ""
     http_url = ""
     symbol_list = list()
+    category_list = list()
     currencies = list()
     accounts = dict()
     ticker = OrderedDict()
@@ -45,10 +45,9 @@ class Variables:
     robots = OrderedDict()
     frames = dict()
     robot_status = dict()
-    
-    # Prepare HTTPS session
-    session = requests.Session()
-    session.headers.update({"user-agent": "Tmatic"})
-    session.headers.update({"content-type": "application/json"})
-    session.headers.update({"accept": "application/json"})
+
+
+
+
+
 
