@@ -21,6 +21,9 @@ class Setup(Variables):
         self.full_symbol_list = self.symbol_list.copy()
         tmp_pos = {y: 0 for y in var.name_position}
         for symbol in self.symbol_list:
+            if symbol[1] not in self.category_list:
+                self.category_list.append(symbol[1])
+        for symbol in self.symbol_list:
             self.ticker[symbol] = {
                 "bid": 0,
                 "ask": 0,

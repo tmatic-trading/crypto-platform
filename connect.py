@@ -26,6 +26,9 @@ def setup():
     for name, ws in Websockets.connect.items():
         if name in var.market_list:
             setup_market(ws, name=name)
+    trades.insert_columns()
+    funding.insert_columns()
+    orders.insert_columns(sort=False)
     functions.load_labels()
     algo.init_algo()
     var.robots_thread_is_active = True
@@ -37,6 +40,7 @@ def setup_market(ws: WS, name: str):
     ws.logNumFatal = -1
     ws.api_is_active = False
     ws.exit(name)
+    print("++++", name, ws.logNumFatal)
     while ws.logNumFatal:
         ws.start_ws(name)
         if ws.logNumFatal:
@@ -62,9 +66,6 @@ def setup_market(ws: WS, name: str):
                     common.Init.load_trading_history(ws)
                     common.Init.account_balances(ws)
                     common.Init.load_orders(ws)
-                    trades.insert_columns()
-                    funding.insert_columns()
-                    orders.insert_columns(sort=False)
                     ws.ticker = ws.get_ticker(name)
                     bots.Init.delete_unused_robot(ws)
                     common.Init.initial_ticker_values(ws)

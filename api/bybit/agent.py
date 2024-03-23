@@ -1,10 +1,17 @@
 from collections import OrderedDict
 from typing import Union
+from api.variables import Variables
+
+from .init import Init
 
 
-class Agent:
-    def get_active_instruments(self) -> OrderedDict:
-        print("___get_active_instruments")
+class Agent(Variables, Init):
+
+    def get_active_instruments(self) -> OrderedDict:        
+        res = self.session.get_instruments_info(category="linear")
+        print(*res["result"]["list"], sep="\n")
+        print(self.robots)
+        print("-----------")
 
     def get_user(self) -> Union[dict, None]:
         print("___get_active_instruments")

@@ -10,8 +10,10 @@ from display.functions import info_display
 
 from .api_auth import API_auth
 
+from .init import Init
 
-class Send(Variables):
+
+class Send(Variables, Init):
     def request(
         self,
         path: str = None,

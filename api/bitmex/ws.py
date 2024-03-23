@@ -15,8 +15,10 @@ from display.functions import info_display
 from .agent import Agent
 from .api_auth import generate_signature
 
+from .init import Init
 
-class Bitmex(Variables):
+
+class Bitmex(Variables, Init):
     def __init__(self):
         pass
 
@@ -31,6 +33,7 @@ class Bitmex(Variables):
             self.depth,
         }
         self.name = "Bitmex"
+        self.session = Init.session
         self.count = 0
         self.agent = Agent
         Setup.variables(self)
