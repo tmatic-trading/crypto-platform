@@ -1,17 +1,25 @@
 from collections import OrderedDict
 from typing import Union
 from api.variables import Variables
+import logging
+from .errors import exceptions_manager
 
 from .init import Init
 
 
-class Agent(Variables, Init):
+def http_exceptions_manager(cls):
+    for attr in cls.__dict__: 
+        if callable(getattr(cls, attr)):
+            setattr(cls, attr, exceptions_manager(getattr(cls, attr)))
+    return cls
 
-    def get_active_instruments(self) -> OrderedDict:        
-        res = self.session.get_instruments_info(category="linear")
-        print(*res["result"]["list"], sep="\n")
-        print(self.robots)
-        print("-----------")
+
+@http_exceptions_manager
+class Agent(Variables, Init):
+    logger = logging.getLogger(__name__)
+
+    def get_active_instruments(self) -> OrderedDict: 
+        result = self.session.get_instruments_info(category="linear")["result"]["list"]
 
     def get_user(self) -> Union[dict, None]:
         print("___get_active_instruments")

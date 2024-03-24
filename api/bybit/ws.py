@@ -1,5 +1,6 @@
 from api.variables import Variables
 from api.init import Setup
+import logging
 
 from .agent import Agent
 from .pybit.unified_trading import HTTP
@@ -14,6 +15,7 @@ class Bybit(Init, Variables):
     def start(self):
         print("-----statr Bybit----")
         self.name = "Bybit"
+        self.logger = logging.getLogger(__name__)
         self.count = 0
         self.agent = Agent
         Setup.variables(self)

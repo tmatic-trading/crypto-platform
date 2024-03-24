@@ -23,18 +23,13 @@ class Agent(Variables):
                     self.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
-                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps \
-                        the name of the symbol does not correspond to the \
-                        category or such symbol does not exist"
+                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
+                        + "the name of the symbol does not correspond to the "
+                        + "category or such symbol does not exist"
                     )
                     exit(1)
         else:
             return OrderedDict()
-        
-        for k, v in self.instruments.items():
-            print(k, v)
-        exit(0)
-
         return self.instruments
 
     def get_user(self) -> Union[dict, None]:
