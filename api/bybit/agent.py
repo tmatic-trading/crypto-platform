@@ -2,7 +2,7 @@ from collections import OrderedDict
 from typing import Union
 from api.variables import Variables
 import logging
-from .errors import exceptions_manager
+from .errors import http_exception
 
 from .init import Init
 
@@ -10,7 +10,7 @@ from .init import Init
 def http_exceptions_manager(cls):
     for attr in cls.__dict__: 
         if callable(getattr(cls, attr)):
-            setattr(cls, attr, exceptions_manager(getattr(cls, attr)))
+            setattr(cls, attr, http_exception(getattr(cls, attr)))
     return cls
 
 
@@ -18,11 +18,36 @@ def http_exceptions_manager(cls):
 class Agent(Variables, Init):
     logger = logging.getLogger(__name__)
 
-    def get_active_instruments(self) -> OrderedDict: 
-        result = self.session.get_instruments_info(category="linear")["result"]["list"]
+    def get_active_instruments(self) -> OrderedDict:
+        for category in self.category_list:
+            print("---category---", category)
+            instrument_info = self.session.get_instruments_info(category=category)            
+            for instrument in instrument_info["result"]["list"]:
+                symbol = (instrument["symbol"], category)
+                self.instruments[symbol] = instrument
+                if "settleCoin" in instrument:
+                    self.instruments[symbol]["settlCurrency"] = instrument["settleCoin"]
+                if "deliveryTime" in instrument:
+                    self.instruments[symbol]["expiry"] = instrument["deliveryTime"]
+                else:
+                    self.instruments[symbol]["expiry"] = None
+                self.instruments[symbol]["tickSize"] = instrument["priceFilter"]["tickSize"]
+                self.instruments[symbol]["lotSize"] = instrument["lotSizeFilter"]["minOrderQty"]
+                self.instruments[symbol]["state"] = instrument["status"]
+                self.instruments[symbol]["multiplier"] = 1
+                self.instruments[symbol]["myMultiplier"] = 1
+            '''if category is not "option":
+                tickers = self.session.get_tickers(category=category)
+                for ticker in tickers["result"]["list"]:
+                    symbol = (ticker["symbol"], category)
+                    self.instruments[symbol].update(ticker)
+                    self.instruments[symbol]["bidPrice"] = ticker["bid1Price"]
+                    self.instruments[symbol]["askPrice"] = ticker["ask1Price"]   '''                 
+
+        return self.instruments
 
     def get_user(self) -> Union[dict, None]:
-        print("___get_active_instruments")
+        print("___get_user")
 
     def get_instrument(self):
         print("___get_instrument_data")
@@ -42,8 +67,9 @@ class Agent(Variables, Init):
     def get_ticker(self) -> OrderedDict:
         print("___get_ticker")
 
-    def exit(self):
-        print("___exit")
+    #del
+    '''def exit(self):
+        print("___exit")'''
 
     def urgent_announcement(self):
         print("___urgent_announcement")

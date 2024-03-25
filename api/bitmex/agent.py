@@ -242,7 +242,8 @@ class Agent(Variables):
 
         return Send.request(self, path=path, postData=postData, verb="DELETE")
 
-    def exit(self):
+    #del 
+    '''def exit(self):
         """
         Closes websocket
         """
@@ -250,4 +251,4 @@ class Agent(Variables):
             self.logNumFatal = -1
             self.ws.close()
         except Exception:
-            pass
+            pass'''

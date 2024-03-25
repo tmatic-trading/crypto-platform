@@ -282,6 +282,7 @@ class _V5HTTPManager:
                     time.sleep(self.retry_delay)
                     continue
                 else:
+
                     raise e
 
             # Check HTTP status code before trying to decode JSON.

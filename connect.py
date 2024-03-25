@@ -42,8 +42,10 @@ def setup_market(ws: WS, name: str):
     ws.exit(name)
     print("++++", name, ws.logNumFatal)
     while ws.logNumFatal:
-        ws.start_ws(name)
+        ws.start_ws(name)       
         if ws.logNumFatal:
+            if ws.logNumFatal > 2000:
+                close() 
             ws.exit(name)
             sleep(2)
         else:
@@ -52,8 +54,7 @@ def setup_market(ws: WS, name: str):
                 ws.user_id = account["id"]
             else:
                 raise Exception(
-                    "A user ID was requested from the \
-                                exchange but was not received."
+                    "A user ID was requested from the exchange but was not received."
                 )
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
@@ -143,3 +144,9 @@ def trade_state(event) -> None:
         ws = Websockets.connect[var.current_market]
         ws.logNumFatal = 0
     print(var.current_market, disp.f9)
+
+
+def close():
+    for name, ws in Websockets.connect.items():
+        print(ws)
+        print(name, ws.ws)
