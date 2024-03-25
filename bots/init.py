@@ -11,9 +11,11 @@ from common.variables import Variables as var
 from display.functions import info_display
 from functions import Function
 
+from api.api import Markets
+
 
 class Init(WS, Variables):
-    def load_robots(self) -> dict:
+    def load_robots(self: Markets) -> dict:
         """
         This function loads robot settings from the SQL database from the 'robots'
         table. Since all transactions for the current account are saved in the
@@ -173,14 +175,14 @@ class Init(WS, Variables):
                 self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
 
         return self.robots
-
+    
     def download_data(
         self, time: datetime, target: datetime, symbol: tuple, timeframe: str
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
         while target > time:
-            data = self.trade_bucketed(
-                name=self.name, symbol=symbol, time=time, timeframe=timeframe
+            data = WS.trade_bucketed(self,
+                symbol=symbol, time=time, timeframe=timeframe
             )
             if data:
                 last = time

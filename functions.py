@@ -7,12 +7,14 @@ from typing import Union
 
 from api.api import WS
 from api.variables import Variables
-from api.websockets import Websockets
+#from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import GridTable, ListBoxTable
 from display.variables import Variables as disp
+
+from api.api import Markets
 
 db = var.env["MYSQL_DATABASE"]
 
@@ -54,7 +56,7 @@ class Function(WS, Variables):
                 self.get_instrument(name=self.name, symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
-            self.get_position(name=self.name, symbol=symbol)
+            WS.get_position(self, symbol=symbol)
 
     def rounding(self) -> None:
         if self.name not in disp.price_rounding:
@@ -632,11 +634,11 @@ class Function(WS, Variables):
 
         return number
 
-    def robots_entry(self, utc: datetime) -> None:
+    def robots_entry(self: Markets, utc: datetime) -> None:
         """
         Processing timeframes and entry point into robot algorithms
         """
-        self.ticker = self.get_ticker(self.name)
+        self.ticker = WS.get_ticker(self)
         for symbol, timeframes in self.frames.items():
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
@@ -712,7 +714,7 @@ class Function(WS, Variables):
 
         # Get funds
 
-        funds = self.get_funds()
+        funds = WS.get_funds(self)
         for currency in self.accounts:
             for fund in funds:
                 if currency == fund["currency"]:
@@ -940,7 +942,7 @@ class Function(WS, Variables):
                         update_label(table="orderbook", column=2, row=row, val="")
                         disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
         else:
-            val = self.market_depth10()[var.symbol]
+            val = WS.market_depth10(self)[var.symbol]
             display_order_book_values(
                 val=val, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
             )
@@ -1099,7 +1101,7 @@ class Function(WS, Variables):
 
         mod = Tables.market.mod
         for row, name in enumerate(var.market_list):
-            ws = Websockets.connect[name]
+            ws = Markets[name].value
             status = "ONLINE"
             if ws.logNumFatal != 0:
                 status = "error " + str(ws.logNumFatal)
@@ -1245,7 +1247,7 @@ def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
         if row_position[0] - orders.mod >= 0:
-            ws = Websockets.connect[var.current_market]
+            ws = Markets[var.current_market].value
             for num, clOrdID in enumerate(var.orders):
                 if num == row_position[0] - orders.mod:
                     break
@@ -1361,7 +1363,7 @@ def handler_order(event) -> None:
 
 def handler_orderbook(event, row_position: int) -> None:
     disp.symb_book = var.symbol
-    ws = Websockets.connect[var.current_market]
+    ws = Markets[var.current_market].value
 
     def refresh() -> None:
         book_window.title(var.symbol)
@@ -1645,7 +1647,7 @@ def warning_window(message: str) -> None:
 
 
 def handler_pos(event, row_position: int) -> None:
-    ws = Websockets.connect[var.current_market]
+    ws = Markets[var.current_market].value
     if row_position > len(ws.symbol_list):
         row_position = len(ws.symbol_list)
     var.symbol = ws.symbol_list[row_position - 1]
@@ -1698,7 +1700,7 @@ def find_order(price: float, qty: int, symbol: str) -> int:
 
 def handler_robots(event, row_position: int) -> None:
     emi = None
-    ws = Websockets.connect[var.current_market]
+    ws = Markets[var.current_market].value
     for val in ws.robots:
         if ws.robots[val]["y_position"] == row_position:
             emi = val
@@ -1759,7 +1761,7 @@ def change_color(color: str, container=None) -> None:
 
 
 def load_labels() -> None:
-    ws = Websockets.connect[var.current_market]
+    ws = Markets[var.current_market].value
     Tables.position = GridTable(
         frame=disp.position_frame,
         name="position",

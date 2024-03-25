@@ -7,11 +7,13 @@ import pymysql.cursors
 
 from api.api import WS
 from api.init import Variables
-from api.websockets import Websockets
+#from api.websockets import Websockets
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
+
+from api.api import Markets
 
 db = var.env["MYSQL_DATABASE"]
 
@@ -44,8 +46,8 @@ class Init(WS, Variables):
             var.logger.error(message)
             raise Exception(message)
         count_val = 500
-        history = self.trading_history(
-            name=self.name, histCount=count_val, time=last_history_time
+        history = WS.trading_history(self,
+            histCount=count_val, time=last_history_time
         )
         if history == "error":
             var.logger.error("history.ini error")
@@ -68,8 +70,8 @@ class Init(WS, Variables):
             last_history_time = datetime.strptime(
                 history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
             )
-            history = self.trading_history(
-                name=self.name, histCount=count_val, time=last_history_time
+            history = WS.trading_history(self,
+                histCount=count_val, time=last_history_time
             )
             if last_history_time == tmp:
                 break
@@ -137,11 +139,11 @@ class Init(WS, Variables):
             self.accounts[currency]["SUMREAL"] = float(data[0]["sumreal"])
             self.accounts[currency]["FUNDING"] = float(data[0]["funding"])
 
-    def load_orders(self) -> None:
+    def load_orders(self: Markets) -> None:
         """
         Load Orders (if any)
         """
-        myOrders = self.open_orders(self.name)
+        myOrders = WS.open_orders(self)
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:
@@ -217,13 +219,13 @@ class Init(WS, Variables):
                 self, func=Function.orders_display, table=orders, val=val
             )
 
-    def initial_ticker_values(self) -> None:
+    def initial_ticker_values(self: Markets) -> None:
         for symbol in self.symbol_list:
             self.ticker[symbol]["open_ask"] = self.ticker[symbol]["ask"]
             self.ticker[symbol]["open_bid"] = self.ticker[symbol]["bid"]
             self.ticker[symbol]["fundingRate"] = self.instruments[symbol]["fundingRate"]
 
-    def load_database(self) -> None:
+    def load_database(self: Markets) -> None:
         """
         Download the latest trades and funding data from the database (if any)
         """
