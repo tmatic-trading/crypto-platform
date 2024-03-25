@@ -10,7 +10,7 @@ from api.bybit.ws import Bybit
 
 class WS(Bitmex, Bybit):
     select_ws = {"Bitmex": Bitmex.start, "Bybit": Bybit.start}
-    exit_agent = {"Bitmex": BitmexAgent.exit, "Bybit": BybitAgent.exit}
+    exit_agent = {"Bitmex": Bitmex.exit, "Bybit": Bybit.exit}
     get_active_instruments_agent = {
         "Bitmex": BitmexAgent.get_active_instruments,
         "Bybit": BybitAgent.get_active_instruments,
