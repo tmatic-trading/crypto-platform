@@ -4,8 +4,6 @@ from api.variables import Variables
 import logging
 from .errors import http_exception
 
-from .init import Init
-
 
 def http_exceptions_manager(cls):
     for attr in cls.__dict__: 
@@ -15,7 +13,7 @@ def http_exceptions_manager(cls):
 
 
 @http_exceptions_manager
-class Agent(Variables, Init):
+class Agent(Variables):
     logger = logging.getLogger(__name__)
 
     def get_active_instruments(self) -> OrderedDict:

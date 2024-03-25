@@ -14,15 +14,16 @@ from display.functions import info_display
 
 from .agent import Agent
 from .api_auth import generate_signature
+import requests
 
-from .init import Init
 
-
-class Bitmex(Variables, Init):
+class Bitmex(Variables):
     def __init__(self):
-        pass
-
-    def start(self):
+        self.name = "Bitmex"
+        self.session = requests.Session()
+        self.session.headers.update({"user-agent": "Tmatic"})
+        self.session.headers.update({"content-type": "application/json"})
+        self.session.headers.update({"accept": "application/json"})
         self.table_subscription = {
             "margin",
             "execution",
@@ -32,12 +33,11 @@ class Bitmex(Variables, Init):
             "trade",
             self.depth,
         }
-        self.name = "Bitmex"
-        self.session = Init.session
-        self.count = 0
         self.agent = Agent
-        Setup.variables(self)
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
+
+    def start(self):        
+        Setup.variables(self)        
         self.symbol_category = dict()
         self.instruments = self.agent.get_active_instruments(self)
         if not self.logNumFatal:

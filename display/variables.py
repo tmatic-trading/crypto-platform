@@ -241,7 +241,7 @@ class GridTable(Variables):
                         tk.Label(
                             sub, text=title_name, pady=0, background=self.title_color
                         )
-                    )  # , foreground=self.fg_color))
+                    )
                     cache.append(title_name + str(row))
                 self.labels[name].append(lst)
                 self.labels_cache[name].append(cache)

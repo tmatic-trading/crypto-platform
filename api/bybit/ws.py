@@ -4,13 +4,12 @@ import logging
 
 from .agent import Agent
 from .pybit.unified_trading import HTTP
-from .init import Init
 from .pybit.unified_trading import WebSocket
 from time import sleep
 from api.bybit.errors import ws_exception
 
 
-class Bybit(Init, Variables):
+class Bybit(Variables):
     def __init__(self):
         self.session = HTTP
         self.categories = ["spot", "inverse", "option", "linear"]

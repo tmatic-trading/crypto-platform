@@ -8,7 +8,7 @@ from common.variables import Variables as var
 
 
 class Variables():
-    name = ""
+    #name = ""
     qwe = 0
     testnet = True
     api_key = ""
@@ -40,6 +40,7 @@ class Variables():
     currency_divisor = dict()
     filename = ""
     api_is_active = False
+    WS = None
 
     # Bots data
     robots = OrderedDict()
