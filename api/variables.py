@@ -32,6 +32,7 @@ class Variables():
     message_point = 0
     connect_count = 0
     user_id = None
+    user = dict()
     message_time = datetime.utcnow()
     message2000 = ""
     messageStopped = ""
@@ -40,7 +41,6 @@ class Variables():
     currency_divisor = dict()
     filename = ""
     api_is_active = False
-    WS = None
 
     # Bots data
     robots = OrderedDict()

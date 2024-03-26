@@ -2,13 +2,15 @@ from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
-from api.variables import Variables
+#from api.variables import Variables
 
 from .http import Send
 from .path import Listing
 
+from .ws import Bitmex
 
-class Agent(Variables):
+
+class Agent(Bitmex):
     def get_active_instruments(self) -> OrderedDict:
         result = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not self.logNumFatal:
@@ -33,7 +35,10 @@ class Agent(Variables):
         return self.instruments
 
     def get_user(self) -> Union[dict, None]:
-        return Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
+        result = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
+        if result:
+            self.user_id = result["id"]
+            self.user = result
 
     def get_instrument(self, symbol: tuple):
         """

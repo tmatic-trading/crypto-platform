@@ -8,11 +8,9 @@ from time import sleep
 
 import websocket
 
-from api.init import Setup
 from api.variables import Variables
 from display.functions import info_display
 
-#from .agent import Agent
 from .api_auth import generate_signature
 import requests
 
@@ -34,14 +32,14 @@ class Bitmex(Variables):
             self.depth,
         }
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
-        Setup.variables(self)
         self.symbol_category = dict()
+        self.logger = logging.getLogger(__name__)
+        print("!!!!!!!!!!!!! BITMEX !!!!!!!!!!!")
 
     def start(self):
         if not self.logNumFatal:
             self.__reset()
             self.__connect(self.__get_url())
-            self.logger = logging.getLogger(__name__)
             if self.logNumFatal == 0:
                 self.logger.info("Connected to websocket.")
                 info_display(self.name, "Connected to websocket.")
