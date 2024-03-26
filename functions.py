@@ -29,7 +29,7 @@ class Tables:
 
 class Function(WS, Variables):
     def calculate(
-        self, symbol: tuple, price: float, qty: float, rate: int, fund: int
+        self: Markets, symbol: tuple, price: float, qty: float, rate: int, fund: int
     ) -> dict:
         """
         Calculate sumreal and commission
@@ -49,7 +49,7 @@ class Function(WS, Variables):
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
 
-    def add_symbol(self, symbol: tuple) -> None:
+    def add_symbol(self: Markets, symbol: tuple) -> None:
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
             if symbol not in self.instruments:
@@ -58,7 +58,7 @@ class Function(WS, Variables):
         if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)
 
-    def rounding(self) -> None:
+    def rounding(self: Markets) -> None:
         if self.name not in disp.price_rounding:
             disp.price_rounding[self.name] = OrderedDict()
         for symbol, instrument in self.instruments.items():
@@ -74,10 +74,10 @@ class Function(WS, Variables):
             else:
                 disp.price_rounding[self.name][symbol] = 0
 
-    def timeframes_data_filename(self, emi: str, symbol: tuple, timefr: str) -> str:
+    def timeframes_data_filename(self: Markets, emi: str, symbol: tuple, timefr: str) -> str:
         return "data/" + symbol[0] + symbol[1] + str(timefr) + "_EMI" + emi + ".txt"
 
-    def save_timeframes_data(self, frame: dict) -> None:
+    def save_timeframes_data(self: Markets, frame: dict) -> None:
         zero = (6 - len(str(frame["time"]))) * "0"
         data = (
             str(frame["date"])
@@ -97,14 +97,14 @@ class Function(WS, Variables):
         with open(self.filename, "a") as f:
             f.write(data + "\n")
 
-    def noll(self, val: str, length: int) -> str:
+    def noll(self: Markets, val: str, length: int) -> str:
         r = ""
         for _ in range(length - len(val)):
             r = r + "0"
 
         return r + val
 
-    def read_database(self, execID: str, user_id: int) -> list:
+    def read_database(self: Markets, execID: str, user_id: int) -> list:
         """
         Load a row by execID from the database
         """
@@ -116,7 +116,7 @@ class Function(WS, Variables):
 
         return data
 
-    def insert_database(self, values: list) -> None:
+    def insert_database(self: Markets, values: list) -> None:
         """
         Insert row into database
         """
@@ -131,7 +131,7 @@ class Function(WS, Variables):
         )
         var.connect_mysql.commit()
 
-    def transaction(self, row: dict, info: str = "") -> None:
+    def transaction(self: Markets, row: dict, info: str = "") -> None:
         """
         Trades and funding processing
         """
@@ -404,12 +404,12 @@ class Function(WS, Variables):
         elif row["execType"] == "Replaced":
             Function.orders_processing(self, row=row)
 
-    def order_number(self, clOrdID: str) -> int:
+    def order_number(self: Markets, clOrdID: str) -> int:
         for number, id in enumerate(var.orders):
             if id == clOrdID:
                 return number
 
-    def orders_processing(self, row: dict, info: str = "") -> None:
+    def orders_processing(self: Markets, row: dict, info: str = "") -> None:
         """
         Orders processing <-- transaction()<--( trading_history() or get_exec() )
         """
@@ -523,7 +523,7 @@ class Function(WS, Variables):
         if clOrdID in var.orders:
             Function.orders_display(self, val=var.orders[clOrdID])
 
-    def trades_display(self, val: dict, init=False) -> Union[None, list]:
+    def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
         Update trades widget
         """
@@ -553,7 +553,7 @@ class Function(WS, Variables):
         trades.insert(row=0, elements=elements)
         trades.paint(row=0, side=val["SIDE"])
 
-    def funding_display(self, val: dict, init=False) -> Union[None, list]:
+    def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
         Update funding widgwt
         """
@@ -580,7 +580,7 @@ class Function(WS, Variables):
         side = "Buy" if val["COMMISS"] < 0 else "Sell"
         funding.paint(row=0, side=side)
 
-    def orders_display(self, val: dict, init=False) -> Union[None, list]:
+    def orders_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
         Update Orders widget
         """
@@ -607,7 +607,7 @@ class Function(WS, Variables):
         orders.insert(row=0, elements=elements)
         orders.paint(row=0, side=val["SIDE"])
 
-    def volume(self, qty: int, symbol: tuple) -> str:
+    def volume(self: Markets, qty: int, symbol: tuple) -> str:
         if qty == 0:
             qty = "0"
         else:
@@ -622,7 +622,7 @@ class Function(WS, Variables):
 
         return qty
 
-    def format_price(self, number: float, symbol: tuple) -> str:
+    def format_price(self: Markets, number: float, symbol: tuple) -> str:
         rounding = disp.price_rounding[self.name][symbol]
         number = "{:.{precision}f}".format(number, precision=rounding)
         dot = number.find(".")
@@ -679,7 +679,7 @@ class Function(WS, Variables):
                     )
                     values["time"] = dt_now
 
-    def refresh_on_screen(self, utc: datetime) -> None:
+    def refresh_on_screen(self: Markets, utc: datetime) -> None:
         """
         Refresh information on screen
         """
@@ -707,7 +707,7 @@ class Function(WS, Variables):
                 self.message_point = self.message_counter
         Function.refresh_tables(self)
 
-    def refresh_tables(self) -> None:
+    def refresh_tables(self: Markets) -> None:
         """
         Update tkinter labels in the tables
         """
@@ -1118,7 +1118,7 @@ class Function(WS, Variables):
                 + status,
             )
 
-    def close_price(self, symbol: tuple, pos: int) -> float:
+    def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         if symbol in self.ticker:
             close = (
                 self.ticker[symbol]["bid"] if pos > 0 else self.ticker[symbol]["ask"]
@@ -1132,7 +1132,7 @@ class Function(WS, Variables):
 
         return close
 
-    def round_price(self, symbol: tuple, price: float, rside: int) -> float:
+    def round_price(self: Markets, symbol: tuple, price: float, rside: int) -> float:
         """
         Round_price() returns rounded price: buy price goes down, sell price
         goes up according to 'tickSize'
@@ -1145,7 +1145,7 @@ class Function(WS, Variables):
         return result
 
     def post_order(
-        self,
+        self: Markets,
         name: str,
         symbol: tuple,
         emi: str,
@@ -1165,14 +1165,14 @@ class Function(WS, Variables):
             qty = -qty
         var.last_order += 1
         clOrdID = str(var.last_order) + "." + emi
-        self.place_limit(
-            name=name, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
+        WS.place_limit(
+            self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
         )
 
         return clOrdID
 
     def put_order(
-        self,
+        self: Markets,
         clOrdID: str,
         price: float,
         qty: int,
@@ -1194,8 +1194,8 @@ class Function(WS, Variables):
             + str(qty)
         )
         if price != var.orders[clOrdID]["price"]:  # the price alters
-            self.replace_limit(
-                name=self.name,
+            WS.replace_limit(
+                self,
                 quantity=qty,
                 price=price_str,
                 orderID=var.orders[clOrdID]["orderID"],
@@ -1204,7 +1204,7 @@ class Function(WS, Variables):
 
         return clOrdID
 
-    def del_order(self, clOrdID: str) -> int:
+    def del_order(self: Markets, clOrdID: str) -> int:
         """
         Del_order() function cancels orders
         """
@@ -1212,11 +1212,11 @@ class Function(WS, Variables):
             "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
         )
         var.logger.info(message)
-        self.remove_order(name=self.name, orderID=var.orders[clOrdID]["orderID"])
+        WS.remove_order(self, orderID=var.orders[clOrdID]["orderID"])
 
         return self.logNumFatal
 
-    def market_status(self, status: str) -> None:
+    def market_status(self: Markets, status: str) -> None:
         mod = Tables.market.mod
         row = var.market_list.index(self.name)
         update_label(
@@ -1226,7 +1226,7 @@ class Function(WS, Variables):
             val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
         )
 
-    def fill_columns(self, func, table: ListBoxTable, val: dict) -> None:
+    def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
         elements = func(self, val=val, init=True)
         for num, element in enumerate(elements):

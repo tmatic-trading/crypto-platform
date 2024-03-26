@@ -12,7 +12,7 @@ from api.init import Setup
 from api.variables import Variables
 from display.functions import info_display
 
-from .agent import Agent
+#from .agent import Agent
 from .api_auth import generate_signature
 import requests
 
@@ -33,13 +33,11 @@ class Bitmex(Variables):
             "trade",
             self.depth,
         }
-        self.agent = Agent
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
-
-    def start(self):        
-        Setup.variables(self)        
+        Setup.variables(self)
         self.symbol_category = dict()
-        self.instruments = self.agent.get_active_instruments(self)
+
+    def start(self):
         if not self.logNumFatal:
             self.__reset()
             self.__connect(self.__get_url())
