@@ -16,8 +16,6 @@ from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
 
 from api.bitmex.ws import Bitmex
-from api.bybit.ws import Bybit
-from typing import Union
 
 from api.api import Markets
 
@@ -48,20 +46,13 @@ def setup_market(ws: Markets):
     print("++++", ws.name, ws.logNumFatal)
     while ws.logNumFatal:
         WS.start_ws(ws)
-        print(ws.logNumFatal)   
+        WS.get_user(ws)  
         if ws.logNumFatal:
             if ws.logNumFatal > 2000:
                 close() 
-            WS.exit(ws.name)
+            WS.exit(ws)
             sleep(2)
         else:
-            account = WS.get_user(ws)
-            if account:
-                ws.user_id = account["id"]
-            else:
-                raise Exception(
-                    "A user ID was requested from the exchange but was not received."
-                )
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
                 algo.init_algo()
@@ -153,7 +144,9 @@ def trade_state(event) -> None:
 
 
 def close():
+    print("____close______")
+    var.robots_thread_is_active = False
     for name in var.market_list:
         ws = Markets[name].value
-        print(ws)
-        print(ws.name, ws)
+        ws.exit()        
+    exit(1)

@@ -7,6 +7,7 @@ from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
 from .variables import Variables
+from api.init import Setup
 
 from enum import Enum
 

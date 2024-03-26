@@ -1,8 +1,10 @@
 from collections import OrderedDict
 from typing import Union
-from api.variables import Variables
+#from api.variables import Variables
 import logging
 from .errors import http_exception
+
+from .ws import Bybit
 
 
 def http_exceptions_manager(cls):
@@ -13,7 +15,7 @@ def http_exceptions_manager(cls):
 
 
 @http_exceptions_manager
-class Agent(Variables):
+class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
     def get_active_instruments(self) -> OrderedDict:
@@ -46,6 +48,18 @@ class Agent(Variables):
 
     def get_user(self) -> Union[dict, None]:
         print("___get_user")
+        result = self.session.get_uid_wallet_type()
+        id = find_value_by_key(result, "uid")
+        if id:
+            self.user_id = id
+        else:
+            self.logNumFatal = 10001
+            message = (
+                "A user ID was requested from the exchange but was not "
+                + "received."
+            )
+            self.logger.error(message)
+       
 
     def get_instrument(self):
         print("___get_instrument_data")
@@ -80,3 +94,19 @@ class Agent(Variables):
 
     def remove_order(self):
         print("___remove_order")
+
+
+def find_value_by_key(data: dict, key: str) -> Union[str, None]:
+    for k, val in data.items():
+        if k == key:
+            return val
+        elif isinstance(val, dict):
+            res = find_value_by_key(val, key)
+            if res:
+                return res
+        elif isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict):
+                    res = find_value_by_key(item, key)
+                    if res:
+                        return res
