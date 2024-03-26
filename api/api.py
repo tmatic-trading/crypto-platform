@@ -14,7 +14,6 @@ from enum import Enum
 class Markets(Variables, Enum):
     Bitmex =  Bitmex()
     Bybit = Bybit()
-    
 
 class Agents(Enum):
     Bitmex = BitmexAgent
@@ -22,128 +21,126 @@ class Agents(Enum):
 
 
 class WS(Variables):
-
-    def start_ws(ws: Markets) -> None:
+    def start_ws(self: Markets) -> None:
         """
         Websockets init
         """
+        self.instruments = Agents[self.name].value.get_active_instruments(self)
+        Markets[self.name].value.start()
 
-        Markets[ws.name].value.start()
-
-    def exit(ws: Markets) -> None:
+    def exit(self: Markets) -> None:
         """
         Closes websocket
         """
+        Markets[self.name].value.exit()
 
-        Markets[ws.name].value.exit()
-
-    def get_active_instruments(ws: Markets) -> OrderedDict:
+    def get_active_instruments(self: Markets) -> OrderedDict:
         """
         Gets all active instruments from the exchange REST API.
         """
 
-        return Agents[ws.name].value.get_active_instruments(ws)
+        return Agents[self.name].value.get_active_instruments(self)
 
-    def get_user(ws: Markets) -> Union[dict, None]:
+    def get_user(self: Markets) -> Union[dict, None]:
         """
         Gets account info.
         """
 
-        return Agents[ws.name].value.get_user(ws)
+        return Agents[self.name].value.get_user(self)
 
-    def get_instrument(ws: Markets, symbol: tuple) -> None:
+    def get_instrument(self: Markets, symbol: tuple) -> None:
         """
         Gets a specific instrument by symbol name and category.
         """
 
-        return Agents[ws.name].value.get_instrument(ws, symbol=symbol)
+        return Agents[self.name].value.get_instrument(self, symbol=symbol)
 
-    def get_position(ws: Markets, symbol: tuple) -> None:
+    def get_position(self: Markets, symbol: tuple) -> None:
         """
         Gets information about an open position for a specific instrument.
         """
 
-        return Agents[ws.name].value.get_position(ws, symbol=symbol)
+        return Agents[self.name].value.get_position(self, symbol=symbol)
 
     def trade_bucketed(
-        ws: Markets, symbol: tuple, time: datetime, timeframe: str
+        self: Markets, symbol: tuple, time: datetime, timeframe: str
     ) -> Union[list, None]:
         """
         Gets timeframe data.
         """
 
-        return Agents[ws.name].value.trade_bucketed(
-            ws, symbol=symbol, time=time, timeframe=timeframe
+        return Agents[self.name].value.trade_bucketed(
+            self, symbol=symbol, time=time, timeframe=timeframe
         )
 
-    def trading_history(ws: Markets, histCount: int, time: datetime) -> list:
+    def trading_history(self: Markets, histCount: int, time: datetime) -> list:
         """
         Gets all trades and funding from the exchange for the period starting
         from 'time'
         """
 
-        return Agents[ws.name].value.trading_history(ws, histCount=histCount, time=time)
+        return Agents[self.name].value.trading_history(self, histCount=histCount, time=time)
 
-    def open_orders(ws: Markets) -> list:
+    def open_orders(self: Markets) -> list:
         """
         Gets open orders.
         """
 
-        return Agents[ws.name].value.open_orders(ws)
+        return Agents[self.name].value.open_orders(self)
 
-    def get_ticker(ws: Markets) -> OrderedDict:
+    def get_ticker(self: Markets) -> OrderedDict:
         """
         Returns the best bid/ask price.
         """
 
-        return Agents[ws.name].value.get_ticker(ws)
+        return Agents[self.name].value.get_ticker(self)
 
-    def urgent_announcement(ws: Markets) -> list:
+    def urgent_announcement(self: Markets) -> list:
         """
         Public announcements of the exchange
         """
 
-        return Agents[ws.name].value.urgent_announcement(ws)
+        return Agents[self.name].value.urgent_announcement(self)
 
-    def get_funds(ws: Markets) -> list:
+    def get_funds(self: Markets) -> list:
         """
         Cash in the account
         """
 
-        return ws.data["margin"].values()
+        return self.data["margin"].values()
 
-    def market_depth10(ws: Markets) -> list:
+    def market_depth10(self: Markets) -> list:
         """
         Gets market depth (orderbook), 10 lines deep.
         """
 
-        return ws.data["orderBook10"]
+        return self.data["orderBook10"]
 
     def place_limit(
-        ws: Markets, quantity: int, price: float, clOrdID: str, symbol: tuple
+        self: Markets, quantity: int, price: float, clOrdID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
         Places a limit order
         """
 
-        return Agents[ws.name].value.place_limit(
-            ws, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
+        return Agents[self.name].value.place_limit(
+            self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
         )
 
     def replace_limit(
-        ws, quantity: int, price: float, orderID: str, symbol: tuple
+        self: Markets, quantity: int, price: float, orderID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
         Moves a limit order
         """
 
-        return Agents[ws.name].value.replace_limit(
-            ws, quantity=quantity, price=price, orderID=orderID, symbol=symbol
+        return Agents[self.name].value.replace_limit(
+            self, quantity=quantity, price=price, orderID=orderID, symbol=symbol
         )
 
-    def remove_order(ws: Markets, orderID: str) -> Union[list, None]:
+    def remove_order(self: Markets, orderID: str) -> Union[list, None]:
         """
         Deletes an order
         """
 
-        return Agents[ws.name].value.remove_order(ws, orderID=orderID)
+        return Agents[self.name].value.remove_order(self, orderID=orderID)
