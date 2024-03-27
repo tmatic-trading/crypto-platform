@@ -13,6 +13,8 @@ from display.functions import info_display
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
 
+import services as service
+
 from api.api import Markets
 
 db = var.env["MYSQL_DATABASE"]
@@ -67,8 +69,8 @@ class Init(WS, Variables):
                 )
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
-            last_history_time = datetime.strptime(
-                history[-1]["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
+            last_history_time = service.time_converter(
+                time=history[-1]["transactTime"]
             )
             history = WS.trading_history(self,
                 histCount=count_val, time=last_history_time
@@ -180,8 +182,8 @@ class Init(WS, Variables):
                             "VOL": 0,
                             "COMMISS": 0,
                             "SUMREAL": 0,
-                            "LTIME": datetime.strptime(
-                                val["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
+                            "LTIME": service.time_converter(
+                                val["transactTime"]
                             ),
                             "PNL": 0,
                             "CAPITAL": None,
@@ -205,8 +207,8 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["orderID"] = val["orderID"]
         for clOrdID, order in var.orders.items():
             order["clOrdID"] = clOrdID
-            order["datetime"] = datetime.strptime(
-                order["transactTime"][0:19], "%Y-%m-%dT%H:%M:%S"
+            order["datetime"] = service.time_converter(
+                order["transactTime"]
             )
         orders.clear_all()
         values = list(var.orders.values())

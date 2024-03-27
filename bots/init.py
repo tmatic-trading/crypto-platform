@@ -12,6 +12,7 @@ from display.functions import info_display
 from functions import Function
 
 from api.api import Markets
+import services as service
 
 
 class Init(WS, Variables):
@@ -186,9 +187,7 @@ class Init(WS, Variables):
             )
             if data:
                 last = time
-                time = datetime.strptime(
-                    str(data[-1]["timestamp"][:19]), "%Y-%m-%dT%H:%M:%S"
-                )
+                time = service.time_converter(time=data[-1]["timestamp"])
                 if last == time:
                     return res, time
                 res += data
@@ -244,14 +243,12 @@ class Init(WS, Variables):
 
         # The 'frames' array is filled with timeframe data.
 
-        if datetime.strptime(
-            res[0]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
-        ) > datetime.strptime(res[-1]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"):
+        if service.time_converter(
+            time=res[0]["timestamp"]
+        ) > service.time_converter(time=res[-1]["timestamp"]):
             res.reverse()
         for num, row in enumerate(res):
-            tm = datetime.strptime(
-                row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
-            ) - timedelta(minutes=robot["TIMEFR"])
+            tm = service.time_converter(time=row["timestamp"]) - timedelta(minutes=robot["TIMEFR"])
             frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,

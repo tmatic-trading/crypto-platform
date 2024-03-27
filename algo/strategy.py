@@ -1,4 +1,4 @@
-import functions as function
+import services as service
 from api.websockets import Websockets
 from common.variables import Variables as var
 from functions import Function
@@ -11,10 +11,10 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
     indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
-    sell_price = function.ticksize_rounding(
+    sell_price = service.ticksize_rounding(
         price=(ticker["ask"] + indent), ticksize=instrument["tickSize"]
     )
-    buy_price = function.ticksize_rounding(
+    buy_price = service.ticksize_rounding(
         price=(ticker["bid"] - indent), ticksize=instrument["tickSize"]
     )
     if frame[-1]["ask"] > frame[-1 - period]["ask"]:

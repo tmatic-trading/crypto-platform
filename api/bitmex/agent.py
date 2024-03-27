@@ -8,9 +8,14 @@ from .http import Send
 from .path import Listing
 
 from .ws import Bitmex
+import services as service
+
+import logging
 
 
 class Agent(Bitmex):
+    logger = logging.getLogger(__name__)
+
     def get_active_instruments(self) -> OrderedDict:
         result = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not self.logNumFatal:
@@ -22,7 +27,7 @@ class Agent(Bitmex):
                 self.symbol_category[instrument["symbol"]] = category
             for symbol in self.symbol_list:
                 if symbol not in self.instruments:
-                    self.logger.error(
+                    Agent.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
                         + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
@@ -51,9 +56,9 @@ class Agent(Bitmex):
             category = Agent.fill_instrument(self, instrument=instrument)
             self.symbol_category[instrument["symbol"]] = category
         else:
-            self.logger.info(str(symbol) + " not found in get_instrument()")
+            Agent.logger.info(str(symbol) + " not found in get_instrument()")
 
-    def fill_instrument(self, instrument: dict) -> OrderedDict:
+    def fill_instrument(self, instrument: dict) -> str:
         """
         Filling the instruments dictionary with data
         """
@@ -111,8 +116,8 @@ class Agent(Bitmex):
             self.instruments[symbol]["askPrice"] = None
         self.instruments[symbol]["isInverse"] = instrument["isInverse"]
         if "expiry" in instrument and instrument["expiry"]:
-            self.instruments[symbol]["expiry"] = datetime.strptime(
-                instrument["expiry"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+            self.instruments[symbol]["expiry"] = service.time_converter(
+                time=instrument["expiry"]
             )
         else:
             self.instruments[symbol]["expiry"] = "Perpetual"
@@ -134,13 +139,13 @@ class Agent(Bitmex):
                 self.positions[symbol] = {"POS": data[0]["currentQty"]}
             else:
                 self.positions[symbol] = {"POS": 0}
-            self.logger.info(
+            Agent.logger.info(
                 str(symbol)
                 + " has been added to the positions dictionary for "
                 + self.name
             )
         else:
-            self.logger.info(str(symbol) + " not found in get_position()")
+            Agent.logger.info(str(symbol) + " not found in get_position()")
 
     def trade_bucketed(
         self, symbol: tuple, time: datetime, timeframe: str

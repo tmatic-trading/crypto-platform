@@ -16,6 +16,8 @@ from display.variables import Variables as disp
 
 from api.api import Markets
 
+import services as service
+
 db = var.env["MYSQL_DATABASE"]
 
 
@@ -136,8 +138,8 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        time_struct = datetime.strptime(
-            row["transactTime"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+        time_struct = service.time_converter(
+            time=row["transactTime"], usec=True
         )
 
         # Trade
@@ -1233,16 +1235,6 @@ class Function(WS, Variables):
             table.columns[num].append(element)
 
 
-def ticksize_rounding(price: float, ticksize: float) -> float:
-    """
-    Rounds the price depending on the tickSize value
-    """
-    arg = 1 / ticksize
-    res = round(price * arg, 0) / arg
-
-    return res
-
-
 def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
@@ -1618,17 +1610,6 @@ def format_number(number: float) -> str:
     after_dot = max(3, 9 - max(3, len_int))
 
     return "{:.{num}f}".format(number, num=after_dot)
-
-
-def gap(val: str, peak: int) -> str:
-    """
-    Generate spaces for scroll widgets
-    """
-    res = " " + val
-    for _ in range(peak - len(val)):
-        res = " " + res
-
-    return res
 
 
 def warning_window(message: str) -> None:
