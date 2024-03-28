@@ -16,6 +16,7 @@ from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
 
 from api.bitmex.ws import Bitmex
+from api.bybit.ws import Bybit
 
 from api.api import Markets
 
@@ -24,6 +25,7 @@ def setup():
     disp.root.bind("<F3>", lambda event: terminal_reload(event))
     disp.root.bind("<F9>", lambda event: trade_state(event))
     Bitmex.transaction = Function.transaction
+    Bybit.transaction = Function.transaction
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = False

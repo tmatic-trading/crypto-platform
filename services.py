@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Union
+from api.bybit.errors import exception
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
@@ -29,3 +30,10 @@ def time_converter(time: Union[int, float, str, datetime], usec=False) -> Union[
             raise e
     else:
         raise TypeError(type(time))
+
+def exceptions_manager(cls):
+    for attr in cls.__dict__: 
+        if callable(getattr(cls, attr)):
+            if attr != "exit":
+                setattr(cls, attr, exception(getattr(cls, attr)))
+    return cls
