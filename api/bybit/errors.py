@@ -3,14 +3,14 @@ from api.variables import Variables
 
 logger = logging.getLogger(__name__)
 
-def http_exception(func):
+def exception(method):
     """
-    Handling HTTP request errors
+    Handling HTTP request and websocket errors
     """    
     def decorator(*args, **kwargs):
         self: Variables = args[0]
         try:
-            result = func(*args, **kwargs)
+            result = method(*args, **kwargs)
             self.logNumFatal = 0
             return result
         except Exception as exception:
@@ -25,16 +25,25 @@ def http_exception(func):
             elif name == "ReadTimeout": # requests module
                 logger.error(message)
                 self.logNumFatal = 1001
-            elif name == "FailedRequestError": # pybit
+            elif name == "FailedRequestError": # pybit http
                 logger.error(message)
                 self.logNumFatal = 1001
-            elif name == "InvalidRequestError": # pybit
+            elif name == "InvalidRequestError": # pybit http
+                logger.error(message)
+                if exception.status_code == 10004: # error sign!
+                    self.logNumFatal = 2001
+                else:
+                    self.logNumFatal = 1001
+            elif name == "InvalidChannelTypeError": # pybit ws
+                logger.error(message)
+                self.logNumFatal = 2002
+            elif name == "UnauthorizedExceptionError": # pybit ws
+                logger.error(message)
+                self.logNumFatal = 1001
+            elif name == "TopicMismatchError": # pybit ws
                 logger.error(message)
                 self.logNumFatal = 1001
             else:
                 raise exception
             
     return decorator
-
-def ws_exception(text: str, logNumFatal):
-    logger.error(text)

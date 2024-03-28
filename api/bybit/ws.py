@@ -6,10 +6,11 @@ import logging
 from .pybit.unified_trading import HTTP
 from .pybit.unified_trading import WebSocket
 from time import sleep
-from api.bybit.errors import ws_exception
 import logging
+from services import exceptions_manager
 
 
+@exceptions_manager
 class Bybit(Variables):
     def __init__(self):
         self.name = "Bybit"
@@ -19,8 +20,11 @@ class Bybit(Variables):
         api_secret=self.api_secret,
         testnet=self.testnet,
         )
-        self.categories = ["spot", "inverse", "option", "linear"]
-        self.ws = {"spot": WebSocket, "inverse": WebSocket, "option": WebSocket, "linear": WebSocket}
+        self.settlCurrency_list = list()
+        self.settleCoin_list = list()
+        self.ws_category = {"spot": WebSocket, "inverse": WebSocket, "option": WebSocket, "linear": WebSocket}
+        self.ws_settleCoin: WebSocket = dict()
+        self.ws = WebSocket
         self.logger = logging.getLogger(__name__)
         print("!!!!!!!!!!!!! BYBIT !!!!!!!!!!!")
 
@@ -29,21 +33,20 @@ class Bybit(Variables):
         self.count = 0
 
         #self.instruments = self.agent.get_active_instruments(self)
-        print(self.categories)
-        #self.__connect()
+        self.__connect()
 
     def __connect(self) -> None:
         """
-        Connects to websocket.
+        Connecting to websocket.
         """
-        self.logger.info("Connecting to websocket")
-        
+        self.logger.info("Connecting to websocket")        
         for category in self.category_list:
-            try:
-                self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
-            except Exception as e:
-                self.logNumFatal = 2002
-                ws_exception(text=e.args[0], logNumFatal=self.logNumFatal)
+            self.ws_category[category] = WebSocket(testnet=self.testnet, channel_type=category)
+
+    def __handle_order(self, message):
+
+        print(message)
+
     
     def exit(self):
         """
@@ -55,6 +58,13 @@ class Bybit(Variables):
             except Exception:
                 pass
         self.logger.info("Websocket closed")
+
+    def transaction(self, **kwargs):
+        """
+        This method is replaced by transaction() from functions.py after the
+        application is launched.
+        """
+        pass
 
 
 

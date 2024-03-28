@@ -90,24 +90,27 @@ class Init(WS, Variables):
         sql = (
             "select SYMBOL, CATEGORY from "
             + db
-            + ".coins where ACCOUNT=%s \
-            and MARKET=%s group by SYMBOL, CATEGORY"
+            + ".coins where ACCOUNT=%s and MARKET=%s group by SYMBOL, CATEGORY"
         )
         var.cursor_mysql.execute(sql, (self.user_id, self.name))
         data = var.cursor_mysql.fetchall()
         symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"]), data))
         for symbol in symbols:
             Function.add_symbol(self, symbol=symbol)
+        if not symbols:
+            symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
         for currency in self.currencies:
             union = ""
-            sql = "select sum(commiss) commiss, sum(sumreal) sumreal, \
-                sum(funding) funding from ("
+            sql = (
+                "select sum(commiss) commiss, sum(sumreal) sumreal, "
+                + "sum(funding) funding from ("
+            )
             for symbol in symbols:
                 sql += (
                     union
-                    + "select IFNULL(sum(COMMISS),0.0) commiss, \
-                IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select \
-                sum(COMMISS) from "
+                    + "select IFNULL(sum(COMMISS),0.0) commiss, "
+                    + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
+                    + "sum(COMMISS) from "
                     + db
                     + ".coins where SIDE < 0 and ACCOUNT = "
                     + str(self.user_id)
@@ -146,6 +149,12 @@ class Init(WS, Variables):
         Load Orders (if any)
         """
         myOrders = WS.open_orders(self)
+        print(myOrders)
+        for order in myOrders:
+            for k, val in order.items():
+                print(k, val, type(val))
+            print("_______________________")
+        exit(0)
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:

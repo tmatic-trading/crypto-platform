@@ -13,11 +13,13 @@ from display.functions import info_display
 
 from .api_auth import generate_signature
 import requests
+from api.init import Setup
 
 
 class Bitmex(Variables):
     def __init__(self):
         self.name = "Bitmex"
+        Setup.variables(self, self.name)
         self.session = requests.Session()
         self.session.headers.update({"user-agent": "Tmatic"})
         self.session.headers.update({"content-type": "application/json"})
@@ -318,7 +320,7 @@ class Bitmex(Variables):
 
     def transaction(self, **kwargs):
         """
-        This function is replaced by transaction() from functions.py after the
+        This method is replaced by transaction() from functions.py after the
         application is launched.
         """
         pass

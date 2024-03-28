@@ -2,22 +2,15 @@ from collections import OrderedDict
 from typing import Union
 #from api.variables import Variables
 import logging
-from .errors import http_exception
 
 from datetime import datetime
 import services as service
+from services import exceptions_manager
 
 from .ws import Bybit
 
 
-def http_exceptions_manager(cls):
-    for attr in cls.__dict__: 
-        if callable(getattr(cls, attr)):
-            setattr(cls, attr, http_exception(getattr(cls, attr)))
-    return cls
-
-
-@http_exceptions_manager
+@exceptions_manager
 class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
@@ -75,16 +68,43 @@ class Agent(Bybit):
     def trade_bucketed(self):
         print("___trade_bucketed")
 
-    def trading_history(self, histCount: int, time: datetime):
-        time = service(time)
+    def trading_history(self, histCount: int, time: datetime) -> list:
+        print("___trading_history")
+        time = service.time_converter(time)
         histCount = min(100, histCount)
+        trade_history = []
         for category in self.category_list:
-            self.session.get_executions(category=category, limit=histCount)
+            result = self.session.get_executions(category=category, limit=histCount)
+            result = result["result"]["list"]
+            for row in result:
+                row["symbol"] = (row["sybol"], category)
+                row["category"] = category
+                row["leavesQty"] = float(row["leavesQty"])
+                row["transactTime"] = int(row["execTime"])
+                row["commission"] = float(row["execFee"])
+                row["clOrdID"] = row["orderLinkId"]
+                row["price"] = float(row["execPrice"])
+                row["lastQty"] = float(row["execQty"])
+                trade_history.append(result)
+        trade_history.sort(key=lambda x: x["transactTime"])
 
-        print("___trading_histor")
+        return trade_history  
 
     def open_orders(self) -> list:
         print("___open_orders")
+        for category in self.category_list:
+            for settleCoin in self.settleCoin_list:
+                cursor = "no"
+                while cursor:
+                    orders = self.session.get_open_orders(
+                        category=category,
+                        settleCoin=settleCoin, 
+                        openOnly = 0,
+                        limit=50,
+                        cursor=cursor,
+                    )
+                    print(orders)
+                    cursor = orders["result"]["nextPageCursor"]
 
     def get_ticker(self) -> OrderedDict:
         print("___get_ticker")
@@ -119,7 +139,10 @@ class Agent(Bybit):
         self.instruments[symbol]["state"] = instrument["status"]
         self.instruments[symbol]["multiplier"] = 1
         self.instruments[symbol]["myMultiplier"] = 1
-
+        if instrument["settlCurrency"] not in self.settlCurrency_list:
+            self.settlCurrency_list.append(instrument["settlCurrency"])
+        if instrument["settleCoin"] not in self.settleCoin_list:
+            self.settleCoin_list(instrument["settleCoin"])
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
