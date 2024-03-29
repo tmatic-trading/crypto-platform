@@ -80,7 +80,7 @@ class Agent(Bybit):
                 row["symbol"] = (row["sybol"], category)
                 row["category"] = category
                 row["leavesQty"] = float(row["leavesQty"])
-                row["transactTime"] = int(row["execTime"])
+                row["transactTime"] = int(row["execTime"]) / 1000
                 row["commission"] = float(row["execFee"])
                 row["clOrdID"] = row["orderLinkId"]
                 row["price"] = float(row["execPrice"])
@@ -92,6 +92,7 @@ class Agent(Bybit):
 
     def open_orders(self) -> list:
         print("___open_orders")
+        myOrders = list()
         for category in self.category_list:
             for settleCoin in self.settleCoin_list:
                 cursor = "no"
@@ -103,8 +104,24 @@ class Agent(Bybit):
                         limit=50,
                         cursor=cursor,
                     )
-                    print(orders)
                     cursor = orders["result"]["nextPageCursor"]
+                    for order in orders["result"]["list"]:
+                        order["symbol"] = (order["symbol"], category)
+                        order["orderID"] = order["orderId"]
+                        if "orderLinkId" in order and order["orderLinkId"]:
+                            order["clOrdID"] = order["orderLinkId"]
+                        order["account"] = self.user_id
+                        order["orderQty"] = float(order["qty"])
+                        order["price"] = float(order["price"])
+                        order["settlCurrency"] = settleCoin
+                        order["ordType"] = order["orderType"]
+                        order["ordStatus"] = order["orderStatus"]
+                        order["leavesQty"] = float(order["leavesQty"])
+                        order["transactTime"] = int(order["updatedTime"]) / 1000
+
+                    myOrders += orders["result"]["list"]
+
+        return myOrders
 
     def get_ticker(self) -> OrderedDict:
         print("___get_ticker")
@@ -142,7 +159,7 @@ class Agent(Bybit):
         if instrument["settlCurrency"] not in self.settlCurrency_list:
             self.settlCurrency_list.append(instrument["settlCurrency"])
         if instrument["settleCoin"] not in self.settleCoin_list:
-            self.settleCoin_list(instrument["settleCoin"])
+            self.settleCoin_list.append(instrument["settleCoin"])
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

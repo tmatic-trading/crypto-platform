@@ -14,10 +14,8 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
 
 
 def time_converter(time: Union[int, float, str, datetime], usec=False) -> Union[datetime, int]:
-    if isinstance(time, int):
+    if isinstance(time, int) or isinstance(time, float):
         return datetime.fromtimestamp(time)
-    elif isinstance(time, float):
-        return datetime.fromtimestamp(int(time))
     elif isinstance(time, datetime):
         return int(time.timestamp())
     elif isinstance(time, str):
