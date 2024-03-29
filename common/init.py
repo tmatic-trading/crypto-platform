@@ -60,7 +60,7 @@ class Init(WS, Variables):
         value. This will happen in the case of a large number of trades or
         funding with the same time greater than or equal to count_val, when
         the first and last line will have the same transactTime accurate to
-        the second.
+        the millisecond.
         """
         while history:
             for row in history:
@@ -69,8 +69,9 @@ class Init(WS, Variables):
                 )
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
+            print(history[-1]["transactTime"])
             last_history_time = service.time_converter(
-                time=history[-1]["transactTime"]
+                time=history[-1]["transactTime"], usec=True,
             )
             history = WS.trading_history(self,
                 histCount=count_val, time=last_history_time
@@ -80,7 +81,7 @@ class Init(WS, Variables):
             tmp = last_history_time
         if self.logNumFatal == 0:
             with open("history.ini", "w") as f:
-                f.write(str(last_history_time))
+                f.write(str(last_history_time)[:19])
 
     def account_balances(self) -> None:
         """
@@ -149,12 +150,12 @@ class Init(WS, Variables):
         Load Orders (if any)
         """
         myOrders = WS.open_orders(self)
-        print(myOrders)
+        '''print(myOrders)
         for order in myOrders:
             for k, val in order.items():
                 print(k, val, type(val))
             print("_______________________")
-        exit(0)
+        exit(0)'''
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:
