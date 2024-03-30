@@ -48,7 +48,8 @@ def setup_market(ws: Markets):
     print("++++", ws.name, ws.logNumFatal)
     while ws.logNumFatal:
         WS.start_ws(ws)
-        WS.get_user(ws)  
+        WS.get_user(ws)
+        #WS.get_wallet_balance(ws)
         if ws.logNumFatal:
             if ws.logNumFatal > 2000:
                 close() 

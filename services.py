@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Union
 from api.bybit.errors import exception
+from api.variables import Variables
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
@@ -35,3 +36,24 @@ def exceptions_manager(cls):
             if attr != "exit":
                 setattr(cls, attr, exception(getattr(cls, attr)))
     return cls
+
+
+def fill_ticker(self: Variables, depth: str, data: dict):
+    if depth in data:
+        for symbol, val in data[depth].items():
+            if depth == "quote":
+                if "bidPrice" in val:
+                    self.ticker[symbol]["bid"] = val["bidPrice"]
+                    self.ticker[symbol]["bidSize"] = val["bidSize"]
+                if "askPrice" in val:
+                    self.ticker[symbol]["ask"] = val["askPrice"]
+                    self.ticker[symbol]["askSize"] = val["askSize"]
+            else:
+                if val["bids"]:
+                    self.ticker[symbol]["bid"] = val["bids"][0][0]
+                    self.ticker[symbol]["bidSize"] = val["bids"][0][1]
+                if val["asks"]:
+                    self.ticker[symbol]["ask"] = val["asks"][0][0]
+                    self.ticker[symbol]["askSize"] = val["asks"][0][1]
+
+    return self.ticker

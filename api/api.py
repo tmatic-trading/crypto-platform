@@ -145,3 +145,11 @@ class WS(Variables):
         """
 
         return Agents[self.name].value.remove_order(self, orderID=orderID)
+    
+    def get_wallet_balance(self: Markets) -> dict:
+        """
+        Obtain wallet balance, query asset information of each currency, and 
+        account risk rate information.
+        """
+
+        return Agents[self.name].value.get_wallet_balance(self)

@@ -21,6 +21,8 @@ class Bitmex(Variables):
         self.name = "Bitmex"
         Setup.variables(self, self.name)
         self.session = requests.Session()
+        if self.depth != "quote":
+            self.depth = "orderBook10"
         self.session.headers.update({"user-agent": "Tmatic"})
         self.session.headers.update({"content-type": "application/json"})
         self.session.headers.update({"accept": "application/json"})
