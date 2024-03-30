@@ -182,24 +182,9 @@ class Agent(Bitmex):
         return orders
 
     def get_ticker(self) -> OrderedDict:
-        if self.depth in self.data:
-            for symbol, val in self.data[self.depth].items():
-                if self.depth == "quote":
-                    if "bidPrice" in val:
-                        self.ticker[symbol]["bid"] = val["bidPrice"]
-                        self.ticker[symbol]["bidSize"] = val["bidSize"]
-                    if "askPrice" in val:
-                        self.ticker[symbol]["ask"] = val["askPrice"]
-                        self.ticker[symbol]["askSize"] = val["askSize"]
-                else:
-                    if val["bids"]:
-                        self.ticker[symbol]["bid"] = val["bids"][0][0]
-                        self.ticker[symbol]["bidSize"] = val["bids"][0][1]
-                    if val["asks"]:
-                        self.ticker[symbol]["ask"] = val["asks"][0][0]
-                        self.ticker[symbol]["askSize"] = val["asks"][0][1]
+        
+        return service.fill_ticker(self, depth=self.depth, data=self.data)
 
-        return self.ticker
 
     def urgent_announcement(self) -> list:
         """
@@ -251,6 +236,13 @@ class Agent(Bitmex):
         postData = {"orderID": orderID}
 
         return Send.request(self, path=path, postData=postData, verb="DELETE")
+    
+    def get_wallet_balance(self):
+        """
+        Bitmex sends this information via websocket, "margin" subscription.
+        """
+        pass
+
 
     #del 
     '''def exit(self):

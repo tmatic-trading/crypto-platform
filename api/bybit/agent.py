@@ -77,15 +77,21 @@ class Agent(Bybit):
             result = self.session.get_executions(category=category, limit=histCount)
             result = result["result"]["list"]
             for row in result:
-                row["symbol"] = (row["sybol"], category)
+                row["symbol"] = (row["symbol"], category)
+                row["execID"] = row["execId"]
+                row["orderID"] = row["orderId"]
                 row["category"] = category
+                row["lastPx"] = float(row["execPrice"])
                 row["leavesQty"] = float(row["leavesQty"])
                 row["transactTime"] = int(row["execTime"]) / 1000
                 row["commission"] = float(row["execFee"])
                 row["clOrdID"] = row["orderLinkId"]
-                row["price"] = float(row["execPrice"])
+                row["price"] = float(row["orderPrice"])
                 row["lastQty"] = float(row["execQty"])
-                trade_history.append(result)
+                row["settlCurrency"] = self.instruments[row["symbol"]]["settlCurrency"]
+                row["market"] = self.name
+                row["foreignNotional"] = 0
+                trade_history += result
         trade_history.sort(key=lambda x: x["transactTime"])
 
         return trade_history  
@@ -126,6 +132,14 @@ class Agent(Bybit):
     def get_ticker(self) -> OrderedDict:
         print("___get_ticker")
 
+        self.ticker = service.fill_ticker(self, depth=self.depth, data=self.data)
+
+        print(self.ticker)
+
+        return self.ticker
+
+        #return service.fill_ticker(self, depth=self.depth, data=self.data)
+
     #del
     '''def exit(self):
         print("___exit")'''
@@ -156,10 +170,26 @@ class Agent(Bybit):
         self.instruments[symbol]["state"] = instrument["status"]
         self.instruments[symbol]["multiplier"] = 1
         self.instruments[symbol]["myMultiplier"] = 1
+        self.instruments[symbol]["fundingRate"] = None
+        if category == "inverse":
+            self.instruments[symbol]["isInverse"] = True
+        else:
+            self.instruments[symbol]["isInverse"] = False
         if instrument["settlCurrency"] not in self.settlCurrency_list:
             self.settlCurrency_list.append(instrument["settlCurrency"])
         if instrument["settleCoin"] not in self.settleCoin_list:
             self.settleCoin_list.append(instrument["settleCoin"])
+
+    def get_wallet_balance(self) -> dict:
+        result = self.session.get_wallet_balance(accountType="UNIFIED")
+        for account in result["result"]["list"]:
+            if account["accountType"] == "UNIFIED":
+                for coin in account["coint"]:
+                    print(coin)
+                exit(0)
+        else:
+            print("UNIFIED account not found")
+
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

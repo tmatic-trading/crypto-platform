@@ -428,7 +428,7 @@ class Function(WS, Variables):
             else:
                 clOrdID = "Empty clOrdID. The order was not sent via Tmatic."
                 print(clOrdID)
-        if "orderID" not in row:  # orderID is missing when text='Closed to
+        if "orderID" not in row:  # for Bitmex: orderID is missing when text='Closed to
             # conform to lot size', last time 2021-05-31
             row["orderID"] = row["text"]
         price = row["price"]
@@ -738,7 +738,7 @@ class Function(WS, Variables):
             else:
                 message = "Currency " + str(currency) + " not found."
                 var.logger.error(message)
-                exit(1)
+                raise
 
         # Refresh Positions table
 

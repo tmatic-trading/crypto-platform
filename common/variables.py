@@ -37,8 +37,8 @@ class Variables:
         )
         position_rows += len(env[market_name]["SYMBOLS"])
         account_rows += len(env[market_name]["CURRENCIES"])
-    if env["ORDER_BOOK_DEPTH"] == "orderBook10":
-        order_book_depth = "orderBook10"
+    if env["ORDER_BOOK_DEPTH"] == "orderBook":
+        order_book_depth = "orderBook"
     else:
         order_book_depth = "quote"
     current_market = market_list[0]
@@ -116,7 +116,7 @@ class Variables:
     connect_mysql = None
     cursor_mysql = None
     timefrs = {1: "1m", 5: "5m", 60: "1h"}
-    currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
+    currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000, "USDT": 1}
     last_order = int((time.time() - 1591000000) * 10)
     last_database_time = datetime(1900, 1, 1, 1, 1)
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
