@@ -460,7 +460,7 @@ class ListBoxTable(Variables):
         """
         if sort:
             if self.columns[0]:  # sort by time
-                self.columns = zip(*self.columns)
+                self.columns = list(zip(*self.columns))
                 self.columns = list(
                     map(
                         lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),

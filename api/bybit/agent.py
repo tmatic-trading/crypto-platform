@@ -1,9 +1,9 @@
-from collections import OrderedDict
-from typing import Union
-#from api.variables import Variables
+# from api.variables import Variables
 import logging
-
+from collections import OrderedDict
 from datetime import datetime
+from typing import Union
+
 import services as service
 from services import exceptions_manager
 
@@ -17,7 +17,7 @@ class Agent(Bybit):
     def get_active_instruments(self) -> OrderedDict:
         for category in self.category_list:
             print("---category---", category)
-            instrument_info = self.session.get_instruments_info(category=category)      
+            instrument_info = self.session.get_instruments_info(category=category)
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
         for symbol in self.symbol_list:
@@ -30,13 +30,13 @@ class Agent(Bybit):
                 )
                 Bybit.exit()
                 exit(1)
-            '''if category is not "option":
+            """if category is not "option":
                 tickers = self.session.get_tickers(category=category)
                 for ticker in tickers["result"]["list"]:
                     symbol = (ticker["symbol"], category)
                     self.instruments[symbol].update(ticker)
                     self.instruments[symbol]["bidPrice"] = ticker["bid1Price"]
-                    self.instruments[symbol]["askPrice"] = ticker["ask1Price"]   '''                 
+                    self.instruments[symbol]["askPrice"] = ticker["ask1Price"]   """
 
         return self.instruments
 
@@ -50,17 +50,18 @@ class Agent(Bybit):
         else:
             self.logNumFatal = 10001
             message = (
-                "A user ID was requested from the exchange but was not "
-                + "received."
+                "A user ID was requested from the exchange but was not " + "received."
             )
             Agent.logger.error(message)
-       
 
     def get_instrument(self, symbol: tuple) -> None:
         print("___get_instrument_data")
-        instrument_info = self.session.get_instruments_info(symbol=symbol[0], category=symbol[1])
-        Agent.fill_instrument(self, instrument=instrument_info["result"]["list"][0], category=symbol[1])
- 
+        instrument_info = self.session.get_instruments_info(
+            symbol=symbol[0], category=symbol[1]
+        )
+        Agent.fill_instrument(
+            self, instrument=instrument_info["result"]["list"][0], category=symbol[1]
+        )
 
     def get_position(self):
         print("___get_position")
@@ -94,7 +95,7 @@ class Agent(Bybit):
                 trade_history += result
         trade_history.sort(key=lambda x: x["transactTime"])
 
-        return trade_history  
+        return trade_history
 
     def open_orders(self) -> list:
         print("___open_orders")
@@ -103,15 +104,15 @@ class Agent(Bybit):
             for settleCoin in self.settleCoin_list:
                 cursor = "no"
                 while cursor:
-                    orders = self.session.get_open_orders(
+                    result = self.session.get_open_orders(
                         category=category,
-                        settleCoin=settleCoin, 
-                        openOnly = 0,
+                        settleCoin=settleCoin,
+                        openOnly=0,
                         limit=50,
                         cursor=cursor,
                     )
-                    cursor = orders["result"]["nextPageCursor"]
-                    for order in orders["result"]["list"]:
+                    cursor = result["result"]["nextPageCursor"]
+                    for order in result["result"]["list"]:
                         order["symbol"] = (order["symbol"], category)
                         order["orderID"] = order["orderId"]
                         if "orderLinkId" in order and order["orderLinkId"]:
@@ -125,7 +126,7 @@ class Agent(Bybit):
                         order["leavesQty"] = float(order["leavesQty"])
                         order["transactTime"] = int(order["updatedTime"]) / 1000
 
-                    myOrders += orders["result"]["list"]
+                    myOrders += result["result"]["list"]
 
         return myOrders
 
@@ -138,11 +139,11 @@ class Agent(Bybit):
 
         return self.ticker
 
-        #return service.fill_ticker(self, depth=self.depth, data=self.data)
+        # return service.fill_ticker(self, depth=self.depth, data=self.data)
 
-    #del
-    '''def exit(self):
-        print("___exit")'''
+    # del
+    """def exit(self):
+        print("___exit")"""
 
     def urgent_announcement(self):
         print("___urgent_announcement")
@@ -156,6 +157,67 @@ class Agent(Bybit):
     def remove_order(self):
         print("___remove_order")
 
+    def get_wallet_balance(self) -> dict:
+        print("___wallet_balance")
+        result = self.session.get_wallet_balance(accountType="UNIFIED")
+        for account in result["result"]["list"]:
+            if account["accountType"] == "UNIFIED":
+                for coin in account["coin"]:
+                    currency = coin["coin"]
+                    self.data["margin"][currency] = dict()
+                    self.data["margin"][currency] = coin
+                    self.data["margin"][currency]["currency"] = currency
+                    self.data["margin"][currency]["walletBalance"] = float(
+                        coin["walletBalance"]
+                    )
+                    self.data["margin"][currency]["unrealisedPnl"] = float(
+                        coin["unrealisedPnl"]
+                    )
+                    self.data["margin"][currency]["marginBalance"] = float(
+                        coin["equity"]
+                    )
+                    self.data["margin"][currency]["availableMargin"] = float(
+                        coin["availableToWithdraw"]
+                    )
+                    self.data["margin"][currency]["withdrawableMargin"] = float(
+                        coin["availableToWithdraw"]
+                    )
+                break
+        else:
+            print("UNIFIED account not found")
+        for currency in self.currencies:
+            if currency not in self.data["margin"]:
+                self.data["margin"][currency] = dict()
+                self.data["margin"][currency]["currency"] = currency
+                self.data["margin"][currency]["walletBalance"] = None
+                self.data["margin"][currency]["unrealisedPnl"] = None
+                self.data["margin"][currency]["marginBalance"] = None
+                self.data["margin"][currency]["availableMargin"] = None
+                self.data["margin"][currency]["withdrawableMargin"] = None
+
+    def get_position_info(self):
+        for category in self.category_list:
+            for settleCurrency in self.settlCurrency_list[category]:
+                if settleCurrency in self.currencies:
+                    cursor = "no"
+                    while cursor:
+                        result = self.session.get_positions(
+                            category=category,
+                            settleCoin=settleCurrency,
+                            limit=200,
+                            cursor=cursor,
+                        )
+                        print(category, settleCurrency, result)
+                        print("--------get_pos------------")
+                        cursor = result["result"]["nextPageCursor"]
+                        for position in result["result"]["list"]:
+                            symbol = (position["symbol"], category)
+                            if symbol in self.positions:
+                                self.positions[symbol] = position
+                                self.positions[symbol]["POS"] = position["positionValue"]
+
+                            # all_positions[symbol][]
+
     def fill_instrument(self, instrument: dict, category: str):
         symbol = (instrument["symbol"], category)
         self.instruments[symbol] = instrument
@@ -166,7 +228,9 @@ class Agent(Bybit):
         else:
             self.instruments[symbol]["expiry"] = None
         self.instruments[symbol]["tickSize"] = instrument["priceFilter"]["tickSize"]
-        self.instruments[symbol]["lotSize"] = float(instrument["lotSizeFilter"]["minOrderQty"])
+        self.instruments[symbol]["lotSize"] = float(
+            instrument["lotSizeFilter"]["minOrderQty"]
+        )
         self.instruments[symbol]["state"] = instrument["status"]
         self.instruments[symbol]["multiplier"] = 1
         self.instruments[symbol]["myMultiplier"] = 1
@@ -175,21 +239,10 @@ class Agent(Bybit):
             self.instruments[symbol]["isInverse"] = True
         else:
             self.instruments[symbol]["isInverse"] = False
-        if instrument["settlCurrency"] not in self.settlCurrency_list:
-            self.settlCurrency_list.append(instrument["settlCurrency"])
+        if instrument["settlCurrency"] not in self.settlCurrency_list[category]:
+            self.settlCurrency_list[category].append(instrument["settlCurrency"])
         if instrument["settleCoin"] not in self.settleCoin_list:
             self.settleCoin_list.append(instrument["settleCoin"])
-
-    def get_wallet_balance(self) -> dict:
-        result = self.session.get_wallet_balance(accountType="UNIFIED")
-        for account in result["result"]["list"]:
-            if account["accountType"] == "UNIFIED":
-                for coin in account["coint"]:
-                    print(coin)
-                exit(0)
-        else:
-            print("UNIFIED account not found")
-
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

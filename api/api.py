@@ -107,6 +107,11 @@ class WS(Variables):
         """
         Cash in the account
         """
+        for val in self.data["margin"].values():
+            for k, v in val.items():
+                print(k, v, type(v))
+            print("-------------------")
+        print(self.data["margin"])
 
         return self.data["margin"].values()
 
@@ -153,3 +158,10 @@ class WS(Variables):
         """
 
         return Agents[self.name].value.get_wallet_balance(self)
+    
+    def get_position_info(self: Markets) -> dict:
+        """
+        Get Position Info
+        """
+
+        return Agents[self.name].value.get_position_info(self)

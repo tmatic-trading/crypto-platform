@@ -49,7 +49,8 @@ def setup_market(ws: Markets):
     while ws.logNumFatal:
         WS.start_ws(ws)
         WS.get_user(ws)
-        #WS.get_wallet_balance(ws)
+        WS.get_wallet_balance(ws)
+        WS.get_position_info(ws)
         if ws.logNumFatal:
             if ws.logNumFatal > 2000:
                 close() 

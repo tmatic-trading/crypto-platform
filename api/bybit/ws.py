@@ -21,7 +21,8 @@ class Bybit(Variables):
         api_secret=self.api_secret,
         testnet=self.testnet,
         )
-        self.settlCurrency_list = list()
+        self.categories = ["spot", "inverse", "option", "linear"]
+        self.settlCurrency_list = {"spot": [], "inverse": [], "option": [], "linear": []}
         self.settleCoin_list = list()
         self.ws = {"spot": WebSocket, "inverse": WebSocket, "option": WebSocket, "linear": WebSocket}
         self.ws_private = WebSocket

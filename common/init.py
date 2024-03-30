@@ -42,11 +42,14 @@ class Init(WS, Variables):
             raise Exception(message)
         lst = [x.replace("\n", "") for x in lst]
         last_history_time = datetime.strptime(lst[0], "%Y-%m-%d %H:%M:%S")
-        if last_history_time > tm:
-            message = "history.ini error. The time in the history.ini file is \
-                greater than the current time."
+        print(last_history_time, tm)
+        '''if last_history_time > tm:
+            message = (
+                "history.ini error. The time in the history.ini file is "
+                + "greater than the current time."
+            )
             var.logger.error(message)
-            raise Exception(message)
+            raise Exception(message)'''
         count_val = 500
         history = WS.trading_history(self,
             histCount=count_val, time=last_history_time
