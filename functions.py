@@ -720,7 +720,7 @@ class Function(WS, Variables):
         for currency in self.accounts:
             for fund in funds:
                 if currency == fund["currency"]:
-                    self.accounts[currency]["ACCOUNT"] = fund["account"]
+                    self.accounts[currency]["ACCOUNT"] = self.user_id
                     self.accounts[currency]["MARGINBAL"] = (
                         float(fund["marginBalance"]) / var.currency_divisor[currency]
                     )
@@ -738,9 +738,16 @@ class Function(WS, Variables):
             else:
                 message = "Currency " + str(currency) + " not found."
                 var.logger.error(message)
-                raise
 
         # Refresh Positions table
+                
+        print(self.positions)
+        for symbol, pos in self.positions.items():
+            print(symbol)
+            for k, p in pos.items():
+                print(k, p, type(p))
+            print("==================")
+        print("---function--- 745")
 
         mod = Tables.position.mod
         for num, symbol in enumerate(self.symbol_list):
@@ -1048,6 +1055,10 @@ class Function(WS, Variables):
                         + " not found. See the CURRENCIES variable in the .env file."
                     )
                     exit(1)
+        print(self.currencies)
+        print(self.accounts)
+        print(self.category_list)
+        print("-----exit----- functions.py 1053")
         for num, cur in enumerate(self.currencies):
             update_label(table="account", column=0, row=num + mod, val=cur)
             update_label(

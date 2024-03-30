@@ -242,7 +242,12 @@ class Agent(Bitmex):
         Bitmex sends this information via websocket, "margin" subscription.
         """
         pass
-
+    
+    def get_position_info(self):
+        """
+        Bitmex sends this information via websocket, "position" subscription.
+        """
+        pass
 
     #del 
     '''def exit(self):
