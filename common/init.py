@@ -42,7 +42,6 @@ class Init(WS, Variables):
             raise Exception(message)
         lst = [x.replace("\n", "") for x in lst]
         last_history_time = datetime.strptime(lst[0], "%Y-%m-%d %H:%M:%S")
-        print(last_history_time, tm)
         '''if last_history_time > tm:
             message = (
                 "history.ini error. The time in the history.ini file is "
@@ -72,10 +71,8 @@ class Init(WS, Variables):
                 )
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
-            print(history[-1]["transactTime"])
-            last_history_time = service.time_converter(
-                time=history[-1]["transactTime"], usec=True,
-            )
+            print("----------history-------------", history[-1]["transactTime"])
+            last_history_time = history[-1]["transactTime"]
             history = WS.trading_history(self,
                 histCount=count_val, time=last_history_time
             )
@@ -195,9 +192,7 @@ class Init(WS, Variables):
                             "VOL": 0,
                             "COMMISS": 0,
                             "SUMREAL": 0,
-                            "LTIME": service.time_converter(
-                                val["transactTime"]
-                            ),
+                            "LTIME": val["transactTime"],
                             "PNL": 0,
                             "CAPITAL": None,
                         }
@@ -220,12 +215,9 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["orderID"] = val["orderID"]
         for clOrdID, order in var.orders.items():
             order["clOrdID"] = clOrdID
-            order["datetime"] = service.time_converter(
-                order["transactTime"]
-            )
         orders.clear_all()
         values = list(var.orders.values())
-        values.sort(key=lambda x: x["datetime"])
+        values.sort(key=lambda x: x["transactTime"])
         var.orders = OrderedDict()
         for val in reversed(values):
             var.orders[val["clOrdID"]] = val

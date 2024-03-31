@@ -84,7 +84,7 @@ class Agent(Bybit):
                 row["category"] = category
                 row["lastPx"] = float(row["execPrice"])
                 row["leavesQty"] = float(row["leavesQty"])
-                row["transactTime"] = int(row["execTime"]) / 1000
+                row["transactTime"] = service.time_converter(time=int(row["execTime"]) / 1000, usec=True)
                 row["commission"] = float(row["execFee"])
                 row["clOrdID"] = row["orderLinkId"]
                 row["price"] = float(row["orderPrice"])
@@ -124,7 +124,7 @@ class Agent(Bybit):
                         order["ordType"] = order["orderType"]
                         order["ordStatus"] = order["orderStatus"]
                         order["leavesQty"] = float(order["leavesQty"])
-                        order["transactTime"] = int(order["updatedTime"]) / 1000
+                        order["transactTime"] = service.time_converter(time=int(order["updatedTime"]) / 1000, usec=True)
 
                     myOrders += result["result"]["list"]
 
@@ -215,6 +215,11 @@ class Agent(Bybit):
                             if symbol in self.positions:
                                 self.positions[symbol] = position
                                 self.positions[symbol]["POS"] = position["positionValue"]
+                                self.positions[symbol]["ENTRY"] = position["avgPrice"]
+                                self.positions[symbol]["PNL"] = position["unrealisedPnl"]
+                                self.positions[symbol]["MCALL"] = position["liqPrice"]
+                                self.positions[symbol]["STATE"] = position["positionStatus"]
+
 
                             # all_positions[symbol][]
 

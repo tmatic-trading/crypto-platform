@@ -178,6 +178,7 @@ class Agent(Bitmex):
         orders = self.data["order"].values()
         for order in orders:
             order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]])
+            order["transactTime"] = service.time_converter(time=order["transactTime"], usec=True)
 
         return orders
 
