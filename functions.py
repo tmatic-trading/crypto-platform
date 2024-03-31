@@ -138,9 +138,6 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        time_struct = service.time_converter(
-            time=row["transactTime"], usec=True
-        )
 
         # Trade
 
@@ -183,7 +180,7 @@ class Function(WS, Variables):
                         "VOL": 0,
                         "COMMISS": 0,
                         "SUMREAL": 0,
-                        "LTIME": time_struct,
+                        "LTIME": row["transactTime"],
                         "PNL": 0,
                         "CAPITAL": None,
                     }
@@ -216,7 +213,7 @@ class Function(WS, Variables):
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
-                self.robots[emi]["LTIME"] = time_struct
+                self.robots[emi]["LTIME"] = row["transactTime"]
                 self.accounts[row["settlCurrency"]]["COMMISS"] += calc["commiss"]
                 self.accounts[row["settlCurrency"]]["SUMREAL"] += calc["sumreal"]
                 values = [
@@ -236,7 +233,7 @@ class Function(WS, Variables):
                     calc["sumreal"],
                     calc["commiss"],
                     clientID,
-                    time_struct,
+                    row["transactTime"],
                     self.user_id,
                 ]
                 Function.insert_database(self, values=values)
@@ -306,12 +303,12 @@ class Function(WS, Variables):
                         calc["sumreal"],
                         calc["funding"],
                         0,
-                        time_struct,
+                        row["transactTime"],
                         self.user_id,
                     ]
                     Function.insert_database(self, values=values)
                     self.robots[emi]["COMMISS"] += calc["funding"]
-                    self.robots[emi]["LTIME"] = time_struct
+                    self.robots[emi]["LTIME"] = row["transactTime"]
                     self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
                     if info:
                         Function.fill_columns(
@@ -363,12 +360,12 @@ class Function(WS, Variables):
                     calc["sumreal"],
                     calc["funding"],
                     0,
-                    time_struct,
+                    row["transactTime"],
                     self.user_id,
                 ]
                 Function.insert_database(self, values=values)
                 self.robots[emi]["COMMISS"] += calc["funding"]
-                self.robots[emi]["LTIME"] = time_struct
+                self.robots[emi]["LTIME"] = row["transactTime"]
                 self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
                 if info:
                     Function.fill_columns(
