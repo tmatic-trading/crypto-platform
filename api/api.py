@@ -107,11 +107,6 @@ class WS(Variables):
         """
         Cash in the account
         """
-        for val in self.data["margin"].values():
-            for k, v in val.items():
-                print(k, v, type(v))
-            print("-------------------")
-        print(self.data["margin"])
 
         return self.data["margin"].values()
 
@@ -120,7 +115,7 @@ class WS(Variables):
         Gets market depth (orderbook), 10 lines deep.
         """
 
-        return self.data["orderBook10"]
+        return self.data["orderBook"]
 
     def place_limit(
         self: Markets, quantity: int, price: float, clOrdID: str, symbol: tuple

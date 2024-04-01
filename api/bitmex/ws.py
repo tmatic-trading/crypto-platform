@@ -21,8 +21,9 @@ class Bitmex(Variables):
         self.name = "Bitmex"
         Setup.variables(self, self.name)
         self.session = requests.Session()
+        depth = "quote"
         if self.depth != "quote":
-            self.depth = "orderBook10"
+            depth = "orderBook10"
         self.session.headers.update({"user-agent": "Tmatic"})
         self.session.headers.update({"content-type": "application/json"})
         self.session.headers.update({"accept": "application/json"})
@@ -33,7 +34,7 @@ class Bitmex(Variables):
             "order",
             "position",
             "trade",
-            self.depth,
+            depth,
         }
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
         self.symbol_category = dict()
@@ -129,11 +130,11 @@ class Bitmex(Variables):
         received after the timeout expires, the websocket is rebooted.
         """
         count = 0
-        while not self.table_subscription <= set(self.data):
+        while not self.table_subscription <= set(self.keys):
             count += 1
             if count > 30:  # fails after 3 seconds
                 table_lack = self.table_subscription.copy()
-                for table in self.data.keys():
+                for table in self.keys.keys():
                     if table in self.table_subscription:
                         table_lack.remove(table)
                 self.logger.info(
@@ -179,8 +180,9 @@ class Bitmex(Variables):
         self.message_counter = self.message_counter + 1
         try:
             if action:
-                if table not in self.data:
-                    self.data[table] = OrderedDict()
+                table_name = "orderBook" if table == "orderBook10" else table
+                if table_name not in self.data:
+                    self.data[table_name] = OrderedDict()
                 if action == "partial":  # table snapshot
                     self.logger.debug("%s: partial" % table)
                     self.keys[table] = message["keys"]
@@ -199,19 +201,19 @@ class Bitmex(Variables):
                                     break
                         else:
                             key = generate_key(self.keys[table], val, table)
-                            self.data[table][key] = val
+                            self.data[table_name][key] = val
                 elif action == "insert":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)
                         if table == "quote":
                             val["category"] = self.symbol_category[val["symbol"]]
                             if "bidPrice" in val:
-                                self.data[table][key]["bidPrice"] = val["bidPrice"]
-                                self.data[table][key]["bidSize"] = val["bidSize"]
+                                self.data[table_name][key]["bidPrice"] = val["bidPrice"]
+                                self.data[table_name][key]["bidSize"] = val["bidSize"]
                             if "askPrice" in val:
-                                self.data[table][key]["askPrice"] = val["askPrice"]
+                                self.data[table_name][key]["askPrice"] = val["askPrice"]
                                 self.data[table][key]["askSize"] = val["askSize"]
-                            self.frames_hi_lo_values(data=self.data[table][key])
+                            self.frames_hi_lo_values(data=self.data[table_name][key])
                         elif table == "execution":
                             val["symbol"] = (
                                 val["symbol"],
@@ -220,28 +222,28 @@ class Bitmex(Variables):
                             val["market"] = self.name
                             self.transaction(row=val)
                         else:
-                            self.data[table][key] = val
+                            self.data[table_name][key] = val
                 elif action == "update":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)
-                        if key not in self.data[table]:
+                        if key not in self.data[table_name]:
                             return  # No key to update
-                        self.data[table][key].update(val)
+                        self.data[table_name][key].update(val)
                         if table == "orderBook10":
-                            self.frames_hi_lo_values(data=self.data[table][key])
+                            self.frames_hi_lo_values(data=self.data[table_name][key])
                         elif table == "instrument":
                             self.instruments[key].update(val)
                         elif table == "position":
                             self.positions_update(val=val)
                         # Removes cancelled or filled orders
                         elif (
-                            table == "order" and self.data[table][key]["leavesQty"] <= 0
+                            table == "order" and self.data[table_name][key]["leavesQty"] <= 0
                         ):
-                            self.data[table].pop(key)
+                            self.data[table_name].pop(key)
                 elif action == "delete":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)
-                        self.data[table].pop(key)
+                        self.data[table_name].pop(key)
         except Exception:
             self.logger.error(
                 traceback.format_exc()
@@ -276,7 +278,7 @@ class Bitmex(Variables):
         if data["symbol"] in self.frames:
             for timeframe in self.frames[data["symbol"]].values():
                 if timeframe["data"]:
-                    if self.depth == "orderBook10":
+                    if self.depth == "orderBook":
                         if data["asks"]:
                             if data["asks"][0][0] > timeframe["data"][-1]["hi"]:
                                 timeframe["data"][-1]["hi"] = data["asks"][0][0]

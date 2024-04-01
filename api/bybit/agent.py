@@ -16,7 +16,6 @@ class Agent(Bybit):
 
     def get_active_instruments(self) -> OrderedDict:
         for category in self.category_list:
-            print("---category---", category)
             instrument_info = self.session.get_instruments_info(category=category)
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
@@ -133,11 +132,7 @@ class Agent(Bybit):
     def get_ticker(self) -> OrderedDict:
         print("___get_ticker")
 
-        self.ticker = service.fill_ticker(self, depth=self.depth, data=self.data)
-
-        print(self.ticker)
-
-        return self.ticker
+        return service.fill_ticker(self, depth=self.depth, data=self.data)
 
         # return service.fill_ticker(self, depth=self.depth, data=self.data)
 
@@ -207,16 +202,14 @@ class Agent(Bybit):
                             limit=200,
                             cursor=cursor,
                         )
-                        print(category, settleCurrency, result)
-                        print("--------get_pos------------")
                         cursor = result["result"]["nextPageCursor"]
                         for position in result["result"]["list"]:
                             symbol = (position["symbol"], category)
                             if symbol in self.positions:
                                 self.positions[symbol] = position
-                                self.positions[symbol]["POS"] = position["positionValue"]
-                                self.positions[symbol]["ENTRY"] = position["avgPrice"]
-                                self.positions[symbol]["PNL"] = position["unrealisedPnl"]
+                                self.positions[symbol]["POS"] = float(position["positionValue"])
+                                self.positions[symbol]["ENTRY"] = float(position["avgPrice"])
+                                self.positions[symbol]["PNL"] = float(position["unrealisedPnl"])
                                 self.positions[symbol]["MCALL"] = position["liqPrice"]
                                 self.positions[symbol]["STATE"] = position["positionStatus"]
 
@@ -239,7 +232,7 @@ class Agent(Bybit):
         self.instruments[symbol]["state"] = instrument["status"]
         self.instruments[symbol]["multiplier"] = 1
         self.instruments[symbol]["myMultiplier"] = 1
-        self.instruments[symbol]["fundingRate"] = None
+        self.instruments[symbol]["fundingRate"] = 0
         if category == "inverse":
             self.instruments[symbol]["isInverse"] = True
         else:
@@ -247,7 +240,8 @@ class Agent(Bybit):
         if instrument["settlCurrency"] not in self.settlCurrency_list[category]:
             self.settlCurrency_list[category].append(instrument["settlCurrency"])
         if instrument["settleCoin"] not in self.settleCoin_list:
-            self.settleCoin_list.append(instrument["settleCoin"])
+            self.settleCoin_list.append(instrument["settleCoin"])        
+        self.instruments[symbol]["volume24h"] = 0
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

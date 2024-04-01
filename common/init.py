@@ -71,7 +71,6 @@ class Init(WS, Variables):
                 )
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
-            print("----------history-------------", history[-1]["transactTime"])
             last_history_time = history[-1]["transactTime"]
             history = WS.trading_history(self,
                 histCount=count_val, time=last_history_time
@@ -150,12 +149,6 @@ class Init(WS, Variables):
         Load Orders (if any)
         """
         myOrders = WS.open_orders(self)
-        '''print(myOrders)
-        for order in myOrders:
-            for k, val in order.items():
-                print(k, val, type(val))
-            print("_______________________")
-        exit(0)'''
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:
