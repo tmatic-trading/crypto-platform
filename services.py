@@ -43,17 +43,17 @@ def fill_ticker(self: Variables, depth: str, data: dict):
         for symbol, val in data[depth].items():
             if depth == "quote":
                 if "bidPrice" in val:
-                    self.ticker[symbol]["bid"] = val["bidPrice"]
-                    self.ticker[symbol]["bidSize"] = val["bidSize"]
+                    self.ticker[symbol]["bid"] = float(val["bidPrice"])
+                    self.ticker[symbol]["bidSize"] = float(val["bidSize"])
                 if "askPrice" in val:
-                    self.ticker[symbol]["ask"] = val["askPrice"]
-                    self.ticker[symbol]["askSize"] = val["askSize"]
+                    self.ticker[symbol]["ask"] = float(val["askPrice"])
+                    self.ticker[symbol]["askSize"] = float(val["askSize"])
             else:
                 if val["bids"]:
-                    self.ticker[symbol]["bid"] = val["bids"][0][0]
-                    self.ticker[symbol]["bidSize"] = val["bids"][0][1]
+                    self.ticker[symbol]["bid"] = float(val["bids"][0][0])
+                    self.ticker[symbol]["bidSize"] = float(val["bids"][0][1])
                 if val["asks"]:
-                    self.ticker[symbol]["ask"] = val["asks"][0][0]
-                    self.ticker[symbol]["askSize"] = val["asks"][0][1]
+                    self.ticker[symbol]["ask"] = float(val["asks"][0][0])
+                    self.ticker[symbol]["askSize"] = float(val["asks"][0][1])
 
     return self.ticker

@@ -606,7 +606,7 @@ class Function(WS, Variables):
         orders.insert(row=0, elements=elements)
         orders.paint(row=0, side=val["SIDE"])
 
-    def volume(self: Markets, qty: int, symbol: tuple) -> str:
+    def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
         if qty == 0:
             qty = "0"
         else:
@@ -701,7 +701,7 @@ class Function(WS, Variables):
                     info_display(self.name, "No data within 10 sec")
                     # disp.label_online["text"] = "NO DATA"
                     # disp.label_online.config(bg="yellow2")
-                    self.urgent_announcement(self.name)
+                    WS.urgent_announcement(self)
                 self.message_time = utc
                 self.message_point = self.message_counter
         Function.refresh_tables(self)
@@ -737,14 +737,6 @@ class Function(WS, Variables):
                 var.logger.error(message)
 
         # Refresh Positions table
-                
-        print(self.positions)
-        for symbol, pos in self.positions.items():
-            print(symbol)
-            for k, p in pos.items():
-                print(k, p, type(p))
-            print("==================")
-        print("---function--- 745")
 
         mod = Tables.position.mod
         for num, symbol in enumerate(self.symbol_list):
@@ -839,10 +831,10 @@ class Function(WS, Variables):
                 qty = 0
                 if len(val[side]) > count:
                     price = Function.format_price(
-                        self, number=val[side][count][0], symbol=var.symbol
+                        self, number=float(val[side][count][0]), symbol=var.symbol
                     )
                     vlm = Function.volume(
-                        self, qty=val[side][count][1], symbol=var.symbol
+                        self, qty=float(val[side][count][1]), symbol=var.symbol
                     )
                     if var.orders:
                         qty = Function.volume(
@@ -1052,10 +1044,6 @@ class Function(WS, Variables):
                         + " not found. See the CURRENCIES variable in the .env file."
                     )
                     exit(1)
-        print(self.currencies)
-        print(self.accounts)
-        print(self.category_list)
-        print("-----exit----- functions.py 1053")
         for num, cur in enumerate(self.currencies):
             update_label(table="account", column=0, row=num + mod, val=cur)
             update_label(

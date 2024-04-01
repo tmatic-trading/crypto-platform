@@ -58,6 +58,10 @@ class Bybit(Variables):
                 self.data[self.depth][symbol]["symbol"] = symbol[0]
                 self.data[self.depth][symbol]["bids"] = list()
                 self.data[self.depth][symbol]["asks"] = list()
+                self.ws[category].ticker_stream(
+                    symbol=symbol[0],
+                    callback=lambda x: self.__handle_ticker(message=x, category=category)
+                )
         self.ws_private = WebSocket(testnet=self.testnet, channel_type="private", api_key=self.api_key, api_secret=self.api_secret,)
         self.ws_private.wallet_stream(callback=self.__handle_wallet)
 
@@ -72,8 +76,12 @@ class Bybit(Variables):
             self.data[self.depth][symbol]["bids"] = message["data"]["b"]
             self.data[self.depth][symbol]["asks"] = message["data"]["a"]
 
+    def __handle_ticker(self, message: dict, category: str):
+        pass
+        #print(category, message)
+
     def __handle_wallet(message):
-        print(message)
+        pass
 
     def __handle_order(self, message):
         pass
