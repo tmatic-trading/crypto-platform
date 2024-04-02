@@ -9,6 +9,7 @@ from .pybit.unified_trading import WebSocket
 from time import sleep
 import logging
 from services import exceptions_manager
+from datetime import datetime
 
 
 @exceptions_manager
@@ -52,7 +53,7 @@ class Bybit(Variables):
                 self.ws[category].orderbook_stream(
                     depth=self.orderbook_depth,
                     symbol=symbol[0],
-                    callback=lambda x: self.__handle_orderbook(message=x, category=category)
+                    callback=lambda x: self.__handle_orderbook(message=x, symbol=symbol)
                 )
                 self.data[self.depth][symbol] = dict()
                 self.data[self.depth][symbol]["symbol"] = symbol[0]
@@ -65,18 +66,24 @@ class Bybit(Variables):
         self.ws_private = WebSocket(testnet=self.testnet, channel_type="private", api_key=self.api_key, api_secret=self.api_secret,)
         self.ws_private.wallet_stream(callback=self.__handle_wallet)
 
-    def __handle_orderbook(self, message: dict, category: str):
-        symbol = (message["topic"].split(".")[-1], category)
+    def __handle_orderbook(self, message: dict, symbol: tuple):
         if self.depth == "quote":
-            self.data[self.depth]["bidPrice"] = message["data"]["b"][0]
-            self.data[self.depth]["askPrice"] = message["data"]["a"][0]
-            self.data[self.depth]["bidSize"] = message["data"]["b"][1]
-            self.data[self.depth]["askSize"] = message["data"]["a"][1]
+            self.data[self.depth][symbol]["bidPrice"] = message["data"]["b"][0]
+            self.data[self.depth][symbol]["askPrice"] = message["data"]["a"][0]
+            self.data[self.depth][symbol]["bidSize"] = message["data"]["b"][1]
+            self.data[self.depth][symbol]["askSize"] = message["data"]["a"][1]
         else:
-            self.data[self.depth][symbol]["bids"] = message["data"]["b"]
-            self.data[self.depth][symbol]["asks"] = message["data"]["a"]
+            asks = message["data"]["a"]
+            bids = message["data"]["b"]
+            asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
+            bids = list(map(lambda x: [float(x[0]), float(x[1])], bids))
+            asks.sort(key=lambda x: x[0])       
+            bids.sort(key=lambda x: x[0], reverse=True)            
+            self.data[self.depth][symbol]["bids"] = bids
+            self.data[self.depth][symbol]["asks"] = asks
 
     def __handle_ticker(self, message: dict, category: str):
+        self.message_counter += 1
         pass
         #print(category, message)
 

@@ -130,7 +130,7 @@ class Agent(Bybit):
         return myOrders
 
     def get_ticker(self) -> OrderedDict:
-        print("___get_ticker")
+        #print("___get_ticker")
 
         return service.fill_ticker(self, depth=self.depth, data=self.data)
 
@@ -229,6 +229,9 @@ class Agent(Bybit):
         self.instruments[symbol]["lotSize"] = float(
             instrument["lotSizeFilter"]["minOrderQty"]
         )
+        self.instruments[symbol]["minOrderQty"] = self.instruments[symbol]["lotSize"]
+        qty = self.instruments[symbol]["lotSize"]
+        self.instruments[symbol]["precision"] = len(str(qty - int(qty)).replace(".", ""))-1
         self.instruments[symbol]["state"] = instrument["status"]
         self.instruments[symbol]["multiplier"] = 1
         self.instruments[symbol]["myMultiplier"] = 1
