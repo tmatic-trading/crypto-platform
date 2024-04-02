@@ -10,10 +10,13 @@ from time import sleep
 import logging
 from services import exceptions_manager
 from datetime import datetime
+from common.data import Meta
 
 
 @exceptions_manager
 class Bybit(Variables):
+    class Position(metaclass=Meta): pass
+    class Instrument(metaclass=Meta): pass
     def __init__(self):
         self.name = "Bybit"
         Setup.variables(self, self.name)

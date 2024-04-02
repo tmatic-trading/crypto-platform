@@ -94,8 +94,6 @@ class Agent(Bitmex):
             self.instruments[symbol] = dict()
         self.instruments[symbol]["myMultiplier"] = int(myMultiplier)
         self.instruments[symbol]["category"] = category
-        if symbol not in self.instruments:
-            self.instruments[symbol] = dict()
         self.instruments[symbol]["symbol"] = instrument["symbol"]
         self.instruments[symbol]["multiplier"] = instrument["multiplier"]
         if "settlCurrency" in instrument:
@@ -132,6 +130,43 @@ class Agent(Bitmex):
             self.instruments[symbol]["fundingRate"] = 0
         else:
             self.instruments[symbol]["fundingRate"] = instrument["fundingRate"]
+
+        # Class
+
+        if "askPrice" in instrument:
+            self.Instrument[symbol].askPrice = instrument["askPrice"]
+        if "bidPrice" in instrument:
+            self.Instrument[symbol].askPrice = instrument["bidPrice"]
+        self.Instrument[symbol].category = category
+        self.Instrument[symbol].symbol = instrument["symbol"]
+        self.Instrument[symbol].myMultiplier = int(myMultiplier)
+        self.Instrument[symbol].multiplier = instrument["multiplier"]
+        if "settlCurrency" in instrument:
+            self.Instrument[symbol].settlCurrency = instrument["settlCurrency"]
+        else:
+            self.Instrument[symbol].settlCurrency = None
+        self.Instrument[symbol].tickSize = instrument["tickSize"]
+        self.Instrument[symbol].minOrderQty = instrument["lotSize"] / myMultiplier
+        qty = self.Instrument[symbol].minOrderQty
+        if qty == int(qty):
+            num = 0
+        else:
+            num = len(str(qty - int(qty)).replace(".", ""))-1
+        self.Instrument[symbol].precision = num
+        self.Instrument[symbol].state = instrument["state"]
+        self.Instrument[symbol].volume24h = instrument["volume24h"]
+        if "expire" in instrument and instrument["expire"]:
+            self.Instrument[symbol].expire = service.time_converter(
+                time=instrument["expiry"]
+            )
+        else:
+            self.Instrument[symbol].expire = "Perpetual"
+        if "fundingRate" not in instrument:
+            self.Instrument[symbol].fundingRate = 0
+        else:
+            self.Instrument[symbol].fundingRate = instrument["fundingRate"]
+
+        
 
         return category
 

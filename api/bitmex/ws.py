@@ -14,9 +14,12 @@ from display.functions import info_display
 from .api_auth import generate_signature
 import requests
 from api.init import Setup
+from common.data import Meta
 
 
 class Bitmex(Variables):
+    class Position(metaclass=Meta): pass
+    class Instrument(metaclass=Meta): pass
     def __init__(self):
         self.name = "Bitmex"
         Setup.variables(self, self.name)
