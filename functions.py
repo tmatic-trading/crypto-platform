@@ -851,6 +851,19 @@ class Function(WS, Variables):
                     disp.labels["orderbook"][row][col_qty]["fg"] = disp.fg_color
                 update_label(table="orderbook", column=col, row=row, val=vlm)
                 update_label(table="orderbook", column=1, row=row, val=price)
+                if var.symbol != disp.symb_book:
+                    col1_book = len(price)
+                    if col1_book != 0:
+                        if col1_book > disp.col1_book:
+                            disp.col1_book = col1_book
+                    if row == 1 and disp.col1_book != 0:
+                        #print(side, row, col1_book, disp.col1_book, var.symbol, disp.symb_book)
+                        for row in range(0, Tables.orderbook.num_book - mod, 1):
+                            disp.labels["orderbook"][row][0]["width"] = 6
+                            disp.labels["orderbook"][row][1]["width"] = disp.col1_book
+                            disp.labels["orderbook"][row][2]["width"] = 6
+                        disp.symb_book = var.symbol
+                        disp.col1_book = 0
                 count += 1
             #print(val["asks"])
 

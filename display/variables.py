@@ -35,6 +35,8 @@ class Variables:
 
     num_robots = 1
     num_book = 21  # Must be odd
+    col1_book = 0
+    symb_book = ()
     frame_state = tk.Frame(padx=10)
     frame_state.grid(row=0, column=0, sticky="W", columnspan=2)
     labels = dict()
