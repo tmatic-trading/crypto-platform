@@ -47,7 +47,7 @@ Before running the program on a real account, it is strongly recommended to debu
 
 ```
 pip3 install pymysql
-pip3 install cryptography
+pip3 install pycryptodome
 pip3 install python-dotenv
 pip3 install websocket-client
 pip3 install requests
