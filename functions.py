@@ -55,7 +55,7 @@ class Function(WS, Variables):
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
             if symbol not in self.instruments:
-                self.get_instrument(name=self.name, symbol=symbol)
+                WS.get_instrument(self, symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)
@@ -607,17 +607,13 @@ class Function(WS, Variables):
         orders.paint(row=0, side=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
+        q = qty; num = 0
         if qty == 0:
             qty = "0"
         else:
             qty /= self.instruments[symbol]["myMultiplier"]
-            num = len(str(self.instruments[symbol]["myMultiplier"])) - len(
-                str(self.instruments[symbol]["lotSize"])
-            )
-            if num > 0:
-                qty = "{:.{precision}f}".format(qty, precision=num)
-            else:
-                qty = "{:.{precision}f}".format(qty, precision=0)
+            qty = "{:.{precision}f}".format(qty, precision=self.instruments[symbol]["precision"])
+        print(symbol, num, self.instruments[symbol]["minOrderQty"], self.instruments[symbol]["precision"], q, qty)
 
         return qty
 
@@ -842,6 +838,7 @@ class Function(WS, Variables):
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
+                #print(count, val[side][count][0], val[side][count][1])
                 if str(qty) != "0":
                     update_label(table="orderbook", column=col_qty, row=row, val=qty)
                     disp.labels["orderbook"][row][col_qty]["bg"] = color
@@ -853,6 +850,7 @@ class Function(WS, Variables):
                 update_label(table="orderbook", column=col, row=row, val=vlm)
                 update_label(table="orderbook", column=1, row=row, val=price)
                 count += 1
+            #print(val["asks"])
 
         mod = 1 - Tables.orderbook.mod
         num = int(disp.num_book / 2) - mod
@@ -940,7 +938,7 @@ class Function(WS, Variables):
                         update_label(table="orderbook", column=2, row=row, val="")
                         disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
         else:
-            val = WS.market_depth10(self)[var.symbol]
+            val = WS.market_depth(self)[var.symbol]
             display_order_book_values(
                 val=val, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
             )

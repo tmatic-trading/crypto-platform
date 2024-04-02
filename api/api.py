@@ -110,7 +110,7 @@ class WS(Variables):
 
         return self.data["margin"].values()
 
-    def market_depth10(self: Markets) -> list:
+    def market_depth(self: Markets) -> list:
         """
         Gets market depth (orderbook), 10 lines deep.
         """

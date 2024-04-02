@@ -104,6 +104,13 @@ class Agent(Bitmex):
             self.instruments[symbol]["settlCurrency"] = None
         self.instruments[symbol]["tickSize"] = instrument["tickSize"]
         self.instruments[symbol]["lotSize"] = instrument["lotSize"]
+        self.instruments[symbol]["minOrderQty"] = instrument["lotSize"] / myMultiplier
+        qty = self.instruments[symbol]["minOrderQty"]
+        if qty == int(qty):
+            num = 0
+        else:
+            num = len(str(qty - int(qty)).replace(".", ""))-1
+        self.instruments[symbol]["precision"] = num
         self.instruments[symbol]["state"] = instrument["state"]
         self.instruments[symbol]["volume24h"] = instrument["volume24h"]
         if "bidPrice" in instrument:
