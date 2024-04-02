@@ -20,6 +20,7 @@ import services as service
 
 db = var.env["MYSQL_DATABASE"]
 
+#from api.bitmex.ws import Bitmex
 
 class Tables:
     position = GridTable
@@ -36,8 +37,10 @@ class Function(WS, Variables):
         """
         Calculate sumreal and commission
         """
+        print(self.instruments[symbol]["multiplier"])
+        print(self.Instrument[symbol].multiplier)
         coef = abs(
-            self.instruments[symbol]["multiplier"]
+            self.Instrument[symbol].multiplier
             / var.currency_divisor[self.instruments[symbol]["settlCurrency"]]
         )
         if self.instruments[symbol]["isInverse"]:
@@ -613,7 +616,6 @@ class Function(WS, Variables):
         else:
             qty /= self.instruments[symbol]["myMultiplier"]
             qty = "{:.{precision}f}".format(qty, precision=self.instruments[symbol]["precision"])
-        print(symbol, num, self.instruments[symbol]["minOrderQty"], self.instruments[symbol]["precision"], q, qty)
 
         return qty
 
@@ -1097,7 +1099,7 @@ class Function(WS, Variables):
 
         mod = Tables.market.mod
         for row, name in enumerate(var.market_list):
-            ws = Markets[name].value
+            ws = Markets[name]
             status = "ONLINE"
             if ws.logNumFatal != 0:
                 status = "error " + str(ws.logNumFatal)
@@ -1233,7 +1235,7 @@ def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
         if row_position[0] - orders.mod >= 0:
-            ws = Markets[var.current_market].value
+            ws = Markets[var.current_market]
             for num, clOrdID in enumerate(var.orders):
                 if num == row_position[0] - orders.mod:
                     break
@@ -1349,7 +1351,7 @@ def handler_order(event) -> None:
 
 def handler_orderbook(event, row_position: int) -> None:
     disp.symb_book = var.symbol
-    ws = Markets[var.current_market].value
+    ws = Markets[var.current_market]
 
     def refresh() -> None:
         book_window.title(var.symbol)
@@ -1622,7 +1624,7 @@ def warning_window(message: str) -> None:
 
 
 def handler_pos(event, row_position: int) -> None:
-    ws = Markets[var.current_market].value
+    ws = Markets[var.current_market]
     if row_position > len(ws.symbol_list):
         row_position = len(ws.symbol_list)
     var.symbol = ws.symbol_list[row_position - 1]
@@ -1675,7 +1677,7 @@ def find_order(price: float, qty: int, symbol: str) -> int:
 
 def handler_robots(event, row_position: int) -> None:
     emi = None
-    ws = Markets[var.current_market].value
+    ws = Markets[var.current_market]
     for val in ws.robots:
         if ws.robots[val]["y_position"] == row_position:
             emi = val
@@ -1736,7 +1738,7 @@ def change_color(color: str, container=None) -> None:
 
 
 def load_labels() -> None:
-    ws = Markets[var.current_market].value
+    ws = Markets[var.current_market]
     Tables.position = GridTable(
         frame=disp.position_frame,
         name="position",

@@ -11,10 +11,27 @@ from api.init import Setup
 
 from enum import Enum
 
+class MetaMarket(type):
+    dictionary = dict()
+    names = {"Bitmex": Bitmex, "Bybit": Bybit}
+    def __getitem__(self, item) -> Union[Bitmex, Bybit]:        
+        key = item 
+        if item not in self.names:
+            raise ValueError(f"{item} not found")
+        if key not in self.dictionary:
+            self.dictionary[key] = self.names[item]()
+            return self.dictionary[key]
+        else:
+            return self.dictionary[key]
+        
 
-class Markets(Variables, Enum):
+class Markets(Bitmex, Bybit, metaclass=MetaMarket):
+    pass
+
+
+'''class Markets(Variables, Enum):
     Bitmex =  Bitmex()
-    Bybit = Bybit()
+    Bybit = Bybit()'''
 
 class Agents(Enum):
     Bitmex = BitmexAgent
@@ -27,13 +44,13 @@ class WS(Variables):
         Websockets init
         """
         self.instruments = Agents[self.name].value.get_active_instruments(self)
-        Markets[self.name].value.start()
+        Markets[self.name].start()
 
     def exit(self: Markets) -> None:
         """
         Closes websocket
         """
-        Markets[self.name].value.exit()
+        Markets[self.name].exit()
 
     def get_active_instruments(self: Markets) -> OrderedDict:
         """

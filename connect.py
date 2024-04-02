@@ -30,7 +30,7 @@ def setup():
     common.setup_database_connecion()
     var.robots_thread_is_active = False
     for name in var.market_list:
-        setup_market(Markets[name].value)
+        setup_market(Markets[name])
     trades.insert_columns()
     funding.insert_columns()
     orders.insert_columns(sort=False)
@@ -85,7 +85,7 @@ def setup_market(ws: Markets):
 
 def refresh() -> None:
     for name in var.market_list:
-        ws = Markets[name].value
+        ws = Markets[name]
         utc = datetime.utcnow()
         if ws.logNumFatal > 2000:
             if ws.message2000 == "":
@@ -121,7 +121,7 @@ def robots_thread() -> None:
     while var.robots_thread_is_active:
         utcnow = datetime.utcnow()
         for name in var.market_list:
-            ws: WS = Markets[name].value
+            ws: WS = Markets[name]
             if ws.api_is_active:
                 if ws.frames:
                     Function.robots_entry(ws, utc=utcnow)
