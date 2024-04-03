@@ -1,4 +1,4 @@
-cryptography
+pycryptodome
 pymysql
 python-dotenv
 requests

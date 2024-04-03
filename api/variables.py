@@ -21,9 +21,9 @@ class Variables():
     accounts = dict()
     ticker = OrderedDict()
     positions = OrderedDict()
-    instruments = OrderedDict()
     data = dict()
     full_symbol_list = list()
+    symbols = set()
     logger = logging
     logNumFatal = -1
     timeoutOccurred = ""

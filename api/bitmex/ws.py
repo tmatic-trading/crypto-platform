@@ -14,12 +14,12 @@ from display.functions import info_display
 from .api_auth import generate_signature
 import requests
 from api.init import Setup
-from common.data import Meta
+from common.data import MetaPosition, MetaInstrument
 
 
 class Bitmex(Variables):
-    class Position(metaclass=Meta): pass
-    class Instrument(metaclass=Meta): pass
+    class Position(metaclass=MetaPosition): pass
+    class Instrument(metaclass=MetaInstrument): pass
     def __init__(self):
         self.name = "Bitmex"
         Setup.variables(self, self.name)
@@ -235,9 +235,9 @@ class Bitmex(Variables):
                         if table == "orderBook10":
                             self.frames_hi_lo_values(data=self.data[table_name][key])
                         elif table == "instrument":
-                            self.instruments[key].update(val)
+                            self.instrument_update(symbol=key, instrument=val)
                         elif table == "position":
-                            self.positions_update(val=val)
+                            self.position_update(position=val)
                         # Removes cancelled or filled orders
                         elif (
                             table == "order" and self.data[table_name][key]["leavesQty"] <= 0
@@ -296,25 +296,33 @@ class Bitmex(Variables):
                             if data["bidPrice"] < timeframe["data"][-1]["lo"]:
                                 timeframe["data"][-1]["lo"] = data["bidPrice"]
 
-    def positions_update(self, val: dict) -> None:
+    def position_update(self, position: dict) -> None:
         """
         Updates the positions variable for subscribed instruments each time
         information from "position" table is received from the websocket.
         """
-        symbol = (val["symbol"], val["category"])
-        self.positions[symbol]["POS"] = val["currentQty"]
-        if "avgEntryPrice" in val:
-            self.positions[symbol]["ENTRY"] = val["avgEntryPrice"]
+        symbol = (position["symbol"], position["category"])
+        self.positions[symbol]["POS"] = position["currentQty"]
+        if "avgEntryPrice" in position:
+            self.positions[symbol]["ENTRY"] = position["avgEntryPrice"]
         else:
             self.positions[symbol]["ENTRY"] = 0
-        if "marginCallPrice" in val:
-            self.positions[symbol]["MCALL"] = val["marginCallPrice"]
+        if "marginCallPrice" in position:
+            self.positions[symbol]["MCALL"] = position["marginCallPrice"]
         else:
             self.positions[symbol]["MCALL"] = 0
-        if "unrealisedPnl" in val:
-            self.positions[symbol]["PNL"] = val["unrealisedPnl"]
+        if "unrealisedPnl" in position:
+            self.positions[symbol]["PNL"] = position["unrealisedPnl"]
         else:
             self.positions[symbol]["PNL"] = 0
+
+    def instrument_update(self, symbol: tuple, instrument: dict):
+        if "fundingRate" in instrument:
+            self.Instrument[symbol].fundingRate = instrument["fundingRate"]
+        if "volume24h" in instrument:
+            self.Instrument[symbol].volume24h = instrument["volume24h"]
+        if "state" in instrument:
+            self.Instrument[symbol].state = instrument["state"]
 
     def exit(self):
         """
