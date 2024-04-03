@@ -16,7 +16,7 @@ import logging
 class Agent(Bitmex):
     logger = logging.getLogger(__name__)
 
-    def get_active_instruments(self) -> OrderedDict:
+    def get_active_instruments(self) -> None:
         result = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not self.logNumFatal:
             for instrument in result:
@@ -26,7 +26,7 @@ class Agent(Bitmex):
                 )
                 self.symbol_category[instrument["symbol"]] = category
             for symbol in self.symbol_list:
-                if symbol not in self.instruments:
+                if symbol not in self.symbols:
                     Agent.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
@@ -35,9 +35,7 @@ class Agent(Bitmex):
                         + "category or such symbol does not exist"
                     )
                     exit(1)
-        else:
-            return OrderedDict()
-        return self.instruments
+
 
     def get_user(self) -> Union[dict, None]:
         result = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
@@ -62,8 +60,6 @@ class Agent(Bitmex):
         """
         Filling the instruments dictionary with data
         """
-        symbol = tuple()
-        category = ""
         # myMultiplier
         if instrument["isInverse"]:  # Inverse
             valueOfOneContract = (
@@ -90,53 +86,7 @@ class Agent(Bitmex):
             category = "linear"
         myMultiplier = instrument["lotSize"] / minimumTradeAmount
         symbol = (instrument["symbol"], category)
-        if symbol not in self.instruments:
-            self.instruments[symbol] = dict()
-        self.instruments[symbol]["myMultiplier"] = int(myMultiplier)
-        self.instruments[symbol]["category"] = category
-        self.instruments[symbol]["symbol"] = instrument["symbol"]
-        self.instruments[symbol]["multiplier"] = instrument["multiplier"]
-        if "settlCurrency" in instrument:
-            self.instruments[symbol]["settlCurrency"] = instrument["settlCurrency"]
-        else:
-            self.instruments[symbol]["settlCurrency"] = None
-        self.instruments[symbol]["tickSize"] = instrument["tickSize"]
-        self.instruments[symbol]["lotSize"] = instrument["lotSize"]
-        self.instruments[symbol]["minOrderQty"] = instrument["lotSize"] / myMultiplier
-        qty = self.instruments[symbol]["minOrderQty"]
-        if qty == int(qty):
-            num = 0
-        else:
-            num = len(str(qty - int(qty)).replace(".", ""))-1
-        self.instruments[symbol]["precision"] = num
-        self.instruments[symbol]["state"] = instrument["state"]
-        self.instruments[symbol]["volume24h"] = instrument["volume24h"]
-        if "bidPrice" in instrument:
-            self.instruments[symbol]["bidPrice"] = instrument["bidPrice"]
-        else:
-            self.instruments[symbol]["bidPrice"] = None
-        if "askPrice" in instrument:
-            self.instruments[symbol]["askPrice"] = instrument["askPrice"]
-        else:
-            self.instruments[symbol]["askPrice"] = None
-        self.instruments[symbol]["isInverse"] = instrument["isInverse"]
-        if "expiry" in instrument and instrument["expiry"]:
-            self.instruments[symbol]["expiry"] = service.time_converter(
-                time=instrument["expiry"]
-            )
-        else:
-            self.instruments[symbol]["expiry"] = "Perpetual"
-        if "fundingRate" not in instrument:
-            self.instruments[symbol]["fundingRate"] = 0
-        else:
-            self.instruments[symbol]["fundingRate"] = instrument["fundingRate"]
-
-        # Class
-
-        if "askPrice" in instrument:
-            self.Instrument[symbol].askPrice = instrument["askPrice"]
-        if "bidPrice" in instrument:
-            self.Instrument[symbol].askPrice = instrument["bidPrice"]
+        self.symbols.add(symbol)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]
         self.Instrument[symbol].myMultiplier = int(myMultiplier)

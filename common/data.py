@@ -1,5 +1,4 @@
 from typing import Any, Union
-from datetime import datetime
 
 
 class Ret:
@@ -15,8 +14,6 @@ class Ret:
 
 
 class Instrument:
-    askPrice: Union[str, float]
-    bidPrice: Union[str, float]
     category: str
     expire: str
     fundingRate: Union[str, float]
@@ -50,16 +47,23 @@ class Position:
         return Ret.iter(self)
     
 
-class Meta(type):
+class MetaInstrument(type):
     dictionary = dict()
-    names = {
-        "Instrument": Instrument,
-        "Position": Position,        
-    }
-    def __getitem__(self, item) -> Union[Position, Instrument]:
-        key = item + (self,)
+    def __getitem__(self, item) -> Instrument:
+        key = (self, item)
         if key not in self.dictionary:
-            self.dictionary[key] = self.names[self.__name__]()
+            self.dictionary[key] = Instrument()
+            return self.dictionary[key]
+        else:
+            return self.dictionary[key]
+        
+
+class MetaPosition(type):
+    dictionary = dict()
+    def __getitem__(self, item) -> Position:
+        key = (self, item)
+        if key not in self.dictionary:
+            self.dictionary[key] = Position()
             return self.dictionary[key]
         else:
             return self.dictionary[key]

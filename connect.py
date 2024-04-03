@@ -96,7 +96,7 @@ def refresh() -> None:
             sleep(1)
         elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
             Function.market_status(ws, "RESTARTING...")
-            setup_market(ws=ws, name=name)
+            setup_market(ws=ws)
         else:
             if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
                 if ws.messageStopped == "":

@@ -223,7 +223,7 @@ class Init(WS, Variables):
         for symbol in self.symbol_list:
             self.ticker[symbol]["open_ask"] = self.ticker[symbol]["ask"]
             self.ticker[symbol]["open_bid"] = self.ticker[symbol]["bid"]
-            self.ticker[symbol]["fundingRate"] = self.instruments[symbol]["fundingRate"]
+            self.ticker[symbol]["fundingRate"] = self.Instrument[symbol].fundingRate
 
     def load_database(self: Markets) -> None:
         """

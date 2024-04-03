@@ -169,8 +169,7 @@ class Init(WS, Variables):
                         )
             self.robots[emi]["PNL"] = 0
             self.robots[emi]["lotSize"] = (
-                self.instruments[self.robots[emi]["SYMBOL"]]["lotSize"]
-                / self.instruments[self.robots[emi]["SYMBOL"]]["myMultiplier"]
+                self.Instrument[self.robots[emi]["SYMBOL"]].minOrderQty
             )
             if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(self.robots[emi]["SYMBOL"])

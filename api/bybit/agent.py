@@ -14,13 +14,13 @@ from .ws import Bybit
 class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
-    def get_active_instruments(self) -> OrderedDict:
+    def get_active_instruments(self):
         for category in self.category_list:
             instrument_info = self.session.get_instruments_info(category=category)
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
         for symbol in self.symbol_list:
-            if symbol not in self.instruments:
+            if symbol not in self.symbols:
                 Agent.logger.error(
                     "Unknown symbol: "
                     + str(symbol)
@@ -29,15 +29,6 @@ class Agent(Bybit):
                 )
                 Bybit.exit()
                 exit(1)
-            """if category is not "option":
-                tickers = self.session.get_tickers(category=category)
-                for ticker in tickers["result"]["list"]:
-                    symbol = (ticker["symbol"], category)
-                    self.instruments[symbol].update(ticker)
-                    self.instruments[symbol]["bidPrice"] = ticker["bid1Price"]
-                    self.instruments[symbol]["askPrice"] = ticker["ask1Price"]   """
-
-        return self.instruments
 
     def get_user(self) -> Union[dict, None]:
         print("___get_user")
@@ -88,7 +79,7 @@ class Agent(Bybit):
                 row["clOrdID"] = row["orderLinkId"]
                 row["price"] = float(row["orderPrice"])
                 row["lastQty"] = float(row["execQty"])
-                row["settlCurrency"] = self.instruments[row["symbol"]]["settlCurrency"]
+                row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
                 row["market"] = self.name
                 row["foreignNotional"] = 0
                 trade_history += result
@@ -214,37 +205,30 @@ class Agent(Bybit):
                                 self.positions[symbol]["STATE"] = position["positionStatus"]
 
 
-                            # all_positions[symbol][]
-
     def fill_instrument(self, instrument: dict, category: str):
         symbol = (instrument["symbol"], category)
-        self.instruments[symbol] = instrument
+        self.symbols.add(symbol)
+        self.Instrument[symbol].category = category
+        self.Instrument[symbol].symbol = instrument["symbol"]
         if "settleCoin" in instrument:
-            self.instruments[symbol]["settlCurrency"] = instrument["settleCoin"]
+            self.Instrument[symbol].settlCurrency = instrument["settleCoin"]
         if "deliveryTime" in instrument:
-            self.instruments[symbol]["expiry"] = instrument["deliveryTime"]
+            self.Instrument[symbol].expire = instrument["deliveryTime"]
         else:
-            self.instruments[symbol]["expiry"] = None
-        self.instruments[symbol]["tickSize"] = instrument["priceFilter"]["tickSize"]
-        self.instruments[symbol]["lotSize"] = float(
-            instrument["lotSizeFilter"]["minOrderQty"]
-        )
-        self.instruments[symbol]["minOrderQty"] = self.instruments[symbol]["lotSize"]
-        qty = self.instruments[symbol]["lotSize"]
-        self.instruments[symbol]["precision"] = len(str(qty - int(qty)).replace(".", ""))-1
-        self.instruments[symbol]["state"] = instrument["status"]
-        self.instruments[symbol]["multiplier"] = 1
-        self.instruments[symbol]["myMultiplier"] = 1
-        self.instruments[symbol]["fundingRate"] = 0
-        if category == "inverse":
-            self.instruments[symbol]["isInverse"] = True
-        else:
-            self.instruments[symbol]["isInverse"] = False
-        if instrument["settlCurrency"] not in self.settlCurrency_list[category]:
-            self.settlCurrency_list[category].append(instrument["settlCurrency"])
+            self.Instrument[symbol].expire = None
+        self.Instrument[symbol].tickSize = instrument["priceFilter"]["tickSize"]
+        self.Instrument[symbol].minOrderQty = instrument["lotSizeFilter"]["minOrderQty"]
+        qty = self.Instrument[symbol].minOrderQty
+        self.Instrument[symbol].precision = len(str(float(qty) - int(float(qty))).replace(".", ""))-1
+        self.Instrument[symbol].state = instrument["status"]
+        self.Instrument[symbol].multiplier = 1
+        self.Instrument[symbol].myMultiplier = 1
+        self.Instrument[symbol].fundingRate = 0
+        if instrument["settleCoin"] not in self.settlCurrency_list[category]:
+            self.settlCurrency_list[category].append(instrument["settleCoin"])
         if instrument["settleCoin"] not in self.settleCoin_list:
             self.settleCoin_list.append(instrument["settleCoin"])        
-        self.instruments[symbol]["volume24h"] = 0
+        self.Instrument[symbol].volume24h = 0
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

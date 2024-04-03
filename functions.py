@@ -37,13 +37,11 @@ class Function(WS, Variables):
         """
         Calculate sumreal and commission
         """
-        print(self.instruments[symbol]["multiplier"])
-        print(self.Instrument[symbol].multiplier)
         coef = abs(
             self.Instrument[symbol].multiplier
-            / var.currency_divisor[self.instruments[symbol]["settlCurrency"]]
+            / var.currency_divisor[self.Instrument[symbol].settlCurrency]
         )
-        if self.instruments[symbol]["isInverse"]:
+        if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
             commiss = abs(qty) / price * coef * rate
             funding = qty / price * coef * rate
@@ -57,7 +55,7 @@ class Function(WS, Variables):
     def add_symbol(self: Markets, symbol: tuple) -> None:
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
-            if symbol not in self.instruments:
+            if symbol not in self.symbols:
                 WS.get_instrument(self, symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
@@ -66,8 +64,8 @@ class Function(WS, Variables):
     def rounding(self: Markets) -> None:
         if self.name not in disp.price_rounding:
             disp.price_rounding[self.name] = OrderedDict()
-        for symbol, instrument in self.instruments.items():
-            tickSize = str(instrument["tickSize"])
+        for symbol in self.symbols:
+            tickSize = str(self.Instrument[symbol].tickSize)
             if tickSize.find(".") > 0:
                 disp.price_rounding[self.name][symbol] = (
                     len(tickSize) - 1 - tickSize.find(".")
@@ -614,8 +612,8 @@ class Function(WS, Variables):
         if qty == 0:
             qty = "0"
         else:
-            qty /= self.instruments[symbol]["myMultiplier"]
-            qty = "{:.{precision}f}".format(qty, precision=self.instruments[symbol]["precision"])
+            qty /= self.Instrument[symbol].myMultiplier
+            qty = "{:.{precision}f}".format(qty, precision=self.Instrument[symbol].precision)
 
         return qty
 
@@ -650,7 +648,7 @@ class Function(WS, Variables):
                                 robot=self.robots[emi],
                                 frame=values["data"],
                                 ticker=self.ticker[symbol],
-                                instrument=self.instruments[symbol],
+                                instrument=self.Instrument[symbol],
                             )
                         Function.save_timeframes_data(
                             self,
@@ -738,10 +736,10 @@ class Function(WS, Variables):
 
         mod = Tables.position.mod
         for num, symbol in enumerate(self.symbol_list):
-            self.positions[symbol]["STATE"] = self.instruments[symbol]["state"]
-            self.positions[symbol]["VOL24h"] = self.instruments[symbol]["volume24h"]
+            self.positions[symbol]["STATE"] = self.Instrument[symbol].state
+            self.positions[symbol]["VOL24h"] = self.Instrument[symbol].volume24h
             self.positions[symbol]["FUND"] = round(
-                self.instruments[symbol]["fundingRate"] * 100, 6
+                self.Instrument[symbol].fundingRate * 100, 6
             )
             update_label(table="position", column=0, row=num + mod, val=symbol[0])
             update_label(table="position", column=1, row=num + mod, val=symbol[1])
@@ -798,10 +796,10 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=humanFormat(self.positions[symbol]["VOL24h"]),
             )
-            if isinstance(self.instruments[symbol]["expiry"], datetime):
-                tm = self.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
+            if isinstance(self.Instrument[symbol].expire, datetime):
+                tm = self.Instrument[symbol].expire.strftime("%y%m%d %Hh")
             else:
-                tm = self.instruments[symbol]["expiry"]
+                tm = self.Instrument[symbol].expire
             update_label(table="position", column=8, row=num + mod, val=tm)
             update_label(
                 table="position",
@@ -896,14 +894,14 @@ class Function(WS, Variables):
             disp.labels["orderbook"][num + 1 - mod][0]["fg"] = "black"
             first_price_sell = (
                 self.ticker[var.symbol]["ask"]
-                + (num + mod) * self.instruments[var.symbol]["tickSize"]
+                + (num + mod) * self.Instrument[var.symbol].tickSize
             )
             first_price_buy = self.ticker[var.symbol]["bid"]
             for row in range(1 - mod, disp.num_book - mod):
                 if row <= num:
                     price = round(
                         first_price_sell
-                        - (row + mod) * self.instruments[var.symbol]["tickSize"],
+                        - (row + mod) * self.Instrument[var.symbol].tickSize,
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -929,7 +927,7 @@ class Function(WS, Variables):
                 else:
                     price = round(
                         first_price_buy
-                        - (row - num - 1) * self.instruments[var.symbol]["tickSize"],
+                        - (row - num - 1) * self.Instrument[var.symbol].tickSize,
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -991,7 +989,7 @@ class Function(WS, Variables):
                 table="robots",
                 column=3,
                 row=num + mod,
-                val=self.instruments[symbol]["settlCurrency"],
+                val=self.Instrument[symbol].settlCurrency,
             )
             update_label(
                 table="robots", column=4, row=num + mod, val=self.robots[emi]["TIMEFR"]
@@ -1048,7 +1046,7 @@ class Function(WS, Variables):
                     rate=0,
                     fund=1,
                 )
-                settlCurrency = self.instruments[symbol]["settlCurrency"]
+                settlCurrency = self.Instrument[symbol].settlCurrency
                 if settlCurrency in self.accounts:
                     self.accounts[settlCurrency]["RESULT"] += calc["sumreal"]
                 else:
@@ -1135,11 +1133,7 @@ class Function(WS, Variables):
                 self.ticker[symbol]["bid"] if pos > 0 else self.ticker[symbol]["ask"]
             )
         else:
-            close = (
-                self.instruments[symbol]["bidPrice"]
-                if pos > 0
-                else self.instruments[symbol]["askPrice"]
-            )
+            close = 0
 
         return close
 
@@ -1148,10 +1142,10 @@ class Function(WS, Variables):
         Round_price() returns rounded price: buy price goes down, sell price
         goes up according to 'tickSize'
         """
-        coeff = 1 / self.instruments[symbol]["tickSize"]
+        coeff = 1 / self.Instrument[symbol].tickSize
         result = int(coeff * price) / coeff
         if rside < 0 and result < price:
-            result += self.instruments[symbol]["tickSize"]
+            result += self.Instrument[symbol].tickSize
 
         return result
 
