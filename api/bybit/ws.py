@@ -40,7 +40,6 @@ class Bybit(Variables):
     def start(self):
         print("-----starting Bybit----")
         self.count = 0
-        self.data[self.depth] = OrderedDict()
         self.data["margin"] = OrderedDict()
         self.__connect()
 
@@ -58,10 +57,6 @@ class Bybit(Variables):
                     symbol=symbol[0],
                     callback=lambda x: self.__handle_orderbook(message=x, symbol=symbol)
                 )
-                self.data[self.depth][symbol] = dict()
-                self.data[self.depth][symbol]["symbol"] = symbol[0]
-                self.data[self.depth][symbol]["bids"] = list()
-                self.data[self.depth][symbol]["asks"] = list()
                 self.ws[category].ticker_stream(
                     symbol=symbol[0],
                     callback=lambda x: self.__handle_ticker(message=x, category=category)
@@ -71,19 +66,17 @@ class Bybit(Variables):
 
     def __handle_orderbook(self, message: dict, symbol: tuple):
         if self.depth == "quote":
-            self.data[self.depth][symbol]["bidPrice"] = message["data"]["b"][0]
-            self.data[self.depth][symbol]["askPrice"] = message["data"]["a"][0]
-            self.data[self.depth][symbol]["bidSize"] = message["data"]["b"][1]
-            self.data[self.depth][symbol]["askSize"] = message["data"]["a"][1]
+            self.Instrument[symbol].asks[0] = message["data"]["a"]
+            self.Instrument[symbol].bids[0] = message["data"]["b"]
         else:
             asks = message["data"]["a"]
             bids = message["data"]["b"]
             asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
             bids = list(map(lambda x: [float(x[0]), float(x[1])], bids))
             asks.sort(key=lambda x: x[0])       
-            bids.sort(key=lambda x: x[0], reverse=True)            
-            self.data[self.depth][symbol]["bids"] = bids
-            self.data[self.depth][symbol]["asks"] = asks
+            bids.sort(key=lambda x: x[0], reverse=True)
+            self.Instrument[symbol].asks = asks          
+            self.Instrument[symbol].bids = bids
 
     def __handle_ticker(self, message: dict, category: str):
         self.message_counter += 1
@@ -118,9 +111,3 @@ class Bybit(Variables):
         application is launched.
         """
         pass
-
-
-
-    #del
-    '''def get_active_instruments(self, symbol: tuple):
-        return self.agent.get_active_instruments(self, symbol=symbol)'''

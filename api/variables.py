@@ -19,7 +19,6 @@ class Variables():
     category_list = list()
     currencies = list()
     accounts = dict()
-    ticker = OrderedDict()
     positions = OrderedDict()
     data = dict()
     full_symbol_list = list()

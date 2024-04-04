@@ -219,12 +219,6 @@ class Init(WS, Variables):
                 self, func=Function.orders_display, table=orders, val=val
             )
 
-    def initial_ticker_values(self: Markets) -> None:
-        for symbol in self.symbol_list:
-            self.ticker[symbol]["open_ask"] = self.ticker[symbol]["ask"]
-            self.ticker[symbol]["open_bid"] = self.ticker[symbol]["bid"]
-            self.ticker[symbol]["fundingRate"] = self.Instrument[symbol].fundingRate
-
     def load_database(self: Markets) -> None:
         """
         Download the latest trades and funding data from the database (if any)

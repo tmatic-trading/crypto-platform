@@ -118,8 +118,8 @@ class Agent(Bitmex):
         self.Instrument[symbol].marginCallPrice = 0
         self.Instrument[symbol].positionValue = 0
         self.Instrument[symbol].unrealisedPnl = 0
-        self.Instrument[symbol].asks = list()
-        self.Instrument[symbol].bids = list()
+        self.Instrument[symbol].asks = [[0, 0]]
+        self.Instrument[symbol].bids = [[0, 0]]
 
         return category
 
@@ -176,11 +176,6 @@ class Agent(Bitmex):
             order["transactTime"] = service.time_converter(time=order["transactTime"], usec=True)
 
         return orders
-
-    def get_ticker(self) -> OrderedDict:
-        
-        return service.fill_ticker(self, depth=self.depth, data=self.data)
-
 
     def urgent_announcement(self) -> list:
         """

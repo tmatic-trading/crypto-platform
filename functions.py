@@ -608,7 +608,6 @@ class Function(WS, Variables):
         orders.paint(row=0, side=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
-        q = qty; num = 0
         if qty == 0:
             qty = "0"
         else:
@@ -633,7 +632,6 @@ class Function(WS, Variables):
         """
         Processing timeframes and entry point into robot algorithms
         """
-        self.ticker = WS.get_ticker(self)
         for symbol, timeframes in self.frames.items():
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
@@ -647,7 +645,6 @@ class Function(WS, Variables):
                             bot.robo[emi](
                                 robot=self.robots[emi],
                                 frame=values["data"],
-                                ticker=self.ticker[symbol],
                                 instrument=self.Instrument[symbol],
                             )
                         Function.save_timeframes_data(
@@ -664,11 +661,11 @@ class Function(WS, Variables):
                             + utc.month * 100
                             + utc.day,
                             "time": utc.hour * 10000 + utc.minute * 100,
-                            "bid": self.ticker[symbol]["bid"],
-                            "ask": self.ticker[symbol]["ask"],
-                            "hi": self.ticker[symbol]["ask"],
-                            "lo": self.ticker[symbol]["bid"],
-                            "funding": self.ticker[symbol]["fundingRate"],
+                            "bid": self.Instrument[symbol].bids[0][0],
+                            "ask": self.Instrument[symbol].asks[0][0],
+                            "hi": self.Instrument[symbol].asks[0][0],
+                            "lo": self.Instrument[symbol].bids[0][0],
+                            "funding": self.Instrument[symbol].fundingRate,
                             "datetime": dt_now,
                         }
                     )
@@ -811,7 +808,7 @@ class Function(WS, Variables):
         # Refresh Orderbook table
 
         def display_order_book_values(
-            val: dict, start: int, end: int, direct: int, side: str
+            val: list, start: int, end: int, direct: int, side: str
         ) -> None:
             count = 0
             if side == "asks":
@@ -825,12 +822,12 @@ class Function(WS, Variables):
                 vlm = ""
                 price = ""
                 qty = 0
-                if len(val[side]) > count:
+                if len(val) > count:
                     price = Function.format_price(
-                        self, number=float(val[side][count][0]), symbol=var.symbol
+                        self, number=float(val[count][0]), symbol=var.symbol
                     )
                     vlm = Function.volume(
-                        self, qty=float(val[side][count][1]), symbol=var.symbol
+                        self, qty=float(val[count][1]), symbol=var.symbol
                     )
                     if var.orders:
                         qty = Function.volume(
@@ -838,7 +835,6 @@ class Function(WS, Variables):
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
-                #print(count, val[side][count][0], val[side][count][1])
                 if str(qty) != "0":
                     update_label(table="orderbook", column=col_qty, row=row, val=qty)
                     disp.labels["orderbook"][row][col_qty]["bg"] = color
@@ -868,35 +864,37 @@ class Function(WS, Variables):
         mod = 1 - Tables.orderbook.mod
         num = int(disp.num_book / 2) - mod
         if var.order_book_depth == "quote":
-            if self.ticker[var.symbol]["askSize"]:
+            askSize = self.Instrument[var.symbol].asks[0][1]
+            if askSize:
                 update_label(
                     table="orderbook",
                     column=2,
                     row=num,
                     val=Function.volume(
-                        self, qty=self.ticker[var.symbol]["askSize"], symbol=var.symbol
+                        self, qty=askSize, symbol=var.symbol
                     ),
                 )
             else:
                 update_label(table="orderbook", column=2, row=num, val="")
             disp.labels["orderbook"][num - mod][2]["fg"] = "black"
-            if self.ticker[var.symbol]["bidSize"]:
+            bidSize = self.Instrument[var.symbol].bids[0][1]
+            if bidSize:
                 update_label(
                     table="orderbook",
                     column=0,
                     row=num + 1,
                     val=Function.volume(
-                        self, qty=self.ticker[var.symbol]["bidSize"], symbol=var.symbol
+                        self, qty=self.Instrument[var.symbol].bids[0][1], symbol=var.symbol
                     ),
                 )
             else:
                 update_label(table="orderbook", column=0, row=num + 1, val="")
             disp.labels["orderbook"][num + 1 - mod][0]["fg"] = "black"
             first_price_sell = (
-                self.ticker[var.symbol]["ask"]
+                self.Instrument[var.symbol].asks[0][0]
                 + (num + mod) * self.Instrument[var.symbol].tickSize
             )
-            first_price_buy = self.ticker[var.symbol]["bid"]
+            first_price_buy = self.Instrument[var.symbol].bids[0][0]
             for row in range(1 - mod, disp.num_book - mod):
                 if row <= num:
                     price = round(
@@ -911,7 +909,7 @@ class Function(WS, Variables):
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
-                    if self.ticker[var.symbol]["ask"]:
+                    if self.Instrument[var.symbol].asks[0][0]:
                         price = Function.format_price(
                             self, number=price, symbol=var.symbol
                         )
@@ -951,12 +949,11 @@ class Function(WS, Variables):
                         update_label(table="orderbook", column=2, row=row, val="")
                         disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
         else:
-            val = WS.market_depth(self)[var.symbol]
             display_order_book_values(
-                val=val, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
+                val=self.Instrument[var.symbol].bids, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
             )
             display_order_book_values(
-                val=val, start=num, end=0 - mod, direct=-1, side="asks"
+                val=self.Instrument[var.symbol].asks, start=num, end=0 - mod, direct=-1, side="asks"
             )
 
         # Refresh Robots table
@@ -1128,12 +1125,9 @@ class Function(WS, Variables):
             )
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
-        if symbol in self.ticker:
-            close = (
-                self.ticker[symbol]["bid"] if pos > 0 else self.ticker[symbol]["ask"]
-            )
-        else:
-            close = 0
+        close = (
+            self.Instrument[symbol].bids[0][0] if pos > 0 else self.Instrument[symbol].asks[0][0]
+        )
 
         return close
 
@@ -1368,7 +1362,7 @@ def handler_orderbook(event, row_position: int) -> None:
                 0,
                 Function.format_price(
                     ws,
-                    number=ws.ticker[var.symbol]["ask"],
+                    number=ws.Instrument[var.symbol].asks[0][0],
                     symbol=var.symbol,
                 ),
             )
@@ -1377,7 +1371,7 @@ def handler_orderbook(event, row_position: int) -> None:
                 0,
                 Function.format_price(
                     ws,
-                    number=ws.ticker[var.symbol]["bid"],
+                    number=ws.Instrument[var.symbol].bids[0][0],
                     symbol=var.symbol,
                 ),
             )
@@ -1535,7 +1529,7 @@ def handler_orderbook(event, row_position: int) -> None:
             0,
             Function.format_price(
                 ws,
-                number=ws.ticker[var.symbol]["ask"],
+                number=ws.Instrument[var.symbol].asks[0][0],
                 symbol=var.symbol,
             ),
         )
@@ -1543,7 +1537,7 @@ def handler_orderbook(event, row_position: int) -> None:
             0,
             Function.format_price(
                 ws,
-                number=ws.ticker[var.symbol]["bid"],
+                number=ws.Instrument[var.symbol].bids[0][0],
                 symbol=var.symbol,
             ),
         )
