@@ -68,7 +68,7 @@ class Agent(Bybit):
             result = self.session.get_executions(category=category, limit=histCount)
             result = result["result"]["list"]
             for row in result:
-                row["symbol"] = (row["symbol"], category)
+                row["symbol"] = (row["symbol"], category, self.name)
                 row["execID"] = row["execId"]
                 row["orderID"] = row["orderId"]
                 row["category"] = category
@@ -103,7 +103,7 @@ class Agent(Bybit):
                     )
                     cursor = result["result"]["nextPageCursor"]
                     for order in result["result"]["list"]:
-                        order["symbol"] = (order["symbol"], category)
+                        order["symbol"] = (order["symbol"], category, self.name)
                         order["orderID"] = order["orderId"]
                         if "orderLinkId" in order and order["orderLinkId"]:
                             order["clOrdID"] = order["orderLinkId"]
@@ -206,7 +206,7 @@ class Agent(Bybit):
 
 
     def fill_instrument(self, instrument: dict, category: str):
-        symbol = (instrument["symbol"], category)
+        symbol = (instrument["symbol"], category, self.name)
         self.symbols.add(symbol)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]

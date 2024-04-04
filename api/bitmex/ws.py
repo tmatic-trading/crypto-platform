@@ -175,6 +175,7 @@ class Bitmex(Variables):
         def generate_key(keys: list, val: dict, table: str) -> tuple:
             if table in ["instrument", "position", "quote", "orderBook10"]:
                 val["category"] = self.symbol_category[val["symbol"]]
+                val["market"] = self.name
             return tuple((val[key]) for key in keys)
 
         message = json.loads(message)
@@ -190,16 +191,17 @@ class Bitmex(Variables):
                     self.logger.debug("%s: partial" % table)
                     self.keys[table] = message["keys"]
                     if table == "quote":
-                        self.keys[table] = ["symbol", "category"]
+                        self.keys[table] = ["symbol", "category", self.name]
                     elif table == "trade":
                         self.keys[table] = ["trdMatchID"]
                     elif table == "execution":
                         self.keys[table] = ["execID"]
                     elif table in ["instrument", "orderBook10", "position"]:
                         self.keys[table].append("category")
+                        self.keys[table].append("market")
                     for val in message["data"]:
                         for key in self.keys[table]:
-                            if key != "category":
+                            if key not in ["category", "market"]:
                                 if key not in val:
                                     break
                         else:
@@ -221,6 +223,7 @@ class Bitmex(Variables):
                             val["symbol"] = (
                                 val["symbol"],
                                 self.symbol_category[val["symbol"]],
+                                self.name
                             )
                             val["market"] = self.name
                             self.transaction(row=val)
@@ -301,7 +304,7 @@ class Bitmex(Variables):
         Updates the positions variable for subscribed instruments each time
         information from "position" table is received from the websocket.
         """
-        symbol = (position["symbol"], position["category"])
+        symbol = (position["symbol"], position["category"], self.name)
         self.positions[symbol]["POS"] = position["currentQty"]
         if "avgEntryPrice" in position:
             self.positions[symbol]["ENTRY"] = position["avgEntryPrice"]
