@@ -191,7 +191,7 @@ class Bitmex(Variables):
                     self.logger.debug("%s: partial" % table)
                     self.keys[table] = message["keys"]
                     if table == "quote":
-                        self.keys[table] = ["symbol", "category", self.name]
+                        self.keys[table] = ["symbol", "category", "market"]
                     elif table == "trade":
                         self.keys[table] = ["trdMatchID"]
                     elif table == "execution":
@@ -207,18 +207,22 @@ class Bitmex(Variables):
                         else:
                             key = generate_key(self.keys[table], val, table)
                             self.data[table_name][key] = val
+                            if table == "orderBook10":
+                                self.update_orderbook(symbol=key, values=val)
+                            elif table == "quote":
+                                self.update_orderbook(symbol=key, values=val, quote=True)
                 elif action == "insert":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)
                         if table == "quote":
                             val["category"] = self.symbol_category[val["symbol"]]
-                            if "bidPrice" in val:
+                            '''if "bidPrice" in val:
                                 self.data[table_name][key]["bidPrice"] = val["bidPrice"]
                                 self.data[table_name][key]["bidSize"] = val["bidSize"]
                             if "askPrice" in val:
                                 self.data[table_name][key]["askPrice"] = val["askPrice"]
-                                self.data[table][key]["askSize"] = val["askSize"]
-                            self.frames_hi_lo_values(data=self.data[table_name][key])
+                                self.data[table][key]["askSize"] = val["askSize"]'''
+                            self.update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
                             val["symbol"] = (
                                 val["symbol"],
@@ -236,11 +240,11 @@ class Bitmex(Variables):
                             return  # No key to update
                         self.data[table_name][key].update(val)
                         if table == "orderBook10":
-                            self.frames_hi_lo_values(data=self.data[table_name][key])
+                            self.update_orderbook(symbol=key, values=val)
                         elif table == "instrument":
-                            self.instrument_update(symbol=key, instrument=val)
+                            self.update_instrument(symbol=key, instrument=val)
                         elif table == "position":
-                            self.position_update(position=val)
+                            self.update_position(key, position=val)
                         # Removes cancelled or filled orders
                         elif (
                             table == "order" and self.data[table_name][key]["leavesQty"] <= 0
@@ -280,7 +284,7 @@ class Bitmex(Variables):
         self.data = {}
         self.keys = {}
 
-    def frames_hi_lo_values(self, data: dict) -> None:
+    '''def frames_hi_lo_values(self, data: dict) -> None:
         if data["symbol"] in self.frames:
             for timeframe in self.frames[data["symbol"]].values():
                 if timeframe["data"]:
@@ -297,29 +301,52 @@ class Bitmex(Variables):
                                 timeframe["data"][-1]["hi"] = data["askPrice"]
                         if "bidPrice" in data:
                             if data["bidPrice"] < timeframe["data"][-1]["lo"]:
-                                timeframe["data"][-1]["lo"] = data["bidPrice"]
+                                timeframe["data"][-1]["lo"] = data["bidPrice"]'''
 
-    def position_update(self, position: dict) -> None:
+    def frames_hi_lo_values(self, symbol: tuple) -> None:
+        if symbol in self.frames:
+            for timeframe in self.frames[symbol].values():
+                if timeframe["data"]:
+                    ask = self.Instrument[symbol].asks[0][0]
+                    bid = self.Instrument[symbol].bids[0][0]
+                    if ask > timeframe["data"][-1]["hi"]:
+                        timeframe["data"][-1]["hi"] = ask
+                    if bid < timeframe["data"][-1]["lo"]:
+                        timeframe["data"][-1]["lo"] = bid
+
+    def update_orderbook(self, symbol: tuple, values: dict, quote=False) -> None:
         """
-        Updates the positions variable for subscribed instruments each time
-        information from "position" table is received from the websocket.
+        There is only one Instrument array for the "instrument", "position", 
+        "quote", "orderBook10" websocket streams.
+        """
+        if quote:
+            if "askPrice" in values:
+                self.Instrument[symbol].asks = [[values["askPrice"], values["askSize"]]]
+            if "bidPrice" in values:
+                self.Instrument[symbol].bids = [[values["bidPrice"], values["bidSize"]]]
+        else:
+            if "asks" in values:
+                self.Instrument[symbol].asks = values["asks"]
+            if "bids" in values:
+                self.Instrument[symbol].bids = values["bids"]
+        self.frames_hi_lo_values(symbol=symbol)
+
+    def update_position(self, key, position: dict) -> None:
+        """
+        There is only one Instrument array for the "instrument", "position", 
+        "quote", "orderBook10" websocket streams.
         """
         symbol = (position["symbol"], position["category"], self.name)
-        self.positions[symbol]["POS"] = position["currentQty"]
-        if "avgEntryPrice" in position:
-            self.positions[symbol]["ENTRY"] = position["avgEntryPrice"]
-        else:
-            self.positions[symbol]["ENTRY"] = 0
-        if "marginCallPrice" in position:
-            self.positions[symbol]["MCALL"] = position["marginCallPrice"]
-        else:
-            self.positions[symbol]["MCALL"] = 0
-        if "unrealisedPnl" in position:
-            self.positions[symbol]["PNL"] = position["unrealisedPnl"]
-        else:
-            self.positions[symbol]["PNL"] = 0
+        self.Instrument[symbol].positionValue = position["currentQty"]
+        if self.Instrument[symbol].positionValue != 0:
+            if "avgEntryPrice" in position:
+                self.Instrument[symbol].avgEntryPrice = position["avgEntryPrice"]
+            if "marginCallPrice" in position:
+                self.Instrument[symbol].marginCallPrice = position["marginCallPrice"]
+            if "unrealisedPnl" in position:
+                self.Instrument[symbol].unrealisedPnl = position["unrealisedPnl"]
 
-    def instrument_update(self, symbol: tuple, instrument: dict):
+    def update_instrument(self, symbol: tuple, instrument: dict):
         if "fundingRate" in instrument:
             self.Instrument[symbol].fundingRate = instrument["fundingRate"]
         if "volume24h" in instrument:

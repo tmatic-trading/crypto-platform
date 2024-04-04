@@ -109,7 +109,7 @@ def refresh() -> None:
                 disp.f9 = "OFF"
             ws.ticker = WS.get_ticker(ws)
             Function.refresh_on_screen(ws, utc=utc)
-            
+
 
 def clear_params():
     var.orders = OrderedDict()

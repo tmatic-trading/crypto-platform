@@ -114,8 +114,12 @@ class Agent(Bitmex):
             self.Instrument[symbol].fundingRate = 0
         else:
             self.Instrument[symbol].fundingRate = instrument["fundingRate"]
-
-        
+        self.Instrument[symbol].avgEntryPrice = 0
+        self.Instrument[symbol].marginCallPrice = 0
+        self.Instrument[symbol].positionValue = 0
+        self.Instrument[symbol].unrealisedPnl = 0
+        self.Instrument[symbol].asks = list()
+        self.Instrument[symbol].bids = list()
 
         return category
 
