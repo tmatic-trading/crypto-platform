@@ -68,9 +68,7 @@ def setup_market(ws: Markets):
                     common.Init.load_trading_history(ws)
                     common.Init.account_balances(ws)
                     common.Init.load_orders(ws)
-                    ws.ticker = WS.get_ticker(ws)
                     bots.Init.delete_unused_robot(ws)
-                    common.Init.initial_ticker_values(ws)
                     for emi, value in ws.robot_status.items():
                         ws.robots[emi]["STATUS"] = value
                 else:
@@ -107,7 +105,6 @@ def refresh() -> None:
                     if ws.logNumFatal == 2:
                         info_display(name, "Insufficient available balance!")
                 disp.f9 = "OFF"
-            ws.ticker = WS.get_ticker(ws)
             Function.refresh_on_screen(ws, utc=utc)
 
 

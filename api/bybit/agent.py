@@ -120,16 +120,6 @@ class Agent(Bybit):
 
         return myOrders
 
-    def get_ticker(self) -> OrderedDict:
-        #print("___get_ticker")
-
-        return service.fill_ticker(self, depth=self.depth, data=self.data)
-
-        # return service.fill_ticker(self, depth=self.depth, data=self.data)
-
-    # del
-    """def exit(self):
-        print("___exit")"""
 
     def urgent_announcement(self):
         print("___urgent_announcement")
@@ -233,8 +223,8 @@ class Agent(Bybit):
         self.Instrument[symbol].marginCallPrice = 0
         self.Instrument[symbol].positionValue = 0
         self.Instrument[symbol].unrealisedPnl = 0
-        self.Instrument[symbol].asks = list()
-        self.Instrument[symbol].bids = list()
+        self.Instrument[symbol].asks = [[0, 0]]
+        self.Instrument[symbol].bids = [[0, 0]]
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

@@ -26,17 +26,6 @@ class Setup(Variables):
                 if symbol[1] not in self.category_list:
                     self.category_list.append(symbol[1])
             for symbol in self.symbol_list:
-                self.ticker[symbol] = {
-                    "bid": 0,
-                    "ask": 0,
-                    "bidSize": 0,
-                    "askSize": 0,
-                    "open_bid": 0,
-                    "open_ask": 0,
-                    "hi": 0,
-                    "lo": 0,
-                    "time": tm,
-                }
                 self.positions[symbol] = tmp_pos.copy()
                 self.positions[symbol]["SYMB"] = symbol
                 self.positions[symbol]["SYMBOL"] = symbol[0]

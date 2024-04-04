@@ -2,9 +2,10 @@ import services as service
 from api.websockets import Websockets
 from common.variables import Variables as var
 from functions import Function
+from common.data import Instrument
 
 
-def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
+def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     ws = Websockets.connect[robot["MARKET"]]
     period = robot["PERIOD"]
     quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument["myMultiplier"]
@@ -12,10 +13,10 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
     symbol = robot["SYMBOL"]
     indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
     sell_price = service.ticksize_rounding(
-        price=(ticker["ask"] + indent), ticksize=instrument["tickSize"]
+        price=(instrument.asks[0][0] + indent), ticksize=instrument["tickSize"]
     )
     buy_price = service.ticksize_rounding(
-        price=(ticker["bid"] - indent), ticksize=instrument["tickSize"]
+        price=(instrument.bids[0][0] - indent), ticksize=instrument["tickSize"]
     )
     if frame[-1]["ask"] > frame[-1 - period]["ask"]:
         buy_quantaty = quantaty - robot["POS"]

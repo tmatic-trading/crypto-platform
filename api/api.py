@@ -105,13 +105,6 @@ class WS(Variables):
 
         return Agents[self.name].value.open_orders(self)
 
-    def get_ticker(self: Markets) -> OrderedDict:
-        """
-        Returns the best bid/ask price.
-        """
-
-        return Agents[self.name].value.get_ticker(self)
-
     def urgent_announcement(self: Markets) -> list:
         """
         Public announcements of the exchange
@@ -126,12 +119,12 @@ class WS(Variables):
 
         return self.data["margin"].values()
 
-    def market_depth(self: Markets) -> list:
+    '''def market_depth(self: Markets) -> list:
         """
         Gets market depth (orderbook), 10 lines deep.
         """
 
-        return self.data["orderBook"]
+        return self.data["orderBook"]'''
 
     def place_limit(
         self: Markets, quantity: int, price: float, clOrdID: str, symbol: tuple

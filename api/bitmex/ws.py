@@ -22,6 +22,7 @@ class Bitmex(Variables):
     class Instrument(metaclass=MetaInstrument): pass
     def __init__(self):
         self.name = "Bitmex"
+        self.data = dict()
         Setup.variables(self, self.name)
         self.session = requests.Session()
         depth = "quote"
@@ -216,12 +217,7 @@ class Bitmex(Variables):
                         key = generate_key(self.keys[table], val, table)
                         if table == "quote":
                             val["category"] = self.symbol_category[val["symbol"]]
-                            '''if "bidPrice" in val:
-                                self.data[table_name][key]["bidPrice"] = val["bidPrice"]
-                                self.data[table_name][key]["bidSize"] = val["bidSize"]
-                            if "askPrice" in val:
-                                self.data[table_name][key]["askPrice"] = val["askPrice"]
-                                self.data[table][key]["askSize"] = val["askSize"]'''
+
                             self.update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
                             val["symbol"] = (
@@ -238,18 +234,19 @@ class Bitmex(Variables):
                         key = generate_key(self.keys[table], val, table)
                         if key not in self.data[table_name]:
                             return  # No key to update
-                        self.data[table_name][key].update(val)
                         if table == "orderBook10":
                             self.update_orderbook(symbol=key, values=val)
                         elif table == "instrument":
                             self.update_instrument(symbol=key, instrument=val)
                         elif table == "position":
                             self.update_position(key, position=val)
-                        # Removes cancelled or filled orders
-                        elif (
-                            table == "order" and self.data[table_name][key]["leavesQty"] <= 0
-                        ):
-                            self.data[table_name].pop(key)
+                        elif table == "margin":
+                            self.data[table_name][key].update(val)
+                        elif table == "order":
+                            self.data[table_name][key].update(val)
+                            if self.data[table_name][key]["leavesQty"] <= 0:
+                                # Removes cancelled or filled orders
+                                self.data[table_name].pop(key)
                 elif action == "delete":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)
@@ -284,25 +281,6 @@ class Bitmex(Variables):
         self.data = {}
         self.keys = {}
 
-    '''def frames_hi_lo_values(self, data: dict) -> None:
-        if data["symbol"] in self.frames:
-            for timeframe in self.frames[data["symbol"]].values():
-                if timeframe["data"]:
-                    if self.depth == "orderBook":
-                        if data["asks"]:
-                            if data["asks"][0][0] > timeframe["data"][-1]["hi"]:
-                                timeframe["data"][-1]["hi"] = data["asks"][0][0]
-                        if data["bids"]:
-                            if data["bids"][0][0] < timeframe["data"][-1]["lo"]:
-                                timeframe["data"][-1]["lo"] = data["bids"][0][0]
-                    else:
-                        if "askPrice" in data:
-                            if data["askPrice"] > timeframe["data"][-1]["hi"]:
-                                timeframe["data"][-1]["hi"] = data["askPrice"]
-                        if "bidPrice" in data:
-                            if data["bidPrice"] < timeframe["data"][-1]["lo"]:
-                                timeframe["data"][-1]["lo"] = data["bidPrice"]'''
-
     def frames_hi_lo_values(self, symbol: tuple) -> None:
         if symbol in self.frames:
             for timeframe in self.frames[symbol].values():
@@ -325,9 +303,9 @@ class Bitmex(Variables):
             if "bidPrice" in values:
                 self.Instrument[symbol].bids = [[values["bidPrice"], values["bidSize"]]]
         else:
-            if "asks" in values:
+            if "asks" in values and values["asks"]:
                 self.Instrument[symbol].asks = values["asks"]
-            if "bids" in values:
+            if "bids" in values and values["bids"]:
                 self.Instrument[symbol].bids = values["bids"]
         self.frames_hi_lo_values(symbol=symbol)
 
