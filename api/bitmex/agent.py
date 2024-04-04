@@ -26,13 +26,13 @@ class Agent(Bitmex):
                 )
                 self.symbol_category[instrument["symbol"]] = category
             for symbol in self.symbol_list:
-                if symbol not in self.symbols:
+                if symbol not in self.Instrument.get_keys():
                     Agent.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
                         + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
                         + "the name of the symbol does not correspond to the "
-                        + "category or such symbol does not exist"
+                        + "category or such symbol does not exist."
                     )
                     exit(1)
 
@@ -85,8 +85,7 @@ class Agent(Bitmex):
             minimumTradeAmount = valueOfOneContract * instrument["lotSize"]
             category = "linear"
         myMultiplier = instrument["lotSize"] / minimumTradeAmount
-        symbol = (instrument["symbol"], category)
-        self.symbols.add(symbol)
+        symbol = (instrument["symbol"], category, self.name)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]
         self.Instrument[symbol].myMultiplier = int(myMultiplier)
@@ -161,7 +160,7 @@ class Agent(Bitmex):
             )
             for row in result:
                 row["market"] = self.name
-                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])
+                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]], self.name)
             return result
         else:
             return "error"
@@ -169,7 +168,7 @@ class Agent(Bitmex):
     def open_orders(self) -> list:
         orders = self.data["order"].values()
         for order in orders:
-            order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]])
+            order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]], self.name)
             order["transactTime"] = service.time_converter(time=order["transactTime"], usec=True)
 
         return orders

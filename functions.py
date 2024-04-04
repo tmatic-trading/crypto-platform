@@ -55,7 +55,7 @@ class Function(WS, Variables):
     def add_symbol(self: Markets, symbol: tuple) -> None:
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
-            if symbol not in self.symbols:
+            if symbol not in self.Instrument.get_keys():
                 WS.get_instrument(self, symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
@@ -64,7 +64,7 @@ class Function(WS, Variables):
     def rounding(self: Markets) -> None:
         if self.name not in disp.price_rounding:
             disp.price_rounding[self.name] = OrderedDict()
-        for symbol in self.symbols:
+        for symbol in self.Instrument.get_keys():
             tickSize = str(self.Instrument[symbol].tickSize)
             if tickSize.find(".") > 0:
                 disp.price_rounding[self.name][symbol] = (
@@ -149,7 +149,7 @@ class Function(WS, Variables):
                     dot == -1
                 ):  # The transaction was done from the exchange web interface,
                     # the clOrdID field is missing or clOrdID does not have EMI number
-                    emi = ".".join(row["symbol"])
+                    emi = ".".join(row["symbol"][:2])
                     refer = ""
                     if row["clOrdID"] == "":
                         clientID = 0
@@ -160,11 +160,11 @@ class Function(WS, Variables):
                     clientID = row["clOrdID"][:dot]
                     refer = emi
             else:
-                emi = ".".join(row["symbol"])
+                emi = ".".join(row["symbol"][:2])
                 clientID = 0
                 refer = ""
             if emi not in self.robots:
-                emi = ".".join(row["symbol"])
+                emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     if row["symbol"] in self.symbol_list:
                         status = "RESERVED"
@@ -332,7 +332,7 @@ class Function(WS, Variables):
                     rate=true_funding,
                     fund=0,
                 )
-                emi = ".".join(row["symbol"])
+                emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     var.logger.error(
                         "Funding could not appear until the EMI="
@@ -382,7 +382,7 @@ class Function(WS, Variables):
                 "clOrdID" not in row
             ):  # The order was placed from the exchange web interface
                 var.last_order += 1
-                clOrdID = str(var.last_order) + "." + ".".join(row["symbol"])
+                clOrdID = str(var.last_order) + "." + ".".join(row["symbol"][:2])
                 var.orders[clOrdID] = {
                     "leavesQty": row["leavesQty"],
                     "price": row["price"],
@@ -492,7 +492,7 @@ class Function(WS, Variables):
         try:
             t = clOrdID.split(".")
             int(t[0])
-            emi = ".".join(t[1:])
+            emi = ".".join(t[1:3])
         except ValueError:
             emi = clOrdID
         info_display(
@@ -555,7 +555,7 @@ class Function(WS, Variables):
 
     def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
-        Update funding widgwt
+        Update funding widget
         """
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
@@ -1320,7 +1320,7 @@ def handler_order(event) -> None:
                     "number\t"
                     + str(row_position[0])
                     + "\nsymbol\t"
-                    + ".".join(var.orders[clOrdID]["SYMBOL"])
+                    + ".".join(var.orders[clOrdID]["SYMBOL"][:2])
                     + "\nside\t"
                     + var.orders[clOrdID]["SIDE"]
                     + "\nclOrdID\t"

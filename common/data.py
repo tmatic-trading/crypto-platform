@@ -1,4 +1,5 @@
 from typing import Any, Union
+from collections import OrderedDict
 
 
 class Ret:
@@ -48,14 +49,29 @@ class Position:
     
 
 class MetaInstrument(type):
-    dictionary = dict()
+    all = dict()
+    market = dict()
     def __getitem__(self, item) -> Instrument:
-        key = (self, item)
-        if key not in self.dictionary:
-            self.dictionary[key] = Instrument()
-            return self.dictionary[key]
+        if item not in self.all:
+            self.all[item] = Instrument()
+            name = item[2]
+            if name not in self.market:
+                self.market[name] = OrderedDict()
+            self.market[name][item] = self.all[item]
+            return self.all[item]
         else:
-            return self.dictionary[key]
+            return self.all[item]
+
+    def keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaInstrument.market:
+            for symbol in MetaInstrument.market[name]:
+                yield symbol
+
+    def get_keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaInstrument.market:
+            return MetaInstrument.market[name].keys()
         
 
 class MetaPosition(type):

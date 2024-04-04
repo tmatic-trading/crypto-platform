@@ -31,7 +31,7 @@ class Variables:
             if tmp in env[market_name]:
                 tmp_list = env[market_name][tmp].replace(",", " ").split()
             for symbol in tmp_list:
-                env[market_name]["SYMBOLS"] += [(symbol, category)]
+                env[market_name]["SYMBOLS"] += [(symbol, category, market_name)]
         env[market_name]["CURRENCIES"] = (
             env[market_name]["CURRENCIES"].replace(",", " ").split()
         )

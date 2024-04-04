@@ -82,7 +82,7 @@ class Init(WS, Variables):
             with open("history.ini", "w") as f:
                 f.write(str(last_history_time)[:19])
 
-    def account_balances(self) -> None:
+    def account_balances(self: Markets) -> None:
         """
         Calculates the account by currency according to data from the MySQL
         'coins' table.
@@ -94,7 +94,7 @@ class Init(WS, Variables):
         )
         var.cursor_mysql.execute(sql, (self.user_id, self.name))
         data = var.cursor_mysql.fetchall()
-        symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"]), data))
+        symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"], self.name), data))
         for symbol in symbols:
             Function.add_symbol(self, symbol=symbol)
         if not symbols:
@@ -155,7 +155,7 @@ class Init(WS, Variables):
                 del var.orders[clOrdID]
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
-                emi = ".".join(val["symbol"])
+                emi = ".".join(val["symbol"][:2])
                 if "clOrdID" not in val:
                     # The order was placed from the exchange interface
                     var.last_order += 1
@@ -172,7 +172,7 @@ class Init(WS, Variables):
                 else:
                     clOrdID = val["clOrdID"]
                     s = clOrdID.split(".")
-                    emi = ".".join(s[1:])
+                    emi = ".".join(s[1:3])
                     if emi not in self.robots:
                         self.robots[emi] = {
                             "STATUS": "NOT DEFINED",
@@ -261,7 +261,7 @@ class Init(WS, Variables):
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:
-            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
+            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
             Function.fill_columns(
                 self, func=Function.funding_display, table=funding, val=val
             )
@@ -296,7 +296,7 @@ class Init(WS, Variables):
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:
-            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"])
+            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
             Function.fill_columns(
                 self, func=Function.trades_display, table=trades, val=val
             )

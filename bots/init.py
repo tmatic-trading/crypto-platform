@@ -54,6 +54,7 @@ class Init(WS, Variables):
             self.robots[emi]["SYMBOL"] = (
                 self.robots[emi]["SYMBOL"],
                 self.robots[emi]["CATEGORY"],
+                self.name
             )
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
@@ -73,7 +74,7 @@ class Init(WS, Variables):
         var.cursor_mysql.execute(qwr)
         defuncts = var.cursor_mysql.fetchall()
         for defunct in defuncts:
-            symbol = (defunct["SYMBOL"], defunct["CATEGORY"])
+            symbol = (defunct["SYMBOL"], defunct["CATEGORY"], self.name)
             for emi in self.robots:
                 if defunct["EMI"] == emi:
                     break
@@ -82,7 +83,7 @@ class Init(WS, Variables):
                     status = "NOT DEFINED"
                 else:
                     status = "NOT IN LIST"
-                emi = ".".join(symbol)
+                emi = ".".join(symbol[:2])
                 self.robots[emi] = {
                     "SYMBOL": symbol,
                     "CATEGORY": defunct["CATEGORY"],
@@ -119,13 +120,13 @@ class Init(WS, Variables):
         reserved = var.cursor_mysql.fetchall()
         for symbol in self.symbol_list:
             for res in reserved:
-                if symbol == (res["SYMBOL"], res["CATEGORY"]):
+                if symbol == (res["SYMBOL"], res["CATEGORY"], self.name):
                     pos = int(reserved[0]["POS"])
                     break
             else:
                 pos = 0
             if symbol in self.symbol_list or pos != 0:
-                emi = ".".join(symbol)
+                emi = ".".join(symbol[:2])
                 self.robots[emi] = {
                     "EMI": emi,
                     "SYMBOL": symbol,
@@ -315,7 +316,7 @@ class Init(WS, Variables):
 
         return self.frames
 
-    def delete_unused_robot(self) -> None:
+    def delete_unused_robot(self: Markets) -> None:
         """
         Deleting unused robots (if any)
         """
@@ -323,7 +324,7 @@ class Init(WS, Variables):
         for val in var.orders.values():
             emi_in_orders.add(val["EMI"])
         for emi in self.robots.copy():
-            symbol = tuple(emi.split("."))
+            symbol = tuple(emi.split(".")) + (self.name,)
             if self.robots[emi]["STATUS"] in ("WORK", "OFF"):
                 pass
             elif symbol in self.symbol_list:
