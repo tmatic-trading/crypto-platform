@@ -229,6 +229,12 @@ class Agent(Bybit):
         if instrument["settleCoin"] not in self.settleCoin_list:
             self.settleCoin_list.append(instrument["settleCoin"])        
         self.Instrument[symbol].volume24h = 0
+        self.Instrument[symbol].avgEntryPrice = 0
+        self.Instrument[symbol].marginCallPrice = 0
+        self.Instrument[symbol].positionValue = 0
+        self.Instrument[symbol].unrealisedPnl = 0
+        self.Instrument[symbol].asks = list()
+        self.Instrument[symbol].bids = list()
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

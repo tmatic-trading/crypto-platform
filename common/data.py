@@ -15,17 +15,23 @@ class Ret:
 
 
 class Instrument:
+    asks: list
+    avgEntryPrice: Union[str, float]
+    bids: list
     category: str
     expire: str
     fundingRate: Union[str, float]
+    marginCallPrice: Union[str, float]
     minOrderQty: Union[str, float]
     multiplier: int
     myMultiplier: int
+    positionValue: Union[str, float]
     precision: int
     settlCurrency: str
     state: str
     symbol: str 
     tickSize: Union[str, float]
+    unrealisedPnl: Union[str, float]
     volume24h: Union[str, float]   
 
     def __iter__(self):
