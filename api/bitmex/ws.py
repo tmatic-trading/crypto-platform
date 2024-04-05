@@ -6,20 +6,24 @@ import traceback
 from collections import OrderedDict
 from time import sleep
 
+import requests
 import websocket
 
+from api.init import Setup
 from api.variables import Variables
+from common.data import MetaInstrument, MetaPosition
 from display.functions import info_display
 
 from .api_auth import generate_signature
-import requests
-from api.init import Setup
-from common.data import MetaPosition, MetaInstrument
 
 
 class Bitmex(Variables):
-    class Position(metaclass=MetaPosition): pass
-    class Instrument(metaclass=MetaInstrument): pass
+    class Position(metaclass=MetaPosition):
+        pass
+
+    class Instrument(metaclass=MetaInstrument):
+        pass
+
     def __init__(self):
         self.name = "Bitmex"
         self.data = dict()
@@ -211,7 +215,9 @@ class Bitmex(Variables):
                             if table == "orderBook10":
                                 self.update_orderbook(symbol=key, values=val)
                             elif table == "quote":
-                                self.update_orderbook(symbol=key, values=val, quote=True)
+                                self.update_orderbook(
+                                    symbol=key, values=val, quote=True
+                                )
                 elif action == "insert":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)
@@ -223,7 +229,7 @@ class Bitmex(Variables):
                             val["symbol"] = (
                                 val["symbol"],
                                 self.symbol_category[val["symbol"]],
-                                self.name
+                                self.name,
                             )
                             val["market"] = self.name
                             self.transaction(row=val)
@@ -285,8 +291,9 @@ class Bitmex(Variables):
         if symbol in self.frames:
             for timeframe in self.frames[symbol].values():
                 if timeframe["data"]:
-                    ask = self.Instrument[symbol].asks[0][0]
-                    bid = self.Instrument[symbol].bids[0][0]
+                    instrument = self.Instrument[symbol]
+                    ask = instrument.asks[0][0]
+                    bid = instrument.bids[0][0]
                     if ask > timeframe["data"][-1]["hi"]:
                         timeframe["data"][-1]["hi"] = ask
                     if bid < timeframe["data"][-1]["lo"]:
@@ -294,44 +301,47 @@ class Bitmex(Variables):
 
     def update_orderbook(self, symbol: tuple, values: dict, quote=False) -> None:
         """
-        There is only one Instrument array for the "instrument", "position", 
+        There is only one Instrument array for the "instrument", "position",
         "quote", "orderBook10" websocket streams.
         """
+        instrument = self.Instrument[symbol]
         if quote:
             if "askPrice" in values:
-                self.Instrument[symbol].asks = [[values["askPrice"], values["askSize"]]]
+                instrument.asks = [[values["askPrice"], values["askSize"]]]
             if "bidPrice" in values:
-                self.Instrument[symbol].bids = [[values["bidPrice"], values["bidSize"]]]
+                instrument.bids = [[values["bidPrice"], values["bidSize"]]]
         else:
             if "asks" in values and values["asks"]:
-                self.Instrument[symbol].asks = values["asks"]
+                instrument.asks = values["asks"]
             if "bids" in values and values["bids"]:
-                self.Instrument[symbol].bids = values["bids"]
+                instrument.bids = values["bids"]
         self.frames_hi_lo_values(symbol=symbol)
 
     def update_position(self, key, values: dict) -> None:
         """
-        There is only one Instrument array for the "instrument", "position", 
+        There is only one Instrument array for the "instrument", "position",
         "quote", "orderBook10" websocket streams.
         """
         symbol = (values["symbol"], values["category"], self.name)
         self.positions[symbol]["POS"] = values["currentQty"]
-        self.Instrument[symbol].positionValue = values["currentQty"]
-        if self.Instrument[symbol].positionValue != 0:
+        instrument = self.Instrument[symbol]
+        instrument.currentQty = values["currentQty"]
+        if instrument.currentQty != 0:
             if "avgEntryPrice" in values:
-                self.Instrument[symbol].avgEntryPrice = values["avgEntryPrice"]
+                instrument.avgEntryPrice = values["avgEntryPrice"]
             if "marginCallPrice" in values:
-                self.Instrument[symbol].marginCallPrice = values["marginCallPrice"]
+                instrument.marginCallPrice = values["marginCallPrice"]
             if "unrealisedPnl" in values:
-                self.Instrument[symbol].unrealisedPnl = values["unrealisedPnl"]
+                instrument.unrealisedPnl = values["unrealisedPnl"]
 
     def update_instrument(self, symbol: tuple, values: dict):
+        instrument = self.Instrument[symbol]
         if "fundingRate" in values:
-            self.Instrument[symbol].fundingRate = values["fundingRate"]
+            instrument.fundingRate = values["fundingRate"]
         if "volume24h" in values:
-            self.Instrument[symbol].volume24h = values["volume24h"]
+            instrument.volume24h = values["volume24h"]
         if "state" in values:
-            self.Instrument[symbol].state = values["state"]
+            instrument.state = values["state"]
 
     def exit(self):
         """

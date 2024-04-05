@@ -53,7 +53,7 @@ class Agent(Bybit):
             self, instrument=instrument_info["result"]["list"][0], category=symbol[1]
         )
 
-    def get_position(self):
+    def get_position(self, symbol: tuple = False):
         print("___get_position")
 
     def trade_bucketed(self):
@@ -74,7 +74,9 @@ class Agent(Bybit):
                 row["category"] = category
                 row["lastPx"] = float(row["execPrice"])
                 row["leavesQty"] = float(row["leavesQty"])
-                row["transactTime"] = service.time_converter(time=int(row["execTime"]) / 1000, usec=True)
+                row["transactTime"] = service.time_converter(
+                    time=int(row["execTime"]) / 1000, usec=True
+                )
                 row["commission"] = float(row["execFee"])
                 row["clOrdID"] = row["orderLinkId"]
                 row["price"] = float(row["orderPrice"])
@@ -114,12 +116,13 @@ class Agent(Bybit):
                         order["ordType"] = order["orderType"]
                         order["ordStatus"] = order["orderStatus"]
                         order["leavesQty"] = float(order["leavesQty"])
-                        order["transactTime"] = service.time_converter(time=int(order["updatedTime"]) / 1000, usec=True)
+                        order["transactTime"] = service.time_converter(
+                            time=int(order["updatedTime"]) / 1000, usec=True
+                        )
 
                     myOrders += result["result"]["list"]
 
         return myOrders
-
 
     def urgent_announcement(self):
         print("___urgent_announcement")
@@ -188,11 +191,13 @@ class Agent(Bybit):
                             symbol = (values["symbol"], category, self.name)
                             instrument = self.Instrument[symbol]
                             if symbol in self.positions:
-                                self.positions[symbol]["POS"] = float(values["positionValue"])
-                            instrument.positionValue = float(values["positionValue"])
+                                self.positions[symbol]["POS"] = float(values["size"])
+                            instrument.currentQty = float(values["size"])
                             instrument.avgEntryPrice = float(values["avgPrice"])
                             instrument.unrealisedPnl = values["unrealisedPnl"]
                             instrument.marginCallPrice = values["liqPrice"]
+                            if not instrument.marginCallPrice:
+                                instrument.marginCallPrice = "inf"
                             instrument.state = values["positionStatus"]
 
     def fill_instrument(self, instrument: dict, category: str):
@@ -203,13 +208,18 @@ class Agent(Bybit):
         if "settleCoin" in instrument:
             self.Instrument[symbol].settlCurrency = instrument["settleCoin"]
         if "deliveryTime" in instrument:
-            self.Instrument[symbol].expire = instrument["deliveryTime"]
-        else:
-            self.Instrument[symbol].expire = None
+            if int(instrument["deliveryTime"]):
+                self.Instrument[symbol].expire = service.time_converter(
+                    int(instrument["deliveryTime"]) / 1000
+                )
+            else:
+                self.Instrument[symbol].expire = "Perpetual"
         self.Instrument[symbol].tickSize = instrument["priceFilter"]["tickSize"]
         self.Instrument[symbol].minOrderQty = instrument["lotSizeFilter"]["minOrderQty"]
         qty = self.Instrument[symbol].minOrderQty
-        self.Instrument[symbol].precision = len(str(float(qty) - int(float(qty))).replace(".", ""))-1
+        self.Instrument[symbol].precision = (
+            len(str(float(qty) - int(float(qty))).replace(".", "")) - 1
+        )
         self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
@@ -217,11 +227,11 @@ class Agent(Bybit):
         if instrument["settleCoin"] not in self.settlCurrency_list[category]:
             self.settlCurrency_list[category].append(instrument["settleCoin"])
         if instrument["settleCoin"] not in self.settleCoin_list:
-            self.settleCoin_list.append(instrument["settleCoin"])        
+            self.settleCoin_list.append(instrument["settleCoin"])
         self.Instrument[symbol].volume24h = 0
         self.Instrument[symbol].avgEntryPrice = 0
         self.Instrument[symbol].marginCallPrice = 0
-        self.Instrument[symbol].positionValue = 0
+        self.Instrument[symbol].currentQty = 0
         self.Instrument[symbol].unrealisedPnl = 0
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]

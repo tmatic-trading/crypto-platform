@@ -1,5 +1,6 @@
 from typing import Any, Union
 from collections import OrderedDict
+from datetime import datetime
 
 
 class Ret:
@@ -19,20 +20,20 @@ class Instrument:
     avgEntryPrice: float
     bids: list
     category: str
-    expire: str
-    fundingRate: Union[str, float]
+    currentQty: float
+    expire: Union[str, datetime]
+    fundingRate: float
     marginCallPrice: Union[str, float]
     minOrderQty: Union[str, float]
     multiplier: int
     myMultiplier: int
-    positionValue: float
     precision: int
     settlCurrency: str
     state: str
     symbol: str 
     tickSize: Union[str, float]
     unrealisedPnl: Union[str, float]
-    volume24h: Union[str, float]   
+    volume24h: float   
 
     def __iter__(self):
         return Ret.iter(self)
