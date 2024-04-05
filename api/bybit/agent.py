@@ -184,16 +184,16 @@ class Agent(Bybit):
                             cursor=cursor,
                         )
                         cursor = result["result"]["nextPageCursor"]
-                        for position in result["result"]["list"]:
-                            symbol = (position["symbol"], category)
+                        for values in result["result"]["list"]:
+                            symbol = (values["symbol"], category, self.name)
+                            instrument = self.Instrument[symbol]
                             if symbol in self.positions:
-                                self.positions[symbol] = position
-                                self.positions[symbol]["POS"] = float(position["positionValue"])
-                                self.positions[symbol]["ENTRY"] = float(position["avgPrice"])
-                                self.positions[symbol]["PNL"] = float(position["unrealisedPnl"])
-                                self.positions[symbol]["MCALL"] = position["liqPrice"]
-                                self.positions[symbol]["STATE"] = position["positionStatus"]
-
+                                self.positions[symbol]["POS"] = float(values["positionValue"])
+                            instrument.positionValue = float(values["positionValue"])
+                            instrument.avgEntryPrice = float(values["avgPrice"])
+                            instrument.unrealisedPnl = values["unrealisedPnl"]
+                            instrument.marginCallPrice = values["liqPrice"]
+                            instrument.state = values["positionStatus"]
 
     def fill_instrument(self, instrument: dict, category: str):
         symbol = (instrument["symbol"], category, self.name)

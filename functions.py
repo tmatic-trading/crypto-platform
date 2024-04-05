@@ -733,16 +733,12 @@ class Function(WS, Variables):
 
         mod = Tables.position.mod
         for num, symbol in enumerate(self.symbol_list):
-            self.positions[symbol]["STATE"] = self.Instrument[symbol].state
-            self.positions[symbol]["VOL24h"] = self.Instrument[symbol].volume24h
-            self.positions[symbol]["FUND"] = round(
-                self.Instrument[symbol].fundingRate * 100, 6
-            )
+            instrument = self.Instrument[symbol]
             update_label(table="position", column=0, row=num + mod, val=symbol[0])
             update_label(table="position", column=1, row=num + mod, val=symbol[1])
             if self.positions[symbol]["POS"]:
                 pos = Function.volume(
-                    self, qty=self.positions[symbol]["POS"], symbol=symbol
+                    self, qty=instrument.positionValue, symbol=symbol
                 )
             else:
                 pos = "0"
@@ -754,55 +750,47 @@ class Function(WS, Variables):
                 val=(
                     Function.format_price(
                         self,
-                        number=self.positions[symbol]["ENTRY"],
+                        number=instrument.avgEntryPrice,
                         symbol=symbol,
                     )
-                    if self.positions[symbol]["ENTRY"] is not None
-                    else 0
                 ),
             )
             update_label(
                 table="position",
                 column=4,
                 row=num + mod,
-                val=(
-                    self.positions[symbol]["PNL"]
-                    if self.positions[symbol]["PNL"] is not None
-                    else 0
-                ),
+                val=instrument.unrealisedPnl,
             )
             update_label(
                 table="position",
                 column=5,
                 row=num + mod,
                 val=(
-                    str(self.positions[symbol]["MCALL"]).replace("100000000", "inf")
-                    if self.positions[symbol]["MCALL"] is not None
-                    else 0
+                    str(instrument.marginCallPrice).replace("100000000", "inf")
                 ),
             )
             update_label(
                 table="position",
                 column=6,
                 row=num + mod,
-                val=self.positions[symbol]["STATE"],
+                val=instrument.state,
             )
             update_label(
                 table="position",
                 column=7,
                 row=num + mod,
-                val=humanFormat(self.positions[symbol]["VOL24h"]),
+                val=humanFormat(instrument.volume24h),
             )
-            if isinstance(self.Instrument[symbol].expire, datetime):
-                tm = self.Instrument[symbol].expire.strftime("%y%m%d %Hh")
+            if isinstance(instrument.expire, datetime):
+                tm = instrument.expire.strftime("%y%m%d %Hh")
             else:
-                tm = self.Instrument[symbol].expire
+                tm = instrument.expire
             update_label(table="position", column=8, row=num + mod, val=tm)
             update_label(
                 table="position",
                 column=9,
                 row=num + mod,
-                val=self.positions[symbol]["FUND"],
+                val=instrument.fundingRate,
             )
 
         # Refresh Orderbook table
@@ -851,7 +839,6 @@ class Function(WS, Variables):
                         if col1_book > disp.col1_book:
                             disp.col1_book = col1_book
                     if row == 1 and disp.col1_book != 0:
-                        #print(side, row, col1_book, disp.col1_book, var.symbol, disp.symb_book)
                         for row in range(0, Tables.orderbook.num_book - mod, 1):
                             disp.labels["orderbook"][row][0]["width"] = 6
                             disp.labels["orderbook"][row][1]["width"] = disp.col1_book
@@ -859,47 +846,44 @@ class Function(WS, Variables):
                         disp.symb_book = var.symbol
                         disp.col1_book = 0
                 count += 1
-            #print(val["asks"])
-
         mod = 1 - Tables.orderbook.mod
         num = int(disp.num_book / 2) - mod
+        instrument = self.Instrument[var.symbol]
         if var.order_book_depth == "quote":
-            askSize = self.Instrument[var.symbol].asks[0][1]
-            if askSize:
+            if instrument.asks[0][1]:
                 update_label(
                     table="orderbook",
                     column=2,
                     row=num,
                     val=Function.volume(
-                        self, qty=askSize, symbol=var.symbol
+                        self, qty=instrument.asks[0][1], symbol=var.symbol
                     ),
                 )
             else:
                 update_label(table="orderbook", column=2, row=num, val="")
             disp.labels["orderbook"][num - mod][2]["fg"] = "black"
-            bidSize = self.Instrument[var.symbol].bids[0][1]
-            if bidSize:
+            if instrument.bids[0][1]:
                 update_label(
                     table="orderbook",
                     column=0,
                     row=num + 1,
                     val=Function.volume(
-                        self, qty=self.Instrument[var.symbol].bids[0][1], symbol=var.symbol
+                        self, qty=instrument.bids[0][1], symbol=var.symbol
                     ),
                 )
             else:
                 update_label(table="orderbook", column=0, row=num + 1, val="")
             disp.labels["orderbook"][num + 1 - mod][0]["fg"] = "black"
             first_price_sell = (
-                self.Instrument[var.symbol].asks[0][0]
-                + (num + mod) * self.Instrument[var.symbol].tickSize
+                instrument.asks[0][0]
+                + (num + mod) * instrument.tickSize
             )
-            first_price_buy = self.Instrument[var.symbol].bids[0][0]
+            first_price_buy = instrument.bids[0][0]
             for row in range(1 - mod, disp.num_book - mod):
                 if row <= num:
                     price = round(
                         first_price_sell
-                        - (row + mod) * self.Instrument[var.symbol].tickSize,
+                        - (row + mod) * instrument.tickSize,
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -909,7 +893,7 @@ class Function(WS, Variables):
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
-                    if self.Instrument[var.symbol].asks[0][0]:
+                    if instrument.asks[0][0]:
                         price = Function.format_price(
                             self, number=price, symbol=var.symbol
                         )
@@ -925,7 +909,7 @@ class Function(WS, Variables):
                 else:
                     price = round(
                         first_price_buy
-                        - (row - num - 1) * self.Instrument[var.symbol].tickSize,
+                        - (row - num - 1) * instrument.tickSize,
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -950,10 +934,10 @@ class Function(WS, Variables):
                         disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
         else:
             display_order_book_values(
-                val=self.Instrument[var.symbol].bids, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
+                val=instrument.bids, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
             )
             display_order_book_values(
-                val=self.Instrument[var.symbol].asks, start=num, end=0 - mod, direct=-1, side="asks"
+                val=instrument.asks, start=num, end=0 - mod, direct=-1, side="asks"
             )
 
         # Refresh Robots table

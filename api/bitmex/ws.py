@@ -237,9 +237,9 @@ class Bitmex(Variables):
                         if table == "orderBook10":
                             self.update_orderbook(symbol=key, values=val)
                         elif table == "instrument":
-                            self.update_instrument(symbol=key, instrument=val)
+                            self.update_instrument(symbol=key, values=val)
                         elif table == "position":
-                            self.update_position(key, position=val)
+                            self.update_position(key, values=val)
                         elif table == "margin":
                             self.data[table_name][key].update(val)
                         elif table == "order":
@@ -309,28 +309,29 @@ class Bitmex(Variables):
                 self.Instrument[symbol].bids = values["bids"]
         self.frames_hi_lo_values(symbol=symbol)
 
-    def update_position(self, key, position: dict) -> None:
+    def update_position(self, key, values: dict) -> None:
         """
         There is only one Instrument array for the "instrument", "position", 
         "quote", "orderBook10" websocket streams.
         """
-        symbol = (position["symbol"], position["category"], self.name)
-        self.Instrument[symbol].positionValue = position["currentQty"]
+        symbol = (values["symbol"], values["category"], self.name)
+        self.positions[symbol]["POS"] = values["currentQty"]
+        self.Instrument[symbol].positionValue = values["currentQty"]
         if self.Instrument[symbol].positionValue != 0:
-            if "avgEntryPrice" in position:
-                self.Instrument[symbol].avgEntryPrice = position["avgEntryPrice"]
-            if "marginCallPrice" in position:
-                self.Instrument[symbol].marginCallPrice = position["marginCallPrice"]
-            if "unrealisedPnl" in position:
-                self.Instrument[symbol].unrealisedPnl = position["unrealisedPnl"]
+            if "avgEntryPrice" in values:
+                self.Instrument[symbol].avgEntryPrice = values["avgEntryPrice"]
+            if "marginCallPrice" in values:
+                self.Instrument[symbol].marginCallPrice = values["marginCallPrice"]
+            if "unrealisedPnl" in values:
+                self.Instrument[symbol].unrealisedPnl = values["unrealisedPnl"]
 
-    def update_instrument(self, symbol: tuple, instrument: dict):
-        if "fundingRate" in instrument:
-            self.Instrument[symbol].fundingRate = instrument["fundingRate"]
-        if "volume24h" in instrument:
-            self.Instrument[symbol].volume24h = instrument["volume24h"]
-        if "state" in instrument:
-            self.Instrument[symbol].state = instrument["state"]
+    def update_instrument(self, symbol: tuple, values: dict):
+        if "fundingRate" in values:
+            self.Instrument[symbol].fundingRate = values["fundingRate"]
+        if "volume24h" in values:
+            self.Instrument[symbol].volume24h = values["volume24h"]
+        if "state" in values:
+            self.Instrument[symbol].state = values["state"]
 
     def exit(self):
         """
