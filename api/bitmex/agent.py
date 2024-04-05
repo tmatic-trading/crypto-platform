@@ -132,6 +132,7 @@ class Agent(Bitmex):
         if isinstance(data, list):
             if data:
                 self.positions[symbol] = {"POS": data[0]["currentQty"]}
+                self.Instrument[symbol].positionValue = data[0]["currentQty"]
             else:
                 self.positions[symbol] = {"POS": 0}
             Agent.logger.info(

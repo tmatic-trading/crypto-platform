@@ -16,7 +16,7 @@ class Ret:
 
 class Instrument:
     asks: list
-    avgEntryPrice: Union[str, float]
+    avgEntryPrice: float
     bids: list
     category: str
     expire: str
@@ -25,7 +25,7 @@ class Instrument:
     minOrderQty: Union[str, float]
     multiplier: int
     myMultiplier: int
-    positionValue: Union[str, float]
+    positionValue: float
     precision: int
     settlCurrency: str
     state: str
