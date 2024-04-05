@@ -33,6 +33,6 @@ def time_converter(time: Union[int, float, str, datetime], usec=False) -> Union[
 def exceptions_manager(cls):
     for attr in cls.__dict__: 
         if callable(getattr(cls, attr)):
-            if attr not in ["exit", "Position", "Instrument"]:
+            if attr not in ["exit", "Position", "Instrument", "Account"]:
                 setattr(cls, attr, exception(getattr(cls, attr)))
     return cls

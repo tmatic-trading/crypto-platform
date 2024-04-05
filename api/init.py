@@ -30,6 +30,3 @@ class Setup(Variables):
                 self.positions[symbol]["SYMB"] = symbol
                 self.positions[symbol]["SYMBOL"] = symbol[0]
                 self.positions[symbol]["CAT"] = symbol[1]
-            for cur in self.currencies:
-                self.accounts[cur] = {y: 0 for y in var.name_account}
-                self.accounts[cur]["SUMREAL"] = 0

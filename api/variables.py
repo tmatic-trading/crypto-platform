@@ -18,9 +18,8 @@ class Variables():
     symbol_list = list()
     category_list = list()
     currencies = list()
-    accounts = dict()
     positions = OrderedDict()
-    data = dict()
+    #data = dict()
     full_symbol_list = list()
     symbols = set()
     logger = logging

@@ -39,17 +39,16 @@ class Instrument:
         return Ret.iter(self)
     
 
-class Position:
-    avgEntryPrice: Union[str, float]
-    category: str
-    currentQty: Union[str, float]
-    expire: str
-    fundingRate: Union[str, float]
-    marginCallPrice: Union[str, float]
-    state: str
-    symbol: str
-    unrealisedPnl: Union[str, float]
-    volume24h: Union[str, float] 
+class Account:
+    account: Union[str, float]
+    availableMargin: float = 0
+    commission: float
+    funding: float
+    marginBalance: float = 0
+    marginLeverage: float = 0
+    result: float
+    settlCurrency: str
+    sumreal: float
 
     def __iter__(self):
         return Ret.iter(self)
@@ -81,12 +80,27 @@ class MetaInstrument(type):
             return MetaInstrument.market[name].keys()
         
 
-class MetaPosition(type):
-    dictionary = dict()
-    def __getitem__(self, item) -> Position:
-        key = (self, item)
-        if key not in self.dictionary:
-            self.dictionary[key] = Position()
-            return self.dictionary[key]
+class MetaAccount(type):
+    all = dict()
+    market = dict()
+    def __getitem__(self, item) -> Account:
+        if item not in self.all:
+            self.all[item] = Account()
+            name = item[1]
+            if name not in self.market:
+                self.market[name] = OrderedDict()
+            self.market[name][item] = self.all[item]
+            return self.all[item]
         else:
-            return self.dictionary[key]
+            return self.all[item]
+        
+    def keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaAccount.market:
+            for symbol in MetaAccount.market[name]:
+                yield symbol
+
+    def get_keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaInstrument.market:
+            return MetaInstrument.market[name].keys()

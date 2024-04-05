@@ -140,6 +140,7 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
+        account = self.Account[row["settlCurrency"]]
 
         # Trade
 
@@ -216,8 +217,8 @@ class Function(WS, Variables):
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                self.accounts[row["settlCurrency"]]["COMMISS"] += calc["commiss"]
-                self.accounts[row["settlCurrency"]]["SUMREAL"] += calc["sumreal"]
+                account.commission += calc["commiss"]
+                account.sumreal += calc["sumreal"]
                 values = [
                     row["execID"],
                     emi,
@@ -311,7 +312,7 @@ class Function(WS, Variables):
                     Function.insert_database(self, values=values)
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = row["transactTime"]
-                    self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
+                    account.funding += calc["funding"]
                     if info:
                         Function.fill_columns(
                             self,
@@ -368,7 +369,7 @@ class Function(WS, Variables):
                 Function.insert_database(self, values=values)
                 self.robots[emi]["COMMISS"] += calc["funding"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
+                account.funding += calc["funding"]
                 if info:
                     Function.fill_columns(
                         self, func=Function.funding_display, table=funding, val=message
@@ -707,31 +708,6 @@ class Function(WS, Variables):
         Update tkinter labels in the tables
         """
 
-        # Get funds
-
-        funds = WS.get_funds(self)
-        for currency in self.accounts:
-            for fund in funds:
-                if currency == fund["currency"]:
-                    self.accounts[currency]["ACCOUNT"] = self.user_id
-                    self.accounts[currency]["MARGINBAL"] = (
-                        float(fund["marginBalance"]) / var.currency_divisor[currency]
-                    )
-                    self.accounts[currency]["AVAILABLE"] = (
-                        float(fund["availableMargin"]) / var.currency_divisor[currency]
-                    )
-                    if "marginLeverage" in fund:
-                        self.accounts[currency]["LEVERAGE"] = fund["marginLeverage"]
-                    else:
-                        self.accounts[currency]["LEVERAGE"] = 0
-                    self.accounts[currency]["RESULT"] = self.accounts[currency][
-                        "SUMREAL"
-                    ]
-                    break
-            else:
-                message = "Currency " + str(currency) + " not found."
-                var.logger.error(message)
-
         # Refresh Positions table
 
         mod = Tables.position.mod
@@ -1014,6 +990,7 @@ class Function(WS, Variables):
         # Refresh Account table
 
         mod = Tables.account.mod
+        results = dict()
         for symbol, position in self.positions.items():
             if position["POS"] != 0:
                 calc = Function.calculate(
@@ -1026,64 +1003,65 @@ class Function(WS, Variables):
                     rate=0,
                     fund=1,
                 )
-                settlCurrency = self.Instrument[symbol].settlCurrency
-                if settlCurrency in self.accounts:
-                    self.accounts[settlCurrency]["RESULT"] += calc["sumreal"]
+                settlCurrency = (self.Instrument[symbol].settlCurrency, self.name)
+                if settlCurrency in results:
+                    results[settlCurrency] += calc["sumreal"]
                 else:
-                    var.logger.error(
-                        settlCurrency
-                        + " not found. See the CURRENCIES variable in the .env file."
-                    )
-                    exit(1)
+                    results[settlCurrency] = calc["sumreal"]
         for num, cur in enumerate(self.currencies):
+            settlCurrency = (cur, self.name)
+            account = self.Account[settlCurrency]
+            if settlCurrency in results:
+                account.result += results[settlCurrency]
             update_label(table="account", column=0, row=num + mod, val=cur)
             update_label(
                 table="account",
                 column=1,
                 row=num + mod,
-                val=format_number(number=self.accounts[cur]["MARGINBAL"]),
+                val=format_number(number=account.marginBalance),
             )
             update_label(
                 table="account",
                 column=2,
                 row=num + mod,
-                val=format_number(number=self.accounts[cur]["AVAILABLE"]),
+                val=format_number(number=account.availableMargin),
             )
             update_label(
                 table="account",
                 column=3,
                 row=num + mod,
-                val="{:.3f}".format(self.accounts[cur]["LEVERAGE"]),
+                val="{:.3f}".format(account.marginLeverage),
             )
             update_label(
                 table="account",
                 column=4,
                 row=num + mod,
-                val=format_number(number=self.accounts[cur]["RESULT"]),
+                val=format_number(number=account.sumreal + account.result),
             )
             update_label(
                 table="account",
                 column=5,
                 row=num + mod,
-                val=format_number(number=-self.accounts[cur]["COMMISS"]),
+                val=format_number(number=-account.commission),
             )
             update_label(
                 table="account",
                 column=6,
                 row=num + mod,
-                val=format_number(number=-self.accounts[cur]["FUNDING"]),
+                val=format_number(number=-account.funding),
             )
-            number = (
-                self.accounts[cur]["MARGINBAL"]
-                - self.accounts[cur]["RESULT"]
-                + self.accounts[cur]["COMMISS"]
-                + self.accounts[cur]["FUNDING"]
+            total = (
+                account.marginBalance
+                - account.result
+                + account.commission
+                + account.funding
+                + account.sumreal
             )
             update_label(
                 table="account",
                 column=7,
                 row=num + mod,
-                val=format_number(number=number),
+                val=format_number(number=total),
             )
 
         # Refresh Exchange table

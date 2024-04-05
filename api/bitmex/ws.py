@@ -11,18 +11,15 @@ import websocket
 
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaInstrument, MetaPosition
+from common.data import MetaInstrument, MetaAccount
 from display.functions import info_display
 
 from .api_auth import generate_signature
 
 
 class Bitmex(Variables):
-    class Position(metaclass=MetaPosition):
-        pass
-
-    class Instrument(metaclass=MetaInstrument):
-        pass
+    class Account(metaclass=MetaAccount): pass
+    class Instrument(metaclass=MetaInstrument): pass
 
     def __init__(self):
         self.name = "Bitmex"
@@ -178,9 +175,9 @@ class Bitmex(Variables):
         """
 
         def generate_key(keys: list, val: dict, table: str) -> tuple:
-            if table in ["instrument", "position", "quote", "orderBook10"]:
+            if "symbol" in keys:
                 val["category"] = self.symbol_category[val["symbol"]]
-                val["market"] = self.name
+            val["market"] = self.name
             return tuple((val[key]) for key in keys)
 
         message = json.loads(message)
@@ -201,6 +198,8 @@ class Bitmex(Variables):
                         self.keys[table] = ["trdMatchID"]
                     elif table == "execution":
                         self.keys[table] = ["execID"]
+                    elif table == "margin":
+                        self.keys[table] = ["currency", "market"]
                     elif table in ["instrument", "orderBook10", "position"]:
                         self.keys[table].append("category")
                         self.keys[table].append("market")
@@ -218,9 +217,13 @@ class Bitmex(Variables):
                                 self.update_orderbook(
                                     symbol=key, values=val, quote=True
                                 )
+                            elif table == "margin":
+                                self.update_account(
+                                    settlCurrency=key, values=val,
+                                )
                 elif action == "insert":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val, table)
+                        key = generate_key(self.keys[table], val=val, table=table)
                         if table == "quote":
                             val["category"] = self.symbol_category[val["symbol"]]
 
@@ -232,12 +235,13 @@ class Bitmex(Variables):
                                 self.name,
                             )
                             val["market"] = self.name
+                            val["settlCurrency"] = (val["settlCurrency"], self.name)
                             self.transaction(row=val)
                         else:
                             self.data[table_name][key] = val
                 elif action == "update":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val, table)
+                        key = generate_key(self.keys[table], val=val, table=table)
                         if key not in self.data[table_name]:
                             return  # No key to update
                         if table == "orderBook10":
@@ -247,7 +251,7 @@ class Bitmex(Variables):
                         elif table == "position":
                             self.update_position(key, values=val)
                         elif table == "margin":
-                            self.data[table_name][key].update(val)
+                            self.update_account(settlCurrency=key, values=val)
                         elif table == "order":
                             self.data[table_name][key].update(val)
                             if self.data[table_name][key]["leavesQty"] <= 0:
@@ -342,6 +346,16 @@ class Bitmex(Variables):
             instrument.volume24h = values["volume24h"]
         if "state" in values:
             instrument.state = values["state"]
+
+    def update_account(self, settlCurrency: tuple, values: dict):
+        account = self.Account[settlCurrency]
+        if "marginBalance" in values:
+            account.marginBalance = values["marginBalance"] / self.currency_divisor[settlCurrency[0]]
+        if "availableMargin" in values:
+            account.availableMargin = values["availableMargin"] / self.currency_divisor[settlCurrency[0]]
+        if "marginLeverage" in values:
+            account.marginLeverage = values["marginLeverage"]
+
 
     def exit(self):
         """

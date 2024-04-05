@@ -117,7 +117,7 @@ class WS(Variables):
         Cash in the account
         """
 
-        return self.data["margin"].values()
+        return self.data["margin"]
 
     '''def market_depth(self: Markets) -> list:
         """
