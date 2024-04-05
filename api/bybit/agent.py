@@ -136,43 +136,33 @@ class Agent(Bybit):
     def remove_order(self):
         print("___remove_order")
 
-    def get_wallet_balance(self) -> dict:
+    def get_wallet_balance(self) -> None:
         print("___wallet_balance")
         result = self.session.get_wallet_balance(accountType="UNIFIED")
-        for account in result["result"]["list"]:
-            if account["accountType"] == "UNIFIED":
-                for coin in account["coin"]:
-                    currency = coin["coin"]
-                    self.data["margin"][currency] = dict()
-                    self.data["margin"][currency] = coin
-                    self.data["margin"][currency]["currency"] = currency
-                    self.data["margin"][currency]["walletBalance"] = float(
-                        coin["walletBalance"]
+        for values in result["result"]["list"]:
+            if values["accountType"] == "UNIFIED":
+                for coin in values["coin"]:
+                    settlCurrency = (coin["coin"], self.name)
+                    print(settlCurrency)
+                    for el in self.Account[settlCurrency]:
+                        print(el.name, el.value)
+                    print("------------------------------")
+                    self.Account[settlCurrency].account = self.user_id
+                    self.Account[settlCurrency].availableMargin = float(
+                        coin["availableToWithdraw"]
                     )
-                    self.data["margin"][currency]["unrealisedPnl"] = float(
-                        coin["unrealisedPnl"]
-                    )
-                    self.data["margin"][currency]["marginBalance"] = float(
+                    self.Account[settlCurrency].commission = 0
+                    self.Account[settlCurrency].funding = 0
+                    self.Account[settlCurrency].marginBalance = float(
                         coin["equity"]
                     )
-                    self.data["margin"][currency]["availableMargin"] = float(
-                        coin["availableToWithdraw"]
-                    )
-                    self.data["margin"][currency]["withdrawableMargin"] = float(
-                        coin["availableToWithdraw"]
-                    )
+                    self.Account[settlCurrency].marginLeverage = 0
+                    self.Account[settlCurrency].result = 0
+                    self.Account[settlCurrency].settlCurrency = settlCurrency
+                    self.Account[settlCurrency].sumreal = 0
                 break
         else:
             print("UNIFIED account not found")
-        for currency in self.currencies:
-            if currency not in self.data["margin"]:
-                self.data["margin"][currency] = dict()
-                self.data["margin"][currency]["currency"] = currency
-                self.data["margin"][currency]["walletBalance"] = None
-                self.data["margin"][currency]["unrealisedPnl"] = None
-                self.data["margin"][currency]["marginBalance"] = None
-                self.data["margin"][currency]["availableMargin"] = None
-                self.data["margin"][currency]["withdrawableMargin"] = None
 
     def get_position_info(self):
         for category in self.category_list:

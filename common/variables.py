@@ -116,7 +116,7 @@ class Variables:
     connect_mysql = None
     cursor_mysql = None
     timefrs = {1: "1m", 5: "5m", 60: "1h"}
-    currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000, "USDT": 1}
+    currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000, "USDT": 1, "BTC": 1}
     last_order = int((time.time() - 1591000000) * 10)
     last_database_time = datetime(1900, 1, 1, 1, 1)
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)

@@ -140,9 +140,11 @@ class Init(WS, Variables):
             sql += ") T"
             var.cursor_mysql.execute(sql)
             data = var.cursor_mysql.fetchall()
-            self.accounts[currency]["COMMISS"] = float(data[0]["commiss"])
-            self.accounts[currency]["SUMREAL"] = float(data[0]["sumreal"])
-            self.accounts[currency]["FUNDING"] = float(data[0]["funding"])
+            settleCurrency = (currency, self.name)
+            self.Account[settleCurrency].commission = float(data[0]["commiss"])
+            self.Account[settleCurrency].funding = float(data[0]["funding"])
+            self.Account[settleCurrency].sumreal = float(data[0]["sumreal"])
+            self.Account[settleCurrency].result = 0
 
     def load_orders(self: Markets) -> None:
         """

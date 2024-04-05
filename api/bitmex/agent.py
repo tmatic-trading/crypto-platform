@@ -168,6 +168,7 @@ class Agent(Bitmex):
                     self.symbol_category[row["symbol"]],
                     self.name,
                 )
+                row["settlCurrency"] = (row["settlCurrency"], self.name)
             return result
         else:
             return "error"
@@ -241,7 +242,12 @@ class Agent(Bitmex):
         """
         Bitmex sends this information via websocket, "margin" subscription.
         """
-        pass
+        '''for settleCurrency in self.currencies:
+            settle = (settleCurrency, self.name)
+            self.Account[settle].marginBalance = 0
+            self.Account[settle].availableMargin = 0
+            self.Account[settle].marginLeverage = 0
+            self.Account[settle].result = 0'''
 
     def get_position_info(self):
         """

@@ -5,7 +5,7 @@ from time import sleep
 
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaInstrument, MetaPosition
+from common.data import MetaInstrument, MetaAccount
 from services import exceptions_manager
 
 # from .agent import Agent
@@ -14,11 +14,8 @@ from .pybit.unified_trading import HTTP, WebSocket
 
 @exceptions_manager
 class Bybit(Variables):
-    class Position(metaclass=MetaPosition):
-        pass
-
-    class Instrument(metaclass=MetaInstrument):
-        pass
+    class Account(metaclass=MetaAccount): pass
+    class Instrument(metaclass=MetaInstrument): pass
 
     def __init__(self):
         self.name = "Bybit"
@@ -48,12 +45,12 @@ class Bybit(Variables):
             self.orderbook_depth = 1
         else:
             self.orderbook_depth = 50
+        self.currency_divisor = {"USDT": 1, "BTC": 1}
         print("!!!!!!!!!!!!! BYBIT !!!!!!!!!!!")
 
     def start(self):
         print("-----starting Bybit----")
         self.count = 0
-        self.data["margin"] = OrderedDict()
         self.__connect()
 
     def __connect(self) -> None:
@@ -105,7 +102,8 @@ class Bybit(Variables):
         instrument.volume24h = float(values["volume24h"])
         instrument.fundingRate = float(values["fundingRate"])
 
-    def __handle_wallet(values):
+    def __handle_wallet(self, values: dict):
+        print(values)
         pass
 
     def __handle_order(self, values):
