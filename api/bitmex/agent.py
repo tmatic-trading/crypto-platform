@@ -1,16 +1,15 @@
+import logging
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
-#from api.variables import Variables
+import services as service
 
 from .http import Send
 from .path import Listing
-
 from .ws import Bitmex
-import services as service
 
-import logging
+# from api.variables import Variables
 
 
 class Agent(Bitmex):
@@ -35,7 +34,6 @@ class Agent(Bitmex):
                         + "category or such symbol does not exist."
                     )
                     exit(1)
-
 
     def get_user(self) -> Union[dict, None]:
         result = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
@@ -100,7 +98,7 @@ class Agent(Bitmex):
         if qty == int(qty):
             num = 0
         else:
-            num = len(str(qty - int(qty)).replace(".", ""))-1
+            num = len(str(qty - int(qty)).replace(".", "")) - 1
         self.Instrument[symbol].precision = num
         self.Instrument[symbol].state = instrument["state"]
         self.Instrument[symbol].volume24h = instrument["volume24h"]
@@ -116,7 +114,7 @@ class Agent(Bitmex):
             self.Instrument[symbol].fundingRate = instrument["fundingRate"]
         self.Instrument[symbol].avgEntryPrice = 0
         self.Instrument[symbol].marginCallPrice = 0
-        self.Instrument[symbol].positionValue = 0
+        self.Instrument[symbol].currentQty = 0
         self.Instrument[symbol].unrealisedPnl = 0
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
@@ -132,7 +130,7 @@ class Agent(Bitmex):
         if isinstance(data, list):
             if data:
                 self.positions[symbol] = {"POS": data[0]["currentQty"]}
-                self.Instrument[symbol].positionValue = data[0]["currentQty"]
+                self.Instrument[symbol].currentQty = data[0]["currentQty"]
             else:
                 self.positions[symbol] = {"POS": 0}
             Agent.logger.info(
@@ -165,7 +163,11 @@ class Agent(Bitmex):
             )
             for row in result:
                 row["market"] = self.name
-                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]], self.name)
+                row["symbol"] = (
+                    row["symbol"],
+                    self.symbol_category[row["symbol"]],
+                    self.name,
+                )
             return result
         else:
             return "error"
@@ -173,8 +175,14 @@ class Agent(Bitmex):
     def open_orders(self) -> list:
         orders = self.data["order"].values()
         for order in orders:
-            order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]], self.name)
-            order["transactTime"] = service.time_converter(time=order["transactTime"], usec=True)
+            order["symbol"] = (
+                order["symbol"],
+                self.symbol_category[order["symbol"]],
+                self.name,
+            )
+            order["transactTime"] = service.time_converter(
+                time=order["transactTime"], usec=True
+            )
 
         return orders
 
@@ -228,20 +236,20 @@ class Agent(Bitmex):
         postData = {"orderID": orderID}
 
         return Send.request(self, path=path, postData=postData, verb="DELETE")
-    
+
     def get_wallet_balance(self):
         """
         Bitmex sends this information via websocket, "margin" subscription.
         """
         pass
-    
+
     def get_position_info(self):
         """
         Bitmex sends this information via websocket, "position" subscription.
         """
         pass
 
-    #del 
+    # del
     '''def exit(self):
         """
         Closes websocket

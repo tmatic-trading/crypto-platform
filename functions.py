@@ -5,22 +5,21 @@ from datetime import datetime, timedelta
 from random import randint
 from typing import Union
 
-from api.api import WS
+import services as service
+from api.api import WS, Markets
 from api.variables import Variables
-#from api.websockets import Websockets
+
+# from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import GridTable, ListBoxTable
 from display.variables import Variables as disp
 
-from api.api import Markets
-
-import services as service
-
 db = var.env["MYSQL_DATABASE"]
 
-#from api.bitmex.ws import Bitmex
+# from api.bitmex.ws import Bitmex
+
 
 class Tables:
     position = GridTable
@@ -77,7 +76,9 @@ class Function(WS, Variables):
             else:
                 disp.price_rounding[self.name][symbol] = 0
 
-    def timeframes_data_filename(self: Markets, emi: str, symbol: tuple, timefr: str) -> str:
+    def timeframes_data_filename(
+        self: Markets, emi: str, symbol: tuple, timefr: str
+    ) -> str:
         return "data/" + symbol[0] + symbol[1] + str(timefr) + "_EMI" + emi + ".txt"
 
     def save_timeframes_data(self: Markets, frame: dict) -> None:
@@ -612,7 +613,9 @@ class Function(WS, Variables):
             qty = "0"
         else:
             qty /= self.Instrument[symbol].myMultiplier
-            qty = "{:.{precision}f}".format(qty, precision=self.Instrument[symbol].precision)
+            qty = "{:.{precision}f}".format(
+                qty, precision=self.Instrument[symbol].precision
+            )
 
         return qty
 
@@ -737,9 +740,7 @@ class Function(WS, Variables):
             update_label(table="position", column=0, row=num + mod, val=symbol[0])
             update_label(table="position", column=1, row=num + mod, val=symbol[1])
             if self.positions[symbol]["POS"]:
-                pos = Function.volume(
-                    self, qty=instrument.positionValue, symbol=symbol
-                )
+                pos = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
             else:
                 pos = "0"
             update_label(table="position", column=2, row=num + mod, val=pos)
@@ -765,9 +766,7 @@ class Function(WS, Variables):
                 table="position",
                 column=5,
                 row=num + mod,
-                val=(
-                    str(instrument.marginCallPrice).replace("100000000", "inf")
-                ),
+                val=(str(instrument.marginCallPrice).replace("100000000", "inf")),
             )
             update_label(
                 table="position",
@@ -846,6 +845,7 @@ class Function(WS, Variables):
                         disp.symb_book = var.symbol
                         disp.col1_book = 0
                 count += 1
+
         mod = 1 - Tables.orderbook.mod
         num = int(disp.num_book / 2) - mod
         instrument = self.Instrument[var.symbol]
@@ -874,16 +874,12 @@ class Function(WS, Variables):
             else:
                 update_label(table="orderbook", column=0, row=num + 1, val="")
             disp.labels["orderbook"][num + 1 - mod][0]["fg"] = "black"
-            first_price_sell = (
-                instrument.asks[0][0]
-                + (num + mod) * instrument.tickSize
-            )
+            first_price_sell = instrument.asks[0][0] + (num + mod) * instrument.tickSize
             first_price_buy = instrument.bids[0][0]
             for row in range(1 - mod, disp.num_book - mod):
                 if row <= num:
                     price = round(
-                        first_price_sell
-                        - (row + mod) * instrument.tickSize,
+                        first_price_sell - (row + mod) * instrument.tickSize,
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -908,8 +904,7 @@ class Function(WS, Variables):
                         disp.labels["orderbook"][row][0]["bg"] = disp.bg_color
                 else:
                     price = round(
-                        first_price_buy
-                        - (row - num - 1) * instrument.tickSize,
+                        first_price_buy - (row - num - 1) * instrument.tickSize,
                         disp.price_rounding[self.name][var.symbol],
                     )
                     qty = 0
@@ -934,7 +929,11 @@ class Function(WS, Variables):
                         disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
         else:
             display_order_book_values(
-                val=instrument.bids, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
+                val=instrument.bids,
+                start=num + 1,
+                end=disp.num_book - mod,
+                direct=1,
+                side="bids",
             )
             display_order_book_values(
                 val=instrument.asks, start=num, end=0 - mod, direct=-1, side="asks"
@@ -1110,7 +1109,9 @@ class Function(WS, Variables):
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         close = (
-            self.Instrument[symbol].bids[0][0] if pos > 0 else self.Instrument[symbol].asks[0][0]
+            self.Instrument[symbol].bids[0][0]
+            if pos > 0
+            else self.Instrument[symbol].asks[0][0]
         )
 
         return close
