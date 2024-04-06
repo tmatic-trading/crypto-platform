@@ -43,7 +43,7 @@ class Account:
     account: Union[str, float]
     availableMargin: float = 0
     commission: float
-    funding: float
+    funding: float = 0
     marginBalance: float = 0
     marginLeverage: float = 0
     result: float

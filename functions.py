@@ -9,7 +9,6 @@ import services as service
 from api.api import WS, Markets
 from api.variables import Variables
 
-# from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
@@ -36,9 +35,9 @@ class Function(WS, Variables):
         """
         Calculate sumreal and commission
         """
+        instrument = self.Instrument[symbol]
         coef = abs(
-            self.Instrument[symbol].multiplier
-            / var.currency_divisor[self.Instrument[symbol].settlCurrency]
+            instrument.multiplier / self.currency_divisor[instrument.settlCurrency]
         )
         if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
@@ -613,9 +612,10 @@ class Function(WS, Variables):
         if qty == 0:
             qty = "0"
         else:
-            qty /= self.Instrument[symbol].myMultiplier
+            instrument = self.Instrument[symbol]
+            qty /= instrument.myMultiplier
             qty = "{:.{precision}f}".format(
-                qty, precision=self.Instrument[symbol].precision
+                qty, precision=instrument.precision
             )
 
         return qty
@@ -637,6 +637,7 @@ class Function(WS, Variables):
         Processing timeframes and entry point into robot algorithms
         """
         for symbol, timeframes in self.frames.items():
+            instrument = self.Instrument[symbol]
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
                     for emi in values["robots"]:
@@ -649,7 +650,7 @@ class Function(WS, Variables):
                             bot.robo[emi](
                                 robot=self.robots[emi],
                                 frame=values["data"],
-                                instrument=self.Instrument[symbol],
+                                instrument=instrument,
                             )
                         Function.save_timeframes_data(
                             self,
@@ -665,11 +666,11 @@ class Function(WS, Variables):
                             + utc.month * 100
                             + utc.day,
                             "time": utc.hour * 10000 + utc.minute * 100,
-                            "bid": self.Instrument[symbol].bids[0][0],
-                            "ask": self.Instrument[symbol].asks[0][0],
-                            "hi": self.Instrument[symbol].asks[0][0],
-                            "lo": self.Instrument[symbol].bids[0][0],
-                            "funding": self.Instrument[symbol].fundingRate,
+                            "bid": instrument.bids[0][0],
+                            "ask": instrument.asks[0][0],
+                            "hi": instrument.asks[0][0],
+                            "lo": instrument.bids[0][0],
+                            "funding": instrument.fundingRate,
                             "datetime": dt_now,
                         }
                     )
@@ -918,27 +919,26 @@ class Function(WS, Variables):
         # Refresh Robots table
 
         mod = Tables.robots.mod
-        for num, emi in enumerate(self.robots):
-            symbol = self.robots[emi]["SYMBOL"]
+        for num, robot in enumerate(self.robots.values()):
+            symbol = robot["SYMBOL"]
             price = Function.close_price(
-                self, symbol=symbol, pos=self.robots[emi]["POS"]
+                self, symbol=symbol, pos=robot["POS"]
             )
             if price:
                 calc = Function.calculate(
                     self,
                     symbol=symbol,
                     price=price,
-                    qty=-float(self.robots[emi]["POS"]),
+                    qty=-float(robot["POS"]),
                     rate=0,
                     fund=1,
                 )
-                self.robots[emi]["PNL"] = (
-                    self.robots[emi]["SUMREAL"]
+                robot["PNL"] = (
+                    robot["SUMREAL"]
                     + calc["sumreal"]
-                    - self.robots[emi]["COMMISS"]
+                    - robot["COMMISS"]
                 )
-            symbol = self.robots[emi]["SYMBOL"]
-            update_label(table="robots", column=0, row=num + mod, val=emi)
+            update_label(table="robots", column=0, row=num + mod, val=robot["EMI"])
             update_label(table="robots", column=1, row=num + mod, val=symbol[0])
             update_label(table="robots", column=2, row=num + mod, val=symbol[1])
             update_label(
@@ -948,34 +948,34 @@ class Function(WS, Variables):
                 val=self.Instrument[symbol].settlCurrency,
             )
             update_label(
-                table="robots", column=4, row=num + mod, val=self.robots[emi]["TIMEFR"]
+                table="robots", column=4, row=num + mod, val=robot["TIMEFR"]
             )
             update_label(
-                table="robots", column=5, row=num + mod, val=self.robots[emi]["CAPITAL"]
+                table="robots", column=5, row=num + mod, val=robot["CAPITAL"]
             )
             update_label(
-                table="robots", column=6, row=num + mod, val=self.robots[emi]["STATUS"]
+                table="robots", column=6, row=num + mod, val=robot["STATUS"]
             )
             update_label(
                 table="robots",
                 column=7,
                 row=num + mod,
-                val=humanFormat(self.robots[emi]["VOL"]),
+                val=humanFormat(robot["VOL"]),
             )
             update_label(
                 table="robots",
                 column=8,
                 row=num + mod,
-                val="{:.8f}".format(self.robots[emi]["PNL"]),
+                val="{:.8f}".format(robot["PNL"]),
             )
             val = Function.volume(
                 self,
-                qty=self.robots[emi]["POS"],
+                qty=robot["POS"],
                 symbol=symbol,
             )
             if disp.labels_cache["robots"][num + mod][9] != val:
-                if self.robots[emi]["STATUS"] == "RESERVED":
-                    if self.robots[emi]["POS"] != 0:
+                if robot["STATUS"] == "RESERVED":
+                    if robot["POS"] != 0:
                         disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
                     else:
                         disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
@@ -985,7 +985,7 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=val,
             )
-            self.robots[emi]["y_position"] = num + mod
+            robot["y_position"] = num + mod
 
         # Refresh Account table
 
@@ -1011,6 +1011,7 @@ class Function(WS, Variables):
         for num, cur in enumerate(self.currencies):
             settlCurrency = (cur, self.name)
             account = self.Account[settlCurrency]
+            account.result = 0            
             if settlCurrency in results:
                 account.result += results[settlCurrency]
             update_label(table="account", column=0, row=num + mod, val=cur)
@@ -1086,10 +1087,11 @@ class Function(WS, Variables):
             )
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
+        instrument = self.Instrument[symbol]
         close = (
-            self.Instrument[symbol].bids[0][0]
+            instrument.bids[0][0]
             if pos > 0
-            else self.Instrument[symbol].asks[0][0]
+            else instrument.asks[0][0]
         )
 
         return close
@@ -1099,10 +1101,11 @@ class Function(WS, Variables):
         Round_price() returns rounded price: buy price goes down, sell price
         goes up according to 'tickSize'
         """
-        coeff = 1 / self.Instrument[symbol].tickSize
+        instrument = self.Instrument[symbol]
+        coeff = 1 / instrument.tickSize
         result = int(coeff * price) / coeff
         if rside < 0 and result < price:
-            result += self.Instrument[symbol].tickSize
+            result += instrument.tickSize
 
         return result
 
@@ -1488,11 +1491,12 @@ def handler_orderbook(event, row_position: int) -> None:
         entry_price_bid = tk.Entry(
             frame_market_bid, width=10, bg=disp.bg_color, textvariable=price_bid
         )
+        instrument = ws.Instrument[var.symbol]
         entry_price_ask.insert(
             0,
             Function.format_price(
                 ws,
-                number=ws.Instrument[var.symbol].asks[0][0],
+                number=instrument.asks[0][0],
                 symbol=var.symbol,
             ),
         )
@@ -1500,7 +1504,7 @@ def handler_orderbook(event, row_position: int) -> None:
             0,
             Function.format_price(
                 ws,
-                number=ws.Instrument[var.symbol].bids[0][0],
+                number=instrument.bids[0][0],
                 symbol=var.symbol,
             ),
         )
@@ -1510,7 +1514,7 @@ def handler_orderbook(event, row_position: int) -> None:
         entry_quantity.insert(
             0,
             Function.volume(
-                ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol
+                ws, qty=instrument.minOrderQty, symbol=var.symbol
             ),
         )
         label_ask = tk.Label(frame_market_ask, text="Price:")

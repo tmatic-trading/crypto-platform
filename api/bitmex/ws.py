@@ -226,7 +226,6 @@ class Bitmex(Variables):
                         key = generate_key(self.keys[table], val=val, table=table)
                         if table == "quote":
                             val["category"] = self.symbol_category[val["symbol"]]
-
                             self.update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
                             val["symbol"] = (
