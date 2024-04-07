@@ -3,9 +3,11 @@ from collections import OrderedDict
 from datetime import datetime
 from time import sleep
 
+import services as service
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaInstrument, MetaAccount
+from common.data import MetaAccount, MetaInstrument
+from common.variables import Variables as var
 from services import exceptions_manager
 
 # from .agent import Agent
@@ -14,8 +16,11 @@ from .pybit.unified_trading import HTTP, WebSocket
 
 @exceptions_manager
 class Bybit(Variables):
-    class Account(metaclass=MetaAccount): pass
-    class Instrument(metaclass=MetaInstrument): pass
+    class Account(metaclass=MetaAccount):
+        pass
+
+    class Instrument(metaclass=MetaInstrument):
+        pass
 
     def __init__(self):
         self.name = "Bybit"
@@ -64,13 +69,13 @@ class Bybit(Variables):
                 self.ws[category].orderbook_stream(
                     depth=self.orderbook_depth,
                     symbol=symbol[0],
-                    callback=lambda x: self.__handle_orderbook(
+                    callback=lambda x: self.__update_orderbook(
                         values=x["data"], symbol=symbol
                     ),
                 )
                 self.ws[category].ticker_stream(
                     symbol=symbol[0],
-                    callback=lambda x: self.__handle_ticker(
+                    callback=lambda x: self.__update_ticker(
                         values=x["data"], category=category
                     ),
                 )
@@ -80,9 +85,11 @@ class Bybit(Variables):
             api_key=self.api_key,
             api_secret=self.api_secret,
         )
-        self.ws_private.wallet_stream(callback=self.__handle_wallet)
+        self.ws_private.wallet_stream(callback=self.__update_account)
+        self.ws_private.position_stream(callback=self.__update_position)
+        self.ws_private.order_stream(callback=self.__handle_order)
 
-    def __handle_orderbook(self, values: dict, symbol: tuple):
+    def __update_orderbook(self, values: dict, symbol: tuple) -> None:
         if self.depth == "quote":
             self.Instrument[symbol].asks[0] = values["a"]
             self.Instrument[symbol].bids[0] = values["b"]
@@ -96,18 +103,80 @@ class Bybit(Variables):
             self.Instrument[symbol].asks = asks
             self.Instrument[symbol].bids = bids
 
-    def __handle_ticker(self, values: dict, category: str):
+    def __update_ticker(self, values: dict, category: str) -> None:
         self.message_counter += 1
         instrument = self.Instrument[(values["symbol"], category, self.name)]
         instrument.volume24h = float(values["volume24h"])
         instrument.fundingRate = float(values["fundingRate"])
 
-    def __handle_wallet(self, values: dict):
-        print(values)
-        pass
+    def __update_account(self, values: dict) -> None:
+        for value in values["data"]:
+            if value["accountType"] == "UNIFIED":
+                for coin in value["coin"]:
+                    if coin["coin"] in self.currencies:
+                        settlCurrency = (coin["coin"], self.name)
+                        self.Account[settlCurrency].availableMargin = float(
+                            coin["availableToWithdraw"]
+                        )
+                        self.Account[settlCurrency].marginBalance = float(
+                            coin["equity"]
+                        )
+                        print("---------", self.currencies)
+
+    def __update_position(self, values: dict) -> None:
+        print("________________update position")
+        for value in values["data"]:
+            symbol = (value["symbol"], value["category"], self.name)
+            if symbol in self.symbol_list:
+                instrument = self.Instrument[symbol]
+                if value["side"] == "Sell":
+                    instrument.currentQty = -float(value["size"])
+                else:
+                    instrument.currentQty = float(value["size"])
+                instrument.avgEntryPrice = float(value["entryPrice"])
+                instrument.marginCallPrice = value["liqPrice"]
+                instrument.unrealisedPnl = float(value["unrealisedPnl"])
 
     def __handle_order(self, values):
-        pass
+        print("________________handle order")
+        for value in values["data"]:
+            if value["orderStatus"] == "Cancelled":
+                orderStatus = "Canceled"
+            elif value["orderStatus"] == "New":
+                for order in var.orders.values():
+                    if value["orderId"] == order["orderID"]:
+                        orderStatus = "Replaced"
+                        break
+                else:
+                    orderStatus = "New"
+            elif value["orderStatus"] == "Rejected":
+                self.logger.info(
+                    "Rejected order "
+                    + value["symbol"]
+                    + " "
+                    + value["category"]
+                    + " orderId "
+                    + value["orderId"]
+                )
+            else:
+                orderStatus = ""
+            if orderStatus:
+                symbol = (value["symbol"], value["category"], self.name)
+                val = {
+                    "leavesQty": float(value["leavesQty"]),
+                    "price": float(value["price"]),
+                    "symbol": symbol,
+                    "transactTime": service.time_converter(
+                        int(value["updatedTime"]) / 1000
+                    ),
+                    "side": value["side"],
+                    "orderID": value["orderId"],
+                    "execType": orderStatus,
+                    "settlCurrency": (self.Instrument[symbol].settlCurrency, self.name),
+                }
+                if value["orderLinkId"]:
+                    val["clOrdID"] = value["orderLinkId"]
+            self.transaction(row=val)
 
     def exit(self):
         """

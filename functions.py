@@ -1345,7 +1345,7 @@ def handler_orderbook(event, row_position: int) -> None:
             entry_quantity.insert(
                 0,
                 Function.volume(
-                    ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol
+                    ws, qty=ws.Instrument[var.symbol].minOrderQty, symbol=var.symbol
                 ),
             )
             option_robots["menu"].delete(0, "end")
@@ -1375,7 +1375,7 @@ def handler_orderbook(event, row_position: int) -> None:
                 qnt = abs(
                     int(
                         float(quantity.get())
-                        * ws.instruments[var.symbol]["myMultiplier"]
+                        * ws.Instrument[var.symbol].myMultiplier
                     )
                 )
                 price = float(price_ask.get())
@@ -1395,12 +1395,12 @@ def handler_orderbook(event, row_position: int) -> None:
                     info_display(ws.name, message)
                     warning_window(message)
                     return
-                if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
+                if qnt % ws.Instrument[var.symbol].minOrderQty != 0:
                     message = (
                         "The "
                         + str(var.symbol)
                         + " quantity must be multiple to "
-                        + str(ws.instruments[var.symbol]["lotSize"])
+                        + str(ws.Instrument[var.symbol].minOrderQty)
                     )
                     info_display(ws.name, message)
                     warning_window(message)
@@ -1423,7 +1423,7 @@ def handler_orderbook(event, row_position: int) -> None:
                 qnt = abs(
                     int(
                         float(quantity.get())
-                        * ws.instruments[var.symbol]["myMultiplier"]
+                        * ws.Instrument[var.symbol].myMultiplier
                     )
                 )
                 price = float(price_bid.get())
@@ -1443,12 +1443,12 @@ def handler_orderbook(event, row_position: int) -> None:
                     info_display(ws.name, message)
                     warning_window(message)
                     return
-                if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
+                if qnt % ws.Instrument[var.symbol].minOrderQty != 0:
                     message = (
                         "The "
                         + str(var.symbol)
                         + " quantity must be multiple to "
-                        + str(ws.instruments[var.symbol]["lotSize"])
+                        + str(ws.Instrument[var.symbol].minOrderQty)
                     )
                     info_display(ws.name, message)
                     warning_window(message)
