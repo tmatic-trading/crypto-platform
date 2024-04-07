@@ -24,7 +24,7 @@ class Instrument:
     expire: Union[str, datetime]
     fundingRate: float
     marginCallPrice: Union[str, float]
-    minOrderQty: Union[str, float]
+    minOrderQty: float
     multiplier: int
     myMultiplier: int
     precision: int
@@ -42,13 +42,13 @@ class Instrument:
 class Account:
     account: Union[str, float]
     availableMargin: float = 0
-    commission: float
+    commission: float = 0
     funding: float = 0
     marginBalance: float = 0
     marginLeverage: float = 0
-    result: float
+    result: float = 0
     settlCurrency: str
-    sumreal: float
+    sumreal: float = 0
 
     def __iter__(self):
         return Ret.iter(self)

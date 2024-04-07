@@ -93,8 +93,8 @@ class Agent(Bitmex):
         else:
             self.Instrument[symbol].settlCurrency = None
         self.Instrument[symbol].tickSize = instrument["tickSize"]
-        self.Instrument[symbol].minOrderQty = instrument["lotSize"] / myMultiplier
-        qty = self.Instrument[symbol].minOrderQty
+        self.Instrument[symbol].minOrderQty = instrument["lotSize"]
+        qty = self.Instrument[symbol].minOrderQty / myMultiplier
         if qty == int(qty):
             num = 0
         else:

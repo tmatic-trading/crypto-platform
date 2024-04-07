@@ -244,13 +244,13 @@ class Bitmex(Variables):
                         if key not in self.data[table_name]:
                             return  # No key to update
                         if table == "orderBook10":
-                            self.update_orderbook(symbol=key, values=val)
+                            self.__update_orderbook(symbol=key, values=val)
                         elif table == "instrument":
-                            self.update_instrument(symbol=key, values=val)
+                            self.__update_instrument(symbol=key, values=val)
                         elif table == "position":
-                            self.update_position(key, values=val)
+                            self.__update_position(key, values=val)
                         elif table == "margin":
-                            self.update_account(settlCurrency=key, values=val)
+                            self.__update_account(settlCurrency=key, values=val)
                         elif table == "order":
                             self.data[table_name][key].update(val)
                             if self.data[table_name][key]["leavesQty"] <= 0:
@@ -302,7 +302,7 @@ class Bitmex(Variables):
                     if bid < timeframe["data"][-1]["lo"]:
                         timeframe["data"][-1]["lo"] = bid
 
-    def update_orderbook(self, symbol: tuple, values: dict, quote=False) -> None:
+    def __update_orderbook(self, symbol: tuple, values: dict, quote=False) -> None:
         """
         There is only one Instrument array for the "instrument", "position",
         "quote", "orderBook10" websocket streams.
@@ -320,7 +320,7 @@ class Bitmex(Variables):
                 instrument.bids = values["bids"]
         self.frames_hi_lo_values(symbol=symbol)
 
-    def update_position(self, key, values: dict) -> None:
+    def __update_position(self, key, values: dict) -> None:
         """
         There is only one Instrument array for the "instrument", "position",
         "quote", "orderBook10" websocket streams.
@@ -337,7 +337,7 @@ class Bitmex(Variables):
             if "unrealisedPnl" in values:
                 instrument.unrealisedPnl = values["unrealisedPnl"]
 
-    def update_instrument(self, symbol: tuple, values: dict):
+    def __update_instrument(self, symbol: tuple, values: dict):
         instrument = self.Instrument[symbol]
         if "fundingRate" in values:
             instrument.fundingRate = values["fundingRate"]
@@ -346,7 +346,7 @@ class Bitmex(Variables):
         if "state" in values:
             instrument.state = values["state"]
 
-    def update_account(self, settlCurrency: tuple, values: dict):
+    def __update_account(self, settlCurrency: tuple, values: dict):
         account = self.Account[settlCurrency]
         if "marginBalance" in values:
             account.marginBalance = values["marginBalance"] / self.currency_divisor[settlCurrency[0]]
