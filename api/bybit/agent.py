@@ -3,6 +3,7 @@ import logging
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
+from common.variables import Variables as var
 
 import services as service
 from services import exceptions_manager
@@ -130,11 +131,23 @@ class Agent(Bybit):
     def place_limit(self):
         print("___place_limit")
 
-    def replace_limit(self):
+    def replace_limit(self, quantity: int, price: float, orderID: str, symbol: tuple):
         print("___replace_limit")
+        return self.session.amend_order(
+            category=symbol[1],
+            symbol=symbol[0],
+            orderId=orderID,
+            qty=str(quantity),
+            price=str(price),
+        )
 
-    def remove_order(self):
+    def remove_order(self, order: dict):
         print("___remove_order")
+        return self.session.cancel_order(
+            category=order["SYMBOL"][1],
+            symbol=order["SYMBOL"][0],
+            orderId=order["orderID"],
+        )
 
     def get_wallet_balance(self) -> None:
         print("___wallet_balance")
@@ -204,8 +217,8 @@ class Agent(Bybit):
                 )
             else:
                 self.Instrument[symbol].expire = "Perpetual"
-        self.Instrument[symbol].tickSize = instrument["priceFilter"]["tickSize"]
-        self.Instrument[symbol].minOrderQty = instrument["lotSizeFilter"]["minOrderQty"]
+        self.Instrument[symbol].tickSize = float(instrument["priceFilter"]["tickSize"])
+        self.Instrument[symbol].minOrderQty = float(instrument["lotSizeFilter"]["minOrderQty"])
         qty = self.Instrument[symbol].minOrderQty
         self.Instrument[symbol].precision = (
             len(str(float(qty) - int(float(qty))).replace(".", "")) - 1

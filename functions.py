@@ -1169,15 +1169,15 @@ class Function(WS, Variables):
 
         return clOrdID
 
-    def del_order(self: Markets, clOrdID: str) -> int:
+    def del_order(self: Markets, order: dict, clOrdID: str) -> int:
         """
         Del_order() function cancels orders
         """
         message = (
-            "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
+            "Deleting orderID=" + order["orderID"] + " clOrdID=" + clOrdID
         )
         var.logger.info(message)
-        WS.remove_order(self, orderID=var.orders[clOrdID]["orderID"])
+        WS.remove_order(self, order=order)
 
         return self.logNumFatal
 
@@ -1211,7 +1211,7 @@ def handler_order(event) -> None:
                 disp.order_window_trigger = "off"
                 order_window.destroy()
 
-            def delete(clOrdID) -> None:
+            def delete(order: dict, clOrdID: str) -> None:
                 try:
                     var.orders[clOrdID]
                 except KeyError:
@@ -1220,7 +1220,7 @@ def handler_order(event) -> None:
                     var.logger.info(message)
                     return
                 if ws.logNumFatal == 0:
-                    Function.del_order(ws, clOrdID=clOrdID)
+                    Function.del_order(ws, order=order, clOrdID=clOrdID)
                     # orders.delete(row_position)
                 else:
                     info_display(ws.name, "The operation failed. Websocket closed!")
@@ -1265,6 +1265,7 @@ def handler_order(event) -> None:
                 on_closing()
 
             if disp.order_window_trigger == "off":
+                order = var.orders[clOrdID]
                 disp.order_window_trigger = "on"
                 order_window = tk.Toplevel(disp.root, pady=10, padx=10)
                 cx = disp.root.winfo_pointerx()
@@ -1298,7 +1299,7 @@ def handler_order(event) -> None:
                 label_price["text"] = "Price "
                 label1.pack(side="left")
                 button = tk.Button(
-                    frame_dn, text="Delete order", command=lambda id=clOrdID: delete(id)
+                    frame_dn, text="Delete order", command=lambda id=clOrdID: delete(clOrdID=id, order=order)
                 )
                 price_replace = tk.StringVar()
                 entry_price = tk.Entry(

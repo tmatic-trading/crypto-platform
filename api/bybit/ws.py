@@ -173,6 +173,8 @@ class Bybit(Variables):
                     "orderID": value["orderId"],
                     "execType": orderStatus,
                     "settlCurrency": (self.Instrument[symbol].settlCurrency, self.name),
+                    "orderQty": float(value["qty"]),
+                    "cumQty": float(value["cumExecQty"]),
                 }
                 if value["orderLinkId"]:
                     val["clOrdID"] = value["orderLinkId"]
