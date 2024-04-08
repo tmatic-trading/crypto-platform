@@ -1374,10 +1374,8 @@ def handler_orderbook(event, row_position: int) -> None:
         if quantity.get() and price_ask.get() and emi_number.get():
             try:
                 qnt = abs(
-                    int(
-                        float(quantity.get())
-                        * ws.Instrument[var.symbol].myMultiplier
-                    )
+                    float(quantity.get())
+                    * ws.Instrument[var.symbol].myMultiplier
                 )
                 price = float(price_ask.get())
                 res = "yes"
