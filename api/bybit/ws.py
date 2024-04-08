@@ -88,6 +88,7 @@ class Bybit(Variables):
         self.ws_private.wallet_stream(callback=self.__update_account)
         self.ws_private.position_stream(callback=self.__update_position)
         self.ws_private.order_stream(callback=self.__handle_order)
+        self.ws_private.execution_stream(callback=self.__handle_execution)
 
     def __update_orderbook(self, values: dict, symbol: tuple) -> None:
         if self.depth == "quote":
@@ -121,10 +122,8 @@ class Bybit(Variables):
                         self.Account[settlCurrency].marginBalance = float(
                             coin["equity"]
                         )
-                        print("---------", self.currencies)
 
     def __update_position(self, values: dict) -> None:
-        print("________________update position")
         for value in values["data"]:
             symbol = (value["symbol"], value["category"], self.name)
             if symbol in self.symbol_list:
@@ -138,7 +137,6 @@ class Bybit(Variables):
                 instrument.unrealisedPnl = float(value["unrealisedPnl"])
 
     def __handle_order(self, values):
-        print("________________handle order")
         for value in values["data"]:
             if value["orderStatus"] == "Cancelled":
                 orderStatus = "Canceled"
@@ -158,11 +156,12 @@ class Bybit(Variables):
                     + " orderId "
                     + value["orderId"]
                 )
+                return
             else:
                 orderStatus = ""
             if orderStatus:
                 symbol = (value["symbol"], value["category"], self.name)
-                val = {
+                row = {
                     "leavesQty": float(value["leavesQty"]),
                     "price": float(value["price"]),
                     "symbol": symbol,
@@ -177,8 +176,28 @@ class Bybit(Variables):
                     "cumQty": float(value["cumExecQty"]),
                 }
                 if value["orderLinkId"]:
-                    val["clOrdID"] = value["orderLinkId"]
-            self.transaction(row=val)
+                    row["clOrdID"] = value["orderLinkId"]
+                self.transaction(row=row)
+
+    def __handle_execution(self, values):
+        for row in values["data"]:
+            row["symbol"] = (row["symbol"], row["category"], self.name)
+            row["execID"] = row["execId"]
+            row["orderID"] = row["orderId"]
+            row["lastPx"] = float(row["execPrice"])
+            row["leavesQty"] = float(row["leavesQty"])
+            row["transactTime"] = service.time_converter(
+                time=int(row["execTime"]) / 1000, usec=True
+            )
+            row["commission"] = float(row["execFee"])
+            if row["orderLinkId"]:
+                row["clOrdID"] = row["orderLinkId"]
+            row["price"] = float(row["orderPrice"])
+            row["lastQty"] = float(row["execQty"])
+            row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
+            row["market"] = self.name
+            row["foreignNotional"] = 0
+            self.transaction(row=row)
 
     def exit(self):
         """

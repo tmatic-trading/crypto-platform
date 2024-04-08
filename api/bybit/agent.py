@@ -3,9 +3,9 @@ import logging
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
-from common.variables import Variables as var
 
 import services as service
+from common.variables import Variables as var
 from services import exceptions_manager
 
 from .ws import Bybit
@@ -79,7 +79,8 @@ class Agent(Bybit):
                     time=int(row["execTime"]) / 1000, usec=True
                 )
                 row["commission"] = float(row["execFee"])
-                row["clOrdID"] = row["orderLinkId"]
+                if row["orderLinkId"]:
+                    row["clOrdID"] = row["orderLinkId"]
                 row["price"] = float(row["orderPrice"])
                 row["lastQty"] = float(row["execQty"])
                 row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
@@ -176,9 +177,7 @@ class Agent(Bybit):
                     )
                     self.Account[settlCurrency].commission = 0
                     self.Account[settlCurrency].funding = 0
-                    self.Account[settlCurrency].marginBalance = float(
-                        coin["equity"]
-                    )
+                    self.Account[settlCurrency].marginBalance = float(coin["equity"])
                     self.Account[settlCurrency].marginLeverage = 0
                     self.Account[settlCurrency].result = 0
                     self.Account[settlCurrency].settlCurrency = settlCurrency
@@ -228,7 +227,9 @@ class Agent(Bybit):
             else:
                 self.Instrument[symbol].expire = "Perpetual"
         self.Instrument[symbol].tickSize = float(instrument["priceFilter"]["tickSize"])
-        self.Instrument[symbol].minOrderQty = float(instrument["lotSizeFilter"]["minOrderQty"])
+        self.Instrument[symbol].minOrderQty = float(
+            instrument["lotSizeFilter"]["minOrderQty"]
+        )
         qty = self.Instrument[symbol].minOrderQty
         self.Instrument[symbol].precision = (
             len(str(float(qty) - int(float(qty))).replace(".", "")) - 1
