@@ -8,7 +8,6 @@ from typing import Union
 import services as service
 from api.api import WS, Markets
 from api.variables import Variables
-
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
@@ -614,9 +613,7 @@ class Function(WS, Variables):
         else:
             instrument = self.Instrument[symbol]
             qty /= instrument.myMultiplier
-            qty = "{:.{precision}f}".format(
-                qty, precision=instrument.precision
-            )
+            qty = "{:.{precision}f}".format(qty, precision=instrument.precision)
 
         return qty
 
@@ -921,9 +918,7 @@ class Function(WS, Variables):
         mod = Tables.robots.mod
         for num, robot in enumerate(self.robots.values()):
             symbol = robot["SYMBOL"]
-            price = Function.close_price(
-                self, symbol=symbol, pos=robot["POS"]
-            )
+            price = Function.close_price(self, symbol=symbol, pos=robot["POS"])
             if price:
                 calc = Function.calculate(
                     self,
@@ -933,11 +928,7 @@ class Function(WS, Variables):
                     rate=0,
                     fund=1,
                 )
-                robot["PNL"] = (
-                    robot["SUMREAL"]
-                    + calc["sumreal"]
-                    - robot["COMMISS"]
-                )
+                robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
             update_label(table="robots", column=0, row=num + mod, val=robot["EMI"])
             update_label(table="robots", column=1, row=num + mod, val=symbol[0])
             update_label(table="robots", column=2, row=num + mod, val=symbol[1])
@@ -947,15 +938,9 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=self.Instrument[symbol].settlCurrency,
             )
-            update_label(
-                table="robots", column=4, row=num + mod, val=robot["TIMEFR"]
-            )
-            update_label(
-                table="robots", column=5, row=num + mod, val=robot["CAPITAL"]
-            )
-            update_label(
-                table="robots", column=6, row=num + mod, val=robot["STATUS"]
-            )
+            update_label(table="robots", column=4, row=num + mod, val=robot["TIMEFR"])
+            update_label(table="robots", column=5, row=num + mod, val=robot["CAPITAL"])
+            update_label(table="robots", column=6, row=num + mod, val=robot["STATUS"])
             update_label(
                 table="robots",
                 column=7,
@@ -1011,7 +996,7 @@ class Function(WS, Variables):
         for num, cur in enumerate(self.currencies):
             settlCurrency = (cur, self.name)
             account = self.Account[settlCurrency]
-            account.result = 0            
+            account.result = 0
             if settlCurrency in results:
                 account.result += results[settlCurrency]
             update_label(table="account", column=0, row=num + mod, val=cur)
@@ -1088,11 +1073,7 @@ class Function(WS, Variables):
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         instrument = self.Instrument[symbol]
-        close = (
-            instrument.bids[0][0]
-            if pos > 0
-            else instrument.asks[0][0]
-        )
+        close = instrument.bids[0][0] if pos > 0 else instrument.asks[0][0]
 
         return close
 
@@ -1173,9 +1154,7 @@ class Function(WS, Variables):
         """
         Del_order() function cancels orders
         """
-        message = (
-            "Deleting orderID=" + order["orderID"] + " clOrdID=" + clOrdID
-        )
+        message = "Deleting orderID=" + order["orderID"] + " clOrdID=" + clOrdID
         var.logger.info(message)
         WS.remove_order(self, order=order)
 
@@ -1299,7 +1278,9 @@ def handler_order(event) -> None:
                 label_price["text"] = "Price "
                 label1.pack(side="left")
                 button = tk.Button(
-                    frame_dn, text="Delete order", command=lambda id=clOrdID: delete(clOrdID=id, order=order)
+                    frame_dn,
+                    text="Delete order",
+                    command=lambda id=clOrdID: delete(clOrdID=id, order=order),
                 )
                 price_replace = tk.StringVar()
                 entry_price = tk.Entry(
@@ -1374,8 +1355,7 @@ def handler_orderbook(event, row_position: int) -> None:
         if quantity.get() and price_ask.get() and emi_number.get():
             try:
                 qnt = abs(
-                    float(quantity.get())
-                    * ws.Instrument[var.symbol].myMultiplier
+                    float(quantity.get()) * ws.Instrument[var.symbol].myMultiplier
                 )
                 price = float(price_ask.get())
                 res = "yes"
@@ -1420,10 +1400,7 @@ def handler_orderbook(event, row_position: int) -> None:
         if quantity.get() and price_bid.get() and emi_number.get():
             try:
                 qnt = abs(
-                    int(
-                        float(quantity.get())
-                        * ws.Instrument[var.symbol].myMultiplier
-                    )
+                    float(quantity.get()) * ws.Instrument[var.symbol].myMultiplier
                 )
                 price = float(price_bid.get())
                 res = "yes"
@@ -1512,9 +1489,7 @@ def handler_orderbook(event, row_position: int) -> None:
         )
         entry_quantity.insert(
             0,
-            Function.volume(
-                ws, qty=instrument.minOrderQty, symbol=var.symbol
-            ),
+            Function.volume(ws, qty=instrument.minOrderQty, symbol=var.symbol),
         )
         label_ask = tk.Label(frame_market_ask, text="Price:")
         label_bid = tk.Label(frame_market_bid, text="Price:")
