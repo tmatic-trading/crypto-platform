@@ -148,12 +148,12 @@ class WS(Variables):
             self, quantity=quantity, price=price, orderID=orderID, symbol=symbol
         )
 
-    def remove_order(self: Markets, orderID: str) -> Union[list, None]:
+    def remove_order(self: Markets, order: dict) -> Union[list, None]:
         """
         Deletes an order
         """
 
-        return Agents[self.name].value.remove_order(self, orderID=orderID)
+        return Agents[self.name].value.remove_order(self, order=order)
     
     def get_wallet_balance(self: Markets) -> dict:
         """

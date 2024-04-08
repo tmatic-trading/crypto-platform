@@ -229,12 +229,12 @@ class Agent(Bitmex):
 
         return Send.request(self, path=path, postData=postData, verb="PUT")
 
-    def remove_order(self, orderID: str) -> Union[list, None]:
+    def remove_order(self, order: dict) -> Union[list, None]:
         """
         Deletes an order
         """
         path = Listing.ORDER_ACTIONS
-        postData = {"orderID": orderID}
+        postData = {"orderID": order["orderID"]}
 
         return Send.request(self, path=path, postData=postData, verb="DELETE")
 

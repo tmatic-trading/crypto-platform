@@ -95,4 +95,4 @@ def order_search(emi: int, side: str) -> str:
 def delete_orders(ws, emi: int, side: str) -> None:
     for clOrdID, order in var.orders.copy().items():
         if order["EMI"] == emi and order["SIDE"] == side:
-            Function.del_order(ws, clOrdID=clOrdID)
+            Function.del_order(ws, order=order, clOrdID=clOrdID)

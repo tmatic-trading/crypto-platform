@@ -44,6 +44,7 @@ def exception(method):
                 logger.error(message)
                 self.logNumFatal = 1001
             else:
+                print("_____________", name)
                 raise exception
             
     return decorator

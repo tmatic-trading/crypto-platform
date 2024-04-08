@@ -212,13 +212,13 @@ class Bitmex(Variables):
                             key = generate_key(self.keys[table], val, table)
                             self.data[table_name][key] = val
                             if table == "orderBook10":
-                                self.update_orderbook(symbol=key, values=val)
+                                self.__update_orderbook(symbol=key, values=val)
                             elif table == "quote":
-                                self.update_orderbook(
+                                self.__update_orderbook(
                                     symbol=key, values=val, quote=True
                                 )
                             elif table == "margin":
-                                self.update_account(
+                                self.__update_account(
                                     settlCurrency=key, values=val,
                                 )
                 elif action == "insert":
@@ -226,7 +226,7 @@ class Bitmex(Variables):
                         key = generate_key(self.keys[table], val=val, table=table)
                         if table == "quote":
                             val["category"] = self.symbol_category[val["symbol"]]
-                            self.update_orderbook(symbol=key, values=val, quote=True)
+                            self.__update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
                             val["symbol"] = (
                                 val["symbol"],
