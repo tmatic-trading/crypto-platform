@@ -203,7 +203,12 @@ class GridTable(Variables):
         color: str = None,
         select: bool = None,
     ) -> None:
+        self.name = name
+        self.title = title
+        self.select = select
+        self.bind = bind
         self.color = color
+        self.size = size
         self.title_on = title_on
         self.mod = 1
         self.labels[name] = []
@@ -225,55 +230,60 @@ class GridTable(Variables):
         scroll.config(command=canvas.yview)
         scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
-        sub = tk.Frame(canvas, bg=self.bg_color)
-        positions_id = canvas.create_window((0, 0), window=sub, anchor="nw")
+        self.sub = tk.Frame(canvas, bg=my_bg)
+        positions_id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
         canvas.bind(
             "<Configure>",
             lambda event, id=positions_id, pos=canvas: event_width(event, id, pos),
         )
-        sub.bind("<Configure>", lambda event: event_config(event, canvas))
+        self.sub.bind("<Configure>", lambda event: event_config(event, canvas))
         canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
         canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
         for row in range(size):
-            lst = []
-            cache = []
-            if len(self.labels[name]) <= row:
-                for title_name in title:
-                    lst.append(
-                        tk.Label(
-                            sub, text=title_name, pady=0, background=self.title_color
-                        )
+            self.create_grid(row=row)
+
+    def create_grid(self, row: int):
+        lst = []
+        cache = []
+        if len(self.labels[self.name]) <= row:
+            for title_name in self.title:
+                lst.append(
+                    tk.Label(
+                        self.sub,
+                        text=title_name,
+                        pady=0,  # , background=self.title_color
                     )
-                    cache.append(title_name + str(row))
-                self.labels[name].append(lst)
-                self.labels_cache[name].append(cache)
-            for column in range(len(title)):
-                self.labels[name][row][column].grid(
-                    row=row, column=column, sticky="N" + "S" + "W" + "E", padx=0, pady=0
                 )
-                if row > self.mod - 1:
-                    if select:
-                        if row == self.mod:
-                            color_bg = self.bg_select_color
-                            color_fg = self.fg_select_color
-                        else:
-                            color_bg = self.color
-                            color_fg = self.fg_color
+                cache.append(title_name + str(row))
+            self.labels[self.name].append(lst)
+            self.labels_cache[self.name].append(cache)
+        for column in range(len(self.title)):
+            self.labels[self.name][row][column].grid(
+                row=row, column=column, sticky="N" + "S" + "W" + "E", padx=0, pady=0
+            )
+            if row > self.mod - 1:
+                if self.select:
+                    if row == self.mod:
+                        color_bg = self.bg_select_color
+                        color_fg = self.fg_select_color
                     else:
                         color_bg = self.color
                         color_fg = self.fg_color
+                else:
+                    color_bg = self.color
+                    color_fg = self.fg_color
 
-                    self.labels[name][row][column]["text"] = ""
-                    self.labels[name][row][column]["bg"] = color_bg
-                    self.labels[name][row][column]["fg"] = color_fg
-                    if bind:
-                        self.labels[name][row][column].bind(
-                            "<Button-1>",
-                            lambda event, row_position=row: bind(event, row_position),
-                        )
-                sub.grid_columnconfigure(column, weight=1)
+                self.labels[self.name][row][column]["text"] = ""
+                self.labels[self.name][row][column]["bg"] = color_bg
+                self.labels[self.name][row][column]["fg"] = color_fg
+                if self.bind:
+                    self.labels[self.name][row][column].bind(
+                        "<Button-1>",
+                        lambda event, row_position=row: self.bind(event, row_position),
+                    )
+            self.sub.grid_columnconfigure(column, weight=1)
 
-    def reconfigure_table(self, widget: tk.Frame, table: str, action: str, number: int):
+    def reconfigure_table(self, action: str, number: int):
         """
         Depending on the exchange, you may need a different number of rows in the
         tables, since, for example, you may be subscribed to a different number of
@@ -283,23 +293,31 @@ class GridTable(Variables):
 
         Input parameters:
 
-        widget - Tkinter object responsible for the table
-        table - the name of the table in the the labels array
-        action - "new" - add new lines, "delete" - remove lines
-        number - number of lines to add or remove
+        action - "new" - add new lines, "hide" - remove lines
+        number - number of lines to add or hide
         """
-        row = widget.grid_size()[1]
+        row = self.sub.grid_size()[1]
         if action == "new":
             while number:
-                if table == "robots":
-                    pass
-                    # create_robot_grid(widget=widget, table=table, row=row)
+                if row + number > self.size:
+                    self.size += 1
+                    self.create_grid(row=row)
+                else:
+                    for num, label in enumerate(self.labels[self.name][row]):
+                        label.grid(
+                            row=row,
+                            column=num,
+                            sticky="N" + "S" + "W" + "E",
+                            padx=0,
+                            pady=0,
+                        )
+                    # self.sub.config(bg=self.bg_color)
                 row += 1
                 number -= 1
-        elif action == "delete":
+        elif action == "hide":
             row -= 1
             while number:
-                for r in widget.grid_slaves(row=row):
+                for r in self.sub.grid_slaves(row=row):
                     r.grid_forget()
                 number -= 1
                 row -= 1
@@ -444,11 +462,11 @@ class ListBoxTable(Variables):
 
     def update(self, row: int, elements: list) -> None:
         pass
-        '''color = self.listboxes[0].itemcget(row + self.mod, "background")
+        """color = self.listboxes[0].itemcget(row + self.mod, "background")
         color_fg = self.listboxes[0].itemcget(row + self.mod, "foreground")
         self.delete(row + self.mod)
         self.insert(row + self.mod, elements)
-        self.paint(row + self.mod, color, color_fg)'''
+        self.paint(row + self.mod, color, color_fg)"""
 
     def paint(self, row: int, side: str) -> None:
         for listbox in self.listboxes:

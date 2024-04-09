@@ -8,17 +8,15 @@ import algo.init as algo
 import bots.init as bots
 import common.init as common
 import functions
-from api.api import WS
-#from api.websockets import Websockets
+from api.api import WS, Markets
+from api.bitmex.ws import Bitmex
+from api.bybit.ws import Bybit
+
+# from api.websockets import Websockets
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
-
-from api.bitmex.ws import Bitmex
-from api.bybit.ws import Bybit
-
-from api.api import Markets
 
 
 def setup():
@@ -53,7 +51,7 @@ def setup_market(ws: Markets):
         WS.get_position_info(ws)
         if ws.logNumFatal:
             if ws.logNumFatal > 2000:
-                close() 
+                close()
             WS.exit(ws)
             sleep(2)
         else:
@@ -105,7 +103,7 @@ def refresh() -> None:
                     if ws.logNumFatal == 2:
                         info_display(name, "Insufficient available balance!")
                 disp.f9 = "OFF"
-            Function.refresh_on_screen(ws, utc=utc)
+    Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
 
 def clear_params():
@@ -149,5 +147,5 @@ def close():
     var.robots_thread_is_active = False
     for name in var.market_list:
         ws = Markets[name].value
-        ws.exit()        
+        ws.exit()
     exit(1)

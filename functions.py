@@ -53,7 +53,7 @@ class Function(WS, Variables):
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
             if symbol not in self.Instrument.get_keys():
-                WS.get_instrument(self, symbol=symbol)
+                WS.get_instrument(Markets[symbol[2]], symbol=symbol)
             Function.rounding(self)
         if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)
@@ -618,7 +618,7 @@ class Function(WS, Variables):
         return qty
 
     def format_price(self: Markets, number: float, symbol: tuple) -> str:
-        rounding = disp.price_rounding[self.name][symbol]
+        rounding = disp.price_rounding[symbol[2]][symbol]
         number = "{:.{precision}f}".format(number, precision=rounding)
         dot = number.find(".")
         if dot == -1:
@@ -977,22 +977,23 @@ class Function(WS, Variables):
         mod = Tables.account.mod
         results = dict()
         for symbol, position in self.positions.items():
-            if position["POS"] != 0:
-                calc = Function.calculate(
-                    self,
-                    symbol=symbol,
-                    price=Function.close_price(
-                        self, symbol=symbol, pos=position["POS"]
-                    ),
-                    qty=-position["POS"],
-                    rate=0,
-                    fund=1,
-                )
-                settlCurrency = (self.Instrument[symbol].settlCurrency, self.name)
-                if settlCurrency in results:
-                    results[settlCurrency] += calc["sumreal"]
-                else:
-                    results[settlCurrency] = calc["sumreal"]
+            if symbol[2] == var.current_market:
+                if position["POS"] != 0:
+                    calc = Function.calculate(
+                        self,
+                        symbol=symbol,
+                        price=Function.close_price(
+                            self, symbol=symbol, pos=position["POS"]
+                        ),
+                        qty=-position["POS"],
+                        rate=0,
+                        fund=1,
+                    )
+                    settlCurrency = (self.Instrument[symbol].settlCurrency, self.name)
+                    if settlCurrency in results:
+                        results[settlCurrency] += calc["sumreal"]
+                    else:
+                        results[settlCurrency] = calc["sumreal"]
         for num, cur in enumerate(self.currencies):
             settlCurrency = (cur, self.name)
             account = self.Account[settlCurrency]
@@ -1172,7 +1173,7 @@ class Function(WS, Variables):
 
     def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
-        elements = func(self, val=val, init=True)
+        elements = func(Markets[val["SYMBOL"][2]], val=val, init=True)
         for num, element in enumerate(elements):
             table.columns[num].append(element)
 
@@ -1565,7 +1566,7 @@ def warning_window(message: str) -> None:
     tex.pack(expand=1)
 
 
-def handler_pos(event, row_position: int) -> None:
+def handler_position(event, row_position: int) -> None:
     ws = Markets[var.current_market]
     if row_position > len(ws.symbol_list):
         row_position = len(ws.symbol_list)
@@ -1585,14 +1586,16 @@ def handler_pos(event, row_position: int) -> None:
 def handler_market(event, row_position: int) -> None:
     if row_position > len(var.market_list):
         row_position = len(var.market_list)
-    var.current_market = var.market_list[row_position - 1]
+    mod = Tables.market.mod
+    var.current_market = var.market_list[row_position - mod]
+    var.symbol = Markets[var.current_market].symbol_list[0]
+    clear_tables()
     for row in enumerate(var.market_list):
         for column in range(len(var.name_market)):
-            if row[0] + 1 == row_position:
-                disp.labels["market"][row[0] + 1][column]["bg"] = "yellow"
+            if row[0] + mod == row_position:
+                disp.labels["market"][row[0] + mod][column]["bg"] = disp.bg_select_color
             else:
-                if row[0] + 1 > 0:
-                    disp.labels["market"][row[0] + 1][column]["bg"] = disp.bg_color
+                disp.labels["market"][row[0] + mod][column]["bg"] = disp.title_color
 
 
 def humanFormat(volNow: int) -> str:
@@ -1681,21 +1684,23 @@ def change_color(color: str, container=None) -> None:
 
 def load_labels() -> None:
     ws = Markets[var.current_market]
+    position_rows = len(var.env[var.current_market]["SYMBOLS"])
     Tables.position = GridTable(
         frame=disp.position_frame,
         name="position",
-        size=max(5, var.position_rows + 1),
+        size=max(5, position_rows + 1),
         title=var.name_position,
         column_width=35,
         canvas_height=65,
-        bind=handler_pos,
+        bind=handler_position,
         color=disp.bg_color,
         select=True,
     )
+    account_rows = len(var.env[var.current_market]["CURRENCIES"])
     Tables.account = GridTable(
         frame=disp.frame_4row_1_2_3col,
         name="account",
-        size=var.account_rows + 1,
+        size=account_rows + 1,
         title=var.name_account,
         canvas_height=63,
         color=disp.bg_color,
@@ -1712,10 +1717,11 @@ def load_labels() -> None:
     Tables.market = GridTable(
         frame=disp.frame_3row_1col,
         name="market",
-        size=2,
+        size=len(var.market_list) + 1,
         title=var.name_market,
         column_width=110,
         title_on=False,
+        bind=handler_market,
         color=disp.title_color,
         select=True,
     )
@@ -1745,6 +1751,27 @@ def load_labels() -> None:
                     disp.labels["orderbook"][row][column]["anchor"] = "w"
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
+
+
+def clear_tables():
+    def clear(table: Tables, number_rows: int):
+        size = table.sub.grid_size()
+        for row in range(table.mod, size[1]):
+            for column in range(size[0]):
+                disp.labels[table.name][row][column]["text"] = ""
+                disp.labels_cache[table.name][row][column] = ""
+
+        number = number_rows - size[1] + table.mod
+        if number > 0:
+            table.reconfigure_table(action="new", number=number)
+        elif number < 0:
+            table.reconfigure_table(action="hide", number=abs(number))
+
+    ws = Markets[var.current_market]
+    clear(table=Tables.position, number_rows=len(ws.symbol_list))
+    clear(table=Tables.account, number_rows=len(ws.currencies))
+    clear(table=Tables.robots, number_rows=len(ws.robots))
+    clear(table=Tables.orderbook, number_rows=disp.num_book)
 
 
 change_color(color=disp.title_color, container=disp.root)

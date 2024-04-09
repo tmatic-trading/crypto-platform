@@ -167,10 +167,6 @@ class Agent(Bybit):
             if values["accountType"] == "UNIFIED":
                 for coin in values["coin"]:
                     settlCurrency = (coin["coin"], self.name)
-                    print(settlCurrency)
-                    for el in self.Account[settlCurrency]:
-                        print(el.name, el.value)
-                    print("------------------------------")
                     self.Account[settlCurrency].account = self.user_id
                     self.Account[settlCurrency].availableMargin = float(
                         coin["availableToWithdraw"]
