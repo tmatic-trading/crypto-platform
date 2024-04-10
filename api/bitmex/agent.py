@@ -168,6 +168,7 @@ class Agent(Bitmex):
                     self.symbol_category[row["symbol"]],
                     self.name,
                 )
+                row["transactTime"] = service.time_converter(time=row["transactTime"])
                 row["settlCurrency"] = (row["settlCurrency"], self.name)
             return result
         else:
