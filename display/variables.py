@@ -311,7 +311,6 @@ class GridTable(Variables):
                             padx=0,
                             pady=0,
                         )
-                    # self.sub.config(bg=self.bg_color)
                 row += 1
                 number -= 1
         elif action == "hide":

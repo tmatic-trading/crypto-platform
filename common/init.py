@@ -5,17 +5,15 @@ from datetime import datetime
 import pymysql
 import pymysql.cursors
 
-from api.api import WS
+import services as service
+from api.api import WS, Markets
 from api.init import Variables
-#from api.websockets import Websockets
+
+# from api.websockets import Websockets
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
-
-import services as service
-
-from api.api import Markets
 
 db = var.env["MYSQL_DATABASE"]
 
@@ -42,17 +40,15 @@ class Init(WS, Variables):
             raise Exception(message)
         lst = [x.replace("\n", "") for x in lst]
         last_history_time = datetime.strptime(lst[0], "%Y-%m-%d %H:%M:%S")
-        '''if last_history_time > tm:
+        """if last_history_time > tm:
             message = (
                 "history.ini error. The time in the history.ini file is "
                 + "greater than the current time."
             )
             var.logger.error(message)
-            raise Exception(message)'''
+            raise Exception(message)"""
         count_val = 500
-        history = WS.trading_history(self,
-            histCount=count_val, time=last_history_time
-        )
+        history = WS.trading_history(self, histCount=count_val, time=last_history_time)
         if history == "error":
             var.logger.error("history.ini error")
             exit(1)
@@ -72,8 +68,8 @@ class Init(WS, Variables):
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
             last_history_time = history[-1]["transactTime"]
-            history = WS.trading_history(self,
-                histCount=count_val, time=last_history_time
+            history = WS.trading_history(
+                self, histCount=count_val, time=last_history_time
             )
             if last_history_time == tmp:
                 break
@@ -217,32 +213,15 @@ class Init(WS, Variables):
         for val in reversed(values):
             var.orders[val["clOrdID"]] = val
         for val in list(var.orders.values()):
-            Function.fill_columns(
-                self, func=Function.orders_display, table=orders, val=val
-            )
+            if val["MARKET"] == self.name:
+                Function.fill_columns(
+                    self, func=Function.orders_display, table=orders, val=val
+                )
 
     def load_database(self: Markets) -> None:
         """
         Download the latest trades and funding data from the database (if any)
         """
-        '''sql = "select * from("
-        union = ""
-        for name in var.market_list:
-            user_id = Websockets.connect[name].user_id
-            sql += (
-                union
-                + "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, \
-            PRICE, TTIME, COMMISS from "
-                + db
-                + ".coins where SIDE = -1 and ACCOUNT = "
-                + str(user_id)
-                + " and MARKET = '"
-                + name
-                + "' "
-            )
-            union = "union "
-        sql += ") T order by TTIME desc limit " + str(disp.table_limit)'''
-
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
             + "PRICE, TTIME, COMMISS from "
@@ -252,32 +231,19 @@ class Init(WS, Variables):
             + " and MARKET = '"
             + self.name
             + "' "
-            + "order by TTIME desc limit " + str(disp.table_limit)
+            + "order by TTIME desc limit "
+            + str(disp.table_limit)
         )
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
+            val["QTY"] = Function.volume(
+                Markets[val["MARKET"]], qty=val["QTY"], symbol=val["SYMBOL"]
+            )
             Function.fill_columns(
                 self, func=Function.funding_display, table=funding, val=val
             )
-        '''sql = "select * from("
-        union = ""
-        for name in var.market_list:
-            user_id = Websockets.connect[name].user_id
-            sql += (
-                union
-                + "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, \
-            TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
-                + db
-                + ".coins where SIDE <> -1 and ACCOUNT = "
-                + str(user_id)
-                + " and MARKET = '"
-                + name
-                + "' "
-            )
-            union = "union "
-        sql += ") T order by TTIME desc limit " + str(disp.table_limit)'''
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
             + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
@@ -287,12 +253,16 @@ class Init(WS, Variables):
             + " and MARKET = '"
             + self.name
             + "' "
-            + "order by TTIME desc limit " + str(disp.table_limit)
+            + "order by TTIME desc limit "
+            + str(disp.table_limit)
         )
         var.cursor_mysql.execute(sql)
         data = var.cursor_mysql.fetchall()
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
+            val["QTY"] = Function.volume(
+                Markets[val["MARKET"]], qty=val["QTY"], symbol=val["SYMBOL"]
+            )
             Function.fill_columns(
                 self, func=Function.trades_display, table=trades, val=val
             )

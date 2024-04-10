@@ -95,6 +95,16 @@ class Variables:
         "QTY",
         "EMI",
     ]
+    name_order = [
+        "TIME",
+        "SYMBOL",
+        "CAT",
+        "EXCH",
+        "SIDE",
+        "PRICE",
+        "QTY",
+        "EMI",
+    ]
     name_funding = [
         "TIME",
         "SYMBOL",

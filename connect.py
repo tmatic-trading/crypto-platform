@@ -29,9 +29,6 @@ def setup():
     var.robots_thread_is_active = False
     for name in var.market_list:
         setup_market(Markets[name])
-    trades.insert_columns()
-    funding.insert_columns()
-    orders.insert_columns(sort=False)
     functions.load_labels()
     algo.init_algo()
     var.robots_thread_is_active = True
@@ -69,6 +66,9 @@ def setup_market(ws: Markets):
                     bots.Init.delete_unused_robot(ws)
                     for emi, value in ws.robot_status.items():
                         ws.robots[emi]["STATUS"] = value
+                    trades.insert_columns()
+                    funding.insert_columns()
+                    orders.insert_columns(sort=False)
                 else:
                     print("Error during loading timeframes.")
                     WS.exit(ws)
