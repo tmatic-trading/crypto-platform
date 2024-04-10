@@ -165,6 +165,8 @@ class Agent(Bitmex):
                 verb="GET",
             )
             for row in result:
+                if row["symbol"] not in self.symbol_category:
+                    Agent.get_instrument(self, symbol=(row["symbol"], "category not defined", self.name))
                 row["market"] = self.name
                 row["symbol"] = (
                     row["symbol"],
