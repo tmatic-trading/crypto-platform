@@ -68,7 +68,7 @@ class Agent(Bitmex):
         elif instrument["isQuanto"]:  # Quanto
             valueOfOneContract = (
                 instrument["multiplier"]
-                / self.currency_divisor[instrument["settlCurrency"]]
+                / self.currency_divisor[instrument["settlCurrency"][0]]
             )
             minimumTradeAmount = instrument["lotSize"]
             category = "quanto"
@@ -89,7 +89,10 @@ class Agent(Bitmex):
         self.Instrument[symbol].myMultiplier = int(myMultiplier)
         self.Instrument[symbol].multiplier = instrument["multiplier"]
         if "settlCurrency" in instrument:
-            self.Instrument[symbol].settlCurrency = instrument["settlCurrency"]
+            self.Instrument[symbol].settlCurrency = (
+                instrument["settlCurrency"],
+                self.name,
+            )
         else:
             self.Instrument[symbol].settlCurrency = None
         self.Instrument[symbol].tickSize = instrument["tickSize"]
@@ -243,12 +246,12 @@ class Agent(Bitmex):
         """
         Bitmex sends this information via websocket, "margin" subscription.
         """
-        '''for settleCurrency in self.currencies:
-            settle = (settleCurrency, self.name)
+        """for settlCurrency in self.currencies:
+            settle = (settlCurrency, self.name)
             self.Account[settle].marginBalance = 0
             self.Account[settle].availableMargin = 0
             self.Account[settle].marginLeverage = 0
-            self.Account[settle].result = 0'''
+            self.Account[settle].result = 0"""
 
     def get_position_info(self):
         """

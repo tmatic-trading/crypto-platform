@@ -2,13 +2,12 @@ import logging
 from collections import OrderedDict
 from datetime import datetime
 
-#from functions import Function
+# from functions import Function
 from common.variables import Variables as var
 
 
-
-class Variables():
-    #name = ""
+class Variables:
+    # name = ""
     qwe = 0
     testnet = True
     api_key = ""
@@ -19,7 +18,7 @@ class Variables():
     category_list = list()
     currencies = list()
     positions = OrderedDict()
-    #data = dict()
+    # data = dict()
     full_symbol_list = list()
     symbols = set()
     logger = logging
@@ -34,7 +33,7 @@ class Variables():
     message_time = datetime.utcnow()
     message2000 = ""
     messageStopped = ""
-    maxRetryRest = (3)
+    maxRetryRest = 3
     symbol_category = ""
     currency_divisor = dict()
     filename = ""
@@ -44,9 +43,3 @@ class Variables():
     robots = OrderedDict()
     frames = dict()
     robot_status = dict()
-
-
-
-
-
-

@@ -11,15 +11,18 @@ import websocket
 
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaInstrument, MetaAccount
+from common.data import MetaAccount, MetaInstrument
 from display.functions import info_display
 
 from .api_auth import generate_signature
 
 
 class Bitmex(Variables):
-    class Account(metaclass=MetaAccount): pass
-    class Instrument(metaclass=MetaInstrument): pass
+    class Account(metaclass=MetaAccount):
+        pass
+
+    class Instrument(metaclass=MetaInstrument):
+        pass
 
     def __init__(self):
         self.name = "Bitmex"
@@ -38,7 +41,7 @@ class Bitmex(Variables):
             "instrument",
             "order",
             "position",
-            "trade",
+            # "trade",
             depth,
         }
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
@@ -219,7 +222,8 @@ class Bitmex(Variables):
                                 )
                             elif table == "margin":
                                 self.__update_account(
-                                    settlCurrency=key, values=val,
+                                    settlCurrency=key,
+                                    values=val,
                                 )
                 elif action == "insert":
                     for val in message["data"]:
@@ -349,12 +353,15 @@ class Bitmex(Variables):
     def __update_account(self, settlCurrency: tuple, values: dict):
         account = self.Account[settlCurrency]
         if "marginBalance" in values:
-            account.marginBalance = values["marginBalance"] / self.currency_divisor[settlCurrency[0]]
+            account.marginBalance = (
+                values["marginBalance"] / self.currency_divisor[settlCurrency[0]]
+            )
         if "availableMargin" in values:
-            account.availableMargin = values["availableMargin"] / self.currency_divisor[settlCurrency[0]]
+            account.availableMargin = (
+                values["availableMargin"] / self.currency_divisor[settlCurrency[0]]
+            )
         if "marginLeverage" in values:
             account.marginLeverage = values["marginLeverage"]
-
 
     def exit(self):
         """

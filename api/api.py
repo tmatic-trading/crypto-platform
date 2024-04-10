@@ -1,20 +1,22 @@
 from collections import OrderedDict
 from datetime import datetime
+from enum import Enum
 from typing import Union
 
 from api.bitmex.agent import Agent as BitmexAgent
 from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
-from .variables import Variables
 from api.init import Setup
 
-from enum import Enum
+from .variables import Variables
+
 
 class MetaMarket(type):
     dictionary = dict()
     names = {"Bitmex": Bitmex, "Bybit": Bybit}
-    def __getitem__(self, item) -> Union[Bitmex, Bybit]:        
+
+    def __getitem__(self, item) -> Union[Bitmex, Bybit]:
         if item not in self.names:
             raise ValueError(f"{item} not found")
         if item not in self.dictionary:
@@ -22,15 +24,16 @@ class MetaMarket(type):
             return self.dictionary[item]
         else:
             return self.dictionary[item]
-        
+
 
 class Markets(Bitmex, Bybit, metaclass=MetaMarket):
     pass
 
 
-'''class Markets(Variables, Enum):
+"""class Markets(Variables, Enum):
     Bitmex =  Bitmex()
-    Bybit = Bybit()'''
+    Bybit = Bybit()"""
+
 
 class Agents(Enum):
     Bitmex = BitmexAgent
@@ -96,7 +99,9 @@ class WS(Variables):
         from 'time'
         """
 
-        return Agents[self.name].value.trading_history(self, histCount=histCount, time=time)
+        return Agents[self.name].value.trading_history(
+            self, histCount=histCount, time=time
+        )
 
     def open_orders(self: Markets) -> list:
         """
@@ -154,15 +159,15 @@ class WS(Variables):
         """
 
         return Agents[self.name].value.remove_order(self, order=order)
-    
+
     def get_wallet_balance(self: Markets) -> dict:
         """
-        Obtain wallet balance, query asset information of each currency, and 
+        Obtain wallet balance, query asset information of each currency, and
         account risk rate information.
         """
 
         return Agents[self.name].value.get_wallet_balance(self)
-    
+
     def get_position_info(self: Markets) -> dict:
         """
         Get Position Info

@@ -171,7 +171,7 @@ class Bybit(Variables):
                     "side": value["side"],
                     "orderID": value["orderId"],
                     "execType": orderStatus,
-                    "settlCurrency": (self.Instrument[symbol].settlCurrency, self.name),
+                    "settlCurrency": self.Instrument[symbol].settlCurrency,
                     "orderQty": float(value["qty"]),
                     "cumQty": float(value["cumExecQty"]),
                 }

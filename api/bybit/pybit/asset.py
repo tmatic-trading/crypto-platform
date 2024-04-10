@@ -10,21 +10,15 @@ class Asset(str, Enum):
     GET_SINGLE_COIN_BALANCE = "/v5/asset/transfer/query-account-coin-balance"
     GET_TRANSFERABLE_COIN = "/v5/asset/transfer/query-transfer-coin-list"
     CREATE_INTERNAL_TRANSFER = "/v5/asset/transfer/inter-transfer"
-    GET_INTERNAL_TRANSFER_RECORDS = (
-        "/v5/asset/transfer/query-inter-transfer-list"
-    )
+    GET_INTERNAL_TRANSFER_RECORDS = "/v5/asset/transfer/query-inter-transfer-list"
     GET_SUB_UID = "/v5/asset/transfer/query-sub-member-list"
     ENABLE_UT_FOR_SUB_UID = "/v5/asset/transfer/save-transfer-sub-member"
     CREATE_UNIVERSAL_TRANSFER = "/v5/asset/transfer/universal-transfer"
-    GET_UNIVERSAL_TRANSFER_RECORDS = (
-        "/v5/asset/transfer/query-universal-transfer-list"
-    )
+    GET_UNIVERSAL_TRANSFER_RECORDS = "/v5/asset/transfer/query-universal-transfer-list"
     GET_ALLOWED_DEPOSIT_COIN_INFO = "/v5/asset/deposit/query-allowed-list"
     SET_DEPOSIT_ACCOUNT = "/v5/asset/deposit/deposit-to-account"
     GET_DEPOSIT_RECORDS = "/v5/asset/deposit/query-record"
-    GET_SUB_ACCOUNT_DEPOSIT_RECORDS = (
-        "/v5/asset/deposit/query-sub-member-record"
-    )
+    GET_SUB_ACCOUNT_DEPOSIT_RECORDS = "/v5/asset/deposit/query-sub-member-record"
     GET_INTERNAL_DEPOSIT_RECORDS = "/v5/asset/deposit/query-internal-record"
     GET_MASTER_DEPOSIT_ADDRESS = "/v5/asset/deposit/query-address"
     GET_SUB_DEPOSIT_ADDRESS = "/v5/asset/deposit/query-sub-member-address"

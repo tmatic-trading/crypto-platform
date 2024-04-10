@@ -1,6 +1,6 @@
-from typing import Any, Union
 from collections import OrderedDict
 from datetime import datetime
+from typing import Any, Union
 
 
 class Ret:
@@ -30,14 +30,14 @@ class Instrument:
     precision: int
     settlCurrency: str
     state: str
-    symbol: str 
+    symbol: str
     tickSize: Union[str, float]
     unrealisedPnl: Union[str, float]
-    volume24h: float   
+    volume24h: float
 
     def __iter__(self):
         return Ret.iter(self)
-    
+
 
 class Account:
     account: Union[str, float]
@@ -52,11 +52,12 @@ class Account:
 
     def __iter__(self):
         return Ret.iter(self)
-    
+
 
 class MetaInstrument(type):
     all = dict()
     market = dict()
+
     def __getitem__(self, item) -> Instrument:
         if item not in self.all:
             self.all[item] = Instrument()
@@ -78,11 +79,12 @@ class MetaInstrument(type):
         name = self.__qualname__.split(".")[0]
         if name in MetaInstrument.market:
             return MetaInstrument.market[name].keys()
-        
+
 
 class MetaAccount(type):
     all = dict()
     market = dict()
+
     def __getitem__(self, item) -> Account:
         if item not in self.all:
             self.all[item] = Account()
@@ -93,7 +95,7 @@ class MetaAccount(type):
             return self.all[item]
         else:
             return self.all[item]
-        
+
     def keys(self):
         name = self.__qualname__.split(".")[0]
         if name in MetaAccount.market:
