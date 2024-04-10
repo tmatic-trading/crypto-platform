@@ -68,7 +68,7 @@ class Agent(Bitmex):
         elif instrument["isQuanto"]:  # Quanto
             valueOfOneContract = (
                 instrument["multiplier"]
-                / self.currency_divisor[instrument["settlCurrency"][0]]
+                / self.currency_divisor[instrument["settlCurrency"]]
             )
             minimumTradeAmount = instrument["lotSize"]
             category = "quanto"
