@@ -36,7 +36,7 @@ class Function(WS, Variables):
         """
         instrument = self.Instrument[symbol]
         coef = abs(
-            instrument.multiplier / self.currency_divisor[instrument.settlCurrency]
+            instrument.multiplier / self.currency_divisor[instrument.settlCurrency[0]]
         )
         if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
@@ -936,7 +936,7 @@ class Function(WS, Variables):
                 table="robots",
                 column=3,
                 row=num + mod,
-                val=self.Instrument[symbol].settlCurrency,
+                val=self.Instrument[symbol].settlCurrency[0],
             )
             update_label(table="robots", column=4, row=num + mod, val=robot["TIMEFR"])
             update_label(table="robots", column=5, row=num + mod, val=robot["CAPITAL"])
@@ -989,7 +989,7 @@ class Function(WS, Variables):
                         rate=0,
                         fund=1,
                     )
-                    settlCurrency = (self.Instrument[symbol].settlCurrency, self.name)
+                    settlCurrency = self.Instrument[symbol].settlCurrency
                     if settlCurrency in results:
                         results[settlCurrency] += calc["sumreal"]
                     else:
@@ -1067,7 +1067,7 @@ class Function(WS, Variables):
                 + "\nAcc."
                 + str(ws.user_id)
                 + "\n"
-                + str(self.connect_count)
+                + str(Markets[name].connect_count)
                 + " "
                 + status,
             )
@@ -1690,7 +1690,7 @@ def load_labels() -> None:
         name="position",
         size=max(5, position_rows + 1),
         title=var.name_position,
-        column_width=35,
+        column_width=50,
         canvas_height=65,
         bind=handler_position,
         color=disp.bg_color,

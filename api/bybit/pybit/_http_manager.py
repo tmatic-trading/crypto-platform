@@ -1,20 +1,20 @@
+import base64
+import hashlib
+import hmac
+import json
+import logging
+import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-import time
-import hmac
-import hashlib
+from datetime import datetime as dt
+
+import requests
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-import base64
-import json
-import logging
-import requests
 
-from datetime import datetime as dt
-
-from .exceptions import FailedRequestError, InvalidRequestError
 from . import _helpers
+from .exceptions import FailedRequestError, InvalidRequestError
 
 # Requests will use simplejson if available.
 try:
@@ -41,9 +41,7 @@ def generate_signature(use_rsa_authentication, secret, param_str):
     def generate_rsa():
         hash = SHA256.new(param_str.encode("utf-8"))
         encoded_signature = base64.b64encode(
-            PKCS1_v1_5.new(RSA.importKey(secret)).sign(
-                hash
-            )
+            PKCS1_v1_5.new(RSA.importKey(secret)).sign(hash)
         )
         return encoded_signature.decode()
 
@@ -160,9 +158,7 @@ class _V5HTTPManager:
 
         param_str = str(timestamp) + self.api_key + str(recv_window) + payload
 
-        return generate_signature(
-            self.rsa_authentication, self.api_secret, param_str
-        )
+        return generate_signature(self.rsa_authentication, self.api_secret, param_str)
 
     @staticmethod
     def _verify_string(params, key):
@@ -245,9 +241,7 @@ class _V5HTTPManager:
                         f"Headers: {headers}"
                     )
                 else:
-                    self.logger.debug(
-                        f"Request -> {method} {path}. Headers: {headers}"
-                    )
+                    self.logger.debug(f"Request -> {method} {path}. Headers: {headers}")
 
             if method == "GET":
                 if req_params:
@@ -262,9 +256,7 @@ class _V5HTTPManager:
                     )
             else:
                 r = self.client.prepare_request(
-                    requests.Request(
-                        method, path, data=req_params, headers=headers
-                    )
+                    requests.Request(method, path, data=req_params, headers=headers)
                 )
 
             # Attempt the request.
@@ -282,7 +274,6 @@ class _V5HTTPManager:
                     time.sleep(self.retry_delay)
                     continue
                 else:
-
                     raise e
 
             # Check HTTP status code before trying to decode JSON.
@@ -347,10 +338,15 @@ class _V5HTTPManager:
                         )
 
                         # Calculate how long we need to wait in milliseconds.
-                        limit_reset_time = int(s.headers["X-Bapi-Limit-Reset-Timestamp"])
-                        limit_reset_str = dt.fromtimestamp(limit_reset_time / 10**3).strftime(
-                            "%H:%M:%S.%f")[:-3]
-                        delay_time = (int(limit_reset_time) - _helpers.generate_timestamp()) / 10**3
+                        limit_reset_time = int(
+                            s.headers["X-Bapi-Limit-Reset-Timestamp"]
+                        )
+                        limit_reset_str = dt.fromtimestamp(
+                            limit_reset_time / 10**3
+                        ).strftime("%H:%M:%S.%f")[:-3]
+                        delay_time = (
+                            int(limit_reset_time) - _helpers.generate_timestamp()
+                        ) / 10**3
                         error_msg = (
                             f"API rate limit will reset at {limit_reset_str}. "
                             f"Sleeping for {int(delay_time * 10**3)} milliseconds"
@@ -374,12 +370,14 @@ class _V5HTTPManager:
                     )
             else:
                 if self.log_requests:
-                    self.logger.debug(
-                        f"Response headers: {s.headers}"
-                    )
+                    self.logger.debug(f"Response headers: {s.headers}")
 
                 if self.return_response_headers:
-                    return s_json, s.elapsed, s.headers,
+                    return (
+                        s_json,
+                        s.elapsed,
+                        s.headers,
+                    )
                 elif self.record_request_time:
                     return s_json, s.elapsed
                 else:

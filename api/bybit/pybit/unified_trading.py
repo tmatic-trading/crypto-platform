@@ -1,23 +1,23 @@
 from dataclasses import dataclass
+
+from ._v5_account import AccountHTTP
+from ._v5_asset import AssetHTTP
+from ._v5_broker import BrokerHTTP
+from ._v5_institutional_loan import InstitutionalLoanHTTP
+from ._v5_market import MarketHTTP
+from ._v5_misc import MiscHTTP
+from ._v5_position import PositionHTTP
+from ._v5_pre_upgrade import PreUpgradeHTTP
+from ._v5_spot_leverage_token import SpotLeverageHTTP
+from ._v5_spot_margin_trade import SpotMarginTradeHTTP
+from ._v5_trade import TradeHTTP
+from ._v5_user import UserHTTP
+from ._websocket_stream import _V5WebSocketManager
 from .exceptions import (
     InvalidChannelTypeError,
     TopicMismatchError,
     UnauthorizedExceptionError,
 )
-from ._v5_misc import MiscHTTP
-from ._v5_market import MarketHTTP
-from ._v5_trade import TradeHTTP
-from ._v5_account import AccountHTTP
-from ._v5_asset import AssetHTTP
-from ._v5_position import PositionHTTP
-from ._v5_pre_upgrade import PreUpgradeHTTP
-from ._v5_spot_leverage_token import SpotLeverageHTTP
-from ._v5_spot_margin_trade import SpotMarginTradeHTTP
-from ._v5_user import UserHTTP
-from ._v5_broker import BrokerHTTP
-from ._v5_institutional_loan import InstitutionalLoanHTTP
-from ._websocket_stream import _V5WebSocketManager
-
 
 WSS_NAME = "Unified V5"
 PRIVATE_WSS = "wss://{SUBDOMAIN}.{DOMAIN}.com/v5/private"
@@ -53,15 +53,11 @@ class HTTP(
 class WebSocket(_V5WebSocketManager):
     def _validate_public_topic(self):
         if "/v5/public" not in self.WS_URL:
-            raise TopicMismatchError(
-                "Requested topic does not match channel_type"
-            )
+            raise TopicMismatchError("Requested topic does not match channel_type")
 
     def _validate_private_topic(self):
         if not self.WS_URL.endswith("/private"):
-            raise TopicMismatchError(
-                "Requested topic does not match channel_type"
-            )
+            raise TopicMismatchError("Requested topic does not match channel_type")
 
     def __init__(
         self,

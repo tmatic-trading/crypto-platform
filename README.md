@@ -251,7 +251,7 @@ Make a new database entry in the "robots" table, for example:
 ```SQL
 INSERT INTO my_db.robots (
   EMI, SYMBOL, CATEGORY, MARKET, SORT, TIMEFR, CAPITAL, MARGIN
-  ) 
+  )
   values (
     "myBot", "XBTUSDT", "linear", "Bitmex", 1, 1, 1, 1
     );

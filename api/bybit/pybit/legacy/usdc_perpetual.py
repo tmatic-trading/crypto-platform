@@ -1,8 +1,6 @@
-from ._http_manager import _USDCHTTPManager
-from ._websocket_stream import _USDCWebSocketManager
-from ._websocket_stream import USDC_PERPETUAL
 from . import _helpers
-
+from ._http_manager import _USDCHTTPManager
+from ._websocket_stream import USDC_PERPETUAL, _USDCWebSocketManager
 
 ws_name = USDC_PERPETUAL
 PUBLIC_WSS = "wss://{SUBDOMAIN}.{DOMAIN}.com/perpetual/ws/v1/realtime_public"
@@ -22,9 +20,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/public/v1/kline/list"
 
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs
+            method="GET", path=self.endpoint + suffix, query=kwargs
         )
 
     def query_mark_price_kline(self, **kwargs):
@@ -39,9 +35,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/public/v1/mark-price-kline"
 
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs
+            method="GET", path=self.endpoint + suffix, query=kwargs
         )
 
     def orderbook(self, **kwargs):
@@ -55,9 +49,7 @@ class HTTP(_USDCHTTPManager):
 
         suffix = "/perpetual/usdc/openapi/public/v1/order-book"
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs
+            method="GET", path=self.endpoint + suffix, query=kwargs
         )
 
     def query_symbol(self, **kwargs):
@@ -68,9 +60,7 @@ class HTTP(_USDCHTTPManager):
 
         suffix = "/perpetual/usdc/openapi/public/v1/symbols"
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs
+            method="GET", path=self.endpoint + suffix, query=kwargs
         )
 
     def latest_information_for_symbol(self, **kwargs):
@@ -84,9 +74,7 @@ class HTTP(_USDCHTTPManager):
 
         suffix = "/perpetual/usdc/openapi/public/v1/tick"
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs
+            method="GET", path=self.endpoint + suffix, query=kwargs
         )
 
     def query_index_price_kline(self, **kwargs):
@@ -101,9 +89,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/public/v1/index-price-kline"
 
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs
+            method="GET", path=self.endpoint + suffix, query=kwargs
         )
 
     def query_premium_index_kline(self, **kwargs):
@@ -119,9 +105,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/public/v1/premium-index-kline"
 
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs
+            method="GET", path=self.endpoint + suffix, query=kwargs
         )
 
     def open_interest(self, **kwargs):
@@ -137,7 +121,7 @@ class HTTP(_USDCHTTPManager):
         return self._submit_request(
             method="GET",
             path=self.endpoint + "/perpetual/usdc/openapi/public/v1/open-interest",
-            query=kwargs
+            query=kwargs,
         )
 
     def latest_big_deal(self, **kwargs):
@@ -152,7 +136,7 @@ class HTTP(_USDCHTTPManager):
         return self._submit_request(
             method="GET",
             path=self.endpoint + "/perpetual/usdc/openapi/public/v1/big-deal",
-            query=kwargs
+            query=kwargs,
         )
 
     def long_short_ratio(self, **kwargs):
@@ -167,7 +151,7 @@ class HTTP(_USDCHTTPManager):
         return self._submit_request(
             method="GET",
             path=self.endpoint + "/perpetual/usdc/openapi/public/v1/account-ratio",
-            query=kwargs
+            query=kwargs,
         )
 
     def place_active_order(self, **kwargs):
@@ -183,10 +167,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/private/v1/place-order"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def cancel_active_order(self, **kwargs):
@@ -202,10 +183,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/private/v1/cancel-order"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def cancel_all_active_orders(self, **kwargs):
@@ -221,10 +199,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/private/v1/cancel-all"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def replace_active_order(self, **kwargs):
@@ -239,10 +214,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/private/v1/replace-order"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def wallet_fund_records(self, **kwargs):
@@ -258,10 +230,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/option/usdc/openapi/private/v1/query-transaction-log"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def set_leverage(self, **kwargs):
@@ -277,10 +246,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/private/v1/position/leverage/save"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def get_settlement_history(self, **kwargs):
@@ -296,10 +262,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/option/usdc/openapi/private/v1/session-settlement"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def get_risk_limit(self, **kwargs):
@@ -314,10 +277,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/public/v1/risk-limit/list"
 
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="GET", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def set_risk_limit(self, **kwargs):
@@ -332,10 +292,7 @@ class HTTP(_USDCHTTPManager):
         suffix = "/perpetual/usdc/openapi/private/v1/position/set-risk-limit"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
 
@@ -354,16 +311,14 @@ class WebSocket(_USDCWebSocketManager):
 
     def _ws_public_subscribe(self, topic, callback, symbol):
         if not self.ws_public:
-            self.ws_public = _USDCWebSocketManager(
-                ws_name, **self.public_kwargs)
+            self.ws_public = _USDCWebSocketManager(ws_name, **self.public_kwargs)
             self.ws_public._connect(PUBLIC_WSS)
             self.active_connections.append(self.ws_public)
         self.ws_public.subscribe(topic, callback, symbol)
 
     def _ws_private_subscribe(self, topic, callback):
         if not self.ws_private:
-            self.ws_private = _USDCWebSocketManager(
-                ws_name, **self.kwargs)
+            self.ws_private = _USDCWebSocketManager(ws_name, **self.kwargs)
             self.ws_private._connect(PRIVATE_WSS)
             self.active_connections.append(self.ws_private)
         self.ws_private.subscribe(topic, callback)
@@ -373,8 +328,9 @@ class WebSocket(_USDCWebSocketManager):
             wss_url,
             {
                 PUBLIC_WSS: self._ws_public_subscribe,
-                PRIVATE_WSS: self._ws_private_subscribe
-            })
+                PRIVATE_WSS: self._ws_private_subscribe,
+            },
+        )
         symbol = self._extract_symbol(topic)
         if symbol:
             subscribe(topic, callback, symbol)

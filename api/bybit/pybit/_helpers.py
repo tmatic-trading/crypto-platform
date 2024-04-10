@@ -1,6 +1,6 @@
-import time
-import re
 import copy
+import re
+import time
 
 
 def generate_timestamp():

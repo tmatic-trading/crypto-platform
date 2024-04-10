@@ -203,7 +203,9 @@ class AssetHTTP(_V5HTTPManager):
         Additional information:
             https://bybit-exchange.github.io/docs/v5/asset/enable-unitransfer-subuid
         """
-        self.logger.warning("enable_universal_transfer_for_sub_uid() is depreciated. You no longer need to configure transferable sub UIDs. Now, all sub UIDs are automatically enabled for universal transfer.")
+        self.logger.warning(
+            "enable_universal_transfer_for_sub_uid() is depreciated. You no longer need to configure transferable sub UIDs. Now, all sub UIDs are automatically enabled for universal transfer."
+        )
         return self._submit_request(
             method="POST",
             path=f"{self.endpoint}{Asset.ENABLE_UT_FOR_SUB_UID}",

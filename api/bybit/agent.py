@@ -114,7 +114,7 @@ class Agent(Bybit):
                         order["account"] = self.user_id
                         order["orderQty"] = float(order["qty"])
                         order["price"] = float(order["price"])
-                        order["settlCurrency"] = settleCoin
+                        order["settlCurrency"] = (settleCoin, self.name)
                         order["ordType"] = order["orderType"]
                         order["ordStatus"] = order["orderStatus"]
                         order["leavesQty"] = float(order["leavesQty"])
@@ -184,13 +184,13 @@ class Agent(Bybit):
 
     def get_position_info(self):
         for category in self.category_list:
-            for settleCurrency in self.settlCurrency_list[category]:
-                if settleCurrency in self.currencies:
+            for settlCurrency in self.settlCurrency_list[category]:
+                if settlCurrency in self.currencies:
                     cursor = "no"
                     while cursor:
                         result = self.session.get_positions(
                             category=category,
-                            settleCoin=settleCurrency,
+                            settleCoin=settlCurrency,
                             limit=200,
                             cursor=cursor,
                         )
@@ -214,7 +214,10 @@ class Agent(Bybit):
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]
         if "settleCoin" in instrument:
-            self.Instrument[symbol].settlCurrency = instrument["settleCoin"]
+            self.Instrument[symbol].settlCurrency = (
+                instrument["settleCoin"],
+                self.name,
+            )
         if "deliveryTime" in instrument:
             if int(instrument["deliveryTime"]):
                 self.Instrument[symbol].expire = service.time_converter(

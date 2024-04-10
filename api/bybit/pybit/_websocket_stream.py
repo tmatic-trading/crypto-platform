@@ -1,13 +1,14 @@
-import websocket
+import copy
+import json
+import logging
 import threading
 import time
-import json
-from ._http_manager import generate_signature
-import logging
-import copy
 from uuid import uuid4
-from . import _helpers
 
+import websocket
+
+from . import _helpers
+from ._http_manager import generate_signature
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class _WebSocketManager:
         retries=10,
         restart_on_error=True,
         trace_logging=False,
-        private_auth_expire=1
+        private_auth_expire=1,
     ):
         self.testnet = testnet
         self.domain = domain
@@ -47,7 +48,7 @@ class _WebSocketManager:
         self.ws_name = ws_name
         if api_key:
             self.ws_name += " (Auth)"
-        
+
         # Delta time for private auth expiration in seconds
         self.private_auth_expire = private_auth_expire
 
@@ -133,9 +134,7 @@ class _WebSocketManager:
         else:
             infinitely_reconnect = False
 
-        while (
-            infinitely_reconnect or retries > 0
-        ) and not self.is_connected():
+        while (infinitely_reconnect or retries > 0) and not self.is_connected():
             logger.info(f"WebSocket {self.ws_name} attempting connection...")
             self.ws = websocket.WebSocketApp(
                 url=url,
@@ -198,9 +197,7 @@ class _WebSocketManager:
 
         # Authenticate with API.
         self.ws.send(
-            json.dumps(
-                {"op": "auth", "args": [self.api_key, expires, signature]}
-            )
+            json.dumps({"op": "auth", "args": [self.api_key, expires, signature]})
         )
 
     def _on_error(self, error):
@@ -251,9 +248,7 @@ class _WebSocketManager:
 
     def _send_initial_ping(self):
         """https://github.com/bybit-exchange/pybit/issues/164"""
-        timer = threading.Timer(
-            self.ping_interval, self._send_custom_ping
-        )
+        timer = threading.Timer(self.ping_interval, self._send_custom_ping)
         timer.start()
 
     @staticmethod
@@ -302,13 +297,7 @@ class _V5WebSocketManager(_WebSocketManager):
             "greeks",
         ]
 
-    def subscribe(
-            self,
-            topic: str,
-            callback,
-            symbol: (str, list) = False
-    ):
-
+    def subscribe(self, topic: str, callback, symbol: (str, list) = False):
         def prepare_subscription_args(list_of_symbols):
             """
             Prepares the topic for subscription by formatting it with the
@@ -365,9 +354,7 @@ class _V5WebSocketManager(_WebSocketManager):
             for entry in entries:
                 # Delete.
                 if float(entry[1]) == 0:
-                    index = _helpers.find_index(
-                        self.data[topic][side], entry, 0
-                    )
+                    index = _helpers.find_index(self.data[topic][side], entry, 0)
                     self.data[topic][side].pop(index)
                     continue
 
@@ -381,14 +368,10 @@ class _V5WebSocketManager(_WebSocketManager):
 
                 # Update.
                 qty_changed = entry[1] != next(
-                    level[1]
-                    for level in self.data[topic][side]
-                    if level[0] == entry[0]
+                    level[1] for level in self.data[topic][side] if level[0] == entry[0]
                 )
                 if price_level_exists and qty_changed:
-                    index = _helpers.find_index(
-                        self.data[topic][side], entry, 0
-                    )
+                    index = _helpers.find_index(self.data[topic][side], entry, 0)
                     self.data[topic][side][index] = entry
                     continue
 
@@ -452,10 +435,7 @@ class _V5WebSocketManager(_WebSocketManager):
 
     def _handle_incoming_message(self, message):
         def is_auth_message():
-            if (
-                message.get("op") == "auth"
-                or message.get("type") == "AUTH_RESP"
-            ):
+            if message.get("op") == "auth" or message.get("type") == "AUTH_RESP":
                 return True
             else:
                 return False

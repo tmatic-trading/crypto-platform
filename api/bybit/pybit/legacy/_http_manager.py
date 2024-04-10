@@ -1,15 +1,15 @@
-import time
-import hmac
 import hashlib
+import hmac
 import json
 import logging
-import requests
-
+import time
 from datetime import datetime as dt
 
-from .exceptions import FailedRequestError, InvalidRequestError
+import requests
+
 from .. import VERSION
 from . import _helpers
+from .exceptions import FailedRequestError, InvalidRequestError
 
 # Requests will use simplejson if available.
 try:
@@ -19,11 +19,23 @@ except ImportError:
 
 
 class _HTTPManager:
-    def __init__(self, endpoint=None, api_key=None, api_secret=None,
-                 logging_level=logging.INFO, log_requests=False,
-                 request_timeout=10, recv_window=5000, force_retry=False,
-                 retry_codes=None, ignore_codes=None, max_retries=3,
-                 retry_delay=3, referral_id=None, record_request_time=False):
+    def __init__(
+        self,
+        endpoint=None,
+        api_key=None,
+        api_secret=None,
+        logging_level=logging.INFO,
+        log_requests=False,
+        request_timeout=10,
+        recv_window=5000,
+        force_retry=False,
+        retry_codes=None,
+        ignore_codes=None,
+        max_retries=3,
+        retry_delay=3,
+        referral_id=None,
+        record_request_time=False,
+    ):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -37,12 +49,14 @@ class _HTTPManager:
         self.logger = logging.getLogger(__name__)
 
         if len(logging.root.handlers) == 0:
-            #no handler on root logger set -> we add handler just for this logger to not mess with custom logic from outside
+            # no handler on root logger set -> we add handler just for this logger to not mess with custom logic from outside
             handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                                                   datefmt="%Y-%m-%d %H:%M:%S"
-                                                   )
-                                 )
+            handler.setFormatter(
+                logging.Formatter(
+                    fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                )
+            )
             handler.setLevel(logging_level)
             self.logger.addHandler(handler)
 
@@ -116,8 +130,11 @@ class _HTTPManager:
 
         # Sort dictionary alphabetically to create querystring.
         _val = "&".join(
-            [str(k) + "=" + str(v) for k, v in sorted(params.items()) if
-             (k != "sign") and (v is not None)]
+            [
+                str(k) + "=" + str(v)
+                for k, v in sorted(params.items())
+                if (k != "sign") and (v is not None)
+            ]
         )
 
         # Bug fix. Replaces all capitalized booleans with lowercase.
@@ -125,10 +142,11 @@ class _HTTPManager:
             _val = _val.replace("True", "true").replace("False", "false")
 
         # Return signature.
-        return str(hmac.new(
-            bytes(api_secret, "utf-8"),
-            bytes(_val, "utf-8"), digestmod="sha256"
-        ).hexdigest())
+        return str(
+            hmac.new(
+                bytes(api_secret, "utf-8"), bytes(_val, "utf-8"), digestmod="sha256"
+            ).hexdigest()
+        )
 
     def _usdc_auth(self, params, recv_window, timestamp):
         """
@@ -142,8 +160,9 @@ class _HTTPManager:
             raise PermissionError("Authenticated endpoints require keys.")
         payload = json.dumps(params)
         param_str = str(timestamp) + api_key + str(recv_window) + payload
-        hash = hmac.new(bytes(api_secret, "utf-8"), param_str.encode("utf-8"),
-                        hashlib.sha256)
+        hash = hmac.new(
+            bytes(api_secret, "utf-8"), param_str.encode("utf-8"), hashlib.sha256
+        )
         return hash.hexdigest()
 
     @staticmethod
@@ -192,14 +211,13 @@ class _HTTPManager:
         req_params = None
 
         while True:
-
             retries_attempted -= 1
             if retries_attempted < 0:
                 raise FailedRequestError(
                     request=f"{method} {path}: {req_params}",
                     message="Bad Request. Retries exceeded maximum.",
                     status_code=400,
-                    time=dt.utcnow().strftime("%H:%M:%S")
+                    time=dt.utcnow().strftime("%H:%M:%S"),
                 )
 
             retries_remaining = f"{retries_attempted} retries remain."
@@ -228,8 +246,7 @@ class _HTTPManager:
 
             # Define parameters and log the request.
             if query is not None:
-                req_params = {k: v for k, v in query.items() if
-                              v is not None}
+                req_params = {k: v for k, v in query.items() if v is not None}
 
             else:
                 req_params = {}
@@ -240,25 +257,24 @@ class _HTTPManager:
 
             # Prepare request; use "params" for GET and "data" for POST.
             if method == "GET":
-                headers = {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
+                headers = {"Content-Type": "application/x-www-form-urlencoded"}
                 r = self.client.prepare_request(
-                    requests.Request(method, path, params=req_params,
-                                     headers=headers)
+                    requests.Request(method, path, params=req_params, headers=headers)
                 )
             else:
                 if "spot" in path:
                     full_param_str = "&".join(
-                        [str(k) + "=" + str(v) for k, v in
-                         sorted(query.items()) if v is not None]
+                        [
+                            str(k) + "=" + str(v)
+                            for k, v in sorted(query.items())
+                            if v is not None
+                        ]
                     )
-                    headers = {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    }
+                    headers = {"Content-Type": "application/x-www-form-urlencoded"}
                     r = self.client.prepare_request(
-                        requests.Request(method, path + f"?{full_param_str}",
-                                         headers=headers)
+                        requests.Request(
+                            method, path + f"?{full_param_str}", headers=headers
+                        )
                     )
                 elif "usdc" in path:
                     headers = {
@@ -267,17 +283,16 @@ class _HTTPManager:
                         "X-BAPI-SIGN": signature,
                         "X-BAPI-SIGN-TYPE": "2",
                         "X-BAPI-TIMESTAMP": str(usdc_timestamp),
-                        "X-BAPI-RECV-WINDOW": str(recv_window)
+                        "X-BAPI-RECV-WINDOW": str(recv_window),
                     }
                     r = self.client.prepare_request(
-                        requests.Request(method, path,
-                                         data=json.dumps(req_params),
-                                         headers=headers)
+                        requests.Request(
+                            method, path, data=json.dumps(req_params), headers=headers
+                        )
                     )
                 else:
                     r = self.client.prepare_request(
-                        requests.Request(method, path,
-                                         data=json.dumps(req_params))
+                        requests.Request(method, path, data=json.dumps(req_params))
                     )
 
             # Attempt the request.
@@ -288,7 +303,7 @@ class _HTTPManager:
             except (
                 requests.exceptions.ReadTimeout,
                 requests.exceptions.SSLError,
-                requests.exceptions.ConnectionError
+                requests.exceptions.ConnectionError,
             ) as e:
                 if self.force_retry:
                     self.logger.error(f"{e}. {retries_remaining}")
@@ -308,7 +323,7 @@ class _HTTPManager:
                     request=f"{method} {path}: {req_params}",
                     message=error_msg,
                     status_code=s.status_code,
-                    time=dt.utcnow().strftime("%H:%M:%S")
+                    time=dt.utcnow().strftime("%H:%M:%S"),
                 )
 
             # Convert response to dictionary, or raise if requests error.
@@ -327,7 +342,7 @@ class _HTTPManager:
                         request=f"{method} {path}: {req_params}",
                         message="Conflict. Could not decode JSON.",
                         status_code=409,
-                        time=dt.utcnow().strftime("%H:%M:%S")
+                        time=dt.utcnow().strftime("%H:%M:%S"),
                     )
 
             if "usdc" in path:
@@ -339,18 +354,14 @@ class _HTTPManager:
 
             # If Bybit returns an error, raise.
             if s_json[ret_code]:
-
                 # Generate error message.
-                error_msg = (
-                    f"{s_json[ret_msg]} (ErrCode: {s_json[ret_code]})"
-                )
+                error_msg = f"{s_json[ret_msg]} (ErrCode: {s_json[ret_code]})"
 
                 # Set default retry delay.
                 err_delay = self.retry_delay
 
                 # Retry non-fatal whitelisted error requests.
                 if s_json[ret_code] in self.retry_codes:
-
                     # 10002, recv_window error; add 2.5 seconds and retry.
                     if s_json[ret_code] == 10002:
                         error_msg += ". Added 2.5 seconds to recv_window"
@@ -366,9 +377,7 @@ class _HTTPManager:
 
                         # Calculate how long we need to wait.
                         limit_reset = s_json["rate_limit_reset_ms"] / 1000
-                        reset_str = time.strftime(
-                            "%X", time.localtime(limit_reset)
-                        )
+                        reset_str = time.strftime("%X", time.localtime(limit_reset))
                         err_delay = int(limit_reset) - int(time.time())
                         error_msg = (
                             f"Ratelimit will reset at {reset_str}. "
@@ -389,7 +398,7 @@ class _HTTPManager:
                         request=f"{method} {path}: {req_params}",
                         message=s_json[ret_msg],
                         status_code=s_json[ret_code],
-                        time=dt.utcnow().strftime("%H:%M:%S")
+                        time=dt.utcnow().strftime("%H:%M:%S"),
                     )
             else:
                 if self.record_request_time:
@@ -405,9 +414,7 @@ class _HTTPManager:
         """
 
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + "/v2/private/account/api-key",
-            auth=True
+            method="GET", path=self.endpoint + "/v2/private/account/api-key", auth=True
         )
 
 
@@ -424,7 +431,7 @@ class _USDCHTTPManager(_HTTPManager):
         return self._submit_request(
             method="GET",
             path=self.endpoint + "/option/usdc/openapi/public/v1/query-trade-latest",
-            query=kwargs
+            query=kwargs,
         )
 
     def get_active_order(self, **kwargs):
@@ -440,10 +447,7 @@ class _USDCHTTPManager(_HTTPManager):
         suffix = "/option/usdc/openapi/private/v1/query-active-orders"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def user_trade_records(self, **kwargs):
@@ -459,10 +463,7 @@ class _USDCHTTPManager(_HTTPManager):
         suffix = "/option/usdc/openapi/private/v1/execution-list"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def get_history_order(self, **kwargs):
@@ -478,10 +479,7 @@ class _USDCHTTPManager(_HTTPManager):
         suffix = "/option/usdc/openapi/private/v1/query-order-history"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def get_wallet_balance(self, **kwargs):
@@ -497,10 +495,7 @@ class _USDCHTTPManager(_HTTPManager):
         suffix = "/option/usdc/openapi/private/v1/query-wallet-balance"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def get_asset_info(self, **kwargs):
@@ -516,10 +511,7 @@ class _USDCHTTPManager(_HTTPManager):
         suffix = "/option/usdc/openapi/private/v1/query-asset-info"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def get_margin_mode(self, **kwargs):
@@ -535,10 +527,7 @@ class _USDCHTTPManager(_HTTPManager):
         suffix = "/option/usdc/openapi/private/v1/query-margin-info"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
     def my_position(self, **kwargs):
@@ -553,19 +542,28 @@ class _USDCHTTPManager(_HTTPManager):
         suffix = "/option/usdc/openapi/private/v1/query-position"
 
         return self._submit_request(
-            method="POST",
-            path=self.endpoint + suffix,
-            query=kwargs,
-            auth=True
+            method="POST", path=self.endpoint + suffix, query=kwargs, auth=True
         )
 
 
 class _V3HTTPManager:
-    def __init__(self, endpoint=None, api_key=None, api_secret=None,
-                 logging_level=logging.INFO, log_requests=False,
-                 request_timeout=10, recv_window=5000, force_retry=False,
-                 retry_codes=None, ignore_codes=None, max_retries=3,
-                 retry_delay=3, referral_id=None, record_request_time=False):
+    def __init__(
+        self,
+        endpoint=None,
+        api_key=None,
+        api_secret=None,
+        logging_level=logging.INFO,
+        log_requests=False,
+        request_timeout=10,
+        recv_window=5000,
+        force_retry=False,
+        retry_codes=None,
+        ignore_codes=None,
+        max_retries=3,
+        retry_delay=3,
+        referral_id=None,
+        record_request_time=False,
+    ):
         """Initializes the HTTP class."""
 
         # Set the endpoint.
@@ -579,12 +577,14 @@ class _V3HTTPManager:
         self.logger = logging.getLogger(__name__)
 
         if len(logging.root.handlers) == 0:
-            #no handler on root logger set -> we add handler just for this logger to not mess with custom logic from outside
+            # no handler on root logger set -> we add handler just for this logger to not mess with custom logic from outside
             handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                                                   datefmt="%Y-%m-%d %H:%M:%S"
-                                                   )
-                                 )
+            handler.setFormatter(
+                logging.Formatter(
+                    fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                )
+            )
             handler.setLevel(logging_level)
             self.logger.addHandler(handler)
 
@@ -640,12 +640,8 @@ class _V3HTTPManager:
         """
 
         def cast_values():
-            string_params = [
-                "qty", "price", "triggerPrice", "takeProfit", "stopLoss"
-            ]
-            integer_params = [
-                "positionIdx"
-            ]
+            string_params = ["qty", "price", "triggerPrice", "takeProfit", "stopLoss"]
+            integer_params = ["positionIdx"]
             for key, value in parameters.items():
                 if key in string_params:
                     if type(value) != str:
@@ -656,8 +652,11 @@ class _V3HTTPManager:
 
         if method == "GET":
             payload = "&".join(
-                [str(k) + "=" + str(v) for k, v in
-                 sorted(parameters.items()) if v is not None]
+                [
+                    str(k) + "=" + str(v)
+                    for k, v in sorted(parameters.items())
+                    if v is not None
+                ]
             )
             return payload
         else:
@@ -676,8 +675,9 @@ class _V3HTTPManager:
             raise PermissionError("Authenticated endpoints require keys.")
 
         param_str = str(timestamp) + api_key + str(recv_window) + payload
-        hash = hmac.new(bytes(api_secret, "utf-8"), param_str.encode("utf-8"),
-                        hashlib.sha256)
+        hash = hmac.new(
+            bytes(api_secret, "utf-8"), param_str.encode("utf-8"), hashlib.sha256
+        )
         return hash.hexdigest()
 
     @staticmethod
@@ -722,14 +722,13 @@ class _V3HTTPManager:
         req_params = None
 
         while True:
-
             retries_attempted -= 1
             if retries_attempted < 0:
                 raise FailedRequestError(
                     request=f"{method} {path}: {req_params}",
                     message="Bad Request. Retries exceeded maximum.",
                     status_code=400,
-                    time=dt.utcnow().strftime("%H:%M:%S")
+                    time=dt.utcnow().strftime("%H:%M:%S"),
                 )
 
             retries_remaining = f"{retries_attempted} retries remain."
@@ -751,7 +750,7 @@ class _V3HTTPManager:
                     "X-BAPI-SIGN": signature,
                     "X-BAPI-SIGN-TYPE": "2",
                     "X-BAPI-TIMESTAMP": str(timestamp),
-                    "X-BAPI-RECV-WINDOW": str(recv_window)
+                    "X-BAPI-RECV-WINDOW": str(recv_window),
                 }
             else:
                 headers = {}
@@ -764,25 +763,22 @@ class _V3HTTPManager:
                         f"Headers: {headers}"
                     )
                 else:
-                    self.logger.debug(
-                        f"Request -> {method} {path}. Headers: {headers}"
-                    )
+                    self.logger.debug(f"Request -> {method} {path}. Headers: {headers}")
 
             if method == "GET":
                 if req_params:
                     r = self.client.prepare_request(
                         requests.Request(
-                            method, path + f"?{req_params}", headers=headers)
+                            method, path + f"?{req_params}", headers=headers
+                        )
                     )
                 else:
                     r = self.client.prepare_request(
-                        requests.Request(
-                            method, path, headers=headers)
+                        requests.Request(method, path, headers=headers)
                     )
             else:
                 r = self.client.prepare_request(
-                    requests.Request(
-                        method, path, data=req_params, headers=headers)
+                    requests.Request(method, path, data=req_params, headers=headers)
                 )
 
             # Attempt the request.
@@ -793,7 +789,7 @@ class _V3HTTPManager:
             except (
                 requests.exceptions.ReadTimeout,
                 requests.exceptions.SSLError,
-                requests.exceptions.ConnectionError
+                requests.exceptions.ConnectionError,
             ) as e:
                 if self.force_retry:
                     self.logger.error(f"{e}. {retries_remaining}")
@@ -813,7 +809,7 @@ class _V3HTTPManager:
                     request=f"{method} {path}: {req_params}",
                     message=error_msg,
                     status_code=s.status_code,
-                    time=dt.utcnow().strftime("%H:%M:%S")
+                    time=dt.utcnow().strftime("%H:%M:%S"),
                 )
 
             # Convert response to dictionary, or raise if requests error.
@@ -832,7 +828,7 @@ class _V3HTTPManager:
                         request=f"{method} {path}: {req_params}",
                         message="Conflict. Could not decode JSON.",
                         status_code=409,
-                        time=dt.utcnow().strftime("%H:%M:%S")
+                        time=dt.utcnow().strftime("%H:%M:%S"),
                     )
 
             ret_code = "retCode"
@@ -840,18 +836,14 @@ class _V3HTTPManager:
 
             # If Bybit returns an error, raise.
             if s_json[ret_code]:
-
                 # Generate error message.
-                error_msg = (
-                    f"{s_json[ret_msg]} (ErrCode: {s_json[ret_code]})"
-                )
+                error_msg = f"{s_json[ret_msg]} (ErrCode: {s_json[ret_code]})"
 
                 # Set default retry delay.
                 err_delay = self.retry_delay
 
                 # Retry non-fatal whitelisted error requests.
                 if s_json[ret_code] in self.retry_codes:
-
                     # 10002, recv_window error; add 2.5 seconds and retry.
                     if s_json[ret_code] == 10002:
                         error_msg += ". Added 2.5 seconds to recv_window"
@@ -867,9 +859,7 @@ class _V3HTTPManager:
 
                         # Calculate how long we need to wait.
                         limit_reset = s_json["rate_limit_reset_ms"] / 1000
-                        reset_str = time.strftime(
-                            "%X", time.localtime(limit_reset)
-                        )
+                        reset_str = time.strftime("%X", time.localtime(limit_reset))
                         err_delay = int(limit_reset) - int(time.time())
                         error_msg = (
                             f"Ratelimit will reset at {reset_str}. "
@@ -889,7 +879,7 @@ class _V3HTTPManager:
                         request=f"{method} {path}: {req_params}",
                         message=s_json[ret_msg],
                         status_code=s_json[ret_code],
-                        time=dt.utcnow().strftime("%H:%M:%S")
+                        time=dt.utcnow().strftime("%H:%M:%S"),
                     )
             else:
                 if self.record_request_time:
@@ -899,14 +889,10 @@ class _V3HTTPManager:
 
     def get_server_time(self):
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + "/v3/public/time",
-            auth=False
+            method="GET", path=self.endpoint + "/v3/public/time", auth=False
         )
 
     def get_api_key_info(self):
         return self._submit_request(
-            method="GET",
-            path=self.endpoint + "/user/v3/private/query-api",
-            auth=True
+            method="GET", path=self.endpoint + "/user/v3/private/query-api", auth=True
         )

@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Tuple, Union
 
+import services as service
+
 # from ws.init import Variables as ws
-from api.api import WS
+from api.api import WS, Markets
 
 # import functions as function
 from api.init import Variables
@@ -10,9 +12,6 @@ from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
 from functions import Function
-
-from api.api import Markets
-import services as service
 
 
 class Init(WS, Variables):
@@ -54,7 +53,7 @@ class Init(WS, Variables):
             self.robots[emi]["SYMBOL"] = (
                 self.robots[emi]["SYMBOL"],
                 self.robots[emi]["CATEGORY"],
-                self.name
+                self.name,
             )
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
@@ -88,7 +87,7 @@ class Init(WS, Variables):
                     "SYMBOL": symbol,
                     "CATEGORY": defunct["CATEGORY"],
                     "MARKET": self.name,
-                    "POS": int(defunct["POS"]),
+                    "POS": defunct["POS"],
                     "EMI": defunct["EMI"],
                     "STATUS": status,
                     "TIMEFR": "None",
@@ -121,22 +120,22 @@ class Init(WS, Variables):
         for symbol in self.symbol_list:
             for res in reserved:
                 if symbol == (res["SYMBOL"], res["CATEGORY"], self.name):
-                    pos = int(reserved[0]["POS"])
+                    pos = reserved[0]["POS"]
                     break
             else:
                 pos = 0
-            if symbol in self.symbol_list or pos != 0:
-                emi = ".".join(symbol[:2])
-                self.robots[emi] = {
-                    "EMI": emi,
-                    "SYMBOL": symbol,
-                    "CATEGORY": symbol[1],
-                    "MARKET": self.name,
-                    "POS": pos,
-                    "STATUS": "RESERVED",
-                    "TIMEFR": "None",
-                    "CAPITAL": "None",
-                }
+            # if pos != 0:
+            emi = ".".join(symbol[:2])
+            self.robots[emi] = {
+                "EMI": emi,
+                "SYMBOL": symbol,
+                "CATEGORY": symbol[1],
+                "MARKET": self.name,
+                "POS": pos,
+                "STATUS": "RESERVED",
+                "TIMEFR": "None",
+                "CAPITAL": "None",
+            }
 
         # Loading all transactions and calculating financial results for each robot
         for emi, val in self.robots.items():
@@ -146,12 +145,12 @@ class Init(WS, Variables):
             else:
                 _emi = emi
             var.cursor_mysql.execute(
-                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) \
-                    POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) \
-                        COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01') LTIME \
-                            FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY \
-                                WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, \
-                                    COMMISS, TTIME FROM "
+                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
+                + "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
+                + "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01') LTIME "
+                + "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY "
+                + "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
+                + "COMMISS, TTIME FROM "
                 + db
                 + ".coins WHERE EMI = %s AND ACCOUNT = %s AND CATEGORY = %s) aa",
                 (_emi, self.user_id, val["CATEGORY"]),
@@ -161,7 +160,7 @@ class Init(WS, Variables):
                 for col in row:
                     self.robots[emi][col] = row[col]
                     if col == "POS" or col == "VOL":
-                        self.robots[emi][col] = int(self.robots[emi][col])
+                        self.robots[emi][col] = float(self.robots[emi][col])
                     if col == "COMMISS" or col == "SUMREAL":
                         self.robots[emi][col] = float(self.robots[emi][col])
                     if col == "LTIME":
@@ -169,21 +168,21 @@ class Init(WS, Variables):
                             str(self.robots[emi][col]), "%Y-%m-%d %H:%M:%S"
                         )
             self.robots[emi]["PNL"] = 0
-            self.robots[emi]["lotSize"] = (
-                self.Instrument[self.robots[emi]["SYMBOL"]].minOrderQty
-            )
+            self.robots[emi]["lotSize"] = self.Instrument[
+                self.robots[emi]["SYMBOL"]
+            ].minOrderQty
             if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
 
         return self.robots
-    
+
     def download_data(
         self, time: datetime, target: datetime, symbol: tuple, timeframe: str
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
         while target > time:
-            data = WS.trade_bucketed(self,
-                symbol=symbol, time=time, timeframe=timeframe
+            data = WS.trade_bucketed(
+                self, symbol=symbol, time=time, timeframe=timeframe
             )
             if data:
                 last = time
@@ -243,12 +242,14 @@ class Init(WS, Variables):
 
         # The 'frames' array is filled with timeframe data.
 
-        if service.time_converter(
-            time=res[0]["timestamp"]
-        ) > service.time_converter(time=res[-1]["timestamp"]):
+        if service.time_converter(time=res[0]["timestamp"]) > service.time_converter(
+            time=res[-1]["timestamp"]
+        ):
             res.reverse()
         for num, row in enumerate(res):
-            tm = service.time_converter(time=row["timestamp"]) - timedelta(minutes=robot["TIMEFR"])
+            tm = service.time_converter(time=row["timestamp"]) - timedelta(
+                minutes=robot["TIMEFR"]
+            )
             frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,

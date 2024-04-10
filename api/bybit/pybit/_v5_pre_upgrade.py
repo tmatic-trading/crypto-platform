@@ -126,5 +126,3 @@ class PreUpgradeHTTP(_V5HTTPManager):
             query=kwargs,
             auth=True,
         )
-
-
