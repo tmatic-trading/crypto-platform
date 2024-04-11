@@ -21,7 +21,7 @@ def time_converter(
     if isinstance(time, int) or isinstance(time, float):
         return datetime.fromtimestamp(time)
     elif isinstance(time, datetime):
-        return int(time.timestamp())
+        return int(time.timestamp() * 1000)
     elif isinstance(time, str):
         try:
             if usec:

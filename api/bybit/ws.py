@@ -196,7 +196,6 @@ class Bybit(Variables):
             row["lastQty"] = float(row["execQty"])
             row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
             row["market"] = self.name
-            row["foreignNotional"] = 0
             self.transaction(row=row)
 
     def exit(self):
