@@ -27,26 +27,35 @@ class Init(WS, Variables):
         Function.rounding(self)
         self.frames = dict()
 
-    def load_trading_history(self) -> None:
+    def load_trading_history(self: Markets) -> None:
         """
         Load trading history (if any)
         """
-        tm = datetime.utcnow()
+        tm = datetime.now()
         with open("history.ini", "r") as f:
             lst = list(f)
-        if not lst or len(lst) < 1:
-            message = "history.ini error. No data in history.ini"
+        rows = list()
+        last_history_time = ""
+        for row in lst:
+            row = row.replace("\n", "")
+            res = row.split()
+            if res:
+                if res[0] == self.name:
+                    time = " ".join(res[1:])
+                    last_history_time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+                else:
+                    rows.append(row)
+        if not last_history_time:
+            message = self.name + " was not found in the history.ini file."
             var.logger.error(message)
             raise Exception(message)
-        lst = [x.replace("\n", "") for x in lst]
-        last_history_time = datetime.strptime(lst[0], "%Y-%m-%d %H:%M:%S")
-        """if last_history_time > tm:
+        if last_history_time > tm:
             message = (
                 "history.ini error. The time in the history.ini file is "
                 + "greater than the current time."
             )
             var.logger.error(message)
-            raise Exception(message)"""
+            raise Exception(message)
         count_val = 500
         history = WS.trading_history(self, histCount=count_val, time=last_history_time)
         if history == "error":
@@ -74,9 +83,11 @@ class Init(WS, Variables):
             if last_history_time == tmp:
                 break
             tmp = last_history_time
+        rows.append(self.name + " " + str(last_history_time)[:19])
         if self.logNumFatal == 0:
             with open("history.ini", "w") as f:
-                f.write(str(last_history_time)[:19])
+                for row in rows:
+                    f.write(row + "\n")
 
     def account_balances(self: Markets) -> None:
         """
