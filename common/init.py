@@ -84,6 +84,7 @@ class Init(WS, Variables):
                 break
             tmp = last_history_time
         rows.append(self.name + " " + str(last_history_time)[:19])
+        print(rows)
         if self.logNumFatal == 0:
             with open("history.ini", "w") as f:
                 for row in rows:
