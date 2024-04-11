@@ -2,8 +2,10 @@ import logging
 from collections import OrderedDict
 from datetime import datetime
 
-import pymysql
-import pymysql.cursors
+#import pymysql
+#import pymysql.cursors
+import sqlite3
+from sqlite3 import Error
 
 import services as service
 from api.api import WS, Markets
@@ -15,7 +17,8 @@ from display.functions import info_display
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
 
-db = var.env["MYSQL_DATABASE"]
+#db = var.env["MYSQL_DATABASE"]
+db_sqlite = var.env["SQLITE_DATABASE"]
 
 
 class Init(WS, Variables):
@@ -71,8 +74,10 @@ class Init(WS, Variables):
         """
         while history:
             for row in history:
-                data = Function.read_database(
-                    self, execID=row["execID"], user_id=self.user_id
+                data = Function.select_database(#read_database
+                    self,
+                    "select EXECID from coins where EXECID='%s' and account=%s" %
+                    (row["execID"], self.user_id)
                 )
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
@@ -95,13 +100,19 @@ class Init(WS, Variables):
         Calculates the account by currency according to data from the MySQL
         'coins' table.
         """
-        sql = (
+        '''sql = (
             "select SYMBOL, CATEGORY from "
             + db
             + ".coins where ACCOUNT=%s and MARKET=%s group by SYMBOL, CATEGORY"
         )
         var.cursor_mysql.execute(sql, (self.user_id, self.name))
-        data = var.cursor_mysql.fetchall()
+        data = var.cursor_mysql.fetchall()'''
+        data = Function.select_database(self,
+            "select SYMBOL, CATEGORY from "
+            + "coins where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY" %
+            (self.user_id, self.name)
+        )
+
         symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"], self.name), data))
         for symbol in symbols:
             Function.add_symbol(self, symbol=symbol)
@@ -114,7 +125,7 @@ class Init(WS, Variables):
                 + "sum(funding) funding from ("
             )
             for symbol in symbols:
-                sql += (
+                '''sql += (
                     union
                     + "select IFNULL(sum(COMMISS),0.0) commiss, "
                     + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
@@ -143,11 +154,40 @@ class Init(WS, Variables):
                     + "' and CATEGORY = '"
                     + symbol[1]
                     + "'"
+                )'''
+                sql += (
+                    union
+                    + "select IFNULL(sum(COMMISS),0.0) commiss, "
+                    + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
+                    + "sum(COMMISS) from "
+                    + "coins where SIDE < 0 and ACCOUNT = "
+                    + str(self.user_id)
+                    + " and MARKET = '"
+                    + self.name
+                    + "' and CURRENCY = '"
+                    + currency
+                    + "' and SYMBOL = '"
+                    + symbol[0]
+                    + "' and CATEGORY = '"
+                    + symbol[1]
+                    + "'),0.0) funding from "
+                    + "coins where SIDE >= 0 and ACCOUNT = "
+                    + str(self.user_id)
+                    + " and MARKET = '"
+                    + self.name
+                    + "' and CURRENCY = '"
+                    + currency
+                    + "' and SYMBOL = '"
+                    + symbol[0]
+                    + "' and CATEGORY = '"
+                    + symbol[1]
+                    + "'"
                 )
                 union = "union "
             sql += ") T"
-            var.cursor_mysql.execute(sql)
-            data = var.cursor_mysql.fetchall()
+            #var.cursor_mysql.execute(sql)
+            #data = var.cursor_mysql.fetchall()
+            data = Function.select_database(self, sql)
             settlCurrency = (currency, self.name)
             self.Account[settlCurrency].commission = float(data[0]["commiss"])
             self.Account[settlCurrency].funding = float(data[0]["funding"])
@@ -234,7 +274,7 @@ class Init(WS, Variables):
         """
         Download the latest trades and funding data from the database (if any)
         """
-        sql = (
+        '''sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
             + "PRICE, TTIME, COMMISS from "
             + db
@@ -245,9 +285,21 @@ class Init(WS, Variables):
             + "' "
             + "order by TTIME desc limit "
             + str(disp.table_limit)
+        )'''
+        sql = (
+            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
+            + "PRICE, TTIME, COMMISS from "
+            + "coins where SIDE = -1 and ACCOUNT = "
+            + str(self.user_id)
+            + " and MARKET = '"
+            + self.name
+            + "' "
+            + "order by TTIME desc limit "
+            + str(disp.table_limit)
         )
-        var.cursor_mysql.execute(sql)
-        data = var.cursor_mysql.fetchall()
+        #var.cursor_mysql.execute(sql)
+        #data = var.cursor_mysql.fetchall()
+        data = Function.select_database(self, sql)
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
             val["QTY"] = Function.volume(
@@ -256,7 +308,7 @@ class Init(WS, Variables):
             Function.fill_columns(
                 self, func=Function.funding_display, table=funding, val=val
             )
-        sql = (
+        '''sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
             + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
             + db
@@ -267,9 +319,21 @@ class Init(WS, Variables):
             + "' "
             + "order by TTIME desc limit "
             + str(disp.table_limit)
+        )'''
+        sql = (
+            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
+            + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
+            + "coins where SIDE <> -1 and ACCOUNT = "
+            + str(self.user_id)
+            + " and MARKET = '"
+            + self.name
+            + "' "
+            + "order by TTIME desc limit "
+            + str(disp.table_limit)
         )
-        var.cursor_mysql.execute(sql)
-        data = var.cursor_mysql.fetchall()
+        #var.cursor_mysql.execute(sql)
+        #data = var.cursor_mysql.fetchall()
+        data = Function.select_database(self, sql)
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
             val["QTY"] = Function.volume(
@@ -299,7 +363,7 @@ def setup_logger():
 
 def setup_database_connecion() -> None:
     try:
-        var.connect_mysql = pymysql.connect(
+        '''var.connect_mysql = pymysql.connect(
             host=var.env["MYSQL_HOST"],
             user=var.env["MYSQL_USER"],
             password=var.env["MYSQL_PASSWORD"],
@@ -307,7 +371,55 @@ def setup_database_connecion() -> None:
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
         )
-        var.cursor_mysql = var.connect_mysql.cursor()
+        var.cursor_mysql = var.connect_mysql.cursor()'''
+
+        var.connect_sqlite = sqlite3.connect(db_sqlite, check_same_thread=False)
+        var.connect_sqlite.row_factory = sqlite3.Row
+        var.cursor_sqlite = var.connect_sqlite.cursor()
+
+        sql_create_robots = """
+        CREATE TABLE IF NOT EXISTS robots (
+        EMI varchar(20) DEFAULT NULL UNIQUE,
+        SYMBOL varchar(20) DEFAULT NULL,
+        CATEGORY varchar(10) DEFAULT NULL,
+        MARKET varchar(20) DEFAULT NULL,
+        SORT tinyint DEFAULT NULL,
+        DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        TIMEFR tinyint DEFAULT 0,
+        CAPITAL int DEFAULT 0,
+        MARGIN int DEFAULT 0)"""
+
+        sql_create_coins = """
+        CREATE TABLE IF NOT EXISTS coins (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        EXECID varchar(45) DEFAULT NULL,
+        EMI varchar(25) DEFAULT NULL,
+        REFER varchar(20) DEFAULT NULL,
+        MARKET varchar(20) DEFAULT NULL,
+        CURRENCY varchar(10) DEFAULT NULL,
+        SYMBOL varchar(20) DEFAULT NULL,
+        CATEGORY varchar(10) DEFAULT NULL,
+        SIDE tinyint DEFAULT NULL,
+        QTY decimal(20,8) DEFAULT NULL,
+        QTY_REST decimal(20,8) DEFAULT NULL,
+        PRICE decimal(20,8) DEFAULT NULL,
+        THEOR_PRICE decimal(20,8) DEFAULT NULL,
+        TRADE_PRICE decimal(20,8) DEFAULT NULL,
+        SUMREAL decimal(30,12) DEFAULT NULL,
+        COMMISS decimal(30,16) DEFAULT 0.0000000000000000,
+        TTIME datetime DEFAULT NULL,
+        DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        CLORDID int DEFAULT 0,
+        ACCOUNT int DEFAULT 0)"""
+    
+        var.cursor_sqlite.execute(sql_create_robots)
+        var.cursor_sqlite.execute(sql_create_coins)
+        var.cursor_sqlite.execute("CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON coins (ID)")
+        var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS EXECID_ix ON coins (EXECID)")
+        var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS EMI_QTY_ix ON coins (EMI, QTY)")
+        var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS SIDE_ix ON coins (SIDE)")
+        var.connect_sqlite.commit()
+        
 
     except Exception as error:
         var.logger.error(error)

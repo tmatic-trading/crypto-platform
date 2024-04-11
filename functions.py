@@ -1,5 +1,6 @@
 import time
 import tkinter as tk
+import threading
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from random import randint
@@ -14,10 +15,10 @@ from display.functions import info_display
 from display.variables import GridTable, ListBoxTable
 from display.variables import Variables as disp
 
-db = var.env["MYSQL_DATABASE"]
+#db = var.env["MYSQL_DATABASE"]
+
 
 # from api.bitmex.ws import Bitmex
-
 
 class Tables:
     position = GridTable
@@ -28,6 +29,8 @@ class Tables:
 
 
 class Function(WS, Variables):
+    sql_lock = threading.Lock()
+
     def calculate(
         self: Markets, symbol: tuple, price: float, qty: float, rate: float, fund: int
     ) -> dict:
@@ -106,23 +109,37 @@ class Function(WS, Variables):
 
         return r + val
 
-    def read_database(self: Markets, execID: str, user_id: int) -> list:
+    def select_database(self: Markets, query: str) -> list:
+        Function.sql_lock.acquire(True)
+        var.cursor_sqlite.execute(query)
+        Function.sql_lock.release()
+        orig = var.cursor_sqlite.fetchall()
+        data = []
+        if orig:
+            data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
+        return data
+
+    '''def read_database(self: Markets, execID: str, user_id: int) -> list:
         """
         Load a row by execID from the database
         """
+        #var.cursor_mysql.execute(
+        #    "select EXECID from " + db + ".coins where EXECID=%s and account=%s",
+        #    (execID, user_id),
+        #)
         var.cursor_mysql.execute(
-            "select EXECID from " + db + ".coins where EXECID=%s and account=%s",
+            "select EXECID from coins where EXECID=%s and account=%s",
             (execID, user_id),
         )
         data = var.cursor_mysql.fetchall()
 
-        return data
+        return data'''
 
     def insert_database(self: Markets, values: list) -> None:
         """
         Insert row into database
         """
-        var.cursor_mysql.execute(
+        '''var.cursor_mysql.execute(
             "insert into "
             + db
             + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
@@ -130,8 +147,17 @@ class Function(WS, Variables):
                     CLORDID,TTIME,ACCOUNT) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
                         %s,%s,%s,%s,%s,%s,%s,%s)",
             values,
+        )'''
+        Function.sql_lock.acquire(True)
+        var.cursor_sqlite.execute(
+            "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
+                SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
+                    CLORDID,TTIME,ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,\
+                        ?,?,?,?,?,?,?,?)",
+            values,
         )
-        var.connect_mysql.commit()
+        var.connect_sqlite.commit()
+        Function.sql_lock.release()
 
     def transaction(self: Markets, row: dict, info: str = "") -> None:
         """
@@ -193,8 +219,10 @@ class Function(WS, Variables):
                     )
                     info_display(self.name, message)
                     var.logger.info(message)
-            data = Function.read_database(
-                self, execID=row["execID"], user_id=self.user_id
+            data = Function.select_database(#read_database
+                self,
+                "select EXECID from coins where EXECID='%s' and account=%s" %
+                (row["execID"], self.user_id)
             )
             if not data:
                 side = 0
@@ -689,8 +717,8 @@ class Function(WS, Variables):
         """
         # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
         if utc.hour != var.refresh_hour:
-            var.cursor_mysql.execute("select count(*) from " + db + ".robots")
-            var.cursor_mysql.fetchall()
+            #var.cursor_mysql.execute("select count(*) from " + db + ".robots")
+            Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening MySQL")
 

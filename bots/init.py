@@ -29,15 +29,12 @@ class Init(WS, Variables):
         separately from the financial results of individual robots. The status of
         such robots is 'RESERVED'.
         """
-        db = var.env["MYSQL_DATABASE"]
         union = ""
         qwr = "select * from ("
         for symbol in self.symbol_list:
             qwr += (
                 union
-                + "select * from "
-                + db
-                + ".robots where SYMBOL = '"
+                + "select * from robots where SYMBOL = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
                 + symbol[1]
@@ -45,8 +42,9 @@ class Init(WS, Variables):
             )
             union = "union "
         qwr += ") T where MARKET = '" + self.name + "' order by SORT"
-        var.cursor_mysql.execute(qwr)
-        for robot in var.cursor_mysql.fetchall():
+        #var.cursor_mysql.execute(qwr)
+        data = Function.select_database(self, qwr)
+        for robot in data:
             emi = robot["EMI"]
             self.robots[emi] = robot
             self.robots[emi]["STATUS"] = "WORK"
@@ -60,9 +58,7 @@ class Init(WS, Variables):
         qwr = (
             "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, \
                 sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-                    -QTY ELSE 0 END) POS from "
-            + db
-            + ".coins where MARKET = '"
+                    -QTY ELSE 0 END) POS from coins where MARKET = '"
             + self.name
             + "' and \
                         account = "
@@ -70,8 +66,9 @@ class Init(WS, Variables):
             + " and SIDE <> -1 group by EMI, \
                             SYMBOL, CATEGORY) res where POS <> 0"
         )
-        var.cursor_mysql.execute(qwr)
-        defuncts = var.cursor_mysql.fetchall()
+        #var.cursor_mysql.execute(qwr)
+        #defuncts = var.cursor_mysql.fetchall()
+        defuncts = Function.select_database(self, qwr)
         for defunct in defuncts:
             symbol = (defunct["SYMBOL"], defunct["CATEGORY"], self.name)
             for emi in self.robots:
@@ -102,9 +99,7 @@ class Init(WS, Variables):
                 union
                 + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, \
             sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-            -QTY ELSE 0 END) POS from "
-                + db
-                + ".coins where SIDE <> -1 group by EMI, SYMBOL, CATEGORY, \
+            -QTY ELSE 0 END) POS from coins where SIDE <> -1 group by EMI, SYMBOL, CATEGORY, \
             ACCOUNT, MARKET) res where EMI = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
@@ -115,8 +110,9 @@ class Init(WS, Variables):
         qwr += (
             ") T where MARKET = '" + self.name + "' and ACCOUNT = " + str(self.user_id)
         )
-        var.cursor_mysql.execute(qwr)
-        reserved = var.cursor_mysql.fetchall()
+        #var.cursor_mysql.execute(qwr)
+        #reserved = var.cursor_mysql.fetchall()
+        reserved = Function.select_database(self, qwr)
         for symbol in self.symbol_list:
             for res in reserved:
                 if symbol == (res["SYMBOL"], res["CATEGORY"], self.name):
@@ -144,18 +140,28 @@ class Init(WS, Variables):
                 _emi = emi[0]
             else:
                 _emi = emi
-            var.cursor_mysql.execute(
+            '''var.cursor_mysql.execute(
                 "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
                 + "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
                 + "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01') LTIME "
                 + "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY "
                 + "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
                 + "COMMISS, TTIME FROM "
-                + db
-                + ".coins WHERE EMI = %s AND ACCOUNT = %s AND CATEGORY = %s) aa",
-                (_emi, self.user_id, val["CATEGORY"]),
+                + "coins WHERE EMI = ? AND ACCOUNT = ? AND CATEGORY = ?) aa",
+                (_emi, self.user_id, val["CATEGORY"])
             )
-            data = var.cursor_mysql.fetchall()
+            data = var.cursor_mysql.fetchall()'''
+
+            sql = "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) " \
+                "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) " \
+                "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME " \
+                "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY " \
+                "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, " \
+                "COMMISS, TTIME FROM " \
+                "coins WHERE EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa" % (_emi, self.user_id, val["CATEGORY"])
+
+            data = Function.select_database(self, sql)
+
             for row in data:
                 for col in row:
                     self.robots[emi][col] = row[col]
@@ -164,8 +170,9 @@ class Init(WS, Variables):
                     if col == "COMMISS" or col == "SUMREAL":
                         self.robots[emi][col] = float(self.robots[emi][col])
                     if col == "LTIME":
+                        print(col, type(self.robots[emi][col]), self.robots[emi][col])
                         self.robots[emi][col] = datetime.strptime(
-                            str(self.robots[emi][col]), "%Y-%m-%d %H:%M:%S"
+                            str(self.robots[emi][col]), "%Y-%m-%d %H:%M:%S.%f"
                         )
             self.robots[emi]["PNL"] = 0
             self.robots[emi]["lotSize"] = self.Instrument[
