@@ -3,6 +3,7 @@ import logging
 import threading
 import time
 import traceback
+import services as service
 from collections import OrderedDict
 from time import sleep
 
@@ -239,6 +240,9 @@ class Bitmex(Variables):
                             )
                             val["market"] = self.name
                             val["settlCurrency"] = (val["settlCurrency"], self.name)
+                            val["transactTime"] = service.time_converter(
+                                time=val["transactTime"], usec=True
+                            )
                             if val["execType"] == "Funding":
                                 if val["foreignNotional"] > 0:
                                     val["lastQty"] = -val["lastQty"]
