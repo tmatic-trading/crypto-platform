@@ -175,6 +175,10 @@ class Agent(Bitmex):
                 )
                 row["transactTime"] = service.time_converter(time=row["transactTime"])
                 row["settlCurrency"] = (row["settlCurrency"], self.name)
+                if row["execType"] == "Funding":
+                    if row["foreignNotional"] > 0:
+                        row["lastQty"] = -row["lastQty"]
+                        row["commission"] = -row["commission"]
             return result
         else:
             return "error"

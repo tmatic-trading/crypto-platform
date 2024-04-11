@@ -78,10 +78,10 @@ class Agent(Bybit):
                 row["transactTime"] = service.time_converter(
                     time=int(row["execTime"]) / 1000, usec=True
                 )
-                row["commission"] = float(row["execFee"])
+                row["commission"] = float(row["feeRate"])
                 if row["orderLinkId"]:
                     row["clOrdID"] = row["orderLinkId"]
-                row["price"] = float(row["orderPrice"])
+                row["price"] = float(row["execPrice"])
                 row["lastQty"] = float(row["execQty"])
                 row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
                 row["market"] = self.name

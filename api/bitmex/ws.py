@@ -239,6 +239,10 @@ class Bitmex(Variables):
                             )
                             val["market"] = self.name
                             val["settlCurrency"] = (val["settlCurrency"], self.name)
+                            if val["execType"] == "Funding":
+                                if val["foreignNotional"] > 0:
+                                    val["lastQty"] = -val["lastQty"]
+                                    val["commission"] = -val["commission"]
                             self.transaction(row=val)
                         else:
                             self.data[table_name][key] = val
