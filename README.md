@@ -151,10 +151,7 @@ Create a new file named ```.env``` in the program's root folder with your settin
 
 ```python
 MARKET_LIST = "Bitmex"
-MYSQL_HOST = "localhost"
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "your password"
-MYSQL_DATABASE = "your database name"
+SQLITE_DATABASE = "tmatic.db"
 ORDER_BOOK_DEPTH = "orderBook10"
 REFRESH_RATE = "5"
 TESTNET = "True"

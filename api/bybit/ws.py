@@ -166,7 +166,7 @@ class Bybit(Variables):
                     "price": float(value["price"]),
                     "symbol": symbol,
                     "transactTime": service.time_converter(
-                        int(value["updatedTime"]) / 1000
+                        int(value["updatedTime"]) / 1000, usec=True
                     ),
                     "side": value["side"],
                     "orderID": value["orderId"],

@@ -173,7 +173,7 @@ class Agent(Bitmex):
                     self.symbol_category[row["symbol"]],
                     self.name,
                 )
-                row["transactTime"] = service.time_converter(time=row["transactTime"])
+                row["transactTime"] = service.time_converter(time=row["transactTime"], usec=True)
                 row["settlCurrency"] = (row["settlCurrency"], self.name)
                 if row["execType"] == "Funding":
                     if row["foreignNotional"] > 0:
