@@ -29,7 +29,7 @@ class Tables:
 
 class Function(WS, Variables):
     def calculate(
-        self: Markets, symbol: tuple, price: float, qty: float, rate: int, fund: int
+        self: Markets, symbol: tuple, price: float, qty: float, rate: float, fund: int
     ) -> dict:
         """
         Calculate sumreal and commission
@@ -210,6 +210,7 @@ class Function(WS, Variables):
                     rate=row["commission"],
                     fund=1,
                 )
+                print("____________calc trade", "commiss", calc["commiss"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", row["execFee"], row["price"])
                 self.robots[emi]["POS"] += lastQty
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
@@ -264,11 +265,6 @@ class Function(WS, Variables):
                 "PRICE": row["price"],
             }
             position = 0
-            true_position = row["lastQty"]
-            true_funding = row["commission"]
-            if row["foreignNotional"] > 0:
-                true_position = -true_position
-                true_funding = -true_funding
             for emi in self.robots:
                 if (
                     self.robots[emi]["SYMBOL"] == row["symbol"]
@@ -280,9 +276,10 @@ class Function(WS, Variables):
                         symbol=row["symbol"],
                         price=row["price"],
                         qty=float(self.robots[emi]["POS"]),
-                        rate=true_funding,
+                        rate=row["commission"],
                         fund=0,
                     )
+                    print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", row["execFee"], row["price"])
                     message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
                     message["QTY"] = self.robots[emi]["POS"]
@@ -320,7 +317,7 @@ class Function(WS, Variables):
                         )
                     else:
                         Function.funding_display(self, message)
-            diff = true_position - position
+            diff = row["lastQty"] - position
             if (
                 diff != 0
             ):  # robots with open positions have been taken, but some quantity is still left
@@ -329,9 +326,10 @@ class Function(WS, Variables):
                     symbol=row["symbol"],
                     price=row["price"],
                     qty=float(diff),
-                    rate=true_funding,
+                    rate=row["commission"],
                     fund=0,
                 )
+                print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", row["execFee"], row["price"])
                 emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     var.logger.error(
