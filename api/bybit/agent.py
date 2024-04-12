@@ -62,35 +62,38 @@ class Agent(Bybit):
 
     def trading_history(self, histCount: int, time: datetime) -> list:
         print("___trading_history")
-        time = service.time_converter(time)
-        print(time)
-        endtime = datetime.now()
-        endtime = service.time_converter(endtime)
-        histCount = min(100, histCount)
+        startTime = service.time_converter(time)
+        limit = min(100, histCount)
         trade_history = []
-        for tm in range (time, endtime, 604700000):
+        while startTime < service.time_converter(datetime.now()):
             for category in self.category_list:
-                result = self.session.get_executions(category=category, startTime=tm, endTime=tm+604799999, limit=histCount)
-                print(service.time_converter(tm / 1000), result)
-                result = result["result"]["list"]
-                for row in result:
-                    row["symbol"] = (row["symbol"], category, self.name)
-                    row["execID"] = row["execId"]
-                    row["orderID"] = row["orderId"]
-                    row["category"] = category
-                    row["lastPx"] = float(row["execPrice"])
-                    row["leavesQty"] = float(row["leavesQty"])
-                    row["transactTime"] = service.time_converter(
-                        time=int(row["execTime"]) / 1000, usec=True
-                    )
-                    row["commission"] = float(row["feeRate"])
-                    if row["orderLinkId"]:
-                        row["clOrdID"] = row["orderLinkId"]
-                    row["price"] = float(row["execPrice"])
-                    row["lastQty"] = float(row["execQty"])
-                    row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
-                    row["market"] = self.name
+                cursor = "no"
+                while cursor:
+                    result = self.session.get_executions(category=category, startTime=startTime, limit=limit, cursor=cursor)          
+                    cursor = result["result"]["nextPageCursor"]
+                    result = result["result"]["list"]
+                    for row in result:
+                        row["symbol"] = (row["symbol"], category, self.name)
+                        row["execID"] = row["execId"]
+                        row["orderID"] = row["orderId"]
+                        row["category"] = category
+                        row["lastPx"] = float(row["execPrice"])
+                        row["leavesQty"] = float(row["leavesQty"])
+                        row["transactTime"] = service.time_converter(
+                            time=int(row["execTime"]) / 1000, usec=True
+                        )
+                        row["commission"] = float(row["feeRate"])
+                        if row["orderLinkId"]:
+                            row["clOrdID"] = row["orderLinkId"]
+                        row["price"] = float(row["execPrice"])
+                        row["lastQty"] = float(row["execQty"])
+                        row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
+                        row["market"] = self.name
                     trade_history += result
+            print("Bybit - loading trading history, startTime=" + str(service.time_converter(startTime / 1000)) + ", received: " + str(len(trade_history)) + " records.")
+            if len(trade_history) > histCount:
+                break
+            startTime += 604800000 
         trade_history.sort(key=lambda x: x["transactTime"])
 
         return trade_history

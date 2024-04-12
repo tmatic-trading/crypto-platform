@@ -1,6 +1,7 @@
 import logging
 from collections import OrderedDict
 from datetime import datetime
+import threading
 
 #import pymysql
 #import pymysql.cursors
@@ -22,6 +23,7 @@ db_sqlite = var.env["SQLITE_DATABASE"]
 
 
 class Init(WS, Variables):
+    file_lock = threading.Lock()
     def clear_params(self) -> None:
         self.connect_count += 1
         for emi, values in self.robots.items():
@@ -30,6 +32,19 @@ class Init(WS, Variables):
         Function.rounding(self)
         self.frames = dict()
 
+    def save_history_file(self: Markets, time: datetime):
+        Init.file_lock.acquire(True)
+        with open("history.ini", "r") as f:
+            lst = list(f)
+        with open("history.ini", "w") as f:
+            for row in lst:
+                row = row.replace("\n", "")
+                res = row.split()
+                if res[0] == self.name:
+                    row = res[0] + " " + str(time)[:19]
+                f.write(row + "\n")
+        Init.file_lock.release()
+
     def load_trading_history(self: Markets) -> None:
         """
         Load trading history (if any)
@@ -37,7 +52,6 @@ class Init(WS, Variables):
         tm = datetime.now()
         with open("history.ini", "r") as f:
             lst = list(f)
-        rows = list()
         last_history_time = ""
         for row in lst:
             row = row.replace("\n", "")
@@ -46,8 +60,6 @@ class Init(WS, Variables):
                 if res[0] == self.name:
                     time = " ".join(res[1:])
                     last_history_time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-                else:
-                    rows.append(row)
         if not last_history_time:
             message = self.name + " was not found in the history.ini file."
             var.logger.error(message)
@@ -88,12 +100,8 @@ class Init(WS, Variables):
             if last_history_time == tmp:
                 break
             tmp = last_history_time
-        rows.append(self.name + " " + str(last_history_time)[:19])
-        print(rows)
-        if self.logNumFatal == 0:
-            with open("history.ini", "w") as f:
-                for row in rows:
-                    f.write(row + "\n")
+            if self.logNumFatal == 0:
+                Init.save_history_file(self, time=last_history_time)
 
     def account_balances(self: Markets) -> None:
         """
