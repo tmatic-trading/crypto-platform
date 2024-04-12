@@ -242,7 +242,7 @@ class Function(WS, Variables):
                     execfee = row["execFee"]
                 else:
                     execfee = "None"
-                print("____________calc trade", "commiss", calc["commiss"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
+                #print("____________calc trade", "commiss", calc["commiss"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                 self.robots[emi]["POS"] += lastQty
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
@@ -315,7 +315,7 @@ class Function(WS, Variables):
                         execfee = row["execFee"]
                     else:
                         execfee = "None"
-                    print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
+                    #print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                     message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
                     message["QTY"] = self.robots[emi]["POS"]
@@ -369,7 +369,7 @@ class Function(WS, Variables):
                     execfee = row["execFee"]
                 else:
                     execfee = "None"
-                print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
+                #print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                 emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     var.logger.error(
