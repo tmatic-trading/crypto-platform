@@ -116,36 +116,36 @@ class Agent(Bybit):
 
     def open_orders(self) -> list:
         print("___open_orders")
-        myOrders = list()
+        myOrders = list()    
         for category in self.category_list:
-            for settleCoin in self.settleCoin_list:
-                cursor = "no"
-                while cursor:
-                    result = self.session.get_open_orders(
-                        category=category,
-                        settleCoin=settleCoin,
-                        openOnly=0,
-                        limit=50,
-                        cursor=cursor,
-                    )
-                    cursor = result["result"]["nextPageCursor"]
-                    for order in result["result"]["list"]:
-                        order["symbol"] = (order["symbol"], category, self.name)
-                        order["orderID"] = order["orderId"]
-                        if "orderLinkId" in order and order["orderLinkId"]:
-                            order["clOrdID"] = order["orderLinkId"]
-                        order["account"] = self.user_id
-                        order["orderQty"] = float(order["qty"])
-                        order["price"] = float(order["price"])
-                        order["settlCurrency"] = (settleCoin, self.name)
-                        order["ordType"] = order["orderType"]
-                        order["ordStatus"] = order["orderStatus"]
-                        order["leavesQty"] = float(order["leavesQty"])
-                        order["transactTime"] = service.time_converter(
-                            time=int(order["updatedTime"]) / 1000, usec=True
+            for settleCoin in self.currencies:                
+                if settleCoin in self.settlCurrency_list[category]:
+                    cursor = "no"
+                    while cursor:
+                        result = self.session.get_open_orders(
+                            category=category,
+                            settleCoin=settleCoin,
+                            openOnly=0,
+                            limit=50,
+                            cursor=cursor,
                         )
-
-                    myOrders += result["result"]["list"]
+                        cursor = result["result"]["nextPageCursor"]
+                        for order in result["result"]["list"]:
+                            order["symbol"] = (order["symbol"], category, self.name)
+                            order["orderID"] = order["orderId"]
+                            if "orderLinkId" in order and order["orderLinkId"]:
+                                order["clOrdID"] = order["orderLinkId"]
+                            order["account"] = self.user_id
+                            order["orderQty"] = float(order["qty"])
+                            order["price"] = float(order["price"])
+                            order["settlCurrency"] = (settleCoin, self.name)
+                            order["ordType"] = order["orderType"]
+                            order["ordStatus"] = order["orderStatus"]
+                            order["leavesQty"] = float(order["leavesQty"])
+                            order["transactTime"] = service.time_converter(
+                                time=int(order["updatedTime"]) / 1000, usec=True
+                            )
+                        myOrders += result["result"]["list"]
 
         return myOrders
 
@@ -270,9 +270,8 @@ class Agent(Bybit):
         self.Instrument[symbol].currentQty = 0
         self.Instrument[symbol].unrealisedPnl = 0
         self.Instrument[symbol].asks = [[0, 0]]
-        self.Instrument[symbol].bids = [[0, 0]]
-
-
+        self.Instrument[symbol].bids = [[0, 0]]          
+    
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
     for k, val in data.items():
         if k == key:

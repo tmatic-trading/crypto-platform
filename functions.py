@@ -65,6 +65,9 @@ class Function(WS, Variables):
         if self.name not in disp.price_rounding:
             disp.price_rounding[self.name] = OrderedDict()
         for symbol in self.Instrument.get_keys():
+            '''print("_______________", symbol, self.symbol_list)
+            for el in self.Instrument[symbol]:
+                print(el.name, el.value)'''
             tickSize = str(self.Instrument[symbol].tickSize)
             if tickSize.find(".") > 0:
                 disp.price_rounding[self.name][symbol] = (
