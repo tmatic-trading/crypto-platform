@@ -196,6 +196,9 @@ class Bybit(Variables):
             row["lastQty"] = float(row["execQty"])
             row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
             row["market"] = self.name
+            if row["execType"] == "Funding":
+                if row["side"] == "Sell":
+                    row["lastQty"] = -row["lastQty"]
             self.transaction(row=row)
 
     def exit(self):
