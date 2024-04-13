@@ -69,7 +69,12 @@ class Agent(Bybit):
             for category in self.category_list:
                 cursor = "no"
                 while cursor:
-                    result = self.session.get_executions(category=category, startTime=startTime, limit=limit, cursor=cursor)          
+                    result = self.session.get_executions(
+                        category=category,
+                        startTime=startTime,
+                        limit=limit,
+                        cursor=cursor,
+                    )
                     cursor = result["result"]["nextPageCursor"]
                     result = result["result"]["list"]
                     for row in result:
@@ -87,13 +92,24 @@ class Agent(Bybit):
                             row["clOrdID"] = row["orderLinkId"]
                         row["price"] = float(row["execPrice"])
                         row["lastQty"] = float(row["execQty"])
-                        row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
+                        row["settlCurrency"] = self.Instrument[
+                            row["symbol"]
+                        ].settlCurrency
                         row["market"] = self.name
+                        if row["execType"] == "Funding":
+                            if row["side"] == "Sell":
+                                row["lastQty"] = -row["lastQty"]
                     trade_history += result
-            print("Bybit - loading trading history, startTime=" + str(service.time_converter(startTime / 1000)) + ", received: " + str(len(trade_history)) + " records.")
+            print(
+                "Bybit - loading trading history, startTime="
+                + str(service.time_converter(startTime / 1000))
+                + ", received: "
+                + str(len(trade_history))
+                + " records."
+            )
             if len(trade_history) > histCount:
                 break
-            startTime += 604800000 
+            startTime += 604800000
         trade_history.sort(key=lambda x: x["transactTime"])
 
         return trade_history
