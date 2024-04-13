@@ -65,20 +65,36 @@ class Bybit(Variables):
         self.logger.info("Connecting to websocket")
         for category in self.category_list:
             self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
-            for symbol in self.symbol_list:
-                self.ws[category].orderbook_stream(
-                    depth=self.orderbook_depth,
-                    symbol=symbol[0],
-                    callback=lambda x: self.__update_orderbook(
-                        values=x["data"], symbol=symbol
-                    ),
-                )
-                self.ws[category].ticker_stream(
-                    symbol=symbol[0],
-                    callback=lambda x: self.__update_ticker(
-                        values=x["data"], category=category
-                    ),
-                )
+            lst = list(filter(lambda x: x[1] == category, self.symbol_list))
+            for symbol in lst:
+                if category == "linear":
+                    self.ws[category].orderbook_stream(
+                        depth=self.orderbook_depth,
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_orderbook(
+                            values=x["data"], category="linear"
+                        ),
+                    )
+                    self.ws[category].ticker_stream(
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_ticker(
+                            values=x["data"], category="linear"
+                        ),
+                    )
+                elif category == "inverse":
+                    self.ws[category].orderbook_stream(
+                        depth=self.orderbook_depth,
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_orderbook(
+                            values=x["data"], category="inverse"
+                        ),
+                    )
+                    self.ws[category].ticker_stream(
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_ticker(
+                            values=x["data"], category="inverse"
+                        ),
+                    )                    
         self.ws_private = WebSocket(
             testnet=self.testnet,
             channel_type="private",
@@ -90,10 +106,12 @@ class Bybit(Variables):
         self.ws_private.order_stream(callback=self.__handle_order)
         self.ws_private.execution_stream(callback=self.__handle_execution)
 
-    def __update_orderbook(self, values: dict, symbol: tuple) -> None:
-        if self.depth == "quote":
-            self.Instrument[symbol].asks[0] = values["a"]
-            self.Instrument[symbol].bids[0] = values["b"]
+    def __update_orderbook(self, values: dict, category: tuple) -> None:        
+        symbol = (values["s"], category, self.name)
+        instrument = self.Instrument[symbol]
+        if self.depth == "quote":            
+            instrument.asks[0] = values["a"]
+            instrument.bids[0] = values["b"]
         else:
             asks = values["a"]
             bids = values["b"]
@@ -101,8 +119,8 @@ class Bybit(Variables):
             bids = list(map(lambda x: [float(x[0]), float(x[1])], bids))
             asks.sort(key=lambda x: x[0])
             bids.sort(key=lambda x: x[0], reverse=True)
-            self.Instrument[symbol].asks = asks
-            self.Instrument[symbol].bids = bids
+            instrument.asks = asks
+            instrument.bids = bids
 
     def __update_ticker(self, values: dict, category: str) -> None:
         self.message_counter += 1
