@@ -9,6 +9,7 @@ from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument
 from common.variables import Variables as var
 from services import exceptions_manager
+from display.functions import info_display
 
 # from .agent import Agent
 from .pybit.unified_trading import HTTP, WebSocket
@@ -50,7 +51,7 @@ class Bybit(Variables):
             self.orderbook_depth = 1
         else:
             self.orderbook_depth = 50
-        self.currency_divisor = {"USDT": 1, "BTC": 1}
+        self.currency_divisor = {"USDT": 1, "BTC": 1, "ETH": 1, "EOS": 1, "XRP": 1, "DOT": 1, "ADA": 1, "MANA": 1, "LTC": 1, "SOL": 1, "None": 1}
         print("!!!!!!!!!!!!! BYBIT !!!!!!!!!!!")
 
     def start(self):
@@ -68,6 +69,7 @@ class Bybit(Variables):
             lst = list(filter(lambda x: x[1] == category, self.symbol_list))
             for symbol in lst:
                 if category == "linear":
+                    print("_________ws subscription: linear - orderbook_stream -", symbol)
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -75,6 +77,7 @@ class Bybit(Variables):
                             values=x["data"], category="linear"
                         ),
                     )
+                    print("_________ws subscription: linear - ticker_stream -", symbol)
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
@@ -82,6 +85,7 @@ class Bybit(Variables):
                         ),
                     )
                 elif category == "inverse":
+                    print("_________ws subscription: inverse - orderbook_stream -", symbol)
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -89,12 +93,29 @@ class Bybit(Variables):
                             values=x["data"], category="inverse"
                         ),
                     )
+                    print("_________ws subscription: inverse - ticker_stream -", symbol)
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
                             values=x["data"], category="inverse"
                         ),
-                    )                    
+                    )
+                elif category == "spot":
+                    print("_________ws subscription: spot - orderbook_stream -", symbol)
+                    self.ws[category].orderbook_stream(
+                        depth=self.orderbook_depth,
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_orderbook(
+                            values=x["data"], category="spot"
+                        ),
+                    )
+                    print("_________ws subscription: spot - ticker_stream -", symbol)
+                    self.ws[category].ticker_stream(
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_ticker(
+                            values=x["data"], category="spot"
+                        ),
+                    )                     
         self.ws_private = WebSocket(
             testnet=self.testnet,
             channel_type="private",
@@ -105,6 +126,7 @@ class Bybit(Variables):
         self.ws_private.position_stream(callback=self.__update_position)
         self.ws_private.order_stream(callback=self.__handle_order)
         self.ws_private.execution_stream(callback=self.__handle_execution)
+        info_display(self.name, "Connected to websocket.")
 
     def __update_orderbook(self, values: dict, category: tuple) -> None:        
         symbol = (values["s"], category, self.name)
@@ -126,7 +148,8 @@ class Bybit(Variables):
         self.message_counter += 1
         instrument = self.Instrument[(values["symbol"], category, self.name)]
         instrument.volume24h = float(values["volume24h"])
-        instrument.fundingRate = float(values["fundingRate"])
+        if "fundingRate" in values:
+            instrument.fundingRate = float(values["fundingRate"])
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:

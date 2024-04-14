@@ -170,7 +170,6 @@ class Init(WS, Variables):
                     if col == "COMMISS" or col == "SUMREAL":
                         self.robots[emi][col] = float(self.robots[emi][col])
                     if col == "LTIME":
-                        print(col, type(self.robots[emi][col]), self.robots[emi][col])
                         self.robots[emi][col] = datetime.strptime(
                             str(self.robots[emi][col]), "%Y-%m-%d %H:%M:%S.%f"
                         )

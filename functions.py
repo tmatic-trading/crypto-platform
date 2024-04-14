@@ -65,9 +65,6 @@ class Function(WS, Variables):
         if self.name not in disp.price_rounding:
             disp.price_rounding[self.name] = OrderedDict()
         for symbol in self.Instrument.get_keys():
-            '''print("_______________", symbol, self.symbol_list)
-            for el in self.Instrument[symbol]:
-                print(el.name, el.value)'''
             tickSize = str(self.Instrument[symbol].tickSize)
             if tickSize.find(".") > 0:
                 disp.price_rounding[self.name][symbol] = (
@@ -1020,21 +1017,23 @@ class Function(WS, Variables):
         for symbol, position in self.positions.items():
             if symbol[2] == var.current_market:
                 if position["POS"] != 0:
-                    calc = Function.calculate(
-                        self,
-                        symbol=symbol,
-                        price=Function.close_price(
+                    price = Function.close_price(
                             self, symbol=symbol, pos=position["POS"]
-                        ),
-                        qty=-position["POS"],
-                        rate=0,
-                        fund=1,
-                    )
-                    settlCurrency = self.Instrument[symbol].settlCurrency
-                    if settlCurrency in results:
-                        results[settlCurrency] += calc["sumreal"]
-                    else:
-                        results[settlCurrency] = calc["sumreal"]
+                        )
+                    if price:
+                        calc = Function.calculate(
+                            self,
+                            symbol=symbol,
+                            price=price,
+                            qty=-position["POS"],
+                            rate=0,
+                            fund=1,
+                        )
+                        settlCurrency = self.Instrument[symbol].settlCurrency
+                        if settlCurrency in results:
+                            results[settlCurrency] += calc["sumreal"]
+                        else:
+                            results[settlCurrency] = calc["sumreal"]
         for num, cur in enumerate(self.currencies):
             settlCurrency = (cur, self.name)
             account = self.Account[settlCurrency]
@@ -1115,7 +1114,12 @@ class Function(WS, Variables):
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         instrument = self.Instrument[symbol]
-        close = instrument.bids[0][0] if pos > 0 else instrument.asks[0][0]
+        if pos > 0 and instrument.bids[0]:
+            close = instrument.bids[0][0]
+        elif pos < 0 and instrument.asks[0]:
+            close = instrument.asks[0][0]
+        else:
+            close = None
 
         return close
 
