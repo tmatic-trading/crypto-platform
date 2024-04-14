@@ -25,7 +25,7 @@ def info_display(name: str, message: str) -> None:
         + " "
         + " "
         + name
-        + " "
+        + ": "
         + message
         + "\n",
     )

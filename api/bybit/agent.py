@@ -28,7 +28,7 @@ class Agent(Bybit):
                     + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
                     + "such symbol does not exist"
                 )
-                Bybit.exit()
+                Bybit.exit(self)
                 exit(1)
 
     def get_user(self) -> Union[dict, None]:
@@ -241,6 +241,15 @@ class Agent(Bybit):
                 instrument["settleCoin"],
                 self.name,
             )
+            if instrument["settleCoin"] not in self.settlCurrency_list[category]:
+                self.settlCurrency_list[category].append(instrument["settleCoin"])
+            if instrument["settleCoin"] not in self.settleCoin_list:
+                self.settleCoin_list.append(instrument["settleCoin"])
+        else:
+            self.Instrument[symbol].settlCurrency = (
+                "None",
+                self.name,
+            )
         if "deliveryTime" in instrument:
             if int(instrument["deliveryTime"]):
                 self.Instrument[symbol].expire = service.time_converter(
@@ -248,22 +257,23 @@ class Agent(Bybit):
                 )
             else:
                 self.Instrument[symbol].expire = "Perpetual"
+        else:
+            self.Instrument[symbol].expire = "None"
         self.Instrument[symbol].tickSize = float(instrument["priceFilter"]["tickSize"])
         self.Instrument[symbol].minOrderQty = float(
             instrument["lotSizeFilter"]["minOrderQty"]
         )
         qty = self.Instrument[symbol].minOrderQty
-        self.Instrument[symbol].precision = (
+        if float(qty) - int(float(qty)) == 0:
+               self.Instrument[symbol].precision = 0
+        else:
+            self.Instrument[symbol].precision = (
             len(str(float(qty) - int(float(qty))).replace(".", "")) - 1
         )
         self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
         self.Instrument[symbol].fundingRate = 0
-        if instrument["settleCoin"] not in self.settlCurrency_list[category]:
-            self.settlCurrency_list[category].append(instrument["settleCoin"])
-        if instrument["settleCoin"] not in self.settleCoin_list:
-            self.settleCoin_list.append(instrument["settleCoin"])
         self.Instrument[symbol].volume24h = 0
         self.Instrument[symbol].avgEntryPrice = 0
         self.Instrument[symbol].marginCallPrice = 0
