@@ -1,31 +1,18 @@
+import threading
 import time
 import tkinter as tk
-import threading
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from random import randint
 from typing import Union
 
-import services as service
 from api.api import WS, Markets
 from api.variables import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
-from display.variables import GridTable, ListBoxTable
+from display.variables import GridTable, ListBoxTable, Tables
 from display.variables import Variables as disp
-
-#db = var.env["MYSQL_DATABASE"]
-
-
-# from api.bitmex.ws import Bitmex
-
-class Tables:
-    position = GridTable
-    account = GridTable
-    robots = GridTable
-    market = GridTable
-    orderbook = GridTable
 
 
 class Function(WS, Variables):
@@ -139,7 +126,7 @@ class Function(WS, Variables):
         """
         Insert row into database
         """
-        '''var.cursor_mysql.execute(
+        """var.cursor_mysql.execute(
             "insert into "
             + db
             + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
@@ -147,7 +134,7 @@ class Function(WS, Variables):
                     CLORDID,TTIME,ACCOUNT) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
                         %s,%s,%s,%s,%s,%s,%s,%s)",
             values,
-        )'''
+        )"""
         Function.sql_lock.acquire(True)
         var.cursor_sqlite.execute(
             "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
@@ -219,10 +206,10 @@ class Function(WS, Variables):
                     )
                     info_display(self.name, message)
                     var.logger.info(message)
-            data = Function.select_database(#read_database
+            data = Function.select_database(  # read_database
                 self,
-                "select EXECID from coins where EXECID='%s' and account=%s" %
-                (row["execID"], self.user_id)
+                "select EXECID from coins where EXECID='%s' and account=%s"
+                % (row["execID"], self.user_id),
             )
             if not data:
                 side = 0
@@ -242,7 +229,7 @@ class Function(WS, Variables):
                     execfee = row["execFee"]
                 else:
                     execfee = "None"
-                #print("____________calc trade", "commiss", calc["commiss"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
+                # print("____________calc trade", "commiss", calc["commiss"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                 self.robots[emi]["POS"] += lastQty
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
@@ -315,7 +302,7 @@ class Function(WS, Variables):
                         execfee = row["execFee"]
                     else:
                         execfee = "None"
-                    #print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
+                    # print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                     message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
                     message["QTY"] = self.robots[emi]["POS"]
@@ -369,7 +356,7 @@ class Function(WS, Variables):
                     execfee = row["execFee"]
                 else:
                     execfee = "None"
-                #print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
+                # print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                 emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     var.logger.error(
@@ -717,7 +704,7 @@ class Function(WS, Variables):
         """
         # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
         if utc.hour != var.refresh_hour:
-            #var.cursor_mysql.execute("select count(*) from " + db + ".robots")
+            # var.cursor_mysql.execute("select count(*) from " + db + ".robots")
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening MySQL")
@@ -1018,8 +1005,8 @@ class Function(WS, Variables):
             if symbol[2] == var.current_market:
                 if position["POS"] != 0:
                     price = Function.close_price(
-                            self, symbol=symbol, pos=position["POS"]
-                        )
+                        self, symbol=symbol, pos=position["POS"]
+                    )
                     if price:
                         calc = Function.calculate(
                             self,
@@ -1091,7 +1078,7 @@ class Function(WS, Variables):
                 val=format_number(number=total),
             )
 
-        # Refresh Exchange table
+        # Refresh Market table
 
         mod = Tables.market.mod
         for row, name in enumerate(var.market_list):
@@ -1103,13 +1090,7 @@ class Function(WS, Variables):
                 table="market",
                 column=0,
                 row=row + mod,
-                val=name
-                + "\nAcc."
-                + str(ws.user_id)
-                + "\n"
-                + str(Markets[name].connect_count)
-                + " "
-                + status,
+                val=ws.account_disp + str(ws.connect_count) + " " + status,
             )
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:

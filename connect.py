@@ -15,6 +15,7 @@ from api.bybit.ws import Bybit
 # from api.websockets import Websockets
 from common.variables import Variables as var
 from display.functions import info_display
+from display.variables import Tables
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
 
@@ -83,26 +84,32 @@ def refresh() -> None:
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.utcnow()
-        if ws.logNumFatal > 2000:
-            if ws.message2000 == "":
-                ws.message2000 = (
-                    "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
-                )
-                info_display(ws.name, ws.message2000)
-            sleep(1)
-        elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-            Function.market_status(ws, "RESTARTING...")
-            setup_market(ws=ws)
-        else:
-            if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
-                if ws.messageStopped == "":
-                    ws.messageStopped = (
-                        "Error=" + str(ws.logNumFatal) + ". Trading stopped"
+        if ws.logNumFatal > 0:
+            if ws.logNumFatal > 2000:
+                if ws.message2000 == "":
+                    ws.message2000 = (
+                        "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
                     )
-                    info_display(name, ws.messageStopped)
-                    if ws.logNumFatal == 2:
-                        info_display(name, "Insufficient available balance!")
-                disp.f9 = "OFF"
+                    info_display(ws.name, ws.message2000)
+                sleep(1)
+            elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
+                Function.market_status(ws, "RESTARTING...")
+                setup_market(ws=ws)
+            else:
+                if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
+                    if ws.messageStopped == "":
+                        ws.messageStopped = (
+                            "Error=" + str(ws.logNumFatal) + ". Trading stopped"
+                        )
+                        info_display(name, ws.messageStopped)
+                        if ws.logNumFatal == 2:
+                            info_display(name, "Insufficient available balance!")
+                    disp.f9 = "OFF"
+            Tables.market.color_market(
+                state="error",
+                row=var.market_list.index(ws.name),
+                market=ws.name,
+            )
     Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
 
@@ -137,9 +144,10 @@ def trade_state(event) -> None:
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
         disp.messageStopped = ""
-        ws = Markets[var.current_market]
-        ws.logNumFatal = 0
-    print(var.current_market, disp.f9)
+        for num, market in enumerate(var.market_list):
+            Markets[market].logNumFatal = 0
+            Tables.market.color_market(state="online", row=num, market=market)
+            print(market, disp.f9)
 
 
 def close():

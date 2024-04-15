@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Union
 
 from api.bybit.errors import exception
-from api.variables import Variables
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:

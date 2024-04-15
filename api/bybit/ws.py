@@ -1,15 +1,12 @@
 import logging
-from collections import OrderedDict
-from datetime import datetime
-from time import sleep
 
 import services as service
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument
 from common.variables import Variables as var
-from services import exceptions_manager
 from display.functions import info_display
+from services import exceptions_manager
 
 # from .agent import Agent
 from .pybit.unified_trading import HTTP, WebSocket
@@ -51,7 +48,19 @@ class Bybit(Variables):
             self.orderbook_depth = 1
         else:
             self.orderbook_depth = 50
-        self.currency_divisor = {"USDT": 1, "BTC": 1, "ETH": 1, "EOS": 1, "XRP": 1, "DOT": 1, "ADA": 1, "MANA": 1, "LTC": 1, "SOL": 1, "None": 1}
+        self.currency_divisor = {
+            "USDT": 1,
+            "BTC": 1,
+            "ETH": 1,
+            "EOS": 1,
+            "XRP": 1,
+            "DOT": 1,
+            "ADA": 1,
+            "MANA": 1,
+            "LTC": 1,
+            "SOL": 1,
+            "None": 1,
+        }
         print("!!!!!!!!!!!!! BYBIT !!!!!!!!!!!")
 
     def start(self):
@@ -69,7 +78,9 @@ class Bybit(Variables):
             lst = list(filter(lambda x: x[1] == category, self.symbol_list))
             for symbol in lst:
                 if category == "linear":
-                    print("_________ws subscription: linear - orderbook_stream -", symbol)
+                    print(
+                        "_________ws subscription: linear - orderbook_stream -", symbol
+                    )
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -85,7 +96,9 @@ class Bybit(Variables):
                         ),
                     )
                 elif category == "inverse":
-                    print("_________ws subscription: inverse - orderbook_stream -", symbol)
+                    print(
+                        "_________ws subscription: inverse - orderbook_stream -", symbol
+                    )
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -115,7 +128,7 @@ class Bybit(Variables):
                         callback=lambda x: self.__update_ticker(
                             values=x["data"], category="spot"
                         ),
-                    )                     
+                    )
         self.ws_private = WebSocket(
             testnet=self.testnet,
             channel_type="private",
@@ -128,10 +141,10 @@ class Bybit(Variables):
         self.ws_private.execution_stream(callback=self.__handle_execution)
         info_display(self.name, "Connected to websocket.")
 
-    def __update_orderbook(self, values: dict, category: tuple) -> None:        
+    def __update_orderbook(self, values: dict, category: tuple) -> None:
         symbol = (values["s"], category, self.name)
         instrument = self.Instrument[symbol]
-        if self.depth == "quote":            
+        if self.depth == "quote":
             instrument.asks[0] = values["a"]
             instrument.bids[0] = values["b"]
         else:

@@ -119,8 +119,8 @@ class Variables:
         "MARKET",
     ]
     logger = logging
-    #connect_mysql = None
-    #cursor_mysql = None
+    # connect_mysql = None
+    # cursor_mysql = None
     connect_sqlite = None
     cursor_sqlite = None
     timefrs = {1: "1m", 5: "5m", 60: "1h"}

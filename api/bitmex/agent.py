@@ -166,14 +166,18 @@ class Agent(Bitmex):
             )
             for row in result:
                 if row["symbol"] not in self.symbol_category:
-                    Agent.get_instrument(self, symbol=(row["symbol"], "category not defined", self.name))
+                    Agent.get_instrument(
+                        self, symbol=(row["symbol"], "category not defined", self.name)
+                    )
                 row["market"] = self.name
                 row["symbol"] = (
                     row["symbol"],
                     self.symbol_category[row["symbol"]],
                     self.name,
                 )
-                row["transactTime"] = service.time_converter(time=row["transactTime"], usec=True)
+                row["transactTime"] = service.time_converter(
+                    time=row["transactTime"], usec=True
+                )
                 row["settlCurrency"] = (row["settlCurrency"], self.name)
                 if row["execType"] == "Funding":
                     if row["foreignNotional"] > 0:

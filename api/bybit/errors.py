@@ -1,6 +1,8 @@
 import logging
 
 from api.variables import Variables
+from common.variables import Variables as var
+from display.variables import Tables
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,8 @@ def exception(method):
         self: Variables = args[0]
         try:
             result = method(*args, **kwargs)
-            self.logNumFatal = 0
+            if self.logNumFatal < 0:
+                self.logNumFatal = 0
             return result
         except Exception as exception:
             name = exception.__class__.__name__
@@ -35,6 +38,8 @@ def exception(method):
                 logger.error(message)
                 if exception.status_code == 10004:  # error sign!
                     self.logNumFatal = 2001
+                elif exception.status_code == 110007:  # Insufficient available balance
+                    self.logNumFatal = 2
                 else:
                     self.logNumFatal = 1001
             elif name == "InvalidChannelTypeError":  # pybit ws
