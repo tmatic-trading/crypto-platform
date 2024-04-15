@@ -51,6 +51,9 @@ def exception(method):
             elif name == "TopicMismatchError":  # pybit ws
                 logger.error(message)
                 self.logNumFatal = 1001
+            elif name == "WebSocketTimeoutException":  # pybit ws
+                logger.error(message)
+                self.logNumFatal = 1001
             else:
                 print("_____________", name)
                 raise exception

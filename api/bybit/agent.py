@@ -151,6 +151,8 @@ class Agent(Bybit):
 
     def urgent_announcement(self):
         print("___urgent_announcement")
+        self.exit()
+        self.logNumFatal = 1001
 
     def place_limit(self, quantity: int, price: float, clOrdID: str, symbol: tuple):
         print("___place_limit")

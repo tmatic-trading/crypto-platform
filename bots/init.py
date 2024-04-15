@@ -168,8 +168,8 @@ class Init(WS, Variables):
                     if col == "COMMISS" or col == "SUMREAL":
                         self.robots[emi][col] = float(self.robots[emi][col])
                     if col == "LTIME":
-                        self.robots[emi][col] = datetime.strptime(
-                            str(self.robots[emi][col]), "%Y-%m-%d %H:%M:%S.%f"
+                        self.robots[emi][col] = service.time_converter(
+                            time=self.robots[emi][col], usec=True
                         )
             self.robots[emi]["PNL"] = 0
             self.robots[emi]["lotSize"] = self.Instrument[

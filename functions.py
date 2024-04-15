@@ -1085,6 +1085,11 @@ class Function(WS, Variables):
             status = "ONLINE"
             if ws.logNumFatal != 0:
                 status = "error " + str(ws.logNumFatal)
+                Tables.market.color_market(
+                    state="error",
+                    row=var.market_list.index(ws.name),
+                    market=ws.name,
+                )
             update_label(
                 table="market",
                 column=0,
@@ -1193,7 +1198,7 @@ class Function(WS, Variables):
             table="market",
             column=0,
             row=row + mod,
-            val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
+            val=self.account_disp + status,
         )
 
     def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
@@ -1764,6 +1769,7 @@ def load_labels() -> None:
         name="orderbook",
         size=disp.num_book,
         title=var.name_book,
+        column_width=85,
         canvas_height=440,
         bind=handler_orderbook,
         color=disp.bg_color,
