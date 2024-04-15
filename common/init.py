@@ -313,9 +313,6 @@ class Init(WS, Variables):
         data = Function.select_database(self, sql)
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-            val["QTY"] = Function.volume(
-                Markets[val["MARKET"]], qty=val["QTY"], symbol=val["SYMBOL"]
-            )
             Function.fill_columns(
                 self, func=Function.funding_display, table=funding, val=val
             )
@@ -347,9 +344,6 @@ class Init(WS, Variables):
         data = Function.select_database(self, sql)
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-            val["QTY"] = Function.volume(
-                Markets[val["MARKET"]], qty=val["QTY"], symbol=val["SYMBOL"]
-            )
             Function.fill_columns(
                 self, func=Function.trades_display, table=trades, val=val
             )

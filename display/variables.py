@@ -338,11 +338,11 @@ class GridTable(Variables):
 
 
 class Tables:
-    position = GridTable
-    account = GridTable
-    robots = GridTable
-    market = GridTable
-    orderbook = GridTable
+    position: GridTable
+    account: GridTable
+    robots: GridTable
+    market: GridTable
+    orderbook: GridTable
 
 
 class ListBoxTable(Variables):

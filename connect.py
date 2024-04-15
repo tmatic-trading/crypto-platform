@@ -11,8 +11,6 @@ import functions
 from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
-
-# from api.websockets import Websockets
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Tables
@@ -43,6 +41,7 @@ def setup_market(ws: Markets):
     WS.exit(ws)
     print("++++", ws.name, ws.logNumFatal)
     while ws.logNumFatal:
+        ws.logNumFatal = -1
         WS.start_ws(ws)
         WS.get_user(ws)
         WS.get_wallet_balance(ws)
@@ -77,6 +76,10 @@ def setup_market(ws: Markets):
                     sleep(2)
             else:
                 var.logger.info("No robots loaded.")
+    if hasattr(Tables, "market"):
+        Tables.market.color_market(
+            state="online", row=var.market_list.index(ws.name), market=ws.name
+        )
     ws.api_is_active = True
 
 
@@ -91,9 +94,14 @@ def refresh() -> None:
                         "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
                     )
                     info_display(ws.name, ws.message2000)
+                    Tables.market.color_market(
+                        state="error",
+                        row=var.market_list.index(ws.name),
+                        market=ws.name,
+                    )
                 sleep(1)
             elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-                Function.market_status(ws, "RESTARTING...")
+                # Function.market_status(ws, "RESTARTING...")
                 setup_market(ws=ws)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
@@ -105,12 +113,7 @@ def refresh() -> None:
                         if ws.logNumFatal == 2:
                             info_display(name, "Insufficient available balance!")
                     disp.f9 = "OFF"
-            Tables.market.color_market(
-                state="error",
-                row=var.market_list.index(ws.name),
-                market=ws.name,
-            )
-    Function.refresh_on_screen(Markets[var.current_market], utc=utc)
+        Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
 
 def clear_params():

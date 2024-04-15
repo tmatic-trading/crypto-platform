@@ -22,13 +22,15 @@ def time_converter(
     elif isinstance(time, datetime):
         return int(time.timestamp() * 1000)
     elif isinstance(time, str):
-        try:
-            if usec:
-                return datetime.strptime(time[:-1], "%Y-%m-%dT%H:%M:%S.%f")
-            else:
-                return datetime.strptime(time[:19], "%Y-%m-%dT%H:%M:%S")
-        except Exception as e:
-            raise e
+        time = time.replace("T", " ")
+        time = time.replace("Z", "")
+        if usec:
+            try:
+                return datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
+            except:
+                return datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+        else:
+            return datetime.strptime(time[:19], "%Y-%m-%d %H:%M:%S")
     else:
         raise TypeError(type(time))
 
