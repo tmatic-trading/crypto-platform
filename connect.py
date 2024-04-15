@@ -11,8 +11,6 @@ import functions
 from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
-
-# from api.websockets import Websockets
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Tables

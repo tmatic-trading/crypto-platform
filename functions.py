@@ -570,7 +570,7 @@ class Function(WS, Variables):
                 number=float(val["TRADE_PRICE"]),
                 symbol=val["SYMBOL"],
             ),
-            val["QTY"],
+            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
             val["EMI"],
         ]
         if init:
@@ -596,7 +596,7 @@ class Function(WS, Variables):
                 symbol=val["SYMBOL"],
             ),
             "{:.7f}".format(-val["COMMISS"]),
-            val["QTY"],
+            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
             val["EMI"],
         ]
         if init:
@@ -624,7 +624,7 @@ class Function(WS, Variables):
                 number=val["price"],
                 symbol=val["SYMBOL"],
             ),
-            val["leavesQty"],
+            Function.volume(self, qty=val["leavesQty"], symbol=val["SYMBOL"]),
             emi,
         ]
         if init:
@@ -702,12 +702,11 @@ class Function(WS, Variables):
         """
         Refresh information on screen
         """
-        # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
         if utc.hour != var.refresh_hour:
             # var.cursor_mysql.execute("select count(*) from " + db + ".robots")
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
-            var.logger.info("Emboldening MySQL")
+            var.logger.info("Emboldening SQLite")
 
         disp.label_time["text"] = time.ctime()
         disp.label_f9["text"] = str(disp.f9)
@@ -777,7 +776,7 @@ class Function(WS, Variables):
                 table="position",
                 column=7,
                 row=num + mod,
-                val=humanFormat(instrument.volume24h),
+                val=Function.humanFormat(self, instrument.volume24h, symbol),
             )
             if isinstance(instrument.expire, datetime):
                 tm = instrument.expire.strftime("%y%m%d %Hh")
@@ -970,7 +969,7 @@ class Function(WS, Variables):
                 table="robots",
                 column=7,
                 row=num + mod,
-                val=humanFormat(robot["VOL"]),
+                val=Function.humanFormat(self, robot["VOL"], symbol),
             )
             update_label(
                 table="robots",
@@ -1202,6 +1201,18 @@ class Function(WS, Variables):
         elements = func(Markets[val["SYMBOL"][2]], val=val, init=True)
         for num, element in enumerate(elements):
             table.columns[num].append(element)
+
+    def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
+        if volNow > 1000000000:
+            volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
+        elif volNow > 1000000:
+            volNow = "{:.2f}".format(round(volNow / 1000000, 2)) + "M"
+        elif volNow > 1000:
+            volNow = "{:.2f}".format(round(volNow / 1000, 2)) + "K"
+        else:
+            volNow = Function.volume(self, qty=volNow, symbol=symbol)
+
+        return volNow
 
 
 def handler_order(event) -> None:
@@ -1622,17 +1633,6 @@ def handler_market(event, row_position: int) -> None:
                 disp.labels["market"][row[0] + mod][column]["bg"] = disp.bg_select_color
             else:
                 disp.labels["market"][row[0] + mod][column]["bg"] = disp.title_color
-
-
-def humanFormat(volNow: int) -> str:
-    if volNow > 1000000000:
-        volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
-    elif volNow > 1000000:
-        volNow = "{:.2f}".format(round(volNow / 1000000, 2)) + "M"
-    elif volNow > 1000:
-        volNow = "{:.2f}".format(round(volNow / 1000, 2)) + "K"
-
-    return volNow
 
 
 def find_order(price: float, qty: int, symbol: str) -> int:
