@@ -135,6 +135,8 @@ class Variables:
         label_trading.config(bg="gray83")
         title_color = label_trading["background"]
         bg_select_color = "khaki1"
+        sell_bg_color = "#feede0"
+        buy_bg_color = "#e3f3cf"
 
     bg_color = text_info["background"]
     fg_color = label_trading["foreground"]
@@ -323,6 +325,25 @@ class GridTable(Variables):
                 if row == 0:
                     break
 
+    def color_market(self, state: str, row: int, market: str):
+        if state == "error":
+            color = self.sell_bg_color
+        else:
+            if market == var.current_market:
+                color = self.bg_select_color
+            else:
+                color = self.color
+        for column in range(len(self.title)):
+            self.labels[self.name][row + self.mod][column]["bg"] = color
+
+
+class Tables:
+    position = GridTable
+    account = GridTable
+    robots = GridTable
+    market = GridTable
+    orderbook = GridTable
+
 
 class ListBoxTable(Variables):
     """
@@ -388,15 +409,15 @@ class ListBoxTable(Variables):
         else:
             self.item_color = {
                 "Buy": {
-                    "bg": "#e3f3cf",
+                    "bg": self.buy_bg_color,
                     "fg": self.fg_color,
-                    "selectbackground": "#e3f3cf",
+                    "selectbackground": self.buy_bg_color,
                     "selectforeground": self.fg_color,
                 },
                 "Sell": {
-                    "bg": "#feede0",
+                    "bg": self.sell_bg_color,
                     "fg": self.fg_color,
-                    "selectbackground": "#feede0",
+                    "selectbackground": self.sell_bg_color,
                     "selectforeground": self.fg_color,
                 },
             }

@@ -42,7 +42,6 @@ class Init(WS, Variables):
             )
             union = "union "
         qwr += ") T where MARKET = '" + self.name + "' order by SORT"
-        #var.cursor_mysql.execute(qwr)
         data = Function.select_database(self, qwr)
         for robot in data:
             emi = robot["EMI"]
@@ -66,8 +65,6 @@ class Init(WS, Variables):
             + " and SIDE <> -1 group by EMI, \
                             SYMBOL, CATEGORY) res where POS <> 0"
         )
-        #var.cursor_mysql.execute(qwr)
-        #defuncts = var.cursor_mysql.fetchall()
         defuncts = Function.select_database(self, qwr)
         for defunct in defuncts:
             symbol = (defunct["SYMBOL"], defunct["CATEGORY"], self.name)
@@ -110,8 +107,6 @@ class Init(WS, Variables):
         qwr += (
             ") T where MARKET = '" + self.name + "' and ACCOUNT = " + str(self.user_id)
         )
-        #var.cursor_mysql.execute(qwr)
-        #reserved = var.cursor_mysql.fetchall()
         reserved = Function.select_database(self, qwr)
         for symbol in self.symbol_list:
             for res in reserved:
@@ -140,7 +135,7 @@ class Init(WS, Variables):
                 _emi = emi[0]
             else:
                 _emi = emi
-            '''var.cursor_mysql.execute(
+            """var.cursor_mysql.execute(
                 "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
                 + "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
                 + "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01') LTIME "
@@ -150,15 +145,18 @@ class Init(WS, Variables):
                 + "coins WHERE EMI = ? AND ACCOUNT = ? AND CATEGORY = ?) aa",
                 (_emi, self.user_id, val["CATEGORY"])
             )
-            data = var.cursor_mysql.fetchall()'''
+            data = var.cursor_mysql.fetchall()"""
 
-            sql = "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) " \
-                "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) " \
-                "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME " \
-                "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY " \
-                "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, " \
-                "COMMISS, TTIME FROM " \
-                "coins WHERE EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa" % (_emi, self.user_id, val["CATEGORY"])
+            sql = (
+                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
+                "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
+                "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME "
+                "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY "
+                "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
+                "COMMISS, TTIME FROM "
+                "coins WHERE EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
+                % (_emi, self.user_id, val["CATEGORY"])
+            )
 
             data = Function.select_database(self, sql)
 

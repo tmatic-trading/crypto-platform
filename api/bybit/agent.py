@@ -116,9 +116,9 @@ class Agent(Bybit):
 
     def open_orders(self) -> list:
         print("___open_orders")
-        myOrders = list()    
+        myOrders = list()
         for category in self.category_list:
-            for settleCoin in self.currencies:                
+            for settleCoin in self.currencies:
                 if settleCoin in self.settlCurrency_list[category]:
                     cursor = "no"
                     while cursor:
@@ -265,11 +265,11 @@ class Agent(Bybit):
         )
         qty = self.Instrument[symbol].minOrderQty
         if float(qty) - int(float(qty)) == 0:
-               self.Instrument[symbol].precision = 0
+            self.Instrument[symbol].precision = 0
         else:
             self.Instrument[symbol].precision = (
-            len(str(float(qty) - int(float(qty))).replace(".", "")) - 1
-        )
+                len(str(float(qty) - int(float(qty))).replace(".", "")) - 1
+            )
         self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
@@ -280,8 +280,9 @@ class Agent(Bybit):
         self.Instrument[symbol].currentQty = 0
         self.Instrument[symbol].unrealisedPnl = 0
         self.Instrument[symbol].asks = [[0, 0]]
-        self.Instrument[symbol].bids = [[0, 0]]          
-    
+        self.Instrument[symbol].bids = [[0, 0]]
+
+
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
     for k, val in data.items():
         if k == key:

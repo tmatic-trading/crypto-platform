@@ -3,13 +3,13 @@ import logging
 import threading
 import time
 import traceback
-import services as service
 from collections import OrderedDict
 from time import sleep
 
 import requests
 import websocket
 
+import services as service
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument
