@@ -41,3 +41,22 @@ def exceptions_manager(cls):
             if attr not in ["exit", "Position", "Instrument", "Account"]:
                 setattr(cls, attr, exception(getattr(cls, attr)))
     return cls
+
+
+def precision(qty: float) -> int:
+    r = str(qty)
+    if "e" in r:
+        r = r.replace("e", "")
+        r = r.replace(".", "")
+        r = r.split("-")
+        precision = len(r[0]) - 1 + int(r[1])
+    elif "." in r:
+        r = r.split(".")
+        if int(r[1]) == 0:
+            precision = 0
+        else:
+            precision = len(r[1])
+    else:
+        precision = 0
+
+    return precision

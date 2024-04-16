@@ -5,6 +5,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 from random import randint
 from typing import Union
+from decimal import Decimal
 
 from api.api import WS, Markets
 from api.variables import Variables
@@ -999,7 +1000,7 @@ class Function(WS, Variables):
         # Refresh Account table
 
         mod = Tables.account.mod
-        results = dict()
+        results = dict()     
         for symbol, position in self.positions.items():
             if symbol[2] == var.current_market:
                 if position["POS"] != 0:
@@ -1315,7 +1316,7 @@ def handler_order(event) -> None:
                         symbol=var.orders[clOrdID]["SYMBOL"],
                     )
                     + "\nquantity\t"
-                    + str(var.orders[clOrdID]["leavesQty"])
+                    + Function.volume(ws, qty=var.orders[clOrdID]["leavesQty"], symbol=var.orders[clOrdID]["SYMBOL"])
                 )
                 label_price = tk.Label(frame_dn)
                 label_price["text"] = "Price "
@@ -1387,12 +1388,36 @@ def handler_orderbook(event, row_position: int) -> None:
                 )
             emi_number.set("")
             disp.symb_book = var.symbol
-        book_window.after(500, refresh)
+        book_window.after(100, refresh)
 
     def on_closing() -> None:
         disp.book_window_trigger = "off"
         book_window.after_cancel(refresh_var)
         book_window.destroy()
+
+    def minimum_qty(qnt):
+        minOrderQty = ws.Instrument[var.symbol].minOrderQty
+        if qnt < minOrderQty:
+            message = (
+                "The "
+                + str(var.symbol)
+                + " quantity must be greater than or equal to "
+                + Function.volume(ws, qty=minOrderQty, symbol=var.symbol)
+            )
+            warning_window(message)
+            return "error"
+        qnt_d = Decimal(str(qnt))
+        qtyStep = Decimal(str(ws.Instrument[var.symbol].qtyStep))
+        print(qnt_d % qtyStep)
+        if qnt_d % qtyStep != 0:
+            message = (
+                "The "
+                + str(var.symbol)
+                + " quantity must be multiple to "
+                + Function.volume(ws, qty=qtyStep, symbol=var.symbol)
+            )
+            warning_window(message)
+            return "error"
 
     def callback_sell_limit() -> None:
         if quantity.get() and price_ask.get() and emi_number.get():
@@ -1403,29 +1428,16 @@ def handler_orderbook(event, row_position: int) -> None:
                 price = float(price_ask.get())
                 res = "yes"
             except Exception:
-                info_display(
-                    ws.name,
-                    "Fields must be numbers! quantity: int or float, price: float",
-                )
+                warning_window("Fields must be numbers!")
                 res = "no"
             if res == "yes" and qnt != 0:
                 price = Function.round_price(
                     ws, symbol=var.symbol, price=price, rside=-qnt
                 )
                 if price <= 0:
-                    message = "The price must be above zero."
-                    info_display(ws.name, message)
-                    warning_window(message)
+                    warning_window("The price must be above zero.")
                     return
-                if qnt % ws.Instrument[var.symbol].minOrderQty != 0:
-                    message = (
-                        "The "
-                        + str(var.symbol)
-                        + " quantity must be multiple to "
-                        + str(ws.Instrument[var.symbol].minOrderQty)
-                    )
-                    info_display(ws.name, message)
-                    warning_window(message)
+                if minimum_qty(qnt):
                     return
                 Function.post_order(
                     ws,
@@ -1437,7 +1449,7 @@ def handler_orderbook(event, row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            info_display(ws.name, "Some of the fields are empty!")
+            warning_window("Some of the fields are empty!")
 
     def callback_buy_limit() -> None:
         if quantity.get() and price_bid.get() and emi_number.get():
@@ -1448,29 +1460,16 @@ def handler_orderbook(event, row_position: int) -> None:
                 price = float(price_bid.get())
                 res = "yes"
             except Exception:
-                info_display(
-                    ws.name,
-                    "Fields must be numbers! quantity: int or float, price: float",
-                )
+                warning_window("Fields must be numbers!")
                 res = "no"
             if res == "yes" and qnt != 0:
                 price = Function.round_price(
                     ws, symbol=var.symbol, price=price, rside=qnt
                 )
                 if price <= 0:
-                    message = "The price must be above zero."
-                    info_display(ws.name, message)
-                    warning_window(message)
+                    warning_window("The price must be above zero.")
                     return
-                if qnt % ws.Instrument[var.symbol].minOrderQty != 0:
-                    message = (
-                        "The "
-                        + str(var.symbol)
-                        + " quantity must be multiple to "
-                        + str(ws.Instrument[var.symbol].minOrderQty)
-                    )
-                    info_display(ws.name, message)
-                    warning_window(message)
+                if minimum_qty(qnt):
                     return
                 Function.post_order(
                     ws,
@@ -1482,7 +1481,7 @@ def handler_orderbook(event, row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            info_display(ws.name, "Some of the fields are empty!")
+            warning_window("Some of the fields are empty!")
 
     if disp.book_window_trigger == "off" and disp.f9 == "OFF":
         disp.book_window_trigger = "on"
@@ -1528,7 +1527,7 @@ def handler_orderbook(event, row_position: int) -> None:
             ),
         )
         entry_quantity = tk.Entry(
-            frame_quantity, width=6, bg=disp.bg_color, textvariable=quantity
+            frame_quantity, width=9, bg=disp.bg_color, textvariable=quantity
         )
         entry_quantity.insert(
             0,
