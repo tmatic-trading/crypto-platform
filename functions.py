@@ -167,6 +167,7 @@ class Function(WS, Variables):
                 )
                 var.connect_sqlite.commit()
                 Function.sql_lock.release()
+                break
             except var.error_sqlite as e:
                 if "database is locked" not in str(e):
                     var.logger.error(
@@ -821,11 +822,15 @@ class Function(WS, Variables):
             else:
                 tm = instrument.expire
             update_label(table="position", column=8, row=num + mod, val=tm)
+            if isinstance(instrument.fundingRate, float):                
+                fund = "{:.{precision}f}".format(instrument.fundingRate * 100, precision=4)
+            else:
+                fund = instrument.fundingRate
             update_label(
                 table="position",
                 column=9,
                 row=num + mod,
-                val=instrument.fundingRate,
+                val=fund,
             )
 
         # Refresh Orderbook table

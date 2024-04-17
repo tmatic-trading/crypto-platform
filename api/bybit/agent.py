@@ -307,6 +307,9 @@ class Agent(Bybit):
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
 
+        if symbol in self.symbol_list:
+            print("_____", symbol, self.Instrument[symbol].fundingRate)
+
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
     for k, val in data.items():
