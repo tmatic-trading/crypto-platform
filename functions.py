@@ -3,9 +3,9 @@ import time
 import tkinter as tk
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from decimal import Decimal
 from random import randint
 from typing import Union
-from decimal import Decimal
 
 from api.api import WS, Markets
 from api.variables import Variables
@@ -1000,7 +1000,7 @@ class Function(WS, Variables):
         # Refresh Account table
 
         mod = Tables.account.mod
-        results = dict()     
+        results = dict()
         for symbol, position in self.positions.items():
             if symbol[2] == var.current_market:
                 if position["POS"] != 0:
@@ -1316,7 +1316,11 @@ def handler_order(event) -> None:
                         symbol=var.orders[clOrdID]["SYMBOL"],
                     )
                     + "\nquantity\t"
-                    + Function.volume(ws, qty=var.orders[clOrdID]["leavesQty"], symbol=var.orders[clOrdID]["SYMBOL"])
+                    + Function.volume(
+                        ws,
+                        qty=var.orders[clOrdID]["leavesQty"],
+                        symbol=var.orders[clOrdID]["SYMBOL"],
+                    )
                 )
                 label_price = tk.Label(frame_dn)
                 label_price["text"] = "Price "

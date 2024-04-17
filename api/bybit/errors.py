@@ -38,9 +38,14 @@ def exception(method):
                 logger.error(message)
                 if exception.status_code == 10004:  # error sign!
                     self.logNumFatal = 2001
-                elif exception.status_code in [110007, 170131]:  # Insufficient available balance
+                elif exception.status_code in [
+                    110007,
+                    170131,
+                ]:  # Insufficient available balance
                     self.logNumFatal = 2
-                elif exception.status_code == 181001: # category only support linear or option
+                elif (
+                    exception.status_code == 181001
+                ):  # category only support linear or option
                     self.logNumFatal = 3
                 else:
                     self.logNumFatal = 1001
