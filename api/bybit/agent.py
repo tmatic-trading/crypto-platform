@@ -290,7 +290,7 @@ class Agent(Bybit):
         self.Instrument[symbol].volume24h = 0
         self.Instrument[symbol].avgEntryPrice = 0
         self.Instrument[symbol].marginCallPrice = 0
-        self.Instrument[symbol].currentQty = 0
+        self.Instrument[symbol].currentQty = None
         self.Instrument[symbol].unrealisedPnl = 0
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]

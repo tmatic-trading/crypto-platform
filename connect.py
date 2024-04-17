@@ -47,8 +47,6 @@ def setup_market(ws: Markets):
         WS.get_wallet_balance(ws)
         WS.get_position_info(ws)
         if ws.logNumFatal:
-            if ws.logNumFatal > 2000:
-                close()
             WS.exit(ws)
             sleep(2)
         else:
@@ -153,10 +151,11 @@ def trade_state(event) -> None:
             print(market, disp.f9)
 
 
-def close():
+
+def close(markets):
     print("____close______")
     var.robots_thread_is_active = False
     for name in var.market_list:
-        ws = Markets[name].value
+        ws = markets[name]
         ws.exit()
     exit(1)
