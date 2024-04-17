@@ -44,8 +44,8 @@ def exceptions_manager(cls):
     return cls
 
 
-def precision(qty: float) -> int:
-    r = str(qty)
+def precision(number: float) -> int:
+    r = str(number)
     if "e" in r:
         r = r.replace("e", "")
         r = r.replace(".", "")

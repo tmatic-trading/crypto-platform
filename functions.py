@@ -45,11 +45,11 @@ class Function(WS, Variables):
             self.full_symbol_list.append(symbol)
             if symbol not in self.Instrument.get_keys():
                 WS.get_instrument(Markets[symbol[2]], symbol=symbol)
-            Function.rounding(self)
+            #Function.rounding(self)
         if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)
 
-    def rounding(self: Markets) -> None:
+    '''def rounding(self: Markets) -> None:
         if self.name not in disp.price_rounding:
             disp.price_rounding[self.name] = OrderedDict()
         for symbol in self.Instrument.get_keys():
@@ -63,7 +63,7 @@ class Function(WS, Variables):
                     tickSize[tickSize.find("e-") + 2 :]
                 )
             else:
-                disp.price_rounding[self.name][symbol] = 0
+                disp.price_rounding[self.name][symbol] = 0'''
 
     def timeframes_data_filename(
         self: Markets, emi: str, symbol: tuple, timefr: str
@@ -634,9 +634,9 @@ class Function(WS, Variables):
         orders.paint(row=0, side=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
-        if qty == None:
-            qty = "None"
-        elif qty == 0:
+        if qty == "None":
+            return qty
+        if qty == 0:
             qty = "0"
         else:
             instrument = self.Instrument[symbol]
@@ -645,14 +645,16 @@ class Function(WS, Variables):
 
         return qty
 
-    def format_price(self: Markets, number: float, symbol: tuple) -> str:
-        rounding = disp.price_rounding[symbol[2]][symbol]
-        number = "{:.{precision}f}".format(number, precision=rounding)
+    def format_price(self: Markets, number: Union[float, str], symbol: tuple) -> str:
+        if number == "None":
+            return number
+        precision = self.Instrument[symbol].price_precision
+        number = "{:.{precision}f}".format(number, precision=precision)
         dot = number.find(".")
         if dot == -1:
             number = number + "."
         n = len(number) - 1 - number.find(".")
-        for _ in range(rounding - n):
+        for _ in range(precision - n):
             number = number + "0"
 
         return number
@@ -878,7 +880,7 @@ class Function(WS, Variables):
                 if row <= num:
                     price = round(
                         first_price_sell - (row + mod) * instrument.tickSize,
-                        disp.price_rounding[self.name][var.symbol],
+                        instrument.precision,
                     )
                     qty = 0
                     if var.orders:
@@ -903,7 +905,7 @@ class Function(WS, Variables):
                 else:
                     price = round(
                         first_price_buy - (row - num - 1) * instrument.tickSize,
-                        disp.price_rounding[self.name][var.symbol],
+                        instrument.precision,
                     )
                     qty = 0
                     if var.orders:

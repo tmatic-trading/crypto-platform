@@ -230,6 +230,7 @@ class Agent(Bybit):
                                     self.positions[symbol]["POS"] = -self.positions[
                                         symbol
                                     ]["POS"]
+                            print("_____", symbol)
                             instrument.currentQty = float(values["size"])
                             if values["side"] == "Sell":
                                 instrument.currentQty = -instrument.currentQty
@@ -269,6 +270,9 @@ class Agent(Bybit):
         else:
             self.Instrument[symbol].expire = "None"
         self.Instrument[symbol].tickSize = float(instrument["priceFilter"]["tickSize"])
+        self.Instrument[symbol].price_precision = service.precision(
+            number=self.Instrument[symbol].tickSize
+        )
         self.Instrument[symbol].minOrderQty = float(
             instrument["lotSizeFilter"]["minOrderQty"]
         )
@@ -281,7 +285,7 @@ class Agent(Bybit):
                 instrument["lotSizeFilter"]["qtyStep"]
             )
         self.Instrument[symbol].precision = service.precision(
-            qty=self.Instrument[symbol].qtyStep
+            number=self.Instrument[symbol].qtyStep
         )
         self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
@@ -290,8 +294,16 @@ class Agent(Bybit):
         self.Instrument[symbol].volume24h = 0
         self.Instrument[symbol].avgEntryPrice = 0
         self.Instrument[symbol].marginCallPrice = 0
-        self.Instrument[symbol].currentQty = None
+        self.Instrument[symbol].currentQty = 0
         self.Instrument[symbol].unrealisedPnl = 0
+        if category == "spot":
+            self.Instrument[symbol].fundingRate = "None"
+            self.Instrument[symbol].avgEntryPrice = "None"
+            self.Instrument[symbol].marginCallPrice = "None"
+            self.Instrument[symbol].currentQty = "None"
+            self.Instrument[symbol].unrealisedPnl = "None"
+        if category == "option":
+            self.Instrument[symbol].fundingRate = None
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
 

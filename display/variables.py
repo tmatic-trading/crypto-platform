@@ -186,7 +186,7 @@ class Variables:
     info_display_counter = 0
     symb_book = ""
     book_window_trigger = "off"
-    price_rounding = OrderedDict()
+    #price_rounding = OrderedDict()
     order_window_trigger = "off"
     table_limit = 150
 
