@@ -98,7 +98,9 @@ class Agent(Bitmex):
         self.Instrument[symbol].tickSize = instrument["tickSize"]
         self.Instrument[symbol].minOrderQty = instrument["lotSize"]
         self.Instrument[symbol].qtyStep = instrument["lotSize"]
-        self.Instrument[symbol].precision = service.precision(qty=self.Instrument[symbol].qtyStep)
+        self.Instrument[symbol].precision = service.precision(
+            qty=self.Instrument[symbol].qtyStep / myMultiplier
+        )
         self.Instrument[symbol].state = instrument["state"]
         self.Instrument[symbol].volume24h = instrument["volume24h"]
         if "expire" in instrument and instrument["expire"]:

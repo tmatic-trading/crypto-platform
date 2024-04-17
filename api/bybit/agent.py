@@ -225,12 +225,14 @@ class Agent(Bybit):
                             symbol = (values["symbol"], category, self.name)
                             instrument = self.Instrument[symbol]
                             if symbol in self.positions:
-                                self.positions[symbol]["POS"] = float(values["size"])                                
-                                if values["side"] == "Sell":                                    
-                                    self.positions[symbol]["POS"] = -self.positions[symbol]["POS"]
+                                self.positions[symbol]["POS"] = float(values["size"])
+                                if values["side"] == "Sell":
+                                    self.positions[symbol]["POS"] = -self.positions[
+                                        symbol
+                                    ]["POS"]
                             instrument.currentQty = float(values["size"])
-                            if values["side"] == "Sell": 
-                                instrument.currentQty = -instrument.currentQty 
+                            if values["side"] == "Sell":
+                                instrument.currentQty = -instrument.currentQty
                             instrument.avgEntryPrice = float(values["avgPrice"])
                             instrument.unrealisedPnl = values["unrealisedPnl"]
                             instrument.marginCallPrice = values["liqPrice"]
@@ -271,10 +273,16 @@ class Agent(Bybit):
             instrument["lotSizeFilter"]["minOrderQty"]
         )
         if category == "spot":
-            self.Instrument[symbol].qtyStep = float(instrument["lotSizeFilter"]["basePrecision"])
+            self.Instrument[symbol].qtyStep = float(
+                instrument["lotSizeFilter"]["basePrecision"]
+            )
         else:
-            self.Instrument[symbol].qtyStep = float(instrument["lotSizeFilter"]["qtyStep"])
-        self.Instrument[symbol].precision = service.precision(qty=self.Instrument[symbol].qtyStep)
+            self.Instrument[symbol].qtyStep = float(
+                instrument["lotSizeFilter"]["qtyStep"]
+            )
+        self.Instrument[symbol].precision = service.precision(
+            qty=self.Instrument[symbol].qtyStep
+        )
         self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
