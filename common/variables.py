@@ -123,6 +123,7 @@ class Variables:
     # cursor_mysql = None
     connect_sqlite = None
     cursor_sqlite = None
+    error_sqlite = None
     timefrs = {1: "1m", 5: "5m", 60: "1h"}
     currency_divisor = {
         "XBt": 100000000,

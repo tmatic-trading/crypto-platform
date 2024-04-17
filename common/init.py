@@ -381,6 +381,7 @@ def setup_database_connecion() -> None:
         var.connect_sqlite = sqlite3.connect(db_sqlite, check_same_thread=False)
         var.connect_sqlite.row_factory = sqlite3.Row
         var.cursor_sqlite = var.connect_sqlite.cursor()
+        var.error_sqlite = Error
 
         sql_create_robots = """
         CREATE TABLE IF NOT EXISTS robots (

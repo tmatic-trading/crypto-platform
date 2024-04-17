@@ -98,14 +98,27 @@ class Function(WS, Variables):
         return r + val
 
     def select_database(self: Markets, query: str) -> list:
-        Function.sql_lock.acquire(True)
-        var.cursor_sqlite.execute(query)
-        Function.sql_lock.release()
-        orig = var.cursor_sqlite.fetchall()
-        data = []
-        if orig:
-            data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
-        return data
+        err_locked = 0
+        while(True):
+            try:
+                Function.sql_lock.acquire(True)
+                var.cursor_sqlite.execute(query)
+                Function.sql_lock.release()
+                orig = var.cursor_sqlite.fetchall()
+                data = []
+                if orig:
+                    data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
+                return data
+            except var.error_sqlite as e:
+                if "database is locked" not in str(e):
+                    break
+                else:
+                    err_locked += 1
+                    var.logger.error(
+                        "Sqlite Error: Database is locked (attempt: "
+                        + str(err_locked)
+                        + ")"
+                    )
 
     '''def read_database(self: Markets, execID: str, user_id: int) -> list:
         """
@@ -136,16 +149,29 @@ class Function(WS, Variables):
                         %s,%s,%s,%s,%s,%s,%s,%s)",
             values,
         )"""
-        Function.sql_lock.acquire(True)
-        var.cursor_sqlite.execute(
-            "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
-                SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
-                    CLORDID,TTIME,ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,\
-                        ?,?,?,?,?,?,?,?)",
-            values,
-        )
-        var.connect_sqlite.commit()
-        Function.sql_lock.release()
+        err_locked = 0
+        while(True):
+            try:
+                Function.sql_lock.acquire(True)
+                var.cursor_sqlite.execute(
+                    "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
+                        SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
+                            CLORDID,TTIME,ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,\
+                                ?,?,?,?,?,?,?,?)",
+                    values,
+                )
+                var.connect_sqlite.commit()
+                Function.sql_lock.release()
+            except var.error_sqlite as e:
+                if "database is locked" not in str(e):
+                    break
+                else:
+                    err_locked += 1
+                    var.logger.error(
+                        "Sqlite Error: Database is locked (attempt: "
+                        + str(err_locked)
+                        + ")"
+                    )
 
     def transaction(self: Markets, row: dict, info: str = "") -> None:
         """
