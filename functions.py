@@ -634,7 +634,9 @@ class Function(WS, Variables):
         orders.paint(row=0, side=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
-        if qty == 0:
+        if qty == None:
+            qty = "None"
+        elif qty == 0:
             qty = "0"
         else:
             instrument = self.Instrument[symbol]
@@ -738,10 +740,7 @@ class Function(WS, Variables):
             instrument = self.Instrument[symbol]
             update_label(table="position", column=0, row=num + mod, val=symbol[0])
             update_label(table="position", column=1, row=num + mod, val=symbol[1])
-            if self.positions[symbol]["POS"]:
-                pos = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
-            else:
-                pos = "0"
+            pos = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
             update_label(table="position", column=2, row=num + mod, val=pos)
             update_label(
                 table="position",

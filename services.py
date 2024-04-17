@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Union
+from common.variables import Variables as var
 
 from api.bybit.errors import exception
 
@@ -60,3 +61,12 @@ def precision(qty: float) -> int:
         precision = 0
 
     return precision
+
+
+def close(markets):
+    print("____close______")
+    var.robots_thread_is_active = False
+    for name in var.market_list:
+        ws = markets[name]
+        ws.exit()
+    exit(1)
