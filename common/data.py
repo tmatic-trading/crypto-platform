@@ -28,6 +28,7 @@ class Instrument:
     multiplier: int
     myMultiplier: int
     precision: int
+    price_precision: int
     qtyStep: float
     settlCurrency: str
     state: str

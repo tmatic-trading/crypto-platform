@@ -1,5 +1,4 @@
 import services as service
-from api.websockets import Websockets
 from common.data import Instrument
 from common.variables import Variables as var
 from functions import Function

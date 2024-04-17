@@ -96,10 +96,13 @@ class Agent(Bitmex):
         else:
             self.Instrument[symbol].settlCurrency = None
         self.Instrument[symbol].tickSize = instrument["tickSize"]
+        self.Instrument[symbol].price_precision = service.precision(
+            number=instrument["tickSize"]
+        )
         self.Instrument[symbol].minOrderQty = instrument["lotSize"]
         self.Instrument[symbol].qtyStep = instrument["lotSize"]
         self.Instrument[symbol].precision = service.precision(
-            qty=self.Instrument[symbol].qtyStep / myMultiplier
+            number=self.Instrument[symbol].qtyStep / myMultiplier
         )
         self.Instrument[symbol].state = instrument["state"]
         self.Instrument[symbol].volume24h = instrument["volume24h"]
