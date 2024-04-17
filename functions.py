@@ -111,6 +111,11 @@ class Function(WS, Variables):
                 return data
             except var.error_sqlite as e:
                 if "database is locked" not in str(e):
+                    var.logger.error(
+                        "Sqlite Error: "
+                        + str(e)
+                        + ")"
+                    )
                     break
                 else:
                     err_locked += 1
@@ -164,6 +169,11 @@ class Function(WS, Variables):
                 Function.sql_lock.release()
             except var.error_sqlite as e:
                 if "database is locked" not in str(e):
+                    var.logger.error(
+                        "Sqlite Error: "
+                        + str(e)
+                        + ")"
+                    )
                     break
                 else:
                     err_locked += 1
