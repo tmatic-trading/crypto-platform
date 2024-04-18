@@ -190,7 +190,7 @@ class Init(WS, Variables):
             )
             if data:
                 last = time
-                time = service.time_converter(time=data[-1]["timestamp"])
+                time = data[-1]["timestamp"]
                 if last == time:
                     return res, time
                 res += data
@@ -239,19 +239,17 @@ class Init(WS, Variables):
             time=time,
             target=target,
             symbol=robot["SYMBOL"],
-            timeframe=var.timefrs[robot["TIMEFR"]],
+            timeframe=robot["TIMEFR"],
         )
         if not res:
             return None
 
         # The 'frames' array is filled with timeframe data.
 
-        if service.time_converter(time=res[0]["timestamp"]) > service.time_converter(
-            time=res[-1]["timestamp"]
-        ):
+        if res[0]["timestamp"] > res[-1]["timestamp"]:
             res.reverse()
         for num, row in enumerate(res):
-            tm = service.time_converter(time=row["timestamp"]) - timedelta(
+            tm = row["timestamp"] - timedelta(
                 minutes=robot["TIMEFR"]
             )
             frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(

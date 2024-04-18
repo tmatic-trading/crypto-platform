@@ -57,8 +57,29 @@ class Agent(Bybit):
     def get_position(self, symbol: tuple = False):
         print("___get_position")
 
-    def trade_bucketed(self):
+    def trade_bucketed(
+            self, symbol: tuple, time: datetime, timeframe: str
+    ) -> Union[list, None]:
         print("___trade_bucketed")
+        kline = self.session.get_kline(
+            category=symbol[1],
+            symbol=symbol[0],
+            interval=str(timeframe),
+            start=service.time_converter(time=time),
+            limit=1000,
+        )
+        result = []
+        for row in kline["result"]["list"]:
+            result.append(
+                {
+                    "timestamp": service.time_converter(int(row[0]) / 1000),
+                    "open": float(row[1]),
+                    "high": float(row[2]),
+                    "low": float(row[3]),
+                    "close": float(row[4]),
+                }
+            )
+        return result        
 
     def trading_history(self, histCount: int, time: datetime) -> list:
         print("___trading_history")
@@ -230,7 +251,6 @@ class Agent(Bybit):
                                     self.positions[symbol]["POS"] = -self.positions[
                                         symbol
                                     ]["POS"]
-                            print("_____", symbol)
                             instrument.currentQty = float(values["size"])
                             if values["side"] == "Sell":
                                 instrument.currentQty = -instrument.currentQty
@@ -303,13 +323,9 @@ class Agent(Bybit):
             self.Instrument[symbol].currentQty = "None"
             self.Instrument[symbol].unrealisedPnl = "None"
         if category == "option":
-            self.Instrument[symbol].fundingRate = None
+            self.Instrument[symbol].fundingRate = "None"
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
-
-        if symbol in self.symbol_list:
-            print("_____", symbol, self.Instrument[symbol].fundingRate)
-
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
     for k, val in data.items():

@@ -150,12 +150,16 @@ class Agent(Bitmex):
     ) -> Union[list, None]:
         """
         Gets timeframe data. Available time interval: 1m,5m,1h,1d.
-        """
+        """        
         path = Listing.TRADE_BUCKETED.format(
-            TIMEFRAME=timeframe, SYMBOL=symbol[0], TIME=time
-        )
+            TIMEFRAME=self.timefrs[timeframe], SYMBOL=symbol[0], TIME=time
+        )      
+        values = Send.request(self, path=path, verb="GET")
+        for value in values:
+            value["symbol"] = symbol
+            value["timestamp"] = service.time_converter(time=value["timestamp"])
 
-        return Send.request(self, path=path, verb="GET")
+        return values
 
     def trading_history(self, histCount: int, time=None) -> Union[list, str]:
         if time:
