@@ -39,8 +39,3 @@ class Variables:
     filename = ""
     api_is_active = False
     account_disp = ""
-
-    # Bots data
-    robots = OrderedDict()
-    frames = dict()
-    robot_status = dict()

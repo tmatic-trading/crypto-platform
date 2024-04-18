@@ -244,7 +244,10 @@ class _WebSocketManager:
         self._send_custom_ping()
 
     def _send_custom_ping(self):
-        self.ws.send(self.custom_ping_message)
+        try:
+            self.ws.send(self.custom_ping_message)
+        except Exception:
+            print("______websocket is already closed")
 
     def _send_initial_ping(self):
         """https://github.com/bybit-exchange/pybit/issues/164"""

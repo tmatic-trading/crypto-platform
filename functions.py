@@ -1127,12 +1127,15 @@ class Function(WS, Variables):
             ws = Markets[name]
             status = "ONLINE"
             if ws.logNumFatal != 0:
-                status = "error " + str(ws.logNumFatal)
-                Tables.market.color_market(
-                    state="error",
-                    row=var.market_list.index(ws.name),
-                    market=ws.name,
-                )
+                if ws.logNumFatal == -1:
+                    status = "RELOADING"
+                else:
+                    status = "error " + str(ws.logNumFatal)
+                    Tables.market.color_market(
+                        state="error",
+                        row=var.market_list.index(ws.name),
+                        market=ws.name,
+                    )
             update_label(
                 table="market",
                 column=0,

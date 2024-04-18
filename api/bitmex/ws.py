@@ -49,6 +49,9 @@ class Bitmex(Variables):
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.symbol_category = dict()
         self.logger = logging.getLogger(__name__)
+        self.robots = OrderedDict()
+        self.frames = dict()
+        self.robot_status = dict()
         print("!!!!!!!!!!!!! BITMEX !!!!!!!!!!!")
 
     def start(self):
@@ -380,6 +383,8 @@ class Bitmex(Variables):
             self.ws.close()
         except Exception:
             pass
+        self.logNumFatal = -1
+        self.logger.info("Websocket closed")
 
     def transaction(self, **kwargs):
         """

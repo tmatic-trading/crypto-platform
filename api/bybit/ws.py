@@ -7,6 +7,8 @@ from common.data import MetaAccount, MetaInstrument
 from common.variables import Variables as var
 from display.functions import info_display
 from services import exceptions_manager
+import time
+from collections import OrderedDict
 
 # from .agent import Agent
 from .pybit.unified_trading import HTTP, WebSocket
@@ -61,6 +63,9 @@ class Bybit(Variables):
             "SOL": 1,
             "None": 1,
         }
+        self.robots = OrderedDict()
+        self.frames = dict()
+        self.robot_status = dict()
         print("!!!!!!!!!!!!! BYBIT !!!!!!!!!!!")
 
     def start(self):
@@ -272,7 +277,8 @@ class Bybit(Variables):
             self.ws_private.exit()
         except Exception:
             pass
-        self.logger.info("Websocket closed")
+        self.logNumFatal = -1
+        self.logger.info("Websocket closed")   
 
     def transaction(self, **kwargs):
         """
