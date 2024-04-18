@@ -68,18 +68,19 @@ class Agent(Bybit):
             start=service.time_converter(time=time),
             limit=1000,
         )
-        result = []
-        for row in kline["result"]["list"]:
-            result.append(
-                {
-                    "timestamp": service.time_converter(int(row[0]) / 1000),
-                    "open": float(row[1]),
-                    "high": float(row[2]),
-                    "low": float(row[3]),
-                    "close": float(row[4]),
-                }
-            )
-        return result        
+        if kline["result"]["list"]:
+            result = []
+            for row in kline["result"]["list"]:
+                result.append(
+                    {
+                        "timestamp": service.time_converter(int(row[0]) / 1000),
+                        "open": float(row[1]),
+                        "high": float(row[2]),
+                        "low": float(row[3]),
+                        "close": float(row[4]),
+                    }
+                )
+            return result        
 
     def trading_history(self, histCount: int, time: datetime) -> list:
         print("___trading_history")

@@ -69,4 +69,4 @@ def close(markets):
     for name in var.market_list:
         ws = markets[name]
         ws.exit()
-    exit(1)
+    print("--------- close")

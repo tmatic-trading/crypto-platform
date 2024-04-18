@@ -16,13 +16,14 @@ from display.functions import info_display
 from display.variables import Tables
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
+import services as service
 
 
 def setup():
     disp.root.bind("<F3>", lambda event: terminal_reload(event))
     disp.root.bind("<F9>", lambda event: trade_state(event))
     Bitmex.transaction = Function.transaction
-    Bybit.transaction = Function.transaction
+    Bybit.transaction = Function.transaction    
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = False
@@ -135,6 +136,7 @@ def robots_thread() -> None:
 def terminal_reload(event) -> None:
     var.robots_thread_is_active = ""
     functions.info_display("Tmatic", "Restarting...")
+    service.close(Markets)    
     disp.root.update()
     setup()
 
@@ -151,11 +153,3 @@ def trade_state(event) -> None:
             print(market, disp.f9)
 
 
-
-def close(markets):
-    print("____close______")
-    var.robots_thread_is_active = False
-    for name in var.market_list:
-        ws = markets[name]
-        ws.exit()
-    exit(1)
