@@ -47,6 +47,10 @@ def exception(method):
                     exception.status_code == 181001
                 ):  # category only support linear or option
                     self.logNumFatal = 3
+                elif exception.status_code == 170135: # Order quantity exceeded upper limit
+                    logger.error(message)
+                elif exception.status_code == 10001: # The number of contracts exceeds maximum limit allowed
+                    logger.error(message)
                 else:
                     self.logNumFatal = 1001
             elif name == "InvalidChannelTypeError":  # pybit ws

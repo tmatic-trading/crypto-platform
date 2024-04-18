@@ -271,6 +271,10 @@ class Init(WS, Variables):
             order["clOrdID"] = clOrdID
         orders.clear_all()
         values = list(var.orders.values())
+        '''for value in values:
+            print("-----------------------------------")
+            for k, v in value.items():
+                print(k, v, type(v))'''
         values.sort(key=lambda x: x["transactTime"])
         var.orders = OrderedDict()
         for val in reversed(values):
