@@ -24,6 +24,7 @@ class Instrument:
     expire: Union[str, datetime]
     fundingRate: float
     marginCallPrice: Union[str, float]
+    maxOrderQty: float
     minOrderQty: float
     multiplier: int
     myMultiplier: int

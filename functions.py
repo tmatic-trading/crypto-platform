@@ -523,7 +523,7 @@ class Function(WS, Variables):
                         "SYMBOL": row["symbol"],
                         "CATEGORY": row["symbol"][1],
                         "MARKET": self.name,
-                        "transactTime": str(datetime.utcnow()),
+                        "transactTime": row["transactTime"],
                         "SIDE": row["side"],
                         "EMI": _emi,
                         "orderID": row["orderID"],
