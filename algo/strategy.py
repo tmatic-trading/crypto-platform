@@ -2,10 +2,11 @@ import services as service
 from common.data import Instrument
 from common.variables import Variables as var
 from functions import Function
+from api.api import Markets
 
 
 def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
-    ws = Websockets.connect[robot["MARKET"]]
+    ws = Markets[robot["MARKET"]]
     period = robot["PERIOD"]
     quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument["myMultiplier"]
     emi = robot["EMI"]

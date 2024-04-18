@@ -823,7 +823,7 @@ class Function(WS, Variables):
                 tm = instrument.expire
             update_label(table="position", column=8, row=num + mod, val=tm)
             if isinstance(instrument.fundingRate, float):                
-                fund = "{:.{precision}f}".format(instrument.fundingRate * 100, precision=4)
+                fund = round(instrument.fundingRate * 100, 4)
             else:
                 fund = instrument.fundingRate
             update_label(
