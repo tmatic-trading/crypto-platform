@@ -540,7 +540,7 @@ class ListBoxTable(Variables):
     def clear_columns(self, name: str) -> None:
         for num, listbox in enumerate(self.listboxes):
             self.columns[num] = list(listbox.get(self.mod, tk.END))
-        col = self.title.index("EXCH")
+        col = self.title.index("MARKET")
         col_size = len(self.columns[col])
         for num in range(col_size - 1, -1, -1):
             if self.columns[col][num] == name:
