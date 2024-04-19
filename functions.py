@@ -1309,7 +1309,7 @@ def handler_order(event) -> None:
                     return
                 try:
                     float(price_replace.get())
-                except KeyError:
+                except ValueError:
                     info_display(ws.name, "Price must be numeric!")
                     return
                 if ws.logNumFatal == 0:
@@ -1344,12 +1344,17 @@ def handler_order(event) -> None:
                 cx = disp.root.winfo_pointerx()
                 cy = disp.root.winfo_pointery()
                 order_window.geometry("+{}+{}".format(cx - 200, cy - 50))
-                order_window.title("Delete order ")
+                order_window.title("Cancel / Modify order ")
                 order_window.protocol("WM_DELETE_WINDOW", on_closing)
                 order_window.attributes("-topmost", 1)
                 frame_up = tk.Frame(order_window)
                 frame_dn = tk.Frame(order_window)
                 label1 = tk.Label(frame_up, justify="left")
+                order_price = Function.format_price(
+                    ws,
+                    number=var.orders[clOrdID]["price"],
+                    symbol=var.orders[clOrdID]["SYMBOL"],
+                )
                 label1["text"] = (
                     "number\t"
                     + str(row_position[0])
@@ -1360,11 +1365,7 @@ def handler_order(event) -> None:
                     + "\nclOrdID\t"
                     + clOrdID
                     + "\nprice\t"
-                    + Function.format_price(
-                        ws,
-                        number=var.orders[clOrdID]["price"],
-                        symbol=var.orders[clOrdID]["SYMBOL"],
-                    )
+                    + order_price
                     + "\nquantity\t"
                     + Function.volume(
                         ws,
@@ -1380,7 +1381,7 @@ def handler_order(event) -> None:
                     text="Delete order",
                     command=lambda id=clOrdID: delete(clOrdID=id, order=order),
                 )
-                price_replace = tk.StringVar()
+                price_replace = tk.StringVar(frame_dn, order_price)
                 entry_price = tk.Entry(
                     frame_dn, width=10, bg=disp.bg_color, textvariable=price_replace
                 )
