@@ -1274,12 +1274,11 @@ class Function(WS, Variables):
 def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
-        if row_position[0] - orders.mod >= 0:
-            ws = Markets[var.current_market]
+        if row_position[0] - orders.mod >= 0:            
             for num, clOrdID in enumerate(var.orders):
                 if num == row_position[0] - orders.mod:
                     break
-
+            ws = Markets[var.orders[clOrdID]["SYMBOL"][2]]
             def on_closing() -> None:
                 disp.order_window_trigger = "off"
                 order_window.destroy()
@@ -1356,8 +1355,8 @@ def handler_order(event) -> None:
                     symbol=var.orders[clOrdID]["SYMBOL"],
                 )
                 label1["text"] = (
-                    "number\t"
-                    + str(row_position[0])
+                    "market\t"
+                    + var.orders[clOrdID]["SYMBOL"][2]
                     + "\nsymbol\t"
                     + ".".join(var.orders[clOrdID]["SYMBOL"][:2])
                     + "\nside\t"
@@ -1683,15 +1682,17 @@ def handler_market(event, row_position: int) -> None:
     if row_position > len(var.market_list):
         row_position = len(var.market_list)
     mod = Tables.market.mod
-    var.current_market = var.market_list[row_position - mod]
-    var.symbol = Markets[var.current_market].symbol_list[0]
-    clear_tables()
-    for row in enumerate(var.market_list):
-        for column in range(len(var.name_market)):
-            if row[0] + mod == row_position:
-                disp.labels["market"][row[0] + mod][column]["bg"] = disp.bg_select_color
-            else:
-                disp.labels["market"][row[0] + mod][column]["bg"] = disp.title_color
+    shift = var.market_list[row_position - mod]
+    if shift != var.current_market:
+        var.current_market = shift
+        var.symbol = Markets[var.current_market].symbol_list[0]
+        clear_tables()
+        for row in enumerate(var.market_list):
+            for column in range(len(var.name_market)):
+                if row[0] + mod == row_position:
+                    disp.labels["market"][row[0] + mod][column]["bg"] = disp.bg_select_color
+                else:
+                    disp.labels["market"][row[0] + mod][column]["bg"] = disp.title_color
 
 
 def find_order(price: float, qty: int, symbol: str) -> int:
@@ -1858,6 +1859,7 @@ def clear_tables():
     clear(table=Tables.account, number_rows=len(ws.currencies))
     clear(table=Tables.robots, number_rows=len(ws.robots))
     clear(table=Tables.orderbook, number_rows=disp.num_book)
+    handler_position("event", row_position=Tables.position.mod)
 
 
 change_color(color=disp.title_color, container=disp.root)
