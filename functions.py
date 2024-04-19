@@ -116,6 +116,7 @@ class Function(WS, Variables):
                         + str(e)
                         + ")"
                     )
+                    Function.sql_lock.release()
                     break
                 else:
                     err_locked += 1
@@ -124,6 +125,7 @@ class Function(WS, Variables):
                         + str(err_locked)
                         + ")"
                     )
+                    Function.sql_lock.release()
 
     '''def read_database(self: Markets, execID: str, user_id: int) -> list:
         """
@@ -175,6 +177,7 @@ class Function(WS, Variables):
                         + str(e)
                         + ")"
                     )
+                    Function.sql_lock.release()
                     break
                 else:
                     err_locked += 1
@@ -183,6 +186,8 @@ class Function(WS, Variables):
                         + str(err_locked)
                         + ")"
                     )
+                    var.connect_sqlite.rollback()
+                    Function.sql_lock.release()
 
     def transaction(self: Markets, row: dict, info: str = "") -> None:
         """
