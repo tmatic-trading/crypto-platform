@@ -253,7 +253,7 @@ class Bybit(Variables):
             row["transactTime"] = service.time_converter(
                 time=int(row["execTime"]) / 1000, usec=True
             )
-            row["commission"] = float(row["execFee"])
+            row["commission"] = float(row["feeRate"])
             if row["orderLinkId"]:
                 row["clOrdID"] = row["orderLinkId"]
             row["price"] = float(row["orderPrice"])
