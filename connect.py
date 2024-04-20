@@ -55,9 +55,9 @@ def setup_market(ws: Markets):
             if bots.Init.load_robots(ws):
                 algo.init_algo()
                 if isinstance(bots.Init.init_timeframes(ws), dict):
-                    trades.clear_columns(name=ws.name)
-                    funding.clear_columns(name=ws.name)
-                    orders.clear_columns(name=ws.name)
+                    trades.clear_columns(market=ws.name)
+                    funding.clear_columns(market=ws.name)
+                    orders.clear_columns(market=ws.name)
                     common.Init.load_database(ws)
                     common.Init.load_trading_history(ws)
                     common.Init.account_balances(ws)
@@ -67,7 +67,7 @@ def setup_market(ws: Markets):
                         ws.robots[emi]["STATUS"] = value
                     trades.insert_columns()
                     funding.insert_columns()
-                    orders.insert_columns(sort=False)
+                    orders.insert_columns()
                 else:
                     print("Error during loading timeframes.")
                     WS.exit(ws)

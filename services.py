@@ -23,7 +23,7 @@ def time_converter(
     corresponds to local time.
     int, float      -> datetime (utc)
     datetime utc    -> Unix timestamp (local time)
-    str             -> datetime (utc)
+    str utc         -> datetime (utc)
     """
     if isinstance(time, int) or isinstance(time, float):
         return datetime.fromtimestamp(time, tz=timezone.utc)
