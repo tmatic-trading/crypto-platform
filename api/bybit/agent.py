@@ -16,7 +16,7 @@ class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
     def get_active_instruments(self):
-        for category in self.category_list:
+        for category in self.categories:
             instrument_info = self.session.get_instruments_info(category=category)
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
@@ -88,7 +88,7 @@ class Agent(Bybit):
         limit = min(100, histCount)
         trade_history = []
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
-            for category in self.category_list:
+            for category in self.categories:
                 cursor = "no"
                 while cursor:
                     result = self.session.get_executions(
@@ -98,8 +98,8 @@ class Agent(Bybit):
                         cursor=cursor,
                     )
                     cursor = result["result"]["nextPageCursor"]
-                    result = result["result"]["list"]
-                    for row in result:
+                    res = result["result"]["list"]
+                    for row in res:
                         row["symbol"] = (row["symbol"], category, self.name)
                         row["execID"] = row["execId"]
                         row["orderID"] = row["orderId"]
@@ -115,13 +115,13 @@ class Agent(Bybit):
                         row["price"] = float(row["execPrice"])
                         row["lastQty"] = float(row["execQty"])
                         row["settlCurrency"] = self.Instrument[
-                            row["symbol"]
-                        ].settlCurrency
+                                row["symbol"]
+                            ].settlCurrency
                         row["market"] = self.name
                         if row["execType"] == "Funding":
                             if row["side"] == "Sell":
                                 row["lastQty"] = -row["lastQty"]
-                    trade_history += result
+                    trade_history += res
             print(
                 "Bybit - loading trading history, startTime="
                 + str(service.time_converter(startTime / 1000))

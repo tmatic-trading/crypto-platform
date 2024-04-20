@@ -89,6 +89,8 @@ class Init(WS, Variables):
         """
         while history:
             for row in history:
+                if row["execID"] == "fc9be015-b864-5bf8-9bb2-70b3e2452b15":
+                    print(row)
                 data = Function.select_database(  # read_database
                     self,
                     "select EXECID from coins where EXECID='%s' and account=%s"
@@ -97,14 +99,18 @@ class Init(WS, Variables):
                 if not data:
                     Function.transaction(self, row=row, info=" History ")
             last_history_time = history[-1]["transactTime"]
+            if self.logNumFatal == 0:
+                Init.save_history_file(self, time=last_history_time)
+            if len(history) < count_val:
+                break
             history = WS.trading_history(
                 self, histCount=count_val, time=last_history_time
             )
-            if last_history_time == tmp:
+            '''if last_history_time == tmp:
                 break
-            tmp = last_history_time
-            if self.logNumFatal == 0:
-                Init.save_history_file(self, time=last_history_time)
+            tmp = last_history_time'''
+
+
 
     def account_balances(self: Markets) -> None:
         """

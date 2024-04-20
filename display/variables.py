@@ -354,6 +354,7 @@ class ListBoxTable(Variables):
 
     def __init__(
         self,
+        name: str, 
         frame: tk.Frame,
         size: int,
         title: list,
@@ -373,6 +374,7 @@ class ListBoxTable(Variables):
         self.active_row = 1
         self.mod = 1
         self.columns = [[] for _ in title]
+        self.name = name
         if expand:
             frame.grid_rowconfigure(0, weight=1)
         canvas = tk.Canvas(frame, highlightthickness=0, bg=self.bg_color)
@@ -537,13 +539,13 @@ class ListBoxTable(Variables):
                     side = self.columns[col][row]
                 self.listboxes[num].itemconfig(row, **self.item_color[side])
 
-    def clear_columns(self, name: str) -> None:
+    def clear_columns(self, market: str) -> None:
         for num, listbox in enumerate(self.listboxes):
             self.columns[num] = list(listbox.get(self.mod, tk.END))
         col = self.title.index("MARKET")
         col_size = len(self.columns[col])
         for num in range(col_size - 1, -1, -1):
-            if self.columns[col][num] == name:
+            if self.columns[col][num] == market:
                 for column in range(len(self.columns)):
                     self.columns[column].pop(num)
         self.clear_all()

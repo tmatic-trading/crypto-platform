@@ -708,7 +708,6 @@ class Function(WS, Variables):
         for symbol, timeframes in self.frames.items():
             instrument = self.Instrument[symbol]
             for timefr, values in timeframes.items():
-                print("___timefr____", symbol, timefr, values)
                 if utc > values["time"] + timedelta(minutes=timefr):
                     for emi in values["robots"]:
                         if (
@@ -1864,12 +1863,13 @@ def clear_tables():
 change_color(color=disp.title_color, container=disp.root)
 
 trades = ListBoxTable(
-    frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
+    name="trades", frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
 )
 funding = ListBoxTable(
-    frame=disp.frame_funding, title=var.name_funding, size=0, expand=True
+    name="funding", frame=disp.frame_funding, title=var.name_funding, size=0, expand=True
 )
 orders = ListBoxTable(
+    name="orders", 
     frame=disp.frame_orders,
     title=var.name_order,
     bind=handler_order,
