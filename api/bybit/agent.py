@@ -1,7 +1,7 @@
 # from api.variables import Variables
 import logging
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union
 
 import services as service
@@ -87,7 +87,7 @@ class Agent(Bybit):
         startTime = service.time_converter(time)
         limit = min(100, histCount)
         trade_history = []
-        while startTime < service.time_converter(datetime.now()):
+        while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             for category in self.category_list:
                 cursor = "no"
                 while cursor:
@@ -167,7 +167,7 @@ class Agent(Bybit):
 
             return myOrders
         
-        for category in self.category_list:
+        for category in self.categories:
             if category == "spot":
                 parameters = base.copy()
                 parameters["category"] = category

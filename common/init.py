@@ -5,7 +5,7 @@ import logging
 import sqlite3
 import threading
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlite3 import Error
 
 import services as service
@@ -51,7 +51,7 @@ class Init(WS, Variables):
         """
         Load trading history (if any)
         """
-        tm = datetime.now()
+        tm = datetime.now(tz=timezone.utc)
         with open("history.ini", "r") as f:
             lst = list(f)
         last_history_time = ""
@@ -62,6 +62,7 @@ class Init(WS, Variables):
                 if res[0] == self.name:
                     time = " ".join(res[1:])
                     last_history_time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+                    last_history_time = last_history_time.replace(tzinfo=timezone.utc)
         if not last_history_time:
             message = self.name + " was not found in the history.ini file."
             var.logger.error(message)
