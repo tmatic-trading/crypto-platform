@@ -112,7 +112,7 @@ def refresh() -> None:
                         if ws.logNumFatal == 2:
                             info_display(name, "Insufficient available balance!")
                     disp.f9 = "OFF"
-        Function.refresh_on_screen(Markets[var.current_market], utc=utc)
+    Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
 
 def clear_params():

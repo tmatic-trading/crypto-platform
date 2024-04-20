@@ -261,6 +261,7 @@ class Agent(Bitmex):
         """
         Bitmex sends this information via websocket, "margin" subscription.
         """
+        pass
         """for settlCurrency in self.currencies:
             settle = (settlCurrency, self.name)
             self.Account[settle].marginBalance = 0

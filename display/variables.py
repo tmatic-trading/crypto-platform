@@ -503,19 +503,13 @@ class ListBoxTable(Variables):
         if sort:
             if self.columns[0]:  # sort by time
                 self.columns = list(zip(*self.columns))
-                if self.name == "orders":
-                    print("_______insert_columns 1", self.columns)
                 self.columns = list(
                     map(
                         lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
                         self.columns,
                     )
                 )
-                if self.name == "orders":
-                    print("_______insert_columns 2", self.columns)
                 self.columns.sort(key=lambda x: x[-1], reverse=True)
-                if self.name == "orders":
-                    print("_______insert_columns 3", self.columns)
                 self.columns = zip(*self.columns)
                 self.columns = list(
                     map(lambda x: list(x[: self.table_limit]), self.columns)
@@ -548,9 +542,6 @@ class ListBoxTable(Variables):
     def clear_columns(self, market: str) -> None:
         for num, listbox in enumerate(self.listboxes):
             self.columns[num] = list(listbox.get(self.mod, tk.END))
-        if self.name == "orders":
-            print(self.name, market)
-            print("_____________name", self.name, self.columns)
         col = self.title.index("MARKET")
         col_size = len(self.columns[col])
         for num in range(col_size - 1, -1, -1):

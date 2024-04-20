@@ -107,5 +107,5 @@ class MetaAccount(type):
 
     def get_keys(self):
         name = self.__qualname__.split(".")[0]
-        if name in MetaInstrument.market:
-            return MetaInstrument.market[name].keys()
+        if name in MetaAccount.market:
+            return MetaAccount.market[name].keys()

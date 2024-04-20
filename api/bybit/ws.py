@@ -175,10 +175,11 @@ class Bybit(Variables):
                 for coin in value["coin"]:
                     if coin["coin"] in self.currencies:
                         settlCurrency = (coin["coin"], self.name)
-                        self.Account[settlCurrency].availableMargin = float(
+                        account = self.Account[settlCurrency]
+                        account.availableMargin = float(
                             coin["availableToWithdraw"]
                         )
-                        self.Account[settlCurrency].marginBalance = float(
+                        account.marginBalance = float(
                             coin["equity"]
                         )
 
