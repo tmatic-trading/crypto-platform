@@ -2,7 +2,7 @@ import threading
 import time
 import tkinter as tk
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from random import randint
 from typing import Union
@@ -544,7 +544,7 @@ class Function(WS, Variables):
             elif row["execType"] == "Replaced":
                 var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 var.orders[clOrdID]["price"] = row["price"]
-                var.orders[clOrdID]["transactTime"] = datetime.utcnow()
+                var.orders[clOrdID]["transactTime"] = datetime.now(tz=timezone.utc)
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
@@ -708,6 +708,7 @@ class Function(WS, Variables):
         for symbol, timeframes in self.frames.items():
             instrument = self.Instrument[symbol]
             for timefr, values in timeframes.items():
+                print("___timefr____", symbol, timefr, values)
                 if utc > values["time"] + timedelta(minutes=timefr):
                     for emi in values["robots"]:
                         if (
@@ -726,9 +727,7 @@ class Function(WS, Variables):
                             frame=values["data"][-1],
                         )
                     next_minute = int(utc.minute / timefr) * timefr
-                    dt_now = datetime(
-                        utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0
-                    )
+                    dt_now = utc.replace(minute=next_minute, microsecond=0)
                     values["data"].append(
                         {
                             "date": (utc.year - 2000) * 10000

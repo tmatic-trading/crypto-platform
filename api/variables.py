@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
 # from functions import Function
 from common.variables import Variables as var
@@ -30,7 +30,7 @@ class Variables:
     connect_count = 0
     user_id = None
     user = dict()
-    message_time = datetime.utcnow()
+    message_time = datetime.now(tz=timezone.utc)
     message2000 = ""
     messageStopped = ""
     maxRetryRest = 3

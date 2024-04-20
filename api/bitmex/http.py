@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union
 
 import requests
@@ -244,7 +244,7 @@ class Send(Variables):
                 break
             else:
                 time.sleep(3)
-        self.time_response = datetime.utcnow()
+        self.time_response = datetime.now(tz=timezone.utc)
         if response:
             return response.json()
         else:

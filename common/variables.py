@@ -2,7 +2,7 @@ import logging
 import os
 import time
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
 from dotenv import dotenv_values
 
@@ -134,5 +134,5 @@ class Variables:
     last_order = int((time.time() - 1591000000) * 10)
     last_database_time = datetime(1900, 1, 1, 1, 1)
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
-    refresh_hour = datetime.utcnow().hour
+    refresh_hour = datetime.now(tz=timezone.utc).hour
     robots_thread_is_active = False

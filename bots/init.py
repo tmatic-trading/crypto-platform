@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
 
 import services as service
@@ -226,7 +226,7 @@ class Init(WS, Variables):
         )
         with open(self.filename, "w"):
             pass
-        target = datetime.utcnow()
+        target = datetime.now(tz=timezone.utc)
         time = target - timedelta(days=bot.missing_days_number)
         delta = timedelta(minutes=robot["TIMEFR"] - target.minute % robot["TIMEFR"])
         target += delta
@@ -281,12 +281,12 @@ class Init(WS, Variables):
 
         return frames
 
-    def init_timeframes(self) -> Union[dict, None]:
+    def init_timeframes(self: Markets) -> Union[dict, None]:
         for emi in self.robots:
             # Initialize candlestick timeframe data using 'TIMEFR' fields
             # expressed in minutes.
             if self.robots[emi]["TIMEFR"] != "None":
-                time = datetime.utcnow()
+                time = datetime.now(tz=timezone.utc)
                 symbol = self.robots[emi]["SYMBOL"]
                 timefr = self.robots[emi]["TIMEFR"]
                 try:

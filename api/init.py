@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from api.variables import Variables
 from common.variables import Variables as var
@@ -7,7 +7,7 @@ from common.variables import Variables as var
 class Setup(Variables):
     def variables(self, name: str) -> None:
         if name in var.env:
-            tm = datetime.utcnow()
+            tm = datetime.now(tz=timezone.utc)
             if var.env["TESTNET"] == "True":
                 testnet = "TESTNET_"
             else:

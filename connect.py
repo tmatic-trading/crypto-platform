@@ -1,7 +1,7 @@
 import threading
 import time
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from time import sleep
 
 import algo.init as algo
@@ -85,7 +85,7 @@ def setup_market(ws: Markets):
 def refresh() -> None:
     for name in var.market_list:
         ws = Markets[name]
-        utc = datetime.utcnow()
+        utc = datetime.now(tz=timezone.utc)
         if ws.logNumFatal > 0:
             if ws.logNumFatal > 2000:
                 if ws.message2000 == "":
@@ -123,7 +123,7 @@ def clear_params():
 
 def robots_thread() -> None:
     while var.robots_thread_is_active:
-        utcnow = datetime.utcnow()
+        utcnow = datetime.now(tz=timezone.utc)
         for name in var.market_list:
             ws: WS = Markets[name]
             if ws.api_is_active:

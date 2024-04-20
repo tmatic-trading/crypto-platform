@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union
 from common.variables import Variables as var
 
@@ -18,20 +18,33 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
 def time_converter(
     time: Union[int, float, str, datetime], usec=False
 ) -> Union[datetime, int]:
+    """
+    The datetime always corresponds to utc time, the timestamp always 
+    corresponds to local time.
+    int, float      -> datetime (utc)
+    datetime utc    -> Unix timestamp (local time)
+    str             -> datetime (utc)
+    """
     if isinstance(time, int) or isinstance(time, float):
-        return datetime.fromtimestamp(time)
+        return datetime.fromtimestamp(time, tz=timezone.utc)
     elif isinstance(time, datetime):
         return int(time.timestamp() * 1000)
     elif isinstance(time, str):
         time = time.replace("T", " ")
         time = time.replace("Z", "")
+        f = time.find("+")
+        if f > 0:
+            time = time[:f]
         if usec:
             try:
-                return datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
+                dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
             except:
-                return datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+                dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
         else:
-            return datetime.strptime(time[:19], "%Y-%m-%d %H:%M:%S")
+            dt = datetime.strptime(time[:19], "%Y-%m-%d %H:%M:%S")
+        dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+        
     else:
         raise TypeError(type(time))
 
@@ -69,4 +82,3 @@ def close(markets):
     for name in var.market_list:
         ws = markets[name]
         ws.exit()
-    print("--------- close")
