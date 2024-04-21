@@ -8,15 +8,15 @@ from api.api import Markets
 def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     ws = Markets[robot["MARKET"]]
     period = robot["PERIOD"]
-    quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument["myMultiplier"]
+    quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument.myMultiplier
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
-    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
+    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 0.5
     sell_price = service.ticksize_rounding(
-        price=(instrument.asks[0][0] + indent), ticksize=instrument["tickSize"]
+        price=(instrument.asks[0][0] + indent), ticksize=instrument.tickSize
     )
     buy_price = service.ticksize_rounding(
-        price=(instrument.bids[0][0] - indent), ticksize=instrument["tickSize"]
+        price=(instrument.bids[0][0] - indent), ticksize=instrument.tickSize
     )
     if frame[-1]["ask"] > frame[-1 - period]["ask"]:
         buy_quantaty = quantaty - robot["POS"]
