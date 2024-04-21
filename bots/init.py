@@ -129,7 +129,7 @@ class Init(WS, Variables):
             }
 
         # Loading all transactions and calculating financial results for each robot
-        for emi, val in self.robots.items():
+        for emi, robot in self.robots.items():
             Function.add_symbol(self, symbol=self.robots[emi]["SYMBOL"])
             if isinstance(emi, tuple):
                 _emi = emi[0]
@@ -155,28 +155,26 @@ class Init(WS, Variables):
                 "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
                 "COMMISS, TTIME FROM "
                 "coins WHERE EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
-                % (_emi, self.user_id, val["CATEGORY"])
+                % (_emi, self.user_id, robot["CATEGORY"])
             )
-
             data = Function.select_database(self, sql)
-
             for row in data:
                 for col in row:
-                    self.robots[emi][col] = row[col]
+                    robot[col] = row[col]
                     if col == "POS" or col == "VOL":
-                        self.robots[emi][col] = float(self.robots[emi][col])
+                        robot[col] = round(robot[col], self.Instrument[robot["SYMBOL"]].precision)
                     if col == "COMMISS" or col == "SUMREAL":
-                        self.robots[emi][col] = float(self.robots[emi][col])
+                        robot[col] = float(robot[col])
                     if col == "LTIME":
-                        self.robots[emi][col] = service.time_converter(
-                            time=self.robots[emi][col], usec=True
+                        robot[col] = service.time_converter(
+                            time=robot[col], usec=True
                         )
-            self.robots[emi]["PNL"] = 0
-            self.robots[emi]["lotSize"] = self.Instrument[
-                self.robots[emi]["SYMBOL"]
+            robot["PNL"] = 0
+            robot["lotSize"] = self.Instrument[
+                robot["SYMBOL"]
             ].minOrderQty
-            if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
-                self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
+            if robot["SYMBOL"] not in self.full_symbol_list:
+                self.full_symbol_list.append(robot["SYMBOL"])
 
         return self.robots
 
@@ -227,7 +225,7 @@ class Init(WS, Variables):
         with open(self.filename, "w"):
             pass
         target = datetime.now(tz=timezone.utc)
-        time = target - timedelta(days=bot.missing_days_number)
+        time = target - timedelta(minutes=bot.candlestick_number * robot["TIMEFR"])
         delta = timedelta(minutes=robot["TIMEFR"] - target.minute % robot["TIMEFR"])
         target += delta
         target = target.replace(second=0, microsecond=0)

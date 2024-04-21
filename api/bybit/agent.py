@@ -80,6 +80,7 @@ class Agent(Bybit):
                         "close": float(row[4]),
                     }
                 )
+                
             return result        
 
     def trading_history(self, histCount: int, time: datetime) -> list:

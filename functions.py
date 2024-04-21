@@ -502,12 +502,14 @@ class Function(WS, Variables):
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in var.orders:
+                print("**************Canceled", clOrdID, Function.order_number(self, clOrdID))
                 orders.delete(row=Function.order_number(self, clOrdID))
                 del var.orders[clOrdID]
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in var.orders:
+                print("**************leavesQty=0", clOrdID, Function.order_number(self, clOrdID))
                 orders.delete(row=Function.order_number(self, clOrdID))
                 del var.orders[clOrdID]
         else:
@@ -540,6 +542,7 @@ class Function(WS, Variables):
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
                 if clOrdID in var.orders:
+                    print("**************trade", clOrdID, Function.order_number(self, clOrdID))
                     orders.delete(row=Function.order_number(self, clOrdID))
             elif row["execType"] == "Replaced":
                 var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
@@ -548,6 +551,7 @@ class Function(WS, Variables):
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
+                print("**************replaced", clOrdID, Function.order_number(self, clOrdID))
                 orders.delete(row=Function.order_number(self, clOrdID))
                 var.orders.move_to_end(clOrdID, last=False)
             if (
@@ -726,7 +730,7 @@ class Function(WS, Variables):
                             frame=values["data"][-1],
                         )
                     next_minute = int(utc.minute / timefr) * timefr
-                    dt_now = utc.replace(minute=next_minute, microsecond=0)
+                    dt_now = utc.replace(minute=next_minute, second=0, microsecond=0)
                     values["data"].append(
                         {
                             "date": (utc.year - 2000) * 10000
@@ -1132,13 +1136,13 @@ class Function(WS, Variables):
             if ws.logNumFatal != 0:
                 if ws.logNumFatal == -1:
                     status = "RELOADING"
-                else:
+                '''else:
                     status = "error " + str(ws.logNumFatal)
                     Tables.market.color_market(
                         state="error",
                         row=var.market_list.index(ws.name),
                         market=ws.name,
-                    )
+                    )'''
             update_label(
                 table="market",
                 column=0,

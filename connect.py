@@ -29,6 +29,7 @@ def setup():
     var.robots_thread_is_active = False
     for name in var.market_list:
         setup_market(Markets[name])
+    algo.init_algo()
     functions.load_labels()
     algo.init_algo()
     var.robots_thread_is_active = True
@@ -53,7 +54,6 @@ def setup_market(ws: Markets):
         else:
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
-                algo.init_algo()
                 if isinstance(bots.Init.init_timeframes(ws), dict):
                     trades.clear_columns(market=ws.name)
                     funding.clear_columns(market=ws.name)
@@ -109,9 +109,10 @@ def refresh() -> None:
                             "Error=" + str(ws.logNumFatal) + ". Trading stopped"
                         )
                         info_display(name, ws.messageStopped)
-                        if ws.logNumFatal == 2:
-                            info_display(name, "Insufficient available balance!")
+                    if ws.logNumFatal == 2:
+                        info_display(name, "Insufficient available balance!")
                     disp.f9 = "OFF"
+                    ws.logNumFatal = 0
     Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
 
@@ -124,8 +125,8 @@ def clear_params():
 def robots_thread() -> None:
     while var.robots_thread_is_active:
         utcnow = datetime.now(tz=timezone.utc)
-        for name in var.market_list:
-            ws: WS = Markets[name]
+        for market in var.market_list:
+            ws = Markets[market]
             if ws.api_is_active:
                 if ws.frames:
                     Function.robots_entry(ws, utc=utcnow)
