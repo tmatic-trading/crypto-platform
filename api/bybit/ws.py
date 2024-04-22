@@ -66,10 +66,8 @@ class Bybit(Variables):
         self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
-        print("!!!!!!!!!!!!! BYBIT !!!!!!!!!!!")
 
     def start(self):
-        print("-----starting Bybit----")
         self.count = 0
         self.__connect()
 
@@ -83,9 +81,7 @@ class Bybit(Variables):
             lst = list(filter(lambda x: x[1] == category, self.symbol_list))
             for symbol in lst:
                 if category == "linear":
-                    print(
-                        "_________ws subscription: linear - orderbook_stream -", symbol
-                    )
+                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -93,7 +89,7 @@ class Bybit(Variables):
                             values=x["data"], category="linear"
                         ),
                     )
-                    print("_________ws subscription: linear - ticker_stream -", symbol)
+                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
@@ -101,9 +97,7 @@ class Bybit(Variables):
                         ),
                     )
                 elif category == "inverse":
-                    print(
-                        "_________ws subscription: inverse - orderbook_stream -", symbol
-                    )
+                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -111,7 +105,7 @@ class Bybit(Variables):
                             values=x["data"], category="inverse"
                         ),
                     )
-                    print("_________ws subscription: inverse - ticker_stream -", symbol)
+                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
@@ -119,7 +113,7 @@ class Bybit(Variables):
                         ),
                     )
                 elif category == "spot":
-                    print("_________ws subscription: spot - orderbook_stream -", symbol)
+                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -127,11 +121,27 @@ class Bybit(Variables):
                             values=x["data"], category="spot"
                         ),
                     )
-                    print("_________ws subscription: spot - ticker_stream -", symbol)
+                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
                             values=x["data"], category="spot"
+                        ),
+                    )
+                elif category == "option":
+                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.ws[category].orderbook_stream(
+                        depth=self.orderbook_depth,
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_orderbook(
+                            values=x["data"], category="option"
+                        ),
+                    )
+                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.ws[category].ticker_stream(
+                        symbol=symbol[0],
+                        callback=lambda x: self.__update_ticker(
+                            values=x["data"], category="option"
                         ),
                     )
         self.ws_private = WebSocket(
