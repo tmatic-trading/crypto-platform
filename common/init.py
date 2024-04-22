@@ -80,13 +80,6 @@ class Init(WS, Variables):
             var.logger.error("history.ini error")
             exit(1)
         tmp = datetime(2000, 1, 1)
-        """
-        A premature exit from the loop is possible due to a small count_val
-        value. This will happen in the case of a large number of trades or
-        funding with the same time greater than or equal to count_val, when
-        the first and last line will have the same transactTime accurate to
-        the millisecond.
-        """
         while history:
             for row in history:
                 if row["execID"] == "fc9be015-b864-5bf8-9bb2-70b3e2452b15":

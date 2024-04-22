@@ -51,7 +51,11 @@ def exception(method):
                     pass
                 elif exception.status_code == 10001: # The number of contracts exceeds maximum limit allowed
                     pass
-                elif exception.status_code ==  170193: # Buy order price cannot be higher
+                elif exception.status_code == 170193: # Buy order price cannot be higher
+                    pass
+                elif exception.status_code == 110094: # Order does not meet minimum order value
+                    pass
+                elif exception.status_code == 110003: # price is out of range
                     pass
                 else:
                     self.logNumFatal = 1001

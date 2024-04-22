@@ -502,14 +502,12 @@ class Function(WS, Variables):
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in var.orders:
-                print("**************Canceled", clOrdID, Function.order_number(self, clOrdID))
                 orders.delete(row=Function.order_number(self, clOrdID))
                 del var.orders[clOrdID]
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in var.orders:
-                print("**************leavesQty=0", clOrdID, Function.order_number(self, clOrdID))
                 orders.delete(row=Function.order_number(self, clOrdID))
                 del var.orders[clOrdID]
         else:
@@ -541,17 +539,17 @@ class Function(WS, Variables):
             elif row["execType"] == "Trade":
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
+                var.orders[clOrdID]["transactTime"] = row["transactTime"]
                 if clOrdID in var.orders:
-                    print("**************trade", clOrdID, Function.order_number(self, clOrdID))
                     orders.delete(row=Function.order_number(self, clOrdID))
+                    var.orders.move_to_end(clOrdID, last=False)
             elif row["execType"] == "Replaced":
                 var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 var.orders[clOrdID]["price"] = row["price"]
-                var.orders[clOrdID]["transactTime"] = datetime.now(tz=timezone.utc)
+                var.orders[clOrdID]["transactTime"] = row["transactTime"]
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
-                print("**************replaced", clOrdID, Function.order_number(self, clOrdID))
                 orders.delete(row=Function.order_number(self, clOrdID))
                 var.orders.move_to_end(clOrdID, last=False)
             if (
@@ -1003,6 +1001,8 @@ class Function(WS, Variables):
                     fund=1,
                 )
                 robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
+            else:
+                robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
             update_label(table="robots", column=0, row=num + mod, val=robot["EMI"])
             update_label(table="robots", column=1, row=num + mod, val=symbol[0])
             update_label(table="robots", column=2, row=num + mod, val=symbol[1])
@@ -1033,11 +1033,10 @@ class Function(WS, Variables):
                 symbol=symbol,
             )
             if disp.labels_cache["robots"][num + mod][9] != val:
-                if robot["STATUS"] == "RESERVED":
-                    if robot["POS"] != 0:
-                        disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
-                    else:
-                        disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
+                if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot["STATUS"] == "OFF":
+                    disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
+                else:
+                    disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
             update_label(
                 table="robots",
                 column=9,
@@ -1154,7 +1153,7 @@ class Function(WS, Variables):
         instrument = self.Instrument[symbol]
         if pos > 0 and instrument.bids[0]:
             close = instrument.bids[0][0]
-        elif pos < 0 and instrument.asks[0]:
+        elif pos <= 0 and instrument.asks[0]:
             close = instrument.asks[0][0]
         else:
             close = None
