@@ -6,7 +6,8 @@ import algo.strategy
 from api.api import Markets
 
 def init_algo():
-    bybit = Markets["Bybit"]
+    pass
+    '''bybit = Markets["Bybit"]
     bitmex = Markets["Bitmex"]
     bot.robo["Btc"] = algo.strategy.algo
     algo.strategy.init_variables(robot=bybit.robots["Btc"])
@@ -17,4 +18,4 @@ def init_algo():
     bot.robo["Eth"] = algo.strategy.algo
     algo.strategy.init_variables(robot=bybit.robots["Eth"])
     bot.robo["Xrp"] = algo.strategy.algo
-    algo.strategy.init_variables(robot=bybit.robots["Xrp"])
+    algo.strategy.init_variables(robot=bybit.robots["Xrp"])'''

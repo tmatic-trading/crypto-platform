@@ -41,7 +41,6 @@ def setup_market(ws: Markets):
     ws.logNumFatal = -1
     ws.api_is_active = False
     WS.exit(ws)
-    print("++++", ws.name, ws.logNumFatal)
     while ws.logNumFatal:
         ws.logNumFatal = -1
         WS.start_ws(ws)

@@ -11,12 +11,25 @@ from services import exceptions_manager
 from .ws import Bybit
 
 
+'''2024-04-22 12:12:28,275 - api.bitmex.ws - INFO - (https) sending GET to user: ""
+2024-04-22 12:12:28,566 - api.bitmex.ws - INFO - (https) sending GET to execution/tradeHistory?count=500&reverse=false&startTime=2024-04-20 13:27:39: ""
+2024-04-22 12:12:28,815 - api.bitmex.ws - INFO - (https) sending GET to instrument?symbol=ADAH24: ""
+2024-04-22 12:12:29,029 - api.bitmex.ws - INFO - (https) sending GET to position?filter=%7B%22symbol%22%3A%22ADAH24%22%7D: ""
+2024-04-22 12:12:29,431 - api.bitmex.agent - INFO - ('ADAH24', 'linear', 'Bitmex') has been added to the positions dictionary for Bitmex
+2024-04-22 12:12:29,431 - api.bitmex.ws - INFO - (https) sending GET to position?filter=%7B%22symbol%22%3A%22XBTEUR%22%7D: ""
+2024-04-22 12:12:29,686 - api.bitmex.agent - INFO - ('XBTEUR', 'inverse', 'Bitmex') has been added to the positions dictionary for Bitmex
+2024-04-22 12:12:29,687 - api.bitmex.ws - INFO - (https) sending GET to instrument?symbol=XBTH24: ""
+2024-04-22 12:12:29,928 - api.bitmex.ws - INFO - (https) sending GET to position?filter=%7B%22symbol%22%3A%22XBTH24%22%7D: ""
+2024-04-22 12:12:30,212 - api.bitmex.agent - INFO - ('XBTH24', 'inverse', 'Bitmex') has been added to the positions dictionary for Bitmex
+'''
+
 @exceptions_manager
 class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
     def get_active_instruments(self):
         for category in self.categories:
+            Agent.logger.info("In get_active_instruments - sending get_instruments_info() - category - " + category)
             instrument_info = self.session.get_instruments_info(category=category)
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
@@ -32,7 +45,7 @@ class Agent(Bybit):
                 exit(1)
 
     def get_user(self) -> Union[dict, None]:
-        print("___get_user")
+        Agent.logger.info("In get_user - sending get_uid_wallet_type()")
         result = self.session.get_uid_wallet_type()
         self.user = result
         id = find_value_by_key(data=result, key="uid")
@@ -46,7 +59,7 @@ class Agent(Bybit):
             Agent.logger.error(message)
 
     def get_instrument(self, symbol: tuple) -> None:
-        print("___get_instrument_data")
+        Agent.logger.info("In get_instrument - sending get_instruments_info() - symbol - " + str(symbol))
         instrument_info = self.session.get_instruments_info(
             symbol=symbol[0], category=symbol[1]
         )
@@ -60,7 +73,7 @@ class Agent(Bybit):
     def trade_bucketed(
             self, symbol: tuple, time: datetime, timeframe: str
     ) -> Union[list, None]:
-        print("___trade_bucketed")
+        Agent.logger.info("In trade_bucketed - sending get_kline() - symbol - " + str(symbol) + " - interval - " + str(timeframe))
         kline = self.session.get_kline(
             category=symbol[1],
             symbol=symbol[0],
@@ -84,7 +97,6 @@ class Agent(Bybit):
             return result        
 
     def trading_history(self, histCount: int, time: datetime) -> list:
-        print("___trading_history")
         startTime = service.time_converter(time)
         limit = min(100, histCount)
         trade_history = []
@@ -92,6 +104,7 @@ class Agent(Bybit):
             for category in self.categories:
                 cursor = "no"
                 while cursor:
+                    Agent.logger.info("In trading_history - sending get_executions() - category - " + category + " - startTime - " + str(time))
                     result = self.session.get_executions(
                         category=category,
                         startTime=startTime,
@@ -138,13 +151,13 @@ class Agent(Bybit):
         return trade_history
 
     def open_orders(self) -> list:
-        print("___open_orders")
         myOrders = list()
         base = {"openOnly": 0, "limit": 50}
         def request_open_orders(myOrders: list, parameters: dict):
             cursor = "no"
             parameters["cursor"] = cursor
             while cursor:
+                Agent.logger.info("In trading_history - sending open_orders() - parameters - " + str(parameters))
                 result = self.session.get_open_orders(**parameters)      
                 cursor = result["result"]["nextPageCursor"]
                 parameters["cursor"] = result["result"]["nextPageCursor"]
@@ -189,7 +202,6 @@ class Agent(Bybit):
         self.logNumFatal = 1001
 
     def place_limit(self, quantity: int, price: float, clOrdID: str, symbol: tuple):
-        print("___place_limit")
         side = "Buy" if quantity > 0 else "Sell"
         return self.session.place_order(
             category=symbol[1],
@@ -202,7 +214,6 @@ class Agent(Bybit):
         )
 
     def replace_limit(self, quantity: int, price: float, orderID: str, symbol: tuple):
-        print("___replace_limit")
         return self.session.amend_order(
             category=symbol[1],
             symbol=symbol[0],
@@ -212,7 +223,6 @@ class Agent(Bybit):
         )
 
     def remove_order(self, order: dict):
-        print("___remove_order")
         return self.session.cancel_order(
             category=order["SYMBOL"][1],
             symbol=order["SYMBOL"][0],
@@ -220,7 +230,7 @@ class Agent(Bybit):
         )
 
     def get_wallet_balance(self) -> None:
-        print("___wallet_balance")
+        Agent.logger.info("In get_wallet_balance - sending get_wallet_balance() - accountType - UNIFIED")
         result = self.session.get_wallet_balance(accountType="UNIFIED")
         for values in result["result"]["list"]:
             if values["accountType"] == "UNIFIED":
@@ -242,12 +252,12 @@ class Agent(Bybit):
             print("UNIFIED account not found")
 
     def get_position_info(self):
-        print("___get_position_info")
         for category in self.category_list:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
                     cursor = "no"
                     while cursor:
+                        Agent.logger.info("In get_position_info - sending get_positions() - category - " + category + " - settlCurrency - " + settlCurrency)
                         result = self.session.get_positions(
                             category=category,
                             settleCoin=settlCurrency,
