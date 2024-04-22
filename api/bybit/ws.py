@@ -184,7 +184,6 @@ class Bybit(Variables):
                         )
 
     def __update_position(self, values: dict) -> None:
-        print("_______update_position")
         for value in values["data"]:
             symbol = (value["symbol"], value["category"], self.name)
             if symbol in self.symbol_list:
@@ -199,7 +198,6 @@ class Bybit(Variables):
                 instrument.unrealisedPnl = float(value["unrealisedPnl"])
 
     def __handle_order(self, values):
-        print("_______handle_order")
         for value in values["data"]:
             if value["orderStatus"] == "Cancelled":
                 orderStatus = "Canceled"
@@ -243,7 +241,6 @@ class Bybit(Variables):
                 self.transaction(row=row)
 
     def __handle_execution(self, values):
-        print("_______handle_execution")
         for row in values["data"]:
             row["symbol"] = (row["symbol"], row["category"], self.name)
             row["execID"] = row["execId"]

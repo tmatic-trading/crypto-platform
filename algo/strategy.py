@@ -79,7 +79,7 @@ def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
 
 
 def init_variables(robot: dict):
-    robot["PERIOD"] = 10
+    robot["PERIOD"] = 5
 
 
 def order_search(emi: int, side: str) -> str:

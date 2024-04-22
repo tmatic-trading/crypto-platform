@@ -1,6 +1,7 @@
 **/__pycache__
-venv/
+debug/
 old/
+venv/
 .env*
 .~lock*
 .pre-commit-config.yaml
