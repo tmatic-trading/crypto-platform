@@ -29,9 +29,7 @@ def setup():
     var.robots_thread_is_active = False
     for name in var.market_list:
         setup_market(Markets[name])
-    algo.init_algo()
     functions.load_labels()
-    algo.init_algo()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
@@ -53,6 +51,7 @@ def setup_market(ws: Markets):
         else:
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
+                algo.init_algo(ws)
                 if isinstance(bots.Init.init_timeframes(ws), dict):
                     trades.clear_columns(market=ws.name)
                     funding.clear_columns(market=ws.name)

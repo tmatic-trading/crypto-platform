@@ -4,11 +4,11 @@
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/tmatic.png)
 
-Working condition tested on Linux, Windows and macOS, Python 3.5+
+Working condition tested on Linux, Windows and macOS, Python 3.9+
 
-This software is designed for trading on the [Bitmex.com](https://www.bitmex.com) marketplace.
+This software is designed for trading on the [Bitmex.com](https://www.bitmex.com) and [Bybit.com](https://www.bybit.com) marketplaces.
 
-API information:
+Bitmex API information:
 
 - [API Overview](https://www.bitmex.com/app/apiOverview)
 
@@ -16,7 +16,15 @@ API information:
 
 - [BitMEX API Connectors](https://github.com/BitMEX/api-connectors)
 
-The software allows you to control trade balances and make transactions manually and automatically.
+Bybit API information:
+
+- [API Overview](https://bybit-exchange.github.io/docs/v5/intro)
+
+- [Bybit API Explorer](https://bybit-exchange.github.io/docs/api-explorer/v5/category)
+
+- [Pybit API module](https://github.com/bybit-exchange/pybit)
+
+The software allows you to monitor trading balances and make transactions manually and automatically for both Bitmex and Bybit exchanges simultaneously.
 
 ## Software Features
 
@@ -32,13 +40,18 @@ The software allows you to control trade balances and make transactions manually
 
 ## Before launch
 
-Although the software can be used for manual trading, it is mainly intended to be used for automated one, opposite to the standard Bitmex trading web-interface.
+Although the software can be used for manual trading, it is mainly intended to be used for automated one, opposite to the standard exchange trading web-interface.
 
 You can use your local computer to run the software, but for stable 24/7 operation, it is highly recommended to use a remote server. For these purposes, it is enough to subscribe to any VPS (Virtual Private Server) with 4GB of memory and several gigabytes of free disk space after installing the operating system and the required packages. To monitor the server, you can utilize the standard capabilities provided by the VPS provider or use, for example, ssh+vncviewer tools.
 
 Python is a cross-platform programming language, so it is suitable for Windows, Linux and macOS. It is more convenient for the server to use Linux with any current distribution at the moment, e.g. Debian 11.
 
-Before running the program on a real account, it is strongly recommended to debug it on the test circuit [testnet.bitmex.com](https://testnet.bitmex.com). A local computer is sufficient to debug the software.
+Before running the program on a real account, it is strongly recommended to debug it on the testnet:
+
+- [testnet.bitmex.com](https://testnet.bitmex.com)
+- [testnet.bybit.com](https://testnet.bybit.com)
+
+A local computer is sufficient to debug the software.
 
 ## Installation on local computer
 
@@ -58,60 +71,28 @@ pip3 install requests
 ```
 pip3 install -r requirements.txt
 ```
+3. The program uses an SQLite database and can work without installing a database management system. After running Tmatic for the first time, the tmatic.db file will be generated automatically. The database consists of two tables:
 
-4. Install the MySQL database on your local computer by following the instructions according to your operating system.
-5. Install your favorite visual tool like MySQL Workbench or something else if you need to.
-6. Create a database, for example "my_db".
-```SQL
-CREATE DATABASE my_db;
-```
-7. Create SQL tables:
-```SQL
-CREATE TABLE my_db.coins (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `EXECID` varchar(45) DEFAULT NULL,
-  `EMI` varchar(25) DEFAULT NULL,
-  `REFER` varchar(20) DEFAULT NULL,
-  `MARKET` varchar(20) DEFAULT NULL,
-  `CURRENCY` varchar(10) DEFAULT NULL,
-  `SYMBOL` varchar(20) DEFAULT NULL,
-  `CATEGORY` varchar(10) DEFAULT NULL,
-  `SIDE` tinyint DEFAULT NULL,
-  `QTY` decimal(16,8) DEFAULT NULL,
-  `QTY_REST` decimal(16,8) DEFAULT NULL,
-  `PRICE` decimal(16,8) DEFAULT NULL,
-  `THEOR_PRICE` decimal(16,8) DEFAULT NULL,
-  `TRADE_PRICE` decimal(16,8) DEFAULT NULL,
-  `SUMREAL` decimal(19,12) DEFAULT NULL,
-  `COMMISS` decimal(19,15) DEFAULT '0.000000000000000',
-  `TTIME` datetime DEFAULT NULL,
-  `DAT` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `CLORDID` int DEFAULT '0',
-  `ACCOUNT` int DEFAULT '0',
-  UNIQUE KEY `ID_UNIQUE` (`ID`),
-  KEY `EXECID_ix` (`EXECID`),
-  KEY `EMI_QTY_ix` (`EMI`,`QTY`),
-  KEY `SIDE_ix` (`SIDE`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-```
-```SQL
-CREATE TABLE my_db.robots (
-  `EMI` varchar(20) DEFAULT NULL,
-  `SYMBOL` varchar(20) DEFAULT NULL,
-  `CATEGORY` varchar(10) DEFAULT NULL,
-  `MARKET` varchar(20) DEFAULT NULL,
-  `SORT` tinyint DEFAULT NULL,
-  `DAT` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `TIMEFR` tinyint DEFAULT '0',
-  `CAPITAL` int DEFAULT '0',
-  `MARGIN` int DEFAULT '0',
-  UNIQUE KEY `EMI_UNIQUE` (`EMI`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-```
-The "coins" table is filled with data from the ```/execution``` or ```/execution/tradeHistory``` endpoints. Explanations for the columns of the “coins” table:
+- ```coins``` - stores all previously executed transactions and accrued funding.
+- ```robots``` - parameters of trading bots.
+
+The "coins" table receives data from the websocket execution stream or trade history endpoint. Explanations for the columns of the "coins" table:
 * ID - row number in the database.
-* EXECID - unique code that Bitmex assigns to any transaction.
-* EMI - identification name of a bot, the same as the EMI field of the "robots" table. This name is taken from the "clOrdID" field of ```/execution``` or ```/execution/tradeHistory``` endpoint. For example, EMI = ```"myBot"``` for ```{"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}```. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them, for example ```"XBTUSD.inverse"```. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the "robots" table, then "symbol" value is also assigned.
+* EXECID - unique code that exchange assigns to any transaction.
+* EMI is the identification name of the bot, usually the same as the EMI field of the "robots" table, taken from the "clOrdID" field. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them execution. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the "robots" table, then "symbol" value is also assigned.
+
+
+When the program receives a transaction from the exchange API, it need to understand which bot the transaction belongs to. This is due to the "orderLinkId" field for Bybit or "clOrdID" for Bitmex respectively, which have been sent to the exchang 
+
+
+
+
+
+This name is taken from the "clOrdID" 
+
+
+
+ field of ```/execution``` or ```/execution/tradeHistory``` endpoint. For example, EMI = ```"myBot"``` for ```{"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}```. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them, for example ```"XBTUSD.inverse"```. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the "robots" table, then "symbol" value is also assigned.
 * REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}```.
 * MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
