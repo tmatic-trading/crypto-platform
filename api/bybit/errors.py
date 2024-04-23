@@ -57,6 +57,8 @@ def exception(method):
                     pass
                 elif exception.status_code == 110003: # price is out of range
                     pass
+                elif exception.status_code == 110001: # Order does not exist
+                    pass
                 else:
                     self.logNumFatal = 1001
             elif name == "InvalidChannelTypeError":  # pybit ws

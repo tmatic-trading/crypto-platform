@@ -1,7 +1,4 @@
 import logging
-
-# import pymysql
-# import pymysql.cursors
 import sqlite3
 import threading
 from collections import OrderedDict
@@ -12,13 +9,11 @@ import services as service
 from api.api import WS, Markets
 from api.init import Variables
 
-# from api.websockets import Websockets
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
 
-# db = var.env["MYSQL_DATABASE"]
 db_sqlite = var.env["SQLITE_DATABASE"]
 
 
@@ -107,16 +102,9 @@ class Init(WS, Variables):
 
     def account_balances(self: Markets) -> None:
         """
-        Calculates the account by currency according to data from the MySQL
+        Calculates the account by currency according to data from the SQLite
         'coins' table.
         """
-        """sql = (
-            "select SYMBOL, CATEGORY from "
-            + db
-            + ".coins where ACCOUNT=%s and MARKET=%s group by SYMBOL, CATEGORY"
-        )
-        var.cursor_mysql.execute(sql, (self.user_id, self.name))
-        data = var.cursor_mysql.fetchall()"""
         data = Function.select_database(
             self,
             "select SYMBOL, CATEGORY from "
@@ -196,8 +184,6 @@ class Init(WS, Variables):
                 )
                 union = "union "
             sql += ") T"
-            # var.cursor_mysql.execute(sql)
-            # data = var.cursor_mysql.fetchall()
             data = Function.select_database(self, sql)
             settlCurrency = (currency, self.name)
             self.Account[settlCurrency].commission = float(data[0]["commiss"])
@@ -312,26 +298,12 @@ class Init(WS, Variables):
             + "order by TTIME desc limit "
             + str(disp.table_limit)
         )
-        # var.cursor_mysql.execute(sql)
-        # data = var.cursor_mysql.fetchall()
         data = Function.select_database(self, sql)
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
             Function.fill_columns(
                 self, func=Function.funding_display, table=funding, val=val
             )
-        """sql = (
-            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
-            + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
-            + db
-            + ".coins where SIDE <> -1 and ACCOUNT = "
-            + str(self.user_id)
-            + " and MARKET = '"
-            + self.name
-            + "' "
-            + "order by TTIME desc limit "
-            + str(disp.table_limit)
-        )"""
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
             + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
@@ -343,8 +315,6 @@ class Init(WS, Variables):
             + "order by TTIME desc limit "
             + str(disp.table_limit)
         )
-        # var.cursor_mysql.execute(sql)
-        # data = var.cursor_mysql.fetchall()
         data = Function.select_database(self, sql)
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
@@ -372,16 +342,6 @@ def setup_logger():
 
 def setup_database_connecion() -> None:
     try:
-        """var.connect_mysql = pymysql.connect(
-            host=var.env["MYSQL_HOST"],
-            user=var.env["MYSQL_USER"],
-            password=var.env["MYSQL_PASSWORD"],
-            database=var.env["MYSQL_DATABASE"],
-            charset="utf8mb4",
-            cursorclass=pymysql.cursors.DictCursor,
-        )
-        var.cursor_mysql = var.connect_mysql.cursor()"""
-
         var.connect_sqlite = sqlite3.connect(db_sqlite, check_same_thread=False)
         var.connect_sqlite.row_factory = sqlite3.Row
         var.cursor_sqlite = var.connect_sqlite.cursor()

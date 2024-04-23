@@ -1,7 +1,6 @@
 import threading
 import time
 import tkinter as tk
-from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from random import randint
@@ -48,22 +47,6 @@ class Function(WS, Variables):
             #Function.rounding(self)
         if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)
-
-    '''def rounding(self: Markets) -> None:
-        if self.name not in disp.price_rounding:
-            disp.price_rounding[self.name] = OrderedDict()
-        for symbol in self.Instrument.get_keys():
-            tickSize = str(self.Instrument[symbol].tickSize)
-            if tickSize.find(".") > 0:
-                disp.price_rounding[self.name][symbol] = (
-                    len(tickSize) - 1 - tickSize.find(".")
-                )
-            elif tickSize.find("e-") > 0:
-                disp.price_rounding[self.name][symbol] = int(
-                    tickSize[tickSize.find("e-") + 2 :]
-                )
-            else:
-                disp.price_rounding[self.name][symbol] = 0'''
 
     def timeframes_data_filename(
         self: Markets, emi: str, symbol: tuple, timefr: str
@@ -127,35 +110,7 @@ class Function(WS, Variables):
                     )
                     Function.sql_lock.release()
 
-    '''def read_database(self: Markets, execID: str, user_id: int) -> list:
-        """
-        Load a row by execID from the database
-        """
-        #var.cursor_mysql.execute(
-        #    "select EXECID from " + db + ".coins where EXECID=%s and account=%s",
-        #    (execID, user_id),
-        #)
-        var.cursor_mysql.execute(
-            "select EXECID from coins where EXECID=%s and account=%s",
-            (execID, user_id),
-        )
-        data = var.cursor_mysql.fetchall()
-
-        return data'''
-
     def insert_database(self: Markets, values: list) -> None:
-        """
-        Insert row into database
-        """
-        """var.cursor_mysql.execute(
-            "insert into "
-            + db
-            + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
-                SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
-                    CLORDID,TTIME,ACCOUNT) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
-                        %s,%s,%s,%s,%s,%s,%s,%s)",
-            values,
-        )"""
         err_locked = 0
         while(True):
             try:
@@ -268,11 +223,6 @@ class Function(WS, Variables):
                     rate=row["commission"],
                     fund=1,
                 )
-                if "execFee" in row:
-                    execfee = row["execFee"]
-                else:
-                    execfee = "None"
-                # print("____________calc trade", "commiss", calc["commiss"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                 self.robots[emi]["POS"] += lastQty
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
@@ -341,11 +291,6 @@ class Function(WS, Variables):
                         rate=row["commission"],
                         fund=0,
                     )
-                    if "execFee" in row:
-                        execfee = row["execFee"]
-                    else:
-                        execfee = "None"
-                    # print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                     message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
                     message["QTY"] = self.robots[emi]["POS"]
@@ -395,11 +340,6 @@ class Function(WS, Variables):
                     rate=row["commission"],
                     fund=0,
                 )
-                if "execFee" in row:
-                    execfee = row["execFee"]
-                else:
-                    execfee = "None"
-                # print("____________calc funding", "funding", calc["funding"], "commission", row["commission"], "lastQty", row["lastQty"], "execFee", execfee, row["price"])
                 emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     var.logger.error(
@@ -539,14 +479,10 @@ class Function(WS, Variables):
             elif row["execType"] == "Trade":
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
-                var.orders[clOrdID]["transactTime"] = row["transactTime"]
                 if clOrdID in var.orders:
                     orders.delete(row=Function.order_number(self, clOrdID))
                     var.orders.move_to_end(clOrdID, last=False)
             elif row["execType"] == "Replaced":
-                var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-                var.orders[clOrdID]["price"] = row["price"]
-                var.orders[clOrdID]["transactTime"] = row["transactTime"]
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
@@ -557,6 +493,7 @@ class Function(WS, Variables):
             ):  # var.orders might be empty if we are here from trading_history()
                 var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 var.orders[clOrdID]["price"] = price
+                var.orders[clOrdID]["transactTime"] = row["transactTime"]
         info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
         info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
         try:
@@ -750,7 +687,6 @@ class Function(WS, Variables):
         Refresh information on screen
         """
         if utc.hour != var.refresh_hour:
-            # var.cursor_mysql.execute("select count(*) from " + db + ".robots")
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening SQLite")

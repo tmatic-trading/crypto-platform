@@ -8,7 +8,7 @@ from api.api import Markets
 def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     ws = Markets[robot["MARKET"]]
     period = robot["PERIOD"]
-    quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument.myMultiplier
+    quantaty = robot["lotSize"] * robot["CAPITAL"]
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
     indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 0.5
