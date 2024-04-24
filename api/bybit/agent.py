@@ -1,27 +1,13 @@
 # from api.variables import Variables
 import logging
-from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
 import services as service
-from common.variables import Variables as var
 from services import exceptions_manager
 
 from .ws import Bybit
 
-
-'''2024-04-22 12:12:28,275 - api.bitmex.ws - INFO - (https) sending GET to user: ""
-2024-04-22 12:12:28,566 - api.bitmex.ws - INFO - (https) sending GET to execution/tradeHistory?count=500&reverse=false&startTime=2024-04-20 13:27:39: ""
-2024-04-22 12:12:28,815 - api.bitmex.ws - INFO - (https) sending GET to instrument?symbol=ADAH24: ""
-2024-04-22 12:12:29,029 - api.bitmex.ws - INFO - (https) sending GET to position?filter=%7B%22symbol%22%3A%22ADAH24%22%7D: ""
-2024-04-22 12:12:29,431 - api.bitmex.agent - INFO - ('ADAH24', 'linear', 'Bitmex') has been added to the positions dictionary for Bitmex
-2024-04-22 12:12:29,431 - api.bitmex.ws - INFO - (https) sending GET to position?filter=%7B%22symbol%22%3A%22XBTEUR%22%7D: ""
-2024-04-22 12:12:29,686 - api.bitmex.agent - INFO - ('XBTEUR', 'inverse', 'Bitmex') has been added to the positions dictionary for Bitmex
-2024-04-22 12:12:29,687 - api.bitmex.ws - INFO - (https) sending GET to instrument?symbol=XBTH24: ""
-2024-04-22 12:12:29,928 - api.bitmex.ws - INFO - (https) sending GET to position?filter=%7B%22symbol%22%3A%22XBTH24%22%7D: ""
-2024-04-22 12:12:30,212 - api.bitmex.agent - INFO - ('XBTH24', 'inverse', 'Bitmex') has been added to the positions dictionary for Bitmex
-'''
 
 @exceptions_manager
 class Agent(Bybit):
@@ -29,7 +15,10 @@ class Agent(Bybit):
 
     def get_active_instruments(self):
         for category in self.categories:
-            Agent.logger.info("In get_active_instruments - sending get_instruments_info() - category - " + category)
+            Agent.logger.info(
+                "In get_active_instruments - sending get_instruments_info() - category - "
+                + category
+            )
             instrument_info = self.session.get_instruments_info(category=category)
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
@@ -59,7 +48,10 @@ class Agent(Bybit):
             Agent.logger.error(message)
 
     def get_instrument(self, symbol: tuple) -> None:
-        Agent.logger.info("In get_instrument - sending get_instruments_info() - symbol - " + str(symbol))
+        Agent.logger.info(
+            "In get_instrument - sending get_instruments_info() - symbol - "
+            + str(symbol)
+        )
         instrument_info = self.session.get_instruments_info(
             symbol=symbol[0], category=symbol[1]
         )
@@ -71,9 +63,14 @@ class Agent(Bybit):
         print("___get_position")
 
     def trade_bucketed(
-            self, symbol: tuple, time: datetime, timeframe: str
+        self, symbol: tuple, time: datetime, timeframe: str
     ) -> Union[list, None]:
-        Agent.logger.info("In trade_bucketed - sending get_kline() - symbol - " + str(symbol) + " - interval - " + str(timeframe))
+        Agent.logger.info(
+            "In trade_bucketed - sending get_kline() - symbol - "
+            + str(symbol)
+            + " - interval - "
+            + str(timeframe)
+        )
         kline = self.session.get_kline(
             category=symbol[1],
             symbol=symbol[0],
@@ -93,8 +90,8 @@ class Agent(Bybit):
                         "close": float(row[4]),
                     }
                 )
-                
-            return result        
+
+            return result
 
     def trading_history(self, histCount: int, time: datetime) -> list:
         startTime = service.time_converter(time)
@@ -104,7 +101,12 @@ class Agent(Bybit):
             for category in self.categories:
                 cursor = "no"
                 while cursor:
-                    Agent.logger.info("In trading_history - sending get_executions() - category - " + category + " - startTime - " + str(time))
+                    Agent.logger.info(
+                        "In trading_history - sending get_executions() - category - "
+                        + category
+                        + " - startTime - "
+                        + str(service.time_converter(startTime / 1000))
+                    )
                     result = self.session.get_executions(
                         category=category,
                         startTime=startTime,
@@ -129,8 +131,8 @@ class Agent(Bybit):
                         row["price"] = float(row["execPrice"])
                         row["lastQty"] = float(row["execQty"])
                         row["settlCurrency"] = self.Instrument[
-                                row["symbol"]
-                            ].settlCurrency
+                            row["symbol"]
+                        ].settlCurrency
                         row["market"] = self.name
                         if row["execType"] == "Funding":
                             if row["side"] == "Sell":
@@ -145,7 +147,7 @@ class Agent(Bybit):
             )
             if len(trade_history) > histCount:
                 break
-            startTime += 604800000
+            startTime += 604800000  # +7 days
         trade_history.sort(key=lambda x: x["transactTime"])
 
         return trade_history
@@ -153,12 +155,16 @@ class Agent(Bybit):
     def open_orders(self) -> list:
         myOrders = list()
         base = {"openOnly": 0, "limit": 50}
+
         def request_open_orders(myOrders: list, parameters: dict):
             cursor = "no"
             parameters["cursor"] = cursor
             while cursor:
-                Agent.logger.info("In trading_history - sending open_orders() - parameters - " + str(parameters))
-                result = self.session.get_open_orders(**parameters)      
+                Agent.logger.info(
+                    "In trading_history - sending open_orders() - parameters - "
+                    + str(parameters)
+                )
+                result = self.session.get_open_orders(**parameters)
                 cursor = result["result"]["nextPageCursor"]
                 parameters["cursor"] = result["result"]["nextPageCursor"]
                 for order in result["result"]["list"]:
@@ -170,7 +176,10 @@ class Agent(Bybit):
                     order["orderQty"] = float(order["qty"])
                     order["price"] = float(order["price"])
                     if "settlCurrency" in parameters:
-                        order["settlCurrency"] = (parameters["settlCurrency"], self.name)
+                        order["settlCurrency"] = (
+                            parameters["settlCurrency"],
+                            self.name,
+                        )
                     order["ordType"] = order["orderType"]
                     order["ordStatus"] = order["orderStatus"]
                     order["leavesQty"] = float(order["leavesQty"])
@@ -180,7 +189,7 @@ class Agent(Bybit):
                 myOrders += result["result"]["list"]
 
             return myOrders
-        
+
         for category in self.categories:
             if category == "spot":
                 parameters = base.copy()
@@ -192,7 +201,9 @@ class Agent(Bybit):
                         parameters = base.copy()
                         parameters["category"] = category
                         parameters["settleCoin"] = settleCoin
-                        myOrders = request_open_orders(myOrders=myOrders, parameters=parameters)
+                        myOrders = request_open_orders(
+                            myOrders=myOrders, parameters=parameters
+                        )
 
         return myOrders
 
@@ -230,12 +241,26 @@ class Agent(Bybit):
         )
 
     def get_wallet_balance(self) -> None:
-        Agent.logger.info("In get_wallet_balance - sending get_wallet_balance() - accountType - UNIFIED")
+        Agent.logger.info(
+            "In get_wallet_balance - sending get_wallet_balance() - accountType - UNIFIED"
+        )
         result = self.session.get_wallet_balance(accountType="UNIFIED")
         for values in result["result"]["list"]:
             if values["accountType"] == "UNIFIED":
                 for coin in values["coin"]:
                     settlCurrency = (coin["coin"], self.name)
+                    self.Account[settlCurrency].orderMargin = float(
+                        coin["locked"]
+                    ) + float(coin["totalOrderIM"])
+                    self.Account[settlCurrency].walletBalance = float(
+                        coin["walletBalance"]
+                    )
+                    self.Account[settlCurrency].unrealisedPnl = float(
+                        coin["unrealisedPnl"]
+                    )
+                    self.Account[settlCurrency].positionMagrin = float(
+                        coin["totalPositionIM"]
+                    )
                     self.Account[settlCurrency].account = self.user_id
                     self.Account[settlCurrency].availableMargin = float(
                         coin["availableToWithdraw"]
@@ -243,7 +268,6 @@ class Agent(Bybit):
                     self.Account[settlCurrency].commission = 0
                     self.Account[settlCurrency].funding = 0
                     self.Account[settlCurrency].marginBalance = float(coin["equity"])
-                    self.Account[settlCurrency].marginLeverage = 0
                     self.Account[settlCurrency].result = 0
                     self.Account[settlCurrency].settlCurrency = settlCurrency
                     self.Account[settlCurrency].sumreal = 0
@@ -257,7 +281,12 @@ class Agent(Bybit):
                 if settlCurrency in self.currencies:
                     cursor = "no"
                     while cursor:
-                        Agent.logger.info("In get_position_info - sending get_positions() - category - " + category + " - settlCurrency - " + settlCurrency)
+                        Agent.logger.info(
+                            "In get_position_info - sending get_positions() - category - "
+                            + category
+                            + " - settlCurrency - "
+                            + settlCurrency
+                        )
                         result = self.session.get_positions(
                             category=category,
                             settleCoin=settlCurrency,
@@ -349,6 +378,7 @@ class Agent(Bybit):
             self.Instrument[symbol].fundingRate = "None"
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
+
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
     for k, val in data.items():

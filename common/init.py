@@ -5,10 +5,8 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from sqlite3 import Error
 
-import services as service
 from api.api import WS, Markets
 from api.init import Variables
-
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Variables as disp
@@ -25,7 +23,7 @@ class Init(WS, Variables):
         for emi, values in self.robots.items():
             self.robot_status[emi] = values["STATUS"]
         self.robots = OrderedDict()
-        #Function.rounding(self)
+        # Function.rounding(self)
         self.frames = dict()
         self.account_disp = self.name + "\nAcc." + str(self.user_id) + "\n"
 
@@ -74,11 +72,8 @@ class Init(WS, Variables):
         if history == "error":
             var.logger.error("history.ini error")
             exit(1)
-        tmp = datetime(2000, 1, 1)
         while history:
             for row in history:
-                if row["execID"] == "fc9be015-b864-5bf8-9bb2-70b3e2452b15":
-                    print(row)
                 data = Function.select_database(  # read_database
                     self,
                     "select EXECID from coins where EXECID='%s' and account=%s"
@@ -94,11 +89,6 @@ class Init(WS, Variables):
             history = WS.trading_history(
                 self, histCount=count_val, time=last_history_time
             )
-            '''if last_history_time == tmp:
-                break
-            tmp = last_history_time'''
-
-
 
     def account_balances(self: Markets) -> None:
         """
@@ -124,36 +114,6 @@ class Init(WS, Variables):
                 + "sum(funding) funding from ("
             )
             for symbol in symbols:
-                """sql += (
-                    union
-                    + "select IFNULL(sum(COMMISS),0.0) commiss, "
-                    + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
-                    + "sum(COMMISS) from "
-                    + db
-                    + ".coins where SIDE < 0 and ACCOUNT = "
-                    + str(self.user_id)
-                    + " and MARKET = '"
-                    + self.name
-                    + "' and CURRENCY = '"
-                    + currency
-                    + "' and SYMBOL = '"
-                    + symbol[0]
-                    + "' and CATEGORY = '"
-                    + symbol[1]
-                    + "'),0.0) funding from "
-                    + db
-                    + ".coins where SIDE >= 0 and ACCOUNT = "
-                    + str(self.user_id)
-                    + " and MARKET = '"
-                    + self.name
-                    + "' and CURRENCY = '"
-                    + currency
-                    + "' and SYMBOL = '"
-                    + symbol[0]
-                    + "' and CATEGORY = '"
-                    + symbol[1]
-                    + "'"
-                )"""
                 sql += (
                     union
                     + "select IFNULL(sum(COMMISS),0.0) commiss, "
@@ -257,10 +217,6 @@ class Init(WS, Variables):
             order["clOrdID"] = clOrdID
         orders.clear_all()
         values = list(var.orders.values())
-        '''for value in values:
-            print("-----------------------------------")
-            for k, v in value.items():
-                print(k, v, type(v))'''
         values.sort(key=lambda x: x["transactTime"])
         var.orders = OrderedDict()
         for val in reversed(values):
@@ -275,18 +231,6 @@ class Init(WS, Variables):
         """
         Download the latest trades and funding data from the database (if any)
         """
-        """sql = (
-            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
-            + "PRICE, TTIME, COMMISS from "
-            + db
-            + ".coins where SIDE = -1 and ACCOUNT = "
-            + str(self.user_id)
-            + " and MARKET = '"
-            + self.name
-            + "' "
-            + "order by TTIME desc limit "
-            + str(disp.table_limit)
-        )"""
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
             + "PRICE, TTIME, COMMISS from "

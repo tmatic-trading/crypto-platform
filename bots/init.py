@@ -2,11 +2,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
 
 import services as service
-
-# from ws.init import Variables as ws
 from api.api import WS, Markets
 
-# import functions as function
 from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
@@ -135,18 +132,6 @@ class Init(WS, Variables):
                 _emi = emi[0]
             else:
                 _emi = emi
-            """var.cursor_mysql.execute(
-                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
-                + "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
-                + "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01') LTIME "
-                + "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY "
-                + "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
-                + "COMMISS, TTIME FROM "
-                + "coins WHERE EMI = ? AND ACCOUNT = ? AND CATEGORY = ?) aa",
-                (_emi, self.user_id, val["CATEGORY"])
-            )
-            data = var.cursor_mysql.fetchall()"""
-
             sql = (
                 "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
                 "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
@@ -162,17 +147,15 @@ class Init(WS, Variables):
                 for col in row:
                     robot[col] = row[col]
                     if col == "POS" or col == "VOL":
-                        robot[col] = round(robot[col], self.Instrument[robot["SYMBOL"]].precision)
+                        robot[col] = round(
+                            robot[col], self.Instrument[robot["SYMBOL"]].precision
+                        )
                     if col == "COMMISS" or col == "SUMREAL":
                         robot[col] = float(robot[col])
                     if col == "LTIME":
-                        robot[col] = service.time_converter(
-                            time=robot[col], usec=True
-                        )
+                        robot[col] = service.time_converter(time=robot[col], usec=True)
             robot["PNL"] = 0
-            robot["lotSize"] = self.Instrument[
-                robot["SYMBOL"]
-            ].minOrderQty
+            robot["lotSize"] = self.Instrument[robot["SYMBOL"]].minOrderQty
             if robot["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(robot["SYMBOL"])
 
@@ -247,9 +230,7 @@ class Init(WS, Variables):
         if res[0]["timestamp"] > res[-1]["timestamp"]:
             res.reverse()
         for num, row in enumerate(res):
-            tm = row["timestamp"] - timedelta(
-                minutes=robot["TIMEFR"]
-            )
+            tm = row["timestamp"] - timedelta(minutes=robot["TIMEFR"])
             frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,

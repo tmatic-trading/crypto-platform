@@ -82,13 +82,13 @@ The "coins" table receives data from the websocket execution stream or trade his
 * EMI is the identification name of the bot, usually the same as the EMI field of the "robots" table, taken from the "clOrdID" field. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them execution. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the "robots" table, then "symbol" value is also assigned.
 
 
-When the program receives a transaction from the exchange API, it need to understand which bot the transaction belongs to. This is due to the "orderLinkId" field for Bybit or "clOrdID" for Bitmex respectively, which have been sent to the exchang 
+When the program receives a transaction from the exchange API, it need to understand which bot the transaction belongs to. This is due to the "orderLinkId" field for Bybit or "clOrdID" for Bitmex respectively, which have been sent to the exchang
 
 
 
 
 
-This name is taken from the "clOrdID" 
+This name is taken from the "clOrdID"
 
 
 

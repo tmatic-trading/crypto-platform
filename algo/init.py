@@ -1,9 +1,10 @@
 # Robot strategy initialization file
 
 
-from bots.variables import Variables as bot
 import algo.strategy
 from api.api import Markets
+from bots.variables import Variables as bot
+
 
 def init_algo(self: Markets):
     for emi, robot in self.robots.items():

@@ -1,7 +1,7 @@
 import threading
 import time
 import tkinter as tk
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from decimal import Decimal
 from random import randint
 from typing import Union
@@ -44,7 +44,7 @@ class Function(WS, Variables):
             self.full_symbol_list.append(symbol)
             if symbol not in self.Instrument.get_keys():
                 WS.get_instrument(Markets[symbol[2]], symbol=symbol)
-            #Function.rounding(self)
+            # Function.rounding(self)
         if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)
 
@@ -82,7 +82,7 @@ class Function(WS, Variables):
 
     def select_database(self: Markets, query: str) -> list:
         err_locked = 0
-        while(True):
+        while True:
             try:
                 Function.sql_lock.acquire(True)
                 var.cursor_sqlite.execute(query)
@@ -94,11 +94,7 @@ class Function(WS, Variables):
                 return data
             except var.error_sqlite as e:
                 if "database is locked" not in str(e):
-                    var.logger.error(
-                        "Sqlite Error: "
-                        + str(e)
-                        + ")"
-                    )
+                    var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
                     break
                 else:
@@ -112,7 +108,7 @@ class Function(WS, Variables):
 
     def insert_database(self: Markets, values: list) -> None:
         err_locked = 0
-        while(True):
+        while True:
             try:
                 Function.sql_lock.acquire(True)
                 var.cursor_sqlite.execute(
@@ -127,11 +123,7 @@ class Function(WS, Variables):
                 break
             except var.error_sqlite as e:
                 if "database is locked" not in str(e):
-                    var.logger.error(
-                        "Sqlite Error: "
-                        + str(e)
-                        + ")"
-                    )
+                    var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
                     break
                 else:
@@ -763,7 +755,7 @@ class Function(WS, Variables):
             else:
                 tm = instrument.expire
             update_label(table="position", column=8, row=num + mod, val=tm)
-            if isinstance(instrument.fundingRate, float):                
+            if isinstance(instrument.fundingRate, float):
                 fund = round(instrument.fundingRate * 100, 4)
             else:
                 fund = instrument.fundingRate
@@ -880,10 +872,12 @@ class Function(WS, Variables):
                     update_label(table="orderbook", column=1, row=row, val=price)
                     if str(qty) != "0":
                         update_label(table="orderbook", column=0, row=row, val=qty)
-                        disp.labels["orderbook"][row][0]["bg"] = "orange red"
+                        disp.labels["orderbook"][row][0]["bg"] = disp.red_color
+                        disp.labels["orderbook"][row][0]["fg"] = "white"
                     else:
                         update_label(table="orderbook", column=0, row=row, val="")
                         disp.labels["orderbook"][row][0]["bg"] = disp.bg_color
+                        disp.labels["orderbook"][row][0]["fg"] = "white"
                 else:
                     price = round(
                         first_price_buy - (row - num - 1) * instrument.tickSize,
@@ -905,10 +899,12 @@ class Function(WS, Variables):
                     update_label(table="orderbook", column=1, row=row, val=price)
                     if str(qty) != "0":
                         update_label(table="orderbook", column=2, row=row, val=qty)
-                        disp.labels["orderbook"][row][2]["bg"] = "green2"
+                        disp.labels["orderbook"][row][2]["bg"] = disp.green_color
+                        disp.labels["orderbook"][row][2]["fg"] = "white"
                     else:
                         update_label(table="orderbook", column=2, row=row, val="")
                         disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
+                        disp.labels["orderbook"][row][2]["fg"] = disp.fg_color
         else:
             display_order_book_values(
                 val=instrument.bids,
@@ -969,7 +965,9 @@ class Function(WS, Variables):
                 symbol=symbol,
             )
             if disp.labels_cache["robots"][num + mod][9] != val:
-                if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot["STATUS"] == "OFF":
+                if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot[
+                    "STATUS"
+                ] == "OFF":
                     disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
                 else:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
@@ -1016,50 +1014,55 @@ class Function(WS, Variables):
                 table="account",
                 column=1,
                 row=num + mod,
-                val=format_number(number=account.marginBalance),
+                val=format_number(number=account.walletBalance),
             )
             update_label(
                 table="account",
                 column=2,
                 row=num + mod,
-                val=format_number(number=account.availableMargin),
+                val=format_number(number=account.unrealisedPnl),
             )
             update_label(
                 table="account",
                 column=3,
                 row=num + mod,
-                val="{:.3f}".format(account.marginLeverage),
+                val=format_number(number=account.marginBalance),
             )
             update_label(
                 table="account",
                 column=4,
                 row=num + mod,
-                val=format_number(number=account.sumreal + account.result),
+                val=format_number(number=account.orderMargin),
             )
             update_label(
                 table="account",
                 column=5,
                 row=num + mod,
-                val=format_number(number=-account.commission),
+                val=format_number(number=account.positionMagrin),
             )
             update_label(
                 table="account",
                 column=6,
                 row=num + mod,
-                val=format_number(number=-account.funding),
-            )
-            total = (
-                account.marginBalance
-                - account.result
-                + account.commission
-                + account.funding
-                + account.sumreal
+                val=format_number(number=account.availableMargin),
             )
             update_label(
                 table="account",
                 column=7,
                 row=num + mod,
-                val=format_number(number=total),
+                val=format_number(number=account.sumreal + account.result),
+            )
+            update_label(
+                table="account",
+                column=8,
+                row=num + mod,
+                val=format_number(number=-account.commission),
+            )
+            update_label(
+                table="account",
+                column=9,
+                row=num + mod,
+                val=format_number(number=-account.funding),
             )
 
         # Refresh Market table
@@ -1071,13 +1074,13 @@ class Function(WS, Variables):
             if ws.logNumFatal != 0:
                 if ws.logNumFatal == -1:
                     status = "RELOADING"
-                '''else:
+                """else:
                     status = "error " + str(ws.logNumFatal)
                     Tables.market.color_market(
                         state="error",
                         row=var.market_list.index(ws.name),
                         market=ws.name,
-                    )'''
+                    )"""
             update_label(
                 table="market",
                 column=0,
@@ -1211,11 +1214,12 @@ class Function(WS, Variables):
 def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
-        if row_position[0] - orders.mod >= 0:            
+        if row_position[0] - orders.mod >= 0:
             for num, clOrdID in enumerate(var.orders):
                 if num == row_position[0] - orders.mod:
                     break
             ws = Markets[var.orders[clOrdID]["SYMBOL"][2]]
+
             def on_closing() -> None:
                 disp.order_window_trigger = "off"
                 order_window.destroy()
@@ -1627,7 +1631,9 @@ def handler_market(event, row_position: int) -> None:
         for row in enumerate(var.market_list):
             for column in range(len(var.name_market)):
                 if row[0] + mod == row_position:
-                    disp.labels["market"][row[0] + mod][column]["bg"] = disp.bg_select_color
+                    disp.labels["market"][row[0] + mod][column][
+                        "bg"
+                    ] = disp.bg_select_color
                 else:
                     disp.labels["market"][row[0] + mod][column]["bg"] = disp.title_color
 
@@ -1805,10 +1811,14 @@ trades = ListBoxTable(
     name="trades", frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
 )
 funding = ListBoxTable(
-    name="funding", frame=disp.frame_funding, title=var.name_funding, size=0, expand=True
+    name="funding",
+    frame=disp.frame_funding,
+    title=var.name_funding,
+    size=0,
+    expand=True,
 )
 orders = ListBoxTable(
-    name="orders", 
+    name="orders",
     frame=disp.frame_orders,
     title=var.name_order,
     bind=handler_order,

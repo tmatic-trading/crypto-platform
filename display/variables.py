@@ -1,6 +1,5 @@
 import platform
 import tkinter as tk
-from collections import OrderedDict
 from datetime import datetime
 from tkinter import ttk
 
@@ -186,7 +185,7 @@ class Variables:
     info_display_counter = 0
     symb_book = ""
     book_window_trigger = "off"
-    #price_rounding = OrderedDict()
+    # price_rounding = OrderedDict()
     order_window_trigger = "off"
     table_limit = 150
 
@@ -354,7 +353,7 @@ class ListBoxTable(Variables):
 
     def __init__(
         self,
-        name: str, 
+        name: str,
         frame: tk.Frame,
         size: int,
         title: list,

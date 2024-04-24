@@ -7,7 +7,6 @@ from api.bitmex.agent import Agent as BitmexAgent
 from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
-from api.init import Setup
 
 from .variables import Variables
 
@@ -28,11 +27,6 @@ class MetaMarket(type):
 
 class Markets(Bitmex, Bybit, metaclass=MetaMarket):
     pass
-
-
-"""class Markets(Variables, Enum):
-    Bitmex =  Bitmex()
-    Bybit = Bybit()"""
 
 
 class Agents(Enum):
@@ -123,13 +117,6 @@ class WS(Variables):
         """
 
         return self.data["margin"]
-
-    '''def market_depth(self: Markets) -> list:
-        """
-        Gets market depth (orderbook), 10 lines deep.
-        """
-
-        return self.data["orderBook"]'''
 
     def place_limit(
         self: Markets, quantity: int, price: float, clOrdID: str, symbol: tuple
