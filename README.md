@@ -67,12 +67,12 @@ pip3 install -r requirements.txt
 The "coins" table receives data from the websocket execution stream or trade history endpoint. Explanations for the columns of the "coins" table:
 * ID - row number in the database.
 * EXECID - unique code that exchange assigns to any transaction.
-* EMI is the identification name of the bot, usually the same as the EMI field of the SQLite "robots" table, taken from the "clOrdID" field. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them execution. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then "symbol" value is also assigned.
+* EMI is the identification name of the bot taken from the "clOrdID" field, usually the same as the EMI field of the SQLite "robots" table. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them execution. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then "symbol" value is also assigned.
 
 | execution|myBot is in the "robots" table|EMI|
 | ------------- |:------------------:|:-----:|
 | {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD", category: "inverse"}|yes|myBot|
-| {"clOrdID": "", "symbol": "XBTUSD", category: "inverse"}|yes|XBTUSD.inverse|
+| {"clOrdID": "", "symbol": "XBTUSD", category: "inverse"}|-|XBTUSD.inverse|
 | {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD", category: "inverse"}|no|XBTUSD.inverse|
 
 * REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```
@@ -86,11 +86,11 @@ The "coins" table receives data from the websocket execution stream or trade his
 * PRICE - order price.
 * THEOR_PRICE - target price.
 * TRADE_PRICE - transaction price or estimated funding price. The transaction price may be better or worse than PRICE.
-* SUMREAL - entry/exit value, which is expressed in the currency of the transaction instrument and is calculated in accordance with the documentation of the exchange for each instrument.
+* SUMREAL - execution value, which is expressed in the currency of the transaction instrument and is calculated in accordance with the documentation of the exchange for each instrument.
 * COMMISS - commission for completing a transaction or funding, expressed in the currency of the instrument, and is calculated in accordance with the documentation of the exchange for each instrument. A negative commission value means a rebate.
 * TTIME - transaction time received from the exchange.
-* DAT - time the current row was written to the database.
-* CLORDID - unique order identifier corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, "1109594183.myBot" where 1109594183 is a unique order number, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite "coins" table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding or the order was made from outside this platform where "clOrdID" was not used.
+* DAT - time the current row was written into the database.
+* CLORDID - unique order identifier assigned by user corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, "1109594183.myBot" where 1109594183 is a unique order number, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite "coins" table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding or the order was made from outside this platform where "clOrdID" was not used.
 * ACCOUNT - account number.
 
 Explanations for the columns of the SQLite "robots" table:
@@ -130,7 +130,7 @@ TESTNET = "True"
 
 - REFRESH_RATE refers to how often the information on the screen is refreshed, ranging from 1 to 10 times per second.
 
-- TESTNET - choose between the main and test networks.
+- TESTNET - choose between the main (False) and test (True) networks.
 
 Create a new file named ```.env.Bitmex``` in the root folder of the program with your settings for the Bitmex exchange if it is in the MARKET_LIST. The file might look like this:
 
@@ -172,7 +172,7 @@ TESTNET_API_SECRET = "your testnet API secret"
 
 Check the variables LINEAR_SYMBOLS, INVERSE_SYMBOLS, QUANTO_SYMBOLS, SPOT_SYMBOLS, OPTION_SYMBOLS for each exchange where there must be at least one instrument symbol, for example for Bitmex: XBTUSD in INVERSE_SYMBOLS, other variables can be empty. Check the CURRENCIES variable where your account currencies should be. If your account supports multiple currencies, specify them if necessary, for example: "XBt, USDt", where XBt is Bitcoin, USDt is Tether stablecoin.
 
-Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date an time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite "coins" table. Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history. **Bybit only supports last two years of trading history**. Its API allows trading history to be downloaded in 7-day chunks, so retrieving data for a long period may take time.
+Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite "coins" table. Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history. **Bybit only supports last two years of trading history**. Its API allows trading history to be downloaded in 7-day chunks, so retrieving data for a long period may take time.
 
 Launch the program:
 - in Linux or macOS terminal ```python3 main.py```
@@ -186,7 +186,7 @@ EMI can be equal to the instrument symbol as the default name, for example, if y
 
 Be careful when assigning EMI to bots. Keep in mind that the "clOrdID" field will permanently store the bot's EMI in the exchange registries. You can't change it. Different instruments such as XBTUSD and XBTUSDT may have different settlement currencies such as XBt and USDt. Therefore, you should not assign the same EMI to a bot that first traded XBTUSD and then started trading XBTUSDT. The program will not be able to correctly recalculate the financial result. If you once assigned EMI="myBot" to XBTUSD, then in the future for a bot with EMI="myBot" the instrument must always have the same currency, because... It is impossible to sum XBt and USDt.
 
-Even if you use the same EMI for different instruments but with the same currency, when switching from one instrument to another, you must ensure that the balance is zero. Let's say you traded XBTUSD and you have 100 purchased contracts left. If you change SYMBOL from XBTUSD to ETHUSD, the program will show 100 purchased contracts, but ETHUSD, which will be an error.
+Even if you use the same EMI for different instruments but with the same currency, when switching from one instrument to another, you must ensure that the balance is zero. Let's say you traded XBTUSD and you have 100 purchased contracts left. If you change SYMBOL from XBTUSD to ETHUSD, the program will show 100 purchased contracts, but ETHUSD, which will be a mistake.
 
 The best practice when using the program is to assign the only SYMBOL instrument to a specific EMI and never change it again for this EMI.
 
