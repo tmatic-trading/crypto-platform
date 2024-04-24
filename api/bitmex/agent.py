@@ -150,10 +150,10 @@ class Agent(Bitmex):
     ) -> Union[list, None]:
         """
         Gets timeframe data. Available time interval: 1m,5m,1h,1d.
-        """        
+        """
         path = Listing.TRADE_BUCKETED.format(
             TIMEFRAME=self.timefrs[timeframe], SYMBOL=symbol[0], TIME=str(time)[:19]
-        )      
+        )
         values = Send.request(self, path=path, verb="GET")
         for value in values:
             value["symbol"] = symbol
@@ -163,7 +163,9 @@ class Agent(Bitmex):
 
     def trading_history(self, histCount: int, time=None) -> Union[list, str]:
         if time:
-            path = Listing.TRADING_HISTORY.format(HISTCOUNT=histCount, TIME=str(time)[:19])
+            path = Listing.TRADING_HISTORY.format(
+                HISTCOUNT=histCount, TIME=str(time)[:19]
+            )
             result = Send.request(
                 self,
                 path=path,
@@ -268,14 +270,3 @@ class Agent(Bitmex):
         Bitmex sends this information via websocket, "position" subscription.
         """
         pass
-
-    # del
-    '''def exit(self):
-        """
-        Closes websocket
-        """
-        try:
-            self.logNumFatal = -1
-            self.ws.close()
-        except Exception:
-            pass'''

@@ -2,12 +2,10 @@ import logging
 from collections import OrderedDict
 from datetime import datetime, timezone
 
-# from functions import Function
 from common.variables import Variables as var
 
 
 class Variables:
-    # name = ""
     qwe = 0
     testnet = True
     api_key = ""
@@ -18,7 +16,6 @@ class Variables:
     category_list = list()
     currencies = list()
     positions = OrderedDict()
-    # data = dict()
     full_symbol_list = list()
     symbols = set()
     logger = logging

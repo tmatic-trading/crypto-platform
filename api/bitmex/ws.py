@@ -52,7 +52,6 @@ class Bitmex(Variables):
         self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
-        print("!!!!!!!!!!!!! BITMEX !!!!!!!!!!!")
 
     def start(self):
         if not self.logNumFatal:
@@ -364,6 +363,22 @@ class Bitmex(Variables):
 
     def __update_account(self, settlCurrency: tuple, values: dict):
         account = self.Account[settlCurrency]
+        if "maintMargin" in values:
+            account.positionMagrin = (
+                values["maintMargin"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "initMargin" in values:
+            account.initMargin = (
+                values["initMargin"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "unrealisedPnl" in values:
+            account.unrealisedPnl = (
+                values["unrealisedPnl"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "walletBalance" in values:
+            account.walletBalance = (
+                values["walletBalance"] / self.currency_divisor[settlCurrency[0]]
+            )
         if "marginBalance" in values:
             account.marginBalance = (
                 values["marginBalance"] / self.currency_divisor[settlCurrency[0]]
@@ -372,8 +387,6 @@ class Bitmex(Variables):
             account.availableMargin = (
                 values["availableMargin"] / self.currency_divisor[settlCurrency[0]]
             )
-        if "marginLeverage" in values:
-            account.marginLeverage = values["marginLeverage"]
 
     def exit(self):
         """

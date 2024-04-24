@@ -77,13 +77,15 @@ class Variables:
     ]
     name_account = [
         "CURR",
-        "MARGINBAL",
+        "WALLET_BAL",
+        "UNRLZD_PNL",
+        "MARGIN_BAL",
+        "ORDER_MARG",
+        "POS_MARG",
         "AVAILABLE",
-        "LEVERAGE",
-        "RESULT",
+        "PNL",
         "COMMISS",
         "FUNDING",
-        "CONTROL",
     ]
     name_trade = [
         "TIME",
@@ -119,8 +121,6 @@ class Variables:
         "MARKET",
     ]
     logger = logging
-    # connect_mysql = None
-    # cursor_mysql = None
     connect_sqlite = None
     cursor_sqlite = None
     error_sqlite = None

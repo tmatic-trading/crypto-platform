@@ -1,4 +1,5 @@
 import logging
+from collections import OrderedDict
 
 import services as service
 from api.init import Setup
@@ -7,10 +8,7 @@ from common.data import MetaAccount, MetaInstrument
 from common.variables import Variables as var
 from display.functions import info_display
 from services import exceptions_manager
-import time
-from collections import OrderedDict
 
-# from .agent import Agent
 from .pybit.unified_trading import HTTP, WebSocket
 
 
@@ -81,7 +79,12 @@ class Bybit(Variables):
             lst = list(filter(lambda x: x[1] == category, self.symbol_list))
             for symbol in lst:
                 if category == "linear":
-                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - orderbook_stream - category - "
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -89,7 +92,12 @@ class Bybit(Variables):
                             values=x["data"], category="linear"
                         ),
                     )
-                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - ticker_stream - category - "
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
@@ -97,7 +105,12 @@ class Bybit(Variables):
                         ),
                     )
                 elif category == "inverse":
-                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - orderbook_stream - category - "
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -105,7 +118,12 @@ class Bybit(Variables):
                             values=x["data"], category="inverse"
                         ),
                     )
-                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - ticker_stream - category - "
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
@@ -113,7 +131,12 @@ class Bybit(Variables):
                         ),
                     )
                 elif category == "spot":
-                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - orderbook_stream - category - "
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -121,7 +144,12 @@ class Bybit(Variables):
                             values=x["data"], category="spot"
                         ),
                     )
-                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - ticker_stream - category - "
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
@@ -129,7 +157,12 @@ class Bybit(Variables):
                         ),
                     )
                 elif category == "option":
-                    self.logger.info("ws subscription - orderbook_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - orderbook_stream - category - "
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].orderbook_stream(
                         depth=self.orderbook_depth,
                         symbol=symbol[0],
@@ -137,7 +170,12 @@ class Bybit(Variables):
                             values=x["data"], category="option"
                         ),
                     )
-                    self.logger.info("ws subscription - ticker_stream - category -" + category + " - symbol - " + str(symbol))
+                    self.logger.info(
+                        "ws subscription - ticker_stream - category -"
+                        + category
+                        + " - symbol - "
+                        + str(symbol)
+                    )
                     self.ws[category].ticker_stream(
                         symbol=symbol[0],
                         callback=lambda x: self.__update_ticker(
@@ -159,18 +197,14 @@ class Bybit(Variables):
     def __update_orderbook(self, values: dict, category: tuple) -> None:
         symbol = (values["s"], category, self.name)
         instrument = self.Instrument[symbol]
-        if self.depth == "quote":
-            instrument.asks[0] = values["a"]
-            instrument.bids[0] = values["b"]
-        else:
-            asks = values["a"]
-            bids = values["b"]
-            asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
-            bids = list(map(lambda x: [float(x[0]), float(x[1])], bids))
-            asks.sort(key=lambda x: x[0])
-            bids.sort(key=lambda x: x[0], reverse=True)
-            instrument.asks = asks
-            instrument.bids = bids
+        asks = values["a"]
+        bids = values["b"]
+        asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
+        bids = list(map(lambda x: [float(x[0]), float(x[1])], bids))
+        asks.sort(key=lambda x: x[0])
+        bids.sort(key=lambda x: x[0], reverse=True)
+        instrument.asks = asks
+        instrument.bids = bids
 
     def __update_ticker(self, values: dict, category: str) -> None:
         self.message_counter += 1
@@ -186,12 +220,14 @@ class Bybit(Variables):
                     if coin["coin"] in self.currencies:
                         settlCurrency = (coin["coin"], self.name)
                         account = self.Account[settlCurrency]
-                        account.availableMargin = float(
-                            coin["availableToWithdraw"]
+                        account.orderMargin = float(coin["locked"]) + float(
+                            coin["totalOrderIM"]
                         )
-                        account.marginBalance = float(
-                            coin["equity"]
-                        )
+                        account.positionMagrin = float(coin["totalPositionIM"])
+                        account.availableMargin = float(coin["availableToWithdraw"])
+                        account.marginBalance = float(coin["equity"])
+                        account.walletBalance = float(coin["walletBalance"])
+                        account.unrealisedPnl = float(coin["unrealisedPnl"])
 
     def __update_position(self, values: dict) -> None:
         for value in values["data"]:
@@ -286,7 +322,7 @@ class Bybit(Variables):
         except Exception:
             pass
         self.logNumFatal = -1
-        self.logger.info("Websocket closed")   
+        self.logger.info("Websocket closed")
 
     def transaction(self, **kwargs):
         """

@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from typing import Union
-from common.variables import Variables as var
 
 from api.bybit.errors import exception
+from common.variables import Variables as var
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
@@ -19,7 +19,7 @@ def time_converter(
     time: Union[int, float, str, datetime], usec=False
 ) -> Union[datetime, int]:
     """
-    The datetime always corresponds to utc time, the timestamp always 
+    The datetime always corresponds to utc time, the timestamp always
     corresponds to local time.
     int, float      -> datetime (utc)
     datetime utc    -> Unix timestamp (local time)
@@ -38,13 +38,13 @@ def time_converter(
         if usec:
             try:
                 dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
-            except:
+            except Exception:
                 dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
         else:
             dt = datetime.strptime(time[:19], "%Y-%m-%d %H:%M:%S")
         dt = dt.replace(tzinfo=timezone.utc)
         return dt
-        
+
     else:
         raise TypeError(type(time))
 
@@ -77,7 +77,6 @@ def precision(number: float) -> int:
 
 
 def close(markets):
-    print("____close______")
     var.robots_thread_is_active = False
     for name in var.market_list:
         ws = markets[name]

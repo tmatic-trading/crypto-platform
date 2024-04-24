@@ -8,6 +8,7 @@ import algo.init as algo
 import bots.init as bots
 import common.init as common
 import functions
+import services as service
 from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
@@ -16,14 +17,13 @@ from display.functions import info_display
 from display.variables import Tables
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
-import services as service
 
 
 def setup():
     disp.root.bind("<F3>", lambda event: terminal_reload(event))
     disp.root.bind("<F9>", lambda event: trade_state(event))
     Bitmex.transaction = Function.transaction
-    Bybit.transaction = Function.transaction    
+    Bybit.transaction = Function.transaction
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = False
@@ -135,7 +135,7 @@ def robots_thread() -> None:
 def terminal_reload(event) -> None:
     var.robots_thread_is_active = ""
     functions.info_display("Tmatic", "Restarting...")
-    service.close(Markets)    
+    service.close(Markets)
     disp.root.update()
     setup()
 
@@ -150,5 +150,3 @@ def trade_state(event) -> None:
             Markets[market].logNumFatal = 0
             Tables.market.color_market(state="online", row=num, market=market)
             print(market, disp.f9)
-
-

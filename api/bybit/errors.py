@@ -1,8 +1,6 @@
 import logging
 
 from api.variables import Variables
-from common.variables import Variables as var
-from display.variables import Tables
 
 logger = logging.getLogger(__name__)
 
@@ -47,17 +45,25 @@ def exception(method):
                     exception.status_code == 181001
                 ):  # category only support linear or option
                     self.logNumFatal = 3
-                elif exception.status_code == 170135: # Order quantity exceeded upper limit
+                elif (
+                    exception.status_code == 170135
+                ):  # Order quantity exceeded upper limit
                     pass
-                elif exception.status_code == 10001: # The number of contracts exceeds maximum limit allowed
+                elif (
+                    exception.status_code == 10001
+                ):  # The number of contracts exceeds maximum limit allowed
                     pass
-                elif exception.status_code == 170193: # Buy order price cannot be higher
+                elif (
+                    exception.status_code == 170193
+                ):  # Buy order price cannot be higher
                     pass
-                elif exception.status_code == 110094: # Order does not meet minimum order value
+                elif (
+                    exception.status_code == 110094
+                ):  # Order does not meet minimum order value
                     pass
-                elif exception.status_code == 110003: # price is out of range
+                elif exception.status_code == 110003:  # price is out of range
                     pass
-                elif exception.status_code == 110001: # Order does not exist
+                elif exception.status_code == 110001:  # Order does not exist
                     pass
                 else:
                     self.logNumFatal = 1001

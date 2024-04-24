@@ -1,8 +1,8 @@
 import services as service
+from api.api import Markets
 from common.data import Instrument
 from common.variables import Variables as var
 from functions import Function
-from api.api import Markets
 
 
 def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
