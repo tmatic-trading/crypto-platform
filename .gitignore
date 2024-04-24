@@ -1,7 +1,9 @@
 **/__pycache__
-venv/
+debug/
 old/
+venv/
 .env*
+.~lock*
 .pre-commit-config.yaml
 1.py
 2.py
@@ -10,3 +12,5 @@ check.py
 description.md
 log.md
 logfile.log
+history.ini
+tmatic.db

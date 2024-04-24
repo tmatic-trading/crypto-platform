@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .variables import Variables as disp
 
@@ -12,7 +12,7 @@ def noll(val: str, length: int) -> str:
 
 
 def info_display(name: str, message: str) -> None:
-    t = datetime.utcnow()
+    t = datetime.now(tz=timezone.utc)
     disp.text_info.insert(
         "1.0",
         noll(str(t.hour), 2)
@@ -25,7 +25,7 @@ def info_display(name: str, message: str) -> None:
         + " "
         + " "
         + name
-        + " "
+        + ": "
         + message
         + "\n",
     )

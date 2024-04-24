@@ -6,41 +6,57 @@ import traceback
 from collections import OrderedDict
 from time import sleep
 
+import requests
 import websocket
 
+import services as service
 from api.init import Setup
 from api.variables import Variables
+from common.data import MetaAccount, MetaInstrument
 from display.functions import info_display
 
-from .agent import Agent
 from .api_auth import generate_signature
 
 
 class Bitmex(Variables):
-    def __init__(self):
+    class Account(metaclass=MetaAccount):
         pass
 
-    def start(self):
+    class Instrument(metaclass=MetaInstrument):
+        pass
+
+    def __init__(self):
+        self.name = "Bitmex"
+        self.data = dict()
+        Setup.variables(self, self.name)
+        self.session = requests.Session()
+        depth = "quote"
+        if self.depth != "quote":
+            depth = "orderBook10"
+        self.session.headers.update({"user-agent": "Tmatic"})
+        self.session.headers.update({"content-type": "application/json"})
+        self.session.headers.update({"accept": "application/json"})
         self.table_subscription = {
             "margin",
             "execution",
             "instrument",
             "order",
             "position",
-            "trade",
-            self.depth,
+            # "trade",
+            depth,
         }
-        self.name = "Bitmex"
-        self.count = 0
-        self.agent = Agent
-        Setup.variables(self)
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
+        self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.symbol_category = dict()
-        self.instruments = self.agent.get_active_instruments(self)
+        self.logger = logging.getLogger(__name__)
+        self.robots = OrderedDict()
+        self.frames = dict()
+        self.robot_status = dict()
+
+    def start(self):
         if not self.logNumFatal:
             self.__reset()
             self.__connect(self.__get_url())
-            self.logger = logging.getLogger(__name__)
             if self.logNumFatal == 0:
                 self.logger.info("Connected to websocket.")
                 info_display(self.name, "Connected to websocket.")
@@ -126,11 +142,11 @@ class Bitmex(Variables):
         received after the timeout expires, the websocket is rebooted.
         """
         count = 0
-        while not self.table_subscription <= set(self.data):
+        while not self.table_subscription <= set(self.keys):
             count += 1
             if count > 30:  # fails after 3 seconds
                 table_lack = self.table_subscription.copy()
-                for table in self.data.keys():
+                for table in self.keys.keys():
                     if table in self.table_subscription:
                         table_lack.remove(table)
                 self.logger.info(
@@ -166,8 +182,9 @@ class Bitmex(Variables):
         """
 
         def generate_key(keys: list, val: dict, table: str) -> tuple:
-            if table in ["instrument", "position", "quote", "orderBook10"]:
+            if "symbol" in keys:
                 val["category"] = self.symbol_category[val["symbol"]]
+            val["market"] = self.name
             return tuple((val[key]) for key in keys)
 
         message = json.loads(message)
@@ -176,69 +193,88 @@ class Bitmex(Variables):
         self.message_counter = self.message_counter + 1
         try:
             if action:
-                if table not in self.data:
-                    self.data[table] = OrderedDict()
+                table_name = "orderBook" if table == "orderBook10" else table
+                if table_name not in self.data:
+                    self.data[table_name] = OrderedDict()
                 if action == "partial":  # table snapshot
                     self.logger.debug("%s: partial" % table)
                     self.keys[table] = message["keys"]
                     if table == "quote":
-                        self.keys[table] = ["symbol", "category"]
+                        self.keys[table] = ["symbol", "category", "market"]
                     elif table == "trade":
                         self.keys[table] = ["trdMatchID"]
                     elif table == "execution":
                         self.keys[table] = ["execID"]
+                    elif table == "margin":
+                        self.keys[table] = ["currency", "market"]
                     elif table in ["instrument", "orderBook10", "position"]:
                         self.keys[table].append("category")
+                        self.keys[table].append("market")
                     for val in message["data"]:
                         for key in self.keys[table]:
-                            if key != "category":
+                            if key not in ["category", "market"]:
                                 if key not in val:
                                     break
                         else:
                             key = generate_key(self.keys[table], val, table)
-                            self.data[table][key] = val
+                            self.data[table_name][key] = val
+                            if table == "orderBook10":
+                                self.__update_orderbook(symbol=key, values=val)
+                            elif table == "quote":
+                                self.__update_orderbook(
+                                    symbol=key, values=val, quote=True
+                                )
+                            elif table == "margin":
+                                self.__update_account(
+                                    settlCurrency=key,
+                                    values=val,
+                                )
                 elif action == "insert":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val, table)
+                        key = generate_key(self.keys[table], val=val, table=table)
                         if table == "quote":
                             val["category"] = self.symbol_category[val["symbol"]]
-                            if "bidPrice" in val:
-                                self.data[table][key]["bidPrice"] = val["bidPrice"]
-                                self.data[table][key]["bidSize"] = val["bidSize"]
-                            if "askPrice" in val:
-                                self.data[table][key]["askPrice"] = val["askPrice"]
-                                self.data[table][key]["askSize"] = val["askSize"]
-                            self.frames_hi_lo_values(data=self.data[table][key])
+                            self.__update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
                             val["symbol"] = (
                                 val["symbol"],
                                 self.symbol_category[val["symbol"]],
+                                self.name,
                             )
                             val["market"] = self.name
+                            val["settlCurrency"] = (val["settlCurrency"], self.name)
+                            val["transactTime"] = service.time_converter(
+                                time=val["transactTime"], usec=True
+                            )
+                            if val["execType"] == "Funding":
+                                if val["foreignNotional"] > 0:
+                                    val["lastQty"] = -val["lastQty"]
+                                    val["commission"] = -val["commission"]
                             self.transaction(row=val)
                         else:
-                            self.data[table][key] = val
+                            self.data[table_name][key] = val
                 elif action == "update":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val, table)
-                        if key not in self.data[table]:
+                        key = generate_key(self.keys[table], val=val, table=table)
+                        if key not in self.data[table_name]:
                             return  # No key to update
-                        self.data[table][key].update(val)
                         if table == "orderBook10":
-                            self.frames_hi_lo_values(data=self.data[table][key])
+                            self.__update_orderbook(symbol=key, values=val)
                         elif table == "instrument":
-                            self.instruments[key].update(val)
+                            self.__update_instrument(symbol=key, values=val)
                         elif table == "position":
-                            self.positions_update(val=val)
-                        # Removes cancelled or filled orders
-                        elif (
-                            table == "order" and self.data[table][key]["leavesQty"] <= 0
-                        ):
-                            self.data[table].pop(key)
+                            self.__update_position(key, values=val)
+                        elif table == "margin":
+                            self.__update_account(settlCurrency=key, values=val)
+                        elif table == "order":
+                            self.data[table_name][key].update(val)
+                            if self.data[table_name][key]["leavesQty"] <= 0:
+                                # Removes cancelled or filled orders
+                                self.data[table_name].pop(key)
                 elif action == "delete":
                     for val in message["data"]:
                         key = generate_key(self.keys[table], val, table)
-                        self.data[table].pop(key)
+                        self.data[table_name].pop(key)
         except Exception:
             self.logger.error(
                 traceback.format_exc()
@@ -269,44 +305,88 @@ class Bitmex(Variables):
         self.data = {}
         self.keys = {}
 
-    def frames_hi_lo_values(self, data: dict) -> None:
-        if data["symbol"] in self.frames:
-            for timeframe in self.frames[data["symbol"]].values():
+    def frames_hi_lo_values(self, symbol: tuple) -> None:
+        if symbol in self.frames:
+            for timeframe in self.frames[symbol].values():
                 if timeframe["data"]:
-                    if self.depth == "orderBook10":
-                        if data["asks"]:
-                            if data["asks"][0][0] > timeframe["data"][-1]["hi"]:
-                                timeframe["data"][-1]["hi"] = data["asks"][0][0]
-                        if data["bids"]:
-                            if data["bids"][0][0] < timeframe["data"][-1]["lo"]:
-                                timeframe["data"][-1]["lo"] = data["bids"][0][0]
-                    else:
-                        if "askPrice" in data:
-                            if data["askPrice"] > timeframe["data"][-1]["hi"]:
-                                timeframe["data"][-1]["hi"] = data["askPrice"]
-                        if "bidPrice" in data:
-                            if data["bidPrice"] < timeframe["data"][-1]["lo"]:
-                                timeframe["data"][-1]["lo"] = data["bidPrice"]
+                    instrument = self.Instrument[symbol]
+                    ask = instrument.asks[0][0]
+                    bid = instrument.bids[0][0]
+                    if ask > timeframe["data"][-1]["hi"]:
+                        timeframe["data"][-1]["hi"] = ask
+                    if bid < timeframe["data"][-1]["lo"]:
+                        timeframe["data"][-1]["lo"] = bid
 
-    def positions_update(self, val: dict) -> None:
+    def __update_orderbook(self, symbol: tuple, values: dict, quote=False) -> None:
         """
-        Updates the positions variable for subscribed instruments each time
-        information from "position" table is received from the websocket.
+        There is only one Instrument array for the "instrument", "position",
+        "quote", "orderBook10" websocket streams.
         """
-        symbol = (val["symbol"], val["category"])
-        self.positions[symbol]["POS"] = val["currentQty"]
-        if "avgEntryPrice" in val:
-            self.positions[symbol]["ENTRY"] = val["avgEntryPrice"]
+        instrument = self.Instrument[symbol]
+        if quote:
+            if "askPrice" in values:
+                instrument.asks = [[values["askPrice"], values["askSize"]]]
+            if "bidPrice" in values:
+                instrument.bids = [[values["bidPrice"], values["bidSize"]]]
         else:
-            self.positions[symbol]["ENTRY"] = 0
-        if "marginCallPrice" in val:
-            self.positions[symbol]["MCALL"] = val["marginCallPrice"]
-        else:
-            self.positions[symbol]["MCALL"] = 0
-        if "unrealisedPnl" in val:
-            self.positions[symbol]["PNL"] = val["unrealisedPnl"]
-        else:
-            self.positions[symbol]["PNL"] = 0
+            if "asks" in values and values["asks"]:
+                instrument.asks = values["asks"]
+            if "bids" in values and values["bids"]:
+                instrument.bids = values["bids"]
+        self.frames_hi_lo_values(symbol=symbol)
+
+    def __update_position(self, key, values: dict) -> None:
+        """
+        There is only one Instrument array for the "instrument", "position",
+        "quote", "orderBook10" websocket streams.
+        """
+        symbol = (values["symbol"], values["category"], self.name)
+        self.positions[symbol]["POS"] = values["currentQty"]
+        instrument = self.Instrument[symbol]
+        instrument.currentQty = values["currentQty"]
+        if instrument.currentQty != 0:
+            if "avgEntryPrice" in values:
+                instrument.avgEntryPrice = values["avgEntryPrice"]
+            if "marginCallPrice" in values:
+                instrument.marginCallPrice = values["marginCallPrice"]
+            if "unrealisedPnl" in values:
+                instrument.unrealisedPnl = values["unrealisedPnl"]
+
+    def __update_instrument(self, symbol: tuple, values: dict):
+        instrument = self.Instrument[symbol]
+        if "fundingRate" in values:
+            instrument.fundingRate = values["fundingRate"]
+        if "volume24h" in values:
+            instrument.volume24h = values["volume24h"]
+        if "state" in values:
+            instrument.state = values["state"]
+
+    def __update_account(self, settlCurrency: tuple, values: dict):
+        account = self.Account[settlCurrency]
+        if "maintMargin" in values:
+            account.positionMagrin = (
+                values["maintMargin"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "initMargin" in values:
+            account.initMargin = (
+                values["initMargin"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "unrealisedPnl" in values:
+            account.unrealisedPnl = (
+                values["unrealisedPnl"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "walletBalance" in values:
+            account.walletBalance = (
+                values["walletBalance"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "marginBalance" in values:
+            account.marginBalance = (
+                values["marginBalance"] / self.currency_divisor[settlCurrency[0]]
+            )
+        if "availableMargin" in values:
+            account.availableMargin = (
+                values["availableMargin"] / self.currency_divisor[settlCurrency[0]]
+            )
 
     def exit(self):
         """
@@ -316,10 +396,12 @@ class Bitmex(Variables):
             self.ws.close()
         except Exception:
             pass
+        self.logNumFatal = -1
+        self.logger.info("Websocket closed")
 
     def transaction(self, **kwargs):
         """
-        This function is replaced by transaction() from functions.py after the
+        This method is replaced by transaction() from functions.py after the
         application is launched.
         """
         pass

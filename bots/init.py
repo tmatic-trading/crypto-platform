@@ -1,10 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
 
-# from ws.init import Variables as ws
-from api.api import WS
-
-# import functions as function
+import services as service
+from api.api import WS, Markets
 from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
@@ -13,7 +11,7 @@ from functions import Function
 
 
 class Init(WS, Variables):
-    def load_robots(self) -> dict:
+    def load_robots(self: Markets) -> dict:
         """
         This function loads robot settings from the SQL database from the 'robots'
         table. Since all transactions for the current account are saved in the
@@ -27,15 +25,12 @@ class Init(WS, Variables):
         separately from the financial results of individual robots. The status of
         such robots is 'RESERVED'.
         """
-        db = var.env["MYSQL_DATABASE"]
         union = ""
         qwr = "select * from ("
         for symbol in self.symbol_list:
             qwr += (
                 union
-                + "select * from "
-                + db
-                + ".robots where SYMBOL = '"
+                + "select * from robots where SYMBOL = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
                 + symbol[1]
@@ -43,23 +38,22 @@ class Init(WS, Variables):
             )
             union = "union "
         qwr += ") T where MARKET = '" + self.name + "' order by SORT"
-        var.cursor_mysql.execute(qwr)
-        for robot in var.cursor_mysql.fetchall():
+        data = Function.select_database(self, qwr)
+        for robot in data:
             emi = robot["EMI"]
             self.robots[emi] = robot
             self.robots[emi]["STATUS"] = "WORK"
             self.robots[emi]["SYMBOL"] = (
                 self.robots[emi]["SYMBOL"],
                 self.robots[emi]["CATEGORY"],
+                self.name,
             )
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
         qwr = (
             "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, \
                 sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-                    -QTY ELSE 0 END) POS from "
-            + db
-            + ".coins where MARKET = '"
+                    -QTY ELSE 0 END) POS from coins where MARKET = '"
             + self.name
             + "' and \
                         account = "
@@ -67,10 +61,9 @@ class Init(WS, Variables):
             + " and SIDE <> -1 group by EMI, \
                             SYMBOL, CATEGORY) res where POS <> 0"
         )
-        var.cursor_mysql.execute(qwr)
-        defuncts = var.cursor_mysql.fetchall()
+        defuncts = Function.select_database(self, qwr)
         for defunct in defuncts:
-            symbol = (defunct["SYMBOL"], defunct["CATEGORY"])
+            symbol = (defunct["SYMBOL"], defunct["CATEGORY"], self.name)
             for emi in self.robots:
                 if defunct["EMI"] == emi:
                     break
@@ -79,12 +72,12 @@ class Init(WS, Variables):
                     status = "NOT DEFINED"
                 else:
                     status = "NOT IN LIST"
-                emi = ".".join(symbol)
+                emi = ".".join(symbol[:2])
                 self.robots[emi] = {
                     "SYMBOL": symbol,
                     "CATEGORY": defunct["CATEGORY"],
                     "MARKET": self.name,
-                    "POS": int(defunct["POS"]),
+                    "POS": defunct["POS"],
                     "EMI": defunct["EMI"],
                     "STATUS": status,
                     "TIMEFR": "None",
@@ -99,9 +92,7 @@ class Init(WS, Variables):
                 union
                 + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, \
             sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-            -QTY ELSE 0 END) POS from "
-                + db
-                + ".coins where SIDE <> -1 group by EMI, SYMBOL, CATEGORY, \
+            -QTY ELSE 0 END) POS from coins where SIDE <> -1 group by EMI, SYMBOL, CATEGORY, \
             ACCOUNT, MARKET) res where EMI = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
@@ -112,65 +103,60 @@ class Init(WS, Variables):
         qwr += (
             ") T where MARKET = '" + self.name + "' and ACCOUNT = " + str(self.user_id)
         )
-        var.cursor_mysql.execute(qwr)
-        reserved = var.cursor_mysql.fetchall()
+        reserved = Function.select_database(self, qwr)
         for symbol in self.symbol_list:
             for res in reserved:
-                if symbol == (res["SYMBOL"], res["CATEGORY"]):
-                    pos = int(reserved[0]["POS"])
+                if symbol == (res["SYMBOL"], res["CATEGORY"], self.name):
+                    pos = reserved[0]["POS"]
                     break
             else:
                 pos = 0
-            if symbol in self.symbol_list or pos != 0:
-                emi = ".".join(symbol)
-                self.robots[emi] = {
-                    "EMI": emi,
-                    "SYMBOL": symbol,
-                    "CATEGORY": symbol[1],
-                    "MARKET": self.name,
-                    "POS": pos,
-                    "STATUS": "RESERVED",
-                    "TIMEFR": "None",
-                    "CAPITAL": "None",
-                }
+            # if pos != 0:
+            emi = ".".join(symbol[:2])
+            self.robots[emi] = {
+                "EMI": emi,
+                "SYMBOL": symbol,
+                "CATEGORY": symbol[1],
+                "MARKET": self.name,
+                "POS": pos,
+                "STATUS": "RESERVED",
+                "TIMEFR": "None",
+                "CAPITAL": "None",
+            }
 
         # Loading all transactions and calculating financial results for each robot
-        for emi, val in self.robots.items():
+        for emi, robot in self.robots.items():
             Function.add_symbol(self, symbol=self.robots[emi]["SYMBOL"])
             if isinstance(emi, tuple):
                 _emi = emi[0]
             else:
                 _emi = emi
-            var.cursor_mysql.execute(
-                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) \
-                    POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) \
-                        COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01') LTIME \
-                            FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY \
-                                WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, \
-                                    COMMISS, TTIME FROM "
-                + db
-                + ".coins WHERE EMI = %s AND ACCOUNT = %s AND CATEGORY = %s) aa",
-                (_emi, self.user_id, val["CATEGORY"]),
+            sql = (
+                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
+                "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
+                "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME "
+                "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY "
+                "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
+                "COMMISS, TTIME FROM "
+                "coins WHERE EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
+                % (_emi, self.user_id, robot["CATEGORY"])
             )
-            data = var.cursor_mysql.fetchall()
+            data = Function.select_database(self, sql)
             for row in data:
                 for col in row:
-                    self.robots[emi][col] = row[col]
+                    robot[col] = row[col]
                     if col == "POS" or col == "VOL":
-                        self.robots[emi][col] = int(self.robots[emi][col])
-                    if col == "COMMISS" or col == "SUMREAL":
-                        self.robots[emi][col] = float(self.robots[emi][col])
-                    if col == "LTIME":
-                        self.robots[emi][col] = datetime.strptime(
-                            str(self.robots[emi][col]), "%Y-%m-%d %H:%M:%S"
+                        robot[col] = round(
+                            robot[col], self.Instrument[robot["SYMBOL"]].precision
                         )
-            self.robots[emi]["PNL"] = 0
-            self.robots[emi]["lotSize"] = (
-                self.instruments[self.robots[emi]["SYMBOL"]]["lotSize"]
-                / self.instruments[self.robots[emi]["SYMBOL"]]["myMultiplier"]
-            )
-            if self.robots[emi]["SYMBOL"] not in self.full_symbol_list:
-                self.full_symbol_list.append(self.robots[emi]["SYMBOL"])
+                    if col == "COMMISS" or col == "SUMREAL":
+                        robot[col] = float(robot[col])
+                    if col == "LTIME":
+                        robot[col] = service.time_converter(time=robot[col], usec=True)
+            robot["PNL"] = 0
+            robot["lotSize"] = self.Instrument[robot["SYMBOL"]].minOrderQty
+            if robot["SYMBOL"] not in self.full_symbol_list:
+                self.full_symbol_list.append(robot["SYMBOL"])
 
         return self.robots
 
@@ -179,14 +165,12 @@ class Init(WS, Variables):
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
         while target > time:
-            data = self.trade_bucketed(
-                name=self.name, symbol=symbol, time=time, timeframe=timeframe
+            data = WS.trade_bucketed(
+                self, symbol=symbol, time=time, timeframe=timeframe
             )
             if data:
                 last = time
-                time = datetime.strptime(
-                    str(data[-1]["timestamp"][:19]), "%Y-%m-%dT%H:%M:%S"
-                )
+                time = data[-1]["timestamp"]
                 if last == time:
                     return res, time
                 res += data
@@ -222,8 +206,8 @@ class Init(WS, Variables):
         )
         with open(self.filename, "w"):
             pass
-        target = datetime.utcnow()
-        time = target - timedelta(days=bot.missing_days_number)
+        target = datetime.now(tz=timezone.utc)
+        time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * robot["TIMEFR"])
         delta = timedelta(minutes=robot["TIMEFR"] - target.minute % robot["TIMEFR"])
         target += delta
         target = target.replace(second=0, microsecond=0)
@@ -235,21 +219,17 @@ class Init(WS, Variables):
             time=time,
             target=target,
             symbol=robot["SYMBOL"],
-            timeframe=var.timefrs[robot["TIMEFR"]],
+            timeframe=robot["TIMEFR"],
         )
         if not res:
             return None
 
         # The 'frames' array is filled with timeframe data.
 
-        if datetime.strptime(
-            res[0]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
-        ) > datetime.strptime(res[-1]["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"):
+        if res[0]["timestamp"] > res[-1]["timestamp"]:
             res.reverse()
         for num, row in enumerate(res):
-            tm = datetime.strptime(
-                row["timestamp"][0:19], "%Y-%m-%dT%H:%M:%S"
-            ) - timedelta(minutes=robot["TIMEFR"])
+            tm = row["timestamp"] - timedelta(minutes=robot["TIMEFR"])
             frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
@@ -279,12 +259,12 @@ class Init(WS, Variables):
 
         return frames
 
-    def init_timeframes(self) -> Union[dict, None]:
+    def init_timeframes(self: Markets) -> Union[dict, None]:
         for emi in self.robots:
             # Initialize candlestick timeframe data using 'TIMEFR' fields
             # expressed in minutes.
             if self.robots[emi]["TIMEFR"] != "None":
-                time = datetime.utcnow()
+                time = datetime.now(tz=timezone.utc)
                 symbol = self.robots[emi]["SYMBOL"]
                 timefr = self.robots[emi]["TIMEFR"]
                 try:
@@ -317,7 +297,7 @@ class Init(WS, Variables):
 
         return self.frames
 
-    def delete_unused_robot(self) -> None:
+    def delete_unused_robot(self: Markets) -> None:
         """
         Deleting unused robots (if any)
         """
@@ -325,7 +305,7 @@ class Init(WS, Variables):
         for val in var.orders.values():
             emi_in_orders.add(val["EMI"])
         for emi in self.robots.copy():
-            symbol = tuple(emi.split("."))
+            symbol = tuple(emi.split(".")) + (self.name,)
             if self.robots[emi]["STATUS"] in ("WORK", "OFF"):
                 pass
             elif symbol in self.symbol_list:

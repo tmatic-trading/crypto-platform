@@ -1,42 +1,34 @@
+import threading
 import time
 import tkinter as tk
-from collections import OrderedDict
 from datetime import datetime, timedelta
+from decimal import Decimal
 from random import randint
 from typing import Union
 
-from api.api import WS
+from api.api import WS, Markets
 from api.variables import Variables
-from api.websockets import Websockets
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
-from display.variables import GridTable, ListBoxTable
+from display.variables import GridTable, ListBoxTable, Tables
 from display.variables import Variables as disp
-
-db = var.env["MYSQL_DATABASE"]
-
-
-class Tables:
-    position = GridTable
-    account = GridTable
-    robots = GridTable
-    market = GridTable
-    orderbook = GridTable
 
 
 class Function(WS, Variables):
+    sql_lock = threading.Lock()
+
     def calculate(
-        self, symbol: tuple, price: float, qty: float, rate: int, fund: int
+        self: Markets, symbol: tuple, price: float, qty: float, rate: float, fund: int
     ) -> dict:
         """
         Calculate sumreal and commission
         """
+        instrument = self.Instrument[symbol]
         coef = abs(
-            self.instruments[symbol]["multiplier"]
-            / var.currency_divisor[self.instruments[symbol]["settlCurrency"]]
+            instrument.multiplier / self.currency_divisor[instrument.settlCurrency[0]]
         )
-        if self.instruments[symbol]["isInverse"]:
+        if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
             commiss = abs(qty) / price * coef * rate
             funding = qty / price * coef * rate
@@ -47,35 +39,21 @@ class Function(WS, Variables):
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
 
-    def add_symbol(self, symbol: tuple) -> None:
+    def add_symbol(self: Markets, symbol: tuple) -> None:
         if symbol not in self.full_symbol_list:
             self.full_symbol_list.append(symbol)
-            if symbol not in self.instruments:
-                self.get_instrument(name=self.name, symbol=symbol)
-            Function.rounding(self)
+            if symbol not in self.Instrument.get_keys():
+                WS.get_instrument(Markets[symbol[2]], symbol=symbol)
+            # Function.rounding(self)
         if symbol not in self.positions:
-            self.get_position(name=self.name, symbol=symbol)
+            WS.get_position(self, symbol=symbol)
 
-    def rounding(self) -> None:
-        if self.name not in disp.price_rounding:
-            disp.price_rounding[self.name] = OrderedDict()
-        for symbol, instrument in self.instruments.items():
-            tickSize = str(instrument["tickSize"])
-            if tickSize.find(".") > 0:
-                disp.price_rounding[self.name][symbol] = (
-                    len(tickSize) - 1 - tickSize.find(".")
-                )
-            elif tickSize.find("e-") > 0:
-                disp.price_rounding[self.name][symbol] = int(
-                    tickSize[tickSize.find("e-") + 2 :]
-                )
-            else:
-                disp.price_rounding[self.name][symbol] = 0
-
-    def timeframes_data_filename(self, emi: str, symbol: tuple, timefr: str) -> str:
+    def timeframes_data_filename(
+        self: Markets, emi: str, symbol: tuple, timefr: str
+    ) -> str:
         return "data/" + symbol[0] + symbol[1] + str(timefr) + "_EMI" + emi + ".txt"
 
-    def save_timeframes_data(self, frame: dict) -> None:
+    def save_timeframes_data(self: Markets, frame: dict) -> None:
         zero = (6 - len(str(frame["time"]))) * "0"
         data = (
             str(frame["date"])
@@ -95,48 +73,75 @@ class Function(WS, Variables):
         with open(self.filename, "a") as f:
             f.write(data + "\n")
 
-    def noll(self, val: str, length: int) -> str:
+    def noll(self: Markets, val: str, length: int) -> str:
         r = ""
         for _ in range(length - len(val)):
             r = r + "0"
 
         return r + val
 
-    def read_database(self, execID: str, user_id: int) -> list:
-        """
-        Load a row by execID from the database
-        """
-        var.cursor_mysql.execute(
-            "select EXECID from " + db + ".coins where EXECID=%s and account=%s",
-            (execID, user_id),
-        )
-        data = var.cursor_mysql.fetchall()
+    def select_database(self: Markets, query: str) -> list:
+        err_locked = 0
+        while True:
+            try:
+                Function.sql_lock.acquire(True)
+                var.cursor_sqlite.execute(query)
+                Function.sql_lock.release()
+                orig = var.cursor_sqlite.fetchall()
+                data = []
+                if orig:
+                    data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
+                return data
+            except var.error_sqlite as e:
+                if "database is locked" not in str(e):
+                    var.logger.error("Sqlite Error: " + str(e) + ")")
+                    Function.sql_lock.release()
+                    break
+                else:
+                    err_locked += 1
+                    var.logger.error(
+                        "Sqlite Error: Database is locked (attempt: "
+                        + str(err_locked)
+                        + ")"
+                    )
+                    Function.sql_lock.release()
 
-        return data
+    def insert_database(self: Markets, values: list) -> None:
+        err_locked = 0
+        while True:
+            try:
+                Function.sql_lock.acquire(True)
+                var.cursor_sqlite.execute(
+                    "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
+                        SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
+                            CLORDID,TTIME,ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,\
+                                ?,?,?,?,?,?,?,?)",
+                    values,
+                )
+                var.connect_sqlite.commit()
+                Function.sql_lock.release()
+                break
+            except var.error_sqlite as e:
+                if "database is locked" not in str(e):
+                    var.logger.error("Sqlite Error: " + str(e) + ")")
+                    Function.sql_lock.release()
+                    break
+                else:
+                    err_locked += 1
+                    var.logger.error(
+                        "Sqlite Error: Database is locked (attempt: "
+                        + str(err_locked)
+                        + ")"
+                    )
+                    var.connect_sqlite.rollback()
+                    Function.sql_lock.release()
 
-    def insert_database(self, values: list) -> None:
-        """
-        Insert row into database
-        """
-        var.cursor_mysql.execute(
-            "insert into "
-            + db
-            + ".coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
-                SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
-                    CLORDID,TTIME,ACCOUNT) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
-                        %s,%s,%s,%s,%s,%s,%s,%s)",
-            values,
-        )
-        var.connect_mysql.commit()
-
-    def transaction(self, row: dict, info: str = "") -> None:
+    def transaction(self: Markets, row: dict, info: str = "") -> None:
         """
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        time_struct = datetime.strptime(
-            row["transactTime"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
-        )
+        account = self.Account[row["settlCurrency"]]
 
         # Trade
 
@@ -147,7 +152,7 @@ class Function(WS, Variables):
                     dot == -1
                 ):  # The transaction was done from the exchange web interface,
                     # the clOrdID field is missing or clOrdID does not have EMI number
-                    emi = ".".join(row["symbol"])
+                    emi = ".".join(row["symbol"][:2])
                     refer = ""
                     if row["clOrdID"] == "":
                         clientID = 0
@@ -158,11 +163,11 @@ class Function(WS, Variables):
                     clientID = row["clOrdID"][:dot]
                     refer = emi
             else:
-                emi = ".".join(row["symbol"])
+                emi = ".".join(row["symbol"][:2])
                 clientID = 0
                 refer = ""
             if emi not in self.robots:
-                emi = ".".join(row["symbol"])
+                emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     if row["symbol"] in self.symbol_list:
                         status = "RESERVED"
@@ -179,7 +184,7 @@ class Function(WS, Variables):
                         "VOL": 0,
                         "COMMISS": 0,
                         "SUMREAL": 0,
-                        "LTIME": time_struct,
+                        "LTIME": row["transactTime"],
                         "PNL": 0,
                         "CAPITAL": None,
                     }
@@ -191,8 +196,10 @@ class Function(WS, Variables):
                     )
                     info_display(self.name, message)
                     var.logger.info(message)
-            data = Function.read_database(
-                self, execID=row["execID"], user_id=self.user_id
+            data = Function.select_database(  # read_database
+                self,
+                "select EXECID from coins where EXECID='%s' and account=%s"
+                % (row["execID"], self.user_id),
             )
             if not data:
                 side = 0
@@ -209,17 +216,20 @@ class Function(WS, Variables):
                     fund=1,
                 )
                 self.robots[emi]["POS"] += lastQty
+                self.robots[emi]["POS"] = round(
+                    self.robots[emi]["POS"], self.Instrument[row["symbol"]].precision
+                )
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
-                self.robots[emi]["LTIME"] = time_struct
-                self.accounts[row["settlCurrency"]]["COMMISS"] += calc["commiss"]
-                self.accounts[row["settlCurrency"]]["SUMREAL"] += calc["sumreal"]
+                self.robots[emi]["LTIME"] = row["transactTime"]
+                account.commission += calc["commiss"]
+                account.sumreal += calc["sumreal"]
                 values = [
                     row["execID"],
                     emi,
                     refer,
-                    row["settlCurrency"],
+                    row["settlCurrency"][0],
                     row["symbol"][0],
                     row["symbol"][1],
                     self.name,
@@ -232,7 +242,7 @@ class Function(WS, Variables):
                     calc["sumreal"],
                     calc["commiss"],
                     clientID,
-                    time_struct,
+                    row["transactTime"],
                     self.user_id,
                 ]
                 Function.insert_database(self, values=values)
@@ -262,11 +272,6 @@ class Function(WS, Variables):
                 "PRICE": row["price"],
             }
             position = 0
-            true_position = row["lastQty"]
-            true_funding = row["commission"]
-            if row["foreignNotional"] > 0:
-                true_position = -true_position
-                true_funding = -true_funding
             for emi in self.robots:
                 if (
                     self.robots[emi]["SYMBOL"] == row["symbol"]
@@ -278,7 +283,7 @@ class Function(WS, Variables):
                         symbol=row["symbol"],
                         price=row["price"],
                         qty=float(self.robots[emi]["POS"]),
-                        rate=true_funding,
+                        rate=row["commission"],
                         fund=0,
                     )
                     message["MARKET"] = self.robots[emi]["MARKET"]
@@ -289,7 +294,7 @@ class Function(WS, Variables):
                         row["execID"],
                         self.robots[emi]["EMI"],
                         "",
-                        row["settlCurrency"],
+                        row["settlCurrency"][0],
                         row["symbol"][0],
                         row["symbol"][1],
                         self.name,
@@ -302,13 +307,13 @@ class Function(WS, Variables):
                         calc["sumreal"],
                         calc["funding"],
                         0,
-                        time_struct,
+                        row["transactTime"],
                         self.user_id,
                     ]
                     Function.insert_database(self, values=values)
                     self.robots[emi]["COMMISS"] += calc["funding"]
-                    self.robots[emi]["LTIME"] = time_struct
-                    self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
+                    self.robots[emi]["LTIME"] = row["transactTime"]
+                    account.funding += calc["funding"]
                     if info:
                         Function.fill_columns(
                             self,
@@ -318,7 +323,7 @@ class Function(WS, Variables):
                         )
                     else:
                         Function.funding_display(self, message)
-            diff = true_position - position
+            diff = row["lastQty"] - position
             if (
                 diff != 0
             ):  # robots with open positions have been taken, but some quantity is still left
@@ -327,10 +332,10 @@ class Function(WS, Variables):
                     symbol=row["symbol"],
                     price=row["price"],
                     qty=float(diff),
-                    rate=true_funding,
+                    rate=row["commission"],
                     fund=0,
                 )
-                emi = ".".join(row["symbol"])
+                emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
                     var.logger.error(
                         "Funding could not appear until the EMI="
@@ -346,7 +351,7 @@ class Function(WS, Variables):
                     row["execID"],
                     self.robots[emi]["EMI"],
                     "",
-                    row["settlCurrency"],
+                    row["settlCurrency"][0],
                     row["symbol"][0],
                     row["symbol"][1],
                     self.name,
@@ -359,13 +364,13 @@ class Function(WS, Variables):
                     calc["sumreal"],
                     calc["funding"],
                     0,
-                    time_struct,
+                    row["transactTime"],
                     self.user_id,
                 ]
                 Function.insert_database(self, values=values)
                 self.robots[emi]["COMMISS"] += calc["funding"]
-                self.robots[emi]["LTIME"] = time_struct
-                self.accounts[row["settlCurrency"]]["FUNDING"] += calc["funding"]
+                self.robots[emi]["LTIME"] = row["transactTime"]
+                account.funding += calc["funding"]
                 if info:
                     Function.fill_columns(
                         self, func=Function.funding_display, table=funding, val=message
@@ -380,7 +385,7 @@ class Function(WS, Variables):
                 "clOrdID" not in row
             ):  # The order was placed from the exchange web interface
                 var.last_order += 1
-                clOrdID = str(var.last_order) + "." + ".".join(row["symbol"])
+                clOrdID = str(var.last_order) + "." + ".".join(row["symbol"][:2])
                 var.orders[clOrdID] = {
                     "leavesQty": row["leavesQty"],
                     "price": row["price"],
@@ -402,12 +407,12 @@ class Function(WS, Variables):
         elif row["execType"] == "Replaced":
             Function.orders_processing(self, row=row)
 
-    def order_number(self, clOrdID: str) -> int:
+    def order_number(self: Markets, clOrdID: str) -> int:
         for number, id in enumerate(var.orders):
             if id == clOrdID:
                 return number
 
-    def orders_processing(self, row: dict, info: str = "") -> None:
+    def orders_processing(self: Markets, row: dict, info: str = "") -> None:
         """
         Orders processing <-- transaction()<--( trading_history() or get_exec() )
         """
@@ -419,12 +424,13 @@ class Function(WS, Variables):
         else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
             # through the exchange web interface.
             for clOrdID in var.orders:
-                if var.orders[clOrdID]["orderID"] == row["orderID"]:
-                    break
+                if "orderID" in row:
+                    if var.orders[clOrdID]["orderID"] == row["orderID"]:
+                        break
             else:
                 clOrdID = "Empty clOrdID. The order was not sent via Tmatic."
                 print(clOrdID)
-        if "orderID" not in row:  # orderID is missing when text='Closed to
+        if "orderID" not in row:  # for Bitmex: orderID is missing when text='Closed to
             # conform to lot size', last time 2021-05-31
             row["orderID"] = row["text"]
         price = row["price"]
@@ -458,7 +464,7 @@ class Function(WS, Variables):
                         "SYMBOL": row["symbol"],
                         "CATEGORY": row["symbol"][1],
                         "MARKET": self.name,
-                        "transactTime": str(datetime.utcnow()),
+                        "transactTime": row["transactTime"],
                         "SIDE": row["side"],
                         "EMI": _emi,
                         "orderID": row["orderID"],
@@ -471,10 +477,8 @@ class Function(WS, Variables):
                 info_q = row["lastQty"]
                 if clOrdID in var.orders:
                     orders.delete(row=Function.order_number(self, clOrdID))
+                    var.orders.move_to_end(clOrdID, last=False)
             elif row["execType"] == "Replaced":
-                var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-                var.orders[clOrdID]["price"] = row["price"]
-                var.orders[clOrdID]["transactTime"] = datetime.utcnow()
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
@@ -485,12 +489,13 @@ class Function(WS, Variables):
             ):  # var.orders might be empty if we are here from trading_history()
                 var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 var.orders[clOrdID]["price"] = price
+                var.orders[clOrdID]["transactTime"] = row["transactTime"]
         info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
         info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
         try:
             t = clOrdID.split(".")
             int(t[0])
-            emi = ".".join(t[1:])
+            emi = ".".join(t[1:3])
         except ValueError:
             emi = clOrdID
         info_display(
@@ -521,7 +526,7 @@ class Function(WS, Variables):
         if clOrdID in var.orders:
             Function.orders_display(self, val=var.orders[clOrdID])
 
-    def trades_display(self, val: dict, init=False) -> Union[None, list]:
+    def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
         Update trades widget
         """
@@ -543,7 +548,7 @@ class Function(WS, Variables):
                 number=float(val["TRADE_PRICE"]),
                 symbol=val["SYMBOL"],
             ),
-            val["QTY"],
+            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
             val["EMI"],
         ]
         if init:
@@ -551,9 +556,9 @@ class Function(WS, Variables):
         trades.insert(row=0, elements=elements)
         trades.paint(row=0, side=val["SIDE"])
 
-    def funding_display(self, val: dict, init=False) -> Union[None, list]:
+    def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
-        Update funding widgwt
+        Update funding widget
         """
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
@@ -569,7 +574,7 @@ class Function(WS, Variables):
                 symbol=val["SYMBOL"],
             ),
             "{:.7f}".format(-val["COMMISS"]),
-            val["QTY"],
+            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
             val["EMI"],
         ]
         if init:
@@ -578,7 +583,7 @@ class Function(WS, Variables):
         side = "Buy" if val["COMMISS"] < 0 else "Sell"
         funding.paint(row=0, side=side)
 
-    def orders_display(self, val: dict, init=False) -> Union[None, list]:
+    def orders_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
         Update Orders widget
         """
@@ -597,7 +602,7 @@ class Function(WS, Variables):
                 number=val["price"],
                 symbol=val["SYMBOL"],
             ),
-            val["leavesQty"],
+            Function.volume(self, qty=val["leavesQty"], symbol=val["SYMBOL"]),
             emi,
         ]
         if init:
@@ -605,39 +610,37 @@ class Function(WS, Variables):
         orders.insert(row=0, elements=elements)
         orders.paint(row=0, side=val["SIDE"])
 
-    def volume(self, qty: int, symbol: tuple) -> str:
+    def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
+        if qty == "None":
+            return qty
         if qty == 0:
             qty = "0"
         else:
-            qty /= self.instruments[symbol]["myMultiplier"]
-            num = len(str(self.instruments[symbol]["myMultiplier"])) - len(
-                str(self.instruments[symbol]["lotSize"])
-            )
-            if num > 0:
-                qty = "{:.{precision}f}".format(qty, precision=num)
-            else:
-                qty = "{:.{precision}f}".format(qty, precision=0)
+            instrument = self.Instrument[symbol]
+            qty /= instrument.myMultiplier
+            qty = "{:.{precision}f}".format(qty, precision=instrument.precision)
 
         return qty
 
-    def format_price(self, number: float, symbol: tuple) -> str:
-        rounding = disp.price_rounding[self.name][symbol]
-        number = "{:.{precision}f}".format(number, precision=rounding)
-        dot = number.find(".")
-        if dot == -1:
-            number = number + "."
-        n = len(number) - 1 - number.find(".")
-        for _ in range(rounding - n):
-            number = number + "0"
+    def format_price(self: Markets, number: Union[float, str], symbol: tuple) -> str:
+        if not isinstance(number, str):
+            precision = self.Instrument[symbol].price_precision
+            number = "{:.{precision}f}".format(number, precision=precision)
+            dot = number.find(".")
+            if dot == -1:
+                number = number + "."
+            n = len(number) - 1 - number.find(".")
+            for _ in range(precision - n):
+                number = number + "0"
 
         return number
 
-    def robots_entry(self, utc: datetime) -> None:
+    def robots_entry(self: Markets, utc: datetime) -> None:
         """
         Processing timeframes and entry point into robot algorithms
         """
-        self.ticker = self.get_ticker(self.name)
         for symbol, timeframes in self.frames.items():
+            instrument = self.Instrument[symbol]
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
                     for emi in values["robots"]:
@@ -650,45 +653,40 @@ class Function(WS, Variables):
                             bot.robo[emi](
                                 robot=self.robots[emi],
                                 frame=values["data"],
-                                ticker=self.ticker[symbol],
-                                instrument=self.instruments[symbol],
+                                instrument=instrument,
                             )
                         Function.save_timeframes_data(
                             self,
                             frame=values["data"][-1],
                         )
                     next_minute = int(utc.minute / timefr) * timefr
-                    dt_now = datetime(
-                        utc.year, utc.month, utc.day, utc.hour, next_minute, 0, 0
-                    )
+                    dt_now = utc.replace(minute=next_minute, second=0, microsecond=0)
                     values["data"].append(
                         {
                             "date": (utc.year - 2000) * 10000
                             + utc.month * 100
                             + utc.day,
                             "time": utc.hour * 10000 + utc.minute * 100,
-                            "bid": self.ticker[symbol]["bid"],
-                            "ask": self.ticker[symbol]["ask"],
-                            "hi": self.ticker[symbol]["ask"],
-                            "lo": self.ticker[symbol]["bid"],
-                            "funding": self.ticker[symbol]["fundingRate"],
+                            "bid": instrument.bids[0][0],
+                            "ask": instrument.asks[0][0],
+                            "hi": instrument.asks[0][0],
+                            "lo": instrument.bids[0][0],
+                            "funding": instrument.fundingRate,
                             "datetime": dt_now,
                         }
                     )
                     values["time"] = dt_now
 
-    def refresh_on_screen(self, utc: datetime) -> None:
+    def refresh_on_screen(self: Markets, utc: datetime) -> None:
         """
         Refresh information on screen
         """
-        # Only to embolden MySQL in order to avoid 'MySQL server has gone away' error
         if utc.hour != var.refresh_hour:
-            var.cursor_mysql.execute("select count(*) from " + db + ".robots")
-            var.cursor_mysql.fetchall()
+            Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
-            var.logger.info("Emboldening MySQL")
+            var.logger.info("Emboldening SQLite")
 
-        disp.label_time["text"] = time.ctime()
+        disp.label_time["text"] = time.asctime(time.gmtime())
         disp.label_f9["text"] = str(disp.f9)
         if disp.f9 == "ON":
             disp.label_f9.config(bg=disp.green_color)
@@ -700,59 +698,24 @@ class Function(WS, Variables):
                     info_display(self.name, "No data within 10 sec")
                     # disp.label_online["text"] = "NO DATA"
                     # disp.label_online.config(bg="yellow2")
-                    self.urgent_announcement(self.name)
+                    WS.urgent_announcement(self)
                 self.message_time = utc
                 self.message_point = self.message_counter
         Function.refresh_tables(self)
 
-    def refresh_tables(self) -> None:
+    def refresh_tables(self: Markets) -> None:
         """
         Update tkinter labels in the tables
         """
-
-        # Get funds
-
-        funds = self.get_funds()
-        for currency in self.accounts:
-            for fund in funds:
-                if currency == fund["currency"]:
-                    self.accounts[currency]["ACCOUNT"] = fund["account"]
-                    self.accounts[currency]["MARGINBAL"] = (
-                        float(fund["marginBalance"]) / var.currency_divisor[currency]
-                    )
-                    self.accounts[currency]["AVAILABLE"] = (
-                        float(fund["availableMargin"]) / var.currency_divisor[currency]
-                    )
-                    if "marginLeverage" in fund:
-                        self.accounts[currency]["LEVERAGE"] = fund["marginLeverage"]
-                    else:
-                        self.accounts[currency]["LEVERAGE"] = 0
-                    self.accounts[currency]["RESULT"] = self.accounts[currency][
-                        "SUMREAL"
-                    ]
-                    break
-            else:
-                message = "Currency " + str(currency) + " not found."
-                var.logger.error(message)
-                exit(1)
 
         # Refresh Positions table
 
         mod = Tables.position.mod
         for num, symbol in enumerate(self.symbol_list):
-            self.positions[symbol]["STATE"] = self.instruments[symbol]["state"]
-            self.positions[symbol]["VOL24h"] = self.instruments[symbol]["volume24h"]
-            self.positions[symbol]["FUND"] = round(
-                self.instruments[symbol]["fundingRate"] * 100, 6
-            )
+            instrument = self.Instrument[symbol]
             update_label(table="position", column=0, row=num + mod, val=symbol[0])
             update_label(table="position", column=1, row=num + mod, val=symbol[1])
-            if self.positions[symbol]["POS"]:
-                pos = Function.volume(
-                    self, qty=self.positions[symbol]["POS"], symbol=symbol
-                )
-            else:
-                pos = "0"
+            pos = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
             update_label(table="position", column=2, row=num + mod, val=pos)
             update_label(
                 table="position",
@@ -761,61 +724,55 @@ class Function(WS, Variables):
                 val=(
                     Function.format_price(
                         self,
-                        number=self.positions[symbol]["ENTRY"],
+                        number=instrument.avgEntryPrice,
                         symbol=symbol,
                     )
-                    if self.positions[symbol]["ENTRY"] is not None
-                    else 0
                 ),
             )
             update_label(
                 table="position",
                 column=4,
                 row=num + mod,
-                val=(
-                    self.positions[symbol]["PNL"]
-                    if self.positions[symbol]["PNL"] is not None
-                    else 0
-                ),
+                val=instrument.unrealisedPnl,
             )
             update_label(
                 table="position",
                 column=5,
                 row=num + mod,
-                val=(
-                    str(self.positions[symbol]["MCALL"]).replace("100000000", "inf")
-                    if self.positions[symbol]["MCALL"] is not None
-                    else 0
-                ),
+                val=(str(instrument.marginCallPrice).replace("100000000", "inf")),
             )
             update_label(
                 table="position",
                 column=6,
                 row=num + mod,
-                val=self.positions[symbol]["STATE"],
+                val=instrument.state,
             )
             update_label(
                 table="position",
                 column=7,
                 row=num + mod,
-                val=humanFormat(self.positions[symbol]["VOL24h"]),
+                val=Function.humanFormat(self, instrument.volume24h, symbol),
             )
-            if isinstance(self.instruments[symbol]["expiry"], datetime):
-                tm = self.instruments[symbol]["expiry"].strftime("%y%m%d %Hh")
+            if isinstance(instrument.expire, datetime):
+                tm = instrument.expire.strftime("%y%m%d %Hh")
             else:
-                tm = self.instruments[symbol]["expiry"]
+                tm = instrument.expire
             update_label(table="position", column=8, row=num + mod, val=tm)
+            if isinstance(instrument.fundingRate, float):
+                fund = round(instrument.fundingRate * 100, 4)
+            else:
+                fund = instrument.fundingRate
             update_label(
                 table="position",
                 column=9,
                 row=num + mod,
-                val=self.positions[symbol]["FUND"],
+                val=fund,
             )
 
         # Refresh Orderbook table
 
         def display_order_book_values(
-            val: dict, start: int, end: int, direct: int, side: str
+            val: list, start: int, end: int, direct: int, side: str
         ) -> None:
             count = 0
             if side == "asks":
@@ -829,12 +786,12 @@ class Function(WS, Variables):
                 vlm = ""
                 price = ""
                 qty = 0
-                if len(val[side]) > count:
+                if len(val) > count:
                     price = Function.format_price(
-                        self, number=val[side][count][0], symbol=var.symbol
+                        self, number=float(val[count][0]), symbol=var.symbol
                     )
                     vlm = Function.volume(
-                        self, qty=val[side][count][1], symbol=var.symbol
+                        self, qty=float(val[count][1]), symbol=var.symbol
                     )
                     if var.orders:
                         qty = Function.volume(
@@ -852,46 +809,55 @@ class Function(WS, Variables):
                     disp.labels["orderbook"][row][col_qty]["fg"] = disp.fg_color
                 update_label(table="orderbook", column=col, row=row, val=vlm)
                 update_label(table="orderbook", column=1, row=row, val=price)
+                if var.symbol != disp.symb_book:
+                    col1_book = len(price)
+                    if col1_book != 0:
+                        if col1_book > disp.col1_book:
+                            disp.col1_book = col1_book
+                    if row == 1 and disp.col1_book != 0:
+                        for row in range(0, Tables.orderbook.num_book - mod, 1):
+                            disp.labels["orderbook"][row][0]["width"] = 6
+                            disp.labels["orderbook"][row][1]["width"] = disp.col1_book
+                            disp.labels["orderbook"][row][2]["width"] = 6
+                        disp.symb_book = var.symbol
+                        disp.col1_book = 0
                 count += 1
 
         mod = 1 - Tables.orderbook.mod
         num = int(disp.num_book / 2) - mod
+        instrument = self.Instrument[var.symbol]
         if var.order_book_depth == "quote":
-            if self.ticker[var.symbol]["askSize"]:
+            if instrument.asks[0][1]:
                 update_label(
                     table="orderbook",
                     column=2,
                     row=num,
                     val=Function.volume(
-                        self, qty=self.ticker[var.symbol]["askSize"], symbol=var.symbol
+                        self, qty=instrument.asks[0][1], symbol=var.symbol
                     ),
                 )
             else:
                 update_label(table="orderbook", column=2, row=num, val="")
             disp.labels["orderbook"][num - mod][2]["fg"] = "black"
-            if self.ticker[var.symbol]["bidSize"]:
+            if instrument.bids[0][1]:
                 update_label(
                     table="orderbook",
                     column=0,
                     row=num + 1,
                     val=Function.volume(
-                        self, qty=self.ticker[var.symbol]["bidSize"], symbol=var.symbol
+                        self, qty=instrument.bids[0][1], symbol=var.symbol
                     ),
                 )
             else:
                 update_label(table="orderbook", column=0, row=num + 1, val="")
             disp.labels["orderbook"][num + 1 - mod][0]["fg"] = "black"
-            first_price_sell = (
-                self.ticker[var.symbol]["ask"]
-                + (num + mod) * self.instruments[var.symbol]["tickSize"]
-            )
-            first_price_buy = self.ticker[var.symbol]["bid"]
+            first_price_sell = instrument.asks[0][0] + (num + mod) * instrument.tickSize
+            first_price_buy = instrument.bids[0][0]
             for row in range(1 - mod, disp.num_book - mod):
                 if row <= num:
                     price = round(
-                        first_price_sell
-                        - (row + mod) * self.instruments[var.symbol]["tickSize"],
-                        disp.price_rounding[self.name][var.symbol],
+                        first_price_sell - (row + mod) * instrument.tickSize,
+                        instrument.precision,
                     )
                     qty = 0
                     if var.orders:
@@ -900,7 +866,7 @@ class Function(WS, Variables):
                             qty=find_order(float(price), qty, symbol=var.symbol),
                             symbol=var.symbol,
                         )
-                    if self.ticker[var.symbol]["ask"]:
+                    if instrument.asks[0][0]:
                         price = Function.format_price(
                             self, number=price, symbol=var.symbol
                         )
@@ -909,15 +875,16 @@ class Function(WS, Variables):
                     update_label(table="orderbook", column=1, row=row, val=price)
                     if str(qty) != "0":
                         update_label(table="orderbook", column=0, row=row, val=qty)
-                        disp.labels["orderbook"][row][0]["bg"] = "orange red"
+                        disp.labels["orderbook"][row][0]["bg"] = disp.red_color
+                        disp.labels["orderbook"][row][0]["fg"] = "white"
                     else:
                         update_label(table="orderbook", column=0, row=row, val="")
                         disp.labels["orderbook"][row][0]["bg"] = disp.bg_color
+                        disp.labels["orderbook"][row][0]["fg"] = "white"
                 else:
                     price = round(
-                        first_price_buy
-                        - (row - num - 1) * self.instruments[var.symbol]["tickSize"],
-                        disp.price_rounding[self.name][var.symbol],
+                        first_price_buy - (row - num - 1) * instrument.tickSize,
+                        instrument.precision,
                     )
                     qty = 0
                     if var.orders:
@@ -935,215 +902,221 @@ class Function(WS, Variables):
                     update_label(table="orderbook", column=1, row=row, val=price)
                     if str(qty) != "0":
                         update_label(table="orderbook", column=2, row=row, val=qty)
-                        disp.labels["orderbook"][row][2]["bg"] = "green2"
+                        disp.labels["orderbook"][row][2]["bg"] = disp.green_color
+                        disp.labels["orderbook"][row][2]["fg"] = "white"
                     else:
                         update_label(table="orderbook", column=2, row=row, val="")
                         disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
+                        disp.labels["orderbook"][row][2]["fg"] = disp.fg_color
         else:
-            val = self.market_depth10()[var.symbol]
             display_order_book_values(
-                val=val, start=num + 1, end=disp.num_book - mod, direct=1, side="bids"
+                val=instrument.bids,
+                start=num + 1,
+                end=disp.num_book - mod,
+                direct=1,
+                side="bids",
             )
             display_order_book_values(
-                val=val, start=num, end=0 - mod, direct=-1, side="asks"
+                val=instrument.asks, start=num, end=0 - mod, direct=-1, side="asks"
             )
 
         # Refresh Robots table
 
         mod = Tables.robots.mod
-        for num, emi in enumerate(self.robots):
-            symbol = self.robots[emi]["SYMBOL"]
-            price = Function.close_price(
-                self, symbol=symbol, pos=self.robots[emi]["POS"]
-            )
+        for num, robot in enumerate(self.robots.values()):
+            symbol = robot["SYMBOL"]
+            price = Function.close_price(self, symbol=symbol, pos=robot["POS"])
             if price:
                 calc = Function.calculate(
                     self,
                     symbol=symbol,
                     price=price,
-                    qty=-float(self.robots[emi]["POS"]),
+                    qty=-float(robot["POS"]),
                     rate=0,
                     fund=1,
                 )
-                self.robots[emi]["PNL"] = (
-                    self.robots[emi]["SUMREAL"]
-                    + calc["sumreal"]
-                    - self.robots[emi]["COMMISS"]
-                )
-            symbol = self.robots[emi]["SYMBOL"]
-            update_label(table="robots", column=0, row=num + mod, val=emi)
+                robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
+            else:
+                robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
+            update_label(table="robots", column=0, row=num + mod, val=robot["EMI"])
             update_label(table="robots", column=1, row=num + mod, val=symbol[0])
             update_label(table="robots", column=2, row=num + mod, val=symbol[1])
             update_label(
                 table="robots",
                 column=3,
                 row=num + mod,
-                val=self.instruments[symbol]["settlCurrency"],
+                val=self.Instrument[symbol].settlCurrency[0],
             )
-            update_label(
-                table="robots", column=4, row=num + mod, val=self.robots[emi]["TIMEFR"]
-            )
-            update_label(
-                table="robots", column=5, row=num + mod, val=self.robots[emi]["CAPITAL"]
-            )
-            update_label(
-                table="robots", column=6, row=num + mod, val=self.robots[emi]["STATUS"]
-            )
+            update_label(table="robots", column=4, row=num + mod, val=robot["TIMEFR"])
+            update_label(table="robots", column=5, row=num + mod, val=robot["CAPITAL"])
+            update_label(table="robots", column=6, row=num + mod, val=robot["STATUS"])
             update_label(
                 table="robots",
                 column=7,
                 row=num + mod,
-                val=humanFormat(self.robots[emi]["VOL"]),
+                val=Function.humanFormat(self, robot["VOL"], symbol),
             )
             update_label(
                 table="robots",
                 column=8,
                 row=num + mod,
-                val="{:.8f}".format(self.robots[emi]["PNL"]),
+                val="{:.8f}".format(robot["PNL"]),
             )
             val = Function.volume(
                 self,
-                qty=self.robots[emi]["POS"],
+                qty=robot["POS"],
                 symbol=symbol,
             )
             if disp.labels_cache["robots"][num + mod][9] != val:
-                if self.robots[emi]["STATUS"] == "RESERVED":
-                    if self.robots[emi]["POS"] != 0:
-                        disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
-                    else:
-                        disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
+                if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot[
+                    "STATUS"
+                ] in ["OFF", "NOT DEFINED"]:
+                    disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
+                else:
+                    disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
             update_label(
                 table="robots",
                 column=9,
                 row=num + mod,
                 val=val,
             )
-            self.robots[emi]["y_position"] = num + mod
+            robot["y_position"] = num + mod
 
         # Refresh Account table
 
         mod = Tables.account.mod
+        results = dict()
         for symbol, position in self.positions.items():
-            if position["POS"] != 0:
-                calc = Function.calculate(
-                    self,
-                    symbol=symbol,
-                    price=Function.close_price(
+            if symbol[2] == var.current_market:
+                if position["POS"] != 0:
+                    price = Function.close_price(
                         self, symbol=symbol, pos=position["POS"]
-                    ),
-                    qty=-position["POS"],
-                    rate=0,
-                    fund=1,
-                )
-                settlCurrency = self.instruments[symbol]["settlCurrency"]
-                if settlCurrency in self.accounts:
-                    self.accounts[settlCurrency]["RESULT"] += calc["sumreal"]
-                else:
-                    var.logger.error(
-                        settlCurrency
-                        + " not found. See the CURRENCIES variable in the .env file."
                     )
-                    exit(1)
+                    if price:
+                        calc = Function.calculate(
+                            self,
+                            symbol=symbol,
+                            price=price,
+                            qty=-position["POS"],
+                            rate=0,
+                            fund=1,
+                        )
+                        settlCurrency = self.Instrument[symbol].settlCurrency
+                        if settlCurrency in results:
+                            results[settlCurrency] += calc["sumreal"]
+                        else:
+                            results[settlCurrency] = calc["sumreal"]
         for num, cur in enumerate(self.currencies):
+            settlCurrency = (cur, self.name)
+            account = self.Account[settlCurrency]
+            account.result = 0
+            if settlCurrency in results:
+                account.result += results[settlCurrency]
             update_label(table="account", column=0, row=num + mod, val=cur)
             update_label(
                 table="account",
                 column=1,
                 row=num + mod,
-                val=format_number(number=self.accounts[cur]["MARGINBAL"]),
+                val=format_number(number=account.walletBalance),
             )
             update_label(
                 table="account",
                 column=2,
                 row=num + mod,
-                val=format_number(number=self.accounts[cur]["AVAILABLE"]),
+                val=format_number(number=account.unrealisedPnl),
             )
             update_label(
                 table="account",
                 column=3,
                 row=num + mod,
-                val="{:.3f}".format(self.accounts[cur]["LEVERAGE"]),
+                val=format_number(number=account.marginBalance),
             )
             update_label(
                 table="account",
                 column=4,
                 row=num + mod,
-                val=format_number(number=self.accounts[cur]["RESULT"]),
+                val=format_number(number=account.orderMargin),
             )
             update_label(
                 table="account",
                 column=5,
                 row=num + mod,
-                val=format_number(number=-self.accounts[cur]["COMMISS"]),
+                val=format_number(number=account.positionMagrin),
             )
             update_label(
                 table="account",
                 column=6,
                 row=num + mod,
-                val=format_number(number=-self.accounts[cur]["FUNDING"]),
-            )
-            number = (
-                self.accounts[cur]["MARGINBAL"]
-                - self.accounts[cur]["RESULT"]
-                + self.accounts[cur]["COMMISS"]
-                + self.accounts[cur]["FUNDING"]
+                val=format_number(number=account.availableMargin),
             )
             update_label(
                 table="account",
                 column=7,
                 row=num + mod,
-                val=format_number(number=number),
+                val=format_number(number=account.sumreal + account.result),
+            )
+            update_label(
+                table="account",
+                column=8,
+                row=num + mod,
+                val=format_number(number=-account.commission),
+            )
+            update_label(
+                table="account",
+                column=9,
+                row=num + mod,
+                val=format_number(number=-account.funding),
             )
 
-        # Refresh Exchange table
+        # Refresh Market table
 
         mod = Tables.market.mod
         for row, name in enumerate(var.market_list):
-            ws = Websockets.connect[name]
+            ws = Markets[name]
             status = "ONLINE"
             if ws.logNumFatal != 0:
-                status = "error " + str(ws.logNumFatal)
+                if ws.logNumFatal == -1:
+                    status = "RELOADING"
+                """else:
+                    status = "error " + str(ws.logNumFatal)
+                    Tables.market.color_market(
+                        state="error",
+                        row=var.market_list.index(ws.name),
+                        market=ws.name,
+                    )"""
             update_label(
                 table="market",
                 column=0,
                 row=row + mod,
-                val=name
-                + "\nAcc."
-                + str(ws.user_id)
-                + "\n"
-                + str(self.connect_count)
-                + " "
-                + status,
+                val=ws.account_disp + str(ws.connect_count) + " " + status,
             )
 
-    def close_price(self, symbol: tuple, pos: int) -> float:
-        if symbol in self.ticker:
-            close = (
-                self.ticker[symbol]["bid"] if pos > 0 else self.ticker[symbol]["ask"]
-            )
+    def close_price(self: Markets, symbol: tuple, pos: int) -> float:
+        instrument = self.Instrument[symbol]
+        if pos > 0 and instrument.bids[0]:
+            close = instrument.bids[0][0]
+        elif pos <= 0 and instrument.asks[0]:
+            close = instrument.asks[0][0]
         else:
-            close = (
-                self.instruments[symbol]["bidPrice"]
-                if pos > 0
-                else self.instruments[symbol]["askPrice"]
-            )
+            close = None
 
         return close
 
-    def round_price(self, symbol: tuple, price: float, rside: int) -> float:
+    def round_price(self: Markets, symbol: tuple, price: float, rside: int) -> float:
         """
         Round_price() returns rounded price: buy price goes down, sell price
         goes up according to 'tickSize'
         """
-        coeff = 1 / self.instruments[symbol]["tickSize"]
+        instrument = self.Instrument[symbol]
+        coeff = 1 / instrument.tickSize
         result = int(coeff * price) / coeff
         if rside < 0 and result < price:
-            result += self.instruments[symbol]["tickSize"]
+            result += instrument.tickSize
 
         return result
 
     def post_order(
-        self,
+        self: Markets,
         name: str,
         symbol: tuple,
         emi: str,
@@ -1163,14 +1136,14 @@ class Function(WS, Variables):
             qty = -qty
         var.last_order += 1
         clOrdID = str(var.last_order) + "." + emi
-        self.place_limit(
-            name=name, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
+        WS.place_limit(
+            self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
         )
 
         return clOrdID
 
     def put_order(
-        self,
+        self: Markets,
         clOrdID: str,
         price: float,
         qty: int,
@@ -1192,8 +1165,8 @@ class Function(WS, Variables):
             + str(qty)
         )
         if price != var.orders[clOrdID]["price"]:  # the price alters
-            self.replace_limit(
-                name=self.name,
+            WS.replace_limit(
+                self,
                 quantity=qty,
                 price=price_str,
                 orderID=var.orders[clOrdID]["orderID"],
@@ -1202,59 +1175,59 @@ class Function(WS, Variables):
 
         return clOrdID
 
-    def del_order(self, clOrdID: str) -> int:
+    def del_order(self: Markets, order: dict, clOrdID: str) -> int:
         """
         Del_order() function cancels orders
         """
-        message = (
-            "Deleting orderID=" + var.orders[clOrdID]["orderID"] + " clOrdID=" + clOrdID
-        )
+        message = "Deleting orderID=" + order["orderID"] + " clOrdID=" + clOrdID
         var.logger.info(message)
-        self.remove_order(name=self.name, orderID=var.orders[clOrdID]["orderID"])
+        WS.remove_order(self, order=order)
 
         return self.logNumFatal
 
-    def market_status(self, status: str) -> None:
+    def market_status(self: Markets, status: str) -> None:
         mod = Tables.market.mod
         row = var.market_list.index(self.name)
         update_label(
             table="market",
             column=0,
             row=row + mod,
-            val=self.name + "\nAcc." + str(self.user_id) + "\n" + status,
+            val=self.account_disp + status,
         )
 
-    def fill_columns(self, func, table: ListBoxTable, val: dict) -> None:
+    def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
-        elements = func(self, val=val, init=True)
+        elements = func(Markets[val["SYMBOL"][2]], val=val, init=True)
         for num, element in enumerate(elements):
             table.columns[num].append(element)
 
+    def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
+        if volNow > 1000000000:
+            volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
+        elif volNow > 1000000:
+            volNow = "{:.2f}".format(round(volNow / 1000000, 2)) + "M"
+        elif volNow > 1000:
+            volNow = "{:.2f}".format(round(volNow / 1000, 2)) + "K"
+        else:
+            volNow = Function.volume(self, qty=volNow, symbol=symbol)
 
-def ticksize_rounding(price: float, ticksize: float) -> float:
-    """
-    Rounds the price depending on the tickSize value
-    """
-    arg = 1 / ticksize
-    res = round(price * arg, 0) / arg
-
-    return res
+        return volNow
 
 
 def handler_order(event) -> None:
     row_position = event.widget.curselection()
     if row_position:
         if row_position[0] - orders.mod >= 0:
-            ws = Websockets.connect[var.current_market]
             for num, clOrdID in enumerate(var.orders):
                 if num == row_position[0] - orders.mod:
                     break
+            ws = Markets[var.orders[clOrdID]["SYMBOL"][2]]
 
             def on_closing() -> None:
                 disp.order_window_trigger = "off"
                 order_window.destroy()
 
-            def delete(clOrdID) -> None:
+            def delete(order: dict, clOrdID: str) -> None:
                 try:
                     var.orders[clOrdID]
                 except KeyError:
@@ -1263,7 +1236,7 @@ def handler_order(event) -> None:
                     var.logger.info(message)
                     return
                 if ws.logNumFatal == 0:
-                    Function.del_order(ws, clOrdID=clOrdID)
+                    Function.del_order(ws, order=order, clOrdID=clOrdID)
                     # orders.delete(row_position)
                 else:
                     info_display(ws.name, "The operation failed. Websocket closed!")
@@ -1279,7 +1252,7 @@ def handler_order(event) -> None:
                     return
                 try:
                     float(price_replace.get())
-                except KeyError:
+                except ValueError:
                     info_display(ws.name, "Price must be numeric!")
                     return
                 if ws.logNumFatal == 0:
@@ -1308,42 +1281,50 @@ def handler_order(event) -> None:
                 on_closing()
 
             if disp.order_window_trigger == "off":
+                order = var.orders[clOrdID]
                 disp.order_window_trigger = "on"
                 order_window = tk.Toplevel(disp.root, pady=10, padx=10)
                 cx = disp.root.winfo_pointerx()
                 cy = disp.root.winfo_pointery()
                 order_window.geometry("+{}+{}".format(cx - 200, cy - 50))
-                order_window.title("Delete order ")
+                order_window.title("Cancel / Modify order ")
                 order_window.protocol("WM_DELETE_WINDOW", on_closing)
                 order_window.attributes("-topmost", 1)
                 frame_up = tk.Frame(order_window)
                 frame_dn = tk.Frame(order_window)
                 label1 = tk.Label(frame_up, justify="left")
+                order_price = Function.format_price(
+                    ws,
+                    number=var.orders[clOrdID]["price"],
+                    symbol=var.orders[clOrdID]["SYMBOL"],
+                )
                 label1["text"] = (
-                    "number\t"
-                    + str(row_position[0])
+                    "market\t"
+                    + var.orders[clOrdID]["SYMBOL"][2]
                     + "\nsymbol\t"
-                    + ".".join(var.orders[clOrdID]["SYMBOL"])
+                    + ".".join(var.orders[clOrdID]["SYMBOL"][:2])
                     + "\nside\t"
                     + var.orders[clOrdID]["SIDE"]
                     + "\nclOrdID\t"
                     + clOrdID
                     + "\nprice\t"
-                    + Function.format_price(
+                    + order_price
+                    + "\nquantity\t"
+                    + Function.volume(
                         ws,
-                        number=var.orders[clOrdID]["price"],
+                        qty=var.orders[clOrdID]["leavesQty"],
                         symbol=var.orders[clOrdID]["SYMBOL"],
                     )
-                    + "\nquantity\t"
-                    + str(var.orders[clOrdID]["leavesQty"])
                 )
                 label_price = tk.Label(frame_dn)
                 label_price["text"] = "Price "
                 label1.pack(side="left")
                 button = tk.Button(
-                    frame_dn, text="Delete order", command=lambda id=clOrdID: delete(id)
+                    frame_dn,
+                    text="Delete order",
+                    command=lambda id=clOrdID: delete(clOrdID=id, order=order),
                 )
-                price_replace = tk.StringVar()
+                price_replace = tk.StringVar(frame_dn, order_price)
                 entry_price = tk.Entry(
                     frame_dn, width=10, bg=disp.bg_color, textvariable=price_replace
                 )
@@ -1361,7 +1342,7 @@ def handler_order(event) -> None:
 
 def handler_orderbook(event, row_position: int) -> None:
     disp.symb_book = var.symbol
-    ws = Websockets.connect[var.current_market]
+    ws = Markets[var.current_market]
 
     def refresh() -> None:
         book_window.title(var.symbol)
@@ -1371,7 +1352,7 @@ def handler_orderbook(event, row_position: int) -> None:
                 0,
                 Function.format_price(
                     ws,
-                    number=ws.ticker[var.symbol]["ask"],
+                    number=ws.Instrument[var.symbol].asks[0][0],
                     symbol=var.symbol,
                 ),
             )
@@ -1380,7 +1361,7 @@ def handler_orderbook(event, row_position: int) -> None:
                 0,
                 Function.format_price(
                     ws,
-                    number=ws.ticker[var.symbol]["bid"],
+                    number=ws.Instrument[var.symbol].bids[0][0],
                     symbol=var.symbol,
                 ),
             )
@@ -1388,7 +1369,7 @@ def handler_orderbook(event, row_position: int) -> None:
             entry_quantity.insert(
                 0,
                 Function.volume(
-                    ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol
+                    ws, qty=ws.Instrument[var.symbol].minOrderQty, symbol=var.symbol
                 ),
             )
             option_robots["menu"].delete(0, "end")
@@ -1405,48 +1386,56 @@ def handler_orderbook(event, row_position: int) -> None:
                 )
             emi_number.set("")
             disp.symb_book = var.symbol
-        book_window.after(500, refresh)
+        book_window.after(100, refresh)
 
     def on_closing() -> None:
         disp.book_window_trigger = "off"
         book_window.after_cancel(refresh_var)
         book_window.destroy()
 
+    def minimum_qty(qnt):
+        minOrderQty = ws.Instrument[var.symbol].minOrderQty
+        if qnt < minOrderQty:
+            message = (
+                "The "
+                + str(var.symbol)
+                + " quantity must be greater than or equal to "
+                + Function.volume(ws, qty=minOrderQty, symbol=var.symbol)
+            )
+            warning_window(message)
+            return "error"
+        qnt_d = Decimal(str(qnt))
+        qtyStep = Decimal(str(ws.Instrument[var.symbol].qtyStep))
+        print(qnt_d % qtyStep)
+        if qnt_d % qtyStep != 0:
+            message = (
+                "The "
+                + str(var.symbol)
+                + " quantity must be multiple to "
+                + Function.volume(ws, qty=qtyStep, symbol=var.symbol)
+            )
+            warning_window(message)
+            return "error"
+
     def callback_sell_limit() -> None:
         if quantity.get() and price_ask.get() and emi_number.get():
             try:
                 qnt = abs(
-                    int(
-                        float(quantity.get())
-                        * ws.instruments[var.symbol]["myMultiplier"]
-                    )
+                    float(quantity.get()) * ws.Instrument[var.symbol].myMultiplier
                 )
                 price = float(price_ask.get())
                 res = "yes"
             except Exception:
-                info_display(
-                    ws.name,
-                    "Fields must be numbers! quantity: int or float, price: float",
-                )
+                warning_window("Fields must be numbers!")
                 res = "no"
             if res == "yes" and qnt != 0:
                 price = Function.round_price(
                     ws, symbol=var.symbol, price=price, rside=-qnt
                 )
                 if price <= 0:
-                    message = "The price must be above zero."
-                    info_display(ws.name, message)
-                    warning_window(message)
+                    warning_window("The price must be above zero.")
                     return
-                if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
-                    message = (
-                        "The "
-                        + str(var.symbol)
-                        + " quantity must be multiple to "
-                        + str(ws.instruments[var.symbol]["lotSize"])
-                    )
-                    info_display(ws.name, message)
-                    warning_window(message)
+                if minimum_qty(qnt):
                     return
                 Function.post_order(
                     ws,
@@ -1458,43 +1447,27 @@ def handler_orderbook(event, row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            info_display(ws.name, "Some of the fields are empty!")
+            warning_window("Some of the fields are empty!")
 
     def callback_buy_limit() -> None:
         if quantity.get() and price_bid.get() and emi_number.get():
             try:
                 qnt = abs(
-                    int(
-                        float(quantity.get())
-                        * ws.instruments[var.symbol]["myMultiplier"]
-                    )
+                    float(quantity.get()) * ws.Instrument[var.symbol].myMultiplier
                 )
                 price = float(price_bid.get())
                 res = "yes"
             except Exception:
-                info_display(
-                    ws.name,
-                    "Fields must be numbers! quantity: int or float, price: float",
-                )
+                warning_window("Fields must be numbers!")
                 res = "no"
             if res == "yes" and qnt != 0:
                 price = Function.round_price(
                     ws, symbol=var.symbol, price=price, rside=qnt
                 )
                 if price <= 0:
-                    message = "The price must be above zero."
-                    info_display(ws.name, message)
-                    warning_window(message)
+                    warning_window("The price must be above zero.")
                     return
-                if qnt % ws.instruments[var.symbol]["lotSize"] != 0:
-                    message = (
-                        "The "
-                        + str(var.symbol)
-                        + " quantity must be multiple to "
-                        + str(ws.instruments[var.symbol]["lotSize"])
-                    )
-                    info_display(ws.name, message)
-                    warning_window(message)
+                if minimum_qty(qnt):
                     return
                 Function.post_order(
                     ws,
@@ -1506,7 +1479,7 @@ def handler_orderbook(event, row_position: int) -> None:
                     qty=qnt,
                 )
         else:
-            info_display(ws.name, "Some of the fields are empty!")
+            warning_window("Some of the fields are empty!")
 
     if disp.book_window_trigger == "off" and disp.f9 == "OFF":
         disp.book_window_trigger = "on"
@@ -1534,11 +1507,12 @@ def handler_orderbook(event, row_position: int) -> None:
         entry_price_bid = tk.Entry(
             frame_market_bid, width=10, bg=disp.bg_color, textvariable=price_bid
         )
+        instrument = ws.Instrument[var.symbol]
         entry_price_ask.insert(
             0,
             Function.format_price(
                 ws,
-                number=ws.ticker[var.symbol]["ask"],
+                number=instrument.asks[0][0],
                 symbol=var.symbol,
             ),
         )
@@ -1546,18 +1520,16 @@ def handler_orderbook(event, row_position: int) -> None:
             0,
             Function.format_price(
                 ws,
-                number=ws.ticker[var.symbol]["bid"],
+                number=instrument.bids[0][0],
                 symbol=var.symbol,
             ),
         )
         entry_quantity = tk.Entry(
-            frame_quantity, width=6, bg=disp.bg_color, textvariable=quantity
+            frame_quantity, width=9, bg=disp.bg_color, textvariable=quantity
         )
         entry_quantity.insert(
             0,
-            Function.volume(
-                ws, qty=ws.instruments[var.symbol]["lotSize"], symbol=var.symbol
-            ),
+            Function.volume(ws, qty=instrument.minOrderQty, symbol=var.symbol),
         )
         label_ask = tk.Label(frame_market_ask, text="Price:")
         label_bid = tk.Label(frame_market_bid, text="Price:")
@@ -1618,17 +1590,6 @@ def format_number(number: float) -> str:
     return "{:.{num}f}".format(number, num=after_dot)
 
 
-def gap(val: str, peak: int) -> str:
-    """
-    Generate spaces for scroll widgets
-    """
-    res = " " + val
-    for _ in range(peak - len(val)):
-        res = " " + res
-
-    return res
-
-
 def warning_window(message: str) -> None:
     def on_closing() -> None:
         warn_window.destroy()
@@ -1644,8 +1605,8 @@ def warning_window(message: str) -> None:
     tex.pack(expand=1)
 
 
-def handler_pos(event, row_position: int) -> None:
-    ws = Websockets.connect[var.current_market]
+def handler_position(event, row_position: int) -> None:
+    ws = Markets[var.current_market]
     if row_position > len(ws.symbol_list):
         row_position = len(ws.symbol_list)
     var.symbol = ws.symbol_list[row_position - 1]
@@ -1664,25 +1625,20 @@ def handler_pos(event, row_position: int) -> None:
 def handler_market(event, row_position: int) -> None:
     if row_position > len(var.market_list):
         row_position = len(var.market_list)
-    var.current_market = var.market_list[row_position - 1]
-    for row in enumerate(var.market_list):
-        for column in range(len(var.name_market)):
-            if row[0] + 1 == row_position:
-                disp.labels["market"][row[0] + 1][column]["bg"] = "yellow"
-            else:
-                if row[0] + 1 > 0:
-                    disp.labels["market"][row[0] + 1][column]["bg"] = disp.bg_color
-
-
-def humanFormat(volNow: int) -> str:
-    if volNow > 1000000000:
-        volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
-    elif volNow > 1000000:
-        volNow = "{:.2f}".format(round(volNow / 1000000, 2)) + "M"
-    elif volNow > 1000:
-        volNow = "{:.2f}".format(round(volNow / 1000, 2)) + "K"
-
-    return volNow
+    mod = Tables.market.mod
+    shift = var.market_list[row_position - mod]
+    if shift != var.current_market:
+        var.current_market = shift
+        var.symbol = Markets[var.current_market].symbol_list[0]
+        clear_tables()
+        for row in enumerate(var.market_list):
+            for column in range(len(var.name_market)):
+                if row[0] + mod == row_position:
+                    disp.labels["market"][row[0] + mod][column][
+                        "bg"
+                    ] = disp.bg_select_color
+                else:
+                    disp.labels["market"][row[0] + mod][column]["bg"] = disp.title_color
 
 
 def find_order(price: float, qty: int, symbol: str) -> int:
@@ -1698,7 +1654,7 @@ def find_order(price: float, qty: int, symbol: str) -> int:
 
 def handler_robots(event, row_position: int) -> None:
     emi = None
-    ws = Websockets.connect[var.current_market]
+    ws = Markets[var.current_market]
     for val in ws.robots:
         if ws.robots[val]["y_position"] == row_position:
             emi = val
@@ -1759,22 +1715,24 @@ def change_color(color: str, container=None) -> None:
 
 
 def load_labels() -> None:
-    ws = Websockets.connect[var.current_market]
+    ws = Markets[var.current_market]
+    position_rows = len(var.env[var.current_market]["SYMBOLS"])
     Tables.position = GridTable(
         frame=disp.position_frame,
         name="position",
-        size=max(5, var.position_rows + 1),
+        size=max(5, position_rows + 1),
         title=var.name_position,
-        column_width=35,
+        column_width=50,
         canvas_height=65,
-        bind=handler_pos,
+        bind=handler_position,
         color=disp.bg_color,
         select=True,
     )
+    account_rows = len(var.env[var.current_market]["CURRENCIES"])
     Tables.account = GridTable(
         frame=disp.frame_4row_1_2_3col,
         name="account",
-        size=var.account_rows + 1,
+        size=account_rows + 1,
         title=var.name_account,
         canvas_height=63,
         color=disp.bg_color,
@@ -1791,10 +1749,11 @@ def load_labels() -> None:
     Tables.market = GridTable(
         frame=disp.frame_3row_1col,
         name="market",
-        size=2,
+        size=len(var.market_list) + 1,
         title=var.name_market,
         column_width=110,
         title_on=False,
+        bind=handler_market,
         color=disp.title_color,
         select=True,
     )
@@ -1811,6 +1770,7 @@ def load_labels() -> None:
         name="orderbook",
         size=disp.num_book,
         title=var.name_book,
+        column_width=85,
         canvas_height=440,
         bind=handler_orderbook,
         color=disp.bg_color,
@@ -1826,17 +1786,44 @@ def load_labels() -> None:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
 
 
+def clear_tables():
+    def clear(table: Tables, number_rows: int):
+        size = table.sub.grid_size()
+        for row in range(table.mod, size[1]):
+            for column in range(size[0]):
+                disp.labels[table.name][row][column]["text"] = ""
+                disp.labels_cache[table.name][row][column] = ""
+
+        number = number_rows - size[1] + table.mod
+        if number > 0:
+            table.reconfigure_table(action="new", number=number)
+        elif number < 0:
+            table.reconfigure_table(action="hide", number=abs(number))
+
+    ws = Markets[var.current_market]
+    clear(table=Tables.position, number_rows=len(ws.symbol_list))
+    clear(table=Tables.account, number_rows=len(ws.currencies))
+    clear(table=Tables.robots, number_rows=len(ws.robots))
+    clear(table=Tables.orderbook, number_rows=disp.num_book)
+    handler_position("event", row_position=Tables.position.mod)
+
+
 change_color(color=disp.title_color, container=disp.root)
 
 trades = ListBoxTable(
-    frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
+    name="trades", frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
 )
 funding = ListBoxTable(
-    frame=disp.frame_funding, title=var.name_funding, size=0, expand=True
+    name="funding",
+    frame=disp.frame_funding,
+    title=var.name_funding,
+    size=0,
+    expand=True,
 )
 orders = ListBoxTable(
+    name="orders",
     frame=disp.frame_orders,
-    title=var.name_trade,
+    title=var.name_order,
     bind=handler_order,
     size=0,
     expand=True,

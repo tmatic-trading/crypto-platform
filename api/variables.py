@@ -1,15 +1,11 @@
 import logging
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
-#from functions import Function
 from common.variables import Variables as var
-import requests
-
 
 
 class Variables:
-    name = ""
     qwe = 0
     testnet = True
     api_key = ""
@@ -17,13 +13,11 @@ class Variables:
     ws_url = ""
     http_url = ""
     symbol_list = list()
+    category_list = list()
     currencies = list()
-    accounts = dict()
-    ticker = OrderedDict()
     positions = OrderedDict()
-    instruments = OrderedDict()
-    data = dict()
     full_symbol_list = list()
+    symbols = set()
     logger = logging
     logNumFatal = -1
     timeoutOccurred = ""
@@ -32,23 +26,13 @@ class Variables:
     message_point = 0
     connect_count = 0
     user_id = None
-    message_time = datetime.utcnow()
+    user = dict()
+    message_time = datetime.now(tz=timezone.utc)
     message2000 = ""
     messageStopped = ""
-    maxRetryRest = (3)
+    maxRetryRest = 3
     symbol_category = ""
     currency_divisor = dict()
     filename = ""
     api_is_active = False
-
-    # Bots data
-    robots = OrderedDict()
-    frames = dict()
-    robot_status = dict()
-    
-    # Prepare HTTPS session
-    session = requests.Session()
-    session.headers.update({"user-agent": "Tmatic"})
-    session.headers.update({"content-type": "application/json"})
-    session.headers.update({"accept": "application/json"})
-
+    account_disp = ""

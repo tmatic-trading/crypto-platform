@@ -1,21 +1,22 @@
-import functions as function
-from api.websockets import Websockets
+import services as service
+from api.api import Markets
+from common.data import Instrument
 from common.variables import Variables as var
 from functions import Function
 
 
-def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
-    ws = Websockets.connect[robot["MARKET"]]
+def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
+    ws = Markets[robot["MARKET"]]
     period = robot["PERIOD"]
-    quantaty = robot["lotSize"] * robot["CAPITAL"] * instrument["myMultiplier"]
+    quantaty = robot["lotSize"] * robot["CAPITAL"]
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
-    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
-    sell_price = function.ticksize_rounding(
-        price=(ticker["ask"] + indent), ticksize=instrument["tickSize"]
+    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 2
+    sell_price = service.ticksize_rounding(
+        price=(instrument.asks[0][0] + indent), ticksize=instrument.tickSize
     )
-    buy_price = function.ticksize_rounding(
-        price=(ticker["bid"] - indent), ticksize=instrument["tickSize"]
+    buy_price = service.ticksize_rounding(
+        price=(instrument.bids[0][0] - indent), ticksize=instrument.tickSize
     )
     if frame[-1]["ask"] > frame[-1 - period]["ask"]:
         buy_quantaty = quantaty - robot["POS"]
@@ -78,7 +79,7 @@ def algo(robot: dict, frame: dict, ticker: dict, instrument: dict) -> None:
 
 
 def init_variables(robot: dict):
-    robot["PERIOD"] = 10
+    robot["PERIOD"] = 5
 
 
 def order_search(emi: int, side: str) -> str:
@@ -94,4 +95,4 @@ def order_search(emi: int, side: str) -> str:
 def delete_orders(ws, emi: int, side: str) -> None:
     for clOrdID, order in var.orders.copy().items():
         if order["EMI"] == emi and order["SIDE"] == side:
-            Function.del_order(ws, clOrdID=clOrdID)
+            Function.del_order(ws, order=order, clOrdID=clOrdID)
