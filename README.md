@@ -2,7 +2,7 @@
 
 # Trading platform designed for automated trading on the Bitmex and Bybit crypto exchanges
 
-![Image](https://github.com/evgrmn/tmatic/blob/dev/tmatic.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/tmatic.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.9+
 
