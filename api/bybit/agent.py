@@ -1,6 +1,6 @@
 # from api.variables import Variables
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Union
 
 import services as service
@@ -94,6 +94,14 @@ class Agent(Bybit):
             return result
 
     def trading_history(self, histCount: int, time: datetime) -> list:
+        utc = datetime.now(timezone.utc)
+        if utc - time > timedelta(days=729):
+            self.logger.info(
+                "Bybit only allows you to query trading history for the last "
+                + "2 years. Check the History.ini file."
+            )
+            time = utc - timedelta(days=729)
+            self.logger.info("Time changed to " + str(time))
         startTime = service.time_converter(time)
         limit = min(100, histCount)
         trade_history = []

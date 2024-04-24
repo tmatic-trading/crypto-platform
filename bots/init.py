@@ -3,7 +3,6 @@ from typing import Tuple, Union
 
 import services as service
 from api.api import WS, Markets
-
 from api.init import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
@@ -208,7 +207,7 @@ class Init(WS, Variables):
         with open(self.filename, "w"):
             pass
         target = datetime.now(tz=timezone.utc)
-        time = target - timedelta(minutes=bot.candlestick_number * robot["TIMEFR"])
+        time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * robot["TIMEFR"])
         delta = timedelta(minutes=robot["TIMEFR"] - target.minute % robot["TIMEFR"])
         target += delta
         target = target.replace(second=0, microsecond=0)
