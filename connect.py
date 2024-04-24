@@ -1,17 +1,20 @@
 import threading
 import time
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from time import sleep
 
 import algo.init as algo
 import bots.init as bots
 import common.init as common
 import functions
-from api.api import WS
-from api.websockets import Websockets
+import services as service
+from api.api import WS, Markets
+from api.bitmex.ws import Bitmex
+from api.bybit.ws import Bybit
 from common.variables import Variables as var
 from display.functions import info_display
+from display.variables import Tables
 from display.variables import Variables as disp
 from functions import Function, funding, orders, trades
 
@@ -19,93 +22,96 @@ from functions import Function, funding, orders, trades
 def setup():
     disp.root.bind("<F3>", lambda event: terminal_reload(event))
     disp.root.bind("<F9>", lambda event: trade_state(event))
-    WS.transaction = Function.transaction
+    Bitmex.transaction = Function.transaction
+    Bybit.transaction = Function.transaction
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = False
-    for name, ws in Websockets.connect.items():
-        if name in var.market_list:
-            setup_market(ws, name=name)
+    for name in var.market_list:
+        setup_market(Markets[name])
     functions.load_labels()
-    algo.init_algo()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
 
 
-def setup_market(ws: WS, name: str):
+def setup_market(ws: Markets):
     ws.logNumFatal = -1
     ws.api_is_active = False
-    ws.exit(name)
+    WS.exit(ws)
     while ws.logNumFatal:
-        ws.start_ws(name)
+        ws.logNumFatal = -1
+        WS.start_ws(ws)
+        WS.get_user(ws)
+        WS.get_wallet_balance(ws)
+        WS.get_position_info(ws)
         if ws.logNumFatal:
-            ws.exit(name)
+            WS.exit(ws)
             sleep(2)
         else:
-            account = ws.get_user(name)
-            if account:
-                ws.user_id = account["id"]
-            else:
-                raise Exception(
-                    "A user ID was requested from the \
-                                exchange but was not received."
-                )
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
-                algo.init_algo()
+                algo.init_algo(ws)
                 if isinstance(bots.Init.init_timeframes(ws), dict):
-                    trades.clear_columns(name=ws.name)
-                    funding.clear_columns(name=ws.name)
-                    orders.clear_columns(name=ws.name)
+                    trades.clear_columns(market=ws.name)
+                    funding.clear_columns(market=ws.name)
+                    orders.clear_columns(market=ws.name)
                     common.Init.load_database(ws)
                     common.Init.load_trading_history(ws)
                     common.Init.account_balances(ws)
                     common.Init.load_orders(ws)
-                    trades.insert_columns()
-                    funding.insert_columns()
-                    orders.insert_columns(sort=False)
-                    ws.ticker = ws.get_ticker(name)
                     bots.Init.delete_unused_robot(ws)
-                    common.Init.initial_ticker_values(ws)
                     for emi, value in ws.robot_status.items():
                         ws.robots[emi]["STATUS"] = value
+                    trades.insert_columns()
+                    funding.insert_columns()
+                    orders.insert_columns()
                 else:
                     print("Error during loading timeframes.")
-                    ws.exit(name)
+                    WS.exit(ws)
                     ws.logNumFatal = -1
                     sleep(2)
             else:
                 var.logger.info("No robots loaded.")
+    if hasattr(Tables, "market"):
+        Tables.market.color_market(
+            state="online", row=var.market_list.index(ws.name), market=ws.name
+        )
     ws.api_is_active = True
 
 
 def refresh() -> None:
     for name in var.market_list:
-        ws = Websockets.connect[name]
-        utc = datetime.utcnow()
-        if ws.logNumFatal > 2000:
-            if ws.message2000 == "":
-                ws.message2000 = (
-                    "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
-                )
-                info_display(ws.name, ws.message2000)
-            sleep(1)
-        elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-            Function.market_status(ws, "RESTARTING...")
-            setup_market(ws=ws, name=name)
-        else:
-            if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
-                if ws.messageStopped == "":
-                    ws.messageStopped = (
-                        "Error=" + str(ws.logNumFatal) + ". Trading stopped"
+        ws = Markets[name]
+        utc = datetime.now(tz=timezone.utc)
+        if ws.logNumFatal > 0:
+            if ws.logNumFatal > 2000:
+                if ws.message2000 == "":
+                    ws.message2000 = (
+                        "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
                     )
-                    info_display(ws.name, ws.messageStopped)
+                    info_display(ws.name, ws.message2000)
+                    Tables.market.color_market(
+                        state="error",
+                        row=var.market_list.index(ws.name),
+                        market=ws.name,
+                    )
+                sleep(1)
+            elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
+                # Function.market_status(ws, "RESTARTING...")
+                setup_market(ws=ws)
+            else:
+                if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
+                    if ws.messageStopped == "":
+                        ws.messageStopped = (
+                            "Error=" + str(ws.logNumFatal) + ". Trading stopped"
+                        )
+                        info_display(name, ws.messageStopped)
                     if ws.logNumFatal == 2:
-                        info_display(ws.name, "Insufficient available balance!")
-                disp.f9 = "OFF"
-            ws.ticker = ws.get_ticker(name=name)
-            Function.refresh_on_screen(ws, utc=utc)
+                        info_display(name, "Insufficient available balance!")
+                    disp.f9 = "OFF"
+                    ws.logNumFatal = 0
+    Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
 
 def clear_params():
@@ -116,12 +122,12 @@ def clear_params():
 
 def robots_thread() -> None:
     while var.robots_thread_is_active:
-        utcnow = datetime.utcnow()
-        for name, ws in Websockets.connect.items():
-            if name in var.market_list:
-                if ws.api_is_active:
-                    if ws.frames:
-                        Function.robots_entry(ws, utc=utcnow)
+        utcnow = datetime.now(tz=timezone.utc)
+        for market in var.market_list:
+            ws = Markets[market]
+            if ws.api_is_active:
+                if ws.frames:
+                    Function.robots_entry(ws, utc=utcnow)
         rest = 1 - time.time() % 1
         time.sleep(rest)
 
@@ -129,6 +135,7 @@ def robots_thread() -> None:
 def terminal_reload(event) -> None:
     var.robots_thread_is_active = ""
     functions.info_display("Tmatic", "Restarting...")
+    service.close(Markets)
     disp.root.update()
     setup()
 
@@ -139,6 +146,7 @@ def trade_state(event) -> None:
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
         disp.messageStopped = ""
-        ws = Websockets.connect[var.current_market]
-        ws.logNumFatal = 0
-    print(var.current_market, disp.f9)
+        for num, market in enumerate(var.market_list):
+            Markets[market].logNumFatal = 0
+            Tables.market.color_market(state="online", row=num, market=market)
+            print(market, disp.f9)

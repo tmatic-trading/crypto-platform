@@ -1,5 +1,4 @@
-cryptography
-pymysql
+pycryptodome
 python-dotenv
 requests
 websocket-client

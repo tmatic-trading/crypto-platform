@@ -2,7 +2,7 @@ import logging
 import os
 import time
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
 from dotenv import dotenv_values
 
@@ -13,8 +13,6 @@ if not os.path.isfile(".env"):
 
 class Variables:
     orders = OrderedDict()
-    position_rows = 0
-    account_rows = 0
     env = dotenv_values(".env")
     market_list = env["MARKET_LIST"].replace(",", " ").split()
     CATEGORIES = OrderedDict()
@@ -31,14 +29,12 @@ class Variables:
             if tmp in env[market_name]:
                 tmp_list = env[market_name][tmp].replace(",", " ").split()
             for symbol in tmp_list:
-                env[market_name]["SYMBOLS"] += [(symbol, category)]
+                env[market_name]["SYMBOLS"] += [(symbol, category, market_name)]
         env[market_name]["CURRENCIES"] = (
             env[market_name]["CURRENCIES"].replace(",", " ").split()
         )
-        position_rows += len(env[market_name]["SYMBOLS"])
-        account_rows += len(env[market_name]["CURRENCIES"])
-    if env["ORDER_BOOK_DEPTH"] == "orderBook10":
-        order_book_depth = "orderBook10"
+    if env["ORDER_BOOK_DEPTH"] == "orderBook":
+        order_book_depth = "orderBook"
     else:
         order_book_depth = "quote"
     current_market = market_list[0]
@@ -81,19 +77,31 @@ class Variables:
     ]
     name_account = [
         "CURR",
-        "MARGINBAL",
+        "WALLET_BAL",
+        "UNRLZD_PNL",
+        "MARGIN_BAL",
+        "ORDER_MARG",
+        "POS_MARG",
         "AVAILABLE",
-        "LEVERAGE",
-        "RESULT",
+        "PNL",
         "COMMISS",
         "FUNDING",
-        "CONTROL",
     ]
     name_trade = [
         "TIME",
         "SYMBOL",
         "CAT",
-        "EXCH",
+        "MARKET",
+        "SIDE",
+        "PRICE",
+        "QTY",
+        "EMI",
+    ]
+    name_order = [
+        "TIME",
+        "SYMBOL",
+        "CAT",
+        "MARKET",
         "SIDE",
         "PRICE",
         "QTY",
@@ -103,7 +111,7 @@ class Variables:
         "TIME",
         "SYMBOL",
         "CAT",
-        "EXCH",
+        "MARKET",
         "PRICE",
         "PNL",
         "QTY",
@@ -113,12 +121,18 @@ class Variables:
         "MARKET",
     ]
     logger = logging
-    connect_mysql = None
-    cursor_mysql = None
-    timefrs = {1: "1m", 5: "5m", 60: "1h"}
-    currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
+    connect_sqlite = None
+    cursor_sqlite = None
+    error_sqlite = None
+    currency_divisor = {
+        "XBt": 100000000,
+        "USDt": 1000000,
+        "BMEx": 1000000,
+        "USDT": 1,
+        "BTC": 1,
+    }
     last_order = int((time.time() - 1591000000) * 10)
     last_database_time = datetime(1900, 1, 1, 1, 1)
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
-    refresh_hour = datetime.utcnow().hour
+    refresh_hour = datetime.now(tz=timezone.utc).hour
     robots_thread_is_active = False

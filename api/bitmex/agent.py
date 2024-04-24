@@ -1,15 +1,21 @@
+import logging
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
-from api.variables import Variables
+import services as service
 
 from .http import Send
 from .path import Listing
+from .ws import Bitmex
+
+# from api.variables import Variables
 
 
-class Agent(Variables):
-    def get_active_instruments(self) -> OrderedDict:
+class Agent(Bitmex):
+    logger = logging.getLogger(__name__)
+
+    def get_active_instruments(self) -> None:
         result = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not self.logNumFatal:
             for instrument in result:
@@ -19,22 +25,21 @@ class Agent(Variables):
                 )
                 self.symbol_category[instrument["symbol"]] = category
             for symbol in self.symbol_list:
-                if symbol not in self.instruments:
-                    self.logger.error(
+                if symbol not in self.Instrument.get_keys():
+                    Agent.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
-                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps \
-                        the name of the symbol does not correspond to the \
-                        category or such symbol does not exist"
+                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
+                        + "the name of the symbol does not correspond to the "
+                        + "category or such symbol does not exist."
                     )
                     exit(1)
-        else:
-            return OrderedDict()
-
-        return self.instruments
 
     def get_user(self) -> Union[dict, None]:
-        return Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
+        result = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
+        if result:
+            self.user_id = result["id"]
+            self.user = result
 
     def get_instrument(self, symbol: tuple):
         """
@@ -47,14 +52,12 @@ class Agent(Variables):
             category = Agent.fill_instrument(self, instrument=instrument)
             self.symbol_category[instrument["symbol"]] = category
         else:
-            self.logger.info(str(symbol) + " not found in get_instrument()")
+            Agent.logger.info(str(symbol) + " not found in get_instrument()")
 
-    def fill_instrument(self, instrument: dict) -> OrderedDict:
+    def fill_instrument(self, instrument: dict) -> str:
         """
         Filling the instruments dictionary with data
         """
-        symbol = tuple()
-        category = ""
         # myMultiplier
         if instrument["isInverse"]:  # Inverse
             valueOfOneContract = (
@@ -80,42 +83,45 @@ class Agent(Variables):
             minimumTradeAmount = valueOfOneContract * instrument["lotSize"]
             category = "linear"
         myMultiplier = instrument["lotSize"] / minimumTradeAmount
-        symbol = (instrument["symbol"], category)
-        if symbol not in self.instruments:
-            self.instruments[symbol] = dict()
-        self.instruments[symbol]["myMultiplier"] = int(myMultiplier)
-        self.instruments[symbol]["category"] = category
-        if symbol not in self.instruments:
-            self.instruments[symbol] = dict()
-        self.instruments[symbol]["symbol"] = instrument["symbol"]
-        self.instruments[symbol]["multiplier"] = instrument["multiplier"]
+        symbol = (instrument["symbol"], category, self.name)
+        self.Instrument[symbol].category = category
+        self.Instrument[symbol].symbol = instrument["symbol"]
+        self.Instrument[symbol].myMultiplier = int(myMultiplier)
+        self.Instrument[symbol].multiplier = instrument["multiplier"]
         if "settlCurrency" in instrument:
-            self.instruments[symbol]["settlCurrency"] = instrument["settlCurrency"]
-        else:
-            self.instruments[symbol]["settlCurrency"] = None
-        self.instruments[symbol]["tickSize"] = instrument["tickSize"]
-        self.instruments[symbol]["lotSize"] = instrument["lotSize"]
-        self.instruments[symbol]["state"] = instrument["state"]
-        self.instruments[symbol]["volume24h"] = instrument["volume24h"]
-        if "bidPrice" in instrument:
-            self.instruments[symbol]["bidPrice"] = instrument["bidPrice"]
-        else:
-            self.instruments[symbol]["bidPrice"] = None
-        if "askPrice" in instrument:
-            self.instruments[symbol]["askPrice"] = instrument["askPrice"]
-        else:
-            self.instruments[symbol]["askPrice"] = None
-        self.instruments[symbol]["isInverse"] = instrument["isInverse"]
-        if "expiry" in instrument and instrument["expiry"]:
-            self.instruments[symbol]["expiry"] = datetime.strptime(
-                instrument["expiry"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+            self.Instrument[symbol].settlCurrency = (
+                instrument["settlCurrency"],
+                self.name,
             )
         else:
-            self.instruments[symbol]["expiry"] = "Perpetual"
-        if "fundingRate" not in instrument:
-            self.instruments[symbol]["fundingRate"] = 0
+            self.Instrument[symbol].settlCurrency = None
+        self.Instrument[symbol].tickSize = instrument["tickSize"]
+        self.Instrument[symbol].price_precision = service.precision(
+            number=instrument["tickSize"]
+        )
+        self.Instrument[symbol].minOrderQty = instrument["lotSize"]
+        self.Instrument[symbol].qtyStep = instrument["lotSize"]
+        self.Instrument[symbol].precision = service.precision(
+            number=self.Instrument[symbol].qtyStep / myMultiplier
+        )
+        self.Instrument[symbol].state = instrument["state"]
+        self.Instrument[symbol].volume24h = instrument["volume24h"]
+        if "expire" in instrument and instrument["expire"]:
+            self.Instrument[symbol].expire = service.time_converter(
+                time=instrument["expiry"]
+            )
         else:
-            self.instruments[symbol]["fundingRate"] = instrument["fundingRate"]
+            self.Instrument[symbol].expire = "Perpetual"
+        if "fundingRate" not in instrument:
+            self.Instrument[symbol].fundingRate = 0
+        else:
+            self.Instrument[symbol].fundingRate = instrument["fundingRate"]
+        self.Instrument[symbol].avgEntryPrice = 0
+        self.Instrument[symbol].marginCallPrice = 0
+        self.Instrument[symbol].currentQty = 0
+        self.Instrument[symbol].unrealisedPnl = 0
+        self.Instrument[symbol].asks = [[0, 0]]
+        self.Instrument[symbol].bids = [[0, 0]]
 
         return category
 
@@ -128,15 +134,16 @@ class Agent(Variables):
         if isinstance(data, list):
             if data:
                 self.positions[symbol] = {"POS": data[0]["currentQty"]}
+                self.Instrument[symbol].currentQty = data[0]["currentQty"]
             else:
                 self.positions[symbol] = {"POS": 0}
-            self.logger.info(
+            Agent.logger.info(
                 str(symbol)
                 + " has been added to the positions dictionary for "
                 + self.name
             )
         else:
-            self.logger.info(str(symbol) + " not found in get_position()")
+            Agent.logger.info(str(symbol) + " not found in get_position()")
 
     def trade_bucketed(
         self, symbol: tuple, time: datetime, timeframe: str
@@ -145,22 +152,44 @@ class Agent(Variables):
         Gets timeframe data. Available time interval: 1m,5m,1h,1d.
         """
         path = Listing.TRADE_BUCKETED.format(
-            TIMEFRAME=timeframe, SYMBOL=symbol[0], TIME=time
+            TIMEFRAME=self.timefrs[timeframe], SYMBOL=symbol[0], TIME=str(time)[:19]
         )
+        values = Send.request(self, path=path, verb="GET")
+        for value in values:
+            value["symbol"] = symbol
+            value["timestamp"] = service.time_converter(time=value["timestamp"])
 
-        return Send.request(self, path=path, verb="GET")
+        return values
 
     def trading_history(self, histCount: int, time=None) -> Union[list, str]:
         if time:
-            path = Listing.TRADING_HISTORY.format(HISTCOUNT=histCount, TIME=time)
+            path = Listing.TRADING_HISTORY.format(
+                HISTCOUNT=histCount, TIME=str(time)[:19]
+            )
             result = Send.request(
                 self,
                 path=path,
                 verb="GET",
             )
             for row in result:
+                if row["symbol"] not in self.symbol_category:
+                    Agent.get_instrument(
+                        self, symbol=(row["symbol"], "category not defined", self.name)
+                    )
                 row["market"] = self.name
-                row["symbol"] = (row["symbol"], self.symbol_category[row["symbol"]])
+                row["symbol"] = (
+                    row["symbol"],
+                    self.symbol_category[row["symbol"]],
+                    self.name,
+                )
+                row["transactTime"] = service.time_converter(
+                    time=row["transactTime"], usec=True
+                )
+                row["settlCurrency"] = (row["settlCurrency"], self.name)
+                if row["execType"] == "Funding":
+                    if row["foreignNotional"] > 0:
+                        row["lastQty"] = -row["lastQty"]
+                        row["commission"] = -row["commission"]
             return result
         else:
             return "error"
@@ -168,29 +197,16 @@ class Agent(Variables):
     def open_orders(self) -> list:
         orders = self.data["order"].values()
         for order in orders:
-            order["symbol"] = (order["symbol"], self.symbol_category[order["symbol"]])
+            order["symbol"] = (
+                order["symbol"],
+                self.symbol_category[order["symbol"]],
+                self.name,
+            )
+            order["transactTime"] = service.time_converter(
+                time=order["transactTime"], usec=True
+            )
 
         return orders
-
-    def get_ticker(self) -> OrderedDict:
-        if self.depth in self.data:
-            for symbol, val in self.data[self.depth].items():
-                if self.depth == "quote":
-                    if "bidPrice" in val:
-                        self.ticker[symbol]["bid"] = val["bidPrice"]
-                        self.ticker[symbol]["bidSize"] = val["bidSize"]
-                    if "askPrice" in val:
-                        self.ticker[symbol]["ask"] = val["askPrice"]
-                        self.ticker[symbol]["askSize"] = val["askSize"]
-                else:
-                    if val["bids"]:
-                        self.ticker[symbol]["bid"] = val["bids"][0][0]
-                        self.ticker[symbol]["bidSize"] = val["bids"][0][1]
-                    if val["asks"]:
-                        self.ticker[symbol]["ask"] = val["asks"][0][0]
-                        self.ticker[symbol]["askSize"] = val["asks"][0][1]
-
-        return self.ticker
 
     def urgent_announcement(self) -> list:
         """
@@ -234,21 +250,23 @@ class Agent(Variables):
 
         return Send.request(self, path=path, postData=postData, verb="PUT")
 
-    def remove_order(self, orderID: str) -> Union[list, None]:
+    def remove_order(self, order: dict) -> Union[list, None]:
         """
         Deletes an order
         """
         path = Listing.ORDER_ACTIONS
-        postData = {"orderID": orderID}
+        postData = {"orderID": order["orderID"]}
 
         return Send.request(self, path=path, postData=postData, verb="DELETE")
 
-    def exit(self):
+    def get_wallet_balance(self):
         """
-        Closes websocket
+        Bitmex sends this information via websocket, "margin" subscription.
         """
-        try:
-            self.logNumFatal = -1
-            self.ws.close()
-        except Exception:
-            pass
+        pass
+
+    def get_position_info(self):
+        """
+        Bitmex sends this information via websocket, "position" subscription.
+        """
+        pass
