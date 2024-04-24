@@ -1,5 +1,6 @@
 import logging
 
+import services as service
 from api.variables import Variables
 
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ def exception(method):
                     pass
                 elif (
                     exception.status_code == 10001
-                ):  # The number of contracts exceeds maximum limit allowed
+                ):  # The number of contracts exceeds maximum limit allowed # Can't query order earlier than 2 years
                     pass
                 elif (
                     exception.status_code == 170193

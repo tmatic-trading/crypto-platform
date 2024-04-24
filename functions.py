@@ -216,6 +216,9 @@ class Function(WS, Variables):
                     fund=1,
                 )
                 self.robots[emi]["POS"] += lastQty
+                self.robots[emi]["POS"] = round(
+                    self.robots[emi]["POS"], self.Instrument[row["symbol"]].precision
+                )
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
@@ -421,8 +424,9 @@ class Function(WS, Variables):
         else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
             # through the exchange web interface.
             for clOrdID in var.orders:
-                if var.orders[clOrdID]["orderID"] == row["orderID"]:
-                    break
+                if "orderID" in row:
+                    if var.orders[clOrdID]["orderID"] == row["orderID"]:
+                        break
             else:
                 clOrdID = "Empty clOrdID. The order was not sent via Tmatic."
                 print(clOrdID)
@@ -683,7 +687,7 @@ class Function(WS, Variables):
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening SQLite")
 
-        disp.label_time["text"] = time.ctime()
+        disp.label_time["text"] = time.asctime(time.gmtime())
         disp.label_f9["text"] = str(disp.f9)
         if disp.f9 == "ON":
             disp.label_f9.config(bg=disp.green_color)
@@ -967,7 +971,7 @@ class Function(WS, Variables):
             if disp.labels_cache["robots"][num + mod][9] != val:
                 if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot[
                     "STATUS"
-                ] == "OFF":
+                ] in ["OFF", "NOT DEFINED"]:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
                 else:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
