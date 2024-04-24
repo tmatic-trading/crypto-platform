@@ -623,16 +623,15 @@ class Function(WS, Variables):
         return qty
 
     def format_price(self: Markets, number: Union[float, str], symbol: tuple) -> str:
-        if number == "None":
-            return number
-        precision = self.Instrument[symbol].price_precision
-        number = "{:.{precision}f}".format(number, precision=precision)
-        dot = number.find(".")
-        if dot == -1:
-            number = number + "."
-        n = len(number) - 1 - number.find(".")
-        for _ in range(precision - n):
-            number = number + "0"
+        if not isinstance(number, str):
+            precision = self.Instrument[symbol].price_precision
+            number = "{:.{precision}f}".format(number, precision=precision)
+            dot = number.find(".")
+            if dot == -1:
+                number = number + "."
+            n = len(number) - 1 - number.find(".")
+            for _ in range(precision - n):
+                number = number + "0"
 
         return number
 

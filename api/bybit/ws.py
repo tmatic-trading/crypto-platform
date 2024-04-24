@@ -241,7 +241,7 @@ class Bybit(Variables):
                 self.positions[symbol]["POS"] = instrument.currentQty
                 instrument.avgEntryPrice = float(value["entryPrice"])
                 instrument.marginCallPrice = value["liqPrice"]
-                instrument.unrealisedPnl = float(value["unrealisedPnl"])
+                instrument.unrealisedPnl = value["unrealisedPnl"]
 
     def __handle_order(self, values):
         for value in values["data"]:
