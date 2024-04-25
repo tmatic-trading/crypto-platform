@@ -1582,13 +1582,13 @@ def update_label(
 
 def format_number(number: float) -> str:
     """
-    Rounding a value from 3 to 6 decimal places
+    Rounding a value from 2 to 8 decimal places
     """
-    number = 0 if round(number, 7) == 0 else number
-    len_int = len(str(int(number)))
-    after_dot = max(3, 9 - max(3, len_int))
-
-    return "{:.{num}f}".format(number, num=after_dot)
+    after_dot = max(2, 9 - max(1, len(str(int(number)))))
+    s = "{:.{num}f}".format(number, num=after_dot)
+    s = s.rstrip("0")
+    
+    return s.rstrip(".") 
 
 
 def warning_window(message: str) -> None:
