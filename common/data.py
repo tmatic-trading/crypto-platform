@@ -47,7 +47,6 @@ class Account:
     availableMargin: float = 0
     commission: float = 0
     funding: float = 0
-    initMargin: float = 0
     marginBalance: float = 0
     orderMargin: float = 0
     positionMagrin: float = 0

@@ -368,7 +368,7 @@ class Bitmex(Variables):
                 values["maintMargin"] / self.currency_divisor[settlCurrency[0]]
             )
         if "initMargin" in values:
-            account.initMargin = (
+            account.orderMargin = (
                 values["initMargin"] / self.currency_divisor[settlCurrency[0]]
             )
         if "unrealisedPnl" in values:
