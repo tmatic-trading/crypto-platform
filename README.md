@@ -213,7 +213,7 @@ Possible bot STATUS:
 * NOT DEFINED - when loading the program, a bot with a position not equal to zero or active orders was found and this bot is not in the SQLite "robots" table. Positions can be closed manually.
 * NOT IN LIST - when loading the program, a bot with a position not equal to zero was found and its symbol was not found in SYMBOLS of the ```.env``` file. You cannot make trades because you're not subscribed to the symbol in the ```.env``` file. Add symbol to SYMBOLS and restart the program.
 
-Red STATUS color can be for OFF, NOT DEFINED, NOT IN LIST or RESERVED with unclosed positions.
+Red STATUS color is for OFF, NOT DEFINED, NOT IN LIST and for RESERVED with unclosed positions.
 
 ## Program controls
 
