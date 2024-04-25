@@ -1128,14 +1128,14 @@ class Function(WS, Variables):
         This function sends a new order
         """
         price_str = Function.format_price(self, number=price, symbol=symbol)
-        var.logger.info(
-            "Posting side=" + side + " price=" + price_str + " qty=" + str(qty)
-        )
         clOrdID = ""
         if side == "Sell":
             qty = -qty
         var.last_order += 1
         clOrdID = str(var.last_order) + "." + emi
+        var.logger.info(
+            "Posting symbol=" + str(symbol) + " clOrdID=" + clOrdID + " side=" + side + " price=" + price_str + " qty=" + str(qty)
+        )
         WS.place_limit(
             self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
         )
