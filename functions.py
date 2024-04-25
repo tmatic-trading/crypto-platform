@@ -1341,12 +1341,14 @@ def handler_order(event) -> None:
 
 
 def handler_orderbook(event, row_position: int) -> None:
-    disp.symb_book = var.symbol
+    disp.handler_orderbook_symbol = var.symbol
     ws = Markets[var.current_market]
 
     def refresh() -> None:
+        nonlocal ws
         book_window.title(var.symbol)
-        if disp.symb_book != var.symbol:
+        if disp.handler_orderbook_symbol != var.symbol:
+            ws = Markets[var.current_market]
             entry_price_ask.delete(0, "end")
             entry_price_ask.insert(
                 0,
@@ -1385,7 +1387,7 @@ def handler_orderbook(event, row_position: int) -> None:
                     label=option, command=lambda v=emi_number, optn=option: v.set(optn)
                 )
             emi_number.set("")
-            disp.symb_book = var.symbol
+            disp.handler_orderbook_symbol = var.symbol
         book_window.after(100, refresh)
 
     def on_closing() -> None:
@@ -1406,7 +1408,6 @@ def handler_orderbook(event, row_position: int) -> None:
             return "error"
         qnt_d = Decimal(str(qnt))
         qtyStep = Decimal(str(ws.Instrument[var.symbol].qtyStep))
-        print(qnt_d % qtyStep)
         if qnt_d % qtyStep != 0:
             message = (
                 "The "

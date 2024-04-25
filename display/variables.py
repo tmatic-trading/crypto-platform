@@ -183,9 +183,8 @@ class Variables:
     messageStopped = ""
     robots_window_trigger = "off"
     info_display_counter = 0
-    symb_book = ""
+    handler_orderbook_symbol = tuple()
     book_window_trigger = "off"
-    # price_rounding = OrderedDict()
     order_window_trigger = "off"
     table_limit = 150
 
