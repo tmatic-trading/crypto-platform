@@ -1817,9 +1817,10 @@ def clear_tables():
 
     ws = Markets[var.current_market]
     clear(table=Tables.position, number_rows=len(ws.symbol_list))
-    clear(table=Tables.account, number_rows=len(ws.currencies))
+    clear(table=Tables.account, number_rows=len(ws.Account.get_keys()))
     clear(table=Tables.robots, number_rows=len(ws.robots))
     clear(table=Tables.orderbook, number_rows=disp.num_book)
+    clear(table=Tables.results, number_rows=len(ws.currencies))
     handler_position("event", row_position=Tables.position.mod)
 
 
