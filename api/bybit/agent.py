@@ -374,12 +374,6 @@ class Agent(Bybit):
         self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
-        self.Instrument[symbol].fundingRate = 0
-        self.Instrument[symbol].volume24h = 0
-        self.Instrument[symbol].avgEntryPrice = 0
-        self.Instrument[symbol].marginCallPrice = 0
-        self.Instrument[symbol].currentQty = 0
-        self.Instrument[symbol].unrealisedPnl = 0
         if category == "spot":
             self.Instrument[symbol].fundingRate = "None"
             self.Instrument[symbol].avgEntryPrice = "None"

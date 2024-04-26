@@ -17,13 +17,13 @@ class Ret:
 
 class Instrument:
     asks: list
-    avgEntryPrice: float
+    avgEntryPrice: float = 0
     bids: list
     category: str
-    currentQty: float
+    currentQty: float = 0
     expire: Union[str, datetime]
-    fundingRate: float
-    marginCallPrice: Union[str, float]
+    fundingRate: float = 0
+    marginCallPrice: float = 0
     maxOrderQty: float
     minOrderQty: float
     multiplier: int
@@ -35,8 +35,8 @@ class Instrument:
     state: str
     symbol: str
     tickSize: Union[str, float]
-    unrealisedPnl: Union[str, float]
-    volume24h: float
+    unrealisedPnl: float = 0
+    volume24h: float = 0
 
     def __iter__(self):
         return Ret.iter(self)

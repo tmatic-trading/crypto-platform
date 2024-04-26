@@ -344,16 +344,16 @@ class Bitmex(Variables):
         "quote", "orderBook10" websocket streams.
         """
         symbol = (values["symbol"], values["category"], self.name)
-        self.positions[symbol]["POS"] = values["currentQty"]
         instrument = self.Instrument[symbol]
-        instrument.currentQty = values["currentQty"]
-        if instrument.currentQty != 0:
-            if "avgEntryPrice" in values:
-                instrument.avgEntryPrice = values["avgEntryPrice"]
-            if "marginCallPrice" in values:
-                instrument.marginCallPrice = values["marginCallPrice"]
-            if "unrealisedPnl" in values:
-                instrument.unrealisedPnl = values["unrealisedPnl"]
+        if "currentQty" in values:
+            instrument.currentQty = values["currentQty"]
+            self.positions[symbol]["POS"] = values["currentQty"]
+        if "avgEntryPrice" in values:
+            instrument.avgEntryPrice = values["avgEntryPrice"]
+        if "marginCallPrice" in values:
+            instrument.marginCallPrice = values["marginCallPrice"]
+        if "unrealisedPnl" in values:
+            instrument.unrealisedPnl = values["unrealisedPnl"]
 
     def __update_instrument(self, symbol: tuple, values: dict):
         instrument = self.Instrument[symbol]
