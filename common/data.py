@@ -45,13 +45,21 @@ class Instrument:
 class Account:
     account: Union[str, float]
     availableMargin: float = 0
-    commission: float = 0
     marginBalance: float = 0
     orderMargin: float = 0
     positionMagrin: float = 0
     settlCurrency: str
     unrealisedPnl: float = 0
     walletBalance: float = 0
+
+    def __iter__(self):
+        return Ret.iter(self)
+    
+class Result:
+    commission: float = 0
+    funding: float = 0
+    sumreal: float = 0
+    result: float = 0
 
     def __iter__(self):
         return Ret.iter(self)
@@ -109,3 +117,30 @@ class MetaAccount(type):
         name = self.__qualname__.split(".")[0]
         if name in MetaAccount.market:
             return MetaAccount.market[name].keys()
+        
+
+class MetaResult(type):
+    all = dict()
+    market = dict()
+
+    def __getitem__(self, item) -> Result:
+        if item not in self.all:
+            self.all[item] = Result()
+            name = item[1]
+            if name not in self.market:
+                self.market[name] = OrderedDict()
+            self.market[name][item] = self.all[item]
+            return self.all[item]
+        else:
+            return self.all[item]
+
+    def keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaResult.market:
+            for symbol in MetaResult.market[name]:
+                yield symbol
+
+    def get_keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaResult.market:
+            return MetaResult.market[name].keys()

@@ -151,7 +151,7 @@ class Variables:
     frame_orders = tk.Frame(pw_orders_trades)
     frame_orders.pack(fill="both", expand="yes")
 
-    # Trades/Funding widget
+    # Trades/Funding/Results widget
 
     if ostype == "Mac":
         notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
@@ -169,8 +169,12 @@ class Variables:
     frame_funding = tk.Frame(notebook)
     frame_funding.pack(fill="both", expand="yes")
 
+    frame_results = tk.Frame(notebook)
+    frame_results.pack(fill="both", expand="yes")
+
     notebook.add(frame_trades, text="Trades")
     notebook.add(frame_funding, text="Funding")
+    notebook.add(frame_results, text="Results")
     pw_orders_trades.add(frame_orders)
     pw_orders_trades.add(notebook)
     pw_orders_trades.bind(
@@ -341,6 +345,7 @@ class Tables:
     robots: GridTable
     market: GridTable
     orderbook: GridTable
+    results: GridTable
 
 
 class ListBoxTable(Variables):

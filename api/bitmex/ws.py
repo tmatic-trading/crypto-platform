@@ -12,7 +12,7 @@ import websocket
 import services as service
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaAccount, MetaInstrument
+from common.data import MetaAccount, MetaInstrument, MetaResult
 from display.functions import info_display
 
 from .api_auth import generate_signature
@@ -23,6 +23,9 @@ class Bitmex(Variables):
         pass
 
     class Instrument(metaclass=MetaInstrument):
+        pass
+
+    class Result(metaclass=MetaResult):
         pass
 
     def __init__(self):

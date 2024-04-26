@@ -4,7 +4,7 @@ from collections import OrderedDict
 import services as service
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaAccount, MetaInstrument
+from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
 from display.functions import info_display
 from services import exceptions_manager
@@ -18,6 +18,9 @@ class Bybit(Variables):
         pass
 
     class Instrument(metaclass=MetaInstrument):
+        pass
+
+    class Result(metaclass=MetaResult):
         pass
 
     def __init__(self):

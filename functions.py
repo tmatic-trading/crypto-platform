@@ -141,7 +141,7 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        #account = self.Account[row["settlCurrency"]]
+        results = self.Result[row["settlCurrency"]]
 
         # Trade
 
@@ -223,8 +223,8 @@ class Function(WS, Variables):
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                #account.commission += calc["commiss"]
-                #account.sumreal += calc["sumreal"]
+                results.commission += calc["commiss"]
+                results.sumreal += calc["sumreal"]
                 values = [
                     row["execID"],
                     emi,
@@ -313,7 +313,7 @@ class Function(WS, Variables):
                     Function.insert_database(self, values=values)
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = row["transactTime"]
-                    #account.funding += calc["funding"]
+                    results.funding += calc["funding"]
                     if info:
                         Function.fill_columns(
                             self,
@@ -370,7 +370,7 @@ class Function(WS, Variables):
                 Function.insert_database(self, values=values)
                 self.robots[emi]["COMMISS"] += calc["funding"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                #account.funding += calc["funding"]
+                results.funding += calc["funding"]
                 if info:
                     Function.fill_columns(
                         self, func=Function.funding_display, table=funding, val=message
@@ -985,34 +985,8 @@ class Function(WS, Variables):
         # Refresh Account table
 
         mod = Tables.account.mod
-        '''results = dict()
-        for symbol, position in self.positions.items():
-            if symbol[2] == var.current_market:
-                if position["POS"] != 0:
-                    price = Function.close_price(
-                        self, symbol=symbol, pos=position["POS"]
-                    )
-                    if price:
-                        calc = Function.calculate(
-                            self,
-                            symbol=symbol,
-                            price=price,
-                            qty=-position["POS"],
-                            rate=0,
-                            fund=1,
-                        )
-                        settlCurrency = self.Instrument[symbol].settlCurrency
-                        if settlCurrency in results:
-                            results[settlCurrency] += calc["sumreal"]
-                        else:
-                            results[settlCurrency] = calc["sumreal"]'''
-
         for num, settlCurrency in enumerate(self.Account.keys()):
-            #settlCurrency = (cur, self.name)
             account = self.Account[settlCurrency]
-            account.result = 0
-            '''if settlCurrency in results:
-                account.result += results[settlCurrency]'''
             update_label(table="account", column=0, row=num + mod, val=settlCurrency[0])
             update_label(
                 table="account",
@@ -1050,24 +1024,55 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=format_number(number=account.availableMargin),
             )
-            '''update_label(
-                table="account",
-                column=7,
+
+        # Refresh Results table
+
+        mod = Tables.results.mod
+        results = dict()
+        for symbol, position in self.positions.items():
+            if symbol[2] == var.current_market:
+                if position["POS"] != 0:
+                    price = Function.close_price(
+                        self, symbol=symbol, pos=position["POS"]
+                    )
+                    if price:
+                        calc = Function.calculate(
+                            self,
+                            symbol=symbol,
+                            price=price,
+                            qty=-position["POS"],
+                            rate=0,
+                            fund=1,
+                        )
+                        currency = self.Instrument[symbol].settlCurrency
+                        if currency in results:
+                            results[currency] += calc["sumreal"]
+                        else:
+                            results[currency] = calc["sumreal"]
+        for num, currency in enumerate(self.Result.keys()):
+            result = self.Result[currency]
+            result.result = 0
+            if currency in results:
+                result.result += results[currency]
+            update_label(table="results", column=0, row=num + mod, val=currency[0])
+            update_label(
+                table="results",
+                column=1,
                 row=num + mod,
-                val=format_number(number=account.sumreal + account.result),
+                val=format_number(number=result.sumreal + result.result),
             )
             update_label(
-                table="account",
-                column=8,
+                table="results",
+                column=2,
                 row=num + mod,
-                val=format_number(number=-account.commission),
+                val=format_number(number=-result.commission),
             )
             update_label(
-                table="account",
-                column=9,
+                table="results",
+                column=3,
                 row=num + mod,
-                val=format_number(number=-account.funding),
-            )'''
+                val=format_number(number=-result.funding),
+            )
 
         # Refresh Market table
 
@@ -1786,6 +1791,14 @@ def load_labels() -> None:
                     disp.labels["orderbook"][row][column]["anchor"] = "w"
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
+    Tables.results = GridTable(
+        frame=disp.frame_results,
+        name="results",
+        size=len(ws.currencies) + 1,
+        title=var.name_results,
+        #column_width=110,
+        color=disp.bg_color,
+    )
 
 
 def clear_tables():

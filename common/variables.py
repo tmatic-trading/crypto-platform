@@ -117,6 +117,12 @@ class Variables:
     name_market = [
         "MARKET",
     ]
+    name_results = [
+        "CURRENCY", 
+        "PNL SUM", 
+        "COMMISSION SUM", 
+        "FUNDING SUM",
+    ]
     logger = logging
     connect_sqlite = None
     cursor_sqlite = None

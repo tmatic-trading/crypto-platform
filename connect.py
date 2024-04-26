@@ -58,7 +58,7 @@ def setup_market(ws: Markets):
                     orders.clear_columns(market=ws.name)
                     common.Init.load_database(ws)
                     common.Init.load_trading_history(ws)
-                    #common.Init.account_balances(ws)
+                    common.Init.account_balances(ws)
                     common.Init.load_orders(ws)
                     bots.Init.delete_unused_robot(ws)
                     for emi, value in ws.robot_status.items():
