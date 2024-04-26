@@ -345,16 +345,30 @@ class Bitmex(Variables):
         """
         symbol = (values["symbol"], values["category"], self.name)
         instrument = self.Instrument[symbol]
-        if "currentQty" in values:
-            instrument.currentQty = values["currentQty"]
+        if "currentQty" in values:            
             self.positions[symbol]["POS"] = values["currentQty"]
-        if instrument.currentQty != 0:
+            if instrument.currentQty != values["currentQty"]:
+                if values["currentQty"] == 0:
+                    instrument.avgEntryPrice = 0
+                    instrument.marginCallPrice = 0
+                    instrument.unrealisedPnl = 0
+                else:
+                    if "avgEntryPrice" in values:
+                        instrument.avgEntryPrice = values["avgEntryPrice"]
+                    if "marginCallPrice" in values:
+                        instrument.marginCallPrice = values["marginCallPrice"]
+                    if "unrealisedPnl" in values:
+                        instrument.unrealisedPnl = values["unrealisedPnl"]
+                instrument.currentQty = values["currentQty"]
+        elif instrument.currentQty != 0:
             if "avgEntryPrice" in values:
                 instrument.avgEntryPrice = values["avgEntryPrice"]
             if "marginCallPrice" in values:
                 instrument.marginCallPrice = values["marginCallPrice"]
             if "unrealisedPnl" in values:
                 instrument.unrealisedPnl = values["unrealisedPnl"]
+
+        
 
     def __update_instrument(self, symbol: tuple, values: dict):
         instrument = self.Instrument[symbol]
