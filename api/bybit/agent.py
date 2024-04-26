@@ -19,7 +19,7 @@ class Agent(Bybit):
                 "In get_active_instruments - sending get_instruments_info() - category - "
                 + category
             )
-            instrument_info = self.session.get_instruments_info(category=category)
+            instrument_info = self.session.get_instruments_info(category=category, limit=1000)
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
         for symbol in self.symbol_list:
@@ -249,39 +249,43 @@ class Agent(Bybit):
         )
 
     def get_wallet_balance(self) -> None:
-        Agent.logger.info(
-            "In get_wallet_balance - sending get_wallet_balance() - accountType - UNIFIED"
-        )
-        result = self.session.get_wallet_balance(accountType="UNIFIED")
-        for values in result["result"]["list"]:
-            if values["accountType"] == "UNIFIED":
+        for account_type in self.account_types:
+            Agent.logger.info(
+                "In get_wallet_balance - sending get_wallet_balance() - accountType - " + account_type
+            )
+            result = self.session.get_wallet_balance(accountType=account_type)
+            for values in result["result"]["list"]:
                 for coin in values["coin"]:
-                    settlCurrency = (coin["coin"], self.name)
-                    self.Account[settlCurrency].orderMargin = float(
-                        coin["locked"]
-                    ) + float(coin["totalOrderIM"])
-                    self.Account[settlCurrency].walletBalance = float(
-                        coin["walletBalance"]
-                    )
-                    self.Account[settlCurrency].unrealisedPnl = float(
-                        coin["unrealisedPnl"]
-                    )
-                    self.Account[settlCurrency].positionMagrin = float(
-                        coin["totalPositionIM"]
-                    )
-                    self.Account[settlCurrency].account = self.user_id
-                    self.Account[settlCurrency].availableMargin = float(
-                        coin["availableToWithdraw"]
-                    )
-                    self.Account[settlCurrency].commission = 0
-                    self.Account[settlCurrency].funding = 0
-                    self.Account[settlCurrency].marginBalance = float(coin["equity"])
-                    self.Account[settlCurrency].result = 0
-                    self.Account[settlCurrency].settlCurrency = settlCurrency
-                    self.Account[settlCurrency].sumreal = 0
+                    currency = (coin["coin"]+"."+values["accountType"], self.name)
+                    account = self.Account[currency]
+                    total = 0
+                    check = 0
+                    if "locked" in coin:
+                        if coin["locked"] != "":
+                            total += float(coin["locked"])
+                            check += 1
+                    if "totalOrderIM" in coin:
+                        total += float(coin["totalOrderIM"])
+                        check += 1
+                    if check: 
+                        account.orderMargin = total
+                    if "totalPositionIM" in coin:
+                        account.positionMagrin = float(coin["totalPositionIM"])
+                    if "availableToWithdraw" in coin:
+                        account.availableMargin = float(coin["availableToWithdraw"])
+                    if "equity" in coin:
+                        account.marginBalance = float(coin["equity"])
+                    if "walletBalance" in coin:
+                        account.walletBalance = float(coin["walletBalance"])
+                    if "unrealisedPnl" in coin:
+                        account.unrealisedPnl = float(coin["unrealisedPnl"])
+                    account.account = self.user_id
+                    self.Account[currency].commission = 0
+                    self.Account[currency].funding = 0
+                    self.Account[currency].result = 0
+                    self.Account[currency].settlCurrency = currency
+                    self.Account[currency].sumreal = 0
                 break
-        else:
-            print("UNIFIED account not found")
 
     def get_position_info(self):
         for category in self.category_list:

@@ -90,7 +90,7 @@ class Init(WS, Variables):
                 self, histCount=count_val, time=last_history_time
             )
 
-    def account_balances(self: Markets) -> None:
+    '''def account_balances(self: Markets) -> None:
         """
         Calculates the account by currency according to data from the SQLite
         'coins' table.
@@ -149,7 +149,7 @@ class Init(WS, Variables):
             self.Account[settlCurrency].commission = float(data[0]["commiss"])
             self.Account[settlCurrency].funding = float(data[0]["funding"])
             self.Account[settlCurrency].sumreal = float(data[0]["sumreal"])
-            self.Account[settlCurrency].result = 0
+            self.Account[settlCurrency].result = 0'''
 
     def load_orders(self: Markets) -> None:
         """

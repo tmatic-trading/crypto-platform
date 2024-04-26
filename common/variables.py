@@ -76,16 +76,13 @@ class Variables:
         "FUND",
     ]
     name_account = [
-        "CURR",
+        "CURRENCY",
         "WALLET_BAL",
         "UNRLZD_PNL",
         "MARGIN_BAL",
         "ORDER_MARG",
         "POS_MARG",
         "AVAILABLE",
-        "PNL",
-        "COMMISS",
-        "FUNDING",
     ]
     name_trade = [
         "TIME",

@@ -46,13 +46,10 @@ class Account:
     account: Union[str, float]
     availableMargin: float = 0
     commission: float = 0
-    funding: float = 0
     marginBalance: float = 0
     orderMargin: float = 0
     positionMagrin: float = 0
-    result: float = 0
     settlCurrency: str
-    sumreal: float = 0
     unrealisedPnl: float = 0
     walletBalance: float = 0
 

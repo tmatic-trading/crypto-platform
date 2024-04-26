@@ -42,6 +42,7 @@ class Bybit(Variables):
             "option": WebSocket,
             "linear": WebSocket,
         }
+        self.account_types = ["UNIFIED", "CONTRACT"]
         self.ws_private = WebSocket
         self.logger = logging.getLogger(__name__)
         if self.depth == "quote":
@@ -215,18 +216,30 @@ class Bybit(Variables):
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:
-            if value["accountType"] == "UNIFIED":
-                for coin in value["coin"]:
-                    if coin["coin"] in self.currencies:
-                        settlCurrency = (coin["coin"], self.name)
-                        account = self.Account[settlCurrency]
-                        account.orderMargin = float(coin["locked"]) + float(
-                            coin["totalOrderIM"]
-                        )
+            for coin in value["coin"]:
+                if coin["coin"] in self.currencies:
+                    currency = (coin["coin"]+"."+values["accountType"], self.name)
+                    account = self.Account[currency]
+                    total = 0
+                    check = 0
+                    if "locked" in coin:
+                        if coin["locked"] != "":
+                            total += float(coin["locked"])
+                            check += 1
+                    if "totalOrderIM" in coin:
+                        total += float(coin["totalOrderIM"])
+                        check += 1
+                    if check: 
+                        account.orderMargin = total
+                    if "totalPositionIM" in coin:
                         account.positionMagrin = float(coin["totalPositionIM"])
+                    if "availableToWithdraw" in coin:
                         account.availableMargin = float(coin["availableToWithdraw"])
+                    if "equity" in coin:
                         account.marginBalance = float(coin["equity"])
+                    if "walletBalance" in coin:
                         account.walletBalance = float(coin["walletBalance"])
+                    if "unrealisedPnl" in coin:
                         account.unrealisedPnl = float(coin["unrealisedPnl"])
 
     def __update_position(self, values: dict) -> None:

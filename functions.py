@@ -92,7 +92,7 @@ class Function(WS, Variables):
                 if orig:
                     data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
                 return data
-            except var.error_sqlite as e:
+            except Exception as e: # var.error_sqlite 
                 if "database is locked" not in str(e):
                     var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
@@ -121,7 +121,7 @@ class Function(WS, Variables):
                 var.connect_sqlite.commit()
                 Function.sql_lock.release()
                 break
-            except var.error_sqlite as e:
+            except Exception as e: # var.error_sqlite 
                 if "database is locked" not in str(e):
                     var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
@@ -141,7 +141,7 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        account = self.Account[row["settlCurrency"]]
+        #account = self.Account[row["settlCurrency"]]
 
         # Trade
 
@@ -223,8 +223,8 @@ class Function(WS, Variables):
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                account.commission += calc["commiss"]
-                account.sumreal += calc["sumreal"]
+                #account.commission += calc["commiss"]
+                #account.sumreal += calc["sumreal"]
                 values = [
                     row["execID"],
                     emi,
@@ -313,7 +313,7 @@ class Function(WS, Variables):
                     Function.insert_database(self, values=values)
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = row["transactTime"]
-                    account.funding += calc["funding"]
+                    #account.funding += calc["funding"]
                     if info:
                         Function.fill_columns(
                             self,
@@ -370,7 +370,7 @@ class Function(WS, Variables):
                 Function.insert_database(self, values=values)
                 self.robots[emi]["COMMISS"] += calc["funding"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                account.funding += calc["funding"]
+                #account.funding += calc["funding"]
                 if info:
                     Function.fill_columns(
                         self, func=Function.funding_display, table=funding, val=message
@@ -985,7 +985,7 @@ class Function(WS, Variables):
         # Refresh Account table
 
         mod = Tables.account.mod
-        results = dict()
+        '''results = dict()
         for symbol, position in self.positions.items():
             if symbol[2] == var.current_market:
                 if position["POS"] != 0:
@@ -1005,14 +1005,15 @@ class Function(WS, Variables):
                         if settlCurrency in results:
                             results[settlCurrency] += calc["sumreal"]
                         else:
-                            results[settlCurrency] = calc["sumreal"]
-        for num, cur in enumerate(self.currencies):
-            settlCurrency = (cur, self.name)
+                            results[settlCurrency] = calc["sumreal"]'''
+
+        for num, settlCurrency in enumerate(self.Account.keys()):
+            #settlCurrency = (cur, self.name)
             account = self.Account[settlCurrency]
             account.result = 0
-            if settlCurrency in results:
-                account.result += results[settlCurrency]
-            update_label(table="account", column=0, row=num + mod, val=cur)
+            '''if settlCurrency in results:
+                account.result += results[settlCurrency]'''
+            update_label(table="account", column=0, row=num + mod, val=settlCurrency[0])
             update_label(
                 table="account",
                 column=1,
@@ -1049,7 +1050,7 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=format_number(number=account.availableMargin),
             )
-            update_label(
+            '''update_label(
                 table="account",
                 column=7,
                 row=num + mod,
@@ -1066,7 +1067,7 @@ class Function(WS, Variables):
                 column=9,
                 row=num + mod,
                 val=format_number(number=-account.funding),
-            )
+            )'''
 
         # Refresh Market table
 
@@ -1587,7 +1588,7 @@ def format_number(number: float) -> str:
     after_dot = max(2, 9 - max(1, len(str(int(number)))))
     s = "{:.{num}f}".format(number, num=after_dot)
     s = s.rstrip("0")
-    
+
     return s.rstrip(".") 
 
 
@@ -1729,7 +1730,7 @@ def load_labels() -> None:
         color=disp.bg_color,
         select=True,
     )
-    account_rows = len(var.env[var.current_market]["CURRENCIES"])
+    account_rows = len(ws.Account.get_keys())
     Tables.account = GridTable(
         frame=disp.frame_4row_1_2_3col,
         name="account",
