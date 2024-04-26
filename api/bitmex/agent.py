@@ -276,10 +276,11 @@ class Agent(Bitmex):
                     instrument = self.Instrument[symbol]
                     if "currentQty" in values:
                         instrument.currentQty = values["currentQty"]
-                    if "avgEntryPrice" in values:
-                        instrument.avgEntryPrice = values["avgEntryPrice"]
-                    if "marginCallPrice" in values:
-                        instrument.marginCallPrice = values["marginCallPrice"]
-                    if "unrealisedPnl" in values:
-                        instrument.unrealisedPnl = values["unrealisedPnl"]
+                    if instrument.currentQty != 0:
+                        if "avgEntryPrice" in values:
+                            instrument.avgEntryPrice = values["avgEntryPrice"]
+                        if "marginCallPrice" in values:
+                            instrument.marginCallPrice = values["marginCallPrice"]
+                        if "unrealisedPnl" in values:
+                            instrument.unrealisedPnl = values["unrealisedPnl"]
 

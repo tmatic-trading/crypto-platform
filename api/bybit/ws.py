@@ -221,7 +221,7 @@ class Bybit(Variables):
         for value in values["data"]:
             for coin in value["coin"]:
                 if coin["coin"] in self.currencies:
-                    currency = (coin["coin"]+"."+values["accountType"], self.name)
+                    currency = (coin["coin"]+"."+value["accountType"], self.name)
                     account = self.Account[currency]
                     total = 0
                     check = 0
