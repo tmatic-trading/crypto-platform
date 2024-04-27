@@ -81,7 +81,6 @@ def setup_market(ws: Markets):
 
 
 def refresh() -> None:
-    var.f9 = "normal"
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)

@@ -1,7 +1,8 @@
 import logging
+import os
 
-import services as service
 from api.variables import Variables
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,8 @@ def exception(method):
                 logger.error(message)
                 self.logNumFatal = 1001
             else:
-                print("_____________", name)
-                raise exception
+                print("_____________error", name)
+                traceback.print_exception(type(exception), exception, exception.__traceback__)
+                os.abort()
 
     return decorator

@@ -99,8 +99,6 @@ class Variables:
 
     # Information widget
 
-    from tkinter import scrolledtext 
-
     if ostype == "Mac":
         text_info = tk.Text(
             frame_information,
