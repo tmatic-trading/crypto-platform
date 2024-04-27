@@ -54,7 +54,8 @@ class Account:
 
     def __iter__(self):
         return Ret.iter(self)
-    
+
+
 class Result:
     commission: float = 0
     funding: float = 0
@@ -117,7 +118,7 @@ class MetaAccount(type):
         name = self.__qualname__.split(".")[0]
         if name in MetaAccount.market:
             return MetaAccount.market[name].keys()
-        
+
 
 class MetaResult(type):
     all = dict()

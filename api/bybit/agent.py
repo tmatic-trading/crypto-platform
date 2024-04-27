@@ -19,7 +19,9 @@ class Agent(Bybit):
                 "In get_active_instruments - sending get_instruments_info() - category - "
                 + category
             )
-            instrument_info = self.session.get_instruments_info(category=category, limit=1000)
+            instrument_info = self.session.get_instruments_info(
+                category=category, limit=1000
+            )
             for instrument in instrument_info["result"]["list"]:
                 Agent.fill_instrument(self, instrument=instrument, category=category)
         for symbol in self.symbol_list:
@@ -251,12 +253,13 @@ class Agent(Bybit):
     def get_wallet_balance(self) -> None:
         for account_type in self.account_types:
             Agent.logger.info(
-                "In get_wallet_balance - sending get_wallet_balance() - accountType - " + account_type
+                "In get_wallet_balance - sending get_wallet_balance() - accountType - "
+                + account_type
             )
             result = self.session.get_wallet_balance(accountType=account_type)
             for values in result["result"]["list"]:
                 for coin in values["coin"]:
-                    currency = (coin["coin"]+"."+values["accountType"], self.name)
+                    currency = (coin["coin"] + "." + values["accountType"], self.name)
                     account = self.Account[currency]
                     total = 0
                     check = 0
@@ -267,7 +270,7 @@ class Agent(Bybit):
                     if "totalOrderIM" in coin:
                         total += float(coin["totalOrderIM"])
                         check += 1
-                    if check: 
+                    if check:
                         account.orderMargin = total
                     if "totalPositionIM" in coin:
                         account.positionMagrin = float(coin["totalPositionIM"])

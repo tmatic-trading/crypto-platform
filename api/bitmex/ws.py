@@ -345,31 +345,26 @@ class Bitmex(Variables):
         """
         symbol = (values["symbol"], values["category"], self.name)
         instrument = self.Instrument[symbol]
-        if "currentQty" in values:            
-            self.positions[symbol]["POS"] = values["currentQty"]
-            if instrument.currentQty != values["currentQty"]:
-                if values["currentQty"] == 0:
-                    instrument.avgEntryPrice = 0
-                    instrument.marginCallPrice = 0
-                    instrument.unrealisedPnl = 0
-                else:
-                    if "avgEntryPrice" in values:
-                        instrument.avgEntryPrice = values["avgEntryPrice"]
-                    if "marginCallPrice" in values:
-                        if values["marginCallPrice"] == 100000000:
-                            instrument.marginCallPrice = "inf"
-                        else:
-                            instrument.marginCallPrice = values["marginCallPrice"]
-                    if "unrealisedPnl" in values:
-                        instrument.unrealisedPnl = values["unrealisedPnl"]
-                instrument.currentQty = values["currentQty"]
-        elif instrument.currentQty != 0:
+        if "currentQty" in values:
+            instrument.currentQty = values["currentQty"]
+            self.positions[symbol]["POS"] = instrument.currentQty
+        if instrument.currentQty == 0:
+            instrument.avgEntryPrice = 0
+            instrument.marginCallPrice = 0
+            instrument.unrealisedPnl = 0
+        else:
             if "avgEntryPrice" in values:
                 instrument.avgEntryPrice = values["avgEntryPrice"]
-            if "marginCallPrice" in values:
-                instrument.marginCallPrice = values["marginCallPrice"]
             if "unrealisedPnl" in values:
-                instrument.unrealisedPnl = values["unrealisedPnl"]        
+                instrument.unrealisedPnl = (
+                    values["unrealisedPnl"]
+                    / self.currency_divisor[instrument.settlCurrency[0]]
+                )
+            if "marginCallPrice" in values:
+                if values["marginCallPrice"] == 100000000:
+                    instrument.marginCallPrice = "inf"
+                else:
+                    instrument.marginCallPrice = values["marginCallPrice"]
 
     def __update_instrument(self, symbol: tuple, values: dict):
         instrument = self.Instrument[symbol]

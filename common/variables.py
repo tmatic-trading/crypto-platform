@@ -118,9 +118,9 @@ class Variables:
         "MARKET",
     ]
     name_results = [
-        "CURRENCY", 
-        "PNL SUM", 
-        "COMMISSION SUM", 
+        "CURRENCY",
+        "PNL SUM",
+        "COMMISSION SUM",
         "FUNDING SUM",
     ]
     logger = logging

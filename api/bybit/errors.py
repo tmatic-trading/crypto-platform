@@ -1,8 +1,8 @@
 import logging
 import os
+import traceback
 
 from api.variables import Variables
-import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,9 @@ def exception(method):
                 self.logNumFatal = 1001
             else:
                 print("_____________error", name)
-                traceback.print_exception(type(exception), exception, exception.__traceback__)
+                traceback.print_exception(
+                    type(exception), exception, exception.__traceback__
+                )
                 os.abort()
 
     return decorator

@@ -269,10 +269,10 @@ class Agent(Bitmex):
             for values in res:
                 if values["symbol"] in self.symbol_category:
                     symbol = (
-                            values["symbol"],
-                            self.symbol_category[values["symbol"]],
-                            self.name,
-                        )            
+                        values["symbol"],
+                        self.symbol_category[values["symbol"]],
+                        self.name,
+                    )
                     if symbol in self.symbol_list:
                         instrument = self.Instrument[symbol]
                         if "currentQty" in values:
@@ -284,7 +284,8 @@ class Agent(Bitmex):
                                 if values["marginCallPrice"] == 100000000:
                                     instrument.marginCallPrice = "inf"
                                 else:
-                                    instrument.marginCallPrice = values["marginCallPrice"]
+                                    instrument.marginCallPrice = values[
+                                        "marginCallPrice"
+                                    ]
                             if "unrealisedPnl" in values:
                                 instrument.unrealisedPnl = values["unrealisedPnl"]
-

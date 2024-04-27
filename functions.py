@@ -92,7 +92,7 @@ class Function(WS, Variables):
                 if orig:
                     data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
                 return data
-            except Exception as e: # var.error_sqlite 
+            except Exception as e:  # var.error_sqlite
                 if "database is locked" not in str(e):
                     var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
@@ -121,7 +121,7 @@ class Function(WS, Variables):
                 var.connect_sqlite.commit()
                 Function.sql_lock.release()
                 break
-            except Exception as e: # var.error_sqlite 
+            except Exception as e:  # var.error_sqlite
                 if "database is locked" not in str(e):
                     var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
@@ -1140,7 +1140,16 @@ class Function(WS, Variables):
         var.last_order += 1
         clOrdID = str(var.last_order) + "." + emi
         var.logger.info(
-            "Posting symbol=" + str(symbol) + " clOrdID=" + clOrdID + " side=" + side + " price=" + price_str + " qty=" + str(qty)
+            "Posting symbol="
+            + str(symbol)
+            + " clOrdID="
+            + clOrdID
+            + " side="
+            + side
+            + " price="
+            + price_str
+            + " qty="
+            + str(qty)
         )
         WS.place_limit(
             self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
@@ -1594,7 +1603,7 @@ def format_number(number: float) -> str:
     s = "{:.{num}f}".format(number, num=after_dot)
     s = s.rstrip("0")
 
-    return s.rstrip(".") 
+    return s.rstrip(".")
 
 
 def warning_window(message: str) -> None:
@@ -1796,7 +1805,7 @@ def load_labels() -> None:
         name="results",
         size=len(ws.currencies) + 1,
         title=var.name_results,
-        #column_width=110,
+        # column_width=110,
         color=disp.bg_color,
     )
 

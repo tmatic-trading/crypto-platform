@@ -221,7 +221,7 @@ class Bybit(Variables):
         for value in values["data"]:
             for coin in value["coin"]:
                 if coin["coin"] in self.currencies:
-                    currency = (coin["coin"]+"."+value["accountType"], self.name)
+                    currency = (coin["coin"] + "." + value["accountType"], self.name)
                     account = self.Account[currency]
                     total = 0
                     check = 0
@@ -232,7 +232,7 @@ class Bybit(Variables):
                     if "totalOrderIM" in coin:
                         total += float(coin["totalOrderIM"])
                         check += 1
-                    if check: 
+                    if check:
                         account.orderMargin = total
                     if "totalPositionIM" in coin:
                         account.positionMagrin = float(coin["totalPositionIM"])
