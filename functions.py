@@ -687,7 +687,7 @@ class Function(WS, Variables):
             var.logger.info("Emboldening SQLite")
 
         disp.label_time["text"] = time.asctime(time.gmtime())
-        disp.label_f9["text"] = str(disp.f9)
+        disp.label_f9["text"] = disp.f9
         if disp.f9 == "ON":
             disp.label_f9.config(bg=disp.green_color)
         else:

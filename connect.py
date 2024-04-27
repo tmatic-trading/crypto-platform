@@ -81,6 +81,7 @@ def setup_market(ws: Markets):
 
 
 def refresh() -> None:
+    var.f9 = "normal"
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
@@ -145,7 +146,6 @@ def trade_state(event) -> None:
         disp.f9 = "OFF"
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
-        disp.messageStopped = ""
         for num, market in enumerate(var.market_list):
             Markets[market].logNumFatal = 0
             Tables.market.color_market(state="online", row=num, market=market)

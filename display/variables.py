@@ -99,6 +99,8 @@ class Variables:
 
     # Information widget
 
+    from tkinter import scrolledtext 
+
     if ostype == "Mac":
         text_info = tk.Text(
             frame_information,
@@ -115,11 +117,11 @@ class Variables:
             highlightthickness=0,
         )
     scroll_info = tk.Scrollbar(frame_information)
-    text_info.bind("<Key>", lambda event: text_ignore(event))
     scroll_info.config(command=text_info.yview)
     text_info.config(yscrollcommand=scroll_info.set)
     scroll_info.pack(side="right", fill="y")
     text_info.pack(side="right", fill="both", expand="yes")
+    text_info.configure(state='disabled')
 
     # color map
 
@@ -184,7 +186,6 @@ class Variables:
     refresh_var = None
     nfo_display_counter = 0
     f9 = "OFF"
-    messageStopped = ""
     robots_window_trigger = "off"
     info_display_counter = 0
     handler_orderbook_symbol = tuple()
@@ -605,10 +606,6 @@ def on_mousewheel(event, canvas, scroll):
                 canvas.yview_scroll(-1, "units")
             elif event.num == 5:
                 canvas.yview_scroll(1, "units")
-
-
-def text_ignore(event):
-    return "break"  # Prevents further handling of the event
 
 
 def resize_col(event, pw, ratio):
