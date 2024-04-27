@@ -257,7 +257,10 @@ class Bybit(Variables):
                 self.positions[symbol]["POS"] = instrument.currentQty
                 instrument.avgEntryPrice = float(value["entryPrice"])
                 if value["liqPrice"] == "":
-                    instrument.marginCallPrice = "inf"
+                    if instrument.currentQty == 0:
+                        instrument.marginCallPrice = 0
+                    else:
+                        instrument.marginCallPrice = "inf"
                 else:
                     instrument.marginCallPrice = value["liqPrice"]
                 instrument.unrealisedPnl = value["unrealisedPnl"]
