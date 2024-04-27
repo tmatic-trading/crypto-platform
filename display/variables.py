@@ -23,7 +23,7 @@ class AutoScrollbar(tk.Scrollbar):
 class Variables:
     root = tk.Tk()
     root.title("Tmatic")
-    root.geometry("+50+50")  # 1360x850
+    root.geometry("+50+50")
 
     if platform.system() == "Windows":
         ostype = "Windows"

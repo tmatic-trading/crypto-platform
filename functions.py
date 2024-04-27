@@ -739,7 +739,7 @@ class Function(WS, Variables):
                 table="position",
                 column=5,
                 row=num + mod,
-                val=(str(instrument.marginCallPrice).replace("100000000", "inf")),
+                val=instrument.marginCallPrice,
             )
             update_label(
                 table="position",

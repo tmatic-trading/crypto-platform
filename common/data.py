@@ -23,7 +23,7 @@ class Instrument:
     currentQty: float = 0
     expire: Union[str, datetime]
     fundingRate: float = 0
-    marginCallPrice: float = 0
+    marginCallPrice: Union[str, float] = 0
     maxOrderQty: float
     minOrderQty: float
     multiplier: int

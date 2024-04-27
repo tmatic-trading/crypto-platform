@@ -356,7 +356,10 @@ class Bitmex(Variables):
                     if "avgEntryPrice" in values:
                         instrument.avgEntryPrice = values["avgEntryPrice"]
                     if "marginCallPrice" in values:
-                        instrument.marginCallPrice = values["marginCallPrice"]
+                        if values["marginCallPrice"] == 100000000:
+                            instrument.marginCallPrice = "inf"
+                        else:
+                            instrument.marginCallPrice = values["marginCallPrice"]
                     if "unrealisedPnl" in values:
                         instrument.unrealisedPnl = values["unrealisedPnl"]
                 instrument.currentQty = values["currentQty"]
@@ -366,9 +369,7 @@ class Bitmex(Variables):
             if "marginCallPrice" in values:
                 instrument.marginCallPrice = values["marginCallPrice"]
             if "unrealisedPnl" in values:
-                instrument.unrealisedPnl = values["unrealisedPnl"]
-
-        
+                instrument.unrealisedPnl = values["unrealisedPnl"]        
 
     def __update_instrument(self, symbol: tuple, values: dict):
         instrument = self.Instrument[symbol]
@@ -415,7 +416,6 @@ class Bitmex(Variables):
         except Exception:
             pass
         self.logNumFatal = -1
-        self.logger.info("Websocket closed")
 
     def transaction(self, **kwargs):
         """

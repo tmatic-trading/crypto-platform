@@ -265,22 +265,26 @@ class Agent(Bitmex):
         """
         path = Listing.GET_POSITION_INFO
         res = Send.request(self, path=path, verb="GET")
-        for values in res:
-            if values["symbol"] in self.symbol_category:
-                symbol = (
-                        values["symbol"],
-                        self.symbol_category[values["symbol"]],
-                        self.name,
-                    )            
-                if symbol in self.symbol_list:
-                    instrument = self.Instrument[symbol]
-                    if "currentQty" in values:
-                        instrument.currentQty = values["currentQty"]
-                    if instrument.currentQty != 0:
-                        if "avgEntryPrice" in values:
-                            instrument.avgEntryPrice = values["avgEntryPrice"]
-                        if "marginCallPrice" in values:
-                            instrument.marginCallPrice = values["marginCallPrice"]
-                        if "unrealisedPnl" in values:
-                            instrument.unrealisedPnl = values["unrealisedPnl"]
+        if res:
+            for values in res:
+                if values["symbol"] in self.symbol_category:
+                    symbol = (
+                            values["symbol"],
+                            self.symbol_category[values["symbol"]],
+                            self.name,
+                        )            
+                    if symbol in self.symbol_list:
+                        instrument = self.Instrument[symbol]
+                        if "currentQty" in values:
+                            instrument.currentQty = values["currentQty"]
+                        if instrument.currentQty != 0:
+                            if "avgEntryPrice" in values:
+                                instrument.avgEntryPrice = values["avgEntryPrice"]
+                            if "marginCallPrice" in values:
+                                if values["marginCallPrice"] == 100000000:
+                                    instrument.marginCallPrice = "inf"
+                                else:
+                                    instrument.marginCallPrice = values["marginCallPrice"]
+                            if "unrealisedPnl" in values:
+                                instrument.unrealisedPnl = values["unrealisedPnl"]
 
