@@ -554,7 +554,7 @@ class ListBoxTable(Variables):
 
 
 def on_closing(root, refresh_var):
-    var.robots_thread_is_active = ""
+    var.robots_thread_is_active = False
     root.after_cancel(refresh_var)
     root.destroy()
 

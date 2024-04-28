@@ -45,8 +45,8 @@ class Function(WS, Variables):
             if symbol not in self.Instrument.get_keys():
                 WS.get_instrument(Markets[symbol[2]], symbol=symbol)
             # Function.rounding(self)
-        if symbol not in self.positions:
-            WS.get_position(self, symbol=symbol)
+        '''if symbol not in self.positions:
+            WS.get_position(self, symbol=symbol)'''
 
     def timeframes_data_filename(
         self: Markets, emi: str, symbol: tuple, timefr: str
@@ -733,7 +733,7 @@ class Function(WS, Variables):
                 table="position",
                 column=4,
                 row=num + mod,
-                val=instrument.unrealisedPnl,
+                val=format_number(number=instrument.unrealisedPnl),
             )
             update_label(
                 table="position",
@@ -1200,7 +1200,7 @@ class Function(WS, Variables):
 
         return self.logNumFatal
 
-    def market_status(self: Markets, status: str) -> None:
+    def market_status(self: Markets, status: str, message: str, error=False) -> None:
         mod = Tables.market.mod
         row = var.market_list.index(self.name)
         update_label(
@@ -1209,6 +1209,14 @@ class Function(WS, Variables):
             row=row + mod,
             val=self.account_disp + status,
         )
+        info_display(self.name, message)
+        if error:
+            Tables.market.color_market(
+                state="error",
+                row=row,
+                market=self.name,
+            )
+        disp.root.update()        
 
     def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
@@ -1595,15 +1603,17 @@ def update_label(
         disp.labels[table][row][column]["text"] = val
 
 
-def format_number(number: float) -> str:
+def format_number(number: Union[float, str]) -> str:
     """
     Rounding a value from 2 to 8 decimal places
     """
-    after_dot = max(2, 9 - max(1, len(str(int(number)))))
-    s = "{:.{num}f}".format(number, num=after_dot)
-    s = s.rstrip("0")
+    if not isinstance(number, str):
+        after_dot = max(2, 9 - max(1, len(str(int(number)))))
+        number = "{:.{num}f}".format(number, num=after_dot)
+        number = number.rstrip("0")
+        number = number.rstrip(".")
 
-    return s.rstrip(".")
+    return number
 
 
 def warning_window(message: str) -> None:

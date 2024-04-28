@@ -62,7 +62,7 @@ class Agent(Bybit):
         )
 
     def get_position(self, symbol: tuple = False):
-        print("___get_position")
+        print("___get_position", symbol)
 
     def trade_bucketed(
         self, symbol: tuple, time: datetime, timeframe: str
@@ -171,7 +171,7 @@ class Agent(Bybit):
             parameters["cursor"] = cursor
             while cursor:
                 Agent.logger.info(
-                    "In trading_history - sending open_orders() - parameters - "
+                    "In open_orders - sending open_orders() - parameters - "
                     + str(parameters)
                 )
                 result = self.session.get_open_orders(**parameters)

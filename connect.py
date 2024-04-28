@@ -90,15 +90,10 @@ def refresh() -> None:
                     ws.message2000 = (
                         "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
                     )
-                    info_display(ws.name, ws.message2000)
-                    Tables.market.color_market(
-                        state="error",
-                        row=var.market_list.index(ws.name),
-                        market=ws.name,
-                    )
+                    Function.market_status(ws, status="Error", message=ws.message2000, error=True)
                 sleep(1)
             elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-                # Function.market_status(ws, "RESTARTING...")
+                Function.market_status(ws, status="RESTARTING...", message="RESTARTING...", error=True)
                 setup_market(ws=ws)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
