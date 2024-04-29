@@ -1,8 +1,8 @@
 # from api.variables import Variables
 import logging
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Union
-import threading
 
 import services as service
 from services import exceptions_manager
@@ -13,6 +13,7 @@ from .ws import Bybit
 @exceptions_manager
 class Agent(Bybit):
     logger = logging.getLogger(__name__)
+
     def get_active_instruments(self):
         def get_in_thread(category):
             cursor = "no"
@@ -24,15 +25,19 @@ class Agent(Bybit):
                     + category
                 )
                 result = self.session.get_instruments_info(
-                    category=category, limit=1000,
+                    category=category,
+                    limit=1000,
                     cursor=cursor,
                 )
-                if "nextPageCursor" in result["result"]:                    
+                if "nextPageCursor" in result["result"]:
                     cursor = result["result"]["nextPageCursor"]
                 else:
                     cursor = ""
                 for instrument in result["result"]["list"]:
-                    Agent.fill_instrument(self, instrument=instrument, category=category)
+                    Agent.fill_instrument(
+                        self, instrument=instrument, category=category
+                    )
+
         threads = []
         for category in self.categories:
             t = threading.Thread(target=get_in_thread, args=(category,))
@@ -328,9 +333,9 @@ class Agent(Bybit):
                     if symbol in self.positions:
                         self.positions[symbol]["POS"] = float(values["size"])
                         if values["side"] == "Sell":
-                            self.positions[symbol]["POS"] = -self.positions[
-                                symbol
-                            ]["POS"]
+                            self.positions[symbol]["POS"] = -self.positions[symbol][
+                                "POS"
+                            ]
                     instrument.currentQty = float(values["size"])
                     if values["side"] == "Sell":
                         instrument.currentQty = -instrument.currentQty
@@ -341,11 +346,13 @@ class Agent(Bybit):
                         instrument.marginCallPrice = "inf"
                     instrument.state = values["positionStatus"]
 
-        threads = []            
+        threads = []
         for category in self.category_list:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
-                    t = threading.Thread(target=get_in_thread, args=(category,settlCurrency))
+                    t = threading.Thread(
+                        target=get_in_thread, args=(category, settlCurrency)
+                    )
                     threads.append(t)
                     t.start()
         [thread.join() for thread in threads]

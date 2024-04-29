@@ -45,8 +45,8 @@ class Function(WS, Variables):
             if symbol not in self.Instrument.get_keys():
                 WS.get_instrument(Markets[symbol[2]], symbol=symbol)
             # Function.rounding(self)
-        '''if symbol not in self.positions:
-            WS.get_position(self, symbol=symbol)'''
+        """if symbol not in self.positions:
+            WS.get_position(self, symbol=symbol)"""
 
     def timeframes_data_filename(
         self: Markets, emi: str, symbol: tuple, timefr: str
@@ -1216,7 +1216,7 @@ class Function(WS, Variables):
                 row=row,
                 market=self.name,
             )
-        disp.root.update()        
+        disp.root.update()
 
     def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])

@@ -13,7 +13,6 @@ import services as service
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
-from display.functions import info_display
 
 from .api_auth import generate_signature
 
@@ -62,7 +61,6 @@ class Bitmex(Variables):
             self.__connect(self.__get_url())
             if self.logNumFatal == 0:
                 self.logger.info("Connected to websocket.")
-                info_display(self.name, "Connected to websocket.")
                 self.__wait_for_tables()
                 if self.logNumFatal == 0:
                     self.logger.info("Data received. Continuing.")

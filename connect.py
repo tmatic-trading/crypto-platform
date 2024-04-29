@@ -42,9 +42,6 @@ def setup_market(ws: Markets):
     while ws.logNumFatal:
         ws.logNumFatal = -1
         WS.start_ws(ws)
-        WS.get_user(ws)
-        WS.get_wallet_balance(ws)
-        WS.get_position_info(ws)
         if ws.logNumFatal:
             WS.exit(ws)
             sleep(2)
@@ -90,10 +87,14 @@ def refresh() -> None:
                     ws.message2000 = (
                         "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
                     )
-                    Function.market_status(ws, status="Error", message=ws.message2000, error=True)
+                    Function.market_status(
+                        ws, status="Error", message=ws.message2000, error=True
+                    )
                 sleep(1)
             elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-                Function.market_status(ws, status="RESTARTING...", message="RESTARTING...", error=True)
+                Function.market_status(
+                    ws, status="RESTARTING...", message="RESTARTING...", error=True
+                )
                 setup_market(ws=ws)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:

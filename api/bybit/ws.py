@@ -1,15 +1,12 @@
 import logging
-from collections import OrderedDict
 import threading
-
-from datetime import datetime
+from collections import OrderedDict
 
 import services as service
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
-from display.functions import info_display
 from services import exceptions_manager
 
 from .pybit.unified_trading import HTTP, WebSocket
@@ -80,10 +77,13 @@ class Bybit(Variables):
         Connecting to websocket.
         """
         self.logger.info("Connecting to websocket")
+
         def subscribe_in_thread(category):
             lst = list(filter(lambda x: x[1] == category, self.symbol_list))
             if lst:
-                self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
+                self.ws[category] = WebSocket(
+                    testnet=self.testnet, channel_type=category
+                )
             for symbol in lst:
                 if category == "linear":
                     self.logger.info(
@@ -189,6 +189,7 @@ class Bybit(Variables):
                             values=x["data"], category="option"
                         ),
                     )
+
         def private_in_thread():
             self.ws_private = WebSocket(
                 testnet=self.testnet,
@@ -196,6 +197,7 @@ class Bybit(Variables):
                 api_key=self.api_key,
                 api_secret=self.api_secret,
             )
+
         threads = []
         for category in self.categories:
             t = threading.Thread(target=subscribe_in_thread, args=(category,))
