@@ -1049,7 +1049,9 @@ class Function(WS, Variables):
                             results[currency] += calc["sumreal"]
                         else:
                             results[currency] = calc["sumreal"]
-        for num, currency in enumerate(self.Result.keys()):
+        lst = self.Result.keys()
+        lst = filter(lambda x: x[0] != "None", lst)
+        for num, currency in enumerate(lst):
             result = self.Result[currency]
             result.result = 0
             if currency in results:

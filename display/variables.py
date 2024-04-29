@@ -115,11 +115,12 @@ class Variables:
             highlightthickness=0,
         )
     scroll_info = tk.Scrollbar(frame_information)
+    text_info.bind("<Key>", lambda event: text_ignore(event))
     scroll_info.config(command=text_info.yview)
     text_info.config(yscrollcommand=scroll_info.set)
     scroll_info.pack(side="right", fill="y")
     text_info.pack(side="right", fill="both", expand="yes")
-    text_info.configure(state="disabled")
+    #text_info.configure(state="disabled")
 
     # color map
 
@@ -604,6 +605,10 @@ def on_mousewheel(event, canvas, scroll):
                 canvas.yview_scroll(-1, "units")
             elif event.num == 5:
                 canvas.yview_scroll(1, "units")
+
+
+def text_ignore(event):
+    return "break"  # Prevents further handling of the event
 
 
 def resize_col(event, pw, ratio):
