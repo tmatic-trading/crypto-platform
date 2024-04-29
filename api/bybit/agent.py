@@ -306,7 +306,7 @@ class Agent(Bybit):
                 break
 
     def get_position_info(self):
-        def get_position_in_thread(category, settlCurrency):
+        def get_in_thread(category, settlCurrency):
             cursor = "no"
             while cursor:
                 Agent.logger.info(
@@ -345,7 +345,7 @@ class Agent(Bybit):
         for category in self.category_list:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
-                    t = threading.Thread(target=get_position_in_thread, args=(category,settlCurrency))
+                    t = threading.Thread(target=get_in_thread, args=(category,settlCurrency))
                     threads.append(t)
                     t.start()
         [thread.join() for thread in threads]

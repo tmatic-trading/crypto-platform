@@ -1,5 +1,8 @@
 import logging
 from collections import OrderedDict
+import threading
+
+from datetime import datetime
 
 import services as service
 from api.init import Setup
@@ -70,7 +73,6 @@ class Bybit(Variables):
         self.robot_status = dict()
 
     def start(self):
-        self.count = 0
         self.__connect()
 
     def __connect(self) -> None:
@@ -78,9 +80,10 @@ class Bybit(Variables):
         Connecting to websocket.
         """
         self.logger.info("Connecting to websocket")
-        for category in self.category_list:
-            self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
+        def subscribe_in_thread(category):
             lst = list(filter(lambda x: x[1] == category, self.symbol_list))
+            if lst:
+                self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
             for symbol in lst:
                 if category == "linear":
                     self.logger.info(
@@ -186,17 +189,26 @@ class Bybit(Variables):
                             values=x["data"], category="option"
                         ),
                     )
-        self.ws_private = WebSocket(
-            testnet=self.testnet,
-            channel_type="private",
-            api_key=self.api_key,
-            api_secret=self.api_secret,
-        )
+        def private_in_thread():
+            self.ws_private = WebSocket(
+                testnet=self.testnet,
+                channel_type="private",
+                api_key=self.api_key,
+                api_secret=self.api_secret,
+            )
+        threads = []
+        for category in self.categories:
+            t = threading.Thread(target=subscribe_in_thread, args=(category,))
+            threads.append(t)
+            t.start()
+        t = threading.Thread(target=private_in_thread)
+        threads.append(t)
+        t.start()
+        [thread.join() for thread in threads]
         self.ws_private.wallet_stream(callback=self.__update_account)
         self.ws_private.position_stream(callback=self.__update_position)
         self.ws_private.order_stream(callback=self.__handle_order)
         self.ws_private.execution_stream(callback=self.__handle_execution)
-        info_display(self.name, "Connected to websocket.")
 
     def __update_orderbook(self, values: dict, category: tuple) -> None:
         symbol = (values["s"], category, self.name)
