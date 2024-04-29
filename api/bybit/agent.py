@@ -306,42 +306,49 @@ class Agent(Bybit):
                 break
 
     def get_position_info(self):
+        def get_position_in_thread(category, settlCurrency):
+            cursor = "no"
+            while cursor:
+                Agent.logger.info(
+                    "In get_position_info - sending get_positions() - category - "
+                    + category
+                    + " - settlCurrency - "
+                    + settlCurrency
+                )
+                result = self.session.get_positions(
+                    category=category,
+                    settleCoin=settlCurrency,
+                    limit=200,
+                    cursor=cursor,
+                )
+                cursor = result["result"]["nextPageCursor"]
+                for values in result["result"]["list"]:
+                    symbol = (values["symbol"], category, self.name)
+                    instrument = self.Instrument[symbol]
+                    if symbol in self.positions:
+                        self.positions[symbol]["POS"] = float(values["size"])
+                        if values["side"] == "Sell":
+                            self.positions[symbol]["POS"] = -self.positions[
+                                symbol
+                            ]["POS"]
+                    instrument.currentQty = float(values["size"])
+                    if values["side"] == "Sell":
+                        instrument.currentQty = -instrument.currentQty
+                    instrument.avgEntryPrice = float(values["avgPrice"])
+                    instrument.unrealisedPnl = values["unrealisedPnl"]
+                    instrument.marginCallPrice = values["liqPrice"]
+                    if not instrument.marginCallPrice:
+                        instrument.marginCallPrice = "inf"
+                    instrument.state = values["positionStatus"]
+
+        threads = []            
         for category in self.category_list:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
-                    cursor = "no"
-                    while cursor:
-                        Agent.logger.info(
-                            "In get_position_info - sending get_positions() - category - "
-                            + category
-                            + " - settlCurrency - "
-                            + settlCurrency
-                        )
-                        result = self.session.get_positions(
-                            category=category,
-                            settleCoin=settlCurrency,
-                            limit=200,
-                            cursor=cursor,
-                        )
-                        cursor = result["result"]["nextPageCursor"]
-                        for values in result["result"]["list"]:
-                            symbol = (values["symbol"], category, self.name)
-                            instrument = self.Instrument[symbol]
-                            if symbol in self.positions:
-                                self.positions[symbol]["POS"] = float(values["size"])
-                                if values["side"] == "Sell":
-                                    self.positions[symbol]["POS"] = -self.positions[
-                                        symbol
-                                    ]["POS"]
-                            instrument.currentQty = float(values["size"])
-                            if values["side"] == "Sell":
-                                instrument.currentQty = -instrument.currentQty
-                            instrument.avgEntryPrice = float(values["avgPrice"])
-                            instrument.unrealisedPnl = values["unrealisedPnl"]
-                            instrument.marginCallPrice = values["liqPrice"]
-                            if not instrument.marginCallPrice:
-                                instrument.marginCallPrice = "inf"
-                            instrument.state = values["positionStatus"]
+                    t = threading.Thread(target=get_position_in_thread, args=(category,settlCurrency))
+                    threads.append(t)
+                    t.start()
+        [thread.join() for thread in threads]
 
     def fill_instrument(self, instrument: dict, category: str):
         symbol = (instrument["symbol"], category, self.name)
