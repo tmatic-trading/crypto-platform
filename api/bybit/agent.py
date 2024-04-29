@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Union
+import threading
 
 import services as service
 from services import exceptions_manager
@@ -12,18 +13,32 @@ from .ws import Bybit
 @exceptions_manager
 class Agent(Bybit):
     logger = logging.getLogger(__name__)
-
     def get_active_instruments(self):
+        def get_in_thread(category):
+            cursor = "no"
+            while cursor:
+                cursor = ""
+                Agent.logger.info(
+                    "In get_active_instruments - sending get_instruments_info() "
+                    + "- category - "
+                    + category
+                )
+                result = self.session.get_instruments_info(
+                    category=category, limit=1000,
+                    cursor=cursor,
+                )
+                if "nextPageCursor" in result["result"]:                    
+                    cursor = result["result"]["nextPageCursor"]
+                else:
+                    cursor = ""
+                for instrument in result["result"]["list"]:
+                    Agent.fill_instrument(self, instrument=instrument, category=category)
+        threads = []
         for category in self.categories:
-            Agent.logger.info(
-                "In get_active_instruments - sending get_instruments_info() - category - "
-                + category
-            )
-            instrument_info = self.session.get_instruments_info(
-                category=category, limit=1000
-            )
-            for instrument in instrument_info["result"]["list"]:
-                Agent.fill_instrument(self, instrument=instrument, category=category)
+            t = threading.Thread(target=get_in_thread, args=(category,))
+            threads.append(t)
+            t.start()
+        [thread.join() for thread in threads]
         for symbol in self.symbol_list:
             if symbol not in self.symbols:
                 Agent.logger.error(
