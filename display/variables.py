@@ -120,7 +120,7 @@ class Variables:
     text_info.config(yscrollcommand=scroll_info.set)
     scroll_info.pack(side="right", fill="y")
     text_info.pack(side="right", fill="both", expand="yes")
-    #text_info.configure(state="disabled")
+    # text_info.configure(state="disabled")
 
     # color map
 

@@ -19,7 +19,13 @@ class Function(WS, Variables):
     sql_lock = threading.Lock()
 
     def calculate(
-        self: Markets, symbol: tuple, price: float, qty: float, rate: float, fund: int
+        self: Markets,
+        symbol: tuple,
+        price: float,
+        qty: float,
+        rate: float,
+        fund: int,
+        execFee=None,
     ) -> dict:
         """
         Calculate sumreal and commission
@@ -30,11 +36,17 @@ class Function(WS, Variables):
         )
         if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
-            commiss = abs(qty) / price * coef * rate
+            if execFee:
+                commiss = execFee
+            else:
+                commiss = abs(qty) / price * coef * rate
             funding = qty / price * coef * rate
         else:
             sumreal = -qty * price * coef * fund
-            commiss = abs(qty) * price * coef * rate
+            if execFee:
+                commiss = execFee
+            else:
+                commiss = abs(qty) * price * coef * rate
             funding = qty * price * coef * rate
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
@@ -214,6 +226,7 @@ class Function(WS, Variables):
                     qty=float(lastQty),
                     rate=row["commission"],
                     fund=1,
+                    execFee=row["execFee"],
                 )
                 self.robots[emi]["POS"] += lastQty
                 self.robots[emi]["POS"] = round(
@@ -285,6 +298,7 @@ class Function(WS, Variables):
                         qty=float(self.robots[emi]["POS"]),
                         rate=row["commission"],
                         fund=0,
+                        execFee=row["execFee"],
                     )
                     message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
@@ -334,6 +348,7 @@ class Function(WS, Variables):
                     qty=float(diff),
                     rate=row["commission"],
                     fund=0,
+                    execFee=row["execFee"],
                 )
                 emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
@@ -1049,9 +1064,7 @@ class Function(WS, Variables):
                             results[currency] += calc["sumreal"]
                         else:
                             results[currency] = calc["sumreal"]
-        lst = self.Result.keys()
-        lst = filter(lambda x: x[0] != "None", lst)
-        for num, currency in enumerate(lst):
+        for num, currency in enumerate(self.Result.keys()):
             result = self.Result[currency]
             result.result = 0
             if currency in results:

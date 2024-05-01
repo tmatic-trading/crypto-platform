@@ -184,6 +184,7 @@ class Agent(Bitmex):
                     if row["foreignNotional"] > 0:
                         row["lastQty"] = -row["lastQty"]
                         row["commission"] = -row["commission"]
+                row["execFee"] = None
             return result
         else:
             return "error"

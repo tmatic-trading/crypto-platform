@@ -336,12 +336,17 @@ class Bybit(Variables):
             if row["orderLinkId"]:
                 row["clOrdID"] = row["orderLinkId"]
             row["price"] = float(row["orderPrice"])
-            row["lastQty"] = float(row["execQty"])
-            row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
+            if row["category"] == "spot":
+                row["settlCurrency"] = (row["feeCurrency"], self.name)
+                row["lastQty"] = 0
+            else:
+                row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
+                row["lastQty"] = float(row["execQty"])
             row["market"] = self.name
             if row["execType"] == "Funding":
                 if row["side"] == "Sell":
                     row["lastQty"] = -row["lastQty"]
+            row["execFee"] = float(row["execFee"])
             self.transaction(row=row)
 
     def exit(self):

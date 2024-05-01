@@ -1,4 +1,3 @@
-# from api.variables import Variables
 import logging
 import threading
 from datetime import datetime, timedelta, timezone
@@ -159,14 +158,19 @@ class Agent(Bybit):
                         if row["orderLinkId"]:
                             row["clOrdID"] = row["orderLinkId"]
                         row["price"] = float(row["execPrice"])
-                        row["lastQty"] = float(row["execQty"])
-                        row["settlCurrency"] = self.Instrument[
-                            row["symbol"]
-                        ].settlCurrency
+                        if category == "spot":
+                            row["settlCurrency"] = (row["feeCurrency"], self.name)
+                            row["lastQty"] = 0
+                        else:
+                            row["settlCurrency"] = self.Instrument[
+                                row["symbol"]
+                            ].settlCurrency
+                            row["lastQty"] = float(row["execQty"])
                         row["market"] = self.name
                         if row["execType"] == "Funding":
                             if row["side"] == "Sell":
                                 row["lastQty"] = -row["lastQty"]
+                        row["execFee"] = float(row["execFee"])
                     trade_history += res
             print(
                 "Bybit - loading trading history, startTime="

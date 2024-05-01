@@ -251,6 +251,7 @@ class Bitmex(Variables):
                                 if val["foreignNotional"] > 0:
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
+                            val["execFee"] = None
                             self.transaction(row=val)
                         else:
                             self.data[table_name][key] = val
