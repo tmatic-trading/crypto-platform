@@ -160,12 +160,11 @@ class Agent(Bybit):
                         row["price"] = float(row["execPrice"])
                         if category == "spot":
                             row["settlCurrency"] = (row["feeCurrency"], self.name)
-                            row["lastQty"] = 0
                         else:
                             row["settlCurrency"] = self.Instrument[
                                 row["symbol"]
                             ].settlCurrency
-                            row["lastQty"] = float(row["execQty"])
+                        row["lastQty"] = float(row["execQty"])
                         row["market"] = self.name
                         if row["execType"] == "Funding":
                             if row["side"] == "Sell":

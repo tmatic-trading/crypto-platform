@@ -338,11 +338,10 @@ class Bybit(Variables):
             row["price"] = float(row["orderPrice"])
             if row["category"] == "spot":
                 row["settlCurrency"] = (row["feeCurrency"], self.name)
-                row["lastQty"] = 0
             else:
-                row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
-                row["lastQty"] = float(row["execQty"])
+                row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency                
             row["market"] = self.name
+            row["lastQty"] = float(row["execQty"])
             if row["execType"] == "Funding":
                 if row["side"] == "Sell":
                     row["lastQty"] = -row["lastQty"]
