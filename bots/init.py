@@ -51,15 +51,12 @@ class Init(WS, Variables):
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
         qwr = (
-            "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, \
-                sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-                    -QTY ELSE 0 END) POS from coins where MARKET = '"
+            "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, "
+            + "sum(QTY) POS from coins where MARKET = '"
             + self.name
-            + "' and \
-                        account = "
+            + "' and account = "
             + str(self.user_id)
-            + " and SIDE <> -1 group by EMI, \
-                            SYMBOL, CATEGORY) res where POS <> 0"
+            + " and SIDE <> 'Fund' group by EMI, SYMBOL, CATEGORY) res where POS <> 0"
         )
         defuncts = Function.select_database(self, qwr)
         for defunct in defuncts:
@@ -90,10 +87,9 @@ class Init(WS, Variables):
         for symbol in self.symbol_list:
             qwr += (
                 union
-                + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, \
-            sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-            -QTY ELSE 0 END) POS from coins where SIDE <> -1 group by EMI, SYMBOL, CATEGORY, \
-            ACCOUNT, MARKET) res where EMI = '"
+                + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, "
+                + "sum(QTY) POS from coins where SIDE <> 'Fund' group by EMI, "
+                + "SYMBOL, CATEGORY, ACCOUNT, MARKET) res where EMI = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
                 + symbol[1]
@@ -132,14 +128,14 @@ class Init(WS, Variables):
             else:
                 _emi = emi
             sql = (
-                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
-                "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
-                "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME "
-                "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY "
-                "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
-                "COMMISS, TTIME FROM "
-                "coins WHERE EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
-                % (_emi, self.user_id, robot["CATEGORY"])
+                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(CASE WHEN "
+                + "SIDE = 'Fund' THEN 0 ELSE QTY END), 0) "
+                + "POS, IFNULL(sum(CASE WHEN SIDE = 'Fund' THEN 0 ELSE abs(QTY) "
+                + "END), 0) VOL, IFNULL(sum(COMMISS), 0) "
+                + "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME "
+                + "FROM (SELECT SUMREAL, SIDE, QTY, COMMISS, TTIME FROM coins WHERE MARKET "
+                + "= '%s' AND EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
+                % (self.name, _emi, self.user_id, robot["CATEGORY"])
             )
             data = Function.select_database(self, sql)
             for row in data:
@@ -293,7 +289,7 @@ class Init(WS, Variables):
                                 + " candle timeframe data was not loaded!"
                             )
                             var.logger.error(message)
-                            return None
+                            return None                        
 
         return self.frames
 

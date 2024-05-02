@@ -80,7 +80,7 @@ The "coins" table receives data from the websocket execution stream or trade his
 * CURRENCY - currency of a transaction or funding.
 * SYMBOL - instrument symbol, for example "XBTUSD".
 * CATEGORY - instrument category. Possible values: "linear", "inverse", "quanto", "spot", "option".
-* SIDE - side of a transaction: 0 - "buy", 1 - "sell", -1 - "funding".
+* SIDE - side of a transaction: "Buy", "Sell", "Fund" - "funding".
 * QTY - transaction volume.
 * QTY_REST - rest of transaction volume after partial execution.
 * PRICE - order price.

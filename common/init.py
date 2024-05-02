@@ -119,7 +119,7 @@ class Init(WS, Variables):
                     + "select IFNULL(sum(COMMISS),0.0) commiss, "
                     + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
                     + "sum(COMMISS) from "
-                    + "coins where SIDE < 0 and ACCOUNT = "
+                    + "coins where SIDE = 'Fund' and ACCOUNT = "
                     + str(self.user_id)
                     + " and MARKET = '"
                     + self.name
@@ -130,7 +130,7 @@ class Init(WS, Variables):
                     + "' and CATEGORY = '"
                     + symbol[1]
                     + "'),0.0) funding from "
-                    + "coins where SIDE >= 0 and ACCOUNT = "
+                    + "coins where SIDE <> 'Fund' and ACCOUNT = "
                     + str(self.user_id)
                     + " and MARKET = '"
                     + self.name
@@ -234,7 +234,7 @@ class Init(WS, Variables):
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
             + "PRICE, TTIME, COMMISS from "
-            + "coins where SIDE = -1 and ACCOUNT = "
+            + "coins where SIDE = 'Fund' and ACCOUNT = "
             + str(self.user_id)
             + " and MARKET = '"
             + self.name
@@ -251,7 +251,7 @@ class Init(WS, Variables):
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
             + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
-            + "coins where SIDE <> -1 and ACCOUNT = "
+            + "coins where SIDE <> 'Fund' and ACCOUNT = "
             + str(self.user_id)
             + " and MARKET = '"
             + self.name
@@ -313,7 +313,7 @@ def setup_database_connecion() -> None:
         CURRENCY varchar(10) DEFAULT NULL,
         SYMBOL varchar(20) DEFAULT NULL,
         CATEGORY varchar(10) DEFAULT NULL,
-        SIDE tinyint DEFAULT NULL,
+        SIDE varchar(4) DEFAULT NULL,
         QTY decimal(20,8) DEFAULT NULL,
         QTY_REST decimal(20,8) DEFAULT NULL,
         PRICE decimal(20,8) DEFAULT NULL,

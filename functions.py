@@ -142,7 +142,7 @@ class Function(WS, Variables):
                 break
             except Exception as e:  # var.error_sqlite
                 if "database is locked" not in str(e):
-                    var.logger.error("Sqlite Error: " + str(e) + ")")
+                    var.logger.error("Sqlite Error: " + str(e) + " execID=" + values[0])
                     Function.sql_lock.release()
                     break
                 else:
@@ -221,11 +221,11 @@ class Function(WS, Variables):
                 % (row["execID"], self.user_id),
             )
             if not data:
-                side = 0
                 lastQty = row["lastQty"]
+                leavesQty = row["leavesQty"]
                 if row["side"] == "Sell":
                     lastQty = -row["lastQty"]
-                    side = 1
+                    leavesQty = -row["leavesQty"]
                 calc = Function.calculate(
                     self,
                     symbol=row["symbol"],
@@ -253,9 +253,9 @@ class Function(WS, Variables):
                     row["symbol"][0],
                     row["symbol"][1],
                     self.name,
-                    side,
-                    abs(lastQty),
-                    row["leavesQty"],
+                    row["side"],
+                    lastQty,
+                    leavesQty,
                     row["price"],
                     0,
                     row["lastPx"],
@@ -265,12 +265,14 @@ class Function(WS, Variables):
                     row["transactTime"],
                     self.user_id,
                 ]
+                if row["symbol"][0] == "BTCUSDT":
+                    self.logger.error("______________ " + str(lastQty) + " " + str(row["lastQty"]) +" " + row["side"])
                 Function.insert_database(self, values=values)
                 message = {
                     "SYMBOL": row["symbol"],
                     "MARKET": row["market"],
                     "TTIME": row["transactTime"],
-                    "SIDE": side,
+                    "SIDE": row["side"],
                     "TRADE_PRICE": row["lastPx"],
                     "QTY": abs(lastQty),
                     "EMI": emi,
@@ -319,7 +321,7 @@ class Function(WS, Variables):
                         row["symbol"][0],
                         row["symbol"][1],
                         self.name,
-                        -1,
+                        "Fund",
                         self.robots[emi]["POS"],
                         0,
                         row["price"],
@@ -377,7 +379,7 @@ class Function(WS, Variables):
                     row["symbol"][0],
                     row["symbol"][1],
                     self.name,
-                    -1,
+                    "Fund",
                     diff,
                     0,
                     row["price"],
@@ -555,10 +557,6 @@ class Function(WS, Variables):
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
-        if val["SIDE"] == 0:
-            val["SIDE"] = "Buy"
-        else:
-            val["SIDE"] = "Sell"
         elements = [
             tm,
             val["SYMBOL"][0],
