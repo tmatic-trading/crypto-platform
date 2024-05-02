@@ -332,7 +332,7 @@ class Bybit(Variables):
             row["leavesQty"] = float(row["leavesQty"])
             row["transactTime"] = service.time_converter(
                 time=int(row["execTime"]) / 1000, usec=True
-            )            
+            )
             row["commission"] = float(row["feeRate"])
             if row["orderLinkId"]:
                 row["clOrdID"] = row["orderLinkId"]
@@ -342,7 +342,7 @@ class Bybit(Variables):
             if row["execType"] == "Funding":
                 if row["side"] == "Sell":
                     row["lastQty"] = -row["lastQty"]
-            row["execFee"] = float(row["execFee"])         
+            row["execFee"] = float(row["execFee"])
             if row["category"] == "spot":
                 if row["commission"] > 0:
                     if row["side"] == "Buy":
@@ -364,8 +364,9 @@ class Bybit(Variables):
             else:
                 row["settlCurrency"] = instrument.settlCurrency
 
-            print("________execution", row["symbol"], row["feeCurrency"], row["execFee"])
-
+            print(
+                "________execution", row["symbol"], row["feeCurrency"], row["execFee"]
+            )
 
             self.transaction(row=row)
 

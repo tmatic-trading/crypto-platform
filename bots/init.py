@@ -65,7 +65,9 @@ class Init(WS, Variables):
                 if defunct["EMI"] == emi:
                     break
             else:
-                if symbol in self.symbol_list:
+                if defunct["CATEGORY"] == "spot":
+                    status = "RESERVED"
+                elif symbol in self.symbol_list:
                     status = "NOT DEFINED"
                 else:
                     status = "NOT IN LIST"
@@ -293,7 +295,7 @@ class Init(WS, Variables):
                                 + " candle timeframe data was not loaded!"
                             )
                             var.logger.error(message)
-                            return None                        
+                            return None
 
         return self.frames
 

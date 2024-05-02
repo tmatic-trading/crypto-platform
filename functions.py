@@ -47,7 +47,7 @@ class Function(WS, Variables):
                 commiss = execFee
             else:
                 commiss = abs(qty) * price * coef * rate
-            funding = 0        
+            funding = 0
         else:
             sumreal = -qty * price * coef * fund
             if execFee:
@@ -238,7 +238,8 @@ class Function(WS, Variables):
                 if row["symbol"][1] != "spot":
                     self.robots[emi]["POS"] += lastQty
                     self.robots[emi]["POS"] = round(
-                        self.robots[emi]["POS"], self.Instrument[row["symbol"]].precision
+                        self.robots[emi]["POS"],
+                        self.Instrument[row["symbol"]].precision,
                     )
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
@@ -988,9 +989,11 @@ class Function(WS, Variables):
                 symbol=symbol,
             )
             if disp.labels_cache["robots"][num + mod][9] != val:
-                if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot[
-                    "STATUS"
-                ] in ["OFF", "NOT DEFINED", "NOT IN LIST"]:
+                if (
+                    robot["STATUS"] == "RESERVED"
+                    and robot["POS"] != 0
+                    and not isinstance(robot["POS"], str)
+                ) or robot["STATUS"] in ["OFF", "NOT DEFINED", "NOT IN LIST"]:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
                 else:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
