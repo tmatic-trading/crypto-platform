@@ -235,10 +235,11 @@ class Function(WS, Variables):
                     fund=1,
                     execFee=row["execFee"],
                 )
-                self.robots[emi]["POS"] += lastQty
-                self.robots[emi]["POS"] = round(
-                    self.robots[emi]["POS"], self.Instrument[row["symbol"]].precision
-                )
+                if row["symbol"][1] != "spot":
+                    self.robots[emi]["POS"] += lastQty
+                    self.robots[emi]["POS"] = round(
+                        self.robots[emi]["POS"], self.Instrument[row["symbol"]].precision
+                    )
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
@@ -265,8 +266,6 @@ class Function(WS, Variables):
                     row["transactTime"],
                     self.user_id,
                 ]
-                if row["symbol"][0] == "BTCUSDT":
-                    self.logger.error("______________ " + str(lastQty) + " " + str(row["lastQty"]) +" " + row["side"])
                 Function.insert_database(self, values=values)
                 message = {
                     "SYMBOL": row["symbol"],
@@ -945,19 +944,20 @@ class Function(WS, Variables):
         mod = Tables.robots.mod
         for num, robot in enumerate(self.robots.values()):
             symbol = robot["SYMBOL"]
-            price = Function.close_price(self, symbol=symbol, pos=robot["POS"])
-            if price:
-                calc = Function.calculate(
-                    self,
-                    symbol=symbol,
-                    price=price,
-                    qty=-float(robot["POS"]),
-                    rate=0,
-                    fund=1,
-                )
-                robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
-            else:
-                robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
+            if robot["CATEGORY"] != "spot":
+                price = Function.close_price(self, symbol=symbol, pos=robot["POS"])
+                if price:
+                    calc = Function.calculate(
+                        self,
+                        symbol=symbol,
+                        price=price,
+                        qty=-float(robot["POS"]),
+                        rate=0,
+                        fund=1,
+                    )
+                    robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
+                else:
+                    robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
             update_label(table="robots", column=0, row=num + mod, val=robot["EMI"])
             update_label(table="robots", column=1, row=num + mod, val=symbol[0])
             update_label(table="robots", column=2, row=num + mod, val=symbol[1])
@@ -980,7 +980,7 @@ class Function(WS, Variables):
                 table="robots",
                 column=8,
                 row=num + mod,
-                val="{:.8f}".format(robot["PNL"]),
+                val=format_number(number=robot["PNL"]),
             )
             val = Function.volume(
                 self,
@@ -990,7 +990,7 @@ class Function(WS, Variables):
             if disp.labels_cache["robots"][num + mod][9] != val:
                 if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot[
                     "STATUS"
-                ] in ["OFF", "NOT DEFINED"]:
+                ] in ["OFF", "NOT DEFINED", "NOT IN LIST"]:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
                 else:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color

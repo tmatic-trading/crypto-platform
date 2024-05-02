@@ -116,6 +116,8 @@ class Agent(Bitmex):
             self.Instrument[symbol].fundingRate = instrument["fundingRate"]
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
+        self.Instrument[symbol].baseCoin = instrument["underlying"]
+        self.Instrument[symbol].quoteCoin = instrument["quoteCurrency"]
 
         return category
 

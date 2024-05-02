@@ -18,6 +18,7 @@ class Ret:
 class Instrument:
     asks: list
     avgEntryPrice: float = 0
+    baseCoin: str
     bids: list
     category: str
     currentQty: float = 0
@@ -31,6 +32,7 @@ class Instrument:
     precision: int
     price_precision: int
     qtyStep: float
+    quoteCoin: str
     settlCurrency: str
     state: str
     symbol: str

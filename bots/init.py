@@ -149,7 +149,11 @@ class Init(WS, Variables):
                         robot[col] = float(robot[col])
                     if col == "LTIME":
                         robot[col] = service.time_converter(time=robot[col], usec=True)
-            robot["PNL"] = 0
+            if robot["CATEGORY"] == "spot":
+                robot["PNL"] = "None"
+                robot["POS"] = "None"
+            else:
+                robot["PNL"] = 0
             robot["lotSize"] = self.Instrument[robot["SYMBOL"]].minOrderQty
             if robot["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(robot["SYMBOL"])

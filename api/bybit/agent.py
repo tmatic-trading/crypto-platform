@@ -376,6 +376,8 @@ class Agent(Bybit):
         self.symbols.add(symbol)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]
+        self.Instrument[symbol].baseCoin = instrument["baseCoin"]
+        self.Instrument[symbol].quoteCoin = instrument["quoteCoin"]
         if "settleCoin" in instrument:
             self.Instrument[symbol].settlCurrency = (
                 instrument["settleCoin"],
@@ -430,7 +432,6 @@ class Agent(Bybit):
             self.Instrument[symbol].fundingRate = "None"
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
-
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
     for k, val in data.items():

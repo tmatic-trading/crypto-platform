@@ -59,6 +59,8 @@ def exception(method):
                     exception.status_code == 170193
                 ):  # Buy order price cannot be higher
                     pass
+                elif exception.status_code == 170194:  # order price cannot be lower
+                    pass
                 elif (
                     exception.status_code == 110094
                 ):  # Order does not meet minimum order value

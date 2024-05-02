@@ -325,27 +325,48 @@ class Bybit(Variables):
     def __handle_execution(self, values):
         for row in values["data"]:
             row["symbol"] = (row["symbol"], row["category"], self.name)
+            instrument = self.Instrument[row["symbol"]]
             row["execID"] = row["execId"]
             row["orderID"] = row["orderId"]
             row["lastPx"] = float(row["execPrice"])
             row["leavesQty"] = float(row["leavesQty"])
             row["transactTime"] = service.time_converter(
                 time=int(row["execTime"]) / 1000, usec=True
-            )
+            )            
             row["commission"] = float(row["feeRate"])
             if row["orderLinkId"]:
                 row["clOrdID"] = row["orderLinkId"]
             row["price"] = float(row["orderPrice"])
-            if row["category"] == "spot":
-                row["settlCurrency"] = (row["feeCurrency"], self.name)
-            else:
-                row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency                
             row["market"] = self.name
             row["lastQty"] = float(row["execQty"])
             if row["execType"] == "Funding":
                 if row["side"] == "Sell":
                     row["lastQty"] = -row["lastQty"]
-            row["execFee"] = float(row["execFee"])
+            row["execFee"] = float(row["execFee"])         
+            if row["category"] == "spot":
+                if row["commission"] > 0:
+                    if row["side"] == "Buy":
+                        row["feeCurrency"] = instrument.baseCoin
+                    elif row["side"] == "Sell":
+                        row["feeCurrency"] = instrument.quoteCoin
+                else:
+                    if row["IsMaker"]:
+                        if row["side"] == "Buy":
+                            row["feeCurrency"] = instrument.quoteCoin
+                        elif row["side"] == "Sell":
+                            row["feeCurrency"] = instrument.baseCoin
+                    elif not row["IsMaker"]:
+                        if row["side"] == "Buy":
+                            row["feeCurrency"] = instrument.baseCoin
+                        elif row["side"] == "Sell":
+                            row["feeCurrency"] = instrument.quoteCoin
+                row["settlCurrency"] = (row["feeCurrency"], self.name)
+            else:
+                row["settlCurrency"] = instrument.settlCurrency
+
+            print("________execution", row["symbol"], row["feeCurrency"], row["execFee"])
+
+
             self.transaction(row=row)
 
     def exit(self):
