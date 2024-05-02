@@ -23,7 +23,6 @@ class Init(WS, Variables):
         for emi, values in self.robots.items():
             self.robot_status[emi] = values["STATUS"]
         self.robots = OrderedDict()
-        # Function.rounding(self)
         self.frames = dict()
         self.account_disp = self.name + "\nAcc." + str(self.user_id) + "\n"
 

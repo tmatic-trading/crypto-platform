@@ -67,10 +67,8 @@ class Function(WS, Variables):
         """if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)"""
 
-    def timeframes_data_filename(
-        self: Markets, emi: str, symbol: tuple, timefr: str
-    ) -> str:
-        return "data/" + symbol[0] + symbol[1] + str(timefr) + "_EMI" + emi + ".txt"
+    def timeframes_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
+        return "data/" + symbol[0] + "_" + symbol[1] + "_" + str(timefr) + ".txt"
 
     def save_timeframes_data(self: Markets, frame: dict) -> None:
         zero = (6 - len(str(frame["time"]))) * "0"
