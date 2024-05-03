@@ -56,6 +56,10 @@ class Bitmex(Variables):
         self.robot_status = dict()
 
     def start(self):
+        for symbol in self.symbol_list:
+            instrument = self.Instrument[symbol]
+            if instrument.settlCurrency:
+                self.Result[(instrument.settlCurrency[0], self.name)]
         if not self.logNumFatal:
             self.__reset()
             self.__connect(self.__get_url())
@@ -375,7 +379,7 @@ class Bitmex(Variables):
             instrument.state = values["state"]
 
     def __update_account(self, settlCurrency: tuple, values: dict):
-        account = self.Account[settlCurrency]
+        account = self.Account[settlCurrency]        
         if "maintMargin" in values:
             account.positionMagrin = (
                 values["maintMargin"] / self.currency_divisor[settlCurrency[0]]

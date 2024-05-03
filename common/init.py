@@ -100,13 +100,15 @@ class Init(WS, Variables):
             + "coins where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY"
             % (self.user_id, self.name),
         )
-
         symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"], self.name), data))
         for symbol in symbols:
             Function.add_symbol(self, symbol=symbol)
         if not symbols:
             symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
-        for currency in self.currencies:
+        sql = "select DISTINCT(CURRENCY) from coins where MARKET = '" + self.name + "' AND ACCOUNT = " + str(self.user_id)
+        data = Function.select_database(self, sql)
+        for cur in data:
+            currency = cur["CURRENCY"]
             union = ""
             sql = (
                 "select sum(commiss) commiss, sum(sumreal) sumreal, "

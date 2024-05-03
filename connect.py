@@ -157,6 +157,7 @@ def trade_state(event) -> None:
             Markets[market].logNumFatal = 0
             Tables.market.color_market(state="online", row=num, market=market)
             print(market, disp.f9)
+            
 
 def on_closing(root, refresh_var):
     root.after_cancel(refresh_var)

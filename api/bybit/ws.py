@@ -70,6 +70,15 @@ class Bybit(Variables):
         self.robot_status = dict()
 
     def start(self):
+        for symbol in self.symbol_list:
+            instrument = self.Instrument[symbol]
+            if instrument.category == "linear":
+                self.Result[(instrument.quoteCoin, self.name)]
+            elif instrument.category == "inverse":
+                self.Result[(instrument.baseCoin, self.name)]
+            elif instrument.category == "spot":
+                self.Result[(instrument.baseCoin, self.name)]
+                self.Result[(instrument.quoteCoin, self.name)]
         self.__connect()
 
     def __connect(self) -> None:

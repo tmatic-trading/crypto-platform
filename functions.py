@@ -211,7 +211,8 @@ class Function(WS, Variables):
                         + ". Adding to 'robots' with STATUS="
                         + status
                     )
-                    info_display(self.name, message)
+                    if not info:
+                        info_display(self.name, message)
                     var.logger.info(message)
             data = Function.select_database(  # read_database
                 self,
@@ -1071,7 +1072,7 @@ class Function(WS, Variables):
                             results[currency] += calc["sumreal"]
                         else:
                             results[currency] = calc["sumreal"]
-        for num, currency in enumerate(self.Result.keys()):
+        for num, currency in enumerate(self.Result.keys()): # self.currencies
             result = self.Result[currency]
             result.result = 0
             if currency in results:
@@ -1835,7 +1836,7 @@ def load_labels() -> None:
     Tables.results = GridTable(
         frame=disp.frame_results,
         name="results",
-        size=len(ws.currencies) + 1,
+        size=len(ws.Result.get_keys()) + 1,
         title=var.name_results,
         # column_width=110,
         color=disp.bg_color,
@@ -1861,7 +1862,7 @@ def clear_tables():
     clear(table=Tables.account, number_rows=len(ws.Account.get_keys()))
     clear(table=Tables.robots, number_rows=len(ws.robots))
     clear(table=Tables.orderbook, number_rows=disp.num_book)
-    clear(table=Tables.results, number_rows=len(ws.currencies))
+    clear(table=Tables.results, number_rows=len(ws.Result.get_keys()))
     handler_position("event", row_position=Tables.position.mod)
 
 
