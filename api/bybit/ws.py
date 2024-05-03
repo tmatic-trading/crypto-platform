@@ -363,11 +363,6 @@ class Bybit(Variables):
                 row["settlCurrency"] = (row["feeCurrency"], self.name)
             else:
                 row["settlCurrency"] = instrument.settlCurrency
-
-            print(
-                "________execution", row["symbol"], row["feeCurrency"], row["execFee"]
-            )
-
             self.transaction(row=row)
 
     def exit(self):
@@ -384,7 +379,7 @@ class Bybit(Variables):
         except Exception:
             pass
         self.logNumFatal = -1
-        self.logger.info("Websocket closed")
+        self.logger.info(self.name + " - Websocket closed")
 
     def transaction(self, **kwargs):
         """

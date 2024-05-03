@@ -277,6 +277,7 @@ class _WebSocketManager:
 
         self.ws.close()
         while self.ws.sock:
+            print("continue")
             continue
         self.exited = True
 

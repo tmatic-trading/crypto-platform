@@ -200,7 +200,8 @@ class Agent(Bybit):
         myOrders = list()
         base = {"openOnly": 0, "limit": 50}
 
-        def request_open_orders(myOrders: list, parameters: dict):
+        def request_open_orders(parameters: dict):
+            nonlocal myOrders
             cursor = "no"
             parameters["cursor"] = cursor
             while cursor:
@@ -231,23 +232,32 @@ class Agent(Bybit):
                         time=int(order["updatedTime"]) / 1000, usec=True
                     )
                 myOrders += result["result"]["list"]
-
-            return myOrders
-
+        
+        def get_in_thread(**parameters):
+            request_open_orders(parameters)
+        
+        threads = []
         for category in self.categories:
             if category == "spot":
                 parameters = base.copy()
                 parameters["category"] = category
-                myOrders = request_open_orders(myOrders=myOrders, parameters=parameters)
+                t = threading.Thread(
+                    target=lambda par=parameters: get_in_thread(**par)
+                )
+                threads.append(t)
+                t.start()
             else:
                 for settleCoin in self.currencies:
                     if settleCoin in self.settlCurrency_list[category]:
                         parameters = base.copy()
                         parameters["category"] = category
                         parameters["settleCoin"] = settleCoin
-                        myOrders = request_open_orders(
-                            myOrders=myOrders, parameters=parameters
+                        t = threading.Thread(
+                            target=lambda par=parameters: get_in_thread(**par)
                         )
+                        threads.append(t)
+                        t.start()
+        [thread.join() for thread in threads]
 
         return myOrders
 

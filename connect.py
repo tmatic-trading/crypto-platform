@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 from collections import OrderedDict
@@ -36,6 +37,12 @@ def setup():
 
 
 def setup_market(ws: Markets):
+    open_orders = list()
+    def get_history():
+        common.Init.load_trading_history(ws)
+    def get_orders(ws):
+        nonlocal open_orders
+        open_orders = WS.open_orders(ws)
     ws.logNumFatal = -1
     ws.api_is_active = False
     WS.exit(ws)
@@ -54,9 +61,14 @@ def setup_market(ws: Markets):
                     funding.clear_columns(market=ws.name)
                     orders.clear_columns(market=ws.name)
                     common.Init.load_database(ws)
-                    common.Init.load_trading_history(ws)
+                    t1 = threading.Thread(target=get_history)
+                    t2 = threading.Thread(target=get_orders, args=(ws,))
+                    t1.start()                   
+                    t2.start()
+                    t1.join()
+                    t2.join()
                     common.Init.account_balances(ws)
-                    common.Init.load_orders(ws)
+                    common.Init.load_orders(ws, open_orders)                    
                     bots.Init.delete_unused_robot(ws)
                     for emi, value in ws.robot_status.items():
                         ws.robots[emi]["STATUS"] = value
@@ -145,3 +157,10 @@ def trade_state(event) -> None:
             Markets[market].logNumFatal = 0
             Tables.market.color_market(state="online", row=num, market=market)
             print(market, disp.f9)
+
+def on_closing(root, refresh_var):
+    root.after_cancel(refresh_var)
+    root.destroy()
+    service.close(Markets)
+    os.abort()
+

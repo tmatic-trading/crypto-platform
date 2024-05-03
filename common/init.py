@@ -150,11 +150,11 @@ class Init(WS, Variables):
             self.Result[settlCurrency].sumreal = float(data[0]["sumreal"])
             self.Result[settlCurrency].result = 0
 
-    def load_orders(self: Markets) -> None:
+    def load_orders(self: Markets, myOrders: list) -> None:
         """
         Load Orders (if any)
         """
-        myOrders = WS.open_orders(self)
+        #myOrders = WS.open_orders(self)
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:

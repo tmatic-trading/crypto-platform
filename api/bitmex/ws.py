@@ -296,7 +296,7 @@ class Bitmex(Variables):
         self.logger.debug("Websocket opened")
 
     def __on_close(self, *args) -> None:
-        self.logger.info("Websocket closed")
+        self.logger.info(self.name + " - Websocket closed")
         if self.logNumFatal < 1011:
             self.logNumFatal = 1011
 

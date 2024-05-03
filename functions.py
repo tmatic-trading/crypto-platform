@@ -520,19 +520,20 @@ class Function(WS, Variables):
             emi = ".".join(t[1:3])
         except ValueError:
             emi = clOrdID
-        info_display(
-            self.name,
-            info
-            + row["execType"]
-            + " "
-            + row["side"]
-            + ": "
-            + emi
-            + " p="
-            + str(info_p)
-            + " q="
-            + info_q,
-        )
+        if not info:
+            info_display(
+                self.name,
+                info
+                + row["execType"]
+                + " "
+                + row["side"]
+                + ": "
+                + emi
+                + " p="
+                + str(info_p)
+                + " q="
+                + info_q,
+            )
         var.logger.info(
             self.name
             + " "

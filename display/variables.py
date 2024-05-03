@@ -554,12 +554,6 @@ class ListBoxTable(Variables):
         self.clear_all()
 
 
-def on_closing(root, refresh_var):
-    var.robots_thread_is_active = False
-    root.after_cancel(refresh_var)
-    root.destroy()
-
-
 def event_width(event, canvas_id, canvas_event):
     canvas_event.itemconfig(canvas_id, width=event.width)
 
