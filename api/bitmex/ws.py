@@ -379,7 +379,7 @@ class Bitmex(Variables):
             instrument.state = values["state"]
 
     def __update_account(self, settlCurrency: tuple, values: dict):
-        account = self.Account[settlCurrency]        
+        account = self.Account[settlCurrency]
         if "maintMargin" in values:
             account.positionMagrin = (
                 values["maintMargin"] / self.currency_divisor[settlCurrency[0]]

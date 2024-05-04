@@ -105,7 +105,12 @@ class Init(WS, Variables):
             Function.add_symbol(self, symbol=symbol)
         if not symbols:
             symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
-        sql = "select DISTINCT(CURRENCY) from coins where MARKET = '" + self.name + "' AND ACCOUNT = " + str(self.user_id)
+        sql = (
+            "select DISTINCT(CURRENCY) from coins where MARKET = '"
+            + self.name
+            + "' AND ACCOUNT = "
+            + str(self.user_id)
+        )
         data = Function.select_database(self, sql)
         for cur in data:
             currency = cur["CURRENCY"]
@@ -156,7 +161,7 @@ class Init(WS, Variables):
         """
         Load Orders (if any)
         """
-        #myOrders = WS.open_orders(self)
+        # myOrders = WS.open_orders(self)
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:

@@ -1,8 +1,8 @@
 import common.init as common_init
 import connect
 from common.variables import Variables as var
-from display.variables import Variables as disp
 from connect import on_closing
+from display.variables import Variables as disp
 
 var.logger = common_init.setup_logger()
 
