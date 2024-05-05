@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 from time import sleep
+import concurrent.futures
 
 import algo.init as algo
 import bots.init as bots
@@ -37,15 +38,16 @@ def setup():
 
 
 def setup_market(ws: Markets):
-    open_orders = list()
+    def get_timeframes(ws):
+        return bots.Init.init_timeframes(ws)
 
-    def get_history():
+    def get_history(ws):
         common.Init.load_trading_history(ws)
 
     def get_orders(ws):
-        nonlocal open_orders
-        open_orders = WS.open_orders(ws)
-
+        #nonlocal open_orders
+        return WS.open_orders(ws)
+    
     ws.logNumFatal = -1
     ws.api_is_active = False
     WS.exit(ws)
@@ -59,17 +61,16 @@ def setup_market(ws: Markets):
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
                 algo.init_algo(ws)
-                if isinstance(bots.Init.init_timeframes(ws), dict):
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    frames = executor.submit(get_timeframes, ws)
+                    executor.submit(get_history, ws)
+                    open_orders = executor.submit(get_orders, ws)
+                    frames = frames.result()
+                    open_orders = open_orders.result()
+                if isinstance(frames, dict):
                     trades.clear_columns(market=ws.name)
                     funding.clear_columns(market=ws.name)
                     orders.clear_columns(market=ws.name)
-                    common.Init.load_database(ws)
-                    t1 = threading.Thread(target=get_history)
-                    t2 = threading.Thread(target=get_orders, args=(ws,))
-                    t1.start()
-                    t2.start()
-                    t1.join()
-                    t2.join()
                     common.Init.account_balances(ws)
                     common.Init.load_orders(ws, open_orders)
                     bots.Init.delete_unused_robot(ws)
@@ -79,7 +80,7 @@ def setup_market(ws: Markets):
                     funding.insert_columns()
                     orders.insert_columns()
                 else:
-                    print("Error during loading timeframes.")
+                    var.logger.info("Error during loading timeframes.")
                     WS.exit(ws)
                     ws.logNumFatal = -1
                     sleep(2)
