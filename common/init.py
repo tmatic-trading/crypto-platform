@@ -23,7 +23,6 @@ class Init(WS, Variables):
         for emi, values in self.robots.items():
             self.robot_status[emi] = values["STATUS"]
         self.robots = OrderedDict()
-        # Function.rounding(self)
         self.frames = dict()
         self.account_disp = self.name + "\nAcc." + str(self.user_id) + "\n"
 
@@ -101,13 +100,20 @@ class Init(WS, Variables):
             + "coins where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY"
             % (self.user_id, self.name),
         )
-
         symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"], self.name), data))
         for symbol in symbols:
             Function.add_symbol(self, symbol=symbol)
         if not symbols:
             symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
-        for currency in self.currencies:
+        sql = (
+            "select DISTINCT(CURRENCY) from coins where MARKET = '"
+            + self.name
+            + "' AND ACCOUNT = "
+            + str(self.user_id)
+        )
+        data = Function.select_database(self, sql)
+        for cur in data:
+            currency = cur["CURRENCY"]
             union = ""
             sql = (
                 "select sum(commiss) commiss, sum(sumreal) sumreal, "
@@ -119,7 +125,7 @@ class Init(WS, Variables):
                     + "select IFNULL(sum(COMMISS),0.0) commiss, "
                     + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
                     + "sum(COMMISS) from "
-                    + "coins where SIDE < 0 and ACCOUNT = "
+                    + "coins where SIDE = 'Fund' and ACCOUNT = "
                     + str(self.user_id)
                     + " and MARKET = '"
                     + self.name
@@ -130,7 +136,7 @@ class Init(WS, Variables):
                     + "' and CATEGORY = '"
                     + symbol[1]
                     + "'),0.0) funding from "
-                    + "coins where SIDE >= 0 and ACCOUNT = "
+                    + "coins where SIDE <> 'Fund' and ACCOUNT = "
                     + str(self.user_id)
                     + " and MARKET = '"
                     + self.name
@@ -146,16 +152,16 @@ class Init(WS, Variables):
             sql += ") T"
             data = Function.select_database(self, sql)
             settlCurrency = (currency, self.name)
-            self.Account[settlCurrency].commission = float(data[0]["commiss"])
-            self.Account[settlCurrency].funding = float(data[0]["funding"])
-            self.Account[settlCurrency].sumreal = float(data[0]["sumreal"])
-            self.Account[settlCurrency].result = 0
+            self.Result[settlCurrency].commission = float(data[0]["commiss"])
+            self.Result[settlCurrency].funding = float(data[0]["funding"])
+            self.Result[settlCurrency].sumreal = float(data[0]["sumreal"])
+            self.Result[settlCurrency].result = 0
 
-    def load_orders(self: Markets) -> None:
+    def load_orders(self: Markets, myOrders: list) -> None:
         """
         Load Orders (if any)
         """
-        myOrders = WS.open_orders(self)
+        # myOrders = WS.open_orders(self)
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:
@@ -234,7 +240,7 @@ class Init(WS, Variables):
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
             + "PRICE, TTIME, COMMISS from "
-            + "coins where SIDE = -1 and ACCOUNT = "
+            + "coins where SIDE = 'Fund' and ACCOUNT = "
             + str(self.user_id)
             + " and MARKET = '"
             + self.name
@@ -251,7 +257,7 @@ class Init(WS, Variables):
         sql = (
             "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
             + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
-            + "coins where SIDE <> -1 and ACCOUNT = "
+            + "coins where SIDE <> 'Fund' and ACCOUNT = "
             + str(self.user_id)
             + " and MARKET = '"
             + self.name
@@ -313,7 +319,7 @@ def setup_database_connecion() -> None:
         CURRENCY varchar(10) DEFAULT NULL,
         SYMBOL varchar(20) DEFAULT NULL,
         CATEGORY varchar(10) DEFAULT NULL,
-        SIDE tinyint DEFAULT NULL,
+        SIDE varchar(4) DEFAULT NULL,
         QTY decimal(20,8) DEFAULT NULL,
         QTY_REST decimal(20,8) DEFAULT NULL,
         PRICE decimal(20,8) DEFAULT NULL,

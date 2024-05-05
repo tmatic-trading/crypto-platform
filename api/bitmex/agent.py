@@ -112,16 +112,12 @@ class Agent(Bitmex):
             )
         else:
             self.Instrument[symbol].expire = "Perpetual"
-        if "fundingRate" not in instrument:
-            self.Instrument[symbol].fundingRate = 0
-        else:
+        if "fundingRate" in instrument:
             self.Instrument[symbol].fundingRate = instrument["fundingRate"]
-        self.Instrument[symbol].avgEntryPrice = 0
-        self.Instrument[symbol].marginCallPrice = 0
-        self.Instrument[symbol].currentQty = 0
-        self.Instrument[symbol].unrealisedPnl = 0
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
+        self.Instrument[symbol].baseCoin = instrument["underlying"]
+        self.Instrument[symbol].quoteCoin = instrument["quoteCurrency"]
 
         return category
 
@@ -190,6 +186,7 @@ class Agent(Bitmex):
                     if row["foreignNotional"] > 0:
                         row["lastQty"] = -row["lastQty"]
                         row["commission"] = -row["commission"]
+                row["execFee"] = None
             return result
         else:
             return "error"
@@ -265,8 +262,30 @@ class Agent(Bitmex):
         """
         pass
 
-    def get_position_info(self):
+    def get_position_info(self) -> None:
         """
-        Bitmex sends this information via websocket, "position" subscription.
+        Gets current positions
         """
-        pass
+        path = Listing.GET_POSITION_INFO
+        res = Send.request(self, path=path, verb="GET")
+        if res:
+            for values in res:
+                if values["symbol"] in self.symbol_category:
+                    symbol = (
+                        values["symbol"],
+                        self.symbol_category[values["symbol"]],
+                        self.name,
+                    )
+                    instrument = self.Instrument[symbol]
+                    if "currentQty" in values:
+                        instrument.currentQty = values["currentQty"]
+                    if instrument.currentQty != 0:
+                        if "avgEntryPrice" in values:
+                            instrument.avgEntryPrice = values["avgEntryPrice"]
+                        if "marginCallPrice" in values:
+                            if values["marginCallPrice"] == 100000000:
+                                instrument.marginCallPrice = "inf"
+                            else:
+                                instrument.marginCallPrice = values["marginCallPrice"]
+                        if "unrealisedPnl" in values:
+                            instrument.unrealisedPnl = values["unrealisedPnl"]

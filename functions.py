@@ -19,7 +19,13 @@ class Function(WS, Variables):
     sql_lock = threading.Lock()
 
     def calculate(
-        self: Markets, symbol: tuple, price: float, qty: float, rate: float, fund: int
+        self: Markets,
+        symbol: tuple,
+        price: float,
+        qty: float,
+        rate: float,
+        fund: int,
+        execFee=None,
     ) -> dict:
         """
         Calculate sumreal and commission
@@ -30,11 +36,24 @@ class Function(WS, Variables):
         )
         if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
-            commiss = abs(qty) / price * coef * rate
+            if execFee:
+                commiss = execFee
+            else:
+                commiss = abs(qty) / price * coef * rate
             funding = qty / price * coef * rate
+        elif symbol[1] == "spot":
+            sumreal = 0
+            if execFee:
+                commiss = execFee
+            else:
+                commiss = abs(qty) * price * coef * rate
+            funding = 0
         else:
             sumreal = -qty * price * coef * fund
-            commiss = abs(qty) * price * coef * rate
+            if execFee:
+                commiss = execFee
+            else:
+                commiss = abs(qty) * price * coef * rate
             funding = qty * price * coef * rate
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
@@ -45,13 +64,11 @@ class Function(WS, Variables):
             if symbol not in self.Instrument.get_keys():
                 WS.get_instrument(Markets[symbol[2]], symbol=symbol)
             # Function.rounding(self)
-        if symbol not in self.positions:
-            WS.get_position(self, symbol=symbol)
+        """if symbol not in self.positions:
+            WS.get_position(self, symbol=symbol)"""
 
-    def timeframes_data_filename(
-        self: Markets, emi: str, symbol: tuple, timefr: str
-    ) -> str:
-        return "data/" + symbol[0] + symbol[1] + str(timefr) + "_EMI" + emi + ".txt"
+    def timeframes_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
+        return "data/" + symbol[0] + "_" + symbol[1] + "_" + str(timefr) + ".txt"
 
     def save_timeframes_data(self: Markets, frame: dict) -> None:
         zero = (6 - len(str(frame["time"]))) * "0"
@@ -92,7 +109,7 @@ class Function(WS, Variables):
                 if orig:
                     data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
                 return data
-            except var.error_sqlite as e:
+            except Exception as e:  # var.error_sqlite
                 if "database is locked" not in str(e):
                     var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
@@ -121,9 +138,9 @@ class Function(WS, Variables):
                 var.connect_sqlite.commit()
                 Function.sql_lock.release()
                 break
-            except var.error_sqlite as e:
+            except Exception as e:  # var.error_sqlite
                 if "database is locked" not in str(e):
-                    var.logger.error("Sqlite Error: " + str(e) + ")")
+                    var.logger.error("Sqlite Error: " + str(e) + " execID=" + values[0])
                     Function.sql_lock.release()
                     break
                 else:
@@ -141,7 +158,7 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        account = self.Account[row["settlCurrency"]]
+        results = self.Result[row["settlCurrency"]]
 
         # Trade
 
@@ -194,7 +211,8 @@ class Function(WS, Variables):
                         + ". Adding to 'robots' with STATUS="
                         + status
                     )
-                    info_display(self.name, message)
+                    if not info:
+                        info_display(self.name, message)
                     var.logger.info(message)
             data = Function.select_database(  # read_database
                 self,
@@ -202,11 +220,11 @@ class Function(WS, Variables):
                 % (row["execID"], self.user_id),
             )
             if not data:
-                side = 0
                 lastQty = row["lastQty"]
+                leavesQty = row["leavesQty"]
                 if row["side"] == "Sell":
                     lastQty = -row["lastQty"]
-                    side = 1
+                    leavesQty = -row["leavesQty"]
                 calc = Function.calculate(
                     self,
                     symbol=row["symbol"],
@@ -214,17 +232,20 @@ class Function(WS, Variables):
                     qty=float(lastQty),
                     rate=row["commission"],
                     fund=1,
+                    execFee=row["execFee"],
                 )
-                self.robots[emi]["POS"] += lastQty
-                self.robots[emi]["POS"] = round(
-                    self.robots[emi]["POS"], self.Instrument[row["symbol"]].precision
-                )
+                if row["symbol"][1] != "spot":
+                    self.robots[emi]["POS"] += lastQty
+                    self.robots[emi]["POS"] = round(
+                        self.robots[emi]["POS"],
+                        self.Instrument[row["symbol"]].precision,
+                    )
                 self.robots[emi]["VOL"] += abs(lastQty)
                 self.robots[emi]["COMMISS"] += calc["commiss"]
                 self.robots[emi]["SUMREAL"] += calc["sumreal"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                account.commission += calc["commiss"]
-                account.sumreal += calc["sumreal"]
+                results.commission += calc["commiss"]
+                results.sumreal += calc["sumreal"]
                 values = [
                     row["execID"],
                     emi,
@@ -233,9 +254,9 @@ class Function(WS, Variables):
                     row["symbol"][0],
                     row["symbol"][1],
                     self.name,
-                    side,
-                    abs(lastQty),
-                    row["leavesQty"],
+                    row["side"],
+                    lastQty,
+                    leavesQty,
                     row["price"],
                     0,
                     row["lastPx"],
@@ -250,7 +271,7 @@ class Function(WS, Variables):
                     "SYMBOL": row["symbol"],
                     "MARKET": row["market"],
                     "TTIME": row["transactTime"],
-                    "SIDE": side,
+                    "SIDE": row["side"],
                     "TRADE_PRICE": row["lastPx"],
                     "QTY": abs(lastQty),
                     "EMI": emi,
@@ -285,6 +306,7 @@ class Function(WS, Variables):
                         qty=float(self.robots[emi]["POS"]),
                         rate=row["commission"],
                         fund=0,
+                        execFee=row["execFee"],
                     )
                     message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
@@ -298,7 +320,7 @@ class Function(WS, Variables):
                         row["symbol"][0],
                         row["symbol"][1],
                         self.name,
-                        -1,
+                        "Fund",
                         self.robots[emi]["POS"],
                         0,
                         row["price"],
@@ -313,7 +335,7 @@ class Function(WS, Variables):
                     Function.insert_database(self, values=values)
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = row["transactTime"]
-                    account.funding += calc["funding"]
+                    results.funding += calc["funding"]
                     if info:
                         Function.fill_columns(
                             self,
@@ -334,6 +356,7 @@ class Function(WS, Variables):
                     qty=float(diff),
                     rate=row["commission"],
                     fund=0,
+                    execFee=row["execFee"],
                 )
                 emi = ".".join(row["symbol"][:2])
                 if emi not in self.robots:
@@ -355,7 +378,7 @@ class Function(WS, Variables):
                     row["symbol"][0],
                     row["symbol"][1],
                     self.name,
-                    -1,
+                    "Fund",
                     diff,
                     0,
                     row["price"],
@@ -370,7 +393,7 @@ class Function(WS, Variables):
                 Function.insert_database(self, values=values)
                 self.robots[emi]["COMMISS"] += calc["funding"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
-                account.funding += calc["funding"]
+                results.funding += calc["funding"]
                 if info:
                     Function.fill_columns(
                         self, func=Function.funding_display, table=funding, val=message
@@ -498,19 +521,20 @@ class Function(WS, Variables):
             emi = ".".join(t[1:3])
         except ValueError:
             emi = clOrdID
-        info_display(
-            self.name,
-            info
-            + row["execType"]
-            + " "
-            + row["side"]
-            + ": "
-            + emi
-            + " p="
-            + str(info_p)
-            + " q="
-            + info_q,
-        )
+        if not info:
+            info_display(
+                self.name,
+                info
+                + row["execType"]
+                + " "
+                + row["side"]
+                + ": "
+                + emi
+                + " p="
+                + str(info_p)
+                + " q="
+                + info_q,
+            )
         var.logger.info(
             self.name
             + " "
@@ -533,10 +557,6 @@ class Function(WS, Variables):
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
-        if val["SIDE"] == 0:
-            val["SIDE"] = "Buy"
-        else:
-            val["SIDE"] = "Sell"
         elements = [
             tm,
             val["SYMBOL"][0],
@@ -681,13 +701,14 @@ class Function(WS, Variables):
         """
         Refresh information on screen
         """
+        adaptive_screen()
         if utc.hour != var.refresh_hour:
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening SQLite")
 
         disp.label_time["text"] = time.asctime(time.gmtime())
-        disp.label_f9["text"] = str(disp.f9)
+        disp.label_f9["text"] = disp.f9
         if disp.f9 == "ON":
             disp.label_f9.config(bg=disp.green_color)
         else:
@@ -733,13 +754,13 @@ class Function(WS, Variables):
                 table="position",
                 column=4,
                 row=num + mod,
-                val=instrument.unrealisedPnl,
+                val=format_number(number=instrument.unrealisedPnl),
             )
             update_label(
                 table="position",
                 column=5,
                 row=num + mod,
-                val=(str(instrument.marginCallPrice).replace("100000000", "inf")),
+                val=instrument.marginCallPrice,
             )
             update_label(
                 table="position",
@@ -925,19 +946,20 @@ class Function(WS, Variables):
         mod = Tables.robots.mod
         for num, robot in enumerate(self.robots.values()):
             symbol = robot["SYMBOL"]
-            price = Function.close_price(self, symbol=symbol, pos=robot["POS"])
-            if price:
-                calc = Function.calculate(
-                    self,
-                    symbol=symbol,
-                    price=price,
-                    qty=-float(robot["POS"]),
-                    rate=0,
-                    fund=1,
-                )
-                robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
-            else:
-                robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
+            if robot["CATEGORY"] != "spot":
+                price = Function.close_price(self, symbol=symbol, pos=robot["POS"])
+                if price:
+                    calc = Function.calculate(
+                        self,
+                        symbol=symbol,
+                        price=price,
+                        qty=-float(robot["POS"]),
+                        rate=0,
+                        fund=1,
+                    )
+                    robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
+                else:
+                    robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
             update_label(table="robots", column=0, row=num + mod, val=robot["EMI"])
             update_label(table="robots", column=1, row=num + mod, val=symbol[0])
             update_label(table="robots", column=2, row=num + mod, val=symbol[1])
@@ -960,7 +982,7 @@ class Function(WS, Variables):
                 table="robots",
                 column=8,
                 row=num + mod,
-                val="{:.8f}".format(robot["PNL"]),
+                val=format_number(number=robot["PNL"]),
             )
             val = Function.volume(
                 self,
@@ -968,9 +990,11 @@ class Function(WS, Variables):
                 symbol=symbol,
             )
             if disp.labels_cache["robots"][num + mod][9] != val:
-                if (robot["STATUS"] == "RESERVED" and robot["POS"] != 0) or robot[
-                    "STATUS"
-                ] in ["OFF", "NOT DEFINED"]:
+                if (
+                    robot["STATUS"] == "RESERVED"
+                    and robot["POS"] != 0
+                    and not isinstance(robot["POS"], str)
+                ) or robot["STATUS"] in ["OFF", "NOT DEFINED", "NOT IN LIST"]:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
                 else:
                     disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
@@ -985,34 +1009,9 @@ class Function(WS, Variables):
         # Refresh Account table
 
         mod = Tables.account.mod
-        results = dict()
-        for symbol, position in self.positions.items():
-            if symbol[2] == var.current_market:
-                if position["POS"] != 0:
-                    price = Function.close_price(
-                        self, symbol=symbol, pos=position["POS"]
-                    )
-                    if price:
-                        calc = Function.calculate(
-                            self,
-                            symbol=symbol,
-                            price=price,
-                            qty=-position["POS"],
-                            rate=0,
-                            fund=1,
-                        )
-                        settlCurrency = self.Instrument[symbol].settlCurrency
-                        if settlCurrency in results:
-                            results[settlCurrency] += calc["sumreal"]
-                        else:
-                            results[settlCurrency] = calc["sumreal"]
-        for num, cur in enumerate(self.currencies):
-            settlCurrency = (cur, self.name)
+        for num, settlCurrency in enumerate(self.Account.keys()):
             account = self.Account[settlCurrency]
-            account.result = 0
-            if settlCurrency in results:
-                account.result += results[settlCurrency]
-            update_label(table="account", column=0, row=num + mod, val=cur)
+            update_label(table="account", column=0, row=num + mod, val=settlCurrency[0])
             update_label(
                 table="account",
                 column=1,
@@ -1049,23 +1048,54 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=format_number(number=account.availableMargin),
             )
+
+        # Refresh Results table
+
+        mod = Tables.results.mod
+        results = dict()
+        for symbol, position in self.positions.items():
+            if symbol[2] == var.current_market:
+                if position["POS"] != 0:
+                    price = Function.close_price(
+                        self, symbol=symbol, pos=position["POS"]
+                    )
+                    if price:
+                        calc = Function.calculate(
+                            self,
+                            symbol=symbol,
+                            price=price,
+                            qty=-position["POS"],
+                            rate=0,
+                            fund=1,
+                        )
+                        currency = self.Instrument[symbol].settlCurrency
+                        if currency in results:
+                            results[currency] += calc["sumreal"]
+                        else:
+                            results[currency] = calc["sumreal"]
+        for num, currency in enumerate(self.Result.keys()):  # self.currencies
+            result = self.Result[currency]
+            result.result = 0
+            if currency in results:
+                result.result += results[currency]
+            update_label(table="results", column=0, row=num + mod, val=currency[0])
             update_label(
-                table="account",
-                column=7,
+                table="results",
+                column=1,
                 row=num + mod,
-                val=format_number(number=account.sumreal + account.result),
+                val=format_number(number=result.sumreal + result.result),
             )
             update_label(
-                table="account",
-                column=8,
+                table="results",
+                column=2,
                 row=num + mod,
-                val=format_number(number=-account.commission),
+                val=format_number(number=-result.commission),
             )
             update_label(
-                table="account",
-                column=9,
+                table="results",
+                column=3,
                 row=num + mod,
-                val=format_number(number=-account.funding),
+                val=format_number(number=-result.funding),
             )
 
         # Refresh Market table
@@ -1128,14 +1158,23 @@ class Function(WS, Variables):
         This function sends a new order
         """
         price_str = Function.format_price(self, number=price, symbol=symbol)
-        var.logger.info(
-            "Posting side=" + side + " price=" + price_str + " qty=" + str(qty)
-        )
         clOrdID = ""
         if side == "Sell":
             qty = -qty
         var.last_order += 1
         clOrdID = str(var.last_order) + "." + emi
+        var.logger.info(
+            "Posting symbol="
+            + str(symbol)
+            + " clOrdID="
+            + clOrdID
+            + " side="
+            + side
+            + " price="
+            + price_str
+            + " qty="
+            + str(qty)
+        )
         WS.place_limit(
             self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
         )
@@ -1185,7 +1224,7 @@ class Function(WS, Variables):
 
         return self.logNumFatal
 
-    def market_status(self: Markets, status: str) -> None:
+    def market_status(self: Markets, status: str, message: str, error=False) -> None:
         mod = Tables.market.mod
         row = var.market_list.index(self.name)
         update_label(
@@ -1194,6 +1233,14 @@ class Function(WS, Variables):
             row=row + mod,
             val=self.account_disp + status,
         )
+        info_display(self.name, message)
+        if error:
+            Tables.market.color_market(
+                state="error",
+                row=row,
+                market=self.name,
+            )
+        disp.root.update()
 
     def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
@@ -1341,12 +1388,14 @@ def handler_order(event) -> None:
 
 
 def handler_orderbook(event, row_position: int) -> None:
-    disp.symb_book = var.symbol
+    disp.handler_orderbook_symbol = var.symbol
     ws = Markets[var.current_market]
 
     def refresh() -> None:
+        nonlocal ws
         book_window.title(var.symbol)
-        if disp.symb_book != var.symbol:
+        if disp.handler_orderbook_symbol != var.symbol:
+            ws = Markets[var.current_market]
             entry_price_ask.delete(0, "end")
             entry_price_ask.insert(
                 0,
@@ -1385,7 +1434,7 @@ def handler_orderbook(event, row_position: int) -> None:
                     label=option, command=lambda v=emi_number, optn=option: v.set(optn)
                 )
             emi_number.set("")
-            disp.symb_book = var.symbol
+            disp.handler_orderbook_symbol = var.symbol
         book_window.after(100, refresh)
 
     def on_closing() -> None:
@@ -1406,7 +1455,6 @@ def handler_orderbook(event, row_position: int) -> None:
             return "error"
         qnt_d = Decimal(str(qnt))
         qtyStep = Decimal(str(ws.Instrument[var.symbol].qtyStep))
-        print(qnt_d % qtyStep)
         if qnt_d % qtyStep != 0:
             message = (
                 "The "
@@ -1544,29 +1592,27 @@ def handler_orderbook(event, row_position: int) -> None:
             ):
                 options.append(ws.robots[emi]["EMI"])
         option_robots = tk.OptionMenu(frame_robots, emi_number, *options)
-        frame_robots.grid(
-            row=1, column=0, sticky="N" + "S" + "W" + "E", columnspan=2, padx=10, pady=0
-        )
+        frame_robots.grid(row=1, column=0, sticky="NSWE", columnspan=2, padx=10, pady=0)
         label_robots.pack(side="left")
         option_robots.pack()
         frame_quantity.grid(
             row=2,
             column=0,
-            sticky="N" + "S" + "W" + "E",
+            sticky="NSWE",
             columnspan=2,
             padx=10,
             pady=10,
         )
         label_quantity.pack(side="left")
         entry_quantity.pack()
-        frame_market_ask.grid(row=3, column=0, sticky="N" + "S" + "W" + "E")
-        frame_market_bid.grid(row=3, column=1, sticky="N" + "S" + "W" + "E")
+        frame_market_ask.grid(row=3, column=0, sticky="NSWE")
+        frame_market_bid.grid(row=3, column=1, sticky="NSWE")
         label_ask.pack(side="left")
         entry_price_ask.pack()
         label_bid.pack(side="left")
         entry_price_bid.pack()
-        sell_limit.grid(row=4, column=0, sticky="N" + "S" + "W" + "E", pady=10)
-        buy_limit.grid(row=4, column=1, sticky="N" + "S" + "W" + "E", pady=10)
+        sell_limit.grid(row=4, column=0, sticky="NSWE", pady=10)
+        buy_limit.grid(row=4, column=1, sticky="NSWE", pady=10)
         change_color(color=disp.title_color, container=book_window)
         refresh_var = book_window.after_idle(refresh)
 
@@ -1579,15 +1625,17 @@ def update_label(
         disp.labels[table][row][column]["text"] = val
 
 
-def format_number(number: float) -> str:
+def format_number(number: Union[float, str]) -> str:
     """
-    Rounding a value from 3 to 6 decimal places
+    Rounding a value from 2 to 8 decimal places
     """
-    number = 0 if round(number, 7) == 0 else number
-    len_int = len(str(int(number)))
-    after_dot = max(3, 9 - max(3, len_int))
+    if not isinstance(number, str):
+        after_dot = max(2, 9 - max(1, len(str(int(number)))))
+        number = "{:.{num}f}".format(number, num=after_dot)
+        number = number.rstrip("0")
+        number = number.rstrip(".")
 
-    return "{:.{num}f}".format(number, num=after_dot)
+    return number
 
 
 def warning_window(message: str) -> None:
@@ -1728,26 +1776,26 @@ def load_labels() -> None:
         color=disp.bg_color,
         select=True,
     )
-    account_rows = len(var.env[var.current_market]["CURRENCIES"])
+    account_rows = len(ws.Account.get_keys())
     Tables.account = GridTable(
-        frame=disp.frame_4row_1_2_3col,
+        frame=disp.account_frame,
         name="account",
         size=account_rows + 1,
         title=var.name_account,
-        canvas_height=63,
+        # canvas_height=63,
         color=disp.bg_color,
     )
     Tables.robots = GridTable(
-        frame=disp.frame_5row_1_2_3col,
+        frame=disp.robots_frame,
         name="robots",
         size=max(disp.num_robots, len(ws.robots) + 1),
         title=var.name_robots,
-        canvas_height=150,
+        # canvas_height=150,
         bind=handler_robots,
-        color=disp.title_color,
+        color=disp.bg_color,  # disp.title_color,
     )
     Tables.market = GridTable(
-        frame=disp.frame_3row_1col,
+        frame=disp.market_frame,
         name="market",
         size=len(var.market_list) + 1,
         title=var.name_market,
@@ -1784,6 +1832,14 @@ def load_labels() -> None:
                     disp.labels["orderbook"][row][column]["anchor"] = "w"
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"
+    Tables.results = GridTable(
+        frame=disp.frame_results,
+        name="results",
+        size=len(ws.Result.get_keys()) + 1,
+        title=var.name_results,
+        # column_width=110,
+        color=disp.bg_color,
+    )
 
 
 def clear_tables():
@@ -1802,9 +1858,10 @@ def clear_tables():
 
     ws = Markets[var.current_market]
     clear(table=Tables.position, number_rows=len(ws.symbol_list))
-    clear(table=Tables.account, number_rows=len(ws.currencies))
+    clear(table=Tables.account, number_rows=len(ws.Account.get_keys()))
     clear(table=Tables.robots, number_rows=len(ws.robots))
     clear(table=Tables.orderbook, number_rows=disp.num_book)
+    clear(table=Tables.results, number_rows=len(ws.Result.get_keys()))
     handler_position("event", row_position=Tables.position.mod)
 
 
@@ -1828,3 +1885,196 @@ orders = ListBoxTable(
     size=0,
     expand=True,
 )
+
+
+def adaptive_screen():
+    now_height = disp.frame_rest.winfo_height()
+    if now_height != disp.all_height:
+        disp.frame_rest.grid_rowconfigure(
+            0, minsize=int(disp.frame_rest.winfo_height() / 6)
+        )
+        disp.frame_rest.grid_rowconfigure(
+            1, minsize=int(disp.frame_rest.winfo_height() / 2)
+        )
+        disp.all_height = now_height
+
+    now_width = disp.root.winfo_width()
+    if now_width != disp.all_width or var.current_market != disp.last_market:
+        ratio = now_width / disp.window_width
+        if now_width > disp.window_width:
+            t = disp.platform_name.ljust((now_width - disp.window_width) // 4)
+            disp.root.title(t)
+        else:
+            disp.root.title(disp.platform_name)
+
+        # Hide / show adaptive columns in order to save space in the tables
+        if ratio < disp.adaptive_ratio:
+            if (
+                disp.labels["position"][0][8].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                for i in range(Tables.position.size):
+                    disp.labels["position"][i][8].grid_forget()
+                Tables.position.sub.grid_columnconfigure(8, weight=0)
+            if (
+                orders.listboxes[7].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                orders.listboxes[7].grid_forget()
+                orders.sub.grid_columnconfigure(7, weight=0)
+            if (
+                trades.listboxes[7].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                trades.listboxes[7].grid_forget()
+                trades.sub.grid_columnconfigure(7, weight=0)
+            if (
+                funding.listboxes[7].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                funding.listboxes[7].grid_forget()
+                funding.sub.grid_columnconfigure(7, weight=0)
+        if ratio < disp.adaptive_ratio - 0.1:
+            if (
+                disp.labels["position"][0][7].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                for i in range(Tables.position.size):
+                    disp.labels["position"][i][7].grid_forget()
+                Tables.position.sub.grid_columnconfigure(7, weight=0)
+            if (
+                orders.listboxes[2].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                orders.listboxes[2].grid_forget()
+                orders.sub.grid_columnconfigure(2, weight=0)
+            if (
+                trades.listboxes[2].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                trades.listboxes[2].grid_forget()
+                trades.sub.grid_columnconfigure(2, weight=0)
+            if (
+                funding.listboxes[2].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                funding.listboxes[2].grid_forget()
+                funding.sub.grid_columnconfigure(2, weight=0)
+            if (
+                disp.labels["robots"][0][5].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                for i in range(Tables.robots.size):
+                    disp.labels["robots"][i][5].grid_forget()
+                Tables.robots.sub.grid_columnconfigure(5, weight=0)
+        if ratio < disp.adaptive_ratio - 0.2:
+            if (
+                disp.labels["position"][0][1].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                for i in range(Tables.position.size):
+                    disp.labels["position"][i][1].grid_forget()
+                Tables.position.sub.grid_columnconfigure(1, weight=0)
+            if (
+                orders.listboxes[4].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                orders.listboxes[4].grid_forget()
+                orders.sub.grid_columnconfigure(4, weight=0)
+            if (
+                trades.listboxes[4].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                trades.listboxes[4].grid_forget()
+                trades.sub.grid_columnconfigure(4, weight=0)
+            if (
+                funding.listboxes[4].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                funding.listboxes[4].grid_forget()
+                funding.sub.grid_columnconfigure(4, weight=0)
+            if (
+                disp.labels["robots"][0][2].winfo_ismapped() == 1
+                or var.current_market != disp.last_market
+            ):
+                for i in range(Tables.robots.size):
+                    disp.labels["robots"][i][2].grid_forget()
+                Tables.robots.sub.grid_columnconfigure(2, weight=0)
+        if ratio >= disp.adaptive_ratio:
+            if disp.labels["position"][0][8].winfo_ismapped() == 0:
+                for i in range(Tables.position.size):
+                    disp.labels["position"][i][8].grid(
+                        row=i, column=8, sticky="NSWE", padx=0, pady=0
+                    )
+                Tables.position.sub.grid_columnconfigure(8, weight=1)
+            if orders.listboxes[7].winfo_ismapped() == 0:
+                orders.listboxes[7].grid(row=0, padx=0, column=7, sticky="NSWE")
+                orders.sub.grid_columnconfigure(7, weight=1)
+            if trades.listboxes[7].winfo_ismapped() == 0:
+                trades.listboxes[7].grid(row=0, padx=0, column=7, sticky="NSWE")
+                trades.sub.grid_columnconfigure(7, weight=1)
+            if funding.listboxes[7].winfo_ismapped() == 0:
+                funding.listboxes[7].grid(row=0, padx=0, column=7, sticky="NSWE")
+                funding.sub.grid_columnconfigure(7, weight=1)
+        if ratio >= disp.adaptive_ratio - 0.1:
+            if disp.labels["position"][0][7].winfo_ismapped() == 0:
+                for i in range(Tables.position.size):
+                    disp.labels["position"][i][7].grid(
+                        row=i, column=7, sticky="NSWE", padx=0, pady=0
+                    )
+                Tables.position.sub.grid_columnconfigure(7, weight=1)
+            if orders.listboxes[2].winfo_ismapped() == 0:
+                orders.listboxes[2].grid(row=0, padx=0, column=2, sticky="NSWE")
+                orders.sub.grid_columnconfigure(2, weight=1)
+            if trades.listboxes[2].winfo_ismapped() == 0:
+                trades.listboxes[2].grid(row=0, padx=0, column=2, sticky="NSWE")
+                trades.sub.grid_columnconfigure(2, weight=1)
+            if funding.listboxes[2].winfo_ismapped() == 0:
+                funding.listboxes[2].grid(row=0, padx=0, column=2, sticky="NSWE")
+                funding.sub.grid_columnconfigure(2, weight=1)
+            if disp.labels["robots"][0][5].winfo_ismapped() == 0:
+                for i in range(Tables.robots.size):
+                    disp.labels["robots"][i][5].grid(
+                        row=i, column=5, sticky="NSWE", padx=0, pady=0
+                    )
+                Tables.robots.sub.grid_columnconfigure(5, weight=1)
+        if ratio >= disp.adaptive_ratio - 0.2:
+            if disp.labels["position"][0][1].winfo_ismapped() == 0:
+                for i in range(Tables.position.size):
+                    disp.labels["position"][i][1].grid(
+                        row=i, column=1, sticky="NSWE", padx=0, pady=0
+                    )
+                Tables.position.sub.grid_columnconfigure(1, weight=1)
+            if orders.listboxes[4].winfo_ismapped() == 0:
+                orders.listboxes[4].grid(row=0, padx=0, column=4, sticky="NSWE")
+                orders.sub.grid_columnconfigure(4, weight=1)
+            if trades.listboxes[4].winfo_ismapped() == 0:
+                trades.listboxes[4].grid(row=0, padx=0, column=4, sticky="NSWE")
+                trades.sub.grid_columnconfigure(4, weight=1)
+            if funding.listboxes[4].winfo_ismapped() == 0:
+                funding.listboxes[4].grid(row=0, padx=0, column=4, sticky="NSWE")
+                funding.sub.grid_columnconfigure(4, weight=1)
+            if disp.labels["robots"][0][2].winfo_ismapped() == 0:
+                for i in range(Tables.robots.size):
+                    disp.labels["robots"][i][2].grid(
+                        row=i, column=2, sticky="NSWE", padx=0, pady=0
+                    )
+                Tables.robots.sub.grid_columnconfigure(2, weight=1)
+        disp.last_market = var.current_market
+
+        # Hide / show right adaptive frame
+        if now_width > disp.window_width:
+            state_width = disp.window_width
+            side_width = now_width - state_width
+            disp.frame_right.configure(width=side_width)
+            if disp.state_width is None:
+                disp.frame_right.grid(row=0, column=1, sticky="NSWE", rowspan=2)
+                disp.frame_state.configure(width=state_width)
+                disp.state_width = state_width
+        else:
+            state_width = None
+            if disp.state_width is not None:
+                disp.frame_right.grid_forget()
+                disp.frame_state.configure(width=state_width)
+                disp.state_width = state_width
+        disp.all_width = now_width

@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 from collections import OrderedDict
@@ -36,15 +37,21 @@ def setup():
 
 
 def setup_market(ws: Markets):
+    open_orders = list()
+
+    def get_history():
+        common.Init.load_trading_history(ws)
+
+    def get_orders(ws):
+        nonlocal open_orders
+        open_orders = WS.open_orders(ws)
+
     ws.logNumFatal = -1
     ws.api_is_active = False
     WS.exit(ws)
     while ws.logNumFatal:
         ws.logNumFatal = -1
         WS.start_ws(ws)
-        WS.get_user(ws)
-        WS.get_wallet_balance(ws)
-        WS.get_position_info(ws)
         if ws.logNumFatal:
             WS.exit(ws)
             sleep(2)
@@ -57,9 +64,14 @@ def setup_market(ws: Markets):
                     funding.clear_columns(market=ws.name)
                     orders.clear_columns(market=ws.name)
                     common.Init.load_database(ws)
-                    common.Init.load_trading_history(ws)
+                    t1 = threading.Thread(target=get_history)
+                    t2 = threading.Thread(target=get_orders, args=(ws,))
+                    t1.start()
+                    t2.start()
+                    t1.join()
+                    t2.join()
                     common.Init.account_balances(ws)
-                    common.Init.load_orders(ws)
+                    common.Init.load_orders(ws, open_orders)
                     bots.Init.delete_unused_robot(ws)
                     for emi, value in ws.robot_status.items():
                         ws.robots[emi]["STATUS"] = value
@@ -90,15 +102,14 @@ def refresh() -> None:
                     ws.message2000 = (
                         "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
                     )
-                    info_display(ws.name, ws.message2000)
-                    Tables.market.color_market(
-                        state="error",
-                        row=var.market_list.index(ws.name),
-                        market=ws.name,
+                    Function.market_status(
+                        ws, status="Error", message=ws.message2000, error=True
                     )
                 sleep(1)
             elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-                # Function.market_status(ws, "RESTARTING...")
+                Function.market_status(
+                    ws, status="RESTARTING...", message="RESTARTING...", error=True
+                )
                 setup_market(ws=ws)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
@@ -118,6 +129,7 @@ def clear_params():
     var.orders = OrderedDict()
     var.current_market = var.market_list[0]
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
+    disp.symb_book = ()
 
 
 def robots_thread() -> None:
@@ -145,8 +157,14 @@ def trade_state(event) -> None:
         disp.f9 = "OFF"
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
-        disp.messageStopped = ""
         for num, market in enumerate(var.market_list):
             Markets[market].logNumFatal = 0
             Tables.market.color_market(state="online", row=num, market=market)
             print(market, disp.f9)
+
+
+def on_closing(root, refresh_var):
+    root.after_cancel(refresh_var)
+    root.destroy()
+    service.close(Markets)
+    os.abort()

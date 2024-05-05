@@ -17,13 +17,14 @@ class Ret:
 
 class Instrument:
     asks: list
-    avgEntryPrice: float
+    avgEntryPrice: float = 0
+    baseCoin: str
     bids: list
     category: str
-    currentQty: float
+    currentQty: float = 0
     expire: Union[str, datetime]
-    fundingRate: float
-    marginCallPrice: Union[str, float]
+    fundingRate: float = 0
+    marginCallPrice: Union[str, float] = 0
     maxOrderQty: float
     minOrderQty: float
     multiplier: int
@@ -31,12 +32,13 @@ class Instrument:
     precision: int
     price_precision: int
     qtyStep: float
+    quoteCoin: str
     settlCurrency: str
     state: str
     symbol: str
     tickSize: Union[str, float]
-    unrealisedPnl: Union[str, float]
-    volume24h: float
+    unrealisedPnl: float = 0
+    volume24h: float = 0
 
     def __iter__(self):
         return Ret.iter(self)
@@ -45,17 +47,22 @@ class Instrument:
 class Account:
     account: Union[str, float]
     availableMargin: float = 0
-    commission: float = 0
-    funding: float = 0
-    initMargin: float = 0
     marginBalance: float = 0
     orderMargin: float = 0
     positionMagrin: float = 0
-    result: float = 0
     settlCurrency: str
-    sumreal: float = 0
     unrealisedPnl: float = 0
     walletBalance: float = 0
+
+    def __iter__(self):
+        return Ret.iter(self)
+
+
+class Result:
+    commission: float = 0
+    funding: float = 0
+    sumreal: float = 0
+    result: float = 0
 
     def __iter__(self):
         return Ret.iter(self)
@@ -113,3 +120,30 @@ class MetaAccount(type):
         name = self.__qualname__.split(".")[0]
         if name in MetaAccount.market:
             return MetaAccount.market[name].keys()
+
+
+class MetaResult(type):
+    all = dict()
+    market = dict()
+
+    def __getitem__(self, item) -> Result:
+        if item not in self.all:
+            self.all[item] = Result()
+            name = item[1]
+            if name not in self.market:
+                self.market[name] = OrderedDict()
+            self.market[name][item] = self.all[item]
+            return self.all[item]
+        else:
+            return self.all[item]
+
+    def keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaResult.market:
+            for symbol in MetaResult.market[name]:
+                yield symbol
+
+    def get_keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaResult.market:
+            return MetaResult.market[name].keys()

@@ -16,6 +16,7 @@ class Listing(str, Enum):
     )
     URGENT_ANNOUNCEMENT = "announcement/urgent"
     ORDER_ACTIONS = "order"
+    GET_POSITION_INFO = "position"
 
     def __str__(self) -> str:
         return self.value

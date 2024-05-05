@@ -76,16 +76,13 @@ class Variables:
         "FUND",
     ]
     name_account = [
-        "CURR",
+        "CURRENCY",
         "WALLET_BAL",
         "UNRLZD_PNL",
         "MARGIN_BAL",
         "ORDER_MARG",
         "POS_MARG",
         "AVAILABLE",
-        "PNL",
-        "COMMISS",
-        "FUNDING",
     ]
     name_trade = [
         "TIME",
@@ -120,17 +117,23 @@ class Variables:
     name_market = [
         "MARKET",
     ]
+    name_results = [
+        "CURRENCY",
+        "PNL SUM",
+        "COMMISSION SUM",
+        "FUNDING SUM",
+    ]
     logger = logging
     connect_sqlite = None
     cursor_sqlite = None
     error_sqlite = None
-    currency_divisor = {
+    """currency_divisor = {
         "XBt": 100000000,
         "USDt": 1000000,
         "BMEx": 1000000,
         "USDT": 1,
         "BTC": 1,
-    }
+    }"""
     last_order = int((time.time() - 1591000000) * 10)
     last_database_time = datetime(1900, 1, 1, 1, 1)
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)

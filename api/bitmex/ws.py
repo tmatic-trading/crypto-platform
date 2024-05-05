@@ -12,8 +12,7 @@ import websocket
 import services as service
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaAccount, MetaInstrument
-from display.functions import info_display
+from common.data import MetaAccount, MetaInstrument, MetaResult
 
 from .api_auth import generate_signature
 
@@ -23,6 +22,9 @@ class Bitmex(Variables):
         pass
 
     class Instrument(metaclass=MetaInstrument):
+        pass
+
+    class Result(metaclass=MetaResult):
         pass
 
     def __init__(self):
@@ -54,12 +56,15 @@ class Bitmex(Variables):
         self.robot_status = dict()
 
     def start(self):
+        for symbol in self.symbol_list:
+            instrument = self.Instrument[symbol]
+            if instrument.settlCurrency:
+                self.Result[(instrument.settlCurrency[0], self.name)]
         if not self.logNumFatal:
             self.__reset()
             self.__connect(self.__get_url())
             if self.logNumFatal == 0:
                 self.logger.info("Connected to websocket.")
-                info_display(self.name, "Connected to websocket.")
                 self.__wait_for_tables()
                 if self.logNumFatal == 0:
                     self.logger.info("Data received. Continuing.")
@@ -250,6 +255,7 @@ class Bitmex(Variables):
                                 if val["foreignNotional"] > 0:
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
+                            val["execFee"] = None
                             self.transaction(row=val)
                         else:
                             self.data[table_name][key] = val
@@ -294,7 +300,7 @@ class Bitmex(Variables):
         self.logger.debug("Websocket opened")
 
     def __on_close(self, *args) -> None:
-        self.logger.info("Websocket closed")
+        self.logger.info(self.name + " - Websocket closed")
         if self.logNumFatal < 1011:
             self.logNumFatal = 1011
 
@@ -341,16 +347,27 @@ class Bitmex(Variables):
         "quote", "orderBook10" websocket streams.
         """
         symbol = (values["symbol"], values["category"], self.name)
-        self.positions[symbol]["POS"] = values["currentQty"]
         instrument = self.Instrument[symbol]
-        instrument.currentQty = values["currentQty"]
-        if instrument.currentQty != 0:
+        if "currentQty" in values:
+            instrument.currentQty = values["currentQty"]
+            self.positions[symbol]["POS"] = instrument.currentQty
+        if instrument.currentQty == 0:
+            instrument.avgEntryPrice = 0
+            instrument.marginCallPrice = 0
+            instrument.unrealisedPnl = 0
+        else:
             if "avgEntryPrice" in values:
                 instrument.avgEntryPrice = values["avgEntryPrice"]
-            if "marginCallPrice" in values:
-                instrument.marginCallPrice = values["marginCallPrice"]
             if "unrealisedPnl" in values:
-                instrument.unrealisedPnl = values["unrealisedPnl"]
+                instrument.unrealisedPnl = (
+                    values["unrealisedPnl"]
+                    / self.currency_divisor[instrument.settlCurrency[0]]
+                )
+            if "marginCallPrice" in values:
+                if values["marginCallPrice"] == 100000000:
+                    instrument.marginCallPrice = "inf"
+                else:
+                    instrument.marginCallPrice = values["marginCallPrice"]
 
     def __update_instrument(self, symbol: tuple, values: dict):
         instrument = self.Instrument[symbol]
@@ -368,7 +385,7 @@ class Bitmex(Variables):
                 values["maintMargin"] / self.currency_divisor[settlCurrency[0]]
             )
         if "initMargin" in values:
-            account.initMargin = (
+            account.orderMargin = (
                 values["initMargin"] / self.currency_divisor[settlCurrency[0]]
             )
         if "unrealisedPnl" in values:
@@ -397,7 +414,6 @@ class Bitmex(Variables):
         except Exception:
             pass
         self.logNumFatal = -1
-        self.logger.info("Websocket closed")
 
     def transaction(self, **kwargs):
         """

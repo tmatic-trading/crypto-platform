@@ -1,6 +1,7 @@
 import logging
+import os
+import traceback
 
-import services as service
 from api.variables import Variables
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,8 @@ def exception(method):
                     exception.status_code == 170193
                 ):  # Buy order price cannot be higher
                     pass
+                elif exception.status_code == 170194:  # order price cannot be lower
+                    pass
                 elif (
                     exception.status_code == 110094
                 ):  # Order does not meet minimum order value
@@ -81,7 +84,10 @@ def exception(method):
                 logger.error(message)
                 self.logNumFatal = 1001
             else:
-                print("_____________", name)
-                raise exception
+                print("_____________error", name)
+                traceback.print_exception(
+                    type(exception), exception, exception.__traceback__
+                )
+                os.abort()
 
     return decorator

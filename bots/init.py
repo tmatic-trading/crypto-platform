@@ -1,3 +1,4 @@
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
 
@@ -51,15 +52,12 @@ class Init(WS, Variables):
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
         qwr = (
-            "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, \
-                sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-                    -QTY ELSE 0 END) POS from coins where MARKET = '"
+            "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, "
+            + "sum(QTY) POS from coins where MARKET = '"
             + self.name
-            + "' and \
-                        account = "
+            + "' and account = "
             + str(self.user_id)
-            + " and SIDE <> -1 group by EMI, \
-                            SYMBOL, CATEGORY) res where POS <> 0"
+            + " and SIDE <> 'Fund' group by EMI, SYMBOL, CATEGORY) res where POS <> 0"
         )
         defuncts = Function.select_database(self, qwr)
         for defunct in defuncts:
@@ -68,7 +66,9 @@ class Init(WS, Variables):
                 if defunct["EMI"] == emi:
                     break
             else:
-                if symbol in self.symbol_list:
+                if defunct["CATEGORY"] == "spot":
+                    status = "RESERVED"
+                elif symbol in self.symbol_list:
                     status = "NOT DEFINED"
                 else:
                     status = "NOT IN LIST"
@@ -90,10 +90,9 @@ class Init(WS, Variables):
         for symbol in self.symbol_list:
             qwr += (
                 union
-                + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, \
-            sum(CASE WHEN SIDE = 0 THEN QTY WHEN SIDE = 1 THEN \
-            -QTY ELSE 0 END) POS from coins where SIDE <> -1 group by EMI, SYMBOL, CATEGORY, \
-            ACCOUNT, MARKET) res where EMI = '"
+                + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, "
+                + "sum(QTY) POS from coins where SIDE <> 'Fund' group by EMI, "
+                + "SYMBOL, CATEGORY, ACCOUNT, MARKET) res where EMI = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
                 + symbol[1]
@@ -132,14 +131,14 @@ class Init(WS, Variables):
             else:
                 _emi = emi
             sql = (
-                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(QTY), 0) "
-                "POS, IFNULL(sum(abs(QTY)), 0) VOL, IFNULL(sum(COMMISS), 0) "
-                "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME "
-                "FROM (SELECT SUMREAL, (CASE WHEN SIDE = 0 THEN QTY "
-                "WHEN SIDE = 1 THEN -QTY ELSE 0 END) QTY, "
-                "COMMISS, TTIME FROM "
-                "coins WHERE EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
-                % (_emi, self.user_id, robot["CATEGORY"])
+                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(CASE WHEN "
+                + "SIDE = 'Fund' THEN 0 ELSE QTY END), 0) "
+                + "POS, IFNULL(sum(CASE WHEN SIDE = 'Fund' THEN 0 ELSE abs(QTY) "
+                + "END), 0) VOL, IFNULL(sum(COMMISS), 0) "
+                + "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME "
+                + "FROM (SELECT SUMREAL, SIDE, QTY, COMMISS, TTIME FROM coins WHERE MARKET "
+                + "= '%s' AND EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
+                % (self.name, _emi, self.user_id, robot["CATEGORY"])
             )
             data = Function.select_database(self, sql)
             for row in data:
@@ -153,7 +152,11 @@ class Init(WS, Variables):
                         robot[col] = float(robot[col])
                     if col == "LTIME":
                         robot[col] = service.time_converter(time=robot[col], usec=True)
-            robot["PNL"] = 0
+            if robot["CATEGORY"] == "spot":
+                robot["PNL"] = "None"
+                robot["POS"] = "None"
+            else:
+                robot["PNL"] = 0
             robot["lotSize"] = self.Instrument[robot["SYMBOL"]].minOrderQty
             if robot["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(robot["SYMBOL"])
@@ -193,7 +196,8 @@ class Init(WS, Variables):
 
     def load_frames(
         self,
-        robot: dict,
+        symbol: tuple,
+        timefr: int,
         frames: dict,
     ) -> Union[dict, None]:
         """
@@ -202,13 +206,13 @@ class Init(WS, Variables):
         overwritten.
         """
         self.filename = Function.timeframes_data_filename(
-            self, emi=robot["EMI"], symbol=robot["SYMBOL"], timefr=robot["TIMEFR"]
+            self, symbol=symbol, timefr=timefr
         )
         with open(self.filename, "w"):
             pass
         target = datetime.now(tz=timezone.utc)
-        time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * robot["TIMEFR"])
-        delta = timedelta(minutes=robot["TIMEFR"] - target.minute % robot["TIMEFR"])
+        time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr)
+        delta = timedelta(minutes=timefr - target.minute % timefr)
         target += delta
         target = target.replace(second=0, microsecond=0)
 
@@ -218,8 +222,8 @@ class Init(WS, Variables):
             self,
             time=time,
             target=target,
-            symbol=robot["SYMBOL"],
-            timeframe=robot["TIMEFR"],
+            symbol=symbol,
+            timeframe=timefr,
         )
         if not res:
             return None
@@ -229,8 +233,8 @@ class Init(WS, Variables):
         if res[0]["timestamp"] > res[-1]["timestamp"]:
             res.reverse()
         for num, row in enumerate(res):
-            tm = row["timestamp"] - timedelta(minutes=robot["TIMEFR"])
-            frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"].append(
+            tm = row["timestamp"] - timedelta(minutes=timefr)
+            frames[symbol][timefr]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
                     "time": tm.hour * 10000 + tm.minute * 100,
@@ -244,22 +248,54 @@ class Init(WS, Variables):
             if num < len(res[:-1]) - 1:
                 Function.save_timeframes_data(
                     self,
-                    frame=frames[robot["SYMBOL"]][robot["TIMEFR"]]["data"][-1],
+                    frame=frames[symbol][timefr]["data"][-1],
                 )
-        frames[robot["SYMBOL"]][robot["TIMEFR"]]["time"] = tm
+        frames[symbol][timefr]["time"] = tm
 
-        message = (
+        """message = (
             "Downloaded missing data, symbol="
-            + str(robot["SYMBOL"])
+            + str(symbol)
             + " TIMEFR="
-            + str(robot["TIMEFR"])
+            + str(timefr)
         )
         var.logger.info(message)
-        info_display(self.name, message)
+        info_display(self.name, message)"""
 
         return frames
 
     def init_timeframes(self: Markets) -> Union[dict, None]:
+        def append_new(frames, symbol, timefr, time):
+            frames[symbol][timefr] = {
+                "time": time,
+                "robots": [],
+                "open": 0,
+                "data": [],
+            }
+            frames[symbol][timefr]["robots"].append(emi)
+
+            return frames
+
+        success = []
+
+        def get_in_thread(symbol, timefr, frames, number):
+            nonlocal success
+            res = Init.load_frames(
+                self,
+                symbol=symbol,
+                timefr=timefr,
+                frames=frames,
+            )
+            if not res:
+                message = (
+                    str(symbol)
+                    + " "
+                    + str(timefr)
+                    + " min candle timeframe data was not loaded!"
+                )
+                var.logger.error(message)
+                return
+            success[number] = "success"
+
         for emi in self.robots:
             # Initialize candlestick timeframe data using 'TIMEFR' fields
             # expressed in minutes.
@@ -268,32 +304,27 @@ class Init(WS, Variables):
                 symbol = self.robots[emi]["SYMBOL"]
                 timefr = self.robots[emi]["TIMEFR"]
                 try:
-                    self.frames[symbol]
+                    self.frames[symbol][timefr]["robots"].append(emi)
                 except KeyError:
-                    self.frames[symbol] = dict()
                     try:
-                        self.frames[symbol][timefr]
+                        self.frames = append_new(self.frames, symbol, timefr, time)
                     except KeyError:
-                        self.frames[symbol][timefr] = {
-                            "time": time,
-                            "robots": [],
-                            "open": 0,
-                            "data": [],
-                        }
-                        self.frames[symbol][timefr]["robots"].append(emi)
-                        res = Init.load_frames(
-                            self,
-                            robot=self.robots[emi],
-                            frames=self.frames,
-                        )
-                        if not res:
-                            message = (
-                                "The emi "
-                                + emi
-                                + " candle timeframe data was not loaded!"
-                            )
-                            var.logger.error(message)
-                            return None
+                        self.frames[symbol] = dict()
+                        self.frames = append_new(self.frames, symbol, timefr, time)
+        threads = []
+        for symbol, timeframes in self.frames.items():
+            for timefr in timeframes.keys():
+                success.append(None)
+                t = threading.Thread(
+                    target=get_in_thread,
+                    args=(symbol, timefr, self.frames, len(success) - 1),
+                )
+                threads.append(t)
+                t.start()
+        [thread.join() for thread in threads]
+        for s in success:
+            if not s:
+                return s
 
         return self.frames
 
