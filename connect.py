@@ -71,6 +71,7 @@ def setup_market(ws: Markets):
                     trades.clear_columns(market=ws.name)
                     funding.clear_columns(market=ws.name)
                     orders.clear_columns(market=ws.name)
+                    common.Init.load_database(ws)
                     common.Init.account_balances(ws)
                     common.Init.load_orders(ws, open_orders)
                     bots.Init.delete_unused_robot(ws)
