@@ -164,18 +164,18 @@ class Init(WS, Variables):
         return self.robots
 
     def download_data(
-        self, time: datetime, target: datetime, symbol: tuple, timeframe: str
+        self, start_time: datetime, target: datetime, symbol: tuple, timeframe: str
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
-        while target > time:
-            print("______0_____", symbol,  target, time)
+        while target > start_time:
+            print("______0_____", timeframe, symbol,  target, start_time)
             data = WS.trade_bucketed(
-                self, symbol=symbol, time=time, timeframe=timeframe
+                self, symbol=symbol, time=start_time, timeframe=timeframe
             )
             if data:
-                last = time
-                time = data[-1]["timestamp"]
-                print("______2_____", symbol,  target, " - ", time, " - ", data[-1]["timestamp"])
+                last = start_time
+                start_time = data[-1]["timestamp"]
+                print("______2_____", timeframe, symbol,  target, " - ", start_time, " - ", data[-1]["timestamp"])
                 print("     ", "high", data[-1]["high"], "low", data[-1]["low"])
                 if len(data) > 1:
                     print("     ", "high", data[-2]["high"], "low", data[-2]["low"])
@@ -185,13 +185,13 @@ class Init(WS, Variables):
                 res += data
                 print(
                     "----> downloaded trade/bucketed, time: "
-                    + str(time)
+                    + str(start_time)
                     + ", rows downloaded:",
                     len(res),
                 )
-                if last == time or target <= data[-1]["timestamp"]:
-                    print("______3_____", symbol,  target, " - ", time, " - ", data[-1]["timestamp"])
-                    return res, time                
+                if last == start_time or target <= data[-1]["timestamp"]:
+                    print("______3_____", timeframe, symbol,  target, " - ", start_time, " - ", data[-1]["timestamp"])
+                    return res
 
             else:
                 message = (
@@ -200,10 +200,10 @@ class Init(WS, Variables):
                 )
                 var.logger.error(message)
                 return None, None
-            print("______1_____", symbol,  target, " - ", time, " - ", data[-1]["timestamp"])
+            print("______1_____", timeframe, symbol,  target, " - ", start_time, " - ", data[-1]["timestamp"])
         self.logNumFatal = 0
 
-        return res, time
+        return res
 
     def load_frames(
         self,
@@ -222,10 +222,10 @@ class Init(WS, Variables):
         with open(self.filename, "w"):
             pass
         target = datetime.now(tz=timezone.utc)
+        target = target.replace(second=0, microsecond=0)
         start_time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr - timefr)
         #delta = timedelta(minutes=timefr - target.minute % timefr)
-        delta = timedelta(minutes=target.minute % timefr)
-        target = target.replace(second=0, microsecond=0)
+        delta = timedelta(minutes=target.minute % timefr + (target.hour * 60) % timefr)        
         target -= delta        
 
         # Loading timeframe data

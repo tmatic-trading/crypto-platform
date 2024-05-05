@@ -67,7 +67,9 @@ def setup_market(ws: Markets):
                     open_orders = executor.submit(get_orders, ws)
                     frames = frames.result()
                     open_orders = open_orders.result()
+                print("+++++1++++++", frames)
                 if isinstance(frames, dict):
+                    print("+++++2++++++")
                     trades.clear_columns(market=ws.name)
                     funding.clear_columns(market=ws.name)
                     orders.clear_columns(market=ws.name)
