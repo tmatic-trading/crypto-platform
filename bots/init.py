@@ -168,14 +168,20 @@ class Init(WS, Variables):
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
         while target > time:
+            print("______0_____", symbol,  target, time)
             data = WS.trade_bucketed(
                 self, symbol=symbol, time=time, timeframe=timeframe
             )
             if data:
                 last = time
                 time = data[-1]["timestamp"]
-                if last == time:
-                    return res, time
+                print("______2_____", symbol,  target, " - ", time, " - ", data[-1]["timestamp"])
+                print("     ", "high", data[-1]["high"], "low", data[-1]["low"])
+                if len(data) > 1:
+                    print("     ", "high", data[-2]["high"], "low", data[-2]["low"])
+
+                    
+                #if last == time:
                 res += data
                 print(
                     "----> downloaded trade/bucketed, time: "
@@ -183,6 +189,10 @@ class Init(WS, Variables):
                     + ", rows downloaded:",
                     len(res),
                 )
+                if last == time or target <= data[-1]["timestamp"]:
+                    print("______3_____", symbol,  target, " - ", time, " - ", data[-1]["timestamp"])
+                    return res, time                
+
             else:
                 message = (
                     "When downloading trade/bucketed data NoneType was recieved "
@@ -190,6 +200,7 @@ class Init(WS, Variables):
                 )
                 var.logger.error(message)
                 return None, None
+            print("______1_____", symbol,  target, " - ", time, " - ", data[-1]["timestamp"])
         self.logNumFatal = 0
 
         return res, time
@@ -211,16 +222,17 @@ class Init(WS, Variables):
         with open(self.filename, "w"):
             pass
         target = datetime.now(tz=timezone.utc)
-        time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr)
-        delta = timedelta(minutes=timefr - target.minute % timefr)
-        target += delta
+        start_time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr - timefr)
+        #delta = timedelta(minutes=timefr - target.minute % timefr)
+        delta = timedelta(minutes=target.minute % timefr)
         target = target.replace(second=0, microsecond=0)
+        target -= delta        
 
         # Loading timeframe data
 
-        res, time = Init.download_data(
+        res = Init.download_data(
             self,
-            time=time,
+            start_time =start_time,
             target=target,
             symbol=symbol,
             timeframe=timefr,
