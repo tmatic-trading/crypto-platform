@@ -164,35 +164,35 @@ class Init(WS, Variables):
         return self.robots
 
     def download_data(
-        self, time: datetime, target: datetime, symbol: tuple, timeframe: str
+        self, start_time: datetime, target: datetime, symbol: tuple, timeframe: int
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
-        while target > time:
+        while target > start_time:
             data = WS.trade_bucketed(
-                self, symbol=symbol, time=time, timeframe=timeframe
+                self, symbol=symbol, time=start_time, timeframe=timeframe
             )
             if data:
-                last = time
-                time = data[-1]["timestamp"]
-                if last == time:
-                    return res, time
+                last = start_time
+                start_time = data[-1]["timestamp"] + timedelta(minutes=timeframe)
                 res += data
                 print(
                     "----> downloaded trade/bucketed, time: "
-                    + str(time)
+                    + str(start_time)
                     + ", rows downloaded:",
                     len(res),
                 )
+                if last == start_time or target <= data[-1]["timestamp"]:
+                    return res
+
             else:
                 message = (
                     "When downloading trade/bucketed data NoneType was recieved "
                     + str(data)
                 )
                 var.logger.error(message)
-                return None, None
+                return None
         self.logNumFatal = 0
-
-        return res, time
+        return res
 
     def load_frames(
         self,
@@ -211,22 +211,29 @@ class Init(WS, Variables):
         with open(self.filename, "w"):
             pass
         target = datetime.now(tz=timezone.utc)
-        time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr)
-        delta = timedelta(minutes=timefr - target.minute % timefr)
-        target += delta
         target = target.replace(second=0, microsecond=0)
+        start_time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr - timefr)
+        delta = timedelta(minutes=target.minute % timefr + (target.hour * 60) % timefr)        
+        target -= delta        
 
         # Loading timeframe data
 
-        res, time = Init.download_data(
+        res = Init.download_data(
             self,
-            time=time,
+            start_time =start_time,
             target=target,
             symbol=symbol,
             timeframe=timefr,
         )
         if not res:
             return None
+        
+        # Bitmex bug fix. Bitmex can send data with the next period's 
+        # timestamp typically for 5m and 60m.
+        if target < res[-1]["timestamp"]:
+            delta = timedelta(minutes=timefr)
+            for r in res:
+                r["timestamp"] -= delta
 
         # The 'frames' array is filled with timeframe data.
 

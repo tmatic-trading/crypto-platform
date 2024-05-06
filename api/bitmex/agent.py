@@ -9,8 +9,6 @@ from .http import Send
 from .path import Listing
 from .ws import Bitmex
 
-# from api.variables import Variables
-
 
 class Agent(Bitmex):
     logger = logging.getLogger(__name__)
@@ -142,7 +140,7 @@ class Agent(Bitmex):
             Agent.logger.info(str(symbol) + " not found in get_position()")
 
     def trade_bucketed(
-        self, symbol: tuple, time: datetime, timeframe: str
+        self, symbol: tuple, time: datetime, timeframe: int
     ) -> Union[list, None]:
         """
         Gets timeframe data. Available time interval: 1m,5m,1h,1d.

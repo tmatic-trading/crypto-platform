@@ -100,9 +100,9 @@ class Agent(Bybit):
             limit=1000,
         )
         if kline["result"]["list"]:
-            result = []
+            res = []
             for row in kline["result"]["list"]:
-                result.append(
+                res.append(
                     {
                         "timestamp": service.time_converter(int(row[0]) / 1000),
                         "open": float(row[1]),
@@ -111,8 +111,9 @@ class Agent(Bybit):
                         "close": float(row[4]),
                     }
                 )
+            res.sort(key=lambda x: x["timestamp"])
 
-            return result
+            return res
 
     def trading_history(self, histCount: int, time: datetime) -> list:
         trade_history = []

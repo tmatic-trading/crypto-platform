@@ -45,7 +45,6 @@ def setup_market(ws: Markets):
         common.Init.load_trading_history(ws)
 
     def get_orders(ws):
-        #nonlocal open_orders
         return WS.open_orders(ws)
     
     ws.logNumFatal = -1
@@ -67,6 +66,7 @@ def setup_market(ws: Markets):
                     open_orders = executor.submit(get_orders, ws)
                     frames = frames.result()
                     open_orders = open_orders.result()
+                #frames = get_timeframes(ws)
                 if isinstance(frames, dict):
                     trades.clear_columns(market=ws.name)
                     funding.clear_columns(market=ws.name)
