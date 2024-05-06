@@ -195,7 +195,7 @@ class Init(WS, Variables):
         return res
 
     def load_frames(
-        self,
+        self: Markets,
         symbol: tuple,
         timefr: int,
         frames: dict,
@@ -259,14 +259,14 @@ class Init(WS, Variables):
                 )
         frames[symbol][timefr]["time"] = tm
 
-        """message = (
+        message = (
             "Downloaded missing data, symbol="
             + str(symbol)
             + " TIMEFR="
             + str(timefr)
         )
         var.logger.info(message)
-        info_display(self.name, message)"""
+        #var.info_queue.put({"market": self.name, "message": message})
 
         return frames
 

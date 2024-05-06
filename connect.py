@@ -29,8 +29,14 @@ def setup():
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = False
+    threads = []
     for name in var.market_list:
-        setup_market(Markets[name])
+        t = threading.Thread(target=setup_market, args=(Markets[name],))
+        threads.append(t)
+        t.start()
+    [thread.join() for thread in threads]
+    for name in var.market_list:    
+        finish_setup(Markets[name])
     functions.load_labels()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
@@ -65,21 +71,10 @@ def setup_market(ws: Markets):
                     executor.submit(get_history, ws)
                     open_orders = executor.submit(get_orders, ws)
                     frames = frames.result()
-                    open_orders = open_orders.result()
+                    ws.setup_orders = open_orders.result()
                 #frames = get_timeframes(ws)
                 if isinstance(frames, dict):
-                    trades.clear_columns(market=ws.name)
-                    funding.clear_columns(market=ws.name)
-                    orders.clear_columns(market=ws.name)
-                    common.Init.load_database(ws)
-                    common.Init.account_balances(ws)
-                    common.Init.load_orders(ws, open_orders)
-                    bots.Init.delete_unused_robot(ws)
-                    for emi, value in ws.robot_status.items():
-                        ws.robots[emi]["STATUS"] = value
-                    trades.insert_columns()
-                    funding.insert_columns()
-                    orders.insert_columns()
+                    pass
                 else:
                     var.logger.info("Error during loading timeframes.")
                     WS.exit(ws)
@@ -87,6 +82,21 @@ def setup_market(ws: Markets):
                     sleep(2)
             else:
                 var.logger.info("No robots loaded.")
+
+
+def finish_setup(ws: Markets):
+    trades.clear_columns(market=ws.name)
+    funding.clear_columns(market=ws.name)
+    orders.clear_columns(market=ws.name)
+    common.Init.load_database(ws)
+    common.Init.account_balances(ws)
+    common.Init.load_orders(ws, ws.setup_orders)
+    bots.Init.delete_unused_robot(ws)
+    for emi, value in ws.robot_status.items():
+        ws.robots[emi]["STATUS"] = value
+    trades.insert_columns()
+    funding.insert_columns()
+    orders.insert_columns()
     if hasattr(Tables, "market"):
         Tables.market.color_market(
             state="online", row=var.market_list.index(ws.name), market=ws.name
@@ -95,6 +105,9 @@ def setup_market(ws: Markets):
 
 
 def refresh() -> None:
+    while not var.info_queue.empty():
+        info = var.info_queue.get()
+        info_display(info["market"], info["message"])
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
@@ -102,7 +115,7 @@ def refresh() -> None:
             if ws.logNumFatal > 2000:
                 if ws.message2000 == "":
                     ws.message2000 = (
-                        "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
+                        "Fatal error=" + str(ws.logNumFatal) + ". Market is frozen"
                     )
                     Function.market_status(
                         ws, status="Error", message=ws.message2000, error=True
@@ -113,6 +126,7 @@ def refresh() -> None:
                     ws, status="RESTARTING...", message="RESTARTING...", error=True
                 )
                 setup_market(ws=ws)
+                finish_setup(ws=ws)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
                     if ws.messageStopped == "":

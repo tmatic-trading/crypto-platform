@@ -3,6 +3,7 @@ import os
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone
+import queue
 
 from dotenv import dotenv_values
 
@@ -139,3 +140,4 @@ class Variables:
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
     refresh_hour = datetime.now(tz=timezone.utc).hour
     robots_thread_is_active = False
+    info_queue = queue.Queue()

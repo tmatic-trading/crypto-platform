@@ -237,40 +237,43 @@ class Init(WS, Variables):
         """
         Download the latest trades and funding data from the database (if any)
         """
-        sql = (
-            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
-            + "PRICE, TTIME, COMMISS from "
-            + "coins where SIDE = 'Fund' and ACCOUNT = "
-            + str(self.user_id)
-            + " and MARKET = '"
-            + self.name
-            + "' "
-            + "order by TTIME desc limit "
-            + str(disp.table_limit)
-        )
-        data = Function.select_database(self, sql)
-        for val in data:
-            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-            Function.fill_columns(
-                self, func=Function.funding_display, table=funding, val=val
+        if self.user_id:
+            sql = (
+                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
+                + "PRICE, TTIME, COMMISS from "
+                + "coins where SIDE = 'Fund' and ACCOUNT = "
+                + str(self.user_id)
+                + " and MARKET = '"
+                + self.name
+                + "' "
+                + "order by TTIME desc limit "
+                + str(disp.table_limit)
             )
-        sql = (
-            "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
-            + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
-            + "coins where SIDE <> 'Fund' and ACCOUNT = "
-            + str(self.user_id)
-            + " and MARKET = '"
-            + self.name
-            + "' "
-            + "order by TTIME desc limit "
-            + str(disp.table_limit)
-        )
-        data = Function.select_database(self, sql)
-        for val in data:
-            val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-            Function.fill_columns(
-                self, func=Function.trades_display, table=trades, val=val
+            data = Function.select_database(self, sql)
+            for val in data:
+                val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
+                Function.fill_columns(
+                    self, func=Function.funding_display, table=funding, val=val
+                )
+            sql = (
+                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
+                + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
+                + "coins where SIDE <> 'Fund' and ACCOUNT = "
+                + str(self.user_id)
+                + " and MARKET = '"
+                + self.name
+                + "' "
+                + "order by TTIME desc limit "
+                + str(disp.table_limit)
             )
+            data = Function.select_database(self, sql)
+            for val in data:
+                val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
+                Function.fill_columns(
+                    self, func=Function.trades_display, table=trades, val=val
+                )
+        else:
+            self.logNumFatal = 1001
 
 
 def setup_logger():

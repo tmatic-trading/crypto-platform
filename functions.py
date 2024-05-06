@@ -102,9 +102,9 @@ class Function(WS, Variables):
         while True:
             try:
                 Function.sql_lock.acquire(True)
-                var.cursor_sqlite.execute(query)
-                Function.sql_lock.release()
+                var.cursor_sqlite.execute(query)                
                 orig = var.cursor_sqlite.fetchall()
+                Function.sql_lock.release()
                 data = []
                 if orig:
                     data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
@@ -158,11 +158,11 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         Function.add_symbol(self, symbol=row["symbol"])
-        results = self.Result[row["settlCurrency"]]
 
         # Trade
 
         if row["execType"] == "Trade":
+            results = self.Result[row["settlCurrency"]]
             if "clOrdID" in row:
                 dot = row["clOrdID"].find(".")
                 if (
@@ -287,6 +287,7 @@ class Function(WS, Variables):
         # Funding
 
         elif row["execType"] == "Funding":
+            results = self.Result[row["settlCurrency"]]
             message = {
                 "SYMBOL": row["symbol"],
                 "TTIME": row["transactTime"],
