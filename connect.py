@@ -45,7 +45,6 @@ def setup_market(ws: Markets):
         common.Init.load_trading_history(ws)
 
     def get_orders(ws):
-        #nonlocal open_orders
         return WS.open_orders(ws)
     
     ws.logNumFatal = -1
@@ -67,12 +66,12 @@ def setup_market(ws: Markets):
                     open_orders = executor.submit(get_orders, ws)
                     frames = frames.result()
                     open_orders = open_orders.result()
-                print("+++++1++++++", frames)
+                #frames = get_timeframes(ws)
                 if isinstance(frames, dict):
-                    print("+++++2++++++")
                     trades.clear_columns(market=ws.name)
                     funding.clear_columns(market=ws.name)
                     orders.clear_columns(market=ws.name)
+                    common.Init.load_database(ws)
                     common.Init.account_balances(ws)
                     common.Init.load_orders(ws, open_orders)
                     bots.Init.delete_unused_robot(ws)

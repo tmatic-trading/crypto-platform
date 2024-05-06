@@ -164,24 +164,16 @@ class Init(WS, Variables):
         return self.robots
 
     def download_data(
-        self, start_time: datetime, target: datetime, symbol: tuple, timeframe: str
+        self, start_time: datetime, target: datetime, symbol: tuple, timeframe: int
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
         while target > start_time:
-            print("______0_____", timeframe, symbol,  target, start_time)
             data = WS.trade_bucketed(
                 self, symbol=symbol, time=start_time, timeframe=timeframe
             )
             if data:
                 last = start_time
-                start_time = data[-1]["timestamp"]
-                print("______2_____", timeframe, symbol,  target, " - ", start_time, " - ", data[-1]["timestamp"])
-                print("     ", "high", data[-1]["high"], "low", data[-1]["low"])
-                if len(data) > 1:
-                    print("     ", "high", data[-2]["high"], "low", data[-2]["low"])
-
-                    
-                #if last == time:
+                start_time = data[-1]["timestamp"] + timedelta(minutes=timeframe)
                 res += data
                 print(
                     "----> downloaded trade/bucketed, time: "
@@ -190,7 +182,6 @@ class Init(WS, Variables):
                     len(res),
                 )
                 if last == start_time or target <= data[-1]["timestamp"]:
-                    print("______3_____", timeframe, symbol,  target, " - ", start_time, " - ", data[-1]["timestamp"])
                     return res
 
             else:
@@ -199,10 +190,8 @@ class Init(WS, Variables):
                     + str(data)
                 )
                 var.logger.error(message)
-                return None, None
-            print("______1_____", timeframe, symbol,  target, " - ", start_time, " - ", data[-1]["timestamp"])
+                return None
         self.logNumFatal = 0
-
         return res
 
     def load_frames(
@@ -224,7 +213,6 @@ class Init(WS, Variables):
         target = datetime.now(tz=timezone.utc)
         target = target.replace(second=0, microsecond=0)
         start_time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr - timefr)
-        #delta = timedelta(minutes=timefr - target.minute % timefr)
         delta = timedelta(minutes=target.minute % timefr + (target.hour * 60) % timefr)        
         target -= delta        
 
@@ -239,6 +227,13 @@ class Init(WS, Variables):
         )
         if not res:
             return None
+        
+        # Bitmex bug fix. Bitmex can send data with the next period's 
+        # timestamp typically for 5m and 60m.
+        if target < res[-1]["timestamp"]:
+            delta = timedelta(minutes=timefr)
+            for r in res:
+                r["timestamp"] -= delta
 
         # The 'frames' array is filled with timeframe data.
 

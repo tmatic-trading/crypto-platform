@@ -142,7 +142,7 @@ class Agent(Bitmex):
             Agent.logger.info(str(symbol) + " not found in get_position()")
 
     def trade_bucketed(
-        self, symbol: tuple, time: datetime, timeframe: str
+        self, symbol: tuple, time: datetime, timeframe: int
     ) -> Union[list, None]:
         """
         Gets timeframe data. Available time interval: 1m,5m,1h,1d.
