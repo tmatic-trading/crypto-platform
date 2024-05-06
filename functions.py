@@ -102,9 +102,9 @@ class Function(WS, Variables):
         while True:
             try:
                 Function.sql_lock.acquire(True)
-                var.cursor_sqlite.execute(query)                
-                orig = var.cursor_sqlite.fetchall()
+                var.cursor_sqlite.execute(query)
                 Function.sql_lock.release()
+                orig = var.cursor_sqlite.fetchall()
                 data = []
                 if orig:
                     data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
@@ -702,7 +702,7 @@ class Function(WS, Variables):
         """
         Refresh information on screen
         """
-        adaptive_screen()
+        adaptive_screen(self)
         if utc.hour != var.refresh_hour:
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
@@ -1771,8 +1771,8 @@ def load_labels() -> None:
         name="position",
         size=max(5, position_rows + 1),
         title=var.name_position,
-        column_width=50,
-        canvas_height=65,
+        # column_width=50,
+        # canvas_height=65,
         bind=handler_position,
         color=disp.bg_color,
         select=True,
@@ -1819,8 +1819,8 @@ def load_labels() -> None:
         name="orderbook",
         size=disp.num_book,
         title=var.name_book,
-        column_width=85,
-        canvas_height=440,
+        column_width=70,
+        # canvas_height=440,
         bind=handler_orderbook,
         color=disp.bg_color,
     )
@@ -1888,8 +1888,8 @@ orders = ListBoxTable(
 )
 
 
-def adaptive_screen():
-    now_height = disp.frame_rest.winfo_height()
+def adaptive_screen(ws: Markets):
+    """now_height = disp.frame_rest.winfo_height()
     if now_height != disp.all_height:
         disp.frame_rest.grid_rowconfigure(
             0, minsize=int(disp.frame_rest.winfo_height() / 6)
@@ -1897,7 +1897,7 @@ def adaptive_screen():
         disp.frame_rest.grid_rowconfigure(
             1, minsize=int(disp.frame_rest.winfo_height() / 2)
         )
-        disp.all_height = now_height
+        disp.all_height = now_height"""
 
     now_width = disp.root.winfo_width()
     if now_width != disp.all_width or var.current_market != disp.last_market:
@@ -1911,10 +1911,10 @@ def adaptive_screen():
         # Hide / show adaptive columns in order to save space in the tables
         if ratio < disp.adaptive_ratio:
             if (
-                disp.labels["position"][0][8].winfo_ismapped() == 1
+                disp.labels["position"][len(ws.symbol_list)][8].winfo_ismapped() == 1
                 or var.current_market != disp.last_market
             ):
-                for i in range(Tables.position.size):
+                for i in range(len(ws.symbol_list) + 1):
                     disp.labels["position"][i][8].grid_forget()
                 Tables.position.sub.grid_columnconfigure(8, weight=0)
             if (
@@ -1937,10 +1937,10 @@ def adaptive_screen():
                 funding.sub.grid_columnconfigure(7, weight=0)
         if ratio < disp.adaptive_ratio - 0.1:
             if (
-                disp.labels["position"][0][7].winfo_ismapped() == 1
+                disp.labels["position"][len(ws.symbol_list)][7].winfo_ismapped() == 1
                 or var.current_market != disp.last_market
             ):
-                for i in range(Tables.position.size):
+                for i in range(len(ws.symbol_list) + 1):
                     disp.labels["position"][i][7].grid_forget()
                 Tables.position.sub.grid_columnconfigure(7, weight=0)
             if (
@@ -1962,18 +1962,18 @@ def adaptive_screen():
                 funding.listboxes[2].grid_forget()
                 funding.sub.grid_columnconfigure(2, weight=0)
             if (
-                disp.labels["robots"][0][5].winfo_ismapped() == 1
+                disp.labels["robots"][len(ws.robots)][5].winfo_ismapped() == 1
                 or var.current_market != disp.last_market
             ):
-                for i in range(Tables.robots.size):
+                for i in range(len(ws.robots) + 1):
                     disp.labels["robots"][i][5].grid_forget()
                 Tables.robots.sub.grid_columnconfigure(5, weight=0)
         if ratio < disp.adaptive_ratio - 0.2:
             if (
-                disp.labels["position"][0][1].winfo_ismapped() == 1
+                disp.labels["position"][len(ws.symbol_list)][1].winfo_ismapped() == 1
                 or var.current_market != disp.last_market
             ):
-                for i in range(Tables.position.size):
+                for i in range(len(ws.symbol_list) + 1):
                     disp.labels["position"][i][1].grid_forget()
                 Tables.position.sub.grid_columnconfigure(1, weight=0)
             if (
@@ -1995,15 +1995,15 @@ def adaptive_screen():
                 funding.listboxes[4].grid_forget()
                 funding.sub.grid_columnconfigure(4, weight=0)
             if (
-                disp.labels["robots"][0][2].winfo_ismapped() == 1
+                disp.labels["robots"][len(ws.robots)][2].winfo_ismapped() == 1
                 or var.current_market != disp.last_market
             ):
-                for i in range(Tables.robots.size):
+                for i in range(len(ws.robots) + 1):
                     disp.labels["robots"][i][2].grid_forget()
                 Tables.robots.sub.grid_columnconfigure(2, weight=0)
         if ratio >= disp.adaptive_ratio:
             if disp.labels["position"][0][8].winfo_ismapped() == 0:
-                for i in range(Tables.position.size):
+                for i in range(len(ws.symbol_list) + 1):
                     disp.labels["position"][i][8].grid(
                         row=i, column=8, sticky="NSWE", padx=0, pady=0
                     )
@@ -2019,7 +2019,7 @@ def adaptive_screen():
                 funding.sub.grid_columnconfigure(7, weight=1)
         if ratio >= disp.adaptive_ratio - 0.1:
             if disp.labels["position"][0][7].winfo_ismapped() == 0:
-                for i in range(Tables.position.size):
+                for i in range(len(ws.symbol_list) + 1):
                     disp.labels["position"][i][7].grid(
                         row=i, column=7, sticky="NSWE", padx=0, pady=0
                     )
@@ -2034,14 +2034,14 @@ def adaptive_screen():
                 funding.listboxes[2].grid(row=0, padx=0, column=2, sticky="NSWE")
                 funding.sub.grid_columnconfigure(2, weight=1)
             if disp.labels["robots"][0][5].winfo_ismapped() == 0:
-                for i in range(Tables.robots.size):
+                for i in range(len(ws.robots) + 1):
                     disp.labels["robots"][i][5].grid(
                         row=i, column=5, sticky="NSWE", padx=0, pady=0
                     )
                 Tables.robots.sub.grid_columnconfigure(5, weight=1)
         if ratio >= disp.adaptive_ratio - 0.2:
             if disp.labels["position"][0][1].winfo_ismapped() == 0:
-                for i in range(Tables.position.size):
+                for i in range(len(ws.symbol_list) + 1):
                     disp.labels["position"][i][1].grid(
                         row=i, column=1, sticky="NSWE", padx=0, pady=0
                     )
@@ -2056,7 +2056,7 @@ def adaptive_screen():
                 funding.listboxes[4].grid(row=0, padx=0, column=4, sticky="NSWE")
                 funding.sub.grid_columnconfigure(4, weight=1)
             if disp.labels["robots"][0][2].winfo_ismapped() == 0:
-                for i in range(Tables.robots.size):
+                for i in range(len(ws.robots) + 1):
                     disp.labels["robots"][i][2].grid(
                         row=i, column=2, sticky="NSWE", padx=0, pady=0
                     )
@@ -2069,7 +2069,7 @@ def adaptive_screen():
             side_width = now_width - state_width
             disp.frame_right.configure(width=side_width)
             if disp.state_width is None:
-                disp.frame_right.grid(row=0, column=1, sticky="NSWE", rowspan=2)
+                disp.frame_right.grid(row=0, column=1, sticky="NSWE")
                 disp.frame_state.configure(width=state_width)
                 disp.state_width = state_width
         else:

@@ -1,10 +1,10 @@
+import concurrent.futures
 import os
 import threading
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 from time import sleep
-import concurrent.futures
 
 import algo.init as algo
 import bots.init as bots
@@ -35,7 +35,7 @@ def setup():
         threads.append(t)
         t.start()
     [thread.join() for thread in threads]
-    for name in var.market_list:    
+    for name in var.market_list:
         finish_setup(Markets[name])
     functions.load_labels()
     var.robots_thread_is_active = True
@@ -52,7 +52,7 @@ def setup_market(ws: Markets):
 
     def get_orders(ws):
         return WS.open_orders(ws)
-    
+
     ws.logNumFatal = -1
     ws.api_is_active = False
     WS.exit(ws)
@@ -72,7 +72,7 @@ def setup_market(ws: Markets):
                     open_orders = executor.submit(get_orders, ws)
                     frames = frames.result()
                     ws.setup_orders = open_orders.result()
-                #frames = get_timeframes(ws)
+                # frames = get_timeframes(ws)
                 if isinstance(frames, dict):
                     pass
                 else:

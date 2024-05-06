@@ -16,19 +16,17 @@ class AutoScrollbar(tk.Scrollbar):
         if float(low) <= 0.0 and float(high) >= 1.0:
             self.tk.call("grid", "remove", self)
             if (
-                self.master in Variables.blank_frames
-                and Variables.blank_frames[self.master].winfo_ismapped() == 0
+                self.master in Variables.dlmtr_frames
+                and Variables.dlmtr_frames[self.master].winfo_ismapped() == 0
             ):
-                Variables.blank_frames[self.master].grid(
-                    row=0, column=2, sticky="NSWE", rowspan=2
-                )
+                Variables.dlmtr_frames[self.master].grid(row=0, column=1, sticky="NSWE")
         else:
             self.grid()
             if (
-                self.master in Variables.blank_frames
-                and Variables.blank_frames[self.master].winfo_ismapped() == 1
+                self.master in Variables.dlmtr_frames
+                and Variables.dlmtr_frames[self.master].winfo_ismapped() == 1
             ):
-                Variables.blank_frames[self.master].grid_forget()
+                Variables.dlmtr_frames[self.master].grid_forget()
         tk.Scrollbar.set(self, low, high)
 
 
@@ -40,16 +38,16 @@ class Variables:
     screen_height = root.winfo_screenheight()
     if screen_width > 1440:
         window_ratio = 0.7
-        adaptive_ratio = 0.9
+        adaptive_ratio = 0.85
     elif screen_width > 1366:
         window_ratio = 0.72
-        adaptive_ratio = 0.95
+        adaptive_ratio = 0.9
     elif screen_width > 1280:
         window_ratio = 0.75
         adaptive_ratio = 0.95
     elif screen_width > 1024:
         window_ratio = 0.8
-        adaptive_ratio = 1
+        adaptive_ratio = 0.97
     else:
         window_ratio = 1
         adaptive_ratio = 1
@@ -57,10 +55,10 @@ class Variables:
     window_height = screen_height
     root.geometry("{}x{}".format(window_width, window_height))
     all_width = window_width
-    all_height = 1
+    # all_height = 1
     state_width = window_width
     last_market = ""
-    blank_frames = {}
+    dlmtr_frames = {}
 
     if platform.system() == "Windows":
         ostype = "Windows"
@@ -76,38 +74,30 @@ class Variables:
     labels = dict()
     labels_cache = dict()
 
-    # Top frame (trading om/off, time)
-    frame_state = tk.Frame(width=None)
+    # Main frame. Always visible
+    frame_left = tk.Frame()
+    frame_left.grid(row=0, column=0, sticky="NSWE")
+    root.grid_columnconfigure(0, weight=1)
+
+    # Adaptive frame to the right. Always blank; forgotten when the window is narrowed
+    frame_right = tk.Frame()
+    frame_right.grid(row=0, column=1, sticky="NSWE")
+    root.grid_columnconfigure(1, weight=0)
+    root.grid_rowconfigure(0, weight=1)
+
+    # Top state frame: trading on/off, time
+    frame_state = tk.Frame(frame_left)
     frame_state.grid(row=0, column=0, sticky="NSWE")
-    frame_state_0 = tk.Frame(frame_state)
-    frame_state_0.grid(row=0, column=0)
-    frame_state_1 = tk.Frame(frame_state)
-    frame_state_1.grid(row=0, column=1)
-    frame_state_2 = tk.Frame(frame_state)
-    frame_state_2.grid(row=0, column=2)
-    frame_state_3 = tk.Frame(frame_state)
-    frame_state_3.grid(row=0, column=3)
-    frame_state_4 = tk.Frame(frame_state)
-    frame_state_4.grid(row=0, column=4)
-    frame_state.grid_columnconfigure(0, weight=0)
-    frame_state.grid_columnconfigure(1, weight=1)
-    frame_state.grid_columnconfigure(2, weight=10)
-    frame_state.grid_columnconfigure(3, weight=1)
-    frame_state.grid_columnconfigure(4, weight=0)
-    label_trading = tk.Label(frame_state_0, text=" TRADING: ")
+    frame_left.grid_columnconfigure(0, weight=1)
+    frame_left.grid_rowconfigure(0, weight=0)
+    label_trading = tk.Label(frame_state, text=" TRADING: ")
     label_trading.pack(side="left")
     label_f9 = tk.Label(
-        frame_state_0, width=3, text="OFF", fg="white", bg="red", anchor="c"
+        frame_state, width=3, text="OFF", fg="white", bg="red", anchor="c"
     )
-    label_f9.pack()
-    label_space1 = tk.Label(frame_state_1, width=20)
-    label_space1.pack()
-    label_info = tk.Label(frame_state_2, anchor="w")
-    label_info.pack()
-    label_space1 = tk.Label(frame_state_3, width=20)
-    label_space1.pack()
-    label_time = tk.Label(frame_state_4, anchor="e")
-    label_time.pack()
+    label_f9.pack(side="left")
+    label_time = tk.Label(frame_state, anchor="e")
+    label_time.pack(side="right")
 
     # Color map
     if ostype == "Mac":
@@ -126,68 +116,92 @@ class Variables:
     fg_color = label_trading["foreground"]
     fg_select_color = fg_color
 
-    # Right adaptive frame
-    frame_right = tk.Frame()
-    frame_right.grid(row=0, column=1, sticky="NSEW", rowspan=2)
-
-    # This pane window divides the area into two sectors: info (up), the rest interface (down)
-    pw_info_rest = tk.PanedWindow(root, orient=tk.VERTICAL, sashrelief="raised", bd=0)
+    # Paned window: up - information field, down - the rest interface
+    pw_info_rest = tk.PanedWindow(
+        frame_left, orient=tk.VERTICAL, sashrelief="raised", bd=0
+    )
     pw_info_rest.grid(row=1, column=0, sticky="NSEW")
+    frame_left.grid_rowconfigure(1, weight=1)
 
-    # Information frame
-    frame_information = tk.Frame(pw_info_rest)
-    frame_information.pack(fill="both", expand="yes")
+    # Information field
+    frame_info = tk.Frame(pw_info_rest)
+    frame_info.pack(fill="both", expand="yes")
+
+    # Information widget
     if ostype == "Mac":
         text_info = tk.Text(
-            frame_information,
+            frame_info,
             highlightthickness=0,
         )
     else:
         text_info = tk.Text(
-            frame_information,
+            frame_info,
             bg="gray98",
             highlightthickness=0,
         )
     text_info.grid(row=0, column=0, sticky="NSEW")
-    scroll_info = AutoScrollbar(frame_information, orient="vertical")
+    frame_info.grid_columnconfigure(0, weight=1)
+    scroll_info = AutoScrollbar(frame_info, orient="vertical")
     scroll_info.config(command=text_info.yview)
     scroll_info.grid(row=0, column=1, sticky="NS")
     text_info.config(yscrollcommand=scroll_info.set)
+    frame_info.grid_columnconfigure(1, weight=0)
+    frame_info.grid_rowconfigure(0, weight=1)
     # text_info.configure(state="disabled")
     bg_color = text_info["background"]
 
-    # The rest area contains most frames and widgets
-    frame_rest = tk.Frame(pw_info_rest)
-    frame_rest.pack(fill="both", expand="yes")
+    # This technical frame contains most frames and widgets
+    frame_rest1 = tk.Frame(pw_info_rest)
+    frame_rest1.pack(fill="both", expand="yes")
 
-    pw_info_rest.add(frame_information)
-    pw_info_rest.add(frame_rest)
+    pw_info_rest.add(frame_info)
+    pw_info_rest.add(frame_rest1)
     pw_info_rest.bind(
         "<Configure>", lambda event: resize_row(event, Variables.pw_info_rest, 9)
     )
 
-    # Frame for the market table
-    market_frame = tk.Frame(frame_rest)
-    market_frame.grid(row=0, column=0, sticky="NSWE", rowspan=3)
+    # One or more exchages is put in this frame
+    market_frame = tk.Frame(frame_rest1)
+    market_frame.grid(row=0, column=0, sticky="NSEW")
+    frame_rest1.grid_columnconfigure(0, weight=10)
 
+    # This technical frame contains orderbook, positions, orders, trades, fundings, results, currencies, robots
+    frame_rest2 = tk.Frame(frame_rest1)
+    frame_rest2.grid(row=0, column=1, sticky="NSEW")
+    frame_rest1.grid_columnconfigure(1, weight=500)
+    frame_rest1.grid_rowconfigure(0, weight=1)
+
+    # This technical frame contains orderbook, positions, orders, trades, fundings, results
+    frame_rest3 = tk.Frame(frame_rest2)
+    frame_rest3.grid(row=0, column=0, sticky="NSEW")
+    frame_rest2.grid_columnconfigure(0, weight=1)
+    frame_rest2.grid_rowconfigure(0, weight=72)
     # Frame for the order book
-    orderbook_frame = tk.Frame(frame_rest)
-    orderbook_frame.grid(row=0, column=1, sticky="NSWE", padx=0, rowspan=2)
 
-    # This frame appears when orderbook scroll is absent
-    orderbook_blank = tk.Frame(frame_rest, width=2)
-    orderbook_blank.grid(row=0, column=2, sticky="NSWE", rowspan=2)
-    blank_frames[orderbook_frame] = orderbook_blank
+    orderbook_frame = tk.Frame(frame_rest3)
+    orderbook_frame.grid(row=0, column=0, sticky="NSEW")
+    frame_rest3.grid_columnconfigure(0, weight=50)
+    orderbook_delimiter = tk.Frame(orderbook_frame, width=2)
+    dlmtr_frames[orderbook_frame] = orderbook_delimiter
+
+    # This technical frame contains positions, orders, trades, fundings, results
+    frame_rest4 = tk.Frame(frame_rest3)
+    frame_rest4.grid(row=0, column=1, sticky="NSEW")
+    frame_rest3.grid_columnconfigure(1, weight=300)
+    frame_rest3.grid_rowconfigure(0, weight=1)
 
     # Frame for instruments and their positions
-    position_frame = tk.Frame(frame_rest)
-    position_frame.grid(row=0, column=3, sticky="NSWE")
+    position_frame = tk.Frame(frame_rest4)
+    position_frame.grid(row=0, column=0, sticky="NSWE")
+    frame_rest4.grid_columnconfigure(0, weight=1)
+    frame_rest4.grid_rowconfigure(0, weight=18)
 
-    # Pane window for Orders (up), Trades / Funding / Result (down)
+    # Paned window: up - orders, down - trades, fundings, results
     pw_orders_trades = tk.PanedWindow(
-        frame_rest, orient=tk.VERTICAL, sashrelief="raised", bd=0
+        frame_rest4, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
     )
-    pw_orders_trades.grid(row=1, column=3, sticky="NSWE")
+    pw_orders_trades.grid(row=1, column=0, sticky="NSWE")
+    frame_rest4.grid_rowconfigure(1, weight=82)
 
     # Orders frame
     frame_orders = tk.Frame(pw_orders_trades)
@@ -199,7 +213,7 @@ class Variables:
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
     style = ttk.Style()
-    style.configure("TNotebook", borderwidth=0, background="gray90")
+    style.configure("TNotebook", borderwidth=0, background="gray90", tabposition="n")
     style.configure("TNotebook.Tab", background="gray90")
     style.map("TNotebook.Tab", background=[("selected", title_color)])
     notebook.pack(expand=1, fill="both")
@@ -225,13 +239,14 @@ class Variables:
         "<Configure>", lambda event: resize_row(event, Variables.pw_orders_trades, 2)
     )
 
-    # Pane window for currencies (up), robots (down)
+    # Paned window: up - currencies (account), down - robots
     pw_account_robo = tk.PanedWindow(
-        frame_rest, orient=tk.VERTICAL, sashrelief="raised", bd=0
+        frame_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
     )
-    pw_account_robo.grid(row=2, column=1, sticky="NSWE", columnspan=3)
+    pw_account_robo.grid(row=1, column=0, sticky="NSWE")
+    frame_rest2.grid_rowconfigure(1, weight=28)
 
-    # Frame for the account (currency) table
+    # Frame for currencies (account)
     account_frame = tk.Frame(pw_account_robo)
     account_frame.pack(fill="both", expand="yes")
 
@@ -242,24 +257,8 @@ class Variables:
     pw_account_robo.add(account_frame)
     pw_account_robo.add(robots_frame)
     pw_account_robo.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_account_robo, 7)
+        "<Configure>", lambda event: resize_row(event, Variables.pw_account_robo, 2)
     )
-
-    root.grid_columnconfigure(0, weight=1)
-    root.grid_columnconfigure(1, weight=0)
-    frame_information.grid_columnconfigure(0, weight=1)
-    frame_information.grid_columnconfigure(1, weight=0)
-    # frame_information.grid_columnconfigure(2, weight=1)
-    frame_rest.grid_columnconfigure(0, weight=1)
-    frame_rest.grid_columnconfigure(1, weight=1)
-    frame_rest.grid_columnconfigure(2, weight=0)
-    frame_rest.grid_columnconfigure(3, weight=20)
-    root.grid_rowconfigure(0, weight=0)
-    root.grid_rowconfigure(1, weight=1)
-    frame_information.grid_rowconfigure(0, weight=1)
-    frame_rest.grid_rowconfigure(0, weight=1)
-    frame_rest.grid_rowconfigure(1, weight=100)
-    # frame_rest.grid_rowconfigure(2, weight=10)
 
     refresh_var = None
     nfo_display_counter = 0
@@ -279,9 +278,9 @@ class GridTable(Variables):
         name: str,
         size: int,
         title: list,
-        column_width: int = 70,
+        column_width: int = None,
+        canvas_height: int = 30,
         title_on: bool = True,
-        canvas_height: int = None,
         bind=None,
         color: str = None,
         select: bool = None,
@@ -296,7 +295,10 @@ class GridTable(Variables):
         self.mod = 1
         self.labels[name] = []
         self.labels_cache[name] = []
-        width = len(title) * column_width
+        if column_width is not None:
+            width = len(title) * column_width
+        else:
+            width = column_width
         if not title_on:
             self.mod = 0
             size -= 1

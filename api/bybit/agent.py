@@ -213,7 +213,11 @@ class Agent(Bybit):
                 cursor = result["result"]["nextPageCursor"]
                 parameters["cursor"] = result["result"]["nextPageCursor"]
                 for order in result["result"]["list"]:
-                    order["symbol"] = (order["symbol"], parameters["category"], self.name)
+                    order["symbol"] = (
+                        order["symbol"],
+                        parameters["category"],
+                        self.name,
+                    )
                     order["orderID"] = order["orderId"]
                     if "orderLinkId" in order and order["orderLinkId"]:
                         order["clOrdID"] = order["orderLinkId"]

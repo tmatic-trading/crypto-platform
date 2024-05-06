@@ -1,9 +1,9 @@
 import logging
 import os
+import queue
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone
-import queue
 
 from dotenv import dotenv_values
 

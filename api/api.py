@@ -70,7 +70,9 @@ class WS(Variables):
         t.start()
         [thread.join() for thread in threads]
         if self.logNumFatal == 0:
-            var.info_queue.put({"market": self.name, "message": "Connected to websocket."})
+            var.info_queue.put(
+                {"market": self.name, "message": "Connected to websocket."}
+            )
 
     def exit(self: Markets) -> None:
         """
