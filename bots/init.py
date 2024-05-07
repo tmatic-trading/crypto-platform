@@ -195,7 +195,7 @@ class Init(WS, Variables):
         return res
 
     def load_frames(
-        self,
+        self: Markets,
         symbol: tuple,
         timefr: int,
         frames: dict,
@@ -212,23 +212,25 @@ class Init(WS, Variables):
             pass
         target = datetime.now(tz=timezone.utc)
         target = target.replace(second=0, microsecond=0)
-        start_time = target - timedelta(minutes=bot.CANDLESTICK_NUMBER * timefr - timefr)
-        delta = timedelta(minutes=target.minute % timefr + (target.hour * 60) % timefr)        
-        target -= delta        
+        start_time = target - timedelta(
+            minutes=bot.CANDLESTICK_NUMBER * timefr - timefr
+        )
+        delta = timedelta(minutes=target.minute % timefr + (target.hour * 60) % timefr)
+        target -= delta
 
         # Loading timeframe data
 
         res = Init.download_data(
             self,
-            start_time =start_time,
+            start_time=start_time,
             target=target,
             symbol=symbol,
             timeframe=timefr,
         )
         if not res:
             return None
-        
-        # Bitmex bug fix. Bitmex can send data with the next period's 
+
+        # Bitmex bug fix. Bitmex can send data with the next period's
         # timestamp typically for 5m and 60m.
         if target < res[-1]["timestamp"]:
             delta = timedelta(minutes=timefr)
@@ -259,14 +261,11 @@ class Init(WS, Variables):
                 )
         frames[symbol][timefr]["time"] = tm
 
-        """message = (
-            "Downloaded missing data, symbol="
-            + str(symbol)
-            + " TIMEFR="
-            + str(timefr)
+        message = (
+            "Downloaded missing data, symbol=" + str(symbol) + " TIMEFR=" + str(timefr)
         )
         var.logger.info(message)
-        info_display(self.name, message)"""
+        # var.info_queue.put({"market": self.name, "message": message})
 
         return frames
 

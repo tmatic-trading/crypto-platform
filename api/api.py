@@ -8,7 +8,7 @@ from api.bitmex.agent import Agent as BitmexAgent
 from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
-from display.functions import info_display
+from common.variables import Variables as var
 
 from .variables import Variables
 
@@ -70,7 +70,9 @@ class WS(Variables):
         t.start()
         [thread.join() for thread in threads]
         if self.logNumFatal == 0:
-            info_display(self.name, "Connected to websocket.")
+            var.info_queue.put(
+                {"market": self.name, "message": "Connected to websocket."}
+            )
 
     def exit(self: Markets) -> None:
         """

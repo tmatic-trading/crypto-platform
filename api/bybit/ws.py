@@ -68,6 +68,7 @@ class Bybit(Variables):
         self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
+        self.setup_orders = list()
 
     def start(self):
         for symbol in self.symbol_list:

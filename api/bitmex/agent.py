@@ -9,8 +9,6 @@ from .http import Send
 from .path import Listing
 from .ws import Bitmex
 
-# from api.variables import Variables
-
 
 class Agent(Bitmex):
     logger = logging.getLogger(__name__)

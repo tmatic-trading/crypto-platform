@@ -51,8 +51,7 @@ class Agent(Bybit):
                     + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
                     + "such symbol does not exist"
                 )
-                Bybit.exit(self)
-                exit(1)
+                self.logNumFatal = 1001
 
     def get_user(self) -> Union[dict, None]:
         Agent.logger.info("In get_user - sending get_uid_wallet_type()")
@@ -214,7 +213,11 @@ class Agent(Bybit):
                 cursor = result["result"]["nextPageCursor"]
                 parameters["cursor"] = result["result"]["nextPageCursor"]
                 for order in result["result"]["list"]:
-                    order["symbol"] = (order["symbol"], category, self.name)
+                    order["symbol"] = (
+                        order["symbol"],
+                        parameters["category"],
+                        self.name,
+                    )
                     order["orderID"] = order["orderId"]
                     if "orderLinkId" in order and order["orderLinkId"]:
                         order["clOrdID"] = order["orderLinkId"]
