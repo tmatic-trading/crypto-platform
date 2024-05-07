@@ -125,7 +125,6 @@ class Variables:
 
     # Information field
     frame_info = tk.Frame(pw_info_rest)
-    frame_info.pack(fill="both", expand="yes")
 
     # Information widget
     if ostype == "Mac":
@@ -152,7 +151,6 @@ class Variables:
 
     # This technical frame contains most frames and widgets
     frame_rest1 = tk.Frame(pw_info_rest)
-    frame_rest1.pack(fill="both", expand="yes")
 
     pw_info_rest.add(frame_info)
     pw_info_rest.add(frame_rest1)
@@ -176,8 +174,8 @@ class Variables:
     frame_rest3.grid(row=0, column=0, sticky="NSEW")
     frame_rest2.grid_columnconfigure(0, weight=1)
     frame_rest2.grid_rowconfigure(0, weight=72)
-    # Frame for the order book
 
+    # Frame for the order book
     orderbook_frame = tk.Frame(frame_rest3)
     orderbook_frame.grid(row=0, column=0, sticky="NSEW")
     frame_rest3.grid_columnconfigure(0, weight=50)
@@ -205,7 +203,6 @@ class Variables:
 
     # Orders frame
     frame_orders = tk.Frame(pw_orders_trades)
-    frame_orders.pack(fill="both", expand="yes")
 
     # Notebook tabs: Trades / Funding / Results
     if ostype == "Mac":
@@ -216,19 +213,15 @@ class Variables:
     style.configure("TNotebook", borderwidth=0, background="gray90", tabposition="n")
     style.configure("TNotebook.Tab", background="gray90")
     style.map("TNotebook.Tab", background=[("selected", title_color)])
-    notebook.pack(expand=1, fill="both")
 
     # Trades frame
     frame_trades = ttk.Frame(notebook)
-    frame_trades.pack(fill="both", expand="yes")
 
     # Funding frame
     frame_funding = tk.Frame(notebook)
-    frame_funding.pack(fill="both", expand="yes")
 
     # Results frame
     frame_results = tk.Frame(notebook)
-    frame_results.pack(fill="both", expand="yes")
 
     notebook.add(frame_trades, text="Trades")
     notebook.add(frame_funding, text="Funding")
@@ -248,11 +241,9 @@ class Variables:
 
     # Frame for currencies (account)
     account_frame = tk.Frame(pw_account_robo)
-    account_frame.pack(fill="both", expand="yes")
 
     # Frame for the robots table
     robots_frame = tk.Frame(pw_account_robo)
-    robots_frame.pack(fill="both", expand="yes")
 
     pw_account_robo.add(account_frame)
     pw_account_robo.add(robots_frame)

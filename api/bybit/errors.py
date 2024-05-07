@@ -88,6 +88,6 @@ def exception(method):
                 traceback.print_exception(
                     type(exception), exception, exception.__traceback__
                 )
-                os.abort()
+                # os.abort()
 
     return decorator

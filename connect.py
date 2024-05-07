@@ -14,6 +14,7 @@ import services as service
 from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
+from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Tables
@@ -93,7 +94,8 @@ def finish_setup(ws: Markets):
     common.Init.load_orders(ws, ws.setup_orders)
     bots.Init.delete_unused_robot(ws)
     for emi, value in ws.robot_status.items():
-        ws.robots[emi]["STATUS"] = value
+        if emi in ws.robots:
+            ws.robots[emi]["STATUS"] = value
     trades.insert_columns()
     funding.insert_columns()
     orders.insert_columns()
@@ -149,13 +151,28 @@ def clear_params():
 
 
 def robots_thread() -> None:
+    def bot_in_thread():
+        # Bots entry point
+        bot.robo[robot["emi"]](
+            robot=robot["robot"],
+            frame=robot["frame"],
+            instrument=robot["instrument"],
+        )
+
     while var.robots_thread_is_active:
         utcnow = datetime.now(tz=timezone.utc)
+        bot_list = list()
         for market in var.market_list:
             ws = Markets[market]
             if ws.api_is_active:
                 if ws.frames:
-                    Function.robots_entry(ws, utc=utcnow)
+                    bot_list = Function.robots_entry(ws, bot_list, utc=utcnow)
+        threads = []
+        for robot in bot_list:
+            t = threading.Thread(target=bot_in_thread)
+            threads.append(t)
+            t.start()
+        [thread.join() for thread in threads]
         rest = 1 - time.time() % 1
         time.sleep(rest)
 
@@ -183,4 +200,4 @@ def on_closing(root, refresh_var):
     root.after_cancel(refresh_var)
     root.destroy()
     service.close(Markets)
-    os.abort()
+    # os.abort()

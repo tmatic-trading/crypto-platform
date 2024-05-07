@@ -102,9 +102,9 @@ class Function(WS, Variables):
         while True:
             try:
                 Function.sql_lock.acquire(True)
-                var.cursor_sqlite.execute(query)
-                Function.sql_lock.release()
+                var.cursor_sqlite.execute(query)                
                 orig = var.cursor_sqlite.fetchall()
+                Function.sql_lock.release()
                 data = []
                 if orig:
                     data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
@@ -656,7 +656,7 @@ class Function(WS, Variables):
 
         return number
 
-    def robots_entry(self: Markets, utc: datetime) -> None:
+    def robots_entry(self: Markets, bot_list: list, utc: datetime) -> None:
         """
         Processing timeframes and entry point into robot algorithms
         """
@@ -670,11 +670,13 @@ class Function(WS, Variables):
                             and disp.f9 == "ON"
                             and bot.robo
                         ):
-                            # Robots entry point
-                            bot.robo[emi](
-                                robot=self.robots[emi],
-                                frame=values["data"],
-                                instrument=instrument,
+                            bot_list.append(
+                                {
+                                    "emi": emi,
+                                    "robot": self.robots[emi],
+                                    "frame": values["data"],
+                                    "instrument": instrument,
+                                }
                             )
                         Function.save_timeframes_data(
                             self,
@@ -697,6 +699,8 @@ class Function(WS, Variables):
                         }
                     )
                     values["time"] = dt_now
+
+        return bot_list
 
     def refresh_on_screen(self: Markets, utc: datetime) -> None:
         """
