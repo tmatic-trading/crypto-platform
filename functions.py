@@ -11,7 +11,7 @@ from api.variables import Variables
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
-from display.variables import GridTable, ListBoxTable, Tables
+from display.variables import GridTable, ListBoxTable, Tables, TreeTables, TreeviewTable
 from display.variables import Variables as disp
 
 
@@ -102,7 +102,7 @@ class Function(WS, Variables):
         while True:
             try:
                 Function.sql_lock.acquire(True)
-                var.cursor_sqlite.execute(query)                
+                var.cursor_sqlite.execute(query)
                 orig = var.cursor_sqlite.fetchall()
                 Function.sql_lock.release()
                 data = []
@@ -727,7 +727,9 @@ class Function(WS, Variables):
                     WS.urgent_announcement(self)
                 self.message_time = utc
                 self.message_point = self.message_counter
+        tm = datetime.now()
         Function.refresh_tables(self)
+        print(datetime.now() - tm)
 
     def refresh_tables(self: Markets) -> None:
         """
@@ -736,80 +738,130 @@ class Function(WS, Variables):
 
         # Refresh Positions table
 
-        mod = Tables.position.mod
+        tree = TreeTables.position
+
         for num, symbol in enumerate(self.symbol_list):
             instrument = self.Instrument[symbol]
-            update_label(table="position", column=0, row=num + mod, val=symbol[0])
-            update_label(table="position", column=1, row=num + mod, val=symbol[1])
-            pos = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
-            update_label(table="position", column=2, row=num + mod, val=pos)
-            update_label(
-                table="position",
-                column=3,
-                row=num + mod,
-                val=(
-                    Function.format_price(
-                        self,
-                        number=instrument.avgEntryPrice,
-                        symbol=symbol,
-                    )
-                ),
-            )
-            update_label(
-                table="position",
-                column=4,
-                row=num + mod,
-                val=format_number(number=instrument.unrealisedPnl),
-            )
-            update_label(
-                table="position",
-                column=5,
-                row=num + mod,
-                val=instrument.marginCallPrice,
-            )
-            update_label(
-                table="position",
-                column=6,
-                row=num + mod,
-                val=instrument.state,
-            )
-            update_label(
-                table="position",
-                column=7,
-                row=num + mod,
-                val=Function.humanFormat(self, instrument.volume24h, symbol),
-            )
-            if isinstance(instrument.expire, datetime):
-                tm = instrument.expire.strftime("%y%m%d %Hh")
-            else:
-                tm = instrument.expire
-            update_label(table="position", column=8, row=num + mod, val=tm)
-            if isinstance(instrument.fundingRate, float):
-                fund = round(instrument.fundingRate * 100, 4)
-            else:
-                fund = instrument.fundingRate
-            update_label(
-                table="position",
-                column=9,
-                row=num + mod,
-                val=fund,
-            )
+            compare = [
+                symbol[0],
+                symbol[1],
+                instrument.currentQty,
+                instrument.avgEntryPrice,
+                instrument.unrealisedPnl,
+                instrument.marginCallPrice,
+                instrument.state,
+                instrument.volume24h,
+                instrument.expire,
+                instrument.fundingRate,
+            ]
+            if compare != tree.cache[num]:
+                tree.cache[num] = compare
+                row = [
+                    symbol[0], 
+                    symbol[1],              
+                    Function.volume(self, qty=instrument.currentQty, symbol=symbol), 
+                    Function.format_price(self, number=instrument.avgEntryPrice, symbol=symbol),
+                    format_number(number=instrument.unrealisedPnl), 
+                    instrument.marginCallPrice, 
+                    instrument.state, 
+                    Function.humanFormat(self, instrument.volume24h, symbol), 
+                    instrument.expire, 
+                    instrument.fundingRate,
+                ]
+                tree.update(row=num, values=row)
+
+                '''mod = Tables.position.mod
+                update_label(table="position", column=0, row=num + mod, val=symbol[0])
+                update_label(table="position", column=1, row=num + mod, val=symbol[1])
+                pos = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
+                update_label(table="position", column=2, row=num + mod, val=pos)
+                update_label(
+                    table="position",
+                    column=3,
+                    row=num + mod,
+                    val=(
+                        Function.format_price(
+                            self,
+                            number=instrument.avgEntryPrice,
+                            symbol=symbol,
+                        )
+                    ),
+                )
+                update_label(
+                    table="position",
+                    column=4,
+                    row=num + mod,
+                    val=format_number(number=instrument.unrealisedPnl),
+                )
+                update_label(
+                    table="position",
+                    column=5,
+                    row=num + mod,
+                    val=instrument.marginCallPrice,
+                )
+                update_label(
+                    table="position",
+                    column=6,
+                    row=num + mod,
+                    val=instrument.state,
+                )
+                update_label(
+                    table="position",
+                    column=7,
+                    row=num + mod,
+                    val=Function.humanFormat(self, instrument.volume24h, symbol),
+                )
+                if isinstance(instrument.expire, datetime):
+                    tm = instrument.expire.strftime("%y%m%d %Hh")
+                else:
+                    tm = instrument.expire
+                update_label(table="position", column=8, row=num + mod, val=tm)
+                if isinstance(instrument.fundingRate, float):
+                    fund = round(instrument.fundingRate * 100, 4)
+                else:
+                    fund = instrument.fundingRate
+                update_label(
+                    table="position",
+                    column=9,
+                    row=num + mod,
+                    val=fund,
+                )'''
 
         # Refresh Orderbook table
+                
+        tree = TreeTables.orderbook
 
         def display_order_book_values(
-            val: list, start: int, end: int, direct: int, side: str
+            val: list, start: int, end: int, direct: int, side: str, col: int, color: str
         ) -> None:
             count = 0
-            if side == "asks":
-                col = 2
-                color = disp.red_color
-            else:
-                col = 0
-                color = disp.green_color
-            col_qty = abs(col - 2)
-            for row in range(start, end, direct):
-                vlm = ""
+            #col_qty = abs(col - 2)
+            for num in range(start, end, direct):
+                compare = [val[count][0], val[count][1],]
+                if side == "bids":
+                    compare = [val[count][0], val[count][1], ""]
+                    if compare != tree.cache[num]:
+                        tree.cache[num] = compare
+                        row = [
+                            Function.volume(self, qty=float(val[count][1]), symbol=var.symbol), 
+                            Function.format_price(self, number=float(val[count][0]), symbol=var.symbol),                             
+                            "", 
+                        ]
+                        tree.update(row=num, values=row)
+                else:
+                    compare = ["", val[count][0], val[count][1]]
+                    if compare != tree.cache[num]:
+                        tree.cache[num] = compare
+                        row = [
+                            "", 
+                            Function.format_price(self, number=float(val[count][0]), symbol=var.symbol), 
+                            Function.volume(self, qty=float(val[count][1]), symbol=var.symbol), 
+                        ]
+                        tree.update(row=num, values=row)
+                
+                
+
+                '''vlm = ""
                 price = ""
                 qty = 0
                 if len(val) > count:
@@ -826,13 +878,13 @@ class Function(WS, Variables):
                             symbol=var.symbol,
                         )
                 if str(qty) != "0":
-                    update_label(table="orderbook", column=col_qty, row=row, val=qty)
-                    disp.labels["orderbook"][row][col_qty]["bg"] = color
-                    disp.labels["orderbook"][row][col_qty]["fg"] = "white"
+                    update_label(table="orderbook", column=abs(col - 2), row=row, val=qty)
+                    #disp.labels["orderbook"][row][col_qty]["bg"] = color
+                    #disp.labels["orderbook"][row][col_qty]["fg"] = "white"
                 else:
-                    update_label(table="orderbook", column=col_qty, row=row, val="")
-                    disp.labels["orderbook"][row][col_qty]["bg"] = disp.bg_color
-                    disp.labels["orderbook"][row][col_qty]["fg"] = disp.fg_color
+                    update_label(table="orderbook", column=abs(col - 2), row=row, val="")
+                    #disp.labels["orderbook"][row][col_qty]["bg"] = disp.bg_color
+                    #disp.labels["orderbook"][row][col_qty]["fg"] = disp.fg_color
                 update_label(table="orderbook", column=col, row=row, val=vlm)
                 update_label(table="orderbook", column=1, row=row, val=price)
                 if var.symbol != disp.symb_book:
@@ -846,7 +898,7 @@ class Function(WS, Variables):
                             disp.labels["orderbook"][row][1]["width"] = disp.col1_book
                             disp.labels["orderbook"][row][2]["width"] = 6
                         disp.symb_book = var.symbol
-                        disp.col1_book = 0
+                        disp.col1_book = 0'''
                 count += 1
 
         mod = 1 - Tables.orderbook.mod
@@ -941,14 +993,73 @@ class Function(WS, Variables):
                 end=disp.num_book - mod,
                 direct=1,
                 side="bids",
+                col=0, 
+                color=disp.red_color,
             )
             display_order_book_values(
-                val=instrument.asks, start=num, end=0 - mod, direct=-1, side="asks"
+                val=instrument.asks, start=num, end=0 - mod, direct=-1, side="asks", col=2, color=disp.green_color,
             )
 
         # Refresh Robots table
+        
+        tree = TreeTables.robots
 
-        mod = Tables.robots.mod
+        for num, robot in enumerate(self.robots.values()):
+            symbol = robot["SYMBOL"]
+            if robot["CATEGORY"] != "spot":
+                price = Function.close_price(self, symbol=symbol, pos=robot["POS"])
+                if price:
+                    calc = Function.calculate(
+                        self,
+                        symbol=symbol,
+                        price=price,
+                        qty=-float(robot["POS"]),
+                        rate=0,
+                        fund=1,
+                    )
+                    robot["PNL"] = robot["SUMREAL"] + calc["sumreal"] - robot["COMMISS"]
+                else:
+                    robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
+            compare = [
+                robot["EMI"], 
+                symbol[0],
+                symbol[1], 
+                self.Instrument[symbol].settlCurrency[0],
+                robot["TIMEFR"], 
+                robot["CAPITAL"], 
+                robot["STATUS"], 
+                robot["VOL"], 
+                robot["PNL"], 
+                robot["POS"], 
+            ]
+            if compare != tree.cache[num]:
+                tree.cache[num] = compare
+                row = [
+                    robot["EMI"], 
+                    symbol[0],
+                    symbol[1], 
+                    self.Instrument[symbol].settlCurrency[0],
+                    robot["TIMEFR"], 
+                    robot["CAPITAL"], 
+                    robot["STATUS"], 
+                    Function.humanFormat(self, robot["VOL"], symbol), 
+                    format_number(number=robot["PNL"]), 
+                    Function.volume(self, qty=robot["POS"], symbol=symbol,) 
+                ]
+                tree.update(row=num, values=row)
+                if (
+                    robot["STATUS"] == "RESERVED"
+                    and robot["POS"] != 0
+                    and not isinstance(robot["POS"], str)
+                ) or robot["STATUS"] in ["OFF", "NOT DEFINED", "NOT IN LIST"]:
+                    disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
+                else:
+                    disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
+
+
+
+
+        '''mod = Tables.robots.mod
         for num, robot in enumerate(self.robots.values()):
             symbol = robot["SYMBOL"]
             if robot["CATEGORY"] != "spot":
@@ -1009,11 +1120,40 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=val,
             )
-            robot["y_position"] = num + mod
+            robot["y_position"] = num + mod'''
 
         # Refresh Account table
 
-        mod = Tables.account.mod
+        tree = TreeTables.account
+
+        for num, settlCurrency in enumerate(self.Account.keys()):
+            account = self.Account[settlCurrency]
+            compare = [
+                settlCurrency[0], 
+                account.walletBalance, 
+                account.unrealisedPnl, 
+                account.marginBalance, 
+                account.orderMargin, 
+                account.positionMagrin, 
+                account.availableMargin,
+            ]
+            if compare != tree.cache[num]:
+                tree.cache[num] = compare
+                row = [
+                    settlCurrency[0], 
+                    format_number(number=account.walletBalance), 
+                    format_number(number=account.unrealisedPnl), 
+                    format_number(number=account.marginBalance), 
+                    format_number(number=account.orderMargin), 
+                    format_number(number=account.positionMagrin), 
+                    format_number(number=account.availableMargin), 
+                ]
+                tree.update(row=num, values=row)
+
+
+
+
+        '''mod = Tables.account.mod
         for num, settlCurrency in enumerate(self.Account.keys()):
             account = self.Account[settlCurrency]
             update_label(table="account", column=0, row=num + mod, val=settlCurrency[0])
@@ -1052,7 +1192,7 @@ class Function(WS, Variables):
                 column=6,
                 row=num + mod,
                 val=format_number(number=account.availableMargin),
-            )
+            )'''
 
         # Refresh Results table
 
@@ -1810,14 +1950,14 @@ def load_labels() -> None:
         color=disp.title_color,
         select=True,
     )
-    mod = Tables.robots.mod
+    '''mod = Tables.robots.mod
     for row, emi in enumerate(ws.robots):
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
             ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
         ):
             disp.labels["robots"][row + mod][6]["fg"] = disp.red_color
         else:
-            disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color
+            disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color'''
     Tables.orderbook = GridTable(
         frame=disp.orderbook_frame,
         name="orderbook",
@@ -1828,7 +1968,7 @@ def load_labels() -> None:
         bind=handler_orderbook,
         color=disp.bg_color,
     )
-    num = int(disp.num_book / 2)
+    '''num = int(disp.num_book / 2)
     mod = Tables.orderbook.mod
     for row in range(disp.num_book + mod - 1):
         for column in range(len(var.name_book)):
@@ -1836,7 +1976,7 @@ def load_labels() -> None:
                 if row <= num and column == 2:
                     disp.labels["orderbook"][row][column]["anchor"] = "w"
                 if row > num and column == 0:
-                    disp.labels["orderbook"][row][column]["anchor"] = "e"
+                    disp.labels["orderbook"][row][column]["anchor"] = "e"'''
     Tables.results = GridTable(
         frame=disp.frame_results,
         name="results",
@@ -1844,6 +1984,30 @@ def load_labels() -> None:
         title=var.name_results,
         # column_width=110,
         color=disp.bg_color,
+    )
+    TreeTables.orderbook = TreeviewTable(
+        frame=disp.orderbook_frame,
+        name="orderbook",
+        title=var.name_book,
+        size=disp.num_book,
+    )
+    TreeTables.position = TreeviewTable(
+        frame=disp.position_frame,
+        name="position",
+        title=var.name_position,
+        size=len(ws.symbol_list),
+    )
+    TreeTables.robots = TreeviewTable(
+        frame=disp.robots_frame, 
+        name="robots",
+        title=var.name_robots,
+        size=len(ws.robots),
+    )
+    TreeTables.account = TreeviewTable(
+        frame=disp.account_frame, 
+        name="account",
+        title=var.name_account,
+        size=len(ws.Account.get_keys()),
     )
 
 

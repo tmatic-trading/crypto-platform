@@ -68,7 +68,7 @@ class Variables:
         ostype = "Linux"
 
     num_robots = 1
-    num_book = 21  # Must be odd
+    num_book = 20  # Must be even
     col1_book = 0
     symb_book = ()
     labels = dict()
@@ -620,6 +620,67 @@ class ListBoxTable(Variables):
                 for column in range(len(self.columns)):
                     self.columns[column].pop(num)
         self.clear_all()
+
+
+class TreeviewTable(Variables):
+    def __init__(
+        self, frame: tk.Frame, name: str, title: list, size: int, bind=None
+    ) -> None:
+        self.title = title
+        self.max_rows = 200
+        self.name = name
+        self.title = title
+        self.cache = list()
+        columns = [num for num in range(1, len(title) + 1)]
+        self.tree = ttk.Treeview(frame, columns=columns, show="headings")
+        for num, name in enumerate(title, start=1):
+            self.tree.heading(num, text=name)
+            self.tree.column(num, anchor=tk.CENTER, width=10)
+        scroll = AutoScrollbar(frame, orient="vertical")
+        scroll.config(command=self.tree.yview)
+        self.tree.config(yscrollcommand=scroll.set)
+        self.tree.grid(row=0, column=0, sticky="NSEW")
+        scroll.grid(row=0, column=1, sticky="NS")
+        self.children = []
+        self.tree.tag_configure("Selected", background=self.bg_select_color)
+        self.tree.tag_configure("Buy", foreground=self.green_color)
+        self.tree.tag_configure("Sell", background=self.red_color)
+        self.init(size)
+        """tree.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")"""
+
+    def init(self, size):
+        self.cache = list()
+        for _ in range(size):
+            self.insert(values=self.title)
+            self.cache.append(self.title)
+
+    def insert(self, values: list, configure="") -> None:
+        self.tree.insert("", 0, values=values, tags=configure)
+        self.children = self.tree.get_children()
+        if len(self.children) > self.max_rows:
+            self.delete(row=len(self.children) - 1)
+
+    def delete(self, row: int) -> None:
+        self.tree.delete(self.children[row])
+        self.children = self.tree.get_children()
+
+    def update(self, row: int, values: list) -> None:
+        self.tree.item(self.children[row], values=values)
+
+    def paint(self, row: int, configure: str) -> None:
+        self.tree.item(self.children[row], tags=configure)
+
+    def clear_all(self):
+        self.tree.delete(*self.children)
+        self.children = self.tree.get_children()
+
+
+class TreeTables:
+    position: TreeviewTable
+    robots: TreeviewTable
+    account: TreeviewTable
+    orderbook: TreeviewTable
 
 
 def event_width(event, canvas_id, canvas_event):
