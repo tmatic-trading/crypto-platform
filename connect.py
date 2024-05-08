@@ -1,3 +1,5 @@
+import concurrent.futures
+import os
 import threading
 import time
 from collections import OrderedDict
@@ -12,6 +14,7 @@ import services as service
 from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
+from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Tables
@@ -27,8 +30,14 @@ def setup():
     clear_params()
     common.setup_database_connecion()
     var.robots_thread_is_active = False
+    threads = []
     for name in var.market_list:
-        setup_market(Markets[name])
+        t = threading.Thread(target=setup_market, args=(Markets[name],))
+        threads.append(t)
+        t.start()
+    [thread.join() for thread in threads]
+    for name in var.market_list:
+        finish_setup(Markets[name])
     functions.load_labels()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
@@ -36,15 +45,21 @@ def setup():
 
 
 def setup_market(ws: Markets):
+    def get_timeframes(ws):
+        return bots.Init.init_timeframes(ws)
+
+    def get_history(ws):
+        common.Init.load_trading_history(ws)
+
+    def get_orders(ws):
+        return WS.open_orders(ws)
+
     ws.logNumFatal = -1
     ws.api_is_active = False
     WS.exit(ws)
     while ws.logNumFatal:
         ws.logNumFatal = -1
         WS.start_ws(ws)
-        WS.get_user(ws)
-        WS.get_wallet_balance(ws)
-        WS.get_position_info(ws)
         if ws.logNumFatal:
             WS.exit(ws)
             sleep(2)
@@ -52,27 +67,38 @@ def setup_market(ws: Markets):
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
                 algo.init_algo(ws)
-                if isinstance(bots.Init.init_timeframes(ws), dict):
-                    trades.clear_columns(market=ws.name)
-                    funding.clear_columns(market=ws.name)
-                    orders.clear_columns(market=ws.name)
-                    common.Init.load_database(ws)
-                    common.Init.load_trading_history(ws)
-                    common.Init.account_balances(ws)
-                    common.Init.load_orders(ws)
-                    bots.Init.delete_unused_robot(ws)
-                    for emi, value in ws.robot_status.items():
-                        ws.robots[emi]["STATUS"] = value
-                    trades.insert_columns()
-                    funding.insert_columns()
-                    orders.insert_columns()
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    frames = executor.submit(get_timeframes, ws)
+                    executor.submit(get_history, ws)
+                    open_orders = executor.submit(get_orders, ws)
+                    frames = frames.result()
+                    ws.setup_orders = open_orders.result()
+                # frames = get_timeframes(ws)
+                if isinstance(frames, dict):
+                    pass
                 else:
-                    print("Error during loading timeframes.")
+                    var.logger.info("Error during loading timeframes.")
                     WS.exit(ws)
                     ws.logNumFatal = -1
                     sleep(2)
             else:
                 var.logger.info("No robots loaded.")
+
+
+def finish_setup(ws: Markets):
+    trades.clear_columns(market=ws.name)
+    funding.clear_columns(market=ws.name)
+    orders.clear_columns(market=ws.name)
+    common.Init.load_database(ws)
+    common.Init.account_balances(ws)
+    common.Init.load_orders(ws, ws.setup_orders)
+    bots.Init.delete_unused_robot(ws)
+    for emi, value in ws.robot_status.items():
+        if emi in ws.robots:
+            ws.robots[emi]["STATUS"] = value
+    trades.insert_columns()
+    funding.insert_columns()
+    orders.insert_columns()
     if hasattr(Tables, "market"):
         Tables.market.color_market(
             state="online", row=var.market_list.index(ws.name), market=ws.name
@@ -81,6 +107,9 @@ def setup_market(ws: Markets):
 
 
 def refresh() -> None:
+    while not var.info_queue.empty():
+        info = var.info_queue.get()
+        info_display(info["market"], info["message"])
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
@@ -88,18 +117,18 @@ def refresh() -> None:
             if ws.logNumFatal > 2000:
                 if ws.message2000 == "":
                     ws.message2000 = (
-                        "Fatal error=" + str(ws.logNumFatal) + ". Terminal is frozen"
+                        "Fatal error=" + str(ws.logNumFatal) + ". Market is frozen"
                     )
-                    info_display(ws.name, ws.message2000)
-                    Tables.market.color_market(
-                        state="error",
-                        row=var.market_list.index(ws.name),
-                        market=ws.name,
+                    Function.market_status(
+                        ws, status="Error", message=ws.message2000, error=True
                     )
                 sleep(1)
             elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-                # Function.market_status(ws, "RESTARTING...")
+                Function.market_status(
+                    ws, status="RESTARTING...", message="RESTARTING...", error=True
+                )
                 setup_market(ws=ws)
+                finish_setup(ws=ws)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
                     if ws.messageStopped == "":
@@ -118,16 +147,32 @@ def clear_params():
     var.orders = OrderedDict()
     var.current_market = var.market_list[0]
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
+    disp.symb_book = ()
 
 
 def robots_thread() -> None:
+    def bot_in_thread():
+        # Bots entry point
+        bot.robo[robot["emi"]](
+            robot=robot["robot"],
+            frame=robot["frame"],
+            instrument=robot["instrument"],
+        )
+
     while var.robots_thread_is_active:
         utcnow = datetime.now(tz=timezone.utc)
+        bot_list = list()
         for market in var.market_list:
             ws = Markets[market]
             if ws.api_is_active:
                 if ws.frames:
-                    Function.robots_entry(ws, utc=utcnow)
+                    bot_list = Function.robots_entry(ws, bot_list, utc=utcnow)
+        threads = []
+        for robot in bot_list:
+            t = threading.Thread(target=bot_in_thread)
+            threads.append(t)
+            t.start()
+        [thread.join() for thread in threads]
         rest = 1 - time.time() % 1
         time.sleep(rest)
 
@@ -145,8 +190,14 @@ def trade_state(event) -> None:
         disp.f9 = "OFF"
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
-        disp.messageStopped = ""
         for num, market in enumerate(var.market_list):
             Markets[market].logNumFatal = 0
             Tables.market.color_market(state="online", row=num, market=market)
             print(market, disp.f9)
+
+
+def on_closing(root, refresh_var):
+    root.after_cancel(refresh_var)
+    root.destroy()
+    service.close(Markets)
+    # os.abort()

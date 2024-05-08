@@ -1,12 +1,12 @@
 import logging
+import threading
 from collections import OrderedDict
 
 import services as service
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaAccount, MetaInstrument
+from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
-from display.functions import info_display
 from services import exceptions_manager
 
 from .pybit.unified_trading import HTTP, WebSocket
@@ -18,6 +18,9 @@ class Bybit(Variables):
         pass
 
     class Instrument(metaclass=MetaInstrument):
+        pass
+
+    class Result(metaclass=MetaResult):
         pass
 
     def __init__(self):
@@ -42,6 +45,7 @@ class Bybit(Variables):
             "option": WebSocket,
             "linear": WebSocket,
         }
+        self.account_types = ["UNIFIED", "CONTRACT"]
         self.ws_private = WebSocket
         self.logger = logging.getLogger(__name__)
         if self.depth == "quote":
@@ -64,9 +68,18 @@ class Bybit(Variables):
         self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
+        self.setup_orders = list()
 
     def start(self):
-        self.count = 0
+        for symbol in self.symbol_list:
+            instrument = self.Instrument[symbol]
+            if instrument.category == "linear":
+                self.Result[(instrument.quoteCoin, self.name)]
+            elif instrument.category == "inverse":
+                self.Result[(instrument.baseCoin, self.name)]
+            elif instrument.category == "spot":
+                self.Result[(instrument.baseCoin, self.name)]
+                self.Result[(instrument.quoteCoin, self.name)]
         self.__connect()
 
     def __connect(self) -> None:
@@ -74,9 +87,13 @@ class Bybit(Variables):
         Connecting to websocket.
         """
         self.logger.info("Connecting to websocket")
-        for category in self.category_list:
-            self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
+
+        def subscribe_in_thread(category):
             lst = list(filter(lambda x: x[1] == category, self.symbol_list))
+            if lst:
+                self.ws[category] = WebSocket(
+                    testnet=self.testnet, channel_type=category
+                )
             for symbol in lst:
                 if category == "linear":
                     self.logger.info(
@@ -182,17 +199,28 @@ class Bybit(Variables):
                             values=x["data"], category="option"
                         ),
                     )
-        self.ws_private = WebSocket(
-            testnet=self.testnet,
-            channel_type="private",
-            api_key=self.api_key,
-            api_secret=self.api_secret,
-        )
+
+        def private_in_thread():
+            self.ws_private = WebSocket(
+                testnet=self.testnet,
+                channel_type="private",
+                api_key=self.api_key,
+                api_secret=self.api_secret,
+            )
+
+        threads = []
+        for category in self.categories:
+            t = threading.Thread(target=subscribe_in_thread, args=(category,))
+            threads.append(t)
+            t.start()
+        t = threading.Thread(target=private_in_thread)
+        threads.append(t)
+        t.start()
+        [thread.join() for thread in threads]
         self.ws_private.wallet_stream(callback=self.__update_account)
         self.ws_private.position_stream(callback=self.__update_position)
         self.ws_private.order_stream(callback=self.__handle_order)
         self.ws_private.execution_stream(callback=self.__handle_execution)
-        info_display(self.name, "Connected to websocket.")
 
     def __update_orderbook(self, values: dict, category: tuple) -> None:
         symbol = (values["s"], category, self.name)
@@ -215,18 +243,30 @@ class Bybit(Variables):
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:
-            if value["accountType"] == "UNIFIED":
-                for coin in value["coin"]:
-                    if coin["coin"] in self.currencies:
-                        settlCurrency = (coin["coin"], self.name)
-                        account = self.Account[settlCurrency]
-                        account.orderMargin = float(coin["locked"]) + float(
-                            coin["totalOrderIM"]
-                        )
+            for coin in value["coin"]:
+                if coin["coin"] in self.currencies:
+                    currency = (coin["coin"] + "." + value["accountType"], self.name)
+                    account = self.Account[currency]
+                    total = 0
+                    check = 0
+                    if "locked" in coin:
+                        if coin["locked"] != "":
+                            total += float(coin["locked"])
+                            check += 1
+                    if "totalOrderIM" in coin:
+                        total += float(coin["totalOrderIM"])
+                        check += 1
+                    if check:
+                        account.orderMargin = total
+                    if "totalPositionIM" in coin:
                         account.positionMagrin = float(coin["totalPositionIM"])
+                    if "availableToWithdraw" in coin:
                         account.availableMargin = float(coin["availableToWithdraw"])
+                    if "equity" in coin:
                         account.marginBalance = float(coin["equity"])
+                    if "walletBalance" in coin:
                         account.walletBalance = float(coin["walletBalance"])
+                    if "unrealisedPnl" in coin:
                         account.unrealisedPnl = float(coin["unrealisedPnl"])
 
     def __update_position(self, values: dict) -> None:
@@ -240,7 +280,13 @@ class Bybit(Variables):
                     instrument.currentQty = float(value["size"])
                 self.positions[symbol]["POS"] = instrument.currentQty
                 instrument.avgEntryPrice = float(value["entryPrice"])
-                instrument.marginCallPrice = value["liqPrice"]
+                if value["liqPrice"] == "":
+                    if instrument.currentQty == 0:
+                        instrument.marginCallPrice = 0
+                    else:
+                        instrument.marginCallPrice = "inf"
+                else:
+                    instrument.marginCallPrice = value["liqPrice"]
                 instrument.unrealisedPnl = value["unrealisedPnl"]
 
     def __handle_order(self, values):
@@ -289,6 +335,7 @@ class Bybit(Variables):
     def __handle_execution(self, values):
         for row in values["data"]:
             row["symbol"] = (row["symbol"], row["category"], self.name)
+            instrument = self.Instrument[row["symbol"]]
             row["execID"] = row["execId"]
             row["orderID"] = row["orderId"]
             row["lastPx"] = float(row["execPrice"])
@@ -300,12 +347,32 @@ class Bybit(Variables):
             if row["orderLinkId"]:
                 row["clOrdID"] = row["orderLinkId"]
             row["price"] = float(row["orderPrice"])
-            row["lastQty"] = float(row["execQty"])
-            row["settlCurrency"] = self.Instrument[row["symbol"]].settlCurrency
             row["market"] = self.name
+            row["lastQty"] = float(row["execQty"])
             if row["execType"] == "Funding":
                 if row["side"] == "Sell":
                     row["lastQty"] = -row["lastQty"]
+            row["execFee"] = float(row["execFee"])
+            if row["category"] == "spot":
+                if row["commission"] > 0:
+                    if row["side"] == "Buy":
+                        row["feeCurrency"] = instrument.baseCoin
+                    elif row["side"] == "Sell":
+                        row["feeCurrency"] = instrument.quoteCoin
+                else:
+                    if row["IsMaker"]:
+                        if row["side"] == "Buy":
+                            row["feeCurrency"] = instrument.quoteCoin
+                        elif row["side"] == "Sell":
+                            row["feeCurrency"] = instrument.baseCoin
+                    elif not row["IsMaker"]:
+                        if row["side"] == "Buy":
+                            row["feeCurrency"] = instrument.baseCoin
+                        elif row["side"] == "Sell":
+                            row["feeCurrency"] = instrument.quoteCoin
+                row["settlCurrency"] = (row["feeCurrency"], self.name)
+            else:
+                row["settlCurrency"] = instrument.settlCurrency
             self.transaction(row=row)
 
     def exit(self):
@@ -322,7 +389,7 @@ class Bybit(Variables):
         except Exception:
             pass
         self.logNumFatal = -1
-        self.logger.info("Websocket closed")
+        self.logger.info(self.name + " - Websocket closed")
 
     def transaction(self, **kwargs):
         """

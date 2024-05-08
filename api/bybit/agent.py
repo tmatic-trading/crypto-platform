@@ -1,5 +1,5 @@
-# from api.variables import Variables
 import logging
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
@@ -14,14 +14,35 @@ class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
     def get_active_instruments(self):
+        def get_in_thread(category):
+            cursor = "no"
+            while cursor:
+                cursor = ""
+                Agent.logger.info(
+                    "In get_active_instruments - sending get_instruments_info() "
+                    + "- category - "
+                    + category
+                )
+                result = self.session.get_instruments_info(
+                    category=category,
+                    limit=1000,
+                    cursor=cursor,
+                )
+                if "nextPageCursor" in result["result"]:
+                    cursor = result["result"]["nextPageCursor"]
+                else:
+                    cursor = ""
+                for instrument in result["result"]["list"]:
+                    Agent.fill_instrument(
+                        self, instrument=instrument, category=category
+                    )
+
+        threads = []
         for category in self.categories:
-            Agent.logger.info(
-                "In get_active_instruments - sending get_instruments_info() - category - "
-                + category
-            )
-            instrument_info = self.session.get_instruments_info(category=category)
-            for instrument in instrument_info["result"]["list"]:
-                Agent.fill_instrument(self, instrument=instrument, category=category)
+            t = threading.Thread(target=get_in_thread, args=(category,))
+            threads.append(t)
+            t.start()
+        [thread.join() for thread in threads]
         for symbol in self.symbol_list:
             if symbol not in self.symbols:
                 Agent.logger.error(
@@ -30,8 +51,7 @@ class Agent(Bybit):
                     + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
                     + "such symbol does not exist"
                 )
-                Bybit.exit(self)
-                exit(1)
+                self.logNumFatal = 1001
 
     def get_user(self) -> Union[dict, None]:
         Agent.logger.info("In get_user - sending get_uid_wallet_type()")
@@ -60,7 +80,7 @@ class Agent(Bybit):
         )
 
     def get_position(self, symbol: tuple = False):
-        print("___get_position")
+        print("___get_position", symbol)
 
     def trade_bucketed(
         self, symbol: tuple, time: datetime, timeframe: str
@@ -79,9 +99,9 @@ class Agent(Bybit):
             limit=1000,
         )
         if kline["result"]["list"]:
-            result = []
+            res = []
             for row in kline["result"]["list"]:
-                result.append(
+                res.append(
                     {
                         "timestamp": service.time_converter(int(row[0]) / 1000),
                         "open": float(row[1]),
@@ -90,10 +110,12 @@ class Agent(Bybit):
                         "close": float(row[4]),
                     }
                 )
+            res.sort(key=lambda x: x["timestamp"])
 
-            return result
+            return res
 
     def trading_history(self, histCount: int, time: datetime) -> list:
+        trade_history = []
         utc = datetime.now(timezone.utc)
         if utc - time > timedelta(days=729):
             self.logger.info(
@@ -104,48 +126,62 @@ class Agent(Bybit):
             self.logger.info("Time changed to " + str(time))
         startTime = service.time_converter(time)
         limit = min(100, histCount)
-        trade_history = []
-        while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
-            for category in self.categories:
-                cursor = "no"
-                while cursor:
-                    Agent.logger.info(
-                        "In trading_history - sending get_executions() - category - "
-                        + category
-                        + " - startTime - "
-                        + str(service.time_converter(startTime / 1000))
+
+        def get_in_thread(category, startTime, limit):
+            nonlocal trade_history
+            cursor = "no"
+            while cursor:
+                Agent.logger.info(
+                    "In trading_history - sending get_executions() - category - "
+                    + category
+                    + " - startTime - "
+                    + str(service.time_converter(startTime / 1000))
+                )
+                result = self.session.get_executions(
+                    category=category,
+                    startTime=startTime,
+                    limit=limit,
+                    cursor=cursor,
+                )
+                cursor = result["result"]["nextPageCursor"]
+                res = result["result"]["list"]
+                for row in res:
+                    row["symbol"] = (row["symbol"], category, self.name)
+                    row["execID"] = row["execId"]
+                    row["orderID"] = row["orderId"]
+                    row["category"] = category
+                    row["lastPx"] = float(row["execPrice"])
+                    row["leavesQty"] = float(row["leavesQty"])
+                    row["transactTime"] = service.time_converter(
+                        time=int(row["execTime"]) / 1000, usec=True
                     )
-                    result = self.session.get_executions(
-                        category=category,
-                        startTime=startTime,
-                        limit=limit,
-                        cursor=cursor,
-                    )
-                    cursor = result["result"]["nextPageCursor"]
-                    res = result["result"]["list"]
-                    for row in res:
-                        row["symbol"] = (row["symbol"], category, self.name)
-                        row["execID"] = row["execId"]
-                        row["orderID"] = row["orderId"]
-                        row["category"] = category
-                        row["lastPx"] = float(row["execPrice"])
-                        row["leavesQty"] = float(row["leavesQty"])
-                        row["transactTime"] = service.time_converter(
-                            time=int(row["execTime"]) / 1000, usec=True
-                        )
-                        row["commission"] = float(row["feeRate"])
-                        if row["orderLinkId"]:
-                            row["clOrdID"] = row["orderLinkId"]
-                        row["price"] = float(row["execPrice"])
-                        row["lastQty"] = float(row["execQty"])
+                    row["commission"] = float(row["feeRate"])
+                    if row["orderLinkId"]:
+                        row["clOrdID"] = row["orderLinkId"]
+                    row["price"] = float(row["execPrice"])
+                    if category == "spot":
+                        row["settlCurrency"] = (row["feeCurrency"], self.name)
+                    else:
                         row["settlCurrency"] = self.Instrument[
                             row["symbol"]
                         ].settlCurrency
-                        row["market"] = self.name
-                        if row["execType"] == "Funding":
-                            if row["side"] == "Sell":
-                                row["lastQty"] = -row["lastQty"]
-                    trade_history += res
+                    row["lastQty"] = float(row["execQty"])
+                    row["market"] = self.name
+                    if row["execType"] == "Funding":
+                        if row["side"] == "Sell":
+                            row["lastQty"] = -row["lastQty"]
+                    row["execFee"] = float(row["execFee"])
+                trade_history += res
+
+        while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
+            threads = []
+            for category in self.categories:
+                t = threading.Thread(
+                    target=get_in_thread, args=(category, startTime, limit)
+                )
+                threads.append(t)
+                t.start()
+            [thread.join() for thread in threads]
             print(
                 "Bybit - loading trading history, startTime="
                 + str(service.time_converter(startTime / 1000))
@@ -164,19 +200,24 @@ class Agent(Bybit):
         myOrders = list()
         base = {"openOnly": 0, "limit": 50}
 
-        def request_open_orders(myOrders: list, parameters: dict):
+        def request_open_orders(parameters: dict):
+            nonlocal myOrders
             cursor = "no"
             parameters["cursor"] = cursor
             while cursor:
                 Agent.logger.info(
-                    "In trading_history - sending open_orders() - parameters - "
+                    "In open_orders - sending open_orders() - parameters - "
                     + str(parameters)
                 )
                 result = self.session.get_open_orders(**parameters)
                 cursor = result["result"]["nextPageCursor"]
                 parameters["cursor"] = result["result"]["nextPageCursor"]
                 for order in result["result"]["list"]:
-                    order["symbol"] = (order["symbol"], category, self.name)
+                    order["symbol"] = (
+                        order["symbol"],
+                        parameters["category"],
+                        self.name,
+                    )
                     order["orderID"] = order["orderId"]
                     if "orderLinkId" in order and order["orderLinkId"]:
                         order["clOrdID"] = order["orderLinkId"]
@@ -196,22 +237,29 @@ class Agent(Bybit):
                     )
                 myOrders += result["result"]["list"]
 
-            return myOrders
+        def get_in_thread(**parameters):
+            request_open_orders(parameters)
 
+        threads = []
         for category in self.categories:
             if category == "spot":
                 parameters = base.copy()
                 parameters["category"] = category
-                myOrders = request_open_orders(myOrders=myOrders, parameters=parameters)
+                t = threading.Thread(target=lambda par=parameters: get_in_thread(**par))
+                threads.append(t)
+                t.start()
             else:
                 for settleCoin in self.currencies:
                     if settleCoin in self.settlCurrency_list[category]:
                         parameters = base.copy()
                         parameters["category"] = category
                         parameters["settleCoin"] = settleCoin
-                        myOrders = request_open_orders(
-                            myOrders=myOrders, parameters=parameters
+                        t = threading.Thread(
+                            target=lambda par=parameters: get_in_thread(**par)
                         )
+                        threads.append(t)
+                        t.start()
+        [thread.join() for thread in threads]
 
         return myOrders
 
@@ -249,83 +297,99 @@ class Agent(Bybit):
         )
 
     def get_wallet_balance(self) -> None:
-        Agent.logger.info(
-            "In get_wallet_balance - sending get_wallet_balance() - accountType - UNIFIED"
-        )
-        result = self.session.get_wallet_balance(accountType="UNIFIED")
-        for values in result["result"]["list"]:
-            if values["accountType"] == "UNIFIED":
+        for account_type in self.account_types:
+            Agent.logger.info(
+                "In get_wallet_balance - sending get_wallet_balance() - accountType - "
+                + account_type
+            )
+            result = self.session.get_wallet_balance(accountType=account_type)
+            for values in result["result"]["list"]:
                 for coin in values["coin"]:
-                    settlCurrency = (coin["coin"], self.name)
-                    self.Account[settlCurrency].orderMargin = float(
-                        coin["locked"]
-                    ) + float(coin["totalOrderIM"])
-                    self.Account[settlCurrency].walletBalance = float(
-                        coin["walletBalance"]
-                    )
-                    self.Account[settlCurrency].unrealisedPnl = float(
-                        coin["unrealisedPnl"]
-                    )
-                    self.Account[settlCurrency].positionMagrin = float(
-                        coin["totalPositionIM"]
-                    )
-                    self.Account[settlCurrency].account = self.user_id
-                    self.Account[settlCurrency].availableMargin = float(
-                        coin["availableToWithdraw"]
-                    )
-                    self.Account[settlCurrency].commission = 0
-                    self.Account[settlCurrency].funding = 0
-                    self.Account[settlCurrency].marginBalance = float(coin["equity"])
-                    self.Account[settlCurrency].result = 0
-                    self.Account[settlCurrency].settlCurrency = settlCurrency
-                    self.Account[settlCurrency].sumreal = 0
+                    currency = (coin["coin"] + "." + values["accountType"], self.name)
+                    account = self.Account[currency]
+                    total = 0
+                    check = 0
+                    if "locked" in coin:
+                        if coin["locked"] != "":
+                            total += float(coin["locked"])
+                            check += 1
+                    if "totalOrderIM" in coin:
+                        total += float(coin["totalOrderIM"])
+                        check += 1
+                    if check:
+                        account.orderMargin = total
+                    if "totalPositionIM" in coin:
+                        account.positionMagrin = float(coin["totalPositionIM"])
+                    if "availableToWithdraw" in coin:
+                        account.availableMargin = float(coin["availableToWithdraw"])
+                    if "equity" in coin:
+                        account.marginBalance = float(coin["equity"])
+                    if "walletBalance" in coin:
+                        account.walletBalance = float(coin["walletBalance"])
+                    if "unrealisedPnl" in coin:
+                        account.unrealisedPnl = float(coin["unrealisedPnl"])
+                    account.account = self.user_id
+                    self.Account[currency].commission = 0
+                    self.Account[currency].funding = 0
+                    self.Account[currency].result = 0
+                    self.Account[currency].settlCurrency = currency
+                    self.Account[currency].sumreal = 0
                 break
-        else:
-            print("UNIFIED account not found")
 
     def get_position_info(self):
+        def get_in_thread(category, settlCurrency):
+            cursor = "no"
+            while cursor:
+                Agent.logger.info(
+                    "In get_position_info - sending get_positions() - category - "
+                    + category
+                    + " - settlCurrency - "
+                    + settlCurrency
+                )
+                result = self.session.get_positions(
+                    category=category,
+                    settleCoin=settlCurrency,
+                    limit=200,
+                    cursor=cursor,
+                )
+                cursor = result["result"]["nextPageCursor"]
+                for values in result["result"]["list"]:
+                    symbol = (values["symbol"], category, self.name)
+                    instrument = self.Instrument[symbol]
+                    if symbol in self.positions:
+                        self.positions[symbol]["POS"] = float(values["size"])
+                        if values["side"] == "Sell":
+                            self.positions[symbol]["POS"] = -self.positions[symbol][
+                                "POS"
+                            ]
+                    instrument.currentQty = float(values["size"])
+                    if values["side"] == "Sell":
+                        instrument.currentQty = -instrument.currentQty
+                    instrument.avgEntryPrice = float(values["avgPrice"])
+                    instrument.unrealisedPnl = values["unrealisedPnl"]
+                    instrument.marginCallPrice = values["liqPrice"]
+                    if not instrument.marginCallPrice:
+                        instrument.marginCallPrice = "inf"
+                    instrument.state = values["positionStatus"]
+
+        threads = []
         for category in self.category_list:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
-                    cursor = "no"
-                    while cursor:
-                        Agent.logger.info(
-                            "In get_position_info - sending get_positions() - category - "
-                            + category
-                            + " - settlCurrency - "
-                            + settlCurrency
-                        )
-                        result = self.session.get_positions(
-                            category=category,
-                            settleCoin=settlCurrency,
-                            limit=200,
-                            cursor=cursor,
-                        )
-                        cursor = result["result"]["nextPageCursor"]
-                        for values in result["result"]["list"]:
-                            symbol = (values["symbol"], category, self.name)
-                            instrument = self.Instrument[symbol]
-                            if symbol in self.positions:
-                                self.positions[symbol]["POS"] = float(values["size"])
-                                if values["side"] == "Sell":
-                                    self.positions[symbol]["POS"] = -self.positions[
-                                        symbol
-                                    ]["POS"]
-                            instrument.currentQty = float(values["size"])
-                            if values["side"] == "Sell":
-                                instrument.currentQty = -instrument.currentQty
-                            instrument.avgEntryPrice = float(values["avgPrice"])
-                            instrument.unrealisedPnl = values["unrealisedPnl"]
-                            instrument.marginCallPrice = values["liqPrice"]
-                            if not instrument.marginCallPrice:
-                                instrument.marginCallPrice = "inf"
-                            instrument.state = values["positionStatus"]
+                    t = threading.Thread(
+                        target=get_in_thread, args=(category, settlCurrency)
+                    )
+                    threads.append(t)
+                    t.start()
+        [thread.join() for thread in threads]
 
     def fill_instrument(self, instrument: dict, category: str):
         symbol = (instrument["symbol"], category, self.name)
         self.symbols.add(symbol)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]
+        self.Instrument[symbol].baseCoin = instrument["baseCoin"]
+        self.Instrument[symbol].quoteCoin = instrument["quoteCoin"]
         if "settleCoin" in instrument:
             self.Instrument[symbol].settlCurrency = (
                 instrument["settleCoin"],
@@ -370,12 +434,6 @@ class Agent(Bybit):
         self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
-        self.Instrument[symbol].fundingRate = 0
-        self.Instrument[symbol].volume24h = 0
-        self.Instrument[symbol].avgEntryPrice = 0
-        self.Instrument[symbol].marginCallPrice = 0
-        self.Instrument[symbol].currentQty = 0
-        self.Instrument[symbol].unrealisedPnl = 0
         if category == "spot":
             self.Instrument[symbol].fundingRate = "None"
             self.Instrument[symbol].avgEntryPrice = "None"

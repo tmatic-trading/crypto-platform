@@ -11,7 +11,7 @@ def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     quantaty = robot["lotSize"] * robot["CAPITAL"]
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
-    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 2
+    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
     sell_price = service.ticksize_rounding(
         price=(instrument.asks[0][0] + indent), ticksize=instrument.tickSize
     )
@@ -79,7 +79,7 @@ def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
 
 
 def init_variables(robot: dict):
-    robot["PERIOD"] = 5
+    robot["PERIOD"] = 10
 
 
 def order_search(emi: int, side: str) -> str:

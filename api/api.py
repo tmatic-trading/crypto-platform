@@ -1,3 +1,4 @@
+import threading
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
@@ -7,6 +8,7 @@ from api.bitmex.agent import Agent as BitmexAgent
 from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
+from common.variables import Variables as var
 
 from .variables import Variables
 
@@ -39,8 +41,38 @@ class WS(Variables):
         """
         Websockets init
         """
+
+        def start_ws_in_thread():
+            Markets[self.name].start()
+
+        def get_in_thread(method):
+            method(self)
+
         Agents[self.name].value.get_active_instruments(self)
-        Markets[self.name].start()
+        threads = []
+        t = threading.Thread(target=start_ws_in_thread)
+        threads.append(t)
+        t.start()
+        t = threading.Thread(
+            target=get_in_thread, args=(Agents[self.name].value.get_user,)
+        )
+        threads.append(t)
+        t.start()
+        t = threading.Thread(
+            target=get_in_thread, args=(Agents[self.name].value.get_wallet_balance,)
+        )
+        threads.append(t)
+        t.start()
+        t = threading.Thread(
+            target=get_in_thread, args=(Agents[self.name].value.get_position_info,)
+        )
+        threads.append(t)
+        t.start()
+        [thread.join() for thread in threads]
+        if self.logNumFatal == 0:
+            var.info_queue.put(
+                {"market": self.name, "message": "Connected to websocket."}
+            )
 
     def exit(self: Markets) -> None:
         """

@@ -52,7 +52,7 @@ def time_converter(
 def exceptions_manager(cls):
     for attr in cls.__dict__:
         if callable(getattr(cls, attr)):
-            if attr not in ["exit", "Position", "Instrument", "Account"]:
+            if attr not in ["exit", "Position", "Instrument", "Account", "Result"]:
                 setattr(cls, attr, exception(getattr(cls, attr)))
     return cls
 
