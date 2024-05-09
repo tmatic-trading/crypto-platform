@@ -1,5 +1,6 @@
 import platform
 import tkinter as tk
+import tkinter.font
 from datetime import datetime
 from tkinter import ttk
 
@@ -52,7 +53,7 @@ class Variables:
         window_ratio = 1
         adaptive_ratio = 1
     window_width = int(screen_width * window_ratio)
-    window_height = screen_height
+    window_height = int(screen_height * 0.7)
     root.geometry("{}x{}".format(window_width, window_height))
     all_width = window_width
     # all_height = 1
@@ -96,8 +97,6 @@ class Variables:
         frame_state, width=3, text="OFF", fg="white", bg="red", anchor="c"
     )
     label_f9.pack(side="left")
-    label_time = tk.Label(frame_state, anchor="e")
-    label_time.pack(side="right")
 
     # Color map
     if ostype == "Mac":
@@ -105,6 +104,7 @@ class Variables:
         red_color = "#f53661"
         title_color = label_trading["background"]
         bg_select_color = "systemSelectedTextBackgroundColor"
+        fg_color = label_trading["foreground"]
     else:
         green_color = "#319d30"
         red_color = "#dc6537"
@@ -113,8 +113,11 @@ class Variables:
         bg_select_color = "khaki1"
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
-    fg_color = label_trading["foreground"]
+        fg_color = "black" 
     fg_select_color = fg_color
+
+    label_time = tk.Label(frame_state, anchor="e", foreground=fg_color)
+    label_time.pack(side="right")
 
     # Paned window: up - information field, down - the rest interface
     pw_info_rest = tk.PanedWindow(
@@ -210,6 +213,8 @@ class Variables:
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
     style = ttk.Style()
+    line_height = tkinter.font.Font(font='TkDefaultFont').metrics('linespace')
+    style.configure("market.Treeview", fieldbackground=title_color, rowheight=line_height*3)
     style.configure("TNotebook", borderwidth=0, background="gray90", tabposition="n")
     style.configure("TNotebook.Tab", background="gray90")
     style.map("TNotebook.Tab", background=[("selected", title_color)])
@@ -624,7 +629,7 @@ class ListBoxTable(Variables):
 
 class TreeviewTable(Variables):
     def __init__(
-        self, frame: tk.Frame, name: str, title: list, size: int, bind=None
+        self, frame: tk.Frame, name: str, title: list, size: int, style="", bind=None
     ) -> None:
         self.title = title
         self.max_rows = 200
@@ -632,7 +637,7 @@ class TreeviewTable(Variables):
         self.title = title
         self.cache = list()
         columns = [num for num in range(1, len(title) + 1)]
-        self.tree = ttk.Treeview(frame, columns=columns, show="headings")
+        self.tree = ttk.Treeview(frame, style=style, columns=columns, show="headings")
         for num, name in enumerate(title, start=1):
             self.tree.heading(num, text=name)
             self.tree.column(num, anchor=tk.CENTER, width=10)
@@ -642,12 +647,14 @@ class TreeviewTable(Variables):
         self.tree.grid(row=0, column=0, sticky="NSEW")
         scroll.grid(row=0, column=1, sticky="NS")
         self.children = []
-        self.tree.tag_configure("Selected", background=self.bg_select_color)
+        self.tree.tag_configure("Select", background=self.bg_select_color)
         self.tree.tag_configure("Buy", foreground=self.green_color)
-        self.tree.tag_configure("Sell", background=self.red_color)
+        self.tree.tag_configure("Sell", foreground=self.red_color)
+        self.tree.tag_configure("Deselect", background=self.bg_select_color)
+        if bind:
+            self.tree.bind("<<TreeviewSelect>>", bind)
         self.init(size)
-        """tree.pack(side="left", fill="both", expand=True)
-        scroll.pack(side="right", fill="y")"""
+
 
     def init(self, size):
         self.cache = list()
@@ -669,6 +676,7 @@ class TreeviewTable(Variables):
         self.tree.item(self.children[row], values=values)
 
     def paint(self, row: int, configure: str) -> None:
+        print("Deselect")
         self.tree.item(self.children[row], tags=configure)
 
     def clear_all(self):
@@ -681,6 +689,7 @@ class TreeTables:
     robots: TreeviewTable
     account: TreeviewTable
     orderbook: TreeviewTable
+    market: TreeviewTable
 
 
 def event_width(event, canvas_id, canvas_event):

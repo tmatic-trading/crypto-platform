@@ -836,28 +836,34 @@ class Function(WS, Variables):
         ) -> None:
             count = 0
             #col_qty = abs(col - 2)
-            for num in range(start, end, direct):
-                compare = [val[count][0], val[count][1],]
-                if side == "bids":
-                    compare = [val[count][0], val[count][1], ""]
-                    if compare != tree.cache[num]:
-                        tree.cache[num] = compare
-                        row = [
-                            Function.volume(self, qty=float(val[count][1]), symbol=var.symbol), 
-                            Function.format_price(self, number=float(val[count][0]), symbol=var.symbol),                             
-                            "", 
-                        ]
-                        tree.update(row=num, values=row)
+            for number in range(start, end, direct):
+                if len(val) > count:
+                    compare = [val[count][0], val[count][1],]
+                    if side == "bids":
+                        compare = [val[count][0], val[count][1], ""]
+                        if compare != tree.cache[number]:
+                            tree.cache[number] = compare
+                            row = [
+                                Function.volume(self, qty=val[count][1], symbol=var.symbol), 
+                                Function.format_price(self, number=val[count][0], symbol=var.symbol),                             
+                                "", 
+                            ]
+                            tree.update(row=number, values=row)
+                    else:
+                        compare = ["", val[count][0], val[count][1]]
+                        if compare != tree.cache[number]:
+                            tree.cache[number] = compare
+                            row = [
+                                "", 
+                                Function.format_price(self, number=val[count][0], symbol=var.symbol), 
+                                Function.volume(self, qty=val[count][1], symbol=var.symbol), 
+                            ]
+                            tree.update(row=number, values=row)
                 else:
-                    compare = ["", val[count][0], val[count][1]]
-                    if compare != tree.cache[num]:
-                        tree.cache[num] = compare
-                        row = [
-                            "", 
-                            Function.format_price(self, number=float(val[count][0]), symbol=var.symbol), 
-                            Function.volume(self, qty=float(val[count][1]), symbol=var.symbol), 
-                        ]
-                        tree.update(row=num, values=row)
+                    row = ["", "", ""]
+                    tree.cache[number] = row
+                    tree.update(row=number, values=row)
+                count += 1
                 
                 
 
@@ -899,10 +905,10 @@ class Function(WS, Variables):
                             disp.labels["orderbook"][row][2]["width"] = 6
                         disp.symb_book = var.symbol
                         disp.col1_book = 0'''
-                count += 1
+                
 
-        mod = 1 - Tables.orderbook.mod
-        num = int(disp.num_book / 2) - mod
+        #mod = 1 - Tables.orderbook.mod
+        num = int(disp.num_book / 2)
         instrument = self.Instrument[var.symbol]
         if var.order_book_depth == "quote":
             if instrument.asks[0][1]:
@@ -989,15 +995,15 @@ class Function(WS, Variables):
         else:
             display_order_book_values(
                 val=instrument.bids,
-                start=num + 1,
-                end=disp.num_book - mod,
+                start=num,
+                end=disp.num_book,
                 direct=1,
                 side="bids",
                 col=0, 
                 color=disp.red_color,
             )
             display_order_book_values(
-                val=instrument.asks, start=num, end=0 - mod, direct=-1, side="asks", col=2, color=disp.green_color,
+                val=instrument.asks, start=num-1, end=-1, direct=-1, side="asks", col=2, color=disp.green_color,
             )
 
         # Refresh Robots table
@@ -1047,14 +1053,15 @@ class Function(WS, Variables):
                     Function.volume(self, qty=robot["POS"], symbol=symbol,) 
                 ]
                 tree.update(row=num, values=row)
-                if (
+            robot["y_position"] = num
+            '''if (
                     robot["STATUS"] == "RESERVED"
                     and robot["POS"] != 0
                     and not isinstance(robot["POS"], str)
                 ) or robot["STATUS"] in ["OFF", "NOT DEFINED", "NOT IN LIST"]:
-                    disp.labels["robots"][num + mod][6]["fg"] = disp.red_color
+                    disp.labels["robots"][num][6]["fg"] = disp.red_color
                 else:
-                    disp.labels["robots"][num + mod][6]["fg"] = disp.fg_color
+                    disp.labels["robots"][num][6]["fg"] = disp.fg_color'''
 
 
 
@@ -1244,27 +1251,19 @@ class Function(WS, Variables):
             )
 
         # Refresh Market table
+            
+        tree = TreeTables.market
 
-        mod = Tables.market.mod
-        for row, name in enumerate(var.market_list):
+        for num, name in enumerate(var.market_list):
             ws = Markets[name]
             status = "ONLINE"
             if ws.logNumFatal != 0:
                 if ws.logNumFatal == -1:
                     status = "RELOADING"
-                """else:
-                    status = "error " + str(ws.logNumFatal)
-                    Tables.market.color_market(
-                        state="error",
-                        row=var.market_list.index(ws.name),
-                        market=ws.name,
-                    )"""
-            update_label(
-                table="market",
-                column=0,
-                row=row + mod,
-                val=ws.account_disp + str(ws.connect_count) + " " + status,
-            )
+            compare = [ws.account_disp + str(ws.connect_count) + " " + status]
+            if compare != tree.cache[num]:
+                tree.cache[num] = compare
+                tree.update(row=num, values=compare)
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         instrument = self.Instrument[symbol]
@@ -1783,11 +1782,13 @@ def format_number(number: Union[float, str]) -> str:
     return number
 
 
-def warning_window(message: str) -> None:
+def warning_window(message: str, widget=None, item=None) -> None:
     def on_closing() -> None:
         warn_window.destroy()
+        if widget:
+            widget.selection_remove(item)
 
-    disp.robots_window_trigger = "on"
+    #disp.robots_window_trigger = "on"
     warn_window = tk.Toplevel(pady=5)
     warn_window.geometry("400x150+{}+{}".format(450 + randint(0, 7) * 15, 300))
     warn_window.title("Warning")
@@ -1798,40 +1799,41 @@ def warning_window(message: str) -> None:
     tex.pack(expand=1)
 
 
-def handler_position(event, row_position: int) -> None:
-    ws = Markets[var.current_market]
-    if row_position > len(ws.symbol_list):
-        row_position = len(ws.symbol_list)
-    var.symbol = ws.symbol_list[row_position - 1]
-    mod = Tables.position.mod
-    for num in range(len(ws.symbol_list)):
-        for column in range(len(var.name_position)):
-            if num + mod == row_position:
-                disp.labels["position"][num + mod][column]["bg"] = disp.bg_select_color
-                disp.labels["position"][num + mod][column]["fg"] = disp.fg_select_color
-            else:
-                if num + mod >= 0:
-                    disp.labels["position"][num + mod][column]["bg"] = disp.bg_color
-                    disp.labels["position"][num + mod][column]["fg"] = disp.fg_color
+def handler_position(event) -> None:    
+    tree = event.widget
+    items = tree.selection()
+    if items:
+        ws = Markets[var.current_market]
+        item = items[0]
+        children = tree.get_children()
+        row_position = children.index(item)
+        var.symbol = ws.symbol_list[row_position]
 
 
-def handler_market(event, row_position: int) -> None:
-    if row_position > len(var.market_list):
-        row_position = len(var.market_list)
-    mod = Tables.market.mod
-    shift = var.market_list[row_position - mod]
-    if shift != var.current_market:
-        var.current_market = shift
-        var.symbol = Markets[var.current_market].symbol_list[0]
-        clear_tables()
-        for row in enumerate(var.market_list):
-            for column in range(len(var.name_market)):
-                if row[0] + mod == row_position:
-                    disp.labels["market"][row[0] + mod][column][
-                        "bg"
-                    ] = disp.bg_select_color
-                else:
-                    disp.labels["market"][row[0] + mod][column]["bg"] = disp.title_color
+def handler_account(event) -> None:
+    tree = event.widget
+    items = tree.selection()
+    if items:        
+        tree.update()
+        time.sleep(0.05)
+        tree.selection_remove(items[0])
+
+
+
+def handler_market(event) -> None:
+    tree = event.widget
+    items = tree.selection()
+    if items:
+        ws = Markets[var.current_market]
+        item = items[0]
+        children = tree.get_children()
+        row_position = children.index(item)
+        var.symbol = ws.symbol_list[row_position]
+        shift = var.market_list[row_position]
+        if shift != var.current_market:
+            var.current_market = shift
+            var.symbol = Markets[var.current_market].symbol_list[0]
+            #clear_tables()
 
 
 def find_order(price: float, qty: int, symbol: str) -> int:
@@ -1845,46 +1847,53 @@ def find_order(price: float, qty: int, symbol: str) -> int:
     return qty
 
 
-def handler_robots(event, row_position: int) -> None:
+def handler_robots(event) -> None:
     emi = None
     ws = Markets[var.current_market]
-    for val in ws.robots:
-        if ws.robots[val]["y_position"] == row_position:
-            emi = val
-            break
-    if emi:
-        if ws.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
+    tree = event.widget
+    items = tree.selection()
+    if items:
+        item = items[0]
+        children = tree.get_children()
+        row_position = children.index(item)
+        for val in ws.robots:
+            if ws.robots[val]["y_position"] == row_position:
+                emi = val
+                break
+        if emi:
+            if ws.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
+                def callback():
+                    row = ws.robots[val]["y_position"]
+                    if ws.robots[emi]["STATUS"] == "WORK":
+                        ws.robots[emi]["STATUS"] = "OFF"
+                        disp.labels["robots"][row][6]["fg"] = disp.red_color
+                    else:
+                        ws.robots[emi]["STATUS"] = "WORK"
+                        disp.labels["robots"][row][6]["fg"] = disp.fg_color
+                    on_closing()
 
-            def callback():
-                row = ws.robots[val]["y_position"]
-                if ws.robots[emi]["STATUS"] == "WORK":
-                    ws.robots[emi]["STATUS"] = "OFF"
-                    disp.labels["robots"][row][6]["fg"] = disp.red_color
-                else:
-                    ws.robots[emi]["STATUS"] = "WORK"
-                    disp.labels["robots"][row][6]["fg"] = disp.fg_color
-                on_closing()
+                def on_closing():
+                    disp.robots_window_trigger = "off"
+                    robot_window.destroy()
+                    tree.selection_remove(item)
 
-            def on_closing():
-                disp.robots_window_trigger = "off"
-                robot_window.destroy()
-
-            if disp.robots_window_trigger == "off":
-                disp.robots_window_trigger = "on"
-                robot_window = tk.Toplevel(disp.root, padx=30, pady=8)
-                cx = disp.root.winfo_pointerx()
-                cy = disp.root.winfo_pointery()
-                robot_window.geometry("+{}+{}".format(cx - 90, cy - 10))
-                robot_window.title("EMI=" + emi)
-                robot_window.protocol("WM_DELETE_WINDOW", on_closing)
-                robot_window.attributes("-topmost", 1)
-                text = emi + " - Disable"
-                if ws.robots[emi]["STATUS"] == "OFF":
-                    text = emi + " - Enable"
-                status = tk.Button(robot_window, text=text, command=callback)
-                status.pack()
-                change_color(color=disp.title_color, container=robot_window)
-
+                if disp.robots_window_trigger == "off":
+                    disp.robots_window_trigger = "on"
+                    robot_window = tk.Toplevel(disp.root, padx=30, pady=8)
+                    cx = disp.root.winfo_pointerx()
+                    cy = disp.root.winfo_pointery()
+                    robot_window.geometry("250x50+{}+{}".format(cx - 150, cy - 50))
+                    robot_window.title("EMI=" + emi)
+                    robot_window.protocol("WM_DELETE_WINDOW", on_closing)
+                    robot_window.attributes("-topmost", 1)
+                    text = emi + " - Disable"
+                    if ws.robots[emi]["STATUS"] == "OFF":
+                        text = emi + " - Enable"
+                    status = tk.Button(robot_window, text=text, command=callback)
+                    status.pack()
+                    change_color(color=disp.title_color, container=robot_window) 
+            else:
+                warning_window("You cannot change the "  + ws.robots[emi]["STATUS"] + " status.", widget=tree, item=item)   
 
 def clear_labels_cache():
     # disp.labels["robots"] = []
@@ -1996,18 +2005,29 @@ def load_labels() -> None:
         name="position",
         title=var.name_position,
         size=len(ws.symbol_list),
+        bind=handler_position,
     )
     TreeTables.robots = TreeviewTable(
         frame=disp.robots_frame, 
         name="robots",
         title=var.name_robots,
         size=len(ws.robots),
+        bind=handler_robots,
     )
     TreeTables.account = TreeviewTable(
         frame=disp.account_frame, 
         name="account",
         title=var.name_account,
         size=len(ws.Account.get_keys()),
+        bind=handler_account,
+    )
+    TreeTables.market = TreeviewTable(
+        frame=disp.market_frame,
+        name="market",
+        title=var.name_market,
+        size=len(var.market_list),
+        style="market.Treeview", 
+        bind=handler_market,
     )
 
 
