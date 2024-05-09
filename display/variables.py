@@ -640,12 +640,14 @@ class TreeviewTable(Variables):
         self.tree = ttk.Treeview(frame, style=style, columns=columns, show="headings")
         for num, name in enumerate(title, start=1):
             self.tree.heading(num, text=name)
-            self.tree.column(num, anchor=tk.CENTER, width=10)
+            self.tree.column(num, anchor=tk.CENTER, width=50)
         scroll = AutoScrollbar(frame, orient="vertical")
         scroll.config(command=self.tree.yview)
         self.tree.config(yscrollcommand=scroll.set)
         self.tree.grid(row=0, column=0, sticky="NSEW")
         scroll.grid(row=0, column=1, sticky="NS")
+        #frame.grid_columnconfigure(0, weight=1)
+        #frame.grid_columnconfigure(1, weight=1)
         self.children = []
         self.tree.tag_configure("Select", background=self.bg_select_color)
         self.tree.tag_configure("Buy", foreground=self.green_color)
@@ -691,6 +693,7 @@ class TreeTables:
     orderbook: TreeviewTable
     market: TreeviewTable
     results: TreeviewTable
+    trades: TreeviewTable
 
 
 def event_width(event, canvas_id, canvas_event):
