@@ -49,7 +49,6 @@ class Init(WS, Variables):
                 self.robots[emi]["CATEGORY"],
                 self.name,
             )
-
         # Searching for unclosed positions by robots that are not in the 'robots' table
         qwr = (
             "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, "
