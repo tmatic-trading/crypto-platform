@@ -1203,7 +1203,51 @@ class Function(WS, Variables):
 
         # Refresh Results table
 
-        mod = Tables.results.mod
+        tree = TreeTables.results
+
+        results = dict()
+        for symbol, position in self.positions.items():
+            if symbol[2] == var.current_market:
+                if position["POS"] != 0:
+                    price = Function.close_price(
+                        self, symbol=symbol, pos=position["POS"]
+                    )
+                    if price:
+                        calc = Function.calculate(
+                            self,
+                            symbol=symbol,
+                            price=price,
+                            qty=-position["POS"],
+                            rate=0,
+                            fund=1,
+                        )
+                        currency = self.Instrument[symbol].settlCurrency
+                        if currency in results:
+                            results[currency] += calc["sumreal"]
+                        else:
+                            results[currency] = calc["sumreal"]
+        for num, currency in enumerate(self.Result.keys()):  # self.currencies
+            result = self.Result[currency]
+            result.result = 0
+            if currency in results:
+                result.result += results[currency]
+            compare = [
+                currency[0], 
+                result.sumreal + result.result, 
+                -result.commission, 
+                -result.funding,
+            ]
+            if compare != tree.cache[num]:
+                tree.cache[num] = compare
+                row = [
+                    currency[0], 
+                    format_number(number=result.sumreal + result.result), 
+                    format_number(number=-result.commission), 
+                    format_number(number=-result.funding),
+                ]
+                tree.update(row=num, values=row)
+
+        '''mod = Tables.results.mod
         results = dict()
         for symbol, position in self.positions.items():
             if symbol[2] == var.current_market:
@@ -1248,7 +1292,7 @@ class Function(WS, Variables):
                 column=3,
                 row=num + mod,
                 val=format_number(number=-result.funding),
-            )
+            )'''
 
         # Refresh Market table
             
@@ -1819,7 +1863,6 @@ def handler_account(event) -> None:
         tree.selection_remove(items[0])
 
 
-
 def handler_market(event) -> None:
     tree = event.widget
     items = tree.selection()
@@ -2028,6 +2071,13 @@ def load_labels() -> None:
         size=len(var.market_list),
         style="market.Treeview", 
         bind=handler_market,
+    )
+    TreeTables.results = TreeviewTable(
+        frame=disp.frame_results,
+        name="results",
+        size=len(ws.Result.get_keys()),
+        title=var.name_results,
+        bind=handler_account,
     )
 
 
