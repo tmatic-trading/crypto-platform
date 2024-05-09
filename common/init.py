@@ -10,7 +10,7 @@ from api.init import Variables
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Variables as disp
-from functions import Function, funding, orders, trades
+from functions import Function, funding, orders #d, trades
 
 db_sqlite = var.env["SQLITE_DATABASE"]
 
@@ -252,9 +252,9 @@ class Init(WS, Variables):
             data = Function.select_database(self, sql)
             for val in data:
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-                Function.fill_columns(
+                '''Function.fill_columns(
                     self, func=Function.funding_display, table=funding, val=val
-                )
+                )'''
             sql = (
                 "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
                 + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
@@ -269,9 +269,10 @@ class Init(WS, Variables):
             data = Function.select_database(self, sql)
             for val in data:
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-                Function.fill_columns(
+                Function.trades_display(self, val=val)
+                '''Function.fill_columns(
                     self, func=Function.trades_display, table=trades, val=val
-                )
+                )'''
         else:
             self.logNumFatal = 1001
 

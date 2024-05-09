@@ -558,7 +558,22 @@ class Function(WS, Variables):
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
-        elements = [
+        row = [
+            tm, 
+            val["SYMBOL"][0], 
+            val["SYMBOL"][1], 
+            val["MARKET"], 
+            val["SIDE"], 
+            Function.format_price(
+                self,
+                number=float(val["TRADE_PRICE"]),
+                symbol=val["SYMBOL"],
+            ), 
+            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]), 
+            val["EMI"],            
+        ]
+        TreeTables.trades.insert(values=row, configure=val["SIDE"])
+        '''elements = [
             tm,
             val["SYMBOL"][0],
             val["SYMBOL"][1],
@@ -573,9 +588,9 @@ class Function(WS, Variables):
             val["EMI"],
         ]
         if init:
-            return elements
-        trades.insert(row=0, elements=elements)
-        trades.paint(row=0, side=val["SIDE"])
+            return elements'''
+        #d trades.insert(row=0, elements=elements)
+        #d trades.paint(row=0, side=val["SIDE"])
 
     def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -706,7 +721,7 @@ class Function(WS, Variables):
         """
         Refresh information on screen
         """
-        adaptive_screen(self)
+        #adaptive_screen(self)
         if utc.hour != var.refresh_hour:
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
@@ -1430,11 +1445,11 @@ class Function(WS, Variables):
             )
         disp.root.update()
 
-    def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
+    '''def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
         elements = func(Markets[val["SYMBOL"][2]], val=val, init=True)
         for num, element in enumerate(elements):
-            table.columns[num].append(element)
+            table.columns[num].append(element)'''
 
     def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
         if volNow > 1000000000:
@@ -2081,6 +2096,7 @@ def load_labels() -> None:
     )
 
 
+
 def clear_tables():
     def clear(table: Tables, number_rows: int):
         size = table.sub.grid_size()
@@ -2106,9 +2122,9 @@ def clear_tables():
 
 change_color(color=disp.title_color, container=disp.root)
 
-trades = ListBoxTable(
+'''trades = ListBoxTable(
     name="trades", frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
-)
+)'''
 funding = ListBoxTable(
     name="funding",
     frame=disp.frame_funding,
@@ -2125,8 +2141,12 @@ orders = ListBoxTable(
     expand=True,
 )
 
+TreeTables.trades = TreeviewTable(
+    frame=disp.frame_trades, name="trades", size=0, title=var.name_trade,
+)
 
-def adaptive_screen(ws: Markets):
+
+'''def adaptive_screen(ws: Markets):
     """now_height = disp.frame_rest.winfo_height()
     if now_height != disp.all_height:
         disp.frame_rest.grid_rowconfigure(
@@ -2316,4 +2336,4 @@ def adaptive_screen(ws: Markets):
                 disp.frame_right.grid_forget()
                 disp.frame_state.configure(width=state_width)
                 disp.state_width = state_width
-        disp.all_width = now_width
+        disp.all_width = now_width'''

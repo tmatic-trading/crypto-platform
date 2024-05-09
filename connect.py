@@ -19,7 +19,9 @@ from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import Tables
 from display.variables import Variables as disp
-from functions import Function, funding, orders, trades
+from functions import Function
+
+from functions import funding, orders #d trades
 
 
 def setup():
@@ -86,7 +88,7 @@ def setup_market(ws: Markets):
 
 
 def finish_setup(ws: Markets):
-    trades.clear_columns(market=ws.name)
+    #d trades.clear_columns(market=ws.name)
     funding.clear_columns(market=ws.name)
     orders.clear_columns(market=ws.name)
     common.Init.load_database(ws)
@@ -96,7 +98,7 @@ def finish_setup(ws: Markets):
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
-    trades.insert_columns()
+    #d trades.insert_columns()
     funding.insert_columns()
     orders.insert_columns()
     if hasattr(Tables, "market"):
