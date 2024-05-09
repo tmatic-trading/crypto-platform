@@ -690,6 +690,7 @@ class TreeTables:
     account: TreeviewTable
     orderbook: TreeviewTable
     market: TreeviewTable
+    results: TreeviewTable
 
 
 def event_width(event, canvas_id, canvas_event):
