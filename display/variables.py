@@ -11,6 +11,7 @@ if platform.system() == "Windows":
 
     windll.shcore.SetProcessDpiAwareness(1)
 
+
 class AutoScrollbar(tk.Scrollbar):
     def set(self, low, high):
         if float(low) <= 0.0 and float(high) >= 1.0:
@@ -18,6 +19,7 @@ class AutoScrollbar(tk.Scrollbar):
         else:
             self.grid()
         tk.Scrollbar.set(self, low, high)
+
 
 class Variables:
     root = tk.Tk()
@@ -155,7 +157,12 @@ class Variables:
 
     # This technical PanedWindow contains orderbook, positions, orders, trades, fundings, results, currencies, robots
     pw_rest2 = tk.PanedWindow(
-        frame_rest1, orient=tk.VERTICAL, sashrelief="raised", bd=0, sashwidth=0, height=1
+        frame_rest1,
+        orient=tk.VERTICAL,
+        sashrelief="raised",
+        bd=0,
+        sashwidth=0,
+        height=1,
     )
     pw_rest2.grid(row=0, column=1, sticky="NSEW")
     frame_rest1.grid_columnconfigure(1, weight=500)
@@ -172,7 +179,12 @@ class Variables:
 
     # This technical PanedWindow contains positions, orders, trades, fundings, results
     pw_rest4 = tk.PanedWindow(
-        frame_rest3, orient=tk.VERTICAL, sashrelief="raised", bd=0, sashwidth=0, height=1
+        frame_rest3,
+        orient=tk.VERTICAL,
+        sashrelief="raised",
+        bd=0,
+        sashwidth=0,
+        height=1,
     )
     pw_rest4.grid(row=0, column=1, sticky="NSWE")
     frame_rest3.grid_columnconfigure(1, weight=300)
@@ -199,16 +211,23 @@ class Variables:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
     style = ttk.Style()
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
-    #style.configure("Treeview.Heading", background=title_color)
+    # style.configure("Treeview.Heading", background=title_color)
     if ostype != "Mac":
-        style.map('Treeview', background=[('selected', '#b3d7ff')], foreground=[('selected', fg_color)])
+        style.map(
+            "Treeview",
+            background=[("selected", "#b3d7ff")],
+            foreground=[("selected", fg_color)],
+        )
     style.configure(
-        "market.Treeview", fieldbackground=title_color, rowheight=line_height * 3
+        "market.Treeview",
+        fieldbackground=title_color,
+        background=title_color,
+        rowheight=line_height * 3,
     )
-    
+
     style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
     style.configure("TNotebook.Tab", background="gray92")
-    #style.map("TNotebook.Tab", background=[("selected", title_color)])
+    # style.map("TNotebook.Tab", background=[("selected", title_color)])
 
     # Trades frame
     frame_trades = tk.Frame(notebook)
@@ -230,9 +249,7 @@ class Variables:
 
     pw_rest4.add(frame_position)
     pw_rest4.add(pw_orders_trades)
-    pw_rest4.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_rest4, 5)
-    )
+    pw_rest4.bind("<Configure>", lambda event: resize_row(event, Variables.pw_rest4, 5))
 
     # Paned window: up - currencies (account), down - robots
     pw_account_robo = tk.PanedWindow(
@@ -284,20 +301,22 @@ class TreeviewTable(Variables):
         self.tree = ttk.Treeview(frame, style=style, columns=columns, show="headings")
         for num, name in enumerate(title, start=1):
             self.tree.heading(num, text=name)
-            self.tree.column(num, anchor=tk.CENTER, width=100)
+            self.tree.column(num, anchor=tk.CENTER, width=50)
         scroll = AutoScrollbar(frame, orient="vertical")
         scroll.config(command=self.tree.yview)
         self.tree.config(yscrollcommand=scroll.set)
         self.tree.grid(row=0, column=0, sticky="NSEW")
         scroll.grid(row=0, column=1, sticky="NS")
-        self.children = list()    
+        self.children = list()
         self.tree.tag_configure("Select", background=self.bg_select_color)
         self.tree.tag_configure("Buy", foreground=self.green_color)
         self.tree.tag_configure("Sell", foreground=self.red_color)
         self.tree.tag_configure("Deselect", background=self.bg_color)
         self.tree.tag_configure("Normal", foreground=self.fg_color)
         self.tree.tag_configure("Error", background=self.red_color, foreground="white")
-        self.tree.tag_configure("Market", background=self.title_color, foreground=self.fg_color)        
+        self.tree.tag_configure(
+            "Market", background=self.title_color, foreground=self.fg_color
+        )
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.init(size=size)
@@ -305,10 +324,10 @@ class TreeviewTable(Variables):
     def init(self, size):
         self.clear_all()
         self.cache = list()
-        print("____________size", self.name, size)
+        blank = ["" for _ in self.title]
         for _ in range(size):
-            self.insert(values=self.title)
-            self.cache.append(self.title)
+            self.insert(values=blank)
+            self.cache.append(blank)
 
     def insert(self, values: list, configure="") -> None:
         self.tree.insert("", 0, values=values, tags=configure)
@@ -324,7 +343,6 @@ class TreeviewTable(Variables):
         self.tree.item(self.children[row], values=values)
 
     def paint(self, row: int, configure: str) -> None:
-        print("Deselect")
         self.tree.item(self.children[row], tags=configure)
 
     def clear_all(self):
@@ -347,10 +365,12 @@ class TreeviewTable(Variables):
         data.sort(key=lambda x: x[-1])
         data = list(map(lambda x: x[:-1], data))
 
-        return data[:self.max_rows]
-    
+        return data[: self.max_rows]
+
     def set_selection(self):
         self.tree.selection_add(self.children[0])
+        # self.tree.selection_clear
+
 
 class TreeTable:
     position: TreeviewTable

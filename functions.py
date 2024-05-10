@@ -1608,16 +1608,13 @@ def handler_market(event) -> None:
     tree = event.widget
     items = tree.selection()
     if items:
-        ws = Markets[var.current_market]
         item = items[0]
         children = tree.get_children()
         row_position = children.index(item)
-        var.symbol = ws.symbol_list[row_position]
         shift = var.market_list[row_position]
         if shift != var.current_market:
             var.current_market = shift
             var.symbol = Markets[var.current_market].symbol_list[0]
-            print("+++++++++++++++++++++++++++")
             clear_tables()
 
 
@@ -1704,14 +1701,6 @@ def change_color(color: str, container=None) -> None:
 
 def load_labels() -> None:
     ws = Markets[var.current_market]
-    """mod = Tables.robots.mod
-    for row, emi in enumerate(ws.robots):
-        if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
-            ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
-        ):
-            disp.labels["robots"][row + mod][6]["fg"] = disp.red_color
-        else:
-            disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color"""
     '''num = int(disp.num_book / 2)
     mod = Tables.orderbook.mod
     for row in range(disp.num_book + mod - 1):
@@ -1766,6 +1755,20 @@ def load_labels() -> None:
     )
     TreeTable.position.set_selection()
     TreeTable.market.set_selection()
+    robot_status(ws)
+
+
+def robot_status(ws: Markets):
+    for row, emi in enumerate(ws.robots):
+        if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
+            ws.robots[emi]["STATUS"] == "RESERVED"
+            and ws.robots[emi]["POS"] != 0
+            and ws.robots[emi]["CATEGORY"] != "spot"
+        ):
+            TreeTable.robots.paint(row=row, configure="Sell")
+        else:
+            TreeTable.robots.paint(row=row, configure="Normal")
+
 
 def clear_tables():
     ws = Markets[var.current_market]
@@ -1775,14 +1778,16 @@ def clear_tables():
     TreeTable.orderbook.init(size=disp.num_book)
     TreeTable.results.init(size=len(ws.Result.get_keys()))
     TreeTable.position.set_selection()
-    TreeTable.market.set_selection()
+    Function.refresh_tables(ws)
+    robot_status(ws)
+
 
 change_color(color=disp.title_color, container=disp.root)
 
 TreeTable.orders = TreeviewTable(
-    frame=disp.frame_orders, 
-    name="orders", 
-    size=0, 
+    frame=disp.frame_orders,
+    name="orders",
+    size=0,
     title=var.name_order,
     bind=handler_order,
 )
@@ -1795,10 +1800,10 @@ TreeTable.trades = TreeviewTable(
 )
 TreeTable.funding = TreeviewTable(
     frame=disp.frame_funding,
-    name="funding", 
-    size=0, 
+    name="funding",
+    size=0,
     title=var.name_funding,
-    bind=handler_account,  
+    bind=handler_account,
 )
 
 
