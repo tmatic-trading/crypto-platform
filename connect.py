@@ -21,8 +21,6 @@ from display.variables import Tables
 from display.variables import Variables as disp
 from functions import Function
 
-from functions import funding, orders #d trades
-
 
 def setup():
     disp.root.bind("<F3>", lambda event: terminal_reload(event))
@@ -88,9 +86,6 @@ def setup_market(ws: Markets):
 
 
 def finish_setup(ws: Markets):
-    #d trades.clear_columns(market=ws.name)
-    funding.clear_columns(market=ws.name)
-    orders.clear_columns(market=ws.name)
     common.Init.load_database(ws)
     common.Init.account_balances(ws)
     common.Init.load_orders(ws, ws.setup_orders)
@@ -98,9 +93,6 @@ def finish_setup(ws: Markets):
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
-    #d trades.insert_columns()
-    funding.insert_columns()
-    orders.insert_columns()
     if hasattr(Tables, "market"):
         Tables.market.color_market(
             state="online", row=var.market_list.index(ws.name), market=ws.name

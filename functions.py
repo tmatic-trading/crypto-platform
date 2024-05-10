@@ -559,21 +559,6 @@ class Function(WS, Variables):
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
         row = [
-            tm, 
-            val["SYMBOL"][0], 
-            val["SYMBOL"][1], 
-            val["MARKET"], 
-            val["SIDE"], 
-            Function.format_price(
-                self,
-                number=float(val["TRADE_PRICE"]),
-                symbol=val["SYMBOL"],
-            ), 
-            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]), 
-            val["EMI"],            
-        ]
-        TreeTables.trades.insert(values=row, configure=val["SIDE"])
-        '''elements = [
             tm,
             val["SYMBOL"][0],
             val["SYMBOL"][1],
@@ -588,9 +573,8 @@ class Function(WS, Variables):
             val["EMI"],
         ]
         if init:
-            return elements'''
-        #d trades.insert(row=0, elements=elements)
-        #d trades.paint(row=0, side=val["SIDE"])
+            return row
+        TreeTables.trades.insert(values=row, configure=val["SIDE"])
 
     def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -599,7 +583,7 @@ class Function(WS, Variables):
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
-        elements = [
+        row = [
             tm,
             val["SYMBOL"][0],
             val["SYMBOL"][1],
@@ -614,12 +598,11 @@ class Function(WS, Variables):
             val["EMI"],
         ]
         if init:
-            return elements
-        funding.insert(row=0, elements=elements)
-        side = "Buy" if val["COMMISS"] < 0 else "Sell"
-        funding.paint(row=0, side=side)
+            return row
+        configure = "Buy" if val["COMMISS"] <= 0 else "Sell"
+        TreeTables.funding.insert(values=row, configure=configure)
 
-    def orders_display(self: Markets, val: dict, init=False) -> Union[None, list]:
+    def orders_display(self: Markets, val: dict) -> None:
         """
         Update Orders widget
         """
@@ -627,7 +610,7 @@ class Function(WS, Variables):
         tm = str(val["transactTime"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
-        elements = [
+        row = [
             tm,
             val["SYMBOL"][0],
             val["CATEGORY"],
@@ -641,10 +624,7 @@ class Function(WS, Variables):
             Function.volume(self, qty=val["leavesQty"], symbol=val["SYMBOL"]),
             emi,
         ]
-        if init:
-            return elements
-        orders.insert(row=0, elements=elements)
-        orders.paint(row=0, side=val["SIDE"])
+        TreeTables.orders.insert(values=row, configure=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
         if qty == "None":
@@ -721,7 +701,7 @@ class Function(WS, Variables):
         """
         Refresh information on screen
         """
-        #adaptive_screen(self)
+        # adaptive_screen(self)
         if utc.hour != var.refresh_hour:
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
@@ -772,20 +752,22 @@ class Function(WS, Variables):
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 row = [
-                    symbol[0], 
-                    symbol[1],              
-                    Function.volume(self, qty=instrument.currentQty, symbol=symbol), 
-                    Function.format_price(self, number=instrument.avgEntryPrice, symbol=symbol),
-                    format_number(number=instrument.unrealisedPnl), 
-                    instrument.marginCallPrice, 
-                    instrument.state, 
-                    Function.humanFormat(self, instrument.volume24h, symbol), 
-                    instrument.expire, 
+                    symbol[0],
+                    symbol[1],
+                    Function.volume(self, qty=instrument.currentQty, symbol=symbol),
+                    Function.format_price(
+                        self, number=instrument.avgEntryPrice, symbol=symbol
+                    ),
+                    format_number(number=instrument.unrealisedPnl),
+                    instrument.marginCallPrice,
+                    instrument.state,
+                    Function.humanFormat(self, instrument.volume24h, symbol),
+                    instrument.expire,
                     instrument.fundingRate,
                 ]
                 tree.update(row=num, values=row)
 
-                '''mod = Tables.position.mod
+                """mod = Tables.position.mod
                 update_label(table="position", column=0, row=num + mod, val=symbol[0])
                 update_label(table="position", column=1, row=num + mod, val=symbol[1])
                 pos = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
@@ -840,28 +822,41 @@ class Function(WS, Variables):
                     column=9,
                     row=num + mod,
                     val=fund,
-                )'''
+                )"""
 
         # Refresh Orderbook table
-                
+
         tree = TreeTables.orderbook
 
         def display_order_book_values(
-            val: list, start: int, end: int, direct: int, side: str, col: int, color: str
+            val: list,
+            start: int,
+            end: int,
+            direct: int,
+            side: str,
+            col: int,
+            color: str,
         ) -> None:
             count = 0
-            #col_qty = abs(col - 2)
+            # col_qty = abs(col - 2)
             for number in range(start, end, direct):
                 if len(val) > count:
-                    compare = [val[count][0], val[count][1],]
+                    compare = [
+                        val[count][0],
+                        val[count][1],
+                    ]
                     if side == "bids":
                         compare = [val[count][0], val[count][1], ""]
                         if compare != tree.cache[number]:
                             tree.cache[number] = compare
                             row = [
-                                Function.volume(self, qty=val[count][1], symbol=var.symbol), 
-                                Function.format_price(self, number=val[count][0], symbol=var.symbol),                             
-                                "", 
+                                Function.volume(
+                                    self, qty=val[count][1], symbol=var.symbol
+                                ),
+                                Function.format_price(
+                                    self, number=val[count][0], symbol=var.symbol
+                                ),
+                                "",
                             ]
                             tree.update(row=number, values=row)
                     else:
@@ -869,9 +864,13 @@ class Function(WS, Variables):
                         if compare != tree.cache[number]:
                             tree.cache[number] = compare
                             row = [
-                                "", 
-                                Function.format_price(self, number=val[count][0], symbol=var.symbol), 
-                                Function.volume(self, qty=val[count][1], symbol=var.symbol), 
+                                "",
+                                Function.format_price(
+                                    self, number=val[count][0], symbol=var.symbol
+                                ),
+                                Function.volume(
+                                    self, qty=val[count][1], symbol=var.symbol
+                                ),
                             ]
                             tree.update(row=number, values=row)
                 else:
@@ -879,10 +878,8 @@ class Function(WS, Variables):
                     tree.cache[number] = row
                     tree.update(row=number, values=row)
                 count += 1
-                
-                
 
-                '''vlm = ""
+                """vlm = ""
                 price = ""
                 qty = 0
                 if len(val) > count:
@@ -919,10 +916,9 @@ class Function(WS, Variables):
                             disp.labels["orderbook"][row][1]["width"] = disp.col1_book
                             disp.labels["orderbook"][row][2]["width"] = 6
                         disp.symb_book = var.symbol
-                        disp.col1_book = 0'''
-                
+                        disp.col1_book = 0"""
 
-        #mod = 1 - Tables.orderbook.mod
+        # mod = 1 - Tables.orderbook.mod
         num = int(disp.num_book / 2)
         instrument = self.Instrument[var.symbol]
         if var.order_book_depth == "quote":
@@ -1014,15 +1010,21 @@ class Function(WS, Variables):
                 end=disp.num_book,
                 direct=1,
                 side="bids",
-                col=0, 
+                col=0,
                 color=disp.red_color,
             )
             display_order_book_values(
-                val=instrument.asks, start=num-1, end=-1, direct=-1, side="asks", col=2, color=disp.green_color,
+                val=instrument.asks,
+                start=num - 1,
+                end=-1,
+                direct=-1,
+                side="asks",
+                col=2,
+                color=disp.green_color,
             )
 
         # Refresh Robots table
-        
+
         tree = TreeTables.robots
 
         for num, robot in enumerate(self.robots.values()):
@@ -1042,46 +1044,47 @@ class Function(WS, Variables):
                 else:
                     robot["PNL"] = robot["SUMREAL"] - robot["COMMISS"]
             compare = [
-                robot["EMI"], 
+                robot["EMI"],
                 symbol[0],
-                symbol[1], 
+                symbol[1],
                 self.Instrument[symbol].settlCurrency[0],
-                robot["TIMEFR"], 
-                robot["CAPITAL"], 
-                robot["STATUS"], 
-                robot["VOL"], 
-                robot["PNL"], 
-                robot["POS"], 
+                robot["TIMEFR"],
+                robot["CAPITAL"],
+                robot["STATUS"],
+                robot["VOL"],
+                robot["PNL"],
+                robot["POS"],
             ]
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 row = [
-                    robot["EMI"], 
+                    robot["EMI"],
                     symbol[0],
-                    symbol[1], 
+                    symbol[1],
                     self.Instrument[symbol].settlCurrency[0],
-                    robot["TIMEFR"], 
-                    robot["CAPITAL"], 
-                    robot["STATUS"], 
-                    Function.humanFormat(self, robot["VOL"], symbol), 
-                    format_number(number=robot["PNL"]), 
-                    Function.volume(self, qty=robot["POS"], symbol=symbol,) 
+                    robot["TIMEFR"],
+                    robot["CAPITAL"],
+                    robot["STATUS"],
+                    Function.humanFormat(self, robot["VOL"], symbol),
+                    format_number(number=robot["PNL"]),
+                    Function.volume(
+                        self,
+                        qty=robot["POS"],
+                        symbol=symbol,
+                    ),
                 ]
                 tree.update(row=num, values=row)
             robot["y_position"] = num
-            '''if (
+            """if (
                     robot["STATUS"] == "RESERVED"
                     and robot["POS"] != 0
                     and not isinstance(robot["POS"], str)
                 ) or robot["STATUS"] in ["OFF", "NOT DEFINED", "NOT IN LIST"]:
                     disp.labels["robots"][num][6]["fg"] = disp.red_color
                 else:
-                    disp.labels["robots"][num][6]["fg"] = disp.fg_color'''
+                    disp.labels["robots"][num][6]["fg"] = disp.fg_color"""
 
-
-
-
-        '''mod = Tables.robots.mod
+        """mod = Tables.robots.mod
         for num, robot in enumerate(self.robots.values()):
             symbol = robot["SYMBOL"]
             if robot["CATEGORY"] != "spot":
@@ -1142,7 +1145,7 @@ class Function(WS, Variables):
                 row=num + mod,
                 val=val,
             )
-            robot["y_position"] = num + mod'''
+            robot["y_position"] = num + mod"""
 
         # Refresh Account table
 
@@ -1151,31 +1154,28 @@ class Function(WS, Variables):
         for num, settlCurrency in enumerate(self.Account.keys()):
             account = self.Account[settlCurrency]
             compare = [
-                settlCurrency[0], 
-                account.walletBalance, 
-                account.unrealisedPnl, 
-                account.marginBalance, 
-                account.orderMargin, 
-                account.positionMagrin, 
+                settlCurrency[0],
+                account.walletBalance,
+                account.unrealisedPnl,
+                account.marginBalance,
+                account.orderMargin,
+                account.positionMagrin,
                 account.availableMargin,
             ]
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 row = [
-                    settlCurrency[0], 
-                    format_number(number=account.walletBalance), 
-                    format_number(number=account.unrealisedPnl), 
-                    format_number(number=account.marginBalance), 
-                    format_number(number=account.orderMargin), 
-                    format_number(number=account.positionMagrin), 
-                    format_number(number=account.availableMargin), 
+                    settlCurrency[0],
+                    format_number(number=account.walletBalance),
+                    format_number(number=account.unrealisedPnl),
+                    format_number(number=account.marginBalance),
+                    format_number(number=account.orderMargin),
+                    format_number(number=account.positionMagrin),
+                    format_number(number=account.availableMargin),
                 ]
                 tree.update(row=num, values=row)
 
-
-
-
-        '''mod = Tables.account.mod
+        """mod = Tables.account.mod
         for num, settlCurrency in enumerate(self.Account.keys()):
             account = self.Account[settlCurrency]
             update_label(table="account", column=0, row=num + mod, val=settlCurrency[0])
@@ -1214,7 +1214,7 @@ class Function(WS, Variables):
                 column=6,
                 row=num + mod,
                 val=format_number(number=account.availableMargin),
-            )'''
+            )"""
 
         # Refresh Results table
 
@@ -1247,22 +1247,22 @@ class Function(WS, Variables):
             if currency in results:
                 result.result += results[currency]
             compare = [
-                currency[0], 
-                result.sumreal + result.result, 
-                -result.commission, 
+                currency[0],
+                result.sumreal + result.result,
+                -result.commission,
                 -result.funding,
             ]
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 row = [
-                    currency[0], 
-                    format_number(number=result.sumreal + result.result), 
-                    format_number(number=-result.commission), 
+                    currency[0],
+                    format_number(number=result.sumreal + result.result),
+                    format_number(number=-result.commission),
                     format_number(number=-result.funding),
                 ]
                 tree.update(row=num, values=row)
 
-        '''mod = Tables.results.mod
+        """mod = Tables.results.mod
         results = dict()
         for symbol, position in self.positions.items():
             if symbol[2] == var.current_market:
@@ -1307,10 +1307,10 @@ class Function(WS, Variables):
                 column=3,
                 row=num + mod,
                 val=format_number(number=-result.funding),
-            )'''
+            )"""
 
         # Refresh Market table
-            
+
         tree = TreeTables.market
 
         for num, name in enumerate(var.market_list):
@@ -1445,11 +1445,11 @@ class Function(WS, Variables):
             )
         disp.root.update()
 
-    '''def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
+    def fill_columns(self: Markets, func, table: ListBoxTable, val: dict) -> None:
         Function.add_symbol(self, symbol=val["SYMBOL"])
         elements = func(Markets[val["SYMBOL"][2]], val=val, init=True)
         for num, element in enumerate(elements):
-            table.columns[num].append(element)'''
+            table.columns[num].append(element)
 
     def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
         if volNow > 1000000000:
@@ -1847,7 +1847,7 @@ def warning_window(message: str, widget=None, item=None) -> None:
         if widget:
             widget.selection_remove(item)
 
-    #disp.robots_window_trigger = "on"
+    # disp.robots_window_trigger = "on"
     warn_window = tk.Toplevel(pady=5)
     warn_window.geometry("400x150+{}+{}".format(450 + randint(0, 7) * 15, 300))
     warn_window.title("Warning")
@@ -1858,7 +1858,7 @@ def warning_window(message: str, widget=None, item=None) -> None:
     tex.pack(expand=1)
 
 
-def handler_position(event) -> None:    
+def handler_position(event) -> None:
     tree = event.widget
     items = tree.selection()
     if items:
@@ -1872,7 +1872,7 @@ def handler_position(event) -> None:
 def handler_account(event) -> None:
     tree = event.widget
     items = tree.selection()
-    if items:        
+    if items:
         tree.update()
         time.sleep(0.05)
         tree.selection_remove(items[0])
@@ -1891,7 +1891,7 @@ def handler_market(event) -> None:
         if shift != var.current_market:
             var.current_market = shift
             var.symbol = Markets[var.current_market].symbol_list[0]
-            #clear_tables()
+            # clear_tables()
 
 
 def find_order(price: float, qty: int, symbol: str) -> int:
@@ -1919,7 +1919,12 @@ def handler_robots(event) -> None:
                 emi = val
                 break
         if emi:
-            if ws.robots[emi]["STATUS"] not in ["NOT IN LIST", "NOT DEFINED", "RESERVED"]:
+            if ws.robots[emi]["STATUS"] not in [
+                "NOT IN LIST",
+                "NOT DEFINED",
+                "RESERVED",
+            ]:
+
                 def callback():
                     row = ws.robots[val]["y_position"]
                     if ws.robots[emi]["STATUS"] == "WORK":
@@ -1949,9 +1954,14 @@ def handler_robots(event) -> None:
                         text = emi + " - Enable"
                     status = tk.Button(robot_window, text=text, command=callback)
                     status.pack()
-                    change_color(color=disp.title_color, container=robot_window) 
+                    change_color(color=disp.title_color, container=robot_window)
             else:
-                warning_window("You cannot change the "  + ws.robots[emi]["STATUS"] + " status.", widget=tree, item=item)   
+                warning_window(
+                    "You cannot change the " + ws.robots[emi]["STATUS"] + " status.",
+                    widget=tree,
+                    item=item,
+                )
+
 
 def clear_labels_cache():
     # disp.labels["robots"] = []
@@ -2017,14 +2027,14 @@ def load_labels() -> None:
         color=disp.title_color,
         select=True,
     )
-    '''mod = Tables.robots.mod
+    """mod = Tables.robots.mod
     for row, emi in enumerate(ws.robots):
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
             ws.robots[emi]["STATUS"] == "RESERVED" and ws.robots[emi]["POS"] != 0
         ):
             disp.labels["robots"][row + mod][6]["fg"] = disp.red_color
         else:
-            disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color'''
+            disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color"""
     Tables.orderbook = GridTable(
         frame=disp.orderbook_frame,
         name="orderbook",
@@ -2066,14 +2076,14 @@ def load_labels() -> None:
         bind=handler_position,
     )
     TreeTables.robots = TreeviewTable(
-        frame=disp.robots_frame, 
+        frame=disp.robots_frame,
         name="robots",
         title=var.name_robots,
         size=len(ws.robots),
         bind=handler_robots,
     )
     TreeTables.account = TreeviewTable(
-        frame=disp.account_frame, 
+        frame=disp.account_frame,
         name="account",
         title=var.name_account,
         size=len(ws.Account.get_keys()),
@@ -2084,7 +2094,7 @@ def load_labels() -> None:
         name="market",
         title=var.name_market,
         size=len(var.market_list),
-        style="market.Treeview", 
+        style="market.Treeview",
         bind=handler_market,
     )
     TreeTables.results = TreeviewTable(
@@ -2094,7 +2104,6 @@ def load_labels() -> None:
         title=var.name_results,
         bind=handler_account,
     )
-
 
 
 def clear_tables():
@@ -2122,9 +2131,9 @@ def clear_tables():
 
 change_color(color=disp.title_color, container=disp.root)
 
-'''trades = ListBoxTable(
+trades = ListBoxTable(
     name="trades", frame=disp.frame_trades, title=var.name_trade, size=0, expand=True
-)'''
+)
 funding = ListBoxTable(
     name="funding",
     frame=disp.frame_funding,
@@ -2132,17 +2141,24 @@ funding = ListBoxTable(
     size=0,
     expand=True,
 )
-orders = ListBoxTable(
-    name="orders",
-    frame=disp.frame_orders,
+TreeTables.orders = TreeviewTable(
+    frame=disp.frame_orders, 
+    name="orders", 
+    size=0, 
     title=var.name_order,
     bind=handler_order,
-    size=0,
-    expand=True,
 )
-
 TreeTables.trades = TreeviewTable(
-    frame=disp.frame_trades, name="trades", size=0, title=var.name_trade,
+    frame=disp.frame_trades,
+    name="trades",
+    size=0,
+    title=var.name_trade,
+)
+TreeTables.funding = TreeviewTable(
+    frame=disp.frame_funding,
+    name="funding", 
+    size=0, 
+    title=var.name_funding,     
 )
 
 
