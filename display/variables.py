@@ -288,7 +288,7 @@ class Variables:
 
 class TreeviewTable(Variables):
     def __init__(
-        self, frame: tk.Frame, name: str, title: list, size: int, style="", bind=None
+        self, frame: tk.Frame, name: str, title: list, size: int, style="", bind=None, hide=[]
     ) -> None:
         self.title = title
         self.max_rows = 200
@@ -320,6 +320,14 @@ class TreeviewTable(Variables):
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.init(size=size)
+        self.column_hide = []
+        self.hide_num = -1
+        hide_begin = list(self.tree["columns"])
+        for num, id_col in enumerate(hide, start=0):
+            self.column_hide.append(hide_begin)
+            self.column_hide[num].remove(id_col)
+            hide_begin = list(self.column_hide[num])
+            self.column_hide[num] = tuple(hide_begin)
 
     def init(self, size):
         self.clear_all()
