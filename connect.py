@@ -17,8 +17,8 @@ from api.bybit.ws import Bybit
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
-from display.variables import Tables
 from display.variables import Variables as disp
+from display.variables import TreeTable
 from functions import Function
 
 
@@ -73,7 +73,6 @@ def setup_market(ws: Markets):
                     open_orders = executor.submit(get_orders, ws)
                     frames = frames.result()
                     ws.setup_orders = open_orders.result()
-                # frames = get_timeframes(ws)
                 if isinstance(frames, dict):
                     pass
                 else:
@@ -93,10 +92,10 @@ def finish_setup(ws: Markets):
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
-    if hasattr(Tables, "market"):
+    '''if hasattr(Tables, "market"):
         Tables.market.color_market(
             state="online", row=var.market_list.index(ws.name), market=ws.name
-        )
+        )'''
     ws.api_is_active = True
 
 
@@ -186,7 +185,11 @@ def trade_state(event) -> None:
         disp.f9 = "ON"
         for num, market in enumerate(var.market_list):
             Markets[market].logNumFatal = 0
-            Tables.market.color_market(state="online", row=num, market=market)
+            #Tables.market.color_market(state="online", row=num, market=market)
+            if market == var.current_market:
+                TreeTable.market.paint(row=num, configure="Select")
+            else:
+                TreeTable.market.paint(row=num, configure="Market")
             print(market, disp.f9)
 
 

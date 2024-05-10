@@ -59,8 +59,6 @@ class Variables:
     num_book = 20  # Must be even
     col1_book = 0
     symb_book = ()
-    labels = dict()
-    labels_cache = dict()
 
     # Main frame. Always visible
     frame_left = tk.Frame()
@@ -268,7 +266,7 @@ class Variables:
     table_limit = 150
 
 
-class GridTable(Variables):
+'''class GridTable(Variables):
     def __init__(
         self,
         frame: tk.Frame,
@@ -625,7 +623,7 @@ class ListBoxTable(Variables):
             if self.columns[col][num] == market:
                 for column in range(len(self.columns)):
                     self.columns[column].pop(num)
-        self.clear_all()
+        self.clear_all()'''
 
 
 class TreeviewTable(Variables):
@@ -643,24 +641,26 @@ class TreeviewTable(Variables):
         self.tree = ttk.Treeview(frame, style=style, columns=columns, show="headings")
         for num, name in enumerate(title, start=1):
             self.tree.heading(num, text=name)
-            self.tree.column(num, anchor=tk.CENTER, width=50)
+            self.tree.column(num, anchor=tk.CENTER, width=100)
         scroll = AutoScrollbar(frame, orient="vertical")
         scroll.config(command=self.tree.yview)
         self.tree.config(yscrollcommand=scroll.set)
         self.tree.grid(row=0, column=0, sticky="NSEW")
         scroll.grid(row=0, column=1, sticky="NS")
-        # frame.grid_columnconfigure(0, weight=1)
-        # frame.grid_columnconfigure(1, weight=1)
-        self.children = []
+        self.children = list()    
         self.tree.tag_configure("Select", background=self.bg_select_color)
         self.tree.tag_configure("Buy", foreground=self.green_color)
         self.tree.tag_configure("Sell", foreground=self.red_color)
-        self.tree.tag_configure("Deselect", background=self.bg_select_color)
+        self.tree.tag_configure("Deselect", background=self.bg_color)
+        self.tree.tag_configure("Normal", foreground=self.fg_color)
+        self.tree.tag_configure("Error", background=self.red_color, foreground="white")
+        self.tree.tag_configure("Market", background=self.title_color, foreground=self.fg_color)        
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
-        self.init(size)
+        self.init(size=size)
 
     def init(self, size):
+        self.clear_all()
         self.cache = list()
         for _ in range(size):
             self.insert(values=self.title)
@@ -705,7 +705,7 @@ class TreeviewTable(Variables):
 
         return data[:self.max_rows]
 
-class TreeTables:
+class TreeTable:
     position: TreeviewTable
     robots: TreeviewTable
     account: TreeviewTable
@@ -717,7 +717,7 @@ class TreeTables:
     orders: TreeviewTable
 
 
-def event_width(event, canvas_id, canvas_event):
+'''def event_width(event, canvas_id, canvas_event):
     canvas_event.itemconfig(canvas_id, width=event.width)
 
 
@@ -761,7 +761,7 @@ def on_mousewheel(event, canvas, scroll):
             if event.num == 4:
                 canvas.yview_scroll(-1, "units")
             elif event.num == 5:
-                canvas.yview_scroll(1, "units")
+                canvas.yview_scroll(1, "units")'''
 
 
 def text_ignore(event):
