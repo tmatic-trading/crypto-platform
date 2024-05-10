@@ -1318,7 +1318,13 @@ def handler_order(event) -> None:
                 change_color(color=disp.title_color, container=order_window)
 
 
-def handler_orderbook(event, row_position: int) -> None:
+def handler_orderbook(event) -> None:
+    tree = event.widget
+    items = tree.selection()
+    if items:
+        tree.update()
+        time.sleep(0.05)
+        tree.selection_remove(items[0])
     disp.handler_orderbook_symbol = var.symbol
     ws = Markets[var.current_market]
 
@@ -1465,7 +1471,7 @@ def handler_orderbook(event, row_position: int) -> None:
         book_window = tk.Toplevel(disp.root, padx=10, pady=20)
         cx = disp.root.winfo_pointerx()
         cy = disp.root.winfo_pointery()
-        book_window.geometry("+{}+{}".format(cx - 200, cy - 250))
+        book_window.geometry("+{}+{}".format(cx + 200, cy))
         book_window.title(var.symbol)
         book_window.protocol("WM_DELETE_WINDOW", on_closing)
         book_window.attributes("-topmost", 1)
@@ -1611,7 +1617,8 @@ def handler_market(event) -> None:
         if shift != var.current_market:
             var.current_market = shift
             var.symbol = Markets[var.current_market].symbol_list[0]
-            # clear_tables()
+            print("+++++++++++++++++++++++++++")
+            clear_tables()
 
 
 def find_order(price: float, qty: int, symbol: str) -> int:
@@ -1719,6 +1726,7 @@ def load_labels() -> None:
         name="orderbook",
         title=var.name_book,
         size=disp.num_book,
+        bind=handler_orderbook,
     )
     TreeTable.position = TreeviewTable(
         frame=disp.frame_position,
@@ -1756,6 +1764,8 @@ def load_labels() -> None:
         title=var.name_results,
         bind=handler_account,
     )
+    TreeTable.position.set_selection()
+    TreeTable.market.set_selection()
 
 def clear_tables():
     ws = Markets[var.current_market]
@@ -1764,6 +1774,8 @@ def clear_tables():
     TreeTable.robots.init(size=len(ws.robots))
     TreeTable.orderbook.init(size=disp.num_book)
     TreeTable.results.init(size=len(ws.Result.get_keys()))
+    TreeTable.position.set_selection()
+    TreeTable.market.set_selection()
 
 change_color(color=disp.title_color, container=disp.root)
 
@@ -1779,12 +1791,14 @@ TreeTable.trades = TreeviewTable(
     name="trades",
     size=0,
     title=var.name_trade,
+    bind=handler_account,
 )
 TreeTable.funding = TreeviewTable(
     frame=disp.frame_funding,
     name="funding", 
     size=0, 
-    title=var.name_funding,     
+    title=var.name_funding,
+    bind=handler_account,  
 )
 
 
