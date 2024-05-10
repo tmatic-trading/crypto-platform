@@ -1715,7 +1715,7 @@ def load_labels() -> None:
                 if row > num and column == 0:
                     disp.labels["orderbook"][row][column]["anchor"] = "e"'''
     TreeTable.orderbook = TreeviewTable(
-        frame=disp.orderbook_frame,
+        frame=disp.frame_orderbook,
         name="orderbook",
         title=var.name_book,
         size=disp.num_book,
