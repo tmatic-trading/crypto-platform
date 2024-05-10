@@ -1721,28 +1721,28 @@ def load_labels() -> None:
         size=disp.num_book,
     )
     TreeTable.position = TreeviewTable(
-        frame=disp.position_frame,
+        frame=disp.frame_position,
         name="position",
         title=var.name_position,
         size=len(ws.symbol_list),
         bind=handler_position,
     )
     TreeTable.robots = TreeviewTable(
-        frame=disp.robots_frame,
+        frame=disp.frame_robots,
         name="robots",
         title=var.name_robots,
         size=len(ws.robots),
         bind=handler_robots,
     )
     TreeTable.account = TreeviewTable(
-        frame=disp.account_frame,
+        frame=disp.frame_account,
         name="account",
         title=var.name_account,
         size=len(ws.Account.get_keys()),
         bind=handler_account,
     )
     TreeTable.market = TreeviewTable(
-        frame=disp.market_frame,
+        frame=disp.frame_market,
         name="market",
         title=var.name_market,
         size=len(var.market_list),
