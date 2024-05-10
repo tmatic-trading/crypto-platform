@@ -1988,7 +1988,7 @@ def load_labels() -> None:
     ws = Markets[var.current_market]
     position_rows = len(var.env[var.current_market]["SYMBOLS"])
     Tables.position = GridTable(
-        frame=disp.position_frame,
+        frame=disp.frame_position,
         name="position",
         size=max(5, position_rows + 1),
         title=var.name_position,
@@ -2000,7 +2000,7 @@ def load_labels() -> None:
     )
     account_rows = len(ws.Account.get_keys())
     Tables.account = GridTable(
-        frame=disp.account_frame,
+        frame=disp.frame_account,
         name="account",
         size=account_rows + 1,
         title=var.name_account,
@@ -2008,7 +2008,7 @@ def load_labels() -> None:
         color=disp.bg_color,
     )
     Tables.robots = GridTable(
-        frame=disp.robots_frame,
+        frame=disp.frame_robots,
         name="robots",
         size=max(disp.num_robots, len(ws.robots) + 1),
         title=var.name_robots,
@@ -2017,7 +2017,7 @@ def load_labels() -> None:
         color=disp.bg_color,  # disp.title_color,
     )
     Tables.market = GridTable(
-        frame=disp.market_frame,
+        frame=disp.frame_market,
         name="market",
         size=len(var.market_list) + 1,
         title=var.name_market,
@@ -2036,7 +2036,7 @@ def load_labels() -> None:
         else:
             disp.labels["robots"][row + mod][6]["fg"] = disp.fg_color"""
     Tables.orderbook = GridTable(
-        frame=disp.orderbook_frame,
+        frame=disp.frame_orderbook,
         name="orderbook",
         size=disp.num_book,
         title=var.name_book,
@@ -2063,34 +2063,34 @@ def load_labels() -> None:
         color=disp.bg_color,
     )
     TreeTables.orderbook = TreeviewTable(
-        frame=disp.orderbook_frame,
+        frame=disp.frame_orderbook,
         name="orderbook",
         title=var.name_book,
         size=disp.num_book,
     )
     TreeTables.position = TreeviewTable(
-        frame=disp.position_frame,
+        frame=disp.frame_position,
         name="position",
         title=var.name_position,
         size=len(ws.symbol_list),
         bind=handler_position,
     )
     TreeTables.robots = TreeviewTable(
-        frame=disp.robots_frame,
+        frame=disp.frame_robots,
         name="robots",
         title=var.name_robots,
         size=len(ws.robots),
         bind=handler_robots,
     )
     TreeTables.account = TreeviewTable(
-        frame=disp.account_frame,
+        frame=disp.frame_account,
         name="account",
         title=var.name_account,
         size=len(ws.Account.get_keys()),
         bind=handler_account,
     )
     TreeTables.market = TreeviewTable(
-        frame=disp.market_frame,
+        frame=disp.frame_market,
         name="market",
         title=var.name_market,
         size=len(var.market_list),
