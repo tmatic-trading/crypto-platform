@@ -693,11 +693,9 @@ class TreeviewTable(Variables):
         data = list()
         if self.children:
             child = self.children[0]
-            values = self.tree.item(child)["values"]
-            indx = values.index(market)
             for child in self.children:
                 values = self.tree.item(child)["values"]
-                if values[indx] != market:
+                if values[3] != market:
                     data.append(values)
         data += rows
         self.clear_all()
