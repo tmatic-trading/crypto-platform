@@ -106,14 +106,14 @@ class Variables:
         bg_select_color = "systemSelectedTextBackgroundColor"
         fg_color = label_trading["foreground"]
     else:
-        green_color = "#319d30"
-        red_color = "#dc6537"
+        green_color = "#07b66e"
+        red_color = "#f53661"
         label_trading.config(bg="gray82")
         title_color = label_trading["background"]
         bg_select_color = "khaki1"
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
-        fg_color = "black" 
+        fg_color = "black"
     fg_select_color = fg_color
 
     label_time = tk.Label(frame_state, anchor="e", foreground=fg_color)
@@ -213,14 +213,17 @@ class Variables:
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
     style = ttk.Style()
-    line_height = tkinter.font.Font(font='TkDefaultFont').metrics('linespace')
-    style.configure("market.Treeview", fieldbackground=title_color, rowheight=line_height*3)
-    style.configure("TNotebook", borderwidth=0, background="gray90", tabposition="n")
-    style.configure("TNotebook.Tab", background="gray90")
-    style.map("TNotebook.Tab", background=[("selected", title_color)])
+    line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
+    #style.configure("Treeview.Heading", background=title_color)
+    style.configure(
+        "market.Treeview", fieldbackground=title_color, rowheight=line_height * 3
+    )
+    style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
+    style.configure("TNotebook.Tab", background="gray92")
+    #style.map("TNotebook.Tab", background=[("selected", title_color)])
 
     # Trades frame
-    frame_trades = ttk.Frame(notebook)
+    frame_trades = tk.Frame(notebook)
 
     # Funding frame
     frame_funding = tk.Frame(notebook)
@@ -637,6 +640,8 @@ class TreeviewTable(Variables):
         self.title = title
         self.cache = list()
         columns = [num for num in range(1, len(title) + 1)]
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_rowconfigure(0, weight=1)
         self.tree = ttk.Treeview(frame, style=style, columns=columns, show="headings")
         for num, name in enumerate(title, start=1):
             self.tree.heading(num, text=name)
@@ -646,8 +651,8 @@ class TreeviewTable(Variables):
         self.tree.config(yscrollcommand=scroll.set)
         self.tree.grid(row=0, column=0, sticky="NSEW")
         scroll.grid(row=0, column=1, sticky="NS")
-        #frame.grid_columnconfigure(0, weight=1)
-        #frame.grid_columnconfigure(1, weight=1)
+        # frame.grid_columnconfigure(0, weight=1)
+        # frame.grid_columnconfigure(1, weight=1)
         self.children = []
         self.tree.tag_configure("Select", background=self.bg_select_color)
         self.tree.tag_configure("Buy", foreground=self.green_color)
@@ -656,7 +661,6 @@ class TreeviewTable(Variables):
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.init(size)
-
 
     def init(self, size):
         self.cache = list()
@@ -685,6 +689,25 @@ class TreeviewTable(Variables):
         self.tree.delete(*self.children)
         self.children = self.tree.get_children()
 
+    def append_data(self, rows: list, market: str) -> list:
+        data = list()
+        if self.children:
+            child = self.children[0]
+            values = self.tree.item(child)["values"]
+            indx = values.index(market)
+            for child in self.children:
+                values = self.tree.item(child)["values"]
+                if values[indx] != market:
+                    data.append(values)
+        data += rows
+        self.clear_all()
+        data = list(
+            map(lambda x: x + [datetime.strptime(x[0], "%y%m%d %H:%M:%S")], data)
+        )
+        data.sort(key=lambda x: x[-1])
+        data = list(map(lambda x: x[:-1], data))
+
+        return data[:self.max_rows]
 
 class TreeTables:
     position: TreeviewTable
@@ -694,6 +717,8 @@ class TreeTables:
     market: TreeviewTable
     results: TreeviewTable
     trades: TreeviewTable
+    funding: TreeviewTable
+    orders: TreeviewTable
 
 
 def event_width(event, canvas_id, canvas_event):

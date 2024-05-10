@@ -9,8 +9,9 @@ from api.api import WS, Markets
 from api.init import Variables
 from common.variables import Variables as var
 from display.functions import info_display
+from display.variables import TreeTables
 from display.variables import Variables as disp
-from functions import Function, funding, orders #d, trades
+from functions import Function
 
 db_sqlite = var.env["SQLITE_DATABASE"]
 
@@ -161,7 +162,6 @@ class Init(WS, Variables):
         """
         Load Orders (if any)
         """
-        # myOrders = WS.open_orders(self)
         copy = var.orders.copy()
         for clOrdID, order in copy.items():
             if order["MARKET"] == self.name:
@@ -221,17 +221,14 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["orderID"] = val["orderID"]
         for clOrdID, order in var.orders.items():
             order["clOrdID"] = clOrdID
-        orders.clear_all()
+        TreeTables.orders.clear_all()
         values = list(var.orders.values())
         values.sort(key=lambda x: x["transactTime"])
         var.orders = OrderedDict()
         for val in reversed(values):
             var.orders[val["clOrdID"]] = val
         for val in list(var.orders.values()):
-            if val["MARKET"] == self.name:
-                Function.fill_columns(
-                    self, func=Function.orders_display, table=orders, val=val
-                )
+            Function.orders_display(self, val=val)
 
     def load_database(self: Markets) -> None:
         """
@@ -250,11 +247,18 @@ class Init(WS, Variables):
                 + str(disp.table_limit)
             )
             data = Function.select_database(self, sql)
+            rows = list()
             for val in data:
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-                '''Function.fill_columns(
-                    self, func=Function.funding_display, table=funding, val=val
-                )'''
+                row = Function.funding_display(self, val=val, init=True)
+                rows.append(row)
+            data = TreeTables.funding.append_data(rows=rows, market=self.name)
+            for values in data:
+                if float(values[5]) >= 0:
+                    configure = "Buy"
+                else:
+                    configure = "Sell"
+                TreeTables.funding.insert(values=values, configure=configure)
             sql = (
                 "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
                 + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
@@ -267,12 +271,15 @@ class Init(WS, Variables):
                 + str(disp.table_limit)
             )
             data = Function.select_database(self, sql)
+            rows = list()
             for val in data:
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
-                Function.trades_display(self, val=val)
-                '''Function.fill_columns(
-                    self, func=Function.trades_display, table=trades, val=val
-                )'''
+                row = Function.trades_display(self, val=val, init=True)
+                rows.append(row)
+            data = TreeTables.trades.append_data(rows=rows, market=self.name)
+            indx = TreeTables.trades.title.index("SIDE")
+            for values in data:
+                TreeTables.trades.insert(values=values, configure=values[indx])
         else:
             self.logNumFatal = 1001
 
