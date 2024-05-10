@@ -9,7 +9,7 @@ from api.api import WS, Markets
 from api.init import Variables
 from common.variables import Variables as var
 from display.functions import info_display
-from display.variables import TreeTables
+from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
 
@@ -221,7 +221,7 @@ class Init(WS, Variables):
                 var.orders[clOrdID]["orderID"] = val["orderID"]
         for clOrdID, order in var.orders.items():
             order["clOrdID"] = clOrdID
-        TreeTables.orders.clear_all()
+        TreeTable.orders.clear_all()
         values = list(var.orders.values())
         values.sort(key=lambda x: x["transactTime"])
         var.orders = OrderedDict()
@@ -252,13 +252,13 @@ class Init(WS, Variables):
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
                 row = Function.funding_display(self, val=val, init=True)
                 rows.append(row)
-            data = TreeTables.funding.append_data(rows=rows, market=self.name)
+            data = TreeTable.funding.append_data(rows=rows, market=self.name)
             for values in data:
                 if float(values[5]) >= 0:
                     configure = "Buy"
                 else:
                     configure = "Sell"
-                TreeTables.funding.insert(values=values, configure=configure)
+                TreeTable.funding.insert(values=values, configure=configure)
             sql = (
                 "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
                 + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
@@ -276,10 +276,10 @@ class Init(WS, Variables):
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
                 row = Function.trades_display(self, val=val, init=True)
                 rows.append(row)
-            data = TreeTables.trades.append_data(rows=rows, market=self.name)
-            indx = TreeTables.trades.title.index("SIDE")
+            data = TreeTable.trades.append_data(rows=rows, market=self.name)
+            indx = TreeTable.trades.title.index("SIDE")
             for values in data:
-                TreeTables.trades.insert(values=values, configure=values[indx])
+                TreeTable.trades.insert(values=values, configure=values[indx])
         else:
             self.logNumFatal = 1001
 
