@@ -95,7 +95,7 @@ class Variables:
         red_color = "#f53661"
         label_trading.config(bg="gray82")
         title_color = label_trading["background"]
-        bg_select_color = "khaki1"
+        bg_select_color = "#b3d7ff"
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
         fg_color = "black"
@@ -200,9 +200,12 @@ class Variables:
     style = ttk.Style()
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
     #style.configure("Treeview.Heading", background=title_color)
+    if ostype != "Mac":
+        style.map('Treeview', background=[('selected', '#b3d7ff')], foreground=[('selected', fg_color)])
     style.configure(
         "market.Treeview", fieldbackground=title_color, rowheight=line_height * 3
     )
+    
     style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
     style.configure("TNotebook.Tab", background="gray92")
     #style.map("TNotebook.Tab", background=[("selected", title_color)])
@@ -266,366 +269,6 @@ class Variables:
     table_limit = 150
 
 
-'''class GridTable(Variables):
-    def __init__(
-        self,
-        frame: tk.Frame,
-        name: str,
-        size: int,
-        title: list,
-        column_width: int = None,
-        canvas_height: int = 30,
-        title_on: bool = True,
-        bind=None,
-        color: str = None,
-        select: bool = None,
-    ) -> None:
-        self.name = name
-        self.title = title
-        self.select = select
-        self.bind = bind
-        self.color = color
-        self.size = size
-        self.title_on = title_on
-        self.mod = 1
-        self.labels[name] = []
-        self.labels_cache[name] = []
-        if column_width is not None:
-            width = len(title) * column_width
-        else:
-            width = column_width
-        if not title_on:
-            self.mod = 0
-            size -= 1
-        my_bg = self.bg_color if name != "market" else self.title_color
-        canvas = tk.Canvas(
-            frame, highlightthickness=0, height=canvas_height, width=width, bg=my_bg
-        )
-        canvas.grid(row=0, column=0, sticky="NSEW")
-        frame.grid_rowconfigure(0, weight=1)
-        frame.grid_columnconfigure(0, weight=1)
-        scroll = AutoScrollbar(frame, orient="vertical")
-        scroll.config(command=canvas.yview)
-        scroll.grid(row=0, column=1, sticky="NS")
-        canvas.config(yscrollcommand=scroll.set)
-        self.sub = tk.Frame(canvas, bg=my_bg)
-        positions_id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
-        canvas.bind(
-            "<Configure>",
-            lambda event, id=positions_id, pos=canvas: event_width(event, id, pos),
-        )
-        self.sub.bind("<Configure>", lambda event: event_config(event, canvas))
-        canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
-        canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
-        for row in range(size):
-            self.create_grid(row=row)
-
-    def create_grid(self, row: int):
-        lst = []
-        cache = []
-        if len(self.labels[self.name]) <= row:
-            for title_name in self.title:
-                lst.append(
-                    tk.Label(
-                        self.sub,
-                        text=title_name,
-                        pady=0,  # , background=self.title_color
-                    )
-                )
-                cache.append(title_name + str(row))
-            self.labels[self.name].append(lst)
-            self.labels_cache[self.name].append(cache)
-        for column in range(len(self.title)):
-            self.labels[self.name][row][column].grid(
-                row=row, column=column, sticky="NSWE", padx=0, pady=0
-            )
-            if row > self.mod - 1:
-                if self.select:
-                    if row == self.mod:
-                        color_bg = self.bg_select_color
-                        color_fg = self.fg_select_color
-                    else:
-                        color_bg = self.color
-                        color_fg = self.fg_color
-                else:
-                    color_bg = self.color
-                    color_fg = self.fg_color
-
-                self.labels[self.name][row][column]["text"] = ""
-                self.labels[self.name][row][column]["bg"] = color_bg
-                self.labels[self.name][row][column]["fg"] = color_fg
-                if self.bind:
-                    self.labels[self.name][row][column].bind(
-                        "<Button-1>",
-                        lambda event, row_position=row: self.bind(event, row_position),
-                    )
-            self.sub.grid_columnconfigure(column, weight=1)
-
-    def reconfigure_table(self, action: str, number: int):
-        """
-        Depending on the exchange, you may need a different number of rows in the
-        tables, since, for example, you may be subscribed to a different number of
-        instruments. Therefore, the number of rows in tables: "account",
-        "position", "robots" must change  dynamically. Calling this function
-        changes the number of rows in a particular table.
-
-        Input parameters:
-
-        action - "new" - add new lines, "hide" - remove lines
-        number - number of lines to add or hide
-        """
-        row = self.sub.grid_size()[1]
-        if action == "new":
-            while number:
-                if row + number > self.size:
-                    self.size += 1
-                    self.create_grid(row=row)
-                else:
-                    for num, label in enumerate(self.labels[self.name][row]):
-                        label.grid(
-                            row=row,
-                            column=num,
-                            sticky="NSWE",
-                            padx=0,
-                            pady=0,
-                        )
-                row += 1
-                number -= 1
-        elif action == "hide":
-            row -= 1
-            while number:
-                for r in self.sub.grid_slaves(row=row):
-                    r.grid_forget()
-                number -= 1
-                row -= 1
-                if row == 0:
-                    break
-
-    def color_market(self, state: str, row: int, market: str):
-        if state == "error":
-            color = self.sell_bg_color
-        else:
-            if market == var.current_market:
-                color = self.bg_select_color
-            else:
-                color = self.color
-        for column in range(len(self.title)):
-            self.labels[self.name][row + self.mod][column]["bg"] = color
-
-
-class Tables:
-    position: GridTable
-    account: GridTable
-    robots: GridTable
-    market: GridTable
-    orderbook: GridTable
-    results: GridTable
-
-
-class ListBoxTable(Variables):
-    """
-    The table contains a grid with one row in each column in which a Listbox
-    is inserted. The contents of table rows are managed through Listbox tools
-    in accordance with the row index.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        frame: tk.Frame,
-        size: int,
-        title: list,
-        title_on: bool = True,
-        bind=None,
-        expand: bool = None,
-    ) -> None:
-        self.title = title
-        self.title_on = title_on
-        self.mod = 1
-        self.max_rows = 200
-        if title_on:
-            self.height = 1
-        else:
-            self.height = 0
-            self.mod = 0
-        self.active_row = 1
-        self.mod = 1
-        self.columns = [[] for _ in title]
-        self.name = name
-        if expand:
-            frame.grid_rowconfigure(0, weight=1)
-        canvas = tk.Canvas(frame, highlightthickness=0, bg=self.bg_color)
-        canvas.grid(row=0, column=0, sticky="NSEW")
-        frame.grid_columnconfigure(0, weight=1)
-        scroll = AutoScrollbar(frame, orient="vertical")
-        scroll.config(command=canvas.yview)
-        scroll.grid(row=0, column=1, sticky="NS")
-        canvas.config(yscrollcommand=scroll.set)
-        self.sub = tk.Frame(canvas, pady=0, bg=self.bg_color)
-        id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
-        canvas.bind(
-            "<Configure>",
-            lambda event, id=id, can=canvas: event_width(event, id, can),
-        )
-        self.sub.bind("<Configure>", lambda event: event_config(event, canvas))
-        canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
-        canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
-        if self.ostype == "Mac":
-            self.item_color = {
-                "Buy": {
-                    "bg": self.bg_color,
-                    "fg": self.green_color,
-                    "selectbackground": self.bg_color,
-                    "selectforeground": self.green_color,
-                },
-                "Sell": {
-                    "bg": self.bg_color,
-                    "fg": self.red_color,
-                    "selectbackground": self.bg_color,
-                    "selectforeground": self.red_color,
-                },
-            }
-        else:
-            self.item_color = {
-                "Buy": {
-                    "bg": self.buy_bg_color,
-                    "fg": self.fg_color,
-                    "selectbackground": self.buy_bg_color,
-                    "selectforeground": self.fg_color,
-                },
-                "Sell": {
-                    "bg": self.sell_bg_color,
-                    "fg": self.fg_color,
-                    "selectbackground": self.sell_bg_color,
-                    "selectforeground": self.fg_color,
-                },
-            }
-        self.listboxes = list()
-        for num, name in enumerate(title):
-            value = (
-                [
-                    name,
-                ]
-                if title_on
-                else [
-                    "",
-                ]
-            )
-            vars = tk.Variable(value=value)
-            self.listboxes.append(
-                tk.Listbox(
-                    self.sub,
-                    listvariable=vars,
-                    bd=0,
-                    background=self.bg_color,
-                    highlightthickness=0,
-                    selectbackground=self.title_color,
-                    selectforeground=self.fg_color,
-                    activestyle="none",
-                    justify="center",
-                    height=self.height,
-                    width=0,
-                )
-            )
-            if title_on:
-                self.listboxes[num].itemconfig(0, bg=self.title_color)
-            self.listboxes[num].grid(row=0, padx=0, column=num, sticky="NSWE")
-            self.sub.grid_columnconfigure(num, weight=1)
-            self.sub.grid_rowconfigure(0, weight=1)
-            if bind:
-                self.listboxes[num].bind("<<ListboxSelect>>", bind)
-            for _ in range(size):
-                lst = ["" for _ in range(len(self.title))]
-                self.insert(elements=lst, row=1)
-
-    def insert(self, row: int, elements: list) -> None:
-        self.height += 1
-        for num, listbox in enumerate(self.listboxes):
-            listbox.config(height=self.height)
-            listbox.insert(row + self.mod, elements[num])
-        if self.height > self.max_rows:
-            self.delete(row=self.height)
-
-    def delete(self, row: int) -> None:
-        self.height -= 1
-        for listbox in self.listboxes:
-            listbox.config(height=self.height)
-            listbox.delete(row + self.mod)
-
-    def clear_all(self) -> None:
-        for listbox in self.listboxes:
-            listbox.config(height=self.height)
-            listbox.delete(self.mod, tk.END)
-
-    def update(self, row: int, elements: list) -> None:
-        pass
-        """color = self.listboxes[0].itemcget(row + self.mod, "background")
-        color_fg = self.listboxes[0].itemcget(row + self.mod, "foreground")
-        self.delete(row + self.mod)
-        self.insert(row + self.mod, elements)
-        self.paint(row + self.mod, color, color_fg)"""
-
-    def paint(self, row: int, side: str) -> None:
-        for listbox in self.listboxes:
-            listbox.itemconfig(row + self.mod, **self.item_color[side])
-
-    def insert_columns(self, sort=True) -> None:
-        """
-        Because the Listbox widget is slow to perform insert operations on
-        macOS, the initial filling of tables is done column-by-column,
-        not row-by-row.
-        """
-        if sort:
-            if self.columns[0]:  # sort by time
-                self.columns = list(zip(*self.columns))
-                self.columns = list(
-                    map(
-                        lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
-                        self.columns,
-                    )
-                )
-                self.columns.sort(key=lambda x: x[-1], reverse=True)
-                self.columns = zip(*self.columns)
-                self.columns = list(
-                    map(lambda x: list(x[: self.table_limit]), self.columns)
-                )[:-1]
-        self.height = len(self.columns[0]) + 1
-        for num, listbox in enumerate(self.listboxes):
-            listbox.delete(self.mod, tk.END)
-            listbox.config(height=self.height)
-            if self.title_on:
-                self.columns[num] = [self.title[num]] + self.columns[num]
-            vars = tk.Variable(value=self.columns[num])
-            listbox.config(listvariable=vars)
-        try:
-            col = self.title.index("SIDE")
-            name = "SIDE"
-        except ValueError:
-            col = self.title.index("PNL")
-            name = "Funding"
-        self.paint_columns(col=col, name=name)
-
-    def paint_columns(self, col: int, name: str) -> None:
-        for num, column in enumerate(self.columns):
-            for row in range(self.mod, len(column)):
-                if name == "Funding":
-                    side = "Buy" if float(self.columns[col][row]) > 0 else "Sell"
-                else:
-                    side = self.columns[col][row]
-                self.listboxes[num].itemconfig(row, **self.item_color[side])
-
-    def clear_columns(self, market: str) -> None:
-        for num, listbox in enumerate(self.listboxes):
-            self.columns[num] = list(listbox.get(self.mod, tk.END))
-        col = self.title.index("MARKET")
-        col_size = len(self.columns[col])
-        for num in range(col_size - 1, -1, -1):
-            if self.columns[col][num] == market:
-                for column in range(len(self.columns)):
-                    self.columns[column].pop(num)
-        self.clear_all()'''
-
-
 class TreeviewTable(Variables):
     def __init__(
         self, frame: tk.Frame, name: str, title: list, size: int, style="", bind=None
@@ -662,6 +305,7 @@ class TreeviewTable(Variables):
     def init(self, size):
         self.clear_all()
         self.cache = list()
+        print("____________size", self.name, size)
         for _ in range(size):
             self.insert(values=self.title)
             self.cache.append(self.title)
@@ -704,6 +348,9 @@ class TreeviewTable(Variables):
         data = list(map(lambda x: x[:-1], data))
 
         return data[:self.max_rows]
+    
+    def set_selection(self):
+        self.tree.selection_add(self.children[0])
 
 class TreeTable:
     position: TreeviewTable
@@ -715,53 +362,6 @@ class TreeTable:
     trades: TreeviewTable
     funding: TreeviewTable
     orders: TreeviewTable
-
-
-'''def event_width(event, canvas_id, canvas_event):
-    canvas_event.itemconfig(canvas_id, width=event.width)
-
-
-def event_config(event, canvas_event):
-    canvas_event.configure(scrollregion=canvas_event.bbox("all"))
-
-
-def on_enter(event, canvas, scroll):
-    if Variables.ostype == "Linux":
-        canvas.bind_all(
-            "<Button-4>",
-            lambda event: on_mousewheel(event, canvas, scroll),
-        )
-        canvas.bind_all(
-            "<Button-5>",
-            lambda event: on_mousewheel(event, canvas, scroll),
-        )
-    else:
-        canvas.bind_all(
-            "<MouseWheel>",
-            lambda event: on_mousewheel(event, canvas, scroll),
-        )
-
-
-def on_leave(event, canvas):
-    if Variables.ostype == "Linux":
-        canvas.unbind_all("<Button-4>")
-        canvas.unbind_all("<Button-5>")
-    else:
-        canvas.unbind_all("<MouseWheel>")
-
-
-def on_mousewheel(event, canvas, scroll):
-    slider_position = scroll.get()
-    if slider_position != (0.0, 1.0):  # Scrollbar is not full
-        if Variables.ostype == "Windows":
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        elif Variables.ostype == "Mac":
-            canvas.yview_scroll(int(-1 * event.delta), "units")
-        else:
-            if event.num == 4:
-                canvas.yview_scroll(-1, "units")
-            elif event.num == 5:
-                canvas.yview_scroll(1, "units")'''
 
 
 def text_ignore(event):
