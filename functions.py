@@ -722,9 +722,9 @@ class Function(WS, Variables):
                     WS.urgent_announcement(self)
                 self.message_time = utc
                 self.message_point = self.message_counter
-        tm = datetime.now()
+        #tm = datetime.now()
         Function.refresh_tables(self)
-        print(datetime.now() - tm)
+        #print(datetime.now() - tm)
 
     def refresh_tables(self: Markets) -> None:
         """
@@ -1701,15 +1701,6 @@ def change_color(color: str, container=None) -> None:
 
 def load_labels() -> None:
     ws = Markets[var.current_market]
-    '''num = int(disp.num_book / 2)
-    mod = Tables.orderbook.mod
-    for row in range(disp.num_book + mod - 1):
-        for column in range(len(var.name_book)):
-            if row > 0:
-                if row <= num and column == 2:
-                    disp.labels["orderbook"][row][column]["anchor"] = "w"
-                if row > num and column == 0:
-                    disp.labels["orderbook"][row][column]["anchor"] = "e"'''
     TreeTable.orderbook = TreeviewTable(
         frame=disp.frame_orderbook,
         name="orderbook",
