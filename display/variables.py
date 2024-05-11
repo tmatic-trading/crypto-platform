@@ -46,7 +46,6 @@ class Variables:
     window_height = int(screen_height * 0.7)
     root.geometry("{}x{}".format(window_width, window_height))
     all_width = window_width
-    # all_height = 1
     state_width = window_width
     last_market = ""
 
@@ -140,59 +139,48 @@ class Variables:
     # text_info.configure(state="disabled")
     bg_color = text_info["background"]
 
-    # This technical frame contains most frames and widgets
-    frame_rest1 = tk.Frame(pw_info_rest)
-    frame_rest1.pack(fill="both", expand="yes")
-
-    pw_info_rest.add(frame_info)
-    pw_info_rest.add(frame_rest1)
-    pw_info_rest.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_info_rest, 9)
+    # This technical PanedWindow contains most frames and widgets
+    pw_rest1 = tk.PanedWindow(
+        pw_info_rest, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
     )
+    pw_rest1.pack(fill="both", expand="yes")
 
     # One or more exchages is put in this frame
-    frame_market = tk.Frame(frame_rest1)
-    frame_market.grid(row=0, column=0, sticky="NSEW")
-    frame_rest1.grid_columnconfigure(0, weight=10)
+    frame_market = tk.Frame(pw_rest1)
 
     # This technical PanedWindow contains orderbook, positions, orders, trades, fundings, results, currencies, robots
     pw_rest2 = tk.PanedWindow(
-        frame_rest1,
+        pw_rest1,
         orient=tk.VERTICAL,
         sashrelief="raised",
         bd=0,
         sashwidth=0,
         height=1,
     )
-    pw_rest2.grid(row=0, column=1, sticky="NSEW")
-    frame_rest1.grid_columnconfigure(1, weight=500)
-    frame_rest1.grid_rowconfigure(0, weight=1)
+    pw_rest2.pack(fill="both", expand="yes")
 
-    # This technical frame contains orderbook, positions, orders, trades, fundings, results
-    frame_rest3 = tk.Frame(pw_rest2)
-    frame_rest3.pack(fill="both", expand="yes")
+    # This technical PanedWindow contains orderbook, positions, orders, trades, fundings, results
+    pw_rest3 = tk.PanedWindow(
+        pw_rest2, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
+    )
+    pw_rest3.pack(fill="both", expand="yes")
 
     # Frame for the order book
-    frame_orderbook = tk.Frame(frame_rest3)
-    frame_orderbook.grid(row=0, column=0, sticky="NSEW")
-    frame_rest3.grid_columnconfigure(0, weight=50)
+    frame_orderbook = tk.Frame(pw_rest3)
 
     # This technical PanedWindow contains positions, orders, trades, fundings, results
     pw_rest4 = tk.PanedWindow(
-        frame_rest3,
+        pw_rest3,
         orient=tk.VERTICAL,
         sashrelief="raised",
         bd=0,
         sashwidth=0,
         height=1,
     )
-    pw_rest4.grid(row=0, column=1, sticky="NSWE")
-    frame_rest3.grid_columnconfigure(1, weight=300)
-    frame_rest3.grid_rowconfigure(0, weight=1)
+    pw_rest4.pack(fill="both", expand="yes")
 
     # Frame for instruments and their positions
     frame_position = tk.Frame(pw_rest4)
-    frame_position.pack(fill="both", expand="yes")
 
     # Paned window: up - orders, down - trades, fundings, results
     pw_orders_trades = tk.PanedWindow(
@@ -200,9 +188,8 @@ class Variables:
     )
     pw_orders_trades.pack(fill="both", expand="yes")
 
-    # Orders frame
+    # Frame for active orders
     frame_orders = tk.Frame(pw_orders_trades)
-    frame_orders.pack(fill="both", expand="yes")
 
     # Notebook tabs: Trades / Funding / Results
     if ostype == "Mac":
@@ -244,12 +231,8 @@ class Variables:
     pw_orders_trades.add(frame_orders)
     pw_orders_trades.add(notebook)
     pw_orders_trades.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_orders_trades, 2)
+        "<Configure>", lambda event: resize_height(event, Variables.pw_orders_trades, 2)
     )
-
-    pw_rest4.add(frame_position)
-    pw_rest4.add(pw_orders_trades)
-    pw_rest4.bind("<Configure>", lambda event: resize_row(event, Variables.pw_rest4, 5))
 
     # Paned window: up - currencies (account), down - robots
     pw_account_robo = tk.PanedWindow(
@@ -266,13 +249,37 @@ class Variables:
     pw_account_robo.add(frame_account)
     pw_account_robo.add(frame_robots)
     pw_account_robo.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_account_robo, 2)
+        "<Configure>", lambda event: resize_height(event, Variables.pw_account_robo, 2)
     )
 
-    pw_rest2.add(frame_rest3)
+    pw_rest4.add(frame_position)
+    pw_rest4.add(pw_orders_trades)
+    pw_rest4.bind(
+        "<Configure>", lambda event: resize_height(event, Variables.pw_rest4, 5)
+    )
+
+    pw_rest3.add(frame_orderbook)
+    pw_rest3.add(pw_rest4)
+    pw_rest3.bind(
+        "<Configure>", lambda event: resize_width(event, Variables.pw_rest3, Variables.window_width // 4.25, 3)
+    )
+
+    pw_rest2.add(pw_rest3)
     pw_rest2.add(pw_account_robo)
     pw_rest2.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_rest2, 1.4)
+        "<Configure>", lambda event: resize_height(event, Variables.pw_rest2, 1.4)
+    )
+
+    pw_rest1.add(frame_market)
+    pw_rest1.add(pw_rest2)
+    pw_rest1.bind(
+        "<Configure>", lambda event: resize_width(event, Variables.pw_rest1, Variables.window_width // 9, 6)
+    )
+
+    pw_info_rest.add(frame_info)
+    pw_info_rest.add(pw_rest1)
+    pw_info_rest.bind(
+        "<Configure>", lambda event: resize_height(event, Variables.pw_info_rest, 9)
     )
 
     refresh_var = None
@@ -400,5 +407,13 @@ def resize_col(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], width=pw.winfo_width() // ratio)
 
 
-def resize_row(event, pw, ratio):
+def resize_height(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], height=pw.winfo_height() // ratio)
+
+def resize_width(event, pw, start_width, min_ratio):
+    ratio = pw.winfo_width() / start_width
+    if ratio < min_ratio:
+        my_width = pw.winfo_width() // min_ratio
+    else:
+        my_width = start_width
+    pw.paneconfig(pw.panes()[0], width=my_width)
