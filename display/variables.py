@@ -61,16 +61,18 @@ class Variables:
     col1_book = 0
     symb_book = ()
 
-    # Main frame. Always visible
-    frame_left = tk.Frame()
-    frame_left.grid(row=0, column=0, sticky="NSWE")
-    root.grid_columnconfigure(0, weight=1)
+    pw_main = tk.PanedWindow(
+        root, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
+    )
+    pw_main.pack(fill="both", expand="yes")
 
-    # Adaptive frame to the right. Always blank; forgotten when the window is narrowed
+    # Adaptive frame to the left, always visible
+    frame_left = tk.Frame()
+    frame_left.pack(fill="both", expand="yes")
+
+    # Frame to the right, always blank
     frame_right = tk.Frame()
-    frame_right.grid(row=0, column=1, sticky="NSWE")
-    root.grid_columnconfigure(1, weight=0)
-    root.grid_rowconfigure(0, weight=1)
+    frame_right.pack(fill="both", expand="yes")
 
     # Top state frame: trading on/off, time
     frame_state = tk.Frame(frame_left)
@@ -280,6 +282,12 @@ class Variables:
     pw_info_rest.add(pw_rest1)
     pw_info_rest.bind(
         "<Configure>", lambda event: resize_height(event, Variables.pw_info_rest, 9)
+    )
+
+    pw_main.add(frame_left)
+    pw_main.add(frame_right)
+    pw_main.bind(
+        "<Configure>", lambda event: resize_width(event, Variables.pw_main, Variables.window_width, 1)
     )
 
     refresh_var = None
