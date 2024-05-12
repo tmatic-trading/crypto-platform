@@ -77,15 +77,10 @@ def precision(number: float) -> int:
 
 
 def add_space(line: list) -> str:
-    print(line)
     n = max(map(lambda x: len(x), line))
-    print(n)
     lst = list()
     for l in line:
-        lst.append((n - len(l)) // 2*" " + l)
-
-    print("+++")
-    print("\n".join(lst))
+        lst.append((n - len(l))*" " + l)
 
     return "\n".join(lst)
 
