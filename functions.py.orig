@@ -724,6 +724,13 @@ class Function(WS, Variables):
                 self.message_point = self.message_counter
         #tm = datetime.now()
         Function.refresh_tables(self)
+<<<<<<< HEAD
+        #print(datetime.now() - tm)
+||||||| 3e39bec
+        print(datetime.now() - tm)
+=======
+        ###print(datetime.now() - tm)
+>>>>>>> 9c64539cf399af886a71c7ea8f9e31c70f14152c
 
     def refresh_tables(self: Markets) -> None:
         """
