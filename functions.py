@@ -1047,12 +1047,11 @@ class Function(WS, Variables):
             status = "ONLINE"
             if ws.logNumFatal != 0:
                 if ws.logNumFatal == -1:
-                    status = "RELOADING"
-            compare = service.add_space([self.name, ws.account_disp, str(ws.connect_count) + " " + status])
-            print("__________", compare)
+                    status = "REBOOT"
+            compare = service.add_space([ws.name, ws.account_disp, str(ws.connect_count) + " " + status])
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
-                tree.update(row=num, values=compare)
+                tree.update(row=num, values=[compare])
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         instrument = self.Instrument[symbol]
@@ -1159,7 +1158,9 @@ class Function(WS, Variables):
 
     def market_status(self: Markets, status: str, message: str, error=False) -> None:
         row = var.market_list.index(self.name)
-        TreeTable.market.update(row=row, values=self.account_disp + status)
+        line = [self.name, self.account_disp, status]
+        values = service.add_space(line)
+        TreeTable.market.update(row=row, values=[values])
         if message:
             info_display(self.name, message)
         if error:

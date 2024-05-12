@@ -55,6 +55,7 @@ class Bitmex(Variables):
         self.frames = dict()
         self.robot_status = dict()
         self.setup_orders = list()
+        self.account_disp = ""
 
     def start(self):
         for symbol in self.symbol_list:

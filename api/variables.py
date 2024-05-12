@@ -35,4 +35,3 @@ class Variables:
     currency_divisor = dict()
     filename = ""
     api_is_active = False
-    account_disp = ""
