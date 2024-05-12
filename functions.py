@@ -13,6 +13,7 @@ from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import TreeTable, TreeviewTable
 from display.variables import Variables as disp
+import services as service
 
 
 class Function(WS, Variables):
@@ -276,12 +277,8 @@ class Function(WS, Variables):
                     "QTY": abs(lastQty),
                     "EMI": emi,
                 }
-                if info:
-                    Function.fill_columns(
-                        self, func=Function.trades_display, table=trades, val=message
-                    )
-                else:
-                    Function.trades_display(self, val=message)
+                if not info:
+                    Function.trades_display(self, val=message)                   
                 Function.orders_processing(self, row=row, info=info)
 
         # Funding
@@ -337,14 +334,7 @@ class Function(WS, Variables):
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = row["transactTime"]
                     results.funding += calc["funding"]
-                    if info:
-                        Function.fill_columns(
-                            self,
-                            func=Function.funding_display,
-                            table=funding,
-                            val=message,
-                        )
-                    else:
+                    if not info:
                         Function.funding_display(self, message)
             diff = row["lastQty"] - position
             if (
@@ -395,11 +385,7 @@ class Function(WS, Variables):
                 self.robots[emi]["COMMISS"] += calc["funding"]
                 self.robots[emi]["LTIME"] = row["transactTime"]
                 results.funding += calc["funding"]
-                if info:
-                    Function.fill_columns(
-                        self, func=Function.funding_display, table=funding, val=message
-                    )
-                else:
+                if not info:
                     Function.funding_display(self, message)
 
         # New order
@@ -1062,7 +1048,8 @@ class Function(WS, Variables):
             if ws.logNumFatal != 0:
                 if ws.logNumFatal == -1:
                     status = "RELOADING"
-            compare = [ws.account_disp + str(ws.connect_count) + " " + status]
+            compare = service.add_space([self.name, ws.account_disp, str(ws.connect_count) + " " + status])
+            print("__________", compare)
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 tree.update(row=num, values=compare)
@@ -1173,9 +1160,12 @@ class Function(WS, Variables):
     def market_status(self: Markets, status: str, message: str, error=False) -> None:
         row = var.market_list.index(self.name)
         TreeTable.market.update(row=row, values=self.account_disp + status)
-        info_display(self.name, message)
+        if message:
+            info_display(self.name, message)
         if error:
             TreeTable.market.paint(row=row, configure="Error")
+        else:
+            TreeTable.market.paint(row=row, configure="Market")
         disp.root.update()
 
     def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
