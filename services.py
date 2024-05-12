@@ -76,6 +76,21 @@ def precision(number: float) -> int:
     return precision
 
 
+def add_space(line: list) -> str:
+    print(line)
+    n = max(map(lambda x: len(x), line))
+    print(n)
+    lst = list()
+    for l in line:
+        lst.append((n - len(l)) // 2*" " + l)
+
+    print("+++")
+    print("\n".join(lst))
+
+    return "\n".join(lst)
+
+
+
 def close(markets):
     var.robots_thread_is_active = False
     for name in var.market_list:

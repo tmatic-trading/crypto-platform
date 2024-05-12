@@ -122,6 +122,9 @@ def refresh() -> None:
                 )
                 setup_market(ws=ws)
                 finish_setup(ws=ws)
+                Function.market_status(
+                    ws, status="ONLINE", message="", error=True
+                )
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
                     if ws.messageStopped == "":

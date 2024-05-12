@@ -12,6 +12,8 @@ from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
+import services as service
+
 
 db_sqlite = var.env["SQLITE_DATABASE"]
 
@@ -25,7 +27,7 @@ class Init(WS, Variables):
             self.robot_status[emi] = values["STATUS"]
         self.robots = OrderedDict()
         self.frames = dict()
-        self.account_disp = self.name + "\nAcc." + str(self.user_id) + "\n"
+        self.account_disp = "Acc." + str(self.user_id)
 
     def save_history_file(self: Markets, time: datetime):
         Init.file_lock.acquire(True)
