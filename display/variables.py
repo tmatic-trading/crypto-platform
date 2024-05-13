@@ -310,6 +310,7 @@ class TreeviewTable(Variables):
         self.name = name
         self.title = title
         self.cache = list()
+        self.bind = bind
         columns = [num for num in range(1, len(title) + 1)]
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)
@@ -355,6 +356,8 @@ class TreeviewTable(Variables):
     def insert(self, values: list, configure="") -> None:
         self.tree.insert("", 0, values=values, tags=configure)
         self.children = self.tree.get_children()
+        if self.bind:
+            self.tree.bind("<<TreeviewSelect>>", self.bind)
         if len(self.children) > self.max_rows:
             self.delete(row=len(self.children) - 1)
 
