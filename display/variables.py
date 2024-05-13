@@ -29,10 +29,10 @@ class Variables:
     screen_height = root.winfo_screenheight()
     if screen_width > 1440:
         window_ratio = 0.7
-        adaptive_ratio = 0.85
+        adaptive_ratio = 0.9
     elif screen_width > 1366:
         window_ratio = 0.72
-        adaptive_ratio = 0.9
+        adaptive_ratio = 0.93
     elif screen_width > 1280:
         window_ratio = 0.75
         adaptive_ratio = 0.95
@@ -46,7 +46,7 @@ class Variables:
     window_height = int(screen_height * 0.7)
     root.geometry("{}x{}".format(window_width, window_height))
     all_width = window_width
-    state_width = window_width
+    left_width = window_width
     last_market = ""
 
     if platform.system() == "Windows":
@@ -69,6 +69,9 @@ class Variables:
     # Adaptive frame to the left, always visible
     frame_left = tk.Frame()
     frame_left.pack(fill="both", expand="yes")
+    frame_left.bind(
+        "<Configure>", lambda event: hide_columns(event)
+    )
 
     # Frame to the right, always blank
     frame_right = tk.Frame()
@@ -336,14 +339,16 @@ class TreeviewTable(Variables):
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.init(size=size)
-        self.column_hide = []
-        self.hide_num = -1
-        hide_begin = list(self.tree["columns"])
-        for num, id_col in enumerate(hide, start=0):
-            self.column_hide.append(hide_begin)
-            self.column_hide[num].remove(id_col)
-            hide_begin = list(self.column_hide[num])
-            self.column_hide[num] = tuple(hide_begin)
+        if hide:
+            self.column_hide = []
+            self.hide_num = 0
+            hide_begin = list(self.tree["columns"])
+            self.column_hide.append(tuple(hide_begin))
+            for num, id_col in enumerate(hide, start=1):
+                self.column_hide.append(hide_begin)
+                self.column_hide[num].remove(id_col)
+                hide_begin = list(self.column_hide[num])
+                self.column_hide[num] = tuple(hide_begin)
 
     def init(self, size):
         self.clear_all()
@@ -419,6 +424,7 @@ def resize_col(event, pw, ratio):
 def resize_height(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], height=pw.winfo_height() // ratio)
 
+
 def resize_width(event, pw, start_width, min_ratio):
     ratio = pw.winfo_width() / start_width
     if ratio < min_ratio:
@@ -426,3 +432,136 @@ def resize_width(event, pw, start_width, min_ratio):
     else:
         my_width = start_width
     pw.paneconfig(pw.panes()[0], width=my_width)
+
+
+def trim_col_width(tview, cols):
+    width = tview.winfo_width() // len(cols)
+    for col in cols:
+        tview.column(col, width=width)
+
+# Hide / show adaptive columns in order to save space in the tables
+def hide_columns(event):
+    ratio = Variables.frame_left.winfo_width() / Variables.left_width if Variables.left_width > 1 else 1.0
+    if ratio < Variables.adaptive_ratio - 0.2:
+        if (
+            TreeTable.position.hide_num != 3
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[3])
+            TreeTable.position.hide_num = 3
+            trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[3])
+        if (
+            TreeTable.orders.hide_num != 3
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[3])
+            TreeTable.orders.hide_num = 3
+            trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[3])
+        if (
+            TreeTable.trades.hide_num != 3
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[3])
+            TreeTable.trades.hide_num = 3
+            trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[3])
+        if (
+            TreeTable.funding.hide_num != 3
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.funding.tree.config(displaycolumns=TreeTable.funding.column_hide[3])
+            TreeTable.funding.hide_num = 3
+            trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[3])
+        if (
+            TreeTable.robots.hide_num != 2
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.robots.tree.config(displaycolumns=TreeTable.robots.column_hide[2])
+            TreeTable.robots.hide_num = 2
+            trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[2])
+    elif ratio < Variables.adaptive_ratio - 0.1:
+        if (
+            TreeTable.position.hide_num != 2
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[2])
+            TreeTable.position.hide_num = 2
+            trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[2])
+        if (
+            TreeTable.orders.hide_num != 2
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[2])
+            TreeTable.orders.hide_num = 2
+            trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[2])
+        if (
+            TreeTable.trades.hide_num != 2
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[2])
+            TreeTable.trades.hide_num = 2
+            trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[2])
+        if (
+            TreeTable.funding.hide_num != 2
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.funding.tree.config(displaycolumns=TreeTable.funding.column_hide[2])
+            TreeTable.funding.hide_num = 2
+            trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[2])
+        if (
+            TreeTable.robots.hide_num != 1
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.robots.tree.config(displaycolumns=TreeTable.robots.column_hide[1])
+            TreeTable.robots.hide_num = 1
+            trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[1])
+    elif ratio < Variables.adaptive_ratio:
+        if (
+            TreeTable.position.hide_num != 1
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[1])
+            TreeTable.position.hide_num = 1
+            trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[1])
+        if (
+            TreeTable.orders.hide_num != 1
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[1])
+            TreeTable.orders.hide_num = 1
+            trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[1])
+        if (
+            TreeTable.trades.hide_num != 1
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[1])
+            TreeTable.trades.hide_num = 1
+            trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[1])
+        if (
+            TreeTable.funding.hide_num != 1
+            or var.current_market != Variables.last_market
+        ):
+            TreeTable.funding.tree.config(displaycolumns=TreeTable.funding.column_hide[1])
+            TreeTable.funding.hide_num = 1
+            trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[1])
+        if TreeTable.robots.hide_num != 0:
+            TreeTable.robots.tree.config(displaycolumns=TreeTable.robots.column_hide[0])
+            TreeTable.robots.hide_num = 0
+            trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[0])
+    elif ratio > Variables.adaptive_ratio:
+        if TreeTable.position.hide_num != 0:
+            TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[0])
+            TreeTable.position.hide_num = 0
+            trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[0])
+        if TreeTable.orders.hide_num != 0:
+            TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[0])
+            TreeTable.orders.hide_num = 0
+            trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[0])
+        if TreeTable.trades.hide_num != 0:
+            TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[0])
+            TreeTable.trades.hide_num = 0
+            trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[0])
+        if TreeTable.funding.hide_num != 0:
+            TreeTable.funding.tree.config(displaycolumns=TreeTable.funding.column_hide[0])
+            TreeTable.funding.hide_num = 0
+            trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[0])
+    Variables.last_market = var.current_market

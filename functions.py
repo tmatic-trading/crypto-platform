@@ -687,7 +687,7 @@ class Function(WS, Variables):
         """
         Refresh information on screen
         """
-        adaptive_screen(self)
+        #adaptive_screen(self)
         if utc.hour != var.refresh_hour:
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
@@ -774,7 +774,7 @@ class Function(WS, Variables):
                         val[count][1],
                     ]
                     qty=find_order(val[count][0], symbol=var.symbol)
-                    print("_______", val[count][0], qty)
+                    #print("_______", val[count][0], qty)
                     if side == "bids":
                         compare = [val[count][0], val[count][1], qty]
                         if compare != tree.cache[number]:
@@ -1723,6 +1723,7 @@ def load_labels() -> None:
         title=var.name_robots,
         size=len(ws.robots),
         bind=handler_robots,
+        hide=["6", "3"],
     )
     TreeTable.account = TreeviewTable(
         frame=disp.frame_account,
@@ -1783,6 +1784,7 @@ TreeTable.orders = TreeviewTable(
     size=0,
     title=var.name_order,
     bind=handler_order,
+    hide=["8", "3", "5"],
 )
 TreeTable.trades = TreeviewTable(
     frame=disp.frame_trades,
@@ -1790,6 +1792,7 @@ TreeTable.trades = TreeviewTable(
     size=0,
     title=var.name_trade,
     bind=handler_account,
+    hide=["8", "3", "5"],
 )
 TreeTable.funding = TreeviewTable(
     frame=disp.frame_funding,
@@ -1797,20 +1800,10 @@ TreeTable.funding = TreeviewTable(
     size=0,
     title=var.name_funding,
     bind=handler_account,
+    hide=["8", "3", "5"],
 )
 
-
-def adaptive_screen(ws: Markets):
-    """now_height = disp.frame_rest.winfo_height()
-    if now_height != disp.all_height:
-        disp.frame_rest.grid_rowconfigure(
-            0, minsize=int(disp.frame_rest.winfo_height() / 6)
-        )
-        disp.frame_rest.grid_rowconfigure(
-            1, minsize=int(disp.frame_rest.winfo_height() / 2)
-        )
-        disp.all_height = now_height"""
-
+'''def adaptive_screen(ws: Markets):
     now_width = disp.root.winfo_width()
     if now_width != disp.all_width or var.current_market != disp.last_market:
         ratio = now_width / disp.window_width if now_width > 1 else 1.0
@@ -1819,163 +1812,5 @@ def adaptive_screen(ws: Markets):
             disp.root.title(t)
         else:
             disp.root.title(disp.platform_name)
-        disp.all_width = now_width
+        disp.all_width = now_width'''
 
-        # Hide / show adaptive columns in order to save space in the tables
-        if ratio < disp.adaptive_ratio:
-            if (
-                TreeTable.position.hide_num < 0
-                or var.current_market != disp.last_market
-            ):
-                TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[0])
-                TreeTable.position.hide_num = 0
-            '''if (
-                orders.listboxes[7].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                orders.listboxes[7].grid_forget()
-                orders.sub.grid_columnconfigure(7, weight=0)
-            if (
-                trades.listboxes[7].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                trades.listboxes[7].grid_forget()
-                trades.sub.grid_columnconfigure(7, weight=0)
-            if (
-                funding.listboxes[7].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                funding.listboxes[7].grid_forget()
-                funding.sub.grid_columnconfigure(7, weight=0)'''
-        if ratio < disp.adaptive_ratio - 0.1:
-            if (
-                TreeTable.position.hide_num < 1
-                or var.current_market != disp.last_market
-            ):
-                TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[1])
-                TreeTable.position.hide_num = 1
-            '''if (
-                orders.listboxes[2].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                orders.listboxes[2].grid_forget()
-                orders.sub.grid_columnconfigure(2, weight=0)
-            if (
-                trades.listboxes[2].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                trades.listboxes[2].grid_forget()
-                trades.sub.grid_columnconfigure(2, weight=0)
-            if (
-                funding.listboxes[2].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                funding.listboxes[2].grid_forget()
-                funding.sub.grid_columnconfigure(2, weight=0)
-            if (
-                disp.labels["robots"][len(ws.robots)][5].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                for i in range(len(ws.robots) + 1):
-                    disp.labels["robots"][i][5].grid_forget()
-                Tables.robots.sub.grid_columnconfigure(5, weight=0)'''
-        if ratio < disp.adaptive_ratio - 0.2:
-            if (
-                TreeTable.position.hide_num < 2
-                or var.current_market != disp.last_market
-            ):
-                TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[2])
-                TreeTable.position.hide_num = 2
-            '''if (
-                orders.listboxes[4].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                orders.listboxes[4].grid_forget()
-                orders.sub.grid_columnconfigure(4, weight=0)
-            if (
-                trades.listboxes[4].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                trades.listboxes[4].grid_forget()
-                trades.sub.grid_columnconfigure(4, weight=0)
-            if (
-                funding.listboxes[4].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                funding.listboxes[4].grid_forget()
-                funding.sub.grid_columnconfigure(4, weight=0)
-            if (
-                disp.labels["robots"][len(ws.robots)][2].winfo_ismapped() == 1
-                or var.current_market != disp.last_market
-            ):
-                for i in range(len(ws.robots) + 1):
-                    disp.labels["robots"][i][2].grid_forget()
-                Tables.robots.sub.grid_columnconfigure(2, weight=0)'''
-        if ratio >= disp.adaptive_ratio:
-            if TreeTable.position.hide_num >= 0:
-                TreeTable.position.tree.config(displaycolumns=TreeTable.position.tree["columns"])
-                TreeTable.position.hide_num = -1
-            '''if orders.listboxes[7].winfo_ismapped() == 0:
-                orders.listboxes[7].grid(row=0, padx=0, column=7, sticky="NSWE")
-                orders.sub.grid_columnconfigure(7, weight=1)
-            if trades.listboxes[7].winfo_ismapped() == 0:
-                trades.listboxes[7].grid(row=0, padx=0, column=7, sticky="NSWE")
-                trades.sub.grid_columnconfigure(7, weight=1)
-            if funding.listboxes[7].winfo_ismapped() == 0:
-                funding.listboxes[7].grid(row=0, padx=0, column=7, sticky="NSWE")
-                funding.sub.grid_columnconfigure(7, weight=1)'''
-        elif ratio >= disp.adaptive_ratio - 0.1:
-            if TreeTable.position.hide_num >= 1:
-                TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[0])
-                TreeTable.position.hide_num = 0
-            '''if orders.listboxes[2].winfo_ismapped() == 0:
-                orders.listboxes[2].grid(row=0, padx=0, column=2, sticky="NSWE")
-                orders.sub.grid_columnconfigure(2, weight=1)
-            if trades.listboxes[2].winfo_ismapped() == 0:
-                trades.listboxes[2].grid(row=0, padx=0, column=2, sticky="NSWE")
-                trades.sub.grid_columnconfigure(2, weight=1)
-            if funding.listboxes[2].winfo_ismapped() == 0:
-                funding.listboxes[2].grid(row=0, padx=0, column=2, sticky="NSWE")
-                funding.sub.grid_columnconfigure(2, weight=1)
-            if disp.labels["robots"][0][5].winfo_ismapped() == 0:
-                for i in range(len(ws.robots) + 1):
-                    disp.labels["robots"][i][5].grid(
-                        row=i, column=5, sticky="NSWE", padx=0, pady=0
-                    )
-                Tables.robots.sub.grid_columnconfigure(5, weight=1)'''
-        elif ratio >= disp.adaptive_ratio - 0.2:
-            if TreeTable.position.hide_num >= 2:
-                TreeTable.position.tree.config(displaycolumns=TreeTable.position.column_hide[1])
-                TreeTable.position.hide_num = 1
-            '''if orders.listboxes[4].winfo_ismapped() == 0:
-                orders.listboxes[4].grid(row=0, padx=0, column=4, sticky="NSWE")
-                orders.sub.grid_columnconfigure(4, weight=1)
-            if trades.listboxes[4].winfo_ismapped() == 0:
-                trades.listboxes[4].grid(row=0, padx=0, column=4, sticky="NSWE")
-                trades.sub.grid_columnconfigure(4, weight=1)
-            if funding.listboxes[4].winfo_ismapped() == 0:
-                funding.listboxes[4].grid(row=0, padx=0, column=4, sticky="NSWE")
-                funding.sub.grid_columnconfigure(4, weight=1)
-            if disp.labels["robots"][0][2].winfo_ismapped() == 0:
-                for i in range(len(ws.robots) + 1):
-                    disp.labels["robots"][i][2].grid(
-                        row=i, column=2, sticky="NSWE", padx=0, pady=0
-                    )
-                Tables.robots.sub.grid_columnconfigure(2, weight=1)'''
-        disp.last_market = var.current_market
-
-        '''# Hide / show right adaptive frame
-        if now_width > disp.window_width:
-            state_width = disp.window_width
-            side_width = now_width - state_width
-            disp.frame_right.configure(width=side_width)
-            if disp.state_width is None:
-                disp.frame_right.grid(row=0, column=1, sticky="NSWE")
-                disp.frame_state.configure(width=state_width)
-                disp.state_width = state_width
-        else:
-            state_width = None
-            if disp.state_width is not None:
-                disp.frame_right.grid_forget()
-                disp.frame_state.configure(width=state_width)
-                disp.state_width = state_width'''
