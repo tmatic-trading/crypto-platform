@@ -356,8 +356,6 @@ class TreeviewTable(Variables):
     def insert(self, values: list, configure="") -> None:
         self.tree.insert("", 0, values=values, tags=configure)
         self.children = self.tree.get_children()
-        if self.bind:
-            self.tree.bind("<<TreeviewSelect>>", self.bind)
         if len(self.children) > self.max_rows:
             self.delete(row=len(self.children) - 1)
 
