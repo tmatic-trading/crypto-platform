@@ -310,6 +310,7 @@ class TreeviewTable(Variables):
         self.name = name
         self.title = title
         self.cache = list()
+        self.bind = bind
         columns = [num for num in range(1, len(title) + 1)]
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)

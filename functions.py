@@ -613,7 +613,7 @@ class Function(WS, Variables):
         TreeTable.orders.insert(values=row, configure=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
-        if qty == "None":
+        if qty in ["", "None"]:
             return qty
         if qty == 0:
             qty = "0"
@@ -773,8 +773,10 @@ class Function(WS, Variables):
                         val[count][0],
                         val[count][1],
                     ]
+                    qty=find_order(val[count][0], symbol=var.symbol)
+                    print("_______", val[count][0], qty)
                     if side == "bids":
-                        compare = [val[count][0], val[count][1], ""]
+                        compare = [val[count][0], val[count][1], qty]
                         if compare != tree.cache[number]:
                             tree.cache[number] = compare
                             row = [
@@ -784,15 +786,19 @@ class Function(WS, Variables):
                                 Function.format_price(
                                     self, number=val[count][0], symbol=var.symbol
                                 ),
-                                "",
+                                Function.volume(
+                                    self, qty=qty, symbol=var.symbol
+                                ),
                             ]
                             tree.update(row=number, values=row)
                     else:
-                        compare = ["", val[count][0], val[count][1]]
+                        compare = [qty, val[count][0], val[count][1]]
                         if compare != tree.cache[number]:
                             tree.cache[number] = compare
                             row = [
-                                "",
+                                Function.volume(
+                                    self, qty=qty, symbol=var.symbol
+                                ),
                                 Function.format_price(
                                     self, number=val[count][0], symbol=var.symbol
                                 ),
@@ -1047,7 +1053,7 @@ class Function(WS, Variables):
             status = "ONLINE"
             if ws.logNumFatal != 0:
                 if ws.logNumFatal == -1:
-                    status = "REBOOT"
+                    status = "RELOADING"
             compare = service.add_space([ws.name, ws.account_disp, str(ws.connect_count) + " " + status])
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
@@ -1183,129 +1189,131 @@ class Function(WS, Variables):
 
 
 def handler_order(event) -> None:
-    row_position = event.widget.curselection()
-    if row_position:
-        if row_position[0] - orders.mod >= 0:
-            for num, clOrdID in enumerate(var.orders):
-                if num == row_position[0] - orders.mod:
-                    break
-            ws = Markets[var.orders[clOrdID]["SYMBOL"][2]]
+    tree = event.widget
+    items = tree.selection()
+    if items:
+        tree.update()
+        children = tree.get_children()
+        row_position = children.index(items[0])
+        clOrdID = list(var.orders.items())[row_position][0]
+        ws = Markets[var.orders[clOrdID]["SYMBOL"][2]]
 
-            def on_closing() -> None:
-                disp.order_window_trigger = "off"
-                order_window.destroy()
+        def on_closing() -> None:
+            disp.order_window_trigger = "off"
+            order_window.destroy()
+            tree.selection_remove(items[0])
 
-            def delete(order: dict, clOrdID: str) -> None:
-                try:
-                    var.orders[clOrdID]
-                except KeyError:
-                    message = "Order " + clOrdID + " does not exist!"
-                    info_display(ws.name, message)
-                    var.logger.info(message)
-                    return
-                if ws.logNumFatal == 0:
-                    Function.del_order(ws, order=order, clOrdID=clOrdID)
-                    # orders.delete(row_position)
-                else:
-                    info_display(ws.name, "The operation failed. Websocket closed!")
-                on_closing()
+        def delete(order: dict, clOrdID: str) -> None:
+            try:
+                var.orders[clOrdID]
+            except KeyError:
+                message = "Order " + clOrdID + " does not exist!"
+                info_display(ws.name, message)
+                var.logger.info(message)
+                return
+            if ws.logNumFatal == 0:
+                Function.del_order(ws, order=order, clOrdID=clOrdID)
+                # orders.delete(row_position)
+            else:
+                info_display(ws.name, "The operation failed. Websocket closed!")
+            on_closing()
 
-            def replace(clOrdID) -> None:
-                try:
-                    var.orders[clOrdID]
-                except KeyError:
-                    message = "Order " + clOrdID + " does not exist!"
-                    info_display(ws.name, message)
-                    var.logger.info(message)
-                    return
-                try:
-                    float(price_replace.get())
-                except ValueError:
-                    info_display(ws.name, "Price must be numeric!")
-                    return
-                if ws.logNumFatal == 0:
-                    roundSide = var.orders[clOrdID]["leavesQty"]
-                    if var.orders[clOrdID]["SIDE"] == "Sell":
-                        roundSide = -roundSide
-                    price = Function.round_price(
-                        ws,
-                        symbol=var.orders[clOrdID]["SYMBOL"],
-                        price=float(price_replace.get()),
-                        rside=roundSide,
-                    )
-                    if price == var.orders[clOrdID]["price"]:
-                        info_display(
-                            ws.name, "Price is the same but must be different!"
-                        )
-                        return
-                    clOrdID = Function.put_order(
-                        ws,
-                        clOrdID=clOrdID,
-                        price=price,
-                        qty=var.orders[clOrdID]["leavesQty"],
-                    )
-                else:
-                    info_display(ws.name, "The operation failed. Websocket closed!")
-                on_closing()
-
-            if disp.order_window_trigger == "off":
-                order = var.orders[clOrdID]
-                disp.order_window_trigger = "on"
-                order_window = tk.Toplevel(disp.root, pady=10, padx=10)
-                cx = disp.root.winfo_pointerx()
-                cy = disp.root.winfo_pointery()
-                order_window.geometry("+{}+{}".format(cx - 200, cy - 50))
-                order_window.title("Cancel / Modify order ")
-                order_window.protocol("WM_DELETE_WINDOW", on_closing)
-                order_window.attributes("-topmost", 1)
-                frame_up = tk.Frame(order_window)
-                frame_dn = tk.Frame(order_window)
-                label1 = tk.Label(frame_up, justify="left")
-                order_price = Function.format_price(
+        def replace(clOrdID) -> None:
+            try:
+                var.orders[clOrdID]
+            except KeyError:
+                message = "Order " + clOrdID + " does not exist!"
+                info_display(ws.name, message)
+                var.logger.info(message)
+                return
+            try:
+                float(price_replace.get())
+            except ValueError:
+                info_display(ws.name, "Price must be numeric!")
+                return
+            if ws.logNumFatal == 0:
+                roundSide = var.orders[clOrdID]["leavesQty"]
+                if var.orders[clOrdID]["SIDE"] == "Sell":
+                    roundSide = -roundSide
+                price = Function.round_price(
                     ws,
-                    number=var.orders[clOrdID]["price"],
+                    symbol=var.orders[clOrdID]["SYMBOL"],
+                    price=float(price_replace.get()),
+                    rside=roundSide,
+                )
+                if price == var.orders[clOrdID]["price"]:
+                    info_display(
+                        ws.name, "Price is the same but must be different!"
+                    )
+                    return
+                clOrdID = Function.put_order(
+                    ws,
+                    clOrdID=clOrdID,
+                    price=price,
+                    qty=var.orders[clOrdID]["leavesQty"],
+                )
+            else:
+                info_display(ws.name, "The operation failed. Websocket closed!")
+            on_closing()
+
+        if disp.order_window_trigger == "off":
+            order = var.orders[clOrdID]
+            disp.order_window_trigger = "on"
+            order_window = tk.Toplevel(disp.root, pady=10, padx=10)
+            cx = disp.root.winfo_pointerx()
+            cy = disp.root.winfo_pointery()
+            order_window.geometry("+{}+{}".format(cx - 200, cy - 50))
+            order_window.title("Cancel / Modify order ")
+            order_window.protocol("WM_DELETE_WINDOW", on_closing)
+            order_window.attributes("-topmost", 1)
+            frame_up = tk.Frame(order_window)
+            frame_dn = tk.Frame(order_window)
+            label1 = tk.Label(frame_up, justify="left")
+            order_price = Function.format_price(
+                ws,
+                number=var.orders[clOrdID]["price"],
+                symbol=var.orders[clOrdID]["SYMBOL"],
+            )
+            label1["text"] = (
+                "market\t"
+                + var.orders[clOrdID]["SYMBOL"][2]
+                + "\nsymbol\t"
+                + ".".join(var.orders[clOrdID]["SYMBOL"][:2])
+                + "\nside\t"
+                + var.orders[clOrdID]["SIDE"]
+                + "\nclOrdID\t"
+                + clOrdID
+                + "\nprice\t"
+                + order_price
+                + "\nquantity\t"
+                + Function.volume(
+                    ws,
+                    qty=var.orders[clOrdID]["leavesQty"],
                     symbol=var.orders[clOrdID]["SYMBOL"],
                 )
-                label1["text"] = (
-                    "market\t"
-                    + var.orders[clOrdID]["SYMBOL"][2]
-                    + "\nsymbol\t"
-                    + ".".join(var.orders[clOrdID]["SYMBOL"][:2])
-                    + "\nside\t"
-                    + var.orders[clOrdID]["SIDE"]
-                    + "\nclOrdID\t"
-                    + clOrdID
-                    + "\nprice\t"
-                    + order_price
-                    + "\nquantity\t"
-                    + Function.volume(
-                        ws,
-                        qty=var.orders[clOrdID]["leavesQty"],
-                        symbol=var.orders[clOrdID]["SYMBOL"],
-                    )
-                )
-                label_price = tk.Label(frame_dn)
-                label_price["text"] = "Price "
-                label1.pack(side="left")
-                button = tk.Button(
-                    frame_dn,
-                    text="Delete order",
-                    command=lambda id=clOrdID: delete(clOrdID=id, order=order),
-                )
-                price_replace = tk.StringVar(frame_dn, order_price)
-                entry_price = tk.Entry(
-                    frame_dn, width=10, bg=disp.bg_color, textvariable=price_replace
-                )
-                button_replace = tk.Button(
-                    frame_dn, text="Replace", command=lambda id=clOrdID: replace(id)
-                )
-                button.pack(side="right")
-                label_price.pack(side="left")
-                entry_price.pack(side="left")
-                button_replace.pack(side="left")
-                frame_up.pack(side="top", fill="x")
-                frame_dn.pack(side="top", fill="x")
-                change_color(color=disp.title_color, container=order_window)
+            )
+            label_price = tk.Label(frame_dn)
+            label_price["text"] = "Price "
+            label1.pack(side="left")
+            button = tk.Button(
+                frame_dn,
+                text="Delete order",
+                command=lambda id=clOrdID: delete(clOrdID=id, order=order),
+            )
+            price_replace = tk.StringVar(frame_dn, order_price)
+            entry_price = tk.Entry(
+                frame_dn, width=10, bg=disp.bg_color, textvariable=price_replace
+            )
+            button_replace = tk.Button(
+                frame_dn, text="Replace", command=lambda id=clOrdID: replace(id)
+            )
+            button.pack(side="right")
+            label_price.pack(side="left")
+            entry_price.pack(side="left")
+            button_replace.pack(side="left")
+            frame_up.pack(side="top", fill="x")
+            frame_dn.pack(side="top", fill="x")
+            change_color(color=disp.title_color, container=order_window)
 
 
 def handler_orderbook(event) -> None:
@@ -1608,13 +1616,16 @@ def handler_market(event) -> None:
             clear_tables()
 
 
-def find_order(price: float, qty: int, symbol: str) -> int:
+def find_order(price: float, symbol: str) -> Union[float, str]:
+    qty = 0
     for clOrdID in var.orders:
         if (
             var.orders[clOrdID]["price"] == price
             and var.orders[clOrdID]["SYMBOL"] == symbol
         ):
             qty += var.orders[clOrdID]["leavesQty"]
+    if not qty:
+        qty = ""
 
     return qty
 

@@ -229,7 +229,7 @@ class Init(WS, Variables):
         var.orders = OrderedDict()
         for val in reversed(values):
             var.orders[val["clOrdID"]] = val
-        for val in list(var.orders.values()):
+        for val in values:
             Function.orders_display(self, val=val)
 
     def load_database(self: Markets) -> None:
