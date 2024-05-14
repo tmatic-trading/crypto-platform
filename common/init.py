@@ -5,6 +5,7 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from sqlite3 import Error
 
+import services as service
 from api.api import WS, Markets
 from api.init import Variables
 from common.variables import Variables as var
@@ -12,8 +13,6 @@ from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
-import services as service
-
 
 db_sqlite = var.env["SQLITE_DATABASE"]
 

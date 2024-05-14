@@ -80,10 +80,9 @@ def add_space(line: list) -> str:
     n = max(map(lambda x: len(x), line))
     lst = list()
     for l in line:
-        lst.append((n - len(l))*" " + l)
+        lst.append((n - len(l)) * " " + l)
 
     return "\n".join(lst)
-
 
 
 def close(markets):
