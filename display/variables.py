@@ -91,14 +91,13 @@ class Variables:
     if ostype == "Mac":
         title_color = label_trading["background"]
         bg_select_color = "systemSelectedTextBackgroundColor"
-        fg_color = label_trading["foreground"]
     else:
         label_trading.config(bg="gray82")
         title_color = label_trading["background"]
         bg_select_color = "#b3d7ff"
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
-        fg_color = "black"
+    fg_color = label_trading["foreground"]
     green_color = "#07b66e"
     red_color = "#f53661"
     white_color = "#FFFFFF"
@@ -216,6 +215,7 @@ class Variables:
         background=title_color,
         rowheight=line_height * 3,
     )
+    style.configure("Treeview.Heading", foreground=fg_color)
 
     style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
     style.configure("TNotebook.Tab", background="gray92")

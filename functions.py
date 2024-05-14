@@ -785,10 +785,9 @@ class Function(WS, Variables):
                                 "",
                             ]
                             tree.update(row=number, values=row)
-                            qty_str = Function.volume(self, qty=qty, symbol=var.symbol)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=qty_str,
+                                    text=Function.volume(self, qty=qty, symbol=var.symbol),
                                     row=number,
                                     column=2,
                                     bg_color=disp.green_color,
@@ -812,10 +811,9 @@ class Function(WS, Variables):
                                 ),
                             ]
                             tree.update(row=number, values=row)
-                            qty_str = Function.volume(self, qty=qty, symbol=var.symbol)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=qty_str,
+                                    text=Function.volume(self, qty=qty, symbol=var.symbol),
                                     row=number,
                                     column=0,
                                     bg_color=disp.red_color,
@@ -834,103 +832,20 @@ class Function(WS, Variables):
 
         num = int(disp.num_book / 2)
         instrument = self.Instrument[var.symbol]
-        if var.order_book_depth == "quote":
-            if instrument.asks[0][1]:
-                update_label(
-                    table="orderbook",
-                    column=2,
-                    row=num,
-                    val=Function.volume(
-                        self, qty=instrument.asks[0][1], symbol=var.symbol
-                    ),
-                )
-            else:
-                update_label(table="orderbook", column=2, row=num, val="")
-            disp.labels["orderbook"][num - mod][2]["fg"] = "black"
-            if instrument.bids[0][1]:
-                update_label(
-                    table="orderbook",
-                    column=0,
-                    row=num + 1,
-                    val=Function.volume(
-                        self, qty=instrument.bids[0][1], symbol=var.symbol
-                    ),
-                )
-            else:
-                update_label(table="orderbook", column=0, row=num + 1, val="")
-            disp.labels["orderbook"][num + 1 - mod][0]["fg"] = "black"
-            first_price_sell = instrument.asks[0][0] + (num + mod) * instrument.tickSize
-            first_price_buy = instrument.bids[0][0]
-            for row in range(1 - mod, disp.num_book - mod):
-                if row <= num:
-                    price = round(
-                        first_price_sell - (row + mod) * instrument.tickSize,
-                        instrument.precision,
-                    )
-                    qty = 0
-                    if var.orders:
-                        qty = Function.volume(
-                            self,
-                            qty=find_order(float(price), qty, symbol=var.symbol),
-                            symbol=var.symbol,
-                        )
-                    if instrument.asks[0][0]:
-                        price = Function.format_price(
-                            self, number=price, symbol=var.symbol
-                        )
-                    else:
-                        price = ""
-                    update_label(table="orderbook", column=1, row=row, val=price)
-                    if str(qty) != "0":
-                        update_label(table="orderbook", column=0, row=row, val=qty)
-                        disp.labels["orderbook"][row][0]["bg"] = disp.red_color
-                        disp.labels["orderbook"][row][0]["fg"] = "white"
-                    else:
-                        update_label(table="orderbook", column=0, row=row, val="")
-                        disp.labels["orderbook"][row][0]["bg"] = disp.bg_color
-                        disp.labels["orderbook"][row][0]["fg"] = "white"
-                else:
-                    price = round(
-                        first_price_buy - (row - num - 1) * instrument.tickSize,
-                        instrument.precision,
-                    )
-                    qty = 0
-                    if var.orders:
-                        qty = Function.volume(
-                            self,
-                            qty=find_order(price, qty, symbol=var.symbol),
-                            symbol=var.symbol,
-                        )
-                    if price > 0:
-                        price = Function.format_price(
-                            self, number=price, symbol=var.symbol
-                        )
-                    else:
-                        price = ""
-                    update_label(table="orderbook", column=1, row=row, val=price)
-                    if str(qty) != "0":
-                        update_label(table="orderbook", column=2, row=row, val=qty)
-                        disp.labels["orderbook"][row][2]["bg"] = disp.green_color
-                        disp.labels["orderbook"][row][2]["fg"] = "white"
-                    else:
-                        update_label(table="orderbook", column=2, row=row, val="")
-                        disp.labels["orderbook"][row][2]["bg"] = disp.bg_color
-                        disp.labels["orderbook"][row][2]["fg"] = disp.fg_color
-        else:
-            display_order_book_values(
-                val=instrument.bids,
-                start=num,
-                end=disp.num_book,
-                direct=1,
-                side="bids",
-            )
-            display_order_book_values(
-                val=instrument.asks,
-                start=num - 1,
-                end=-1,
-                direct=-1,
-                side="asks",
-            )
+        display_order_book_values(
+            val=instrument.bids,
+            start=num,
+            end=disp.num_book,
+            direct=1,
+            side="bids",
+        )
+        display_order_book_values(
+            val=instrument.asks,
+            start=num - 1,
+            end=-1,
+            direct=-1,
+            side="asks",
+        )
 
         # Refresh Robots table
 
