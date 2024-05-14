@@ -6,6 +6,7 @@ from decimal import Decimal
 from random import randint
 from typing import Union
 
+import services as service
 from api.api import WS, Markets
 from api.variables import Variables
 from bots.variables import Variables as bot
@@ -13,7 +14,6 @@ from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import TreeTable, TreeviewTable
 from display.variables import Variables as disp
-import services as service
 
 
 class Function(WS, Variables):
@@ -278,7 +278,7 @@ class Function(WS, Variables):
                     "EMI": emi,
                 }
                 if not info:
-                    Function.trades_display(self, val=message)                   
+                    Function.trades_display(self, val=message)
                 Function.orders_processing(self, row=row, info=info)
 
         # Funding
@@ -687,7 +687,7 @@ class Function(WS, Variables):
         """
         Refresh information on screen
         """
-        #adaptive_screen(self)
+        # adaptive_screen(self)
         if utc.hour != var.refresh_hour:
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
@@ -708,7 +708,7 @@ class Function(WS, Variables):
                     WS.urgent_announcement(self)
                 self.message_time = utc
                 self.message_point = self.message_counter
-        #tm = datetime.now()
+        # tm = datetime.now()
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
@@ -762,19 +762,15 @@ class Function(WS, Variables):
             end: int,
             direct: int,
             side: str,
-            col: int,
-            color: str,
         ) -> None:
             count = 0
-            # col_qty = abs(col - 2)
             for number in range(start, end, direct):
                 if len(val) > count:
                     compare = [
                         val[count][0],
                         val[count][1],
                     ]
-                    qty=find_order(val[count][0], symbol=var.symbol)
-                    #print("_______", val[count][0], qty)
+                    qty = find_order(val[count][0], symbol=var.symbol)
                     if side == "bids":
                         compare = [val[count][0], val[count][1], qty]
                         if compare != tree.cache[number]:
@@ -786,19 +782,28 @@ class Function(WS, Variables):
                                 Function.format_price(
                                     self, number=val[count][0], symbol=var.symbol
                                 ),
-                                Function.volume(
-                                    self, qty=qty, symbol=var.symbol
-                                ),
+                                "",
                             ]
                             tree.update(row=number, values=row)
+                            qty_str = Function.volume(self, qty=qty, symbol=var.symbol)
+                            if qty:
+                                TreeTable.orderbook.show_color_cell(
+                                    text=qty_str,
+                                    row=number,
+                                    column=2,
+                                    bg_color=disp.green_color,
+                                    fg_color=disp.white_color,
+                                )
+                            else:
+                                TreeTable.orderbook.hide_color_cell(
+                                    row=number, column=2
+                                )
                     else:
                         compare = [qty, val[count][0], val[count][1]]
                         if compare != tree.cache[number]:
                             tree.cache[number] = compare
                             row = [
-                                Function.volume(
-                                    self, qty=qty, symbol=var.symbol
-                                ),
+                                "",
                                 Function.format_price(
                                     self, number=val[count][0], symbol=var.symbol
                                 ),
@@ -807,10 +812,24 @@ class Function(WS, Variables):
                                 ),
                             ]
                             tree.update(row=number, values=row)
+                            qty_str = Function.volume(self, qty=qty, symbol=var.symbol)
+                            if qty:
+                                TreeTable.orderbook.show_color_cell(
+                                    text=qty_str,
+                                    row=number,
+                                    column=0,
+                                    bg_color=disp.red_color,
+                                    fg_color=disp.white_color,
+                                )
+                            else:
+                                TreeTable.orderbook.hide_color_cell(
+                                    row=number, column=0
+                                )
                 else:
-                    row = ["", "", ""]
-                    tree.cache[number] = row
-                    tree.update(row=number, values=row)
+                    compare = ["", "", ""]
+                    if compare != tree.cache[number]:
+                        tree.cache[number] = compare
+                        tree.update(row=number, values=compare)
                 count += 1
 
         num = int(disp.num_book / 2)
@@ -904,8 +923,6 @@ class Function(WS, Variables):
                 end=disp.num_book,
                 direct=1,
                 side="bids",
-                col=0,
-                color=disp.red_color,
             )
             display_order_book_values(
                 val=instrument.asks,
@@ -913,8 +930,6 @@ class Function(WS, Variables):
                 end=-1,
                 direct=-1,
                 side="asks",
-                col=2,
-                color=disp.green_color,
             )
 
         # Refresh Robots table
@@ -1054,7 +1069,9 @@ class Function(WS, Variables):
             if ws.logNumFatal != 0:
                 if ws.logNumFatal == -1:
                     status = "RELOADING"
-            compare = service.add_space([ws.name, ws.account_disp, str(ws.connect_count) + " " + status])
+            compare = service.add_space(
+                [ws.name, ws.account_disp, str(ws.connect_count) + " " + status]
+            )
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 tree.update(row=num, values=[compare])
@@ -1242,9 +1259,7 @@ def handler_order(event) -> None:
                     rside=roundSide,
                 )
                 if price == var.orders[clOrdID]["price"]:
-                    info_display(
-                        ws.name, "Price is the same but must be different!"
-                    )
+                    info_display(ws.name, "Price is the same but must be different!")
                     return
                 clOrdID = Function.put_order(
                     ws,
@@ -1321,7 +1336,6 @@ def handler_orderbook(event) -> None:
     items = tree.selection()
     if items:
         tree.update()
-        time.sleep(0.05)
         tree.selection_remove(items[0])
     disp.handler_orderbook_symbol = var.symbol
     ws = Markets[var.current_market]
@@ -1585,6 +1599,7 @@ def warning_window(message: str, widget=None, item=None) -> None:
 def handler_position(event) -> None:
     tree = event.widget
     items = tree.selection()
+    TreeTable.orderbook.clear_color_cell()
     if items:
         ws = Markets[var.current_market]
         item = items[0]
@@ -1708,6 +1723,7 @@ def load_labels() -> None:
         title=var.name_book,
         size=disp.num_book,
         bind=handler_orderbook,
+        multicolor=True,
     )
     TreeTable.position = TreeviewTable(
         frame=disp.frame_position,
@@ -1752,6 +1768,32 @@ def load_labels() -> None:
     robot_status(ws)
 
 
+TreeTable.orders = TreeviewTable(
+    frame=disp.frame_orders,
+    name="orders",
+    size=0,
+    title=var.name_order,
+    bind=handler_order,
+    hide=["8", "3", "5"],
+)
+TreeTable.trades = TreeviewTable(
+    frame=disp.frame_trades,
+    name="trades",
+    size=0,
+    title=var.name_trade,
+    bind=handler_account,
+    hide=["8", "3", "5"],
+)
+TreeTable.funding = TreeviewTable(
+    frame=disp.frame_funding,
+    name="funding",
+    size=0,
+    title=var.name_funding,
+    bind=handler_account,
+    hide=["8", "3", "5"],
+)
+
+
 def robot_status(ws: Markets):
     for row, emi in enumerate(ws.robots):
         if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
@@ -1778,32 +1820,8 @@ def clear_tables():
 
 change_color(color=disp.title_color, container=disp.root)
 
-TreeTable.orders = TreeviewTable(
-    frame=disp.frame_orders,
-    name="orders",
-    size=0,
-    title=var.name_order,
-    bind=handler_order,
-    hide=["8", "3", "5"],
-)
-TreeTable.trades = TreeviewTable(
-    frame=disp.frame_trades,
-    name="trades",
-    size=0,
-    title=var.name_trade,
-    bind=handler_account,
-    hide=["8", "3", "5"],
-)
-TreeTable.funding = TreeviewTable(
-    frame=disp.frame_funding,
-    name="funding",
-    size=0,
-    title=var.name_funding,
-    bind=handler_account,
-    hide=["8", "3", "5"],
-)
 
-'''def adaptive_screen(ws: Markets):
+"""def adaptive_screen(ws: Markets):
     now_width = disp.root.winfo_width()
     if now_width != disp.all_width or var.current_market != disp.last_market:
         ratio = now_width / disp.window_width if now_width > 1 else 1.0
@@ -1812,5 +1830,4 @@ TreeTable.funding = TreeviewTable(
             disp.root.title(t)
         else:
             disp.root.title(disp.platform_name)
-        disp.all_width = now_width'''
-
+        disp.all_width = now_width"""

@@ -16,7 +16,6 @@ def refresh():
     connect.refresh()
     disp.root.after(var.refresh_rate, refresh)
 
-
 disp.refresh_var = disp.root.after_idle(refresh)
 disp.root.protocol(
     "WM_DELETE_WINDOW",
