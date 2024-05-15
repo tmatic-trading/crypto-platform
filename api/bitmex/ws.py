@@ -58,18 +58,19 @@ class Bitmex(Variables):
         self.account_disp = ""
 
     def start(self):
-        for symbol in self.symbol_list:
-            instrument = self.Instrument[symbol]
-            if instrument.settlCurrency:
-                self.Result[(instrument.settlCurrency[0], self.name)]
         if not self.logNumFatal:
-            self.__reset()
-            self.__connect(self.__get_url())
-            if self.logNumFatal == 0:
-                self.logger.info("Connected to websocket.")
-                self.__wait_for_tables()
+            for symbol in self.symbol_list:
+                instrument = self.Instrument[symbol]
+                if instrument.settlCurrency:
+                    self.Result[(instrument.settlCurrency[0], self.name)]
+            if not self.logNumFatal:
+                self.__reset()
+                self.__connect(self.__get_url())
                 if self.logNumFatal == 0:
-                    self.logger.info("Data received. Continuing.")
+                    self.logger.info("Connected to websocket.")
+                    self.__wait_for_tables()
+                    if self.logNumFatal == 0:
+                        self.logger.info("Data received. Continuing.")
 
     def __connect(self, url: str) -> None:
         try:
@@ -374,7 +375,7 @@ class Bitmex(Variables):
     def __update_instrument(self, symbol: tuple, values: dict):
         instrument = self.Instrument[symbol]
         if "fundingRate" in values:
-            instrument.fundingRate = values["fundingRate"]
+            instrument.fundingRate = values["fundingRate"] * 100
         if "volume24h" in values:
             instrument.volume24h = values["volume24h"]
         if "state" in values:
