@@ -703,19 +703,15 @@ class Function(WS, Variables):
             if utc > self.message_time + timedelta(seconds=10):
                 if self.message_counter == self.message_point:
                     info_display(self.name, "No data within 10 sec")
-                    # disp.label_online["text"] = "NO DATA"
-                    # disp.label_online.config(bg="yellow2")
                     WS.urgent_announcement(self)
                 self.message_time = utc
                 self.message_point = self.message_counter
-        # tm = datetime.now()
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
         """
         Update tkinter labels in the tables
         """
-
         # Refresh Positions table
 
         tree = TreeTable.position
@@ -827,6 +823,12 @@ class Function(WS, Variables):
                     compare = ["", "", ""]
                     if compare != tree.cache[number]:
                         tree.cache[number] = compare
+                        TreeTable.orderbook.hide_color_cell(
+                                    row=number, column=0
+                                )
+                        TreeTable.orderbook.hide_color_cell(
+                                    row=number, column=2
+                                )
                         tree.update(row=number, values=compare)
                 count += 1
 
@@ -990,6 +992,16 @@ class Function(WS, Variables):
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 tree.update(row=num, values=[compare])
+
+        '''now_width = disp.root.winfo_width()
+        if now_width != disp.all_width or var.current_market != disp.last_market:
+            if now_width > disp.window_width:
+                t = disp.platform_name.ljust((now_width - disp.window_width) // 4)
+                disp.root.title(t)
+            else:
+                disp.root.title(disp.platform_name)
+            disp.all_width = now_width'''
+
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         instrument = self.Instrument[symbol]
@@ -1647,6 +1659,7 @@ def load_labels() -> None:
         size=len(ws.symbol_list),
         bind=handler_position,
         hide=["9", "8", "2"],
+        autoscroll=False,
     )
     TreeTable.robots = TreeviewTable(
         frame=disp.frame_robots,
@@ -1655,6 +1668,7 @@ def load_labels() -> None:
         size=len(ws.robots),
         bind=handler_robots,
         hide=["6", "3"],
+        autoscroll=False,
     )
     TreeTable.account = TreeviewTable(
         frame=disp.frame_account,
@@ -1662,6 +1676,7 @@ def load_labels() -> None:
         title=var.name_account,
         size=len(ws.Account.get_keys()),
         bind=handler_account,
+        autoscroll=False,
     )
     TreeTable.market = TreeviewTable(
         frame=disp.frame_market,
@@ -1690,6 +1705,7 @@ TreeTable.orders = TreeviewTable(
     title=var.name_order,
     bind=handler_order,
     hide=["8", "3", "5"],
+    autoscroll=False,
 )
 TreeTable.trades = TreeviewTable(
     frame=disp.frame_trades,
@@ -1734,15 +1750,3 @@ def clear_tables():
 
 
 change_color(color=disp.title_color, container=disp.root)
-
-
-"""def adaptive_screen(ws: Markets):
-    now_width = disp.root.winfo_width()
-    if now_width != disp.all_width or var.current_market != disp.last_market:
-        ratio = now_width / disp.window_width if now_width > 1 else 1.0
-        if now_width > disp.window_width:
-            t = disp.platform_name.ljust((now_width - disp.window_width) // 4)
-            disp.root.title(t)
-        else:
-            disp.root.title(disp.platform_name)
-        disp.all_width = now_width"""

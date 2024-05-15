@@ -92,10 +92,6 @@ def finish_setup(ws: Markets):
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
-    """if hasattr(Tables, "market"):
-        Tables.market.color_market(
-            state="online", row=var.market_list.index(ws.name), market=ws.name
-        )"""
     ws.api_is_active = True
 
 
@@ -122,7 +118,7 @@ def refresh() -> None:
                 )
                 setup_market(ws=ws)
                 finish_setup(ws=ws)
-                Function.market_status(ws, status="ONLINE", message="", error=True)
+                Function.market_status(ws, status="ONLINE", message="", error=False)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
                     if ws.messageStopped == "":

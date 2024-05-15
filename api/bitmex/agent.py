@@ -111,7 +111,7 @@ class Agent(Bitmex):
         else:
             self.Instrument[symbol].expire = "Perpetual"
         if "fundingRate" in instrument:
-            self.Instrument[symbol].fundingRate = instrument["fundingRate"]
+            self.Instrument[symbol].fundingRate = instrument["fundingRate"] * 100
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
         self.Instrument[symbol].baseCoin = instrument["underlying"]

@@ -6,7 +6,7 @@ from typing import Union
 import requests
 
 from api.variables import Variables
-from display.functions import info_display
+from common.variables import Variables as var
 
 from .api_auth import API_auth
 
@@ -152,7 +152,9 @@ class Send(Variables):
                             1,
                         )  # impossible situation => stop trading
                     elif "insufficient available balance" in message:
-                        info_display(self.name, error["message"])
+                        var.info_queue.put(
+                            {"market": self.name, "message": error["message"]}
+                        )
                         info_warn_err(
                             "ERROR",
                             error["message"]
@@ -209,7 +211,9 @@ class Send(Variables):
                     "Timed out on request. %s: %s" % (url, json.dumps(postData or "")),
                     errCode,
                 )
-                info_display(self.name, "Websocket. Timed out on request")
+                var.info_queue.put(
+                    {"market": self.name, "message": "Websocket. Timed out on request"}
+                )
 
             except requests.exceptions.ConnectionError as e:
                 info_warn_err(
@@ -218,7 +222,9 @@ class Send(Variables):
                     % (e, url, json.dumps(postData or "")),
                     1002,
                 )
-                info_display(self.name, "Websocket. Unable to contact API")
+                var.info_queue.put(
+                    {"market": self.name, "message": "Websocket. Unable to contact API"}
+                )
                 cur_retries += 1
             if postData:  # trading orders (POST, PUT, DELETE)
                 if cur_retries == stop_retries:  # means no errors
@@ -234,7 +240,9 @@ class Send(Variables):
             else:
                 if cur_retries > self.maxRetryRest:
                     info_warn_err("ERROR", "Max retries hit. Reboot", 1003)
-                    info_display(self.name, "ERROR, Max retries hit. Reboot")
+                    var.info_queue.put(
+                        {"market": self.name, "message": "ERROR, Max retries hit. Reboot"}
+                    )
                     break
                 if cur_retries == stop_retries:  # means no errors
                     if self.logNumFatal < 1000:
