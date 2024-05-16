@@ -102,6 +102,7 @@ class Variables:
         bg_select_color = "#b3d7ff"
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
+        frame_right.configure(background=title_color)
     fg_color = label_trading["foreground"]
     green_color = "#07b66e"
     red_color = "#f53661"
@@ -200,12 +201,13 @@ class Variables:
     # Frame for active orders
     frame_orders = tk.Frame(pw_orders_trades)
 
+    style = ttk.Style()
     # Notebook tabs: Trades / Funding / Results
     if ostype == "Mac":
         notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
-    style = ttk.Style()
+        style.theme_use("default")
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
     symbol_width = tkinter.font.Font().measure("01234567890.") / 12
     if ostype != "Mac":
