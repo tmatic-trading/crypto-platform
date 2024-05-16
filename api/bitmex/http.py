@@ -241,7 +241,10 @@ class Send(Variables):
                 if cur_retries > self.maxRetryRest:
                     info_warn_err("ERROR", "Max retries hit. Reboot", 1003)
                     var.info_queue.put(
-                        {"market": self.name, "message": "ERROR, Max retries hit. Reboot"}
+                        {
+                            "market": self.name,
+                            "message": "ERROR, Max retries hit. Reboot",
+                        }
                     )
                     break
                 if cur_retries == stop_retries:  # means no errors

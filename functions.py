@@ -709,7 +709,6 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
-
         tree = TreeTable.position
 
         for num, symbol in enumerate(self.symbol_list):
@@ -779,7 +778,9 @@ class Function(WS, Variables):
                             tree.update(row=number, values=row)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=Function.volume(self, qty=qty, symbol=var.symbol),
+                                    text=Function.volume(
+                                        self, qty=qty, symbol=var.symbol
+                                    ),
                                     row=number,
                                     column=2,
                                     bg_color=disp.green_color,
@@ -805,7 +806,9 @@ class Function(WS, Variables):
                             tree.update(row=number, values=row)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=Function.volume(self, qty=qty, symbol=var.symbol),
+                                    text=Function.volume(
+                                        self, qty=qty, symbol=var.symbol
+                                    ),
                                     row=number,
                                     column=0,
                                     bg_color=disp.red_color,
@@ -814,17 +817,13 @@ class Function(WS, Variables):
                             else:
                                 TreeTable.orderbook.hide_color_cell(
                                     row=number, column=0
-                                    )
+                                )
                 else:
                     compare = ["", "", ""]
                     if compare != tree.cache[number]:
                         tree.cache[number] = compare
-                        TreeTable.orderbook.hide_color_cell(
-                                    row=number, column=0
-                                )
-                        TreeTable.orderbook.hide_color_cell(
-                                    row=number, column=2
-                                )
+                        TreeTable.orderbook.hide_color_cell(row=number, column=0)
+                        TreeTable.orderbook.hide_color_cell(row=number, column=2)
                         tree.update(row=number, values=compare)
                 count += 1
 
@@ -989,15 +988,14 @@ class Function(WS, Variables):
                 tree.cache[num] = compare
                 tree.update(row=num, values=[compare])
 
-        '''now_width = disp.root.winfo_width()
+        """now_width = disp.root.winfo_width()
         if now_width != disp.all_width or var.current_market != disp.last_market:
             if now_width > disp.window_width:
                 t = disp.platform_name.ljust((now_width - disp.window_width) // 4)
                 disp.root.title(t)
             else:
                 disp.root.title(disp.platform_name)
-            disp.all_width = now_width'''
-
+            disp.all_width = now_width"""
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         instrument = self.Instrument[symbol]
@@ -1739,7 +1737,7 @@ def clear_tables():
     TreeTable.orderbook.init(size=disp.num_book)
     TreeTable.results.init(size=len(ws.Result.get_keys()))
     TreeTable.position.set_selection()
-    #Function.refresh_tables(ws)
+    # Function.refresh_tables(ws)
     robot_status(ws)
 
 

@@ -15,6 +15,7 @@ if platform.system() == "Windows":
 class AutoScrollbar(tk.Scrollbar):
     def resize_init(self, on_scroll_resize):
         self.on_scroll_resize = on_scroll_resize
+
     def set(self, low, high):
         if float(low) <= 0.0 and float(high) >= 1.0:
             self.tk.call("grid", "remove", self)
@@ -329,7 +330,7 @@ class TreeviewTable(Variables):
         bind=None,
         hide=[],
         multicolor=False,
-        autoscroll=False, 
+        autoscroll=False,
     ) -> None:
         self.title = title
         self.max_rows = 200
@@ -338,10 +339,13 @@ class TreeviewTable(Variables):
         self.cache = list()
         self.bind = bind
         self.size = size
+        self.count = 0
         columns = [num for num in range(1, len(title) + 1)]
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)
-        self.tree = ttk.Treeview(frame, style=style, columns=columns, show="headings")
+        self.tree = ttk.Treeview(
+            frame, style=style, columns=columns, show="headings", selectmode="browse"
+        )
         for num, name in enumerate(title, start=1):
             self.tree.heading(num, text=name)
             self.tree.column(num, anchor=tk.CENTER, width=50)
@@ -380,8 +384,8 @@ class TreeviewTable(Variables):
             self.setup_color_cell()
             self.tree.bind("<Configure>", self.on_window_resize)
             scroll.resize_init(self.on_scroll_resize)
-            self.tree.bind('<B1-Motion>', self.on_window_resize)
-            self.tree.update()            
+            self.tree.bind("<B1-Motion>", self.on_window_resize)
+            self.tree.update()
 
     def init(self, size):
         self.clear_all()
@@ -452,23 +456,25 @@ class TreeviewTable(Variables):
         bg_color: str,
         fg_color: str,
     ):
-        bbox = self.tree.bbox(self.children[row], column+1)
+        canvas = self._canvas[row][column]
+        s_length = self.symbol_width * len(text)
+        canvas.config(background=bg_color)
+        canvas.itemconfigure(canvas.text, text=text, fill=fg_color)
+        canvas.txt = text
+        bbox = self.tree.bbox(self.children[row], column + 1)
         if bbox:
             x, y, width, height = bbox
-            s_length = self.symbol_width * len(text)
-            canvas = self._canvas[row][column]
             canvas.configure(width=width, height=height)
-            canvas.config(background=bg_color)
             canvas.coords(canvas.text, (max(0, (width - s_length)) / 2, height / 2))
-            canvas.itemconfigure(canvas.text, text=text, fill=fg_color)
             canvas.place(x=x, y=y)
-            canvas.txt = text
             canvas.up = True
+        else:
+            canvas.up = "hidden"
 
     def resize_color_cell(self, bbox: tuple, row: int, column: int):
         x, y, width, height = bbox
         canvas = self._canvas[row][column]
-        s_length = self.symbol_width * len(canvas.txt)        
+        s_length = self.symbol_width * len(canvas.txt)
         canvas.configure(width=width, height=height)
         canvas.coords(canvas.text, (max(0, (width - s_length)) / 2, height / 2))
         canvas.place(x=x, y=y)
@@ -485,11 +491,25 @@ class TreeviewTable(Variables):
 
     def on_window_resize(self, event):
         for row, canvas_list in enumerate(self._canvas):
+            self.count += 1
             for column, canvas in enumerate(canvas_list):
-                if canvas.up:
-                    bbox = self.tree.bbox(self.children[row], column+1)
-                    if bbox:
+                bbox = self.tree.bbox(self.children[row], column + 1)
+                if bbox:
+                    if canvas.up == True:
                         self.resize_color_cell(bbox, row, column)
+                    elif canvas.up == "hidden":
+                        x, y, width, height = bbox
+                        canvas.configure(width=width, height=height)
+                        s_length = self.symbol_width * len(canvas.txt)
+                        canvas.coords(
+                            canvas.text, (max(0, (width - s_length)) / 2, height / 2)
+                        )
+                        canvas.place(x=x, y=y)
+                        canvas.up = True
+                else:
+                    if canvas.up == True:
+                        self.hide_color_cell(row=row, column=column)
+                        canvas.up = "hidden"
 
     def on_scroll_resize(self):
         self.on_window_resize("scroll")
@@ -536,7 +556,7 @@ def trim_col_width(tview, cols):
 
 # Hide / show adaptive columns in order to save space in the tables
 def hide_columns(event):
-    if hasattr(TreeTable, 'position'):
+    if hasattr(TreeTable, "position"):
         ratio = (
             Variables.frame_left.winfo_width() / Variables.left_width
             if Variables.left_width > 1
@@ -551,19 +571,25 @@ def hide_columns(event):
                     displaycolumns=TreeTable.position.column_hide[3]
                 )
                 TreeTable.position.hide_num = 3
-                trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[3])
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[3]
+                )
             if (
                 TreeTable.orders.hide_num != 3
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[3])
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[3]
+                )
                 TreeTable.orders.hide_num = 3
                 trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[3])
             if (
                 TreeTable.trades.hide_num != 3
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[3])
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[3]
+                )
                 TreeTable.trades.hide_num = 3
                 trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[3])
             if (
@@ -579,7 +605,9 @@ def hide_columns(event):
                 TreeTable.robots.hide_num != 2
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.robots.tree.config(displaycolumns=TreeTable.robots.column_hide[2])
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[2]
+                )
                 TreeTable.robots.hide_num = 2
                 trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[2])
         elif ratio < Variables.adaptive_ratio - 0.1:
@@ -591,19 +619,25 @@ def hide_columns(event):
                     displaycolumns=TreeTable.position.column_hide[2]
                 )
                 TreeTable.position.hide_num = 2
-                trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[2])
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[2]
+                )
             if (
                 TreeTable.orders.hide_num != 2
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[2])
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[2]
+                )
                 TreeTable.orders.hide_num = 2
                 trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[2])
             if (
                 TreeTable.trades.hide_num != 2
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[2])
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[2]
+                )
                 TreeTable.trades.hide_num = 2
                 trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[2])
             if (
@@ -619,7 +653,9 @@ def hide_columns(event):
                 TreeTable.robots.hide_num != 1
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.robots.tree.config(displaycolumns=TreeTable.robots.column_hide[1])
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[1]
+                )
                 TreeTable.robots.hide_num = 1
                 trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[1])
         elif ratio < Variables.adaptive_ratio:
@@ -631,19 +667,25 @@ def hide_columns(event):
                     displaycolumns=TreeTable.position.column_hide[1]
                 )
                 TreeTable.position.hide_num = 1
-                trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[1])
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[1]
+                )
             if (
                 TreeTable.orders.hide_num != 1
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[1])
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[1]
+                )
                 TreeTable.orders.hide_num = 1
                 trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[1])
             if (
                 TreeTable.trades.hide_num != 1
                 or var.current_market != Variables.last_market
             ):
-                TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[1])
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[1]
+                )
                 TreeTable.trades.hide_num = 1
                 trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[1])
             if (
@@ -656,7 +698,9 @@ def hide_columns(event):
                 TreeTable.funding.hide_num = 1
                 trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[1])
             if TreeTable.robots.hide_num != 0:
-                TreeTable.robots.tree.config(displaycolumns=TreeTable.robots.column_hide[0])
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[0]
+                )
                 TreeTable.robots.hide_num = 0
                 trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[0])
         elif ratio > Variables.adaptive_ratio:
@@ -665,13 +709,19 @@ def hide_columns(event):
                     displaycolumns=TreeTable.position.column_hide[0]
                 )
                 TreeTable.position.hide_num = 0
-                trim_col_width(TreeTable.position.tree, TreeTable.position.column_hide[0])
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[0]
+                )
             if TreeTable.orders.hide_num != 0:
-                TreeTable.orders.tree.config(displaycolumns=TreeTable.orders.column_hide[0])
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[0]
+                )
                 TreeTable.orders.hide_num = 0
                 trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[0])
             if TreeTable.trades.hide_num != 0:
-                TreeTable.trades.tree.config(displaycolumns=TreeTable.trades.column_hide[0])
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[0]
+                )
                 TreeTable.trades.hide_num = 0
                 trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[0])
             if TreeTable.funding.hide_num != 0:
@@ -681,7 +731,9 @@ def hide_columns(event):
                 TreeTable.funding.hide_num = 0
                 trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[0])
             if TreeTable.robots.hide_num != 0:
-                TreeTable.robots.tree.config(displaycolumns=TreeTable.robots.column_hide[0])
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[0]
+                )
                 TreeTable.robots.hide_num = 0
                 trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[0])
         Variables.last_market = var.current_market
