@@ -2,7 +2,7 @@
 
 # Trading platform designed for automated trading on the Bitmex and Bybit crypto exchanges
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/tmaticL.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/tmaticDark.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.9+
 
@@ -177,6 +177,8 @@ Check the ```history.ini``` file which keeps the date and time of the last trans
 Launch the program:
 - in Linux or macOS terminal ```python3 main.py```
 - in Windows command prompt (cmd.exe) ```python main.py```
+
+*If the program does not start, check the logfile.log file for errors. For example, your computer's system time may be out of sync. If your OS is Windows you should check the “Date and Time” settings: in the “Synchronize clocks” section, you must click the “Sync now” button.*
 
 ## How it works
 

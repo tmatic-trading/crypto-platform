@@ -69,6 +69,7 @@ class Bybit(Variables):
         self.frames = dict()
         self.robot_status = dict()
         self.setup_orders = list()
+        self.account_disp = ""
 
     def start(self):
         for symbol in self.symbol_list:
@@ -239,7 +240,7 @@ class Bybit(Variables):
         instrument = self.Instrument[(values["symbol"], category, self.name)]
         instrument.volume24h = float(values["volume24h"])
         if "fundingRate" in values:
-            instrument.fundingRate = float(values["fundingRate"])
+            instrument.fundingRate = float(values["fundingRate"]) * 100
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:

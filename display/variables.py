@@ -1,5 +1,6 @@
 import platform
 import tkinter as tk
+import tkinter.font
 from datetime import datetime
 from tkinter import ttk
 
@@ -12,21 +13,16 @@ if platform.system() == "Windows":
 
 
 class AutoScrollbar(tk.Scrollbar):
+    def resize_init(self, on_scroll_resize):
+        self.on_scroll_resize = on_scroll_resize
+
     def set(self, low, high):
         if float(low) <= 0.0 and float(high) >= 1.0:
             self.tk.call("grid", "remove", self)
-            if (
-                self.master in Variables.dlmtr_frames
-                and Variables.dlmtr_frames[self.master].winfo_ismapped() == 0
-            ):
-                Variables.dlmtr_frames[self.master].grid(row=0, column=1, sticky="NSWE")
         else:
+            if hasattr(self, "on_scroll_resize"):
+                self.on_scroll_resize()
             self.grid()
-            if (
-                self.master in Variables.dlmtr_frames
-                and Variables.dlmtr_frames[self.master].winfo_ismapped() == 1
-            ):
-                Variables.dlmtr_frames[self.master].grid_forget()
         tk.Scrollbar.set(self, low, high)
 
 
@@ -38,10 +34,10 @@ class Variables:
     screen_height = root.winfo_screenheight()
     if screen_width > 1440:
         window_ratio = 0.7
-        adaptive_ratio = 0.85
+        adaptive_ratio = 0.9
     elif screen_width > 1366:
         window_ratio = 0.72
-        adaptive_ratio = 0.9
+        adaptive_ratio = 0.93
     elif screen_width > 1280:
         window_ratio = 0.75
         adaptive_ratio = 0.95
@@ -52,13 +48,11 @@ class Variables:
         window_ratio = 1
         adaptive_ratio = 1
     window_width = int(screen_width * window_ratio)
-    window_height = screen_height
+    window_height = int(screen_height)
     root.geometry("{}x{}".format(window_width, window_height))
     all_width = window_width
-    # all_height = 1
-    state_width = window_width
+    left_width = window_width
     last_market = ""
-    dlmtr_frames = {}
 
     if platform.system() == "Windows":
         ostype = "Windows"
@@ -68,22 +62,23 @@ class Variables:
         ostype = "Linux"
 
     num_robots = 1
-    num_book = 21  # Must be odd
+    num_book = 20  # Must be even
     col1_book = 0
     symb_book = ()
-    labels = dict()
-    labels_cache = dict()
 
-    # Main frame. Always visible
+    pw_main = tk.PanedWindow(
+        root, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
+    )
+    pw_main.pack(fill="both", expand="yes")
+
+    # Adaptive frame to the left, always visible
     frame_left = tk.Frame()
-    frame_left.grid(row=0, column=0, sticky="NSWE")
-    root.grid_columnconfigure(0, weight=1)
+    frame_left.pack(fill="both", expand="yes")
+    frame_left.bind("<Configure>", lambda event: hide_columns(event))
 
-    # Adaptive frame to the right. Always blank; forgotten when the window is narrowed
+    # Frame to the right, always blank
     frame_right = tk.Frame()
-    frame_right.grid(row=0, column=1, sticky="NSWE")
-    root.grid_columnconfigure(1, weight=0)
-    root.grid_rowconfigure(0, weight=1)
+    frame_right.pack(fill="both", expand="yes")
 
     # Top state frame: trading on/off, time
     frame_state = tk.Frame(frame_left)
@@ -96,25 +91,26 @@ class Variables:
         frame_state, width=3, text="OFF", fg="white", bg="red", anchor="c"
     )
     label_f9.pack(side="left")
-    label_time = tk.Label(frame_state, anchor="e")
-    label_time.pack(side="right")
 
     # Color map
     if ostype == "Mac":
-        green_color = "#07b66e"
-        red_color = "#f53661"
         title_color = label_trading["background"]
         bg_select_color = "systemSelectedTextBackgroundColor"
     else:
-        green_color = "#319d30"
-        red_color = "#dc6537"
         label_trading.config(bg="gray82")
         title_color = label_trading["background"]
-        bg_select_color = "khaki1"
+        bg_select_color = "#b3d7ff"
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
+        frame_right.configure(background=title_color)
     fg_color = label_trading["foreground"]
+    green_color = "#07b66e"
+    red_color = "#f53661"
+    white_color = "#FFFFFF"
     fg_select_color = fg_color
+
+    label_time = tk.Label(frame_state, anchor="e", foreground=fg_color)
+    label_time.pack(side="right")
 
     # Paned window: up - information field, down - the rest interface
     pw_info_rest = tk.PanedWindow(
@@ -125,6 +121,7 @@ class Variables:
 
     # Information field
     frame_info = tk.Frame(pw_info_rest)
+    frame_info.pack(fill="both", expand="yes")
 
     # Information widget
     if ostype == "Mac":
@@ -139,83 +136,103 @@ class Variables:
             highlightthickness=0,
         )
     text_info.grid(row=0, column=0, sticky="NSEW")
-    frame_info.grid_columnconfigure(0, weight=1)
     scroll_info = AutoScrollbar(frame_info, orient="vertical")
     scroll_info.config(command=text_info.yview)
     scroll_info.grid(row=0, column=1, sticky="NS")
     text_info.config(yscrollcommand=scroll_info.set)
+    frame_info.grid_columnconfigure(0, weight=1)
     frame_info.grid_columnconfigure(1, weight=0)
     frame_info.grid_rowconfigure(0, weight=1)
     # text_info.configure(state="disabled")
     bg_color = text_info["background"]
 
-    # This technical frame contains most frames and widgets
-    frame_rest1 = tk.Frame(pw_info_rest)
-
-    pw_info_rest.add(frame_info)
-    pw_info_rest.add(frame_rest1)
-    pw_info_rest.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_info_rest, 9)
+    # This technical PanedWindow contains most frames and widgets
+    pw_rest1 = tk.PanedWindow(
+        pw_info_rest, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
     )
+    pw_rest1.pack(fill="both", expand="yes")
 
     # One or more exchages is put in this frame
-    market_frame = tk.Frame(frame_rest1)
-    market_frame.grid(row=0, column=0, sticky="NSEW")
-    frame_rest1.grid_columnconfigure(0, weight=10)
+    frame_market = tk.Frame(pw_rest1)
 
-    # This technical frame contains orderbook, positions, orders, trades, fundings, results, currencies, robots
-    frame_rest2 = tk.Frame(frame_rest1)
-    frame_rest2.grid(row=0, column=1, sticky="NSEW")
-    frame_rest1.grid_columnconfigure(1, weight=500)
-    frame_rest1.grid_rowconfigure(0, weight=1)
+    # This technical PanedWindow contains orderbook, positions, orders,
+    # trades, fundings, results, currencies, robots
+    pw_rest2 = tk.PanedWindow(
+        pw_rest1,
+        orient=tk.VERTICAL,
+        sashrelief="raised",
+        bd=0,
+        sashwidth=0,
+        height=1,
+    )
+    pw_rest2.pack(fill="both", expand="yes")
 
-    # This technical frame contains orderbook, positions, orders, trades, fundings, results
-    frame_rest3 = tk.Frame(frame_rest2)
-    frame_rest3.grid(row=0, column=0, sticky="NSEW")
-    frame_rest2.grid_columnconfigure(0, weight=1)
-    frame_rest2.grid_rowconfigure(0, weight=72)
+    # This technical PanedWindow contains orderbook, positions, orders,
+    # trades, fundings, results
+    pw_rest3 = tk.PanedWindow(
+        pw_rest2, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
+    )
+    pw_rest3.pack(fill="both", expand="yes")
 
     # Frame for the order book
-    orderbook_frame = tk.Frame(frame_rest3)
-    orderbook_frame.grid(row=0, column=0, sticky="NSEW")
-    frame_rest3.grid_columnconfigure(0, weight=50)
-    orderbook_delimiter = tk.Frame(orderbook_frame, width=2)
-    dlmtr_frames[orderbook_frame] = orderbook_delimiter
+    frame_orderbook = tk.Frame(pw_rest3)
 
-    # This technical frame contains positions, orders, trades, fundings, results
-    frame_rest4 = tk.Frame(frame_rest3)
-    frame_rest4.grid(row=0, column=1, sticky="NSEW")
-    frame_rest3.grid_columnconfigure(1, weight=300)
-    frame_rest3.grid_rowconfigure(0, weight=1)
+    # This technical PanedWindow contains positions, orders, trades, fundings,
+    # results
+    pw_rest4 = tk.PanedWindow(
+        pw_rest3,
+        orient=tk.VERTICAL,
+        sashrelief="raised",
+        bd=0,
+        sashwidth=0,
+        height=1,
+    )
+    pw_rest4.pack(fill="both", expand="yes")
 
     # Frame for instruments and their positions
-    position_frame = tk.Frame(frame_rest4)
-    position_frame.grid(row=0, column=0, sticky="NSWE")
-    frame_rest4.grid_columnconfigure(0, weight=1)
-    frame_rest4.grid_rowconfigure(0, weight=18)
+    frame_position = tk.Frame(pw_rest4)
 
     # Paned window: up - orders, down - trades, fundings, results
     pw_orders_trades = tk.PanedWindow(
-        frame_rest4, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
+        pw_rest4, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
     )
-    pw_orders_trades.grid(row=1, column=0, sticky="NSWE")
-    frame_rest4.grid_rowconfigure(1, weight=82)
+    pw_orders_trades.pack(fill="both", expand="yes")
 
-    # Orders frame
+    # Frame for active orders
     frame_orders = tk.Frame(pw_orders_trades)
 
+    style = ttk.Style()
     # Notebook tabs: Trades / Funding / Results
     if ostype == "Mac":
         notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_orders_trades, padding=0)
-    style = ttk.Style()
-    style.configure("TNotebook", borderwidth=0, background="gray90", tabposition="n")
-    style.configure("TNotebook.Tab", background="gray90")
-    style.map("TNotebook.Tab", background=[("selected", title_color)])
+        style.theme_use("default")
+    line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
+    symbol_width = tkinter.font.Font().measure("01234567890.") / 12
+    if ostype != "Mac":
+        style.map(
+            "Treeview",
+            background=[("selected", "#b3d7ff")],
+            foreground=[("selected", fg_color)],
+        )
+    style.configure(
+        "Treeview",
+        foreground=fg_color,
+    )
+    style.configure(
+        "market.Treeview",
+        fieldbackground=title_color,
+        background=title_color,
+        rowheight=line_height * 3,
+    )
+    style.configure("Treeview.Heading", foreground=fg_color)
+    style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
+    style.configure("TNotebook.Tab", background="gray92")
+    # style.map("TNotebook.Tab", background=[("selected", title_color)])
 
     # Trades frame
-    frame_trades = ttk.Frame(notebook)
+    frame_trades = tk.Frame(notebook)
 
     # Funding frame
     frame_funding = tk.Frame(notebook)
@@ -229,26 +246,68 @@ class Variables:
     pw_orders_trades.add(frame_orders)
     pw_orders_trades.add(notebook)
     pw_orders_trades.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_orders_trades, 2)
+        "<Configure>", lambda event: resize_height(event, Variables.pw_orders_trades, 2)
     )
 
     # Paned window: up - currencies (account), down - robots
     pw_account_robo = tk.PanedWindow(
-        frame_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
+        pw_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
     )
-    pw_account_robo.grid(row=1, column=0, sticky="NSWE")
-    frame_rest2.grid_rowconfigure(1, weight=28)
+    pw_account_robo.pack(fill="both", expand="yes")
 
     # Frame for currencies (account)
-    account_frame = tk.Frame(pw_account_robo)
+    frame_account = tk.Frame(pw_account_robo)
 
     # Frame for the robots table
-    robots_frame = tk.Frame(pw_account_robo)
+    frame_robots = tk.Frame(pw_account_robo)
 
-    pw_account_robo.add(account_frame)
-    pw_account_robo.add(robots_frame)
+    pw_account_robo.add(frame_account)
+    pw_account_robo.add(frame_robots)
     pw_account_robo.bind(
-        "<Configure>", lambda event: resize_row(event, Variables.pw_account_robo, 2)
+        "<Configure>", lambda event: resize_height(event, Variables.pw_account_robo, 2)
+    )
+
+    pw_rest4.add(frame_position)
+    pw_rest4.add(pw_orders_trades)
+    pw_rest4.bind(
+        "<Configure>", lambda event: resize_height(event, Variables.pw_rest4, 5)
+    )
+
+    pw_rest3.add(frame_orderbook)
+    pw_rest3.add(pw_rest4)
+    pw_rest3.bind(
+        "<Configure>",
+        lambda event: resize_width(
+            event, Variables.pw_rest3, Variables.window_width // 4.5, 3
+        ),
+    )
+
+    pw_rest2.add(pw_rest3)
+    pw_rest2.add(pw_account_robo)
+    pw_rest2.bind(
+        "<Configure>", lambda event: resize_height(event, Variables.pw_rest2, 1.4)
+    )
+
+    pw_rest1.add(frame_market)
+    pw_rest1.add(pw_rest2)
+    pw_rest1.bind(
+        "<Configure>",
+        lambda event: resize_width(
+            event, Variables.pw_rest1, Variables.window_width // 9.5, 6
+        ),
+    )
+
+    pw_info_rest.add(frame_info)
+    pw_info_rest.add(pw_rest1)
+    pw_info_rest.bind(
+        "<Configure>", lambda event: resize_height(event, Variables.pw_info_rest, 9)
+    )
+
+    pw_main.add(frame_left)
+    pw_main.add(frame_right)
+    pw_main.bind(
+        "<Configure>",
+        lambda event: resize_width(event, Variables.pw_main, Variables.window_width, 1),
     )
 
     refresh_var = None
@@ -262,411 +321,213 @@ class Variables:
     table_limit = 150
 
 
-class GridTable(Variables):
+class TreeviewTable(Variables):
     def __init__(
         self,
         frame: tk.Frame,
         name: str,
-        size: int,
         title: list,
-        column_width: int = None,
-        canvas_height: int = 30,
-        title_on: bool = True,
-        bind=None,
-        color: str = None,
-        select: bool = None,
-    ) -> None:
-        self.name = name
-        self.title = title
-        self.select = select
-        self.bind = bind
-        self.color = color
-        self.size = size
-        self.title_on = title_on
-        self.mod = 1
-        self.labels[name] = []
-        self.labels_cache[name] = []
-        if column_width is not None:
-            width = len(title) * column_width
-        else:
-            width = column_width
-        if not title_on:
-            self.mod = 0
-            size -= 1
-        my_bg = self.bg_color if name != "market" else self.title_color
-        canvas = tk.Canvas(
-            frame, highlightthickness=0, height=canvas_height, width=width, bg=my_bg
-        )
-        canvas.grid(row=0, column=0, sticky="NSEW")
-        frame.grid_rowconfigure(0, weight=1)
-        frame.grid_columnconfigure(0, weight=1)
-        scroll = AutoScrollbar(frame, orient="vertical")
-        scroll.config(command=canvas.yview)
-        scroll.grid(row=0, column=1, sticky="NS")
-        canvas.config(yscrollcommand=scroll.set)
-        self.sub = tk.Frame(canvas, bg=my_bg)
-        positions_id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
-        canvas.bind(
-            "<Configure>",
-            lambda event, id=positions_id, pos=canvas: event_width(event, id, pos),
-        )
-        self.sub.bind("<Configure>", lambda event: event_config(event, canvas))
-        canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
-        canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
-        for row in range(size):
-            self.create_grid(row=row)
-
-    def create_grid(self, row: int):
-        lst = []
-        cache = []
-        if len(self.labels[self.name]) <= row:
-            for title_name in self.title:
-                lst.append(
-                    tk.Label(
-                        self.sub,
-                        text=title_name,
-                        pady=0,  # , background=self.title_color
-                    )
-                )
-                cache.append(title_name + str(row))
-            self.labels[self.name].append(lst)
-            self.labels_cache[self.name].append(cache)
-        for column in range(len(self.title)):
-            self.labels[self.name][row][column].grid(
-                row=row, column=column, sticky="NSWE", padx=0, pady=0
-            )
-            if row > self.mod - 1:
-                if self.select:
-                    if row == self.mod:
-                        color_bg = self.bg_select_color
-                        color_fg = self.fg_select_color
-                    else:
-                        color_bg = self.color
-                        color_fg = self.fg_color
-                else:
-                    color_bg = self.color
-                    color_fg = self.fg_color
-
-                self.labels[self.name][row][column]["text"] = ""
-                self.labels[self.name][row][column]["bg"] = color_bg
-                self.labels[self.name][row][column]["fg"] = color_fg
-                if self.bind:
-                    self.labels[self.name][row][column].bind(
-                        "<Button-1>",
-                        lambda event, row_position=row: self.bind(event, row_position),
-                    )
-            self.sub.grid_columnconfigure(column, weight=1)
-
-    def reconfigure_table(self, action: str, number: int):
-        """
-        Depending on the exchange, you may need a different number of rows in the
-        tables, since, for example, you may be subscribed to a different number of
-        instruments. Therefore, the number of rows in tables: "account",
-        "position", "robots" must change  dynamically. Calling this function
-        changes the number of rows in a particular table.
-
-        Input parameters:
-
-        action - "new" - add new lines, "hide" - remove lines
-        number - number of lines to add or hide
-        """
-        row = self.sub.grid_size()[1]
-        if action == "new":
-            while number:
-                if row + number > self.size:
-                    self.size += 1
-                    self.create_grid(row=row)
-                else:
-                    for num, label in enumerate(self.labels[self.name][row]):
-                        label.grid(
-                            row=row,
-                            column=num,
-                            sticky="NSWE",
-                            padx=0,
-                            pady=0,
-                        )
-                row += 1
-                number -= 1
-        elif action == "hide":
-            row -= 1
-            while number:
-                for r in self.sub.grid_slaves(row=row):
-                    r.grid_forget()
-                number -= 1
-                row -= 1
-                if row == 0:
-                    break
-
-    def color_market(self, state: str, row: int, market: str):
-        if state == "error":
-            color = self.sell_bg_color
-        else:
-            if market == var.current_market:
-                color = self.bg_select_color
-            else:
-                color = self.color
-        for column in range(len(self.title)):
-            self.labels[self.name][row + self.mod][column]["bg"] = color
-
-
-class Tables:
-    position: GridTable
-    account: GridTable
-    robots: GridTable
-    market: GridTable
-    orderbook: GridTable
-    results: GridTable
-
-
-class ListBoxTable(Variables):
-    """
-    The table contains a grid with one row in each column in which a Listbox
-    is inserted. The contents of table rows are managed through Listbox tools
-    in accordance with the row index.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        frame: tk.Frame,
         size: int,
-        title: list,
-        title_on: bool = True,
+        style="",
         bind=None,
-        expand: bool = None,
+        hide=[],
+        multicolor=False,
+        autoscroll=False,
     ) -> None:
         self.title = title
-        self.title_on = title_on
-        self.mod = 1
         self.max_rows = 200
-        if title_on:
-            self.height = 1
-        else:
-            self.height = 0
-            self.mod = 0
-        self.active_row = 1
-        self.mod = 1
-        self.columns = [[] for _ in title]
         self.name = name
-        if expand:
-            frame.grid_rowconfigure(0, weight=1)
-        canvas = tk.Canvas(frame, highlightthickness=0, bg=self.bg_color)
-        canvas.grid(row=0, column=0, sticky="NSEW")
+        self.title = title
+        self.cache = list()
+        self.bind = bind
+        self.size = size
+        self.count = 0
+        columns = [num for num in range(1, len(title) + 1)]
         frame.grid_columnconfigure(0, weight=1)
-        scroll = AutoScrollbar(frame, orient="vertical")
-        scroll.config(command=canvas.yview)
-        scroll.grid(row=0, column=1, sticky="NS")
-        canvas.config(yscrollcommand=scroll.set)
-        self.sub = tk.Frame(canvas, pady=0, bg=self.bg_color)
-        id = canvas.create_window((0, 0), window=self.sub, anchor="nw")
-        canvas.bind(
-            "<Configure>",
-            lambda event, id=id, can=canvas: event_width(event, id, can),
+        frame.grid_rowconfigure(0, weight=1)
+        self.tree = ttk.Treeview(
+            frame, style=style, columns=columns, show="headings", selectmode="browse"
         )
-        self.sub.bind("<Configure>", lambda event: event_config(event, canvas))
-        canvas.bind("<Enter>", lambda event: on_enter(event, canvas, scroll))
-        canvas.bind("<Leave>", lambda event: on_leave(event, canvas))
-        if self.ostype == "Mac":
-            self.item_color = {
-                "Buy": {
-                    "bg": self.bg_color,
-                    "fg": self.green_color,
-                    "selectbackground": self.bg_color,
-                    "selectforeground": self.green_color,
-                },
-                "Sell": {
-                    "bg": self.bg_color,
-                    "fg": self.red_color,
-                    "selectbackground": self.bg_color,
-                    "selectforeground": self.red_color,
-                },
-            }
+        for num, name in enumerate(title, start=1):
+            self.tree.heading(num, text=name)
+            self.tree.column(num, anchor=tk.CENTER, width=50)
+        if autoscroll:
+            scroll = AutoScrollbar(frame, orient="vertical")
         else:
-            self.item_color = {
-                "Buy": {
-                    "bg": self.buy_bg_color,
-                    "fg": self.fg_color,
-                    "selectbackground": self.buy_bg_color,
-                    "selectforeground": self.fg_color,
-                },
-                "Sell": {
-                    "bg": self.sell_bg_color,
-                    "fg": self.fg_color,
-                    "selectbackground": self.sell_bg_color,
-                    "selectforeground": self.fg_color,
-                },
-            }
-        self.listboxes = list()
-        for num, name in enumerate(title):
-            value = (
-                [
-                    name,
-                ]
-                if title_on
-                else [
-                    "",
-                ]
-            )
-            vars = tk.Variable(value=value)
-            self.listboxes.append(
-                tk.Listbox(
-                    self.sub,
-                    listvariable=vars,
-                    bd=0,
-                    background=self.bg_color,
-                    highlightthickness=0,
-                    selectbackground=self.title_color,
-                    selectforeground=self.fg_color,
-                    activestyle="none",
-                    justify="center",
-                    height=self.height,
-                    width=0,
-                )
-            )
-            if title_on:
-                self.listboxes[num].itemconfig(0, bg=self.title_color)
-            self.listboxes[num].grid(row=0, padx=0, column=num, sticky="NSWE")
-            self.sub.grid_columnconfigure(num, weight=1)
-            self.sub.grid_rowconfigure(0, weight=1)
-            if bind:
-                self.listboxes[num].bind("<<ListboxSelect>>", bind)
-            for _ in range(size):
-                lst = ["" for _ in range(len(self.title))]
-                self.insert(elements=lst, row=1)
+            scroll = tk.Scrollbar(frame, orient="vertical")
+        scroll.config(command=self.tree.yview)
+        self.tree.config(yscrollcommand=scroll.set)
+        self.tree.grid(row=0, column=0, sticky="NSEW")
+        scroll.grid(row=0, column=1, sticky="NS")
+        self.children = list()
+        self.tree.tag_configure("Select", background=self.bg_select_color)
+        self.tree.tag_configure("Buy", foreground=self.green_color)
+        self.tree.tag_configure("Sell", foreground=self.red_color)
+        self.tree.tag_configure("Deselect", background=self.bg_color)
+        self.tree.tag_configure("Normal", foreground=self.fg_color)
+        self.tree.tag_configure("Error", background=self.red_color, foreground="white")
+        self.tree.tag_configure(
+            "Market", background=self.title_color, foreground=self.fg_color
+        )
+        if bind:
+            self.tree.bind("<<TreeviewSelect>>", bind)
+        self.init(size=size)
+        if hide:
+            self.column_hide = []
+            self.hide_num = 0
+            hide_begin = list(self.tree["columns"])
+            self.column_hide.append(tuple(hide_begin))
+            for num, id_col in enumerate(hide, start=1):
+                self.column_hide.append(hide_begin)
+                self.column_hide[num].remove(id_col)
+                hide_begin = list(self.column_hide[num])
+                self.column_hide[num] = tuple(hide_begin)
+        if multicolor:
+            self.setup_color_cell()
+            self.tree.bind("<Configure>", self.on_window_resize)
+            scroll.resize_init(self.on_scroll_resize)
+            self.tree.bind("<B1-Motion>", self.on_window_resize)
+            self.tree.update()
 
-    def insert(self, row: int, elements: list) -> None:
-        self.height += 1
-        for num, listbox in enumerate(self.listboxes):
-            listbox.config(height=self.height)
-            listbox.insert(row + self.mod, elements[num])
-        if self.height > self.max_rows:
-            self.delete(row=self.height)
+    def init(self, size):
+        self.clear_all()
+        self.cache = list()
+        blank = ["" for _ in self.title]
+        for _ in range(size):
+            self.insert(values=blank)
+            self.cache.append(blank)
+
+    def insert(self, values: list, configure="") -> None:
+        self.tree.insert("", 0, values=values, tags=configure)
+        self.children = self.tree.get_children()
+        if len(self.children) > self.max_rows:
+            self.delete(row=len(self.children) - 1)
 
     def delete(self, row: int) -> None:
-        self.height -= 1
-        for listbox in self.listboxes:
-            listbox.config(height=self.height)
-            listbox.delete(row + self.mod)
+        self.tree.delete(self.children[row])
+        self.children = self.tree.get_children()
 
-    def clear_all(self) -> None:
-        for listbox in self.listboxes:
-            listbox.config(height=self.height)
-            listbox.delete(self.mod, tk.END)
+    def update(self, row: int, values: list) -> None:
+        self.tree.item(self.children[row], values=values)
 
-    def update(self, row: int, elements: list) -> None:
-        pass
-        """color = self.listboxes[0].itemcget(row + self.mod, "background")
-        color_fg = self.listboxes[0].itemcget(row + self.mod, "foreground")
-        self.delete(row + self.mod)
-        self.insert(row + self.mod, elements)
-        self.paint(row + self.mod, color, color_fg)"""
+    def paint(self, row: int, configure: str) -> None:
+        self.tree.item(self.children[row], tags=configure)
 
-    def paint(self, row: int, side: str) -> None:
-        for listbox in self.listboxes:
-            listbox.itemconfig(row + self.mod, **self.item_color[side])
+    def clear_all(self):
+        self.tree.delete(*self.children)
+        self.children = self.tree.get_children()
 
-    def insert_columns(self, sort=True) -> None:
-        """
-        Because the Listbox widget is slow to perform insert operations on
-        macOS, the initial filling of tables is done column-by-column,
-        not row-by-row.
-        """
-        if sort:
-            if self.columns[0]:  # sort by time
-                self.columns = list(zip(*self.columns))
-                self.columns = list(
-                    map(
-                        lambda x: x + (datetime.strptime(x[0], "%y%m%d %H:%M:%S"),),
-                        self.columns,
-                    )
-                )
-                self.columns.sort(key=lambda x: x[-1], reverse=True)
-                self.columns = zip(*self.columns)
-                self.columns = list(
-                    map(lambda x: list(x[: self.table_limit]), self.columns)
-                )[:-1]
-        self.height = len(self.columns[0]) + 1
-        for num, listbox in enumerate(self.listboxes):
-            listbox.delete(self.mod, tk.END)
-            listbox.config(height=self.height)
-            if self.title_on:
-                self.columns[num] = [self.title[num]] + self.columns[num]
-            vars = tk.Variable(value=self.columns[num])
-            listbox.config(listvariable=vars)
-        try:
-            col = self.title.index("SIDE")
-            name = "SIDE"
-        except ValueError:
-            col = self.title.index("PNL")
-            name = "Funding"
-        self.paint_columns(col=col, name=name)
-
-    def paint_columns(self, col: int, name: str) -> None:
-        for num, column in enumerate(self.columns):
-            for row in range(self.mod, len(column)):
-                if name == "Funding":
-                    side = "Buy" if float(self.columns[col][row]) > 0 else "Sell"
-                else:
-                    side = self.columns[col][row]
-                self.listboxes[num].itemconfig(row, **self.item_color[side])
-
-    def clear_columns(self, market: str) -> None:
-        for num, listbox in enumerate(self.listboxes):
-            self.columns[num] = list(listbox.get(self.mod, tk.END))
-        col = self.title.index("MARKET")
-        col_size = len(self.columns[col])
-        for num in range(col_size - 1, -1, -1):
-            if self.columns[col][num] == market:
-                for column in range(len(self.columns)):
-                    self.columns[column].pop(num)
+    def append_data(self, rows: list, market: str) -> list:
+        data = list()
+        if self.children:
+            child = self.children[0]
+            for child in self.children:
+                values = self.tree.item(child)["values"]
+                if values[3] != market:
+                    data.append(values)
+        data += rows
         self.clear_all()
-
-
-def event_width(event, canvas_id, canvas_event):
-    canvas_event.itemconfig(canvas_id, width=event.width)
-
-
-def event_config(event, canvas_event):
-    canvas_event.configure(scrollregion=canvas_event.bbox("all"))
-
-
-def on_enter(event, canvas, scroll):
-    if Variables.ostype == "Linux":
-        canvas.bind_all(
-            "<Button-4>",
-            lambda event: on_mousewheel(event, canvas, scroll),
+        data = list(
+            map(lambda x: x + [datetime.strptime(x[0], "%y%m%d %H:%M:%S")], data)
         )
-        canvas.bind_all(
-            "<Button-5>",
-            lambda event: on_mousewheel(event, canvas, scroll),
-        )
-    else:
-        canvas.bind_all(
-            "<MouseWheel>",
-            lambda event: on_mousewheel(event, canvas, scroll),
-        )
+        data.sort(key=lambda x: x[-1])
+        data = list(map(lambda x: x[:-1], data))
 
+        return data[: self.max_rows]
 
-def on_leave(event, canvas):
-    if Variables.ostype == "Linux":
-        canvas.unbind_all("<Button-4>")
-        canvas.unbind_all("<Button-5>")
-    else:
-        canvas.unbind_all("<MouseWheel>")
+    def set_selection(self):
+        self.tree.selection_add(self.children[0])
 
+    def setup_color_cell(self):
+        self._canvas = list()
+        for _ in range(self.size):
+            lst = list()
+            for num in range(len(self.title)):
+                lst.append(tk.Canvas(self.tree, borderwidth=0, highlightthickness=0))
+                lst[num].text = lst[num].create_text(
+                    10, self.line_height / 2, anchor="w"
+                )
+                lst[num].up = False
+            self._canvas.append(lst)
 
-def on_mousewheel(event, canvas, scroll):
-    slider_position = scroll.get()
-    if slider_position != (0.0, 1.0):  # Scrollbar is not full
-        if Variables.ostype == "Windows":
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        elif Variables.ostype == "Mac":
-            canvas.yview_scroll(int(-1 * event.delta), "units")
+    def show_color_cell(
+        self,
+        text: str,
+        row: int,
+        column: int,
+        bg_color: str,
+        fg_color: str,
+    ):
+        canvas = self._canvas[row][column]
+        s_length = self.symbol_width * len(text)
+        canvas.config(background=bg_color)
+        canvas.itemconfigure(canvas.text, text=text, fill=fg_color)
+        canvas.txt = text
+        bbox = self.tree.bbox(self.children[row], column + 1)
+        if bbox:
+            x, y, width, height = bbox
+            canvas.configure(width=width, height=height)
+            canvas.coords(canvas.text, (max(0, (width - s_length)) / 2, height / 2))
+            canvas.place(x=x, y=y)
+            canvas.up = True
         else:
-            if event.num == 4:
-                canvas.yview_scroll(-1, "units")
-            elif event.num == 5:
-                canvas.yview_scroll(1, "units")
+            canvas.up = "hidden"
+
+    def resize_color_cell(self, bbox: tuple, row: int, column: int):
+        x, y, width, height = bbox
+        canvas = self._canvas[row][column]
+        s_length = self.symbol_width * len(canvas.txt)
+        canvas.configure(width=width, height=height)
+        canvas.coords(canvas.text, (max(0, (width - s_length)) / 2, height / 2))
+        canvas.place(x=x, y=y)
+
+    def hide_color_cell(self, row: int, column: int):
+        canvas = self._canvas[row][column]
+        canvas.configure(width=0, height=0)        
+        canvas.place(x=0, y=0)
+        canvas.up = False
+
+    def clear_color_cell(self):
+        for row in range(self.size):
+            for column in range(len(self.title)):
+                self.hide_color_cell(row, column)
+
+    def on_window_resize(self, event):
+        for row, canvas_list in enumerate(self._canvas):
+            self.count += 1
+            for column, canvas in enumerate(canvas_list):
+                bbox = self.tree.bbox(self.children[row], column + 1)
+                if bbox:
+                    if canvas.up == True:
+                        self.resize_color_cell(bbox, row, column)
+                    elif canvas.up == "hidden":
+                        x, y, width, height = bbox
+                        canvas.configure(width=width, height=height)
+                        s_length = self.symbol_width * len(canvas.txt)
+                        canvas.coords(
+                            canvas.text, (max(0, (width - s_length)) / 2, height / 2)
+                        )
+                        canvas.place(x=x, y=y)
+                        canvas.up = True
+                else:
+                    if canvas.up == True:
+                        self.hide_color_cell(row=row, column=column)
+                        canvas.up = "hidden"
+
+    def on_scroll_resize(self):
+        self.on_window_resize("scroll")
+
+
+class TreeTable:
+    position: TreeviewTable
+    robots: TreeviewTable
+    account: TreeviewTable
+    orderbook: TreeviewTable
+    market: TreeviewTable
+    results: TreeviewTable
+    trades: TreeviewTable
+    funding: TreeviewTable
+    orders: TreeviewTable
 
 
 def text_ignore(event):
@@ -677,5 +538,214 @@ def resize_col(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], width=pw.winfo_width() // ratio)
 
 
-def resize_row(event, pw, ratio):
+def resize_height(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], height=pw.winfo_height() // ratio)
+
+
+def resize_width(event, pw, start_width, min_ratio):
+    ratio = pw.winfo_width() / start_width
+    if ratio < min_ratio:
+        my_width = pw.winfo_width() // min_ratio
+    else:
+        my_width = start_width
+    pw.paneconfig(pw.panes()[0], width=my_width)
+
+
+def trim_col_width(tview, cols):
+    width = tview.winfo_width() // len(cols)
+    for col in cols:
+        tview.column(col, width=width)
+
+
+# Hide / show adaptive columns in order to save space in the tables
+def hide_columns(event):
+    if hasattr(TreeTable, "position"):
+        ratio = (
+            Variables.frame_left.winfo_width() / Variables.left_width
+            if Variables.left_width > 1
+            else 1.0
+        )
+        if ratio < Variables.adaptive_ratio - 0.2:
+            if (
+                TreeTable.position.hide_num != 3
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.position.tree.config(
+                    displaycolumns=TreeTable.position.column_hide[3]
+                )
+                TreeTable.position.hide_num = 3
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[3]
+                )
+            if (
+                TreeTable.orders.hide_num != 3
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[3]
+                )
+                TreeTable.orders.hide_num = 3
+                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[3])
+            if (
+                TreeTable.trades.hide_num != 3
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[3]
+                )
+                TreeTable.trades.hide_num = 3
+                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[3])
+            if (
+                TreeTable.funding.hide_num != 3
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.funding.tree.config(
+                    displaycolumns=TreeTable.funding.column_hide[3]
+                )
+                TreeTable.funding.hide_num = 3
+                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[3])
+            if (
+                TreeTable.robots.hide_num != 2
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[2]
+                )
+                TreeTable.robots.hide_num = 2
+                trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[2])
+        elif ratio < Variables.adaptive_ratio - 0.1:
+            if (
+                TreeTable.position.hide_num != 2
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.position.tree.config(
+                    displaycolumns=TreeTable.position.column_hide[2]
+                )
+                TreeTable.position.hide_num = 2
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[2]
+                )
+            if (
+                TreeTable.orders.hide_num != 2
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[2]
+                )
+                TreeTable.orders.hide_num = 2
+                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[2])
+            if (
+                TreeTable.trades.hide_num != 2
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[2]
+                )
+                TreeTable.trades.hide_num = 2
+                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[2])
+            if (
+                TreeTable.funding.hide_num != 2
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.funding.tree.config(
+                    displaycolumns=TreeTable.funding.column_hide[2]
+                )
+                TreeTable.funding.hide_num = 2
+                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[2])
+            if (
+                TreeTable.robots.hide_num != 1
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[1]
+                )
+                TreeTable.robots.hide_num = 1
+                trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[1])
+        elif ratio < Variables.adaptive_ratio:
+            if (
+                TreeTable.position.hide_num != 1
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.position.tree.config(
+                    displaycolumns=TreeTable.position.column_hide[1]
+                )
+                TreeTable.position.hide_num = 1
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[1]
+                )
+            if (
+                TreeTable.orders.hide_num != 1
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[1]
+                )
+                TreeTable.orders.hide_num = 1
+                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[1])
+            if (
+                TreeTable.trades.hide_num != 1
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[1]
+                )
+                TreeTable.trades.hide_num = 1
+                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[1])
+            if (
+                TreeTable.funding.hide_num != 1
+                or var.current_market != Variables.last_market
+            ):
+                TreeTable.funding.tree.config(
+                    displaycolumns=TreeTable.funding.column_hide[1]
+                )
+                TreeTable.funding.hide_num = 1
+                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[1])
+            if TreeTable.robots.hide_num != 0:
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[0]
+                )
+                TreeTable.robots.hide_num = 0
+                trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[0])
+        elif ratio > Variables.adaptive_ratio:
+            if TreeTable.position.hide_num != 0:
+                TreeTable.position.tree.config(
+                    displaycolumns=TreeTable.position.column_hide[0]
+                )
+                TreeTable.position.hide_num = 0
+                trim_col_width(
+                    TreeTable.position.tree, TreeTable.position.column_hide[0]
+                )
+            if TreeTable.orders.hide_num != 0:
+                TreeTable.orders.tree.config(
+                    displaycolumns=TreeTable.orders.column_hide[0]
+                )
+                TreeTable.orders.hide_num = 0
+                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[0])
+            if TreeTable.trades.hide_num != 0:
+                TreeTable.trades.tree.config(
+                    displaycolumns=TreeTable.trades.column_hide[0]
+                )
+                TreeTable.trades.hide_num = 0
+                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[0])
+            if TreeTable.funding.hide_num != 0:
+                TreeTable.funding.tree.config(
+                    displaycolumns=TreeTable.funding.column_hide[0]
+                )
+                TreeTable.funding.hide_num = 0
+                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[0])
+            if TreeTable.robots.hide_num != 0:
+                TreeTable.robots.tree.config(
+                    displaycolumns=TreeTable.robots.column_hide[0]
+                )
+                TreeTable.robots.hide_num = 0
+                trim_col_width(TreeTable.robots.tree, TreeTable.robots.column_hide[0])
+        Variables.last_market = var.current_market
+
+    now_width = Variables.root.winfo_width()
+    if now_width != Variables.all_width or var.current_market != Variables.last_market:
+        if now_width > Variables.window_width:
+            t = Variables.platform_name.ljust((now_width - Variables.window_width) // 4)
+            Variables.root.title(t)
+        else:
+            Variables.root.title(Variables.platform_name)
+        Variables.all_width = now_width
