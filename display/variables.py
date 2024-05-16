@@ -48,7 +48,7 @@ class Variables:
         window_ratio = 1
         adaptive_ratio = 1
     window_width = int(screen_width * window_ratio)
-    window_height = int(screen_height * 0.7)
+    window_height = int(screen_height)
     root.geometry("{}x{}".format(window_width, window_height))
     all_width = window_width
     left_width = window_width
@@ -481,7 +481,8 @@ class TreeviewTable(Variables):
 
     def hide_color_cell(self, row: int, column: int):
         canvas = self._canvas[row][column]
-        canvas.configure(width=0, height=0)
+        canvas.configure(width=0, height=0)        
+        canvas.place(x=0, y=0)
         canvas.up = False
 
     def clear_color_cell(self):
