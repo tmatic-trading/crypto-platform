@@ -116,6 +116,7 @@ def refresh() -> None:
                 Function.market_status(
                     ws, status="RESTARTING...", message="RESTARTING...", error=True
                 )
+                TreeTable.market.tree.update()
                 setup_market(ws=ws)
                 finish_setup(ws=ws)
                 Function.market_status(ws, status="ONLINE", message="", error=False)

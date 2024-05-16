@@ -30,5 +30,5 @@ def info_display(name: str, message: str) -> None:
         + "\n",
     )
     disp.info_display_counter += 1
-    if disp.info_display_counter > 40:
-        disp.text_info.delete("41.0", "end")
+    if disp.info_display_counter > 300:
+        disp.text_info.delete("301.0", "end")
