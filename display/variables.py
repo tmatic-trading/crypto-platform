@@ -13,10 +13,14 @@ if platform.system() == "Windows":
 
 
 class AutoScrollbar(tk.Scrollbar):
+    def resize_init(self, on_scroll_resize):
+        self.on_scroll_resize = on_scroll_resize
     def set(self, low, high):
         if float(low) <= 0.0 and float(high) >= 1.0:
             self.tk.call("grid", "remove", self)
         else:
+            if hasattr(self, "on_scroll_resize"):
+                self.on_scroll_resize()
             self.grid()
         tk.Scrollbar.set(self, low, high)
 
@@ -325,7 +329,7 @@ class TreeviewTable(Variables):
         bind=None,
         hide=[],
         multicolor=False,
-        autoscroll=True, 
+        autoscroll=False, 
     ) -> None:
         self.title = title
         self.max_rows = 200
@@ -375,8 +379,9 @@ class TreeviewTable(Variables):
         if multicolor:
             self.setup_color_cell()
             self.tree.bind("<Configure>", self.on_window_resize)
-            self.tree.update()
-            self.tree.update()
+            scroll.resize_init(self.on_scroll_resize)
+            self.tree.bind('<B1-Motion>', self.on_window_resize)
+            self.tree.update()            
 
     def init(self, size):
         self.clear_all()
@@ -447,16 +452,18 @@ class TreeviewTable(Variables):
         bg_color: str,
         fg_color: str,
     ):
-        x, y, width, height = self.tree.bbox(self.children[row], column+1)
-        s_length = self.symbol_width * len(text)
-        canvas = self._canvas[row][column]
-        canvas.configure(width=width, height=height)
-        canvas.config(background=bg_color)
-        canvas.coords(canvas.text, (max(0, (width - s_length)) / 2, height / 2))
-        canvas.itemconfigure(canvas.text, text=text, fill=fg_color)
-        canvas.place(x=x, y=y)
-        canvas.txt = text
-        canvas.up = True
+        bbox = self.tree.bbox(self.children[row], column+1)
+        if bbox:
+            x, y, width, height = bbox
+            s_length = self.symbol_width * len(text)
+            canvas = self._canvas[row][column]
+            canvas.configure(width=width, height=height)
+            canvas.config(background=bg_color)
+            canvas.coords(canvas.text, (max(0, (width - s_length)) / 2, height / 2))
+            canvas.itemconfigure(canvas.text, text=text, fill=fg_color)
+            canvas.place(x=x, y=y)
+            canvas.txt = text
+            canvas.up = True
 
     def resize_color_cell(self, bbox: tuple, row: int, column: int):
         x, y, width, height = bbox
@@ -483,6 +490,9 @@ class TreeviewTable(Variables):
                     bbox = self.tree.bbox(self.children[row], column+1)
                     if bbox:
                         self.resize_color_cell(bbox, row, column)
+
+    def on_scroll_resize(self):
+        self.on_window_resize("scroll")
 
 
 class TreeTable:

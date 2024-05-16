@@ -709,10 +709,6 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
-        """
-        Update tkinter labels in the tables
-        """
-        # Refresh Positions table
 
         tree = TreeTable.position
 
@@ -818,7 +814,7 @@ class Function(WS, Variables):
                             else:
                                 TreeTable.orderbook.hide_color_cell(
                                     row=number, column=0
-                                )
+                                    )
                 else:
                     compare = ["", "", ""]
                     if compare != tree.cache[number]:
@@ -1651,6 +1647,7 @@ def load_labels() -> None:
         size=disp.num_book,
         bind=handler_orderbook,
         multicolor=True,
+        autoscroll=True,
     )
     TreeTable.position = TreeviewTable(
         frame=disp.frame_position,
@@ -1659,7 +1656,6 @@ def load_labels() -> None:
         size=len(ws.symbol_list),
         bind=handler_position,
         hide=["9", "8", "2"],
-        autoscroll=False,
     )
     TreeTable.robots = TreeviewTable(
         frame=disp.frame_robots,
@@ -1668,7 +1664,6 @@ def load_labels() -> None:
         size=len(ws.robots),
         bind=handler_robots,
         hide=["6", "3"],
-        autoscroll=False,
     )
     TreeTable.account = TreeviewTable(
         frame=disp.frame_account,
@@ -1676,7 +1671,6 @@ def load_labels() -> None:
         title=var.name_account,
         size=len(ws.Account.get_keys()),
         bind=handler_account,
-        autoscroll=False,
     )
     TreeTable.market = TreeviewTable(
         frame=disp.frame_market,
@@ -1685,6 +1679,7 @@ def load_labels() -> None:
         size=len(var.market_list),
         style="market.Treeview",
         bind=handler_market,
+        autoscroll=True,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,
@@ -1705,7 +1700,6 @@ TreeTable.orders = TreeviewTable(
     title=var.name_order,
     bind=handler_order,
     hide=["8", "3", "5"],
-    autoscroll=False,
 )
 TreeTable.trades = TreeviewTable(
     frame=disp.frame_trades,
@@ -1745,7 +1739,7 @@ def clear_tables():
     TreeTable.orderbook.init(size=disp.num_book)
     TreeTable.results.init(size=len(ws.Result.get_keys()))
     TreeTable.position.set_selection()
-    Function.refresh_tables(ws)
+    #Function.refresh_tables(ws)
     robot_status(ws)
 
 
