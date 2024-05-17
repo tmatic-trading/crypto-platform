@@ -277,9 +277,10 @@ class Init(WS, Variables):
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
                 row = Function.trades_display(self, val=val, init=True)
                 rows.append(row)
+
             data = TreeTable.trades.append_data(rows=rows, market=self.name)
             indx = TreeTable.trades.title.index("SIDE")
-            for values in data:
+            for values in reversed(data):
                 TreeTable.trades.insert(values=values, configure=values[indx])
         else:
             self.logNumFatal = 1001

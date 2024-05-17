@@ -318,7 +318,7 @@ class Variables:
     handler_orderbook_symbol = tuple()
     book_window_trigger = "off"
     order_window_trigger = "off"
-    table_limit = 150
+    table_limit = 200
 
 
 class TreeviewTable(Variables):
@@ -420,7 +420,6 @@ class TreeviewTable(Variables):
     def append_data(self, rows: list, market: str) -> list:
         data = list()
         if self.children:
-            child = self.children[0]
             for child in self.children:
                 values = self.tree.item(child)["values"]
                 if values[3] != market:
@@ -430,7 +429,7 @@ class TreeviewTable(Variables):
         data = list(
             map(lambda x: x + [datetime.strptime(x[0], "%y%m%d %H:%M:%S")], data)
         )
-        data.sort(key=lambda x: x[-1])
+        data.sort(key=lambda x: x[-1], reverse=True)
         data = list(map(lambda x: x[:-1], data))
 
         return data[: self.max_rows]
