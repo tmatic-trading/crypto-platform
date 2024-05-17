@@ -181,13 +181,8 @@ def trade_state(event) -> None:
         disp.f9 = "OFF"
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
-        for num, market in enumerate(var.market_list):
+        for market in var.market_list:
             Markets[market].logNumFatal = 0
-            # Tables.market.color_market(state="online", row=num, market=market)
-            if market == var.current_market:
-                TreeTable.market.paint(row=num, configure="Select")
-            else:
-                TreeTable.market.paint(row=num, configure="Market")
             print(market, disp.f9)
 
 
