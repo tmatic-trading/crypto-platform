@@ -11,9 +11,9 @@ def noll(val: str, length: int) -> str:
     return r + val
 
 
-def info_display(
-    name: str, message: str, tm=datetime.now(tz=timezone.utc), warning=False
-) -> None:
+def info_display(name: str, message: str, tm=None, warning=False) -> None:
+    if not tm:
+        tm = datetime.now(tz=timezone.utc)
     disp.text_info.insert(
         "1.0",
         noll(str(tm.hour), 2)

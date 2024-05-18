@@ -5,7 +5,6 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from sqlite3 import Error
 
-import services as service
 from api.api import WS, Markets
 from api.init import Variables
 from common.variables import Variables as var

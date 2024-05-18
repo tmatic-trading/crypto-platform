@@ -497,7 +497,7 @@ class TreeviewTable(Variables):
             for column, canvas in enumerate(canvas_list):
                 bbox = self.tree.bbox(self.children[row], column + 1)
                 if bbox:
-                    if canvas.up == True:
+                    if canvas.up is True:
                         self.resize_color_cell(bbox, row, column)
                     elif canvas.up == "hidden":
                         x, y, width, height = bbox
@@ -509,7 +509,7 @@ class TreeviewTable(Variables):
                         canvas.place(x=x, y=y)
                         canvas.up = True
                 else:
-                    if canvas.up == True:
+                    if canvas.up is True:
                         self.hide_color_cell(row=row, column=column)
                         canvas.up = "hidden"
 
