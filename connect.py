@@ -1,5 +1,4 @@
 import concurrent.futures
-import os
 import threading
 import time
 from collections import OrderedDict
@@ -98,7 +97,12 @@ def finish_setup(ws: Markets):
 def refresh() -> None:
     while not var.info_queue.empty():
         info = var.info_queue.get()
-        info_display(info["market"], info["message"])
+        info_display(
+            name=info["market"],
+            message=info["message"],
+            tm=info["time"],
+            warning=info["warning"],
+        )
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)

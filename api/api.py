@@ -1,6 +1,6 @@
 import threading
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Union
 
@@ -71,7 +71,12 @@ class WS(Variables):
         [thread.join() for thread in threads]
         if self.logNumFatal == 0:
             var.info_queue.put(
-                {"market": self.name, "message": "Connected to websocket."}
+                {
+                    "market": self.name,
+                    "message": "Connected to websocket.",
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": False,
+                }
             )
 
     def exit(self: Markets) -> None:

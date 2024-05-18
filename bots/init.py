@@ -264,7 +264,6 @@ class Init(WS, Variables):
             "Downloaded missing data, symbol=" + str(symbol) + " TIMEFR=" + str(timefr)
         )
         var.logger.info(message)
-        # var.info_queue.put({"market": self.name, "message": message})
 
         return frames
 

@@ -34,7 +34,18 @@ class Send(Variables):
             else:
                 self.logger.error(textNow)
                 if codeNow > self.logNumFatal:
-                    self.logNumFatal = codeNow
+                    var.info_queue.put(
+                        {
+                            "market": self.name,
+                            "message": textNow,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": True,
+                        }
+                    )
+                    if codeNow == 3:
+                        self.logNumFatal = 0
+                    else:
+                        self.logNumFatal = codeNow
 
         url = self.http_url + path
         cur_retries = 1
@@ -153,7 +164,12 @@ class Send(Variables):
                         )  # impossible situation => stop trading
                     elif "insufficient available balance" in message:
                         var.info_queue.put(
-                            {"market": self.name, "message": error["message"]}
+                            {
+                                "market": self.name,
+                                "message": error["message"],
+                                "time": datetime.now(tz=timezone.utc),
+                                "warning": True,
+                            }
                         )
                         info_warn_err(
                             "ERROR",
@@ -212,7 +228,12 @@ class Send(Variables):
                     errCode,
                 )
                 var.info_queue.put(
-                    {"market": self.name, "message": "Websocket. Timed out on request"}
+                    {
+                        "market": self.name,
+                        "message": "Websocket. Timed out on request",
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
                 )
 
             except requests.exceptions.ConnectionError as e:
@@ -223,7 +244,12 @@ class Send(Variables):
                     1002,
                 )
                 var.info_queue.put(
-                    {"market": self.name, "message": "Websocket. Unable to contact API"}
+                    {
+                        "market": self.name,
+                        "message": "Websocket. Unable to contact API",
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
                 )
                 cur_retries += 1
             if postData:  # trading orders (POST, PUT, DELETE)
@@ -244,6 +270,8 @@ class Send(Variables):
                         {
                             "market": self.name,
                             "message": "ERROR, Max retries hit. Reboot",
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": True,
                         }
                     )
                     break

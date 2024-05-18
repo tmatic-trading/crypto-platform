@@ -482,7 +482,7 @@ class TreeviewTable(Variables):
 
     def hide_color_cell(self, row: int, column: int):
         canvas = self._canvas[row][column]
-        canvas.configure(width=0, height=0)        
+        canvas.configure(width=0, height=0)
         canvas.place(x=0, y=0)
         canvas.up = False
 

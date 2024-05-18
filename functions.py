@@ -702,7 +702,7 @@ class Function(WS, Variables):
         if self.logNumFatal == 0:
             if utc > self.message_time + timedelta(seconds=10):
                 if self.message_counter == self.message_point:
-                    info_display(self.name, "No data within 10 sec")
+                    info_display(self.name, "No data within 10 sec", warning=True)
                     WS.urgent_announcement(self)
                 self.message_time = utc
                 self.message_point = self.message_counter
