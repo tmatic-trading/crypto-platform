@@ -280,7 +280,7 @@ class Init(WS, Variables):
 
             data = TreeTable.trades.append_data(rows=rows, market=self.name)
             indx = TreeTable.trades.title.index("SIDE")
-            for values in reversed(data):
+            for values in data:
                 TreeTable.trades.insert(values=values, configure=values[indx])
         else:
             self.logNumFatal = 1001

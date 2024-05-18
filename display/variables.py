@@ -432,7 +432,7 @@ class TreeviewTable(Variables):
         data.sort(key=lambda x: x[-1], reverse=True)
         data = list(map(lambda x: x[:-1], data))
 
-        return data[: self.max_rows]
+        return reversed(data[: self.max_rows])
 
     def set_selection(self):
         self.tree.selection_add(self.children[0])
