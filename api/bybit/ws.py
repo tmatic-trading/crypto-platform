@@ -331,7 +331,12 @@ class Bybit(Variables):
                 }
                 if value["orderLinkId"]:
                     row["clOrdID"] = value["orderLinkId"]
-                self.transaction(row=row)
+                try:
+                    var.lock.acquire(True)
+                    self.transaction(row=row)
+                    var.lock.release()
+                except Exception:
+                    var.lock.release()                
 
     def __handle_execution(self, values):
         for row in values["data"]:
@@ -374,7 +379,12 @@ class Bybit(Variables):
                 row["settlCurrency"] = (row["feeCurrency"], self.name)
             else:
                 row["settlCurrency"] = instrument.settlCurrency
-            self.transaction(row=row)
+            try:
+                var.lock.acquire(True)
+                self.transaction(row=row)
+                var.lock.release()
+            except Exception:
+                var.lock.release()
 
     def exit(self):
         """

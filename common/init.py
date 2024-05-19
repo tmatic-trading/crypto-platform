@@ -80,7 +80,12 @@ class Init(WS, Variables):
                     % (row["execID"], self.user_id),
                 )
                 if not data:
-                    Function.transaction(self, row=row, info=" History ")
+                    try:
+                        var.lock.acquire(True)
+                        Function.transaction(self, row=row, info=" History ")
+                        var.lock.release()
+                    except Exception:
+                        var.lock.release()
             last_history_time = history[-1]["transactTime"]
             if self.logNumFatal == 0:
                 Init.save_history_file(self, time=last_history_time)
@@ -236,7 +241,7 @@ class Init(WS, Variables):
         """
         if self.user_id:
             sql = (
-                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY, "
+                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
                 + "PRICE, TTIME, COMMISS from "
                 + "coins where SIDE = 'Fund' and ACCOUNT = "
                 + str(self.user_id)
@@ -260,7 +265,7 @@ class Init(WS, Variables):
                     configure = "Sell"
                 TreeTable.funding.insert(values=values, configure=configure)
             sql = (
-                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
+                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
                 + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
                 + "coins where SIDE <> 'Fund' and ACCOUNT = "
                 + str(self.user_id)
@@ -276,7 +281,6 @@ class Init(WS, Variables):
                 val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
                 row = Function.trades_display(self, val=val, init=True)
                 rows.append(row)
-
             data = TreeTable.trades.append_data(rows=rows, market=self.name)
             indx = TreeTable.trades.title.index("SIDE")
             for values in data:

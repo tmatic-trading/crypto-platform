@@ -13,6 +13,7 @@ import services as service
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
+from common.variables import Variables as var
 
 from .api_auth import generate_signature
 
@@ -259,7 +260,12 @@ class Bitmex(Variables):
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
                             val["execFee"] = None
-                            self.transaction(row=val)
+                            try:
+                                var.lock.acquire(True)
+                                self.transaction(row=val)
+                                var.lock.release()
+                            except Exception:
+                                var.lock.release()
                         else:
                             self.data[table_name][key] = val
                 elif action == "update":

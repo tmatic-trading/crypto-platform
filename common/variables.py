@@ -1,3 +1,4 @@
+import threading
 import logging
 import os
 import queue
@@ -141,3 +142,4 @@ class Variables:
     refresh_hour = datetime.now(tz=timezone.utc).hour
     robots_thread_is_active = False
     info_queue = queue.Queue()
+    lock = threading.Lock()
