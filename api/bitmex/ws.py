@@ -56,6 +56,7 @@ class Bitmex(Variables):
         self.frames = dict()
         self.robot_status = dict()
         self.setup_orders = list()
+        self.setup_frames = None
         self.account_disp = ""
 
     def start(self):

@@ -328,9 +328,10 @@ class Init(WS, Variables):
         [thread.join() for thread in threads]
         for s in success:
             if not s:
-                return s
+                self.setup_frames = None
+                return
 
-        return self.frames
+        self.setup_frames = "success"
 
     def delete_unused_robot(self: Markets) -> None:
         """

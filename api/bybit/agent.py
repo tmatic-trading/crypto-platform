@@ -260,6 +260,7 @@ class Agent(Bybit):
                         threads.append(t)
                         t.start()
         [thread.join() for thread in threads]
+        self.setup_orders = myOrders
 
         return myOrders
 

@@ -200,6 +200,7 @@ class Agent(Bitmex):
             order["transactTime"] = service.time_converter(
                 time=order["transactTime"], usec=True
             )
+        self.setup_orders = orders
 
         return orders
 

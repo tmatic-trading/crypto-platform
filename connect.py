@@ -1,4 +1,3 @@
-import concurrent.futures
 import threading
 import time
 from collections import OrderedDict
@@ -66,15 +65,18 @@ def setup_market(ws: Markets):
             common.Init.clear_params(ws)
             if bots.Init.load_robots(ws):
                 algo.init_algo(ws)
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    frames = executor.submit(get_timeframes, ws)
-                    executor.submit(get_history, ws)
-                    open_orders = executor.submit(get_orders, ws)
-                    frames = frames.result()
-                    ws.setup_orders = open_orders.result()
-                if isinstance(frames, dict):
-                    pass
-                else:
+                threads = []
+                t = threading.Thread(target=get_timeframes, args=(ws,))
+                threads.append(t)
+                t.start()
+                t = threading.Thread(target=get_history, args=(ws,))
+                threads.append(t)
+                t.start()
+                t = threading.Thread(target=get_orders, args=(ws,))
+                threads.append(t)
+                t.start()
+                [thread.join() for thread in threads]
+                if not ws.setup_frames:
                     var.logger.info("Error during loading timeframes.")
                     WS.exit(ws)
                     ws.logNumFatal = -1
