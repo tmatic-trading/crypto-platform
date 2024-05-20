@@ -123,7 +123,7 @@ def refresh() -> None:
                 sleep(1)
             elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
                 Function.market_status(
-                    ws, status="RESTARTING...", message="RESTARTING...", error=True
+                    ws, status="RESTARTING...", message="Restarting...", error=True
                 )
                 TreeTable.market.tree.update()
                 setup_market(ws=ws)

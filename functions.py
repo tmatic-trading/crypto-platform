@@ -757,10 +757,6 @@ class Function(WS, Variables):
             count = 0
             for number in range(start, end, direct):
                 if len(val) > count:
-                    compare = [
-                        val[count][0],
-                        val[count][1],
-                    ]
                     qty = find_order(val[count][0], symbol=var.symbol)
                     if side == "bids":
                         compare = [val[count][0], val[count][1], qty]
@@ -999,9 +995,9 @@ class Function(WS, Variables):
 
     def close_price(self: Markets, symbol: tuple, pos: int) -> float:
         instrument = self.Instrument[symbol]
-        if pos > 0 and instrument.bids[0]:
+        if pos > 0 and instrument.bids:
             close = instrument.bids[0][0]
-        elif pos <= 0 and instrument.asks[0]:
+        elif pos <= 0 and instrument.asks:
             close = instrument.asks[0][0]
         else:
             close = None
@@ -1261,6 +1257,12 @@ def handler_orderbook(event) -> None:
     disp.handler_orderbook_symbol = var.symbol
     ws = Markets[var.current_market]
 
+    def first_price(prices: list) -> float:
+        if prices:
+            return prices[0][0]
+        else:
+            return "None"             
+
     def refresh() -> None:
         nonlocal ws
         book_window.title(var.symbol)
@@ -1271,7 +1273,7 @@ def handler_orderbook(event) -> None:
                 0,
                 Function.format_price(
                     ws,
-                    number=ws.Instrument[var.symbol].asks[0][0],
+                    number=first_price(ws.Instrument[var.symbol].asks),
                     symbol=var.symbol,
                 ),
             )
@@ -1280,7 +1282,7 @@ def handler_orderbook(event) -> None:
                 0,
                 Function.format_price(
                     ws,
-                    number=ws.Instrument[var.symbol].bids[0][0],
+                    number=first_price(ws.Instrument[var.symbol].bids),
                     symbol=var.symbol,
                 ),
             )
@@ -1430,7 +1432,7 @@ def handler_orderbook(event) -> None:
             0,
             Function.format_price(
                 ws,
-                number=instrument.asks[0][0],
+                number=first_price(instrument.asks),
                 symbol=var.symbol,
             ),
         )
@@ -1438,7 +1440,7 @@ def handler_orderbook(event) -> None:
             0,
             Function.format_price(
                 ws,
-                number=instrument.bids[0][0],
+                number=first_price(instrument.bids),
                 symbol=var.symbol,
             ),
         )

@@ -344,9 +344,9 @@ class Bitmex(Variables):
             if "bidPrice" in values:
                 instrument.bids = [[values["bidPrice"], values["bidSize"]]]
         else:
-            if "asks" in values and values["asks"]:
+            if "asks" in values:
                 instrument.asks = values["asks"]
-            if "bids" in values and values["bids"]:
+            if "bids" in values:
                 instrument.bids = values["bids"]
         self.frames_hi_lo_values(symbol=symbol)
 

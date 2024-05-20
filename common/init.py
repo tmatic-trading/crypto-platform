@@ -241,7 +241,7 @@ class Init(WS, Variables):
         """
         if self.user_id:
             sql = (
-                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
+                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
                 + "PRICE, TTIME, COMMISS from "
                 + "coins where SIDE = 'Fund' and ACCOUNT = "
                 + str(self.user_id)
