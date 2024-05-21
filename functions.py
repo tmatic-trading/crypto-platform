@@ -449,13 +449,13 @@ class Function(WS, Variables):
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in var.orders:
                 TreeTable.orders.delete(row=Function.order_number(self, clOrdID))
-                del var.orders[clOrdID]           
+                del var.orders[clOrdID]   
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in var.orders:
                 TreeTable.orders.delete(row=Function.order_number(self, clOrdID))
-                del var.orders[clOrdID]            
+                del var.orders[clOrdID] 
         else:
             if row["execType"] == "New":
                 if "clOrdID" in row:
@@ -485,13 +485,13 @@ class Function(WS, Variables):
             elif row["execType"] == "Trade":
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
-                if clOrdID in var.orders:
+                if clOrdID in var.orders:   
                     TreeTable.orders.delete(row=Function.order_number(self, clOrdID))                    
-                    var.orders.move_to_end(clOrdID, last=False)
+                    var.orders.move_to_end(clOrdID, last=False)   
             elif row["execType"] == "Replaced":
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
-                info_q = row["leavesQty"]
+                info_q = row["leavesQty"] 
                 TreeTable.orders.delete(row=Function.order_number(self, clOrdID))                
                 var.orders.move_to_end(clOrdID, last=False)
             if (
@@ -535,7 +535,7 @@ class Function(WS, Variables):
             info_q,
         )
         if clOrdID in var.orders:
-            Function.orders_display(self, val=var.orders[clOrdID])
+            Function.orders_display(self, val=var.orders[clOrdID])  
 
     def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """

@@ -80,11 +80,10 @@ class Init(WS, Variables):
                     % (row["execID"], self.user_id),
                 )
                 if not data:
-                    try:
-                        var.lock.acquire(True)
+                    var.lock.acquire(True)
+                    try:                        
                         Function.transaction(self, row=row, info=" History ")
-                        var.lock.release()
-                    except Exception:
+                    finally:
                         var.lock.release()
             last_history_time = history[-1]["transactTime"]
             if self.logNumFatal == 0:

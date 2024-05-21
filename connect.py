@@ -86,14 +86,13 @@ def setup_market(ws: Markets):
 
 
 def finish_setup(ws: Markets):
-    try:
-        var.lock.acquire(True)
+    var.lock.acquire(True)
+    try:        
         common.Init.load_database(ws)
         common.Init.account_balances(ws)
-        common.Init.load_orders(ws, ws.setup_orders)        
+        common.Init.load_orders(ws, ws.setup_orders)   
         bots.Init.delete_unused_robot(ws)
-        var.lock.release()
-    except Exception:
+    finally:
         var.lock.release()
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
@@ -147,7 +146,6 @@ def refresh() -> None:
 
 def clear_params():
     var.orders = OrderedDict()
-    var.current_market = var.market_list[0]
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
     disp.symb_book = ()
 
