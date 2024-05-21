@@ -23,7 +23,6 @@ class Variables:
     timeoutOccurred = ""
     depth = var.order_book_depth
     message_counter = 0
-    message_point = 0
     connect_count = 0
     user_id = None
     user = dict()

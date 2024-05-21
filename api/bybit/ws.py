@@ -332,11 +332,10 @@ class Bybit(Variables):
                 }
                 if value["orderLinkId"]:
                     row["clOrdID"] = value["orderLinkId"]
+                var.lock.acquire(True)
                 try:
-                    var.lock.acquire(True)
                     self.transaction(row=row)
-                    var.lock.release()
-                except Exception:
+                finally:
                     var.lock.release()                
 
     def __handle_execution(self, values):
@@ -380,11 +379,10 @@ class Bybit(Variables):
                 row["settlCurrency"] = (row["feeCurrency"], self.name)
             else:
                 row["settlCurrency"] = instrument.settlCurrency
+            var.lock.acquire(True)
             try:
-                var.lock.acquire(True)
                 self.transaction(row=row)
-                var.lock.release()
-            except Exception:
+            finally:
                 var.lock.release()
 
     def exit(self):
@@ -408,4 +406,8 @@ class Bybit(Variables):
         This method is replaced by transaction() from functions.py after the
         application is launched.
         """
+        pass
+
+
+    def ping_pong(self):
         pass

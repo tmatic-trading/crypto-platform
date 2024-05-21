@@ -449,7 +449,7 @@ class Function(WS, Variables):
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in var.orders:
                 TreeTable.orders.delete(row=Function.order_number(self, clOrdID))
-                del var.orders[clOrdID]   
+                del var.orders[clOrdID]
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
@@ -485,15 +485,15 @@ class Function(WS, Variables):
             elif row["execType"] == "Trade":
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
-                if clOrdID in var.orders:   
+                if clOrdID in var.orders:
                     TreeTable.orders.delete(row=Function.order_number(self, clOrdID))                    
-                    var.orders.move_to_end(clOrdID, last=False)   
+                    var.orders.move_to_end(clOrdID, last=False)
             elif row["execType"] == "Replaced":
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
-                info_q = row["leavesQty"] 
+                info_q = row["leavesQty"]
                 TreeTable.orders.delete(row=Function.order_number(self, clOrdID))                
-                var.orders.move_to_end(clOrdID, last=False)
+                var.orders.move_to_end(clOrdID, last=False)   
             if (
                 clOrdID in var.orders
             ):  # var.orders might be empty if we are here from trading_history()
@@ -535,7 +535,7 @@ class Function(WS, Variables):
             info_q,
         )
         if clOrdID in var.orders:
-            Function.orders_display(self, val=var.orders[clOrdID])  
+            Function.orders_display(self, val=var.orders[clOrdID])
 
     def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -701,11 +701,15 @@ class Function(WS, Variables):
             disp.label_f9.config(bg=disp.red_color)
         if self.logNumFatal == 0:
             if utc > self.message_time + timedelta(seconds=10):
-                if self.message_counter == self.message_point:
+                if self.message_counter == 0:
                     info_display(self.name, "No data within 10 sec", warning=True)
-                    WS.urgent_announcement(self)
+                    WS.ping_pong(self)
+                    self.message_counter = 1000000000
+                elif self.message_counter == 1000000000:
+                    self.logNumFatal = 1001
+                else:
+                    self.message_counter = 0               
                 self.message_time = utc
-                self.message_point = self.message_counter
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:

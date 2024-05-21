@@ -87,10 +87,10 @@ def setup_market(ws: Markets):
 
 def finish_setup(ws: Markets):
     var.lock.acquire(True)
-    try:        
+    try:    
         common.Init.load_database(ws)
         common.Init.account_balances(ws)
-        common.Init.load_orders(ws, ws.setup_orders)   
+        common.Init.load_orders(ws, ws.setup_orders) 
         bots.Init.delete_unused_robot(ws)
     finally:
         var.lock.release()
@@ -98,6 +98,7 @@ def finish_setup(ws: Markets):
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
     ws.api_is_active = True
+    ws.message_time = datetime.now(tz=timezone.utc)
 
 
 def refresh() -> None:

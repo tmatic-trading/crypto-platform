@@ -186,21 +186,25 @@ class Bitmex(Variables):
                 break
             sleep(0.1)
 
+    def ping_pong(self):
+        self.ws.send("ping")
+
     def __on_message(self, ws, message) -> None:
         """
         Parses websocket messages.
         """
-
+        self.message_counter = self.message_counter + 1
+        if message == "pong":
+            return
         def generate_key(keys: list, val: dict, table: str) -> tuple:
             if "symbol" in keys:
                 val["category"] = self.symbol_category[val["symbol"]]
             val["market"] = self.name
             return tuple((val[key]) for key in keys)
-
+        
         message = json.loads(message)
         action = message["action"] if "action" in message else None
         table = message["table"] if "table" in message else None
-        self.message_counter = self.message_counter + 1
         try:
             if action:
                 table_name = "orderBook" if table == "orderBook10" else table
@@ -261,11 +265,10 @@ class Bitmex(Variables):
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
                             val["execFee"] = None
-                            try:
-                                var.lock.acquire(True)
+                            var.lock.acquire(True)
+                            try:                                
                                 self.transaction(row=val)
-                                var.lock.release()
-                            except Exception:
+                            finally:
                                 var.lock.release()
                         else:
                             self.data[table_name][key] = val
