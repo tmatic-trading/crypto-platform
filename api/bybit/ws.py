@@ -332,11 +332,7 @@ class Bybit(Variables):
                 }
                 if value["orderLinkId"]:
                     row["clOrdID"] = value["orderLinkId"]
-                var.lock.acquire(True)
-                try:
-                    self.transaction(row=row)
-                finally:
-                    var.lock.release()                
+                self.transaction(row=row)              
 
     def __handle_execution(self, values):
         for row in values["data"]:
@@ -379,11 +375,7 @@ class Bybit(Variables):
                 row["settlCurrency"] = (row["feeCurrency"], self.name)
             else:
                 row["settlCurrency"] = instrument.settlCurrency
-            var.lock.acquire(True)
-            try:
-                self.transaction(row=row)
-            finally:
-                var.lock.release()
+            self.transaction(row=row)
 
     def exit(self):
         """

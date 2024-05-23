@@ -49,9 +49,6 @@ def setup_market(ws: Markets):
     def get_history(ws):
         common.Init.load_trading_history(ws)
 
-    def get_orders(ws):
-        return WS.open_orders(ws)
-
     ws.logNumFatal = -1
     ws.api_is_active = False
     WS.exit(ws)
@@ -70,9 +67,6 @@ def setup_market(ws: Markets):
                 threads.append(t)
                 t.start()
                 t = threading.Thread(target=get_history, args=(ws,))
-                threads.append(t)
-                t.start()
-                t = threading.Thread(target=get_orders, args=(ws,))
                 threads.append(t)
                 t.start()
                 [thread.join() for thread in threads]

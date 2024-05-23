@@ -190,8 +190,13 @@ class Agent(Bitmex):
             return "error"
 
     def open_orders(self) -> list:
-        orders = self.data["order"].values()
-        for order in orders:
+        path = Listing.OPEN_ORDERS
+        res = Send.request(
+            self,
+            path=path,
+            verb="GET",
+        )
+        for order in res:
             order["symbol"] = (
                 order["symbol"],
                 self.symbol_category[order["symbol"]],
@@ -200,9 +205,9 @@ class Agent(Bitmex):
             order["transactTime"] = service.time_converter(
                 time=order["transactTime"], usec=True
             )
-        self.setup_orders = orders
+        self.setup_orders = res
 
-        return orders
+        return res
 
     def urgent_announcement(self) -> list:
         """

@@ -49,6 +49,7 @@ class WS(Variables):
             method(self)
 
         Agents[self.name].value.get_active_instruments(self)
+        Agents[self.name].value.open_orders(self)
         threads = []
         t = threading.Thread(target=start_ws_in_thread)
         threads.append(t)

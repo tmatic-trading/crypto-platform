@@ -43,10 +43,10 @@ class Bitmex(Variables):
             "margin",
             "execution",
             "instrument",
-            "order",
             "position",
-            # "trade",
             depth,
+            # "order",
+            # "trade",
         }
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
@@ -264,12 +264,8 @@ class Bitmex(Variables):
                                 if val["foreignNotional"] > 0:
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
-                            val["execFee"] = None
-                            var.lock.acquire(True)
-                            try:                                
-                                self.transaction(row=val)
-                            finally:
-                                var.lock.release()
+                            val["execFee"] = None                             
+                            self.transaction(row=val)
                         else:
                             self.data[table_name][key] = val
                 elif action == "update":

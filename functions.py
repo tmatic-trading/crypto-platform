@@ -158,157 +158,210 @@ class Function(WS, Variables):
         """
         Trades and funding processing
         """
-        Function.add_symbol(self, symbol=row["symbol"])
+        var.lock.acquire(True)
+        try: 
+            Function.add_symbol(self, symbol=row["symbol"])
 
-        # Trade
+            # Trade
 
-        if row["execType"] == "Trade":
-            results = self.Result[row["settlCurrency"]]
-            if "clOrdID" in row:
-                dot = row["clOrdID"].find(".")
-                if (
-                    dot == -1
-                ):  # The transaction was done from the exchange web interface,
-                    # the clOrdID field is missing or clOrdID does not have EMI number
-                    emi = ".".join(row["symbol"][:2])
-                    refer = ""
-                    if row["clOrdID"] == "":
-                        clientID = 0
+            if row["execType"] == "Trade":
+                results = self.Result[row["settlCurrency"]]
+                if "clOrdID" in row:
+                    dot = row["clOrdID"].find(".")
+                    if (
+                        dot == -1
+                    ):  # The transaction was done from the exchange web interface,
+                        # the clOrdID field is missing or clOrdID does not have EMI number
+                        emi = ".".join(row["symbol"][:2])
+                        refer = ""
+                        if row["clOrdID"] == "":
+                            clientID = 0
+                        else:
+                            clientID = int(row["clOrdID"])
                     else:
-                        clientID = int(row["clOrdID"])
+                        emi = row["clOrdID"][dot + 1 :]
+                        clientID = row["clOrdID"][:dot]
+                        refer = emi
                 else:
-                    emi = row["clOrdID"][dot + 1 :]
-                    clientID = row["clOrdID"][:dot]
-                    refer = emi
-            else:
-                emi = ".".join(row["symbol"][:2])
-                clientID = 0
-                refer = ""
-            if emi not in self.robots:
-                emi = ".".join(row["symbol"][:2])
+                    emi = ".".join(row["symbol"][:2])
+                    clientID = 0
+                    refer = ""
                 if emi not in self.robots:
-                    if row["symbol"] in self.symbol_list:
-                        status = "RESERVED"
-                    else:
-                        status = "NOT IN LIST"
-                    self.robots[emi] = {
-                        "STATUS": status,
-                        "TIMEFR": None,
-                        "EMI": emi,
-                        "SYMBOL": row["symbol"],
-                        "CATEGORY": row["symbol"][1],
-                        "MARKET": self.name,
-                        "POS": 0,
-                        "VOL": 0,
-                        "COMMISS": 0,
-                        "SUMREAL": 0,
-                        "LTIME": row["transactTime"],
-                        "PNL": 0,
-                        "CAPITAL": None,
-                    }
-                    message = (
-                        "Robot EMI="
-                        + str(emi)
-                        + ". Adding to 'robots' with STATUS="
-                        + status
-                    )
-                    if not info:
-                        info_display(self.name, message)
-                    var.logger.info(message)
-            data = Function.select_database(  # read_database
-                self,
-                "select EXECID from coins where EXECID='%s' and account=%s"
-                % (row["execID"], self.user_id),
-            )
-            if not data:
-                lastQty = row["lastQty"]
-                leavesQty = row["leavesQty"]
-                if row["side"] == "Sell":
-                    lastQty = -row["lastQty"]
-                    leavesQty = -row["leavesQty"]
-                calc = Function.calculate(
+                    emi = ".".join(row["symbol"][:2])
+                    if emi not in self.robots:
+                        if row["symbol"] in self.symbol_list:
+                            status = "RESERVED"
+                        else:
+                            status = "NOT IN LIST"
+                        self.robots[emi] = {
+                            "STATUS": status,
+                            "TIMEFR": None,
+                            "EMI": emi,
+                            "SYMBOL": row["symbol"],
+                            "CATEGORY": row["symbol"][1],
+                            "MARKET": self.name,
+                            "POS": 0,
+                            "VOL": 0,
+                            "COMMISS": 0,
+                            "SUMREAL": 0,
+                            "LTIME": row["transactTime"],
+                            "PNL": 0,
+                            "CAPITAL": None,
+                        }
+                        message = (
+                            "Robot EMI="
+                            + str(emi)
+                            + ". Adding to 'robots' with STATUS="
+                            + status
+                        )
+                        if not info:
+                            info_display(self.name, message)
+                        var.logger.info(message)
+                data = Function.select_database(  # read_database
                     self,
-                    symbol=row["symbol"],
-                    price=row["lastPx"],
-                    qty=float(lastQty),
-                    rate=row["commission"],
-                    fund=1,
-                    execFee=row["execFee"],
+                    "select EXECID from coins where EXECID='%s' and account=%s"
+                    % (row["execID"], self.user_id),
                 )
-                if row["symbol"][1] != "spot":
-                    self.robots[emi]["POS"] += lastQty
-                    self.robots[emi]["POS"] = round(
-                        self.robots[emi]["POS"],
-                        self.Instrument[row["symbol"]].precision,
+                if not data:
+                    lastQty = row["lastQty"]
+                    leavesQty = row["leavesQty"]
+                    if row["side"] == "Sell":
+                        lastQty = -row["lastQty"]
+                        leavesQty = -row["leavesQty"]
+                    calc = Function.calculate(
+                        self,
+                        symbol=row["symbol"],
+                        price=row["lastPx"],
+                        qty=float(lastQty),
+                        rate=row["commission"],
+                        fund=1,
+                        execFee=row["execFee"],
                     )
-                self.robots[emi]["VOL"] += abs(lastQty)
-                self.robots[emi]["COMMISS"] += calc["commiss"]
-                self.robots[emi]["SUMREAL"] += calc["sumreal"]
-                self.robots[emi]["LTIME"] = row["transactTime"]
-                results.commission += calc["commiss"]
-                results.sumreal += calc["sumreal"]
-                values = [
-                    row["execID"],
-                    emi,
-                    refer,
-                    row["settlCurrency"][0],
-                    row["symbol"][0],
-                    row["symbol"][1],
-                    self.name,
-                    row["side"],
-                    lastQty,
-                    leavesQty,
-                    row["price"],
-                    0,
-                    row["lastPx"],
-                    calc["sumreal"],
-                    calc["commiss"],
-                    clientID,
-                    row["transactTime"],
-                    self.user_id,
-                ]
-                Function.insert_database(self, values=values)
+                    if row["symbol"][1] != "spot":
+                        self.robots[emi]["POS"] += lastQty
+                        self.robots[emi]["POS"] = round(
+                            self.robots[emi]["POS"],
+                            self.Instrument[row["symbol"]].precision,
+                        )
+                    self.robots[emi]["VOL"] += abs(lastQty)
+                    self.robots[emi]["COMMISS"] += calc["commiss"]
+                    self.robots[emi]["SUMREAL"] += calc["sumreal"]
+                    self.robots[emi]["LTIME"] = row["transactTime"]
+                    results.commission += calc["commiss"]
+                    results.sumreal += calc["sumreal"]
+                    values = [
+                        row["execID"],
+                        emi,
+                        refer,
+                        row["settlCurrency"][0],
+                        row["symbol"][0],
+                        row["symbol"][1],
+                        self.name,
+                        row["side"],
+                        lastQty,
+                        leavesQty,
+                        row["price"],
+                        0,
+                        row["lastPx"],
+                        calc["sumreal"],
+                        calc["commiss"],
+                        clientID,
+                        row["transactTime"],
+                        self.user_id,
+                    ]
+                    Function.insert_database(self, values=values)
+                    message = {
+                        "SYMBOL": row["symbol"],
+                        "MARKET": row["market"],
+                        "TTIME": row["transactTime"],
+                        "SIDE": row["side"],
+                        "TRADE_PRICE": row["lastPx"],
+                        "QTY": abs(lastQty),
+                        "EMI": emi,
+                    }
+                    if not info:
+                        Function.trades_display(self, val=message)
+                    Function.orders_processing(self, row=row, info=info)
+
+            # Funding
+
+            elif row["execType"] == "Funding":
+                results = self.Result[row["settlCurrency"]]
                 message = {
                     "SYMBOL": row["symbol"],
-                    "MARKET": row["market"],
                     "TTIME": row["transactTime"],
-                    "SIDE": row["side"],
-                    "TRADE_PRICE": row["lastPx"],
-                    "QTY": abs(lastQty),
-                    "EMI": emi,
+                    "PRICE": row["price"],
                 }
-                if not info:
-                    Function.trades_display(self, val=message)
-                Function.orders_processing(self, row=row, info=info)
-
-        # Funding
-
-        elif row["execType"] == "Funding":
-            results = self.Result[row["settlCurrency"]]
-            message = {
-                "SYMBOL": row["symbol"],
-                "TTIME": row["transactTime"],
-                "PRICE": row["price"],
-            }
-            position = 0
-            for emi in self.robots:
+                position = 0
+                for emi in self.robots:
+                    if (
+                        self.robots[emi]["SYMBOL"] == row["symbol"]
+                        and self.robots[emi]["POS"] != 0
+                    ):
+                        position += self.robots[emi]["POS"]
+                        calc = Function.calculate(
+                            self,
+                            symbol=row["symbol"],
+                            price=row["price"],
+                            qty=float(self.robots[emi]["POS"]),
+                            rate=row["commission"],
+                            fund=0,
+                            execFee=row["execFee"],
+                        )
+                        message["MARKET"] = self.robots[emi]["MARKET"]
+                        message["EMI"] = self.robots[emi]["EMI"]
+                        message["QTY"] = self.robots[emi]["POS"]
+                        message["COMMISS"] = calc["funding"]
+                        values = [
+                            row["execID"],
+                            self.robots[emi]["EMI"],
+                            "",
+                            row["settlCurrency"][0],
+                            row["symbol"][0],
+                            row["symbol"][1],
+                            self.name,
+                            "Fund",
+                            self.robots[emi]["POS"],
+                            0,
+                            row["price"],
+                            0,
+                            row["price"],
+                            calc["sumreal"],
+                            calc["funding"],
+                            0,
+                            row["transactTime"],
+                            self.user_id,
+                        ]
+                        Function.insert_database(self, values=values)
+                        self.robots[emi]["COMMISS"] += calc["funding"]
+                        self.robots[emi]["LTIME"] = row["transactTime"]
+                        results.funding += calc["funding"]
+                        if not info:
+                            Function.funding_display(self, message)
+                diff = row["lastQty"] - position
                 if (
-                    self.robots[emi]["SYMBOL"] == row["symbol"]
-                    and self.robots[emi]["POS"] != 0
-                ):
-                    position += self.robots[emi]["POS"]
+                    diff != 0
+                ):  # robots with open positions have been taken, but some quantity is still left
                     calc = Function.calculate(
                         self,
                         symbol=row["symbol"],
                         price=row["price"],
-                        qty=float(self.robots[emi]["POS"]),
+                        qty=float(diff),
                         rate=row["commission"],
                         fund=0,
                         execFee=row["execFee"],
                     )
+                    emi = ".".join(row["symbol"][:2])
+                    if emi not in self.robots:
+                        var.logger.error(
+                            "Funding could not appear until the EMI="
+                            + emi
+                            + " was traded. View your trading history."
+                        )
+                        exit(1)
                     message["MARKET"] = self.robots[emi]["MARKET"]
                     message["EMI"] = self.robots[emi]["EMI"]
-                    message["QTY"] = self.robots[emi]["POS"]
+                    message["QTY"] = diff
                     message["COMMISS"] = calc["funding"]
                     values = [
                         row["execID"],
@@ -319,7 +372,7 @@ class Function(WS, Variables):
                         row["symbol"][1],
                         self.name,
                         "Fund",
-                        self.robots[emi]["POS"],
+                        diff,
                         0,
                         row["price"],
                         0,
@@ -336,86 +389,37 @@ class Function(WS, Variables):
                     results.funding += calc["funding"]
                     if not info:
                         Function.funding_display(self, message)
-            diff = row["lastQty"] - position
-            if (
-                diff != 0
-            ):  # robots with open positions have been taken, but some quantity is still left
-                calc = Function.calculate(
-                    self,
-                    symbol=row["symbol"],
-                    price=row["price"],
-                    qty=float(diff),
-                    rate=row["commission"],
-                    fund=0,
-                    execFee=row["execFee"],
-                )
-                emi = ".".join(row["symbol"][:2])
-                if emi not in self.robots:
-                    var.logger.error(
-                        "Funding could not appear until the EMI="
-                        + emi
-                        + " was traded. View your trading history."
-                    )
-                    exit(1)
-                message["MARKET"] = self.robots[emi]["MARKET"]
-                message["EMI"] = self.robots[emi]["EMI"]
-                message["QTY"] = diff
-                message["COMMISS"] = calc["funding"]
-                values = [
-                    row["execID"],
-                    self.robots[emi]["EMI"],
-                    "",
-                    row["settlCurrency"][0],
-                    row["symbol"][0],
-                    row["symbol"][1],
-                    self.name,
-                    "Fund",
-                    diff,
-                    0,
-                    row["price"],
-                    0,
-                    row["price"],
-                    calc["sumreal"],
-                    calc["funding"],
-                    0,
-                    row["transactTime"],
-                    self.user_id,
-                ]
-                Function.insert_database(self, values=values)
-                self.robots[emi]["COMMISS"] += calc["funding"]
-                self.robots[emi]["LTIME"] = row["transactTime"]
-                results.funding += calc["funding"]
-                if not info:
-                    Function.funding_display(self, message)
 
-        # New order
+            # New order
 
-        elif row["execType"] == "New":
-            if (
-                "clOrdID" not in row
-            ):  # The order was placed from the exchange web interface
-                var.last_order += 1
-                clOrdID = str(var.last_order) + "." + ".".join(row["symbol"][:2])
-                var.orders[clOrdID] = {
-                    "leavesQty": row["leavesQty"],
-                    "price": row["price"],
-                    "SYMBOL": row["symbol"],
-                    "CATEGORY": row["symbol"][1],
-                    "MARKET": self.name,
-                    "transactTime": row["transactTime"],
-                    "SIDE": row["side"],
-                    "EMI": row["symbol"],
-                    "orderID": row["orderID"],
-                }
-                var.orders.move_to_end(clOrdID, last=False)
-                info = "Outside placement: "
-            else:
-                info = ""
-            Function.orders_processing(self, row=row, info=info)
-        elif row["execType"] == "Canceled":
-            Function.orders_processing(self, row=row)
-        elif row["execType"] == "Replaced":
-            Function.orders_processing(self, row=row)
+            elif row["execType"] == "New":
+                if (
+                    "clOrdID" not in row
+                ):  # The order was placed from the exchange web interface
+                    var.last_order += 1
+                    clOrdID = str(var.last_order) + "." + ".".join(row["symbol"][:2])
+                    var.orders[clOrdID] = {
+                        "leavesQty": row["leavesQty"],
+                        "price": row["price"],
+                        "SYMBOL": row["symbol"],
+                        "CATEGORY": row["symbol"][1],
+                        "MARKET": self.name,
+                        "transactTime": row["transactTime"],
+                        "SIDE": row["side"],
+                        "EMI": row["symbol"],
+                        "orderID": row["orderID"],
+                    }
+                    var.orders.move_to_end(clOrdID, last=False)
+                    info = "Outside placement: "
+                else:
+                    info = ""
+                Function.orders_processing(self, row=row, info=info)
+            elif row["execType"] == "Canceled":
+                Function.orders_processing(self, row=row)
+            elif row["execType"] == "Replaced":
+                Function.orders_processing(self, row=row)
+        finally:
+            var.lock.release()
 
     def order_number(self: Markets, clOrdID: str) -> int:
         for number, id in enumerate(var.orders):

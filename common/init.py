@@ -79,12 +79,8 @@ class Init(WS, Variables):
                     "select EXECID from coins where EXECID='%s' and account=%s"
                     % (row["execID"], self.user_id),
                 )
-                if not data:
-                    var.lock.acquire(True)
-                    try:                        
-                        Function.transaction(self, row=row, info=" History ")
-                    finally:
-                        var.lock.release()
+                if not data:                     
+                    Function.transaction(self, row=row, info=" History ")
             last_history_time = history[-1]["transactTime"]
             if self.logNumFatal == 0:
                 Init.save_history_file(self, time=last_history_time)
