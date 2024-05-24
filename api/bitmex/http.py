@@ -34,7 +34,7 @@ class Send(Variables):
             else:
                 self.logger.error(textNow)
                 if codeNow > self.logNumFatal:
-                    var.info_queue.put(
+                    var.queue_info.put(
                         {
                             "market": self.name,
                             "message": textNow,
@@ -163,7 +163,7 @@ class Send(Variables):
                             1,
                         )  # impossible situation => stop trading
                     elif "insufficient available balance" in message:
-                        var.info_queue.put(
+                        var.queue_info.put(
                             {
                                 "market": self.name,
                                 "message": error["message"],
@@ -227,7 +227,7 @@ class Send(Variables):
                     "Timed out on request. %s: %s" % (url, json.dumps(postData or "")),
                     errCode,
                 )
-                var.info_queue.put(
+                var.queue_info.put(
                     {
                         "market": self.name,
                         "message": "Websocket. Timed out on request",
@@ -243,7 +243,7 @@ class Send(Variables):
                     % (e, url, json.dumps(postData or "")),
                     1002,
                 )
-                var.info_queue.put(
+                var.queue_info.put(
                     {
                         "market": self.name,
                         "message": "Websocket. Unable to contact API",
@@ -266,7 +266,7 @@ class Send(Variables):
             else:
                 if cur_retries > self.maxRetryRest:
                     info_warn_err("ERROR", "Max retries hit. Reboot", 1003)
-                    var.info_queue.put(
+                    var.queue_info.put(
                         {
                             "market": self.name,
                             "message": "ERROR, Max retries hit. Reboot",

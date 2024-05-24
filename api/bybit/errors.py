@@ -195,7 +195,7 @@ def exception(method):
             if message:
                 message = message.replace("\n", " ")
                 logger.error(message)
-                var.info_queue.put(
+                var.queue_info.put(
                     {
                         "market": self.name,
                         "message": message,

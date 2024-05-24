@@ -261,7 +261,6 @@ Create a file ```strategy.py``` in the ```algo``` folder:
 import services as service
 from api.api import Markets
 from common.data import Instrument
-from common.variables import Variables as var
 from functions import Function
 
 
@@ -280,12 +279,12 @@ def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     )
     if frame[-1]["ask"] > frame[-1 - period]["ask"]:
         buy_quantaty = quantaty - robot["POS"]
-        clOrdID = order_search(emi=emi, side="Buy")
+        clOrdID = order_search(ws, emi=emi, side="Buy")
         # Move an existing order
         if clOrdID:
             if (
-                buy_price != var.orders[clOrdID]["price"]
-                or buy_quantaty != var.orders[clOrdID]["leavesQty"]
+                buy_price != ws.orders[clOrdID]["price"]
+                or buy_quantaty != ws.orders[clOrdID]["leavesQty"]
             ):
                 if robot["POS"] < quantaty:
                     clOrdID = Function.put_order(
@@ -309,12 +308,12 @@ def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
                 delete_orders(ws, emi=emi, side="Sell")
     elif frame[-1]["bid"] <= frame[-1 - period]["bid"]:
         sell_quantaty = quantaty + robot["POS"]
-        clOrdID = order_search(emi=emi, side="Sell")
+        clOrdID = order_search(ws, emi=emi, side="Sell")
         # Move an existing order
         if clOrdID:
             if (
-                sell_price != var.orders[clOrdID]["price"]
-                or sell_quantaty != var.orders[clOrdID]["leavesQty"]
+                sell_price != ws.orders[clOrdID]["price"]
+                or sell_quantaty != ws.orders[clOrdID]["leavesQty"]
             ):
                 if robot["POS"] > -quantaty:
                     clOrdID = Function.put_order(
@@ -342,9 +341,9 @@ def init_variables(robot: dict):
     robot["PERIOD"] = 10
 
 
-def order_search(emi: int, side: str) -> str:
+def order_search(ws: Markets, emi: int, side: str) -> str:
     res = ""
-    for clOrdID, order in var.orders.items():
+    for clOrdID, order in ws.orders.items():
         if order["EMI"] == emi and order["SIDE"] == side:
             res = clOrdID
             break
@@ -353,7 +352,7 @@ def order_search(emi: int, side: str) -> str:
 
 
 def delete_orders(ws, emi: int, side: str) -> None:
-    for clOrdID, order in var.orders.copy().items():
+    for clOrdID, order in ws.orders.copy().items():
         if order["EMI"] == emi and order["SIDE"] == side:
             Function.del_order(ws, order=order, clOrdID=clOrdID)
 

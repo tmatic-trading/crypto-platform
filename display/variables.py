@@ -405,7 +405,7 @@ class TreeviewTable(Variables):
         self.tree.insert("", 0, iid=iid, values=values, tags=configure)
         self.children = self.tree.get_children()
         if len(self.children) > self.max_rows:
-            self.delete(row=len(self.children) - 1)
+            self.delete()
 
     def delete(self, iid="") -> None:
         if not iid:

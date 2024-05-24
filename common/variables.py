@@ -14,7 +14,6 @@ if not os.path.isfile(".env"):
 
 
 class Variables:
-    orders = OrderedDict()
     env = dotenv_values(".env")
     market_list = env["MARKET_LIST"].replace(",", " ").split()
     CATEGORIES = OrderedDict()
@@ -141,5 +140,6 @@ class Variables:
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
     refresh_hour = datetime.now(tz=timezone.utc).hour
     robots_thread_is_active = False
-    info_queue = queue.Queue()
+    queue_info = queue.Queue()
+    queue_order = queue.Queue()
     lock = threading.Lock()

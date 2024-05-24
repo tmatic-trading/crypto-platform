@@ -71,6 +71,7 @@ class Bybit(Variables):
         self.setup_orders = list()
         self.setup_frames = None
         self.account_disp = ""
+        self.orders = dict()
 
     def start(self):
         for symbol in self.symbol_list:
@@ -296,7 +297,7 @@ class Bybit(Variables):
             if value["orderStatus"] == "Cancelled":
                 orderStatus = "Canceled"
             elif value["orderStatus"] == "New":
-                for order in var.orders.values():
+                for order in self.orders.values():
                     if value["orderId"] == order["orderID"]:
                         orderStatus = "Replaced"
                         break

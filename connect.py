@@ -85,7 +85,13 @@ def finish_setup(ws: Markets):
     try:    
         common.Init.load_database(ws)
         common.Init.account_balances(ws)
-        common.Init.load_orders(ws, ws.setup_orders) 
+        common.Init.load_orders(ws, ws.setup_orders)
+        orders_list = list()
+        for name in var.market_list:
+            orders_list += Markets[name].orders.values()
+        orders_list.sort(key=lambda x: x["transactTime"])
+        for order in orders_list:
+            var.queue_order.put(order)
         bots.Init.delete_unused_robot(ws)
     finally:
         var.lock.release()
@@ -97,14 +103,24 @@ def finish_setup(ws: Markets):
 
 
 def refresh() -> None:
-    while not var.info_queue.empty():
-        info = var.info_queue.get()
+    while not var.queue_info.empty():
+        info = var.queue_info.get()
         info_display(
             name=info["market"],
             message=info["message"],
             tm=info["time"],
             warning=info["warning"],
         )
+    while not var.queue_order.empty():
+        order = var.queue_order.get()
+        ws = Markets[order["MARKET"]]
+        clOrdID = order["clOrdID"]
+        if "delete" in order:
+            if clOrdID in TreeTable.orders.children:
+                TreeTable.orders.delete(iid=clOrdID)
+        else:
+            if clOrdID in ws.orders:
+                Function.orders_display(ws, val=order)
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
@@ -153,7 +169,6 @@ def refresh() -> None:
 
 
 def clear_params():
-    var.orders = OrderedDict()
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
     disp.symb_book = ()
 

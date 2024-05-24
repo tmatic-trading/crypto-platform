@@ -162,10 +162,7 @@ class Init(WS, Variables):
         """
         Load Orders (if any)
         """
-        copy = var.orders.copy()
-        for clOrdID, order in copy.items():
-            if order["MARKET"] == self.name:
-                del var.orders[clOrdID]
+        self.orders = dict()
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
                 emi = ".".join(val["symbol"][:2])
@@ -209,26 +206,17 @@ class Init(WS, Variables):
                         )
                         info_display(self.name, message)
                         var.logger.info(message)
-                var.orders[clOrdID] = {}
-                var.orders[clOrdID]["EMI"] = emi
-                var.orders[clOrdID]["leavesQty"] = val["leavesQty"]
-                var.orders[clOrdID]["transactTime"] = val["transactTime"]
-                var.orders[clOrdID]["price"] = val["price"]
-                var.orders[clOrdID]["SYMBOL"] = val["symbol"]
-                var.orders[clOrdID]["CATEGORY"] = val["symbol"][1]
-                var.orders[clOrdID]["MARKET"] = self.name
-                var.orders[clOrdID]["SIDE"] = val["side"]
-                var.orders[clOrdID]["orderID"] = val["orderID"]
-        for clOrdID, order in var.orders.items():
-            order["clOrdID"] = clOrdID
-        TreeTable.orders.clear_all()
-        values = list(var.orders.values())
-        values.sort(key=lambda x: x["transactTime"])
-        var.orders = OrderedDict()
-        for val in reversed(values):
-            var.orders[val["clOrdID"]] = val
-        for val in values:
-            Function.orders_display(self, val=val)
+                self.orders[clOrdID] = {}
+                self.orders[clOrdID]["EMI"] = emi
+                self.orders[clOrdID]["leavesQty"] = val["leavesQty"]
+                self.orders[clOrdID]["transactTime"] = val["transactTime"]
+                self.orders[clOrdID]["price"] = val["price"]
+                self.orders[clOrdID]["SYMBOL"] = val["symbol"]
+                self.orders[clOrdID]["CATEGORY"] = val["symbol"][1]
+                self.orders[clOrdID]["MARKET"] = self.name
+                self.orders[clOrdID]["SIDE"] = val["side"]
+                self.orders[clOrdID]["orderID"] = val["orderID"]
+                self.orders[clOrdID]["clOrdID"] = clOrdID
 
     def load_database(self: Markets) -> None:
         """

@@ -338,7 +338,7 @@ class Init(WS, Variables):
         Deleting unused robots (if any)
         """
         emi_in_orders = set()
-        for val in var.orders.values():
+        for val in self.orders.values():
             emi_in_orders.add(val["EMI"])
         for emi in self.robots.copy():
             symbol = tuple(emi.split(".")) + (self.name,)

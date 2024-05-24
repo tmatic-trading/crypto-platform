@@ -398,7 +398,7 @@ class Function(WS, Variables):
                 ):  # The order was placed from the exchange web interface
                     var.last_order += 1
                     clOrdID = str(var.last_order) + "." + ".".join(row["symbol"][:2])
-                    var.orders[clOrdID] = {
+                    self.orders[clOrdID] = {
                         "leavesQty": row["leavesQty"],
                         "price": row["price"],
                         "SYMBOL": row["symbol"],
@@ -410,7 +410,6 @@ class Function(WS, Variables):
                         "orderID": row["orderID"],
                         "clOrdID": clOrdID, 
                     }
-                    var.orders.move_to_end(clOrdID, last=False)
                     info = "Outside placement: "
                 else:
                     info = ""
@@ -433,9 +432,9 @@ class Function(WS, Variables):
                 clOrdID = "Retrieved from Trading history"
         else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
             # through the exchange web interface.
-            for clOrdID in var.orders:
+            for clOrdID in self.orders:
                 if "orderID" in row:
-                    if var.orders[clOrdID]["orderID"] == row["orderID"]:
+                    if self.orders[clOrdID]["orderID"] == row["orderID"]:
                         break
             else:
                 clOrdID = "Empty clOrdID. The order was not sent via Tmatic."
@@ -447,15 +446,15 @@ class Function(WS, Variables):
         if row["execType"] == "Canceled":
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
-            if clOrdID in var.orders:
-                TreeTable.orders.delete(iid=clOrdID)  # Function.order_number(self, clOrdID)
-                del var.orders[clOrdID]
+            if clOrdID in self.orders:
+                var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
+                del self.orders[clOrdID]
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
-            if clOrdID in var.orders:
-                TreeTable.orders.delete(iid=clOrdID)
-                del var.orders[clOrdID] 
+            if clOrdID in self.orders:
+                var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
+                del self.orders[clOrdID] 
         else:
             if row["execType"] == "New":
                 if "clOrdID" in row:
@@ -468,7 +467,7 @@ class Function(WS, Variables):
                         _emi = emi[0]
                     else:
                         _emi = emi
-                    var.orders[clOrdID] = {
+                    self.orders[clOrdID] = {
                         "leavesQty": row["leavesQty"],
                         "price": row["price"],
                         "SYMBOL": row["symbol"],
@@ -480,27 +479,24 @@ class Function(WS, Variables):
                         "orderID": row["orderID"],
                         "clOrdID": clOrdID, 
                     }
-                    var.orders.move_to_end(clOrdID, last=False)
                 info_p = price
                 info_q = row["orderQty"]
             elif row["execType"] == "Trade":
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
-                if clOrdID in var.orders:
-                    TreeTable.orders.delete(iid=clOrdID)                    
-                    var.orders.move_to_end(clOrdID, last=False)
+                if clOrdID in self.orders:
+                    var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
             elif row["execType"] == "Replaced":
-                var.orders[clOrdID]["orderID"] = row["orderID"]
+                self.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
-                TreeTable.orders.delete(iid=clOrdID)                
-                var.orders.move_to_end(clOrdID, last=False)   
+                var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
             if (
-                clOrdID in var.orders
-            ):  # var.orders might be empty if we are here from trading_history()
-                var.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-                var.orders[clOrdID]["price"] = price
-                var.orders[clOrdID]["transactTime"] = row["transactTime"]
+                clOrdID in self.orders
+            ):
+                self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+                self.orders[clOrdID]["price"] = price
+                self.orders[clOrdID]["transactTime"] = row["transactTime"]
         info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
         info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
         try:
@@ -535,8 +531,8 @@ class Function(WS, Variables):
             str(info_p),
             info_q,
         )
-        if clOrdID in var.orders:
-            Function.orders_display(self, val=var.orders[clOrdID])
+        if clOrdID in self.orders:
+            var.queue_order.put(self.orders[clOrdID])
 
     def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -611,6 +607,9 @@ class Function(WS, Variables):
             Function.volume(self, qty=val["leavesQty"], symbol=val["SYMBOL"]),
             emi,
         ]
+        clOrdID = val["clOrdID"]
+        if clOrdID in TreeTable.orders.children:
+            TreeTable.orders.delete(iid=clOrdID)
         TreeTable.orders.insert(values=row, iid=val["clOrdID"], configure=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
@@ -745,7 +744,7 @@ class Function(WS, Variables):
             count = 0
             for number in range(start, end, direct):
                 if len(val) > count:
-                    qty = find_order(val[count][0], symbol=var.symbol)
+                    qty = Function.find_order(self, val[count][0], symbol=var.symbol)
                     if side == "bids":
                         compare = [val[count][0], val[count][1], qty]
                         if compare != tree.cache[number]:
@@ -1051,11 +1050,11 @@ class Function(WS, Variables):
         Replace orders
         """
         price_str = Function.format_price(
-            self, number=price, symbol=var.orders[clOrdID]["SYMBOL"]
+            self, number=price, symbol=self.orders[clOrdID]["SYMBOL"]
         )
         var.logger.info(
             "Putting orderID="
-            + var.orders[clOrdID]["orderID"]
+            + self.orders[clOrdID]["orderID"]
             + " clOrdID="
             + clOrdID
             + " price="
@@ -1063,13 +1062,13 @@ class Function(WS, Variables):
             + " qty="
             + str(qty)
         )
-        if price != var.orders[clOrdID]["price"]:  # the price alters
+        if price != self.orders[clOrdID]["price"]:  # the price alters
             WS.replace_limit(
                 self,
                 quantity=qty,
                 price=price_str,
-                orderID=var.orders[clOrdID]["orderID"],
-                symbol=var.orders[clOrdID]["SYMBOL"],
+                orderID=self.orders[clOrdID]["orderID"],
+                symbol=self.orders[clOrdID]["SYMBOL"],
             )
 
         return clOrdID
@@ -1108,6 +1107,19 @@ class Function(WS, Variables):
             volNow = Function.volume(self, qty=volNow, symbol=symbol)
 
         return volNow
+    
+    def find_order(self: Markets, price: float, symbol: str) -> Union[float, str]:
+        qty = 0
+        for clOrdID in self.orders:
+            if (
+                self.orders[clOrdID]["price"] == price
+                and self.orders[clOrdID]["SYMBOL"] == symbol
+            ):
+                qty += self.orders[clOrdID]["leavesQty"]
+        if not qty:
+            qty = ""
+
+        return qty
 
 
 def handler_order(event) -> None:
@@ -1115,10 +1127,9 @@ def handler_order(event) -> None:
     items = tree.selection()
     if items:
         tree.update()
-        children = tree.get_children()
-        row_position = children.index(items[0])
-        clOrdID = list(var.orders.items())[row_position][0]
-        ws = Markets[var.orders[clOrdID]["SYMBOL"][2]]
+        clOrdID = items[0]
+        indx = TreeTable.orders.title.index("MARKET")
+        ws = Markets[TreeTable.orders.tree.item(clOrdID)["values"][indx]]
 
         def on_closing() -> None:
             disp.order_window_trigger = "off"
@@ -1127,7 +1138,7 @@ def handler_order(event) -> None:
 
         def delete(order: dict, clOrdID: str) -> None:
             try:
-                var.orders[clOrdID]
+                ws.orders[clOrdID]
             except KeyError:
                 message = "Order " + clOrdID + " does not exist!"
                 info_display(ws.name, message)
@@ -1141,7 +1152,7 @@ def handler_order(event) -> None:
 
         def replace(clOrdID) -> None:
             try:
-                var.orders[clOrdID]
+                ws.orders[clOrdID]
             except KeyError:
                 message = "Order " + clOrdID + " does not exist!"
                 info_display(ws.name, message)
@@ -1153,30 +1164,30 @@ def handler_order(event) -> None:
                 info_display(ws.name, "Price must be numeric!")
                 return
             if ws.logNumFatal == 0:
-                roundSide = var.orders[clOrdID]["leavesQty"]
-                if var.orders[clOrdID]["SIDE"] == "Sell":
+                roundSide = ws.orders[clOrdID]["leavesQty"]
+                if ws.orders[clOrdID]["SIDE"] == "Sell":
                     roundSide = -roundSide
                 price = Function.round_price(
                     ws,
-                    symbol=var.orders[clOrdID]["SYMBOL"],
+                    symbol=ws.orders[clOrdID]["SYMBOL"],
                     price=float(price_replace.get()),
                     rside=roundSide,
                 )
-                if price == var.orders[clOrdID]["price"]:
+                if price == ws.orders[clOrdID]["price"]:
                     info_display(ws.name, "Price is the same but must be different!")
                     return
                 clOrdID = Function.put_order(
                     ws,
                     clOrdID=clOrdID,
                     price=price,
-                    qty=var.orders[clOrdID]["leavesQty"],
+                    qty=ws.orders[clOrdID]["leavesQty"],
                 )
             else:
                 info_display(ws.name, "The operation failed. Websocket closed!")
             on_closing()
 
         if disp.order_window_trigger == "off":
-            order = var.orders[clOrdID]
+            order = ws.orders[clOrdID]
             disp.order_window_trigger = "on"
             order_window = tk.Toplevel(disp.root, pady=10, padx=10)
             cx = disp.root.winfo_pointerx()
@@ -1190,16 +1201,16 @@ def handler_order(event) -> None:
             label1 = tk.Label(frame_up, justify="left")
             order_price = Function.format_price(
                 ws,
-                number=var.orders[clOrdID]["price"],
-                symbol=var.orders[clOrdID]["SYMBOL"],
+                number=ws.orders[clOrdID]["price"],
+                symbol=ws.orders[clOrdID]["SYMBOL"],
             )
             label1["text"] = (
                 "market\t"
-                + var.orders[clOrdID]["SYMBOL"][2]
+                + ws.orders[clOrdID]["SYMBOL"][2]
                 + "\nsymbol\t"
-                + ".".join(var.orders[clOrdID]["SYMBOL"][:2])
+                + ".".join(ws.orders[clOrdID]["SYMBOL"][:2])
                 + "\nside\t"
-                + var.orders[clOrdID]["SIDE"]
+                + ws.orders[clOrdID]["SIDE"]
                 + "\nclOrdID\t"
                 + clOrdID
                 + "\nprice\t"
@@ -1207,8 +1218,8 @@ def handler_order(event) -> None:
                 + "\nquantity\t"
                 + Function.volume(
                     ws,
-                    qty=var.orders[clOrdID]["leavesQty"],
-                    symbol=var.orders[clOrdID]["SYMBOL"],
+                    qty=ws.orders[clOrdID]["leavesQty"],
+                    symbol=ws.orders[clOrdID]["SYMBOL"],
                 )
             )
             label_price = tk.Label(frame_dn)
@@ -1539,20 +1550,6 @@ def handler_market(event) -> None:
             var.current_market = shift
             var.symbol = Markets[var.current_market].symbol_list[0]
             clear_tables()
-
-
-def find_order(price: float, symbol: str) -> Union[float, str]:
-    qty = 0
-    for clOrdID in var.orders:
-        if (
-            var.orders[clOrdID]["price"] == price
-            and var.orders[clOrdID]["SYMBOL"] == symbol
-        ):
-            qty += var.orders[clOrdID]["leavesQty"]
-    if not qty:
-        qty = ""
-
-    return qty
 
 
 def handler_robots(event) -> None:
