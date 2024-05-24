@@ -1,7 +1,7 @@
 import threading
 import time
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from time import sleep
 
 import algo.init as algo
@@ -40,6 +40,7 @@ def setup():
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
+    disp.label_f9.config(bg=disp.red_color)
 
 
 def setup_market(ws: Markets):
@@ -107,6 +108,17 @@ def refresh() -> None:
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
+        if ws.logNumFatal == 0:
+            if utc > ws.message_time + timedelta(seconds=10):
+                if ws.message_counter == 0:
+                    info_display(ws.name, "No data within 10 sec", warning=True)
+                    WS.ping_pong(ws)
+                    ws.message_counter = 1000000000
+                elif ws.message_counter == 1000000000:
+                    ws.logNumFatal = 1001
+                else:
+                    ws.message_counter = 0               
+                ws.message_time = utc       
         if ws.logNumFatal > 0:
             if ws.logNumFatal > 2000:
                 if ws.message2000 == "":
@@ -135,6 +147,7 @@ def refresh() -> None:
                     if ws.logNumFatal == 2:
                         info_display(name, "Insufficient available balance!")
                     disp.f9 = "OFF"
+                    disp.label_f9.config(bg=disp.red_color)
                     ws.logNumFatal = 0
     Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
@@ -183,11 +196,14 @@ def terminal_reload(event) -> None:
 def trade_state(event) -> None:
     if disp.f9 == "ON":
         disp.f9 = "OFF"
+        disp.label_f9.config(bg=disp.red_color)
     elif disp.f9 == "OFF":
         disp.f9 = "ON"
+        disp.label_f9.config(bg=disp.green_color)
         for market in var.market_list:
             Markets[market].logNumFatal = 0
             print(market, disp.f9)
+    disp.label_f9["text"] = disp.f9
 
 
 def on_closing(root, refresh_var):

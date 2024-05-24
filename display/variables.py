@@ -394,7 +394,7 @@ class TreeviewTable(Variables):
         self.clear_all()
         self.cache = list()
         blank = ["" for _ in self.title]
-        for num in range(size):
+        for _ in range(size):
             self.insert(values=blank)
             self.cache.append(blank)
 

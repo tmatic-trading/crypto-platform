@@ -693,24 +693,7 @@ class Function(WS, Variables):
             Function.select_database(self, "select count(*) cou from robots")
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening SQLite")
-
         disp.label_time["text"] = time.asctime(time.gmtime())
-        disp.label_f9["text"] = disp.f9
-        if disp.f9 == "ON":
-            disp.label_f9.config(bg=disp.green_color)
-        else:
-            disp.label_f9.config(bg=disp.red_color)
-        if self.logNumFatal == 0:
-            if utc > self.message_time + timedelta(seconds=10):
-                if self.message_counter == 0:
-                    info_display(self.name, "No data within 10 sec", warning=True)
-                    WS.ping_pong(self)
-                    self.message_counter = 1000000000
-                elif self.message_counter == 1000000000:
-                    self.logNumFatal = 1001
-                else:
-                    self.message_counter = 0               
-                self.message_time = utc
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
