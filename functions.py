@@ -408,6 +408,7 @@ class Function(WS, Variables):
                         "SIDE": row["side"],
                         "EMI": row["symbol"],
                         "orderID": row["orderID"],
+                        "clOrdID": clOrdID, 
                     }
                     var.orders.move_to_end(clOrdID, last=False)
                     info = "Outside placement: "
@@ -420,11 +421,6 @@ class Function(WS, Variables):
                 Function.orders_processing(self, row=row)
         finally:
             var.lock.release()
-
-    def order_number(self: Markets, clOrdID: str) -> int:
-        for number, id in enumerate(var.orders):
-            if id == clOrdID:
-                return number
 
     def orders_processing(self: Markets, row: dict, info: str = "") -> None:
         """
@@ -452,13 +448,13 @@ class Function(WS, Variables):
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in var.orders:
-                TreeTable.orders.delete(row=Function.order_number(self, clOrdID))
+                TreeTable.orders.delete(iid=clOrdID)  # Function.order_number(self, clOrdID)
                 del var.orders[clOrdID]
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in var.orders:
-                TreeTable.orders.delete(row=Function.order_number(self, clOrdID))
+                TreeTable.orders.delete(iid=clOrdID)
                 del var.orders[clOrdID] 
         else:
             if row["execType"] == "New":
@@ -482,6 +478,7 @@ class Function(WS, Variables):
                         "SIDE": row["side"],
                         "EMI": _emi,
                         "orderID": row["orderID"],
+                        "clOrdID": clOrdID, 
                     }
                     var.orders.move_to_end(clOrdID, last=False)
                 info_p = price
@@ -490,13 +487,13 @@ class Function(WS, Variables):
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
                 if clOrdID in var.orders:
-                    TreeTable.orders.delete(row=Function.order_number(self, clOrdID))                    
+                    TreeTable.orders.delete(iid=clOrdID)                    
                     var.orders.move_to_end(clOrdID, last=False)
             elif row["execType"] == "Replaced":
                 var.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
-                TreeTable.orders.delete(row=Function.order_number(self, clOrdID))                
+                TreeTable.orders.delete(iid=clOrdID)                
                 var.orders.move_to_end(clOrdID, last=False)   
             if (
                 clOrdID in var.orders
@@ -614,7 +611,7 @@ class Function(WS, Variables):
             Function.volume(self, qty=val["leavesQty"], symbol=val["SYMBOL"]),
             emi,
         ]
-        TreeTable.orders.insert(values=row, configure=val["SIDE"])
+        TreeTable.orders.insert(values=row, iid=val["clOrdID"], configure=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
         if qty in ["", "None"]:
@@ -1155,7 +1152,6 @@ def handler_order(event) -> None:
                 return
             if ws.logNumFatal == 0:
                 Function.del_order(ws, order=order, clOrdID=clOrdID)
-                # orders.delete(row_position)
             else:
                 info_display(ws.name, "The operation failed. Websocket closed!")
             on_closing()

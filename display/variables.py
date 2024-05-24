@@ -371,6 +371,7 @@ class TreeviewTable(Variables):
         )
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
+        self.iid_count = 0
         self.init(size=size)
         if hide:
             self.column_hide = []
@@ -393,18 +394,23 @@ class TreeviewTable(Variables):
         self.clear_all()
         self.cache = list()
         blank = ["" for _ in self.title]
-        for _ in range(size):
+        for num in range(size):
             self.insert(values=blank)
             self.cache.append(blank)
 
-    def insert(self, values: list, configure="") -> None:
-        self.tree.insert("", 0, values=values, tags=configure)
+    def insert(self, values: list, iid="", configure="") -> None:
+        if not iid:
+            self.iid_count += 1
+            iid = self.iid_count
+        self.tree.insert("", 0, iid=iid, values=values, tags=configure)
         self.children = self.tree.get_children()
         if len(self.children) > self.max_rows:
             self.delete(row=len(self.children) - 1)
 
-    def delete(self, row: int) -> None:
-        self.tree.delete(self.children[row])
+    def delete(self, iid="") -> None:
+        if not iid:
+            iid = self.children[len(self.children) - 1]
+        self.tree.delete(iid)
         self.children = self.tree.get_children()
 
     def update(self, row: int, values: list) -> None:
