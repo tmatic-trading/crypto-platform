@@ -530,14 +530,14 @@ class Function(WS, Variables):
                 + " q="
                 + info_q
             )
-        var.queue_info.put(
-            {
-                "market": self.name,
-                "message": message,
-                "time": datetime.now(tz=timezone.utc),
-                "warning": False,
-            }
-        )
+            var.queue_info.put(
+                {
+                    "market": self.name,
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": False,
+                }
+            )
         var.logger.info(
             self.name
             + " "
