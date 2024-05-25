@@ -129,8 +129,8 @@ def refresh() -> None:
                 elif ws.message_counter == 1000000000:
                     ws.logNumFatal = 1001
                 else:
-                    ws.message_counter = 0               
-                ws.message_time = utc       
+                    ws.message_counter = 0
+                ws.message_time = utc
         if ws.logNumFatal > 0:
             if ws.logNumFatal > 2000:
                 if ws.message2000 == "":

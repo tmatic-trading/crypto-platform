@@ -197,12 +197,13 @@ class Bitmex(Variables):
         self.message_counter = self.message_counter + 1
         if message == "pong":
             return
+
         def generate_key(keys: list, val: dict, table: str) -> tuple:
             if "symbol" in keys:
                 val["category"] = self.symbol_category[val["symbol"]]
             val["market"] = self.name
             return tuple((val[key]) for key in keys)
-        
+
         message = json.loads(message)
         action = message["action"] if "action" in message else None
         table = message["table"] if "table" in message else None
@@ -265,7 +266,7 @@ class Bitmex(Variables):
                                 if val["foreignNotional"] > 0:
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
-                            val["execFee"] = None                             
+                            val["execFee"] = None
                             self.transaction(row=val)
                         else:
                             self.data[table_name][key] = val

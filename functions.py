@@ -159,7 +159,7 @@ class Function(WS, Variables):
         Trades and funding processing
         """
         var.lock.acquire(True)
-        try: 
+        try:
             Function.add_symbol(self, symbol=row["symbol"])
 
             # Trade
@@ -415,7 +415,7 @@ class Function(WS, Variables):
                         "SIDE": row["side"],
                         "EMI": row["symbol"],
                         "orderID": row["orderID"],
-                        "clOrdID": clOrdID, 
+                        "clOrdID": clOrdID,
                     }
                     info = "Outside placement: "
                 else:
@@ -454,14 +454,18 @@ class Function(WS, Variables):
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in self.orders:
-                var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
+                var.queue_order.put(
+                    {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                )
                 del self.orders[clOrdID]
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in self.orders:
-                var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
-                del self.orders[clOrdID] 
+                var.queue_order.put(
+                    {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                )
+                del self.orders[clOrdID]
         else:
             if row["execType"] == "New":
                 if "clOrdID" in row:
@@ -484,7 +488,7 @@ class Function(WS, Variables):
                         "SIDE": row["side"],
                         "EMI": _emi,
                         "orderID": row["orderID"],
-                        "clOrdID": clOrdID, 
+                        "clOrdID": clOrdID,
                     }
                 info_p = price
                 info_q = row["orderQty"]
@@ -492,15 +496,17 @@ class Function(WS, Variables):
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
                 if clOrdID in self.orders:
-                    var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
+                    var.queue_order.put(
+                        {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                    )
             elif row["execType"] == "Replaced":
                 self.orders[clOrdID]["orderID"] = row["orderID"]
                 info_p = price
                 info_q = row["leavesQty"]
-                var.queue_order.put({"clOrdID": clOrdID, "delete": True, "MARKET": self.name})
-            if (
-                clOrdID in self.orders
-            ):
+                var.queue_order.put(
+                    {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                )
+            if clOrdID in self.orders:
                 self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 self.orders[clOrdID]["price"] = price
                 self.orders[clOrdID]["transactTime"] = row["transactTime"]
@@ -514,8 +520,7 @@ class Function(WS, Variables):
             emi = clOrdID
         if not info:
             message = (
-                info
-                + row["execType"]
+                row["execType"]
                 + " "
                 + row["side"]
                 + ": "
@@ -523,7 +528,7 @@ class Function(WS, Variables):
                 + " p="
                 + str(info_p)
                 + " q="
-                + info_q,
+                + info_q
             )
         var.queue_info.put(
             {
@@ -1121,7 +1126,7 @@ class Function(WS, Variables):
             volNow = Function.volume(self, qty=volNow, symbol=symbol)
 
         return volNow
-    
+
     def find_order(self: Markets, price: float, symbol: str) -> Union[float, str]:
         qty = 0
         for clOrdID in self.orders:
@@ -1273,7 +1278,7 @@ def handler_orderbook(event) -> None:
         if prices:
             return prices[0][0]
         else:
-            return "None"             
+            return "None"
 
     def refresh() -> None:
         nonlocal ws

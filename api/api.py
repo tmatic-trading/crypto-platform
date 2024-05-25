@@ -199,7 +199,7 @@ class WS(Variables):
         """
 
         return Agents[self.name].value.get_position_info(self)
-    
+
     def ping_pong(self: Markets) -> None:
         """
         Check if websocket is working

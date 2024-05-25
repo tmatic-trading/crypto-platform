@@ -1,7 +1,7 @@
-import threading
 import logging
 import os
 import queue
+import threading
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone

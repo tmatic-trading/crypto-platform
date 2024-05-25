@@ -333,7 +333,7 @@ class Bybit(Variables):
                 }
                 if value["orderLinkId"]:
                     row["clOrdID"] = value["orderLinkId"]
-                self.transaction(row=row)              
+                self.transaction(row=row)
 
     def __handle_execution(self, values):
         for row in values["data"]:
@@ -400,7 +400,6 @@ class Bybit(Variables):
         application is launched.
         """
         pass
-
 
     def ping_pong(self):
         pass
