@@ -1,7 +1,7 @@
 import threading
 import time
 import tkinter as tk
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from random import randint
 from typing import Union
@@ -215,7 +215,14 @@ class Function(WS, Variables):
                             + status
                         )
                         if not info:
-                            info_display(self.name, message)
+                            var.queue_info.put(
+                                {
+                                    "market": self.name,
+                                    "message": message,
+                                    "time": datetime.now(tz=timezone.utc),
+                                    "warning": False,
+                                }
+                            )
                         var.logger.info(message)
                 data = Function.select_database(  # read_database
                     self,
@@ -506,8 +513,7 @@ class Function(WS, Variables):
         except ValueError:
             emi = clOrdID
         if not info:
-            info_display(
-                self.name,
+            message = (
                 info
                 + row["execType"]
                 + " "
@@ -519,6 +525,14 @@ class Function(WS, Variables):
                 + " q="
                 + info_q,
             )
+        var.queue_info.put(
+            {
+                "market": self.name,
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": False,
+            }
+        )
         var.logger.info(
             self.name
             + " "

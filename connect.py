@@ -81,20 +81,16 @@ def setup_market(ws: Markets):
 
 
 def finish_setup(ws: Markets):
-    var.lock.acquire(True)
-    try:    
-        common.Init.load_database(ws)
-        common.Init.account_balances(ws)
-        common.Init.load_orders(ws, ws.setup_orders)
-        orders_list = list()
-        for name in var.market_list:
-            orders_list += Markets[name].orders.values()
-        orders_list.sort(key=lambda x: x["transactTime"])
-        for order in orders_list:
-            var.queue_order.put(order)
-        bots.Init.delete_unused_robot(ws)
-    finally:
-        var.lock.release()
+    common.Init.load_database(ws)
+    common.Init.account_balances(ws)
+    common.Init.load_orders(ws, ws.setup_orders)
+    orders_list = list()
+    for name in var.market_list:
+        orders_list += Markets[name].orders.values()
+    orders_list.sort(key=lambda x: x["transactTime"])
+    for order in orders_list:
+        var.queue_order.put(order)
+    bots.Init.delete_unused_robot(ws)
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
