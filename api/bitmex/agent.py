@@ -160,32 +160,35 @@ class Agent(Bitmex):
             path = Listing.TRADING_HISTORY.format(
                 HISTCOUNT=histCount, TIME=str(time)[:19]
             )
-            result = Send.request(
+            res = Send.request(
                 self,
                 path=path,
                 verb="GET",
             )
-            for row in result:
-                if row["symbol"] not in self.symbol_category:
-                    Agent.get_instrument(
-                        self, symbol=(row["symbol"], "category not defined", self.name)
+            if isinstance(res, list):
+                for row in res:
+                    if row["symbol"] not in self.symbol_category:
+                        Agent.get_instrument(
+                            self, symbol=(row["symbol"], "category not defined", self.name)
+                        )
+                    row["market"] = self.name
+                    row["symbol"] = (
+                        row["symbol"],
+                        self.symbol_category[row["symbol"]],
+                        self.name,
                     )
-                row["market"] = self.name
-                row["symbol"] = (
-                    row["symbol"],
-                    self.symbol_category[row["symbol"]],
-                    self.name,
-                )
-                row["transactTime"] = service.time_converter(
-                    time=row["transactTime"], usec=True
-                )
-                row["settlCurrency"] = (row["settlCurrency"], self.name)
-                if row["execType"] == "Funding":
-                    if row["foreignNotional"] > 0:
-                        row["lastQty"] = -row["lastQty"]
-                        row["commission"] = -row["commission"]
-                row["execFee"] = None
-            return result
+                    row["transactTime"] = service.time_converter(
+                        time=row["transactTime"], usec=True
+                    )
+                    row["settlCurrency"] = (row["settlCurrency"], self.name)
+                    if row["execType"] == "Funding":
+                        if row["foreignNotional"] > 0:
+                            row["lastQty"] = -row["lastQty"]
+                            row["commission"] = -row["commission"]
+                    row["execFee"] = None
+                return res
+            else:
+                self.logNumFatal = 1001
         else:
             return "error"
 
@@ -196,15 +199,18 @@ class Agent(Bitmex):
             path=path,
             verb="GET",
         )
-        for order in res:
-            order["symbol"] = (
-                order["symbol"],
-                self.symbol_category[order["symbol"]],
-                self.name,
-            )
-            order["transactTime"] = service.time_converter(
-                time=order["transactTime"], usec=True
-            )
+        if isinstance(res, list):
+            for order in res:
+                order["symbol"] = (
+                    order["symbol"],
+                    self.symbol_category[order["symbol"]],
+                    self.name,
+                )
+                order["transactTime"] = service.time_converter(
+                    time=order["transactTime"], usec=True
+                )
+        else:
+            self.logNumFatal = 1001
         self.setup_orders = res
 
         return res

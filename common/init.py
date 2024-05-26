@@ -69,26 +69,27 @@ class Init(WS, Variables):
             raise Exception(message)
         count_val = 500
         history = WS.trading_history(self, histCount=count_val, time=last_history_time)
-        if history == "error":
-            var.logger.error("history.ini error")
-            exit(1)
-        while history:
-            for row in history:
-                data = Function.select_database(  # read_database
-                    self,
-                    "select EXECID from coins where EXECID='%s' and account=%s"
-                    % (row["execID"], self.user_id),
+        if isinstance(history, list):
+            while history:
+                for row in history:
+                    data = Function.select_database(  # read_database
+                        self,
+                        "select EXECID from coins where EXECID='%s' and account=%s"
+                        % (row["execID"], self.user_id),
+                    )
+                    if not data:
+                        Function.transaction(self, row=row, info=" History ")
+                last_history_time = history[-1]["transactTime"]
+                if self.logNumFatal == 0:
+                    Init.save_history_file(self, time=last_history_time)
+                if len(history) < count_val:
+                    break
+                history = WS.trading_history(
+                    self, histCount=count_val, time=last_history_time
                 )
-                if not data:
-                    Function.transaction(self, row=row, info=" History ")
-            last_history_time = history[-1]["transactTime"]
-            if self.logNumFatal == 0:
-                Init.save_history_file(self, time=last_history_time)
-            if len(history) < count_val:
-                break
-            history = WS.trading_history(
-                self, histCount=count_val, time=last_history_time
-            )
+                if not isinstance(history, list):
+                    self.logNumFatal = 1001
+                    return
 
     def account_balances(self: Markets) -> None:
         """
@@ -101,62 +102,66 @@ class Init(WS, Variables):
             + "coins where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY"
             % (self.user_id, self.name),
         )
-        symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"], self.name), data))
-        for symbol in symbols:
-            Function.add_symbol(self, symbol=symbol)
-        if not symbols:
-            symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
-        sql = (
-            "select DISTINCT(CURRENCY) from coins where MARKET = '"
-            + self.name
-            + "' AND ACCOUNT = "
-            + str(self.user_id)
-        )
-        data = Function.select_database(self, sql)
-        for cur in data:
-            currency = cur["CURRENCY"]
-            union = ""
-            sql = (
-                "select sum(commiss) commiss, sum(sumreal) sumreal, "
-                + "sum(funding) funding from ("
-            )
+        if isinstance(data, list):
+            symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"], self.name), data))
             for symbol in symbols:
-                sql += (
-                    union
-                    + "select IFNULL(sum(COMMISS),0.0) commiss, "
-                    + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
-                    + "sum(COMMISS) from "
-                    + "coins where SIDE = 'Fund' and ACCOUNT = "
-                    + str(self.user_id)
-                    + " and MARKET = '"
-                    + self.name
-                    + "' and CURRENCY = '"
-                    + currency
-                    + "' and SYMBOL = '"
-                    + symbol[0]
-                    + "' and CATEGORY = '"
-                    + symbol[1]
-                    + "'),0.0) funding from "
-                    + "coins where SIDE <> 'Fund' and ACCOUNT = "
-                    + str(self.user_id)
-                    + " and MARKET = '"
-                    + self.name
-                    + "' and CURRENCY = '"
-                    + currency
-                    + "' and SYMBOL = '"
-                    + symbol[0]
-                    + "' and CATEGORY = '"
-                    + symbol[1]
-                    + "'"
-                )
-                union = "union "
-            sql += ") T"
+                Function.add_symbol(self, symbol=symbol)
+            if not symbols:
+                symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
+            sql = (
+                "select DISTINCT(CURRENCY) from coins where MARKET = '"
+                + self.name
+                + "' AND ACCOUNT = "
+                + str(self.user_id)
+            )
             data = Function.select_database(self, sql)
-            settlCurrency = (currency, self.name)
-            self.Result[settlCurrency].commission = float(data[0]["commiss"])
-            self.Result[settlCurrency].funding = float(data[0]["funding"])
-            self.Result[settlCurrency].sumreal = float(data[0]["sumreal"])
-            self.Result[settlCurrency].result = 0
+            for cur in data:
+                currency = cur["CURRENCY"]
+                union = ""
+                sql = (
+                    "select sum(commiss) commiss, sum(sumreal) sumreal, "
+                    + "sum(funding) funding from ("
+                )
+                for symbol in symbols:
+                    sql += (
+                        union
+                        + "select IFNULL(sum(COMMISS),0.0) commiss, "
+                        + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
+                        + "sum(COMMISS) from "
+                        + "coins where SIDE = 'Fund' and ACCOUNT = "
+                        + str(self.user_id)
+                        + " and MARKET = '"
+                        + self.name
+                        + "' and CURRENCY = '"
+                        + currency
+                        + "' and SYMBOL = '"
+                        + symbol[0]
+                        + "' and CATEGORY = '"
+                        + symbol[1]
+                        + "'),0.0) funding from "
+                        + "coins where SIDE <> 'Fund' and ACCOUNT = "
+                        + str(self.user_id)
+                        + " and MARKET = '"
+                        + self.name
+                        + "' and CURRENCY = '"
+                        + currency
+                        + "' and SYMBOL = '"
+                        + symbol[0]
+                        + "' and CATEGORY = '"
+                        + symbol[1]
+                        + "'"
+                    )
+                    union = "union "
+                sql += ") T"
+                data = Function.select_database(self, sql)
+                settlCurrency = (currency, self.name)
+                self.Result[settlCurrency].commission = float(data[0]["commiss"])
+                self.Result[settlCurrency].funding = float(data[0]["funding"])
+                self.Result[settlCurrency].sumreal = float(data[0]["sumreal"])
+                self.Result[settlCurrency].result = 0
+        else:
+            var.logger.error("SQL error in account_balances() function")
+            self.logNumFatal = 1001
 
     def load_orders(self: Markets, myOrders: list) -> None:
         """

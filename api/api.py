@@ -49,36 +49,38 @@ class WS(Variables):
             method(self)
 
         Agents[self.name].value.get_active_instruments(self)
-        Agents[self.name].value.open_orders(self)
-        threads = []
-        t = threading.Thread(target=start_ws_in_thread)
-        threads.append(t)
-        t.start()
-        t = threading.Thread(
-            target=get_in_thread, args=(Agents[self.name].value.get_user,)
-        )
-        threads.append(t)
-        t.start()
-        t = threading.Thread(
-            target=get_in_thread, args=(Agents[self.name].value.get_wallet_balance,)
-        )
-        threads.append(t)
-        t.start()
-        t = threading.Thread(
-            target=get_in_thread, args=(Agents[self.name].value.get_position_info,)
-        )
-        threads.append(t)
-        t.start()
-        [thread.join() for thread in threads]
-        if self.logNumFatal == 0:
-            var.queue_info.put(
-                {
-                    "market": self.name,
-                    "message": "Connected to websocket.",
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": False,
-                }
+        if not self.logNumFatal:
+            Agents[self.name].value.open_orders(self)
+        if not self.logNumFatal:
+            threads = []
+            t = threading.Thread(target=start_ws_in_thread)
+            threads.append(t)
+            t.start()
+            t = threading.Thread(
+                target=get_in_thread, args=(Agents[self.name].value.get_user,)
             )
+            threads.append(t)
+            t.start()
+            t = threading.Thread(
+                target=get_in_thread, args=(Agents[self.name].value.get_wallet_balance,)
+            )
+            threads.append(t)
+            t.start()
+            t = threading.Thread(
+                target=get_in_thread, args=(Agents[self.name].value.get_position_info,)
+            )
+            threads.append(t)
+            t.start()
+            [thread.join() for thread in threads]
+            if self.logNumFatal == 0:
+                var.queue_info.put(
+                    {
+                        "market": self.name,
+                        "message": "Connected to websocket.",
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": False,
+                    }
+                )
 
     def exit(self: Markets) -> None:
         """

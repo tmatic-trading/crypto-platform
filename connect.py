@@ -72,7 +72,7 @@ def setup_market(ws: Markets):
                 t.start()
                 [thread.join() for thread in threads]
                 if not ws.setup_frames:
-                    var.logger.info("Error during loading timeframes.")
+                    var.logger.info(ws.name + " Error during loading timeframes.")
                     WS.exit(ws)
                     ws.logNumFatal = -1
                     sleep(2)
@@ -83,7 +83,10 @@ def setup_market(ws: Markets):
 def finish_setup(ws: Markets):
     common.Init.load_database(ws)
     common.Init.account_balances(ws)
-    common.Init.load_orders(ws, ws.setup_orders)
+    if isinstance(ws.setup_orders, list):
+        common.Init.load_orders(ws, ws.setup_orders)
+    else:
+        ws.logNumFatal = 1001
     orders_list = list()
     for name in var.market_list:
         orders_list += Markets[name].orders.values()
