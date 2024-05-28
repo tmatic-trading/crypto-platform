@@ -49,14 +49,14 @@ class WS(Variables):
             method(self)
 
         try:
-            self.logNumFatal = Agents[self.name].value.get_active_instruments(self)
-            if self.logNumFatal:
+            if Agents[self.name].value.get_active_instruments(self):
                 return -1
         except Exception:
             self.logger.error("Instruments not loaded.")
             return -1
         try:
-            Agents[self.name].value.open_orders(self)
+            if Agents[self.name].value.open_orders(self):
+                return -1
         except Exception:
             self.logger.error("Orders not loaded.")
             return -1

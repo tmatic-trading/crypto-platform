@@ -199,7 +199,7 @@ class Agent(Bitmex):
         else:
             return "error"
 
-    def open_orders(self) -> list:
+    def open_orders(self) -> int:
         path = Listing.OPEN_ORDERS
         res = Send.request(
             self,
@@ -217,10 +217,10 @@ class Agent(Bitmex):
                     time=order["transactTime"], usec=True
                 )
         else:
-            self.logNumFatal = 1001
+            return -1
         self.setup_orders = res
 
-        return res
+        return 0
 
     def urgent_announcement(self) -> list:
         """

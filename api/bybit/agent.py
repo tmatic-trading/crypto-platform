@@ -14,7 +14,7 @@ class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
     def get_active_instruments(self):
-        def get_in_thread(category, succsess, num):
+        def get_in_thread(category, success, num):
             cursor = "no"
             while cursor:
                 cursor = ""
@@ -37,17 +37,16 @@ class Agent(Bybit):
                         self, instrument=instrument, category=category
                     )
                 if isinstance(result["result"]["list"], list):
-                    succsess[num] = 0
+                    success[num] = 0
 
-        threads, succsess = [], []
+        threads, success = [], []
         for num, category in enumerate(self.categories):
-            succsess.append(-1)
-            t = threading.Thread(target=get_in_thread, args=(category, succsess, num))
+            success.append(-1)
+            t = threading.Thread(target=get_in_thread, args=(category, success, num))
             threads.append(t)
             t.start()
-        for num, thread in enumerate(threads):
-            thread.join()
-        for number in succsess:
+        [thread.join() for thread in threads]
+        for number in success:
             if number != 0:
                 return -1
 
@@ -208,7 +207,7 @@ class Agent(Bybit):
 
         return trade_history
 
-    def open_orders(self) -> list:
+    def open_orders(self) -> int:
         myOrders = list()
         base = {"openOnly": 0, "limit": 50}
 
@@ -216,6 +215,10 @@ class Agent(Bybit):
             nonlocal myOrders
             cursor = "no"
             parameters["cursor"] = cursor
+            success = parameters["success"]
+            num = parameters["num"]
+            parameters.pop("success")
+            parameters.pop("num")
             while cursor:
                 Agent.logger.info(
                     "In open_orders - sending open_orders() - parameters - "
@@ -248,33 +251,46 @@ class Agent(Bybit):
                         time=int(order["updatedTime"]) / 1000, usec=True
                     )
                 myOrders += result["result"]["list"]
+                if isinstance(result["result"]["list"], list):
+                    success[num] = 0
 
         def get_in_thread(**parameters):
             request_open_orders(parameters)
 
-        threads = []
+        threads, success = [], []
         for category in self.categories:
             if category == "spot":
+                success.append(-1)
                 parameters = base.copy()
                 parameters["category"] = category
-                t = threading.Thread(target=lambda par=parameters: get_in_thread(**par))
+                t = threading.Thread(
+                    target=lambda par=parameters: get_in_thread(
+                        **par, success=success, num=len(success) - 1
+                    )
+                )
                 threads.append(t)
                 t.start()
             else:
                 for settleCoin in self.currencies:
                     if settleCoin in self.settlCurrency_list[category]:
+                        success.append(-1)
                         parameters = base.copy()
                         parameters["category"] = category
                         parameters["settleCoin"] = settleCoin
                         t = threading.Thread(
-                            target=lambda par=parameters: get_in_thread(**par)
+                            target=lambda par=parameters: get_in_thread(
+                                **par, success=success, num=len(success) - 1
+                            )
                         )
                         threads.append(t)
                         t.start()
         [thread.join() for thread in threads]
+        for number in success:
+            if number != 0:
+                return -1
         self.setup_orders = myOrders
 
-        return myOrders
+        return 0
 
     def urgent_announcement(self):
         print("___urgent_announcement")
