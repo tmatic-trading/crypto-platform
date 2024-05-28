@@ -14,7 +14,7 @@ class Agent(Bybit):
     logger = logging.getLogger(__name__)
 
     def get_active_instruments(self):
-        def get_in_thread(category):
+        def get_in_thread(category, succsess, num):
             cursor = "no"
             while cursor:
                 cursor = ""
@@ -36,22 +36,34 @@ class Agent(Bybit):
                     Agent.fill_instrument(
                         self, instrument=instrument, category=category
                     )
+                if isinstance(result["result"]["list"], list):
+                    succsess[num] = 0
 
-        threads = []
-        for category in self.categories:
-            t = threading.Thread(target=get_in_thread, args=(category,))
+        threads, succsess = [], []
+        for num, category in enumerate(self.categories):
+            succsess.append(-1)
+            t = threading.Thread(target=get_in_thread, args=(category, succsess, num))
             threads.append(t)
             t.start()
-        [thread.join() for thread in threads]
-        for symbol in self.symbol_list:
-            if symbol not in self.symbols:
-                Agent.logger.error(
-                    "Unknown symbol: "
-                    + str(symbol)
-                    + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
-                    + "such symbol does not exist"
-                )
-                self.logNumFatal = 1001
+        for num, thread in enumerate(threads):
+            thread.join()
+        for number in succsess:
+            if number != 0:
+                return -1
+
+        if self.Instrument.get_keys():
+            for symbol in self.symbol_list:
+                if symbol not in self.Instrument.get_keys():
+                    Agent.logger.error(
+                        "Unknown symbol: "
+                        + str(symbol)
+                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps such symbol does not exist"
+                    )
+                    return -1
+        else:
+            return -1
+
+        return 0
 
     def get_user(self) -> Union[dict, None]:
         Agent.logger.info("In get_user - sending get_uid_wallet_type()")
@@ -386,7 +398,6 @@ class Agent(Bybit):
 
     def fill_instrument(self, instrument: dict, category: str):
         symbol = (instrument["symbol"], category, self.name)
-        self.symbols.add(symbol)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]
         self.Instrument[symbol].baseCoin = instrument["baseCoin"]

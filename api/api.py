@@ -48,10 +48,19 @@ class WS(Variables):
         def get_in_thread(method):
             method(self)
 
-        Agents[self.name].value.get_active_instruments(self)
-        if not self.logNumFatal:
+        try:
+            self.logNumFatal = Agents[self.name].value.get_active_instruments(self)
+            if self.logNumFatal:
+                return -1
+        except Exception:
+            self.logger.error("Instruments not loaded.")
+            return -1
+        try:
             Agents[self.name].value.open_orders(self)
-        if not self.logNumFatal:
+        except Exception:
+            self.logger.error("Orders not loaded.")
+            return -1
+        try:
             threads = []
             t = threading.Thread(target=start_ws_in_thread)
             threads.append(t)
@@ -72,15 +81,21 @@ class WS(Variables):
             threads.append(t)
             t.start()
             [thread.join() for thread in threads]
-            if self.logNumFatal == 0:
-                var.queue_info.put(
-                    {
-                        "market": self.name,
-                        "message": "Connected to websocket.",
-                        "time": datetime.now(tz=timezone.utc),
-                        "warning": False,
-                    }
-                )
+        except Exception:
+            self.logger.error(
+                "The websocket is not running, or the user information, wallet balance or position information is not loaded."
+            )
+            return -1
+        var.queue_info.put(
+            {
+                "market": self.name,
+                "message": "Connected to websocket.",
+                "time": datetime.now(tz=timezone.utc),
+                "warning": False,
+            }
+        )
+
+        return 0
 
     def exit(self: Markets) -> None:
         """

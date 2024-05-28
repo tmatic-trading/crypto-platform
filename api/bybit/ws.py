@@ -6,7 +6,6 @@ import services as service
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
-from common.variables import Variables as var
 from services import exceptions_manager
 
 from .pybit.unified_trading import HTTP, WebSocket

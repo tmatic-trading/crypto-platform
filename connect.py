@@ -1,6 +1,5 @@
 import threading
 import time
-from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
@@ -36,6 +35,7 @@ def setup():
     [thread.join() for thread in threads]
     for name in var.market_list:
         finish_setup(Markets[name])
+    merge_orders()
     functions.load_labels()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
@@ -54,23 +54,27 @@ def setup_market(ws: Markets):
     ws.api_is_active = False
     WS.exit(ws)
     while ws.logNumFatal:
-        ws.logNumFatal = -1
-        WS.start_ws(ws)
+        ws.logNumFatal = WS.start_ws(ws)
         if ws.logNumFatal:
             WS.exit(ws)
             sleep(2)
         else:
             common.Init.clear_params(ws)
-            if bots.Init.load_robots(ws):
+            ws.logNumFatal = bots.Init.load_robots(ws)
+            if not ws.logNumFatal:
                 algo.init_algo(ws)
-                threads = []
-                t = threading.Thread(target=get_timeframes, args=(ws,))
-                threads.append(t)
-                t.start()
-                t = threading.Thread(target=get_history, args=(ws,))
-                threads.append(t)
-                t.start()
-                [thread.join() for thread in threads]
+                try:
+                    threads = []
+                    t = threading.Thread(target=get_timeframes, args=(ws,))
+                    threads.append(t)
+                    t.start()
+                    t = threading.Thread(target=get_history, args=(ws,))
+                    threads.append(t)
+                    t.start()
+                    [thread.join() for thread in threads]
+                except Exception:
+                    var.logger.error("The kline data or trade history is not loaded.")
+                    ws.logNumFatal = -1
                 if not ws.setup_frames:
                     var.logger.info(ws.name + " Error during loading timeframes.")
                     WS.exit(ws)
@@ -80,19 +84,19 @@ def setup_market(ws: Markets):
                 var.logger.info("No robots loaded.")
 
 
-def finish_setup(ws: Markets):
-    common.Init.load_database(ws)
-    common.Init.account_balances(ws)
-    if isinstance(ws.setup_orders, list):
-        common.Init.load_orders(ws, ws.setup_orders)
-    else:
-        ws.logNumFatal = 1001
+def merge_orders():
     orders_list = list()
     for name in var.market_list:
         orders_list += Markets[name].orders.values()
     orders_list.sort(key=lambda x: x["transactTime"])
     for order in orders_list:
         var.queue_order.put(order)
+
+
+def finish_setup(ws: Markets):
+    common.Init.load_database(ws)
+    common.Init.account_balances(ws)
+    common.Init.load_orders(ws, ws.setup_orders)
     bots.Init.delete_unused_robot(ws)
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
@@ -151,6 +155,7 @@ def refresh() -> None:
                 TreeTable.market.tree.update()
                 setup_market(ws=ws)
                 finish_setup(ws=ws)
+                merge_orders()
                 Function.market_status(ws, status="ONLINE", message="", error=False)
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:

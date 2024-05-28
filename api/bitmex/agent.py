@@ -13,15 +13,17 @@ from .ws import Bitmex
 class Agent(Bitmex):
     logger = logging.getLogger(__name__)
 
-    def get_active_instruments(self) -> None:
-        result = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
-        if not self.logNumFatal:
-            for instrument in result:
-                category = Agent.fill_instrument(
-                    self,
-                    instrument=instrument,
-                )
-                self.symbol_category[instrument["symbol"]] = category
+    def get_active_instruments(self) -> int:
+        data = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
+        if not isinstance(data, list):
+            return -1
+        for instrument in data:
+            category = Agent.fill_instrument(
+                self,
+                instrument=instrument,
+            )
+            self.symbol_category[instrument["symbol"]] = category
+        if self.Instrument.get_keys():
             for symbol in self.symbol_list:
                 if symbol not in self.Instrument.get_keys():
                     Agent.logger.error(
@@ -31,7 +33,11 @@ class Agent(Bitmex):
                         + "the name of the symbol does not correspond to the "
                         + "category or such symbol does not exist."
                     )
-                    exit(1)
+                    return -1
+        else:
+            return -1
+
+        return 0
 
     def get_user(self) -> Union[dict, None]:
         result = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
@@ -169,7 +175,8 @@ class Agent(Bitmex):
                 for row in res:
                     if row["symbol"] not in self.symbol_category:
                         Agent.get_instrument(
-                            self, symbol=(row["symbol"], "category not defined", self.name)
+                            self,
+                            symbol=(row["symbol"], "category not defined", self.name),
                         )
                     row["market"] = self.name
                     row["symbol"] = (

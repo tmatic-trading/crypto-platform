@@ -160,7 +160,7 @@ class Init(WS, Variables):
             if robot["SYMBOL"] not in self.full_symbol_list:
                 self.full_symbol_list.append(robot["SYMBOL"])
 
-        return self.robots
+        return 0
 
     def download_data(
         self, start_time: datetime, target: datetime, symbol: tuple, timeframe: int
