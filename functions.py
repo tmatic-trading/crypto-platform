@@ -1281,54 +1281,54 @@ def handler_orderbook(event) -> None:
             return "None"
 
     def refresh() -> None:
-        nonlocal ws
-        book_window.title(var.symbol)
-        if disp.handler_orderbook_symbol != var.symbol:
-            ws = Markets[var.current_market]
-            entry_price_ask.delete(0, "end")
-            entry_price_ask.insert(
-                0,
-                Function.format_price(
-                    ws,
-                    number=first_price(ws.Instrument[var.symbol].asks),
-                    symbol=var.symbol,
-                ),
-            )
-            entry_price_bid.delete(0, "end")
-            entry_price_bid.insert(
-                0,
-                Function.format_price(
-                    ws,
-                    number=first_price(ws.Instrument[var.symbol].bids),
-                    symbol=var.symbol,
-                ),
-            )
-            entry_quantity.delete(0, "end")
-            entry_quantity.insert(
-                0,
-                Function.volume(
-                    ws, qty=ws.Instrument[var.symbol].minOrderQty, symbol=var.symbol
-                ),
-            )
-            option_robots["menu"].delete(0, "end")
-            options = list()
-            for emi in ws.robots:
-                if (
-                    ws.robots[emi]["SYMBOL"] in ws.symbol_list
-                    and ws.robots[emi]["SYMBOL"] == var.symbol
-                ):
-                    options.append(ws.robots[emi]["EMI"])
-            for option in options:
-                option_robots["menu"].add_command(
-                    label=option, command=lambda v=emi_number, optn=option: v.set(optn)
+        while disp.refresh_handler_orderbook:
+            book_window.title(var.symbol)
+            if disp.handler_orderbook_symbol != var.symbol:
+                ws = Markets[var.current_market]
+                entry_price_ask.delete(0, "end")
+                entry_price_ask.insert(
+                    0,
+                    Function.format_price(
+                        ws,
+                        number=first_price(ws.Instrument[var.symbol].asks),
+                        symbol=var.symbol,
+                    ),
                 )
-            emi_number.set("")
-            disp.handler_orderbook_symbol = var.symbol
-        book_window.after(100, refresh)
+                entry_price_bid.delete(0, "end")
+                entry_price_bid.insert(
+                    0,
+                    Function.format_price(
+                        ws,
+                        number=first_price(ws.Instrument[var.symbol].bids),
+                        symbol=var.symbol,
+                    ),
+                )
+                entry_quantity.delete(0, "end")
+                entry_quantity.insert(
+                    0,
+                    Function.volume(
+                        ws, qty=ws.Instrument[var.symbol].minOrderQty, symbol=var.symbol
+                    ),
+                )
+                option_robots["menu"].delete(0, "end")
+                options = list()
+                for emi in ws.robots:
+                    if (
+                        ws.robots[emi]["SYMBOL"] in ws.symbol_list
+                        and ws.robots[emi]["SYMBOL"] == var.symbol
+                    ):
+                        options.append(ws.robots[emi]["EMI"])
+                for option in options:
+                    option_robots["menu"].add_command(
+                        label=option, command=lambda v=emi_number, optn=option: v.set(optn)
+                    )
+                emi_number.set("")
+                disp.handler_orderbook_symbol = var.symbol
+            time.sleep(0.1)
 
     def on_closing() -> None:
         disp.book_window_trigger = "off"
-        book_window.after_cancel(refresh_var)
+        disp.refresh_handler_orderbook = False
         book_window.destroy()
 
     def minimum_qty(qnt):
@@ -1503,7 +1503,9 @@ def handler_orderbook(event) -> None:
         sell_limit.grid(row=4, column=0, sticky="NSWE", pady=10)
         buy_limit.grid(row=4, column=1, sticky="NSWE", pady=10)
         change_color(color=disp.title_color, container=book_window)
-        refresh_var = book_window.after_idle(refresh)
+        disp.refresh_handler_orderbook = True
+        t = threading.Thread(target=refresh)
+        t.start()
 
 
 def format_number(number: Union[float, str]) -> str:

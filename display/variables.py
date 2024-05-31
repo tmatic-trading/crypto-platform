@@ -319,6 +319,7 @@ class Variables:
     book_window_trigger = "off"
     order_window_trigger = "off"
     table_limit = 200
+    refresh_handler_orderbook = False
 
 
 class TreeviewTable(Variables):
