@@ -19,8 +19,7 @@ class Agent(Bybit):
             while cursor:
                 cursor = ""
                 Agent.logger.info(
-                    "Sending get_instruments_info() - category - "
-                    + category
+                    "Sending get_instruments_info() - category - " + category
                 )
                 result = self.session.get_instruments_info(
                     category=category,
@@ -47,7 +46,9 @@ class Agent(Bybit):
         [thread.join() for thread in threads]
         for number in success:
             if number != 0:
-                self.logger.error("The list was expected when the instruments were loaded, but for some categories it was not received.")
+                self.logger.error(
+                    "The list was expected when the instruments were loaded, but for some categories it was not received."
+                )
                 return -1
 
         if self.Instrument.get_keys():
@@ -65,19 +66,22 @@ class Agent(Bybit):
 
         return 0
 
-    def get_user(self) -> Union[dict, None]:
+    def get_user(self) -> None:
+        """
+        Returns the user ID and other useful information about the user and
+        places it in self.user. If unsuccessful, logNumFatal is not 0.
+        """
         Agent.logger.info("Sending get_uid_wallet_type()")
-        result = self.session.get_uid_wallet_type()
-        self.user = result
-        id = find_value_by_key(data=result, key="uid")
-        if id:
-            self.user_id = id
-        else:
-            self.logNumFatal = 10001
-            message = (
-                "A user ID was requested from the exchange but was not " + "received."
-            )
-            Agent.logger.error(message)
+        data = self.session.get_uid_wallet_type()
+        if isinstance(data, dict):
+            self.user = data
+            id = find_value_by_key(data=data, key="uid")
+            if id:
+                self.user_id = id
+                return
+        self.logNumFatal = 1001
+        message = "A user ID was requested from the exchange but was not received."
+        Agent.logger.error(message)
 
     def get_instrument(self, symbol: tuple) -> None:
         Agent.logger.info(
@@ -222,8 +226,7 @@ class Agent(Bybit):
             parameters.pop("num")
             while cursor:
                 Agent.logger.info(
-                    "Sending open_orders() - parameters - "
-                    + str(parameters)
+                    "Sending open_orders() - parameters - " + str(parameters)
                 )
                 result = self.session.get_open_orders(**parameters)
                 cursor = result["result"]["nextPageCursor"]
@@ -288,7 +291,9 @@ class Agent(Bybit):
         [thread.join() for thread in threads]
         for number in success:
             if number != 0:
-                self.logger.error("The list was expected when the orders were loaded, but for some categories it was not received.")
+                self.logger.error(
+                    "The list was expected when the orders were loaded, but for some categories it was not received."
+                )
                 return -1
         self.setup_orders = myOrders
 
@@ -330,8 +335,7 @@ class Agent(Bybit):
     def get_wallet_balance(self) -> None:
         for account_type in self.account_types:
             Agent.logger.info(
-                "Sending get_wallet_balance() - accountType - "
-                + account_type
+                "Sending get_wallet_balance() - accountType - " + account_type
             )
             result = self.session.get_wallet_balance(accountType=account_type)
             for values in result["result"]["list"]:

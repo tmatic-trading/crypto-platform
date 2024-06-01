@@ -72,7 +72,6 @@ class Bybit(Variables):
         self.account_disp = ""
         self.orders = dict()
 
-
     def start(self):
         for symbol in self.symbol_list:
             instrument = self.Instrument[symbol]
@@ -83,7 +82,7 @@ class Bybit(Variables):
             elif instrument.category == "spot":
                 self.Result[(instrument.baseCoin, self.name)]
                 self.Result[(instrument.quoteCoin, self.name)]
-            
+
         self.__connect()
 
     def __connect(self) -> None:

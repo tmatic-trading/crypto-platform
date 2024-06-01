@@ -458,6 +458,15 @@ class Function(WS, Variables):
                     {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
                 )
                 del self.orders[clOrdID]
+            else:
+                var.logger.warning(
+                    self.name
+                    + ": execType "
+                    + row["execType"]
+                    + " - order with clOrdID "
+                    + clOrdID
+                    + " not found."
+                )
         elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
@@ -466,6 +475,15 @@ class Function(WS, Variables):
                     {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
                 )
                 del self.orders[clOrdID]
+            else:
+                var.logger.warning(
+                    self.name
+                    + ": execType "
+                    + row["execType"]
+                    + " - order with clOrdID "
+                    + clOrdID
+                    + " not found."
+                )
         else:
             if row["execType"] == "New":
                 if "clOrdID" in row:
@@ -499,13 +517,32 @@ class Function(WS, Variables):
                     var.queue_order.put(
                         {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
                     )
+                else:
+                    var.logger.warning(
+                        self.name
+                        + ": execType "
+                        + row["execType"]
+                        + " - order with clOrdID "
+                        + clOrdID
+                        + " not found."
+                    )
             elif row["execType"] == "Replaced":
-                self.orders[clOrdID]["orderID"] = row["orderID"]
-                info_p = price
-                info_q = row["leavesQty"]
-                var.queue_order.put(
-                    {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
-                )
+                if clOrdID in self.orders:
+                    self.orders[clOrdID]["orderID"] = row["orderID"]
+                    info_p = price
+                    info_q = row["leavesQty"]
+                    var.queue_order.put(
+                        {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                    )
+                else:
+                    var.logger.warning(
+                        self.name
+                        + ": execType "
+                        + row["execType"]
+                        + " - order with clOrdID "
+                        + clOrdID
+                        + " not found."
+                    )
             if clOrdID in self.orders:
                 self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 self.orders[clOrdID]["price"] = price
@@ -1320,7 +1357,8 @@ def handler_orderbook(event) -> None:
                         options.append(ws.robots[emi]["EMI"])
                 for option in options:
                     option_robots["menu"].add_command(
-                        label=option, command=lambda v=emi_number, optn=option: v.set(optn)
+                        label=option,
+                        command=lambda v=emi_number, optn=option: v.set(optn),
                     )
                 emi_number.set("")
                 disp.handler_orderbook_symbol = var.symbol

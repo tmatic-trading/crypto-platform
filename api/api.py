@@ -39,7 +39,8 @@ class Agents(Enum):
 class WS(Variables):
     def start_ws(self: Markets) -> None:
         """
-        Websockets init
+        Loading instruments, orders, user ID, wallet balance, position
+        information and initializing websockets.
         """
 
         def start_ws_in_thread():
@@ -52,13 +53,13 @@ class WS(Variables):
             if Agents[self.name].value.get_active_instruments(self):
                 return -1
         except Exception:
-            self.logger.error(self.name + " Instruments not loaded.")
+            self.logger.error(self.name + " Instruments not loaded. Reboot.")
             return -1
         try:
             if Agents[self.name].value.open_orders(self):
                 return -1
         except Exception:
-            self.logger.error(self.name + " Orders not loaded.")
+            self.logger.error(self.name + " Orders not loaded. Reboot.")
             return -1
         try:
             threads = []
@@ -83,12 +84,14 @@ class WS(Variables):
             [thread.join() for thread in threads]
         except Exception:
             self.logger.error(
-                self.name + "The websocket is not running, or the user information, wallet balance or position information is not loaded."
+                self.name
+                + "The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
             )
             return -1
         if self.logNumFatal:
             self.logger.error(
-                self.name + "The websocket is not running, or the user information, wallet balance or position information is not loaded."
+                self.name
+                + "The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
             )
             return -1
         var.queue_info.put(

@@ -247,7 +247,9 @@ class _WebSocketManager:
         try:
             self.ws.send(self.custom_ping_message)
         except Exception:
-            print("______Tmatic: Bybit API is still pinging, but the websocket is already closed")
+            print(
+                "______Tmatic: Bybit API is still pinging, but the websocket is already closed"
+            )
 
     def _send_initial_ping(self):
         """https://github.com/bybit-exchange/pybit/issues/164"""

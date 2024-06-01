@@ -275,7 +275,6 @@ class _V5HTTPManager:
                     continue
                 else:
                     raise e
-                
 
             # Check HTTP status code before trying to decode JSON.
             if s.status_code != 200:
@@ -291,7 +290,7 @@ class _V5HTTPManager:
                     time=dt.utcnow().strftime("%H:%M:%S"),
                     resp_headers=s.headers,
                 )
-            
+
             # Convert response to dictionary, or raise if requests error.
             try:
                 s_json = s.json()

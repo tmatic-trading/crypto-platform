@@ -18,7 +18,6 @@ from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
 
-
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
 Bitmex.transaction = Function.transaction
@@ -27,8 +26,8 @@ Bybit.transaction = Function.transaction
 
 def setup():
     """
-    This function works the first time you start the program or when you 
-    reboot after pressing F3. Markets are loaded using setup_market() in 
+    This function works the first time you start the program or when you
+    reboot after pressing F3. Markets are loaded using setup_market() in
     parallel in threads to speed up the loading process.
     """
     clear_params()
@@ -52,39 +51,40 @@ def setup():
 
 def setup_market(ws: Markets):
     """
-    Market reboot. During program operation, when accessing endpoints or 
-    receiving information from websockets, errors may occur due to the loss of 
-    the Internet connection or errors for other reasons. If the program 
+    Market reboot. During program operation, when accessing endpoints or
+    receiving information from websockets, errors may occur due to the loss of
+    the Internet connection or errors for other reasons. If the program
     detects such a case, it reboots the market to restore data integrity.
 
-    The download process may take time, because there are a large number 
-    of calls to endpoints and websocket subscriptions. To speed up, many calls 
-    are performed in parallel threads, within which parallel threads can also 
-    be opened. If any download component is not received, the program will 
+    The download process may take time, because there are a large number
+    of calls to endpoints and websocket subscriptions. To speed up, many calls
+    are performed in parallel threads, within which parallel threads can also
+    be opened. If any download component is not received, the program will
     restart again from the very beginning.
 
-    The download process is done in stages because the order in which the 
+    The download process is done in stages because the order in which the
     information is received matters. Loading sequence:
 
     1) All active instruments.
-    2) All active orders. After receiving orders, it may happen that the order 
-       is executed even before the websocket comes up. In this case, the 
-       websocket will not send execution, but the integrity of the information 
-       will not be lost, because execution of order will be processed at the 
+    2) All active orders. After receiving orders, it may happen that the order
+       is executed even before the websocket comes up. In this case, the
+       websocket will not send execution, but the integrity of the information
+       will not be lost, because execution of order will be processed at the
        end of loading in the load_trading_history() function.
     3) Simultaneous download:
-        1. Subscribe to websockets only for those instruments that are 
+        1. Subscribe to websockets only for those instruments that are
            specified in the .env files.
         2. Getting the user id.
         3. Obtaining information on account balances.
-        4. Obtaining initial information about the positions of signed 
+        4. Obtaining initial information about the positions of signed
            instruments.
     4) Reading active bots from the database.
     5) Simultaneous download:
-        1. Receiving klines only for those instruments and timeframes that are 
+        1. Receiving klines only for those instruments and timeframes that are
            used by bots.
         2. Trading history.
     """
+
     def get_timeframes(ws):
         return bots.Init.init_timeframes(ws)
 
