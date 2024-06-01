@@ -52,13 +52,13 @@ class WS(Variables):
             if Agents[self.name].value.get_active_instruments(self):
                 return -1
         except Exception:
-            self.logger.error("Instruments not loaded.")
+            self.logger.error(self.name + " Instruments not loaded.")
             return -1
         try:
             if Agents[self.name].value.open_orders(self):
                 return -1
         except Exception:
-            self.logger.error("Orders not loaded.")
+            self.logger.error(self.name + " Orders not loaded.")
             return -1
         try:
             threads = []
@@ -83,7 +83,12 @@ class WS(Variables):
             [thread.join() for thread in threads]
         except Exception:
             self.logger.error(
-                "The websocket is not running, or the user information, wallet balance or position information is not loaded."
+                self.name + "The websocket is not running, or the user information, wallet balance or position information is not loaded."
+            )
+            return -1
+        if self.logNumFatal:
+            self.logger.error(
+                self.name + "The websocket is not running, or the user information, wallet balance or position information is not loaded."
             )
             return -1
         var.queue_info.put(

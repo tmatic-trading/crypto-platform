@@ -21,17 +21,17 @@ def exception(method):
                 self.logNumFatal = 0
             return result
         except Exception as exception:
-            name = exception.__class__.__name__
-            message = name + " - " + str(exception)
-            if name == "ConnectionError":  # requests module
+            exception_class = exception.__class__.__name__
+            message = exception_class + " - " + str(exception)
+            if exception_class == "ConnectionError":  # requests module
                 self.logNumFatal = 1001
-            elif name == "SSLError":  # requests module
+            elif exception_class == "SSLError":  # requests module
                 self.logNumFatal = 1001
-            elif name == "ReadTimeout":  # requests module
+            elif exception_class == "ReadTimeout":  # requests module
                 self.logNumFatal = 1001
-            elif name == "FailedRequestError":  # pybit http
+            elif exception_class == "FailedRequestError":  # pybit http
                 self.logNumFatal = 1001
-            elif name == "InvalidRequestError":  # pybit http
+            elif exception_class == "InvalidRequestError":  # pybit http
                 if exception.status_code in [
                     10000,
                     10002,
@@ -178,19 +178,20 @@ def exception(method):
                     pass
                 else:
                     self.logNumFatal = 1001
-            elif name == "InvalidChannelTypeError":  # pybit ws
+            elif exception_class == "InvalidChannelTypeError":  # pybit ws
                 self.logNumFatal = 2002
-            elif name == "UnauthorizedExceptionError":  # pybit ws
+            elif exception_class == "UnauthorizedExceptionError":  # pybit ws
                 self.logNumFatal = 1001
-            elif name == "TopicMismatchError":  # pybit ws
+            elif exception_class == "TopicMismatchError":  # pybit ws
                 self.logNumFatal = 1001
-            elif name == "WebSocketTimeoutException":  # pybit ws
+            elif exception_class == "WebSocketTimeoutException":  # pybit ws
                 self.logNumFatal = 1001
             else:
-                print("_____________error", name)
+                print("_______________________Unexpected Bybit error:", exception_class)
                 traceback.print_exception(
                     type(exception), exception, exception.__traceback__
                 )
+                self.logNumFatal = 1100
                 # os.abort()
             if message:
                 message = message.replace("\n", " ")

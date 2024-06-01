@@ -16,6 +16,7 @@ class Agent(Bitmex):
     def get_active_instruments(self) -> int:
         data = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not isinstance(data, list):
+            self.logger.error("A list was expected when loading instruments, but was not received.")
             return -1
         for instrument in data:
             category = Agent.fill_instrument(
@@ -35,6 +36,7 @@ class Agent(Bitmex):
                     )
                     return -1
         else:
+            self.logger.error("There are no entries in the Instrument class.")
             return -1
 
         return 0
@@ -217,6 +219,7 @@ class Agent(Bitmex):
                     time=order["transactTime"], usec=True
                 )
         else:
+            self.logger.error("The list was expected when the orders were loaded, but it was not received.")
             return -1
         self.setup_orders = res
 

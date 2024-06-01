@@ -19,8 +19,7 @@ class Agent(Bybit):
             while cursor:
                 cursor = ""
                 Agent.logger.info(
-                    "In get_active_instruments - sending get_instruments_info() "
-                    + "- category - "
+                    "Sending get_instruments_info() - category - "
                     + category
                 )
                 result = self.session.get_instruments_info(
@@ -48,6 +47,7 @@ class Agent(Bybit):
         [thread.join() for thread in threads]
         for number in success:
             if number != 0:
+                self.logger.error("The list was expected when the instruments were loaded, but for some categories it was not received.")
                 return -1
 
         if self.Instrument.get_keys():
@@ -56,16 +56,17 @@ class Agent(Bybit):
                     Agent.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
-                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps such symbol does not exist"
+                        + ". Check the SYMBOLS in the .env.Bybit file. Perhaps such symbol does not exist"
                     )
                     return -1
         else:
+            self.logger.error("There are no entries in the Instrument class.")
             return -1
 
         return 0
 
     def get_user(self) -> Union[dict, None]:
-        Agent.logger.info("In get_user - sending get_uid_wallet_type()")
+        Agent.logger.info("Sending get_uid_wallet_type()")
         result = self.session.get_uid_wallet_type()
         self.user = result
         id = find_value_by_key(data=result, key="uid")
@@ -97,7 +98,7 @@ class Agent(Bybit):
         self, symbol: tuple, time: datetime, timeframe: str
     ) -> Union[list, None]:
         Agent.logger.info(
-            "In trade_bucketed - sending get_kline() - symbol - "
+            "Sending get_kline() - symbol - "
             + str(symbol)
             + " - interval - "
             + str(timeframe)
@@ -143,7 +144,7 @@ class Agent(Bybit):
             cursor = "no"
             while cursor:
                 Agent.logger.info(
-                    "In trading_history - sending get_executions() - category - "
+                    "Sending get_executions() - category - "
                     + category
                     + " - startTime - "
                     + str(service.time_converter(startTime / 1000))
@@ -221,7 +222,7 @@ class Agent(Bybit):
             parameters.pop("num")
             while cursor:
                 Agent.logger.info(
-                    "In open_orders - sending open_orders() - parameters - "
+                    "Sending open_orders() - parameters - "
                     + str(parameters)
                 )
                 result = self.session.get_open_orders(**parameters)
@@ -287,6 +288,7 @@ class Agent(Bybit):
         [thread.join() for thread in threads]
         for number in success:
             if number != 0:
+                self.logger.error("The list was expected when the orders were loaded, but for some categories it was not received.")
                 return -1
         self.setup_orders = myOrders
 
@@ -328,7 +330,7 @@ class Agent(Bybit):
     def get_wallet_balance(self) -> None:
         for account_type in self.account_types:
             Agent.logger.info(
-                "In get_wallet_balance - sending get_wallet_balance() - accountType - "
+                "Sending get_wallet_balance() - accountType - "
                 + account_type
             )
             result = self.session.get_wallet_balance(accountType=account_type)
@@ -370,7 +372,7 @@ class Agent(Bybit):
             cursor = "no"
             while cursor:
                 Agent.logger.info(
-                    "In get_position_info - sending get_positions() - category - "
+                    "Sending get_positions() - category - "
                     + category
                     + " - settlCurrency - "
                     + settlCurrency
