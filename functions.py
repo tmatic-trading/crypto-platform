@@ -473,19 +473,21 @@ class Function(WS, Variables):
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in self.orders:
-                var.queue_order.put(
-                    {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
-                )
+                if not info:
+                    var.queue_order.put(
+                        {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                    )
                 del self.orders[clOrdID]
             else:
-                var.logger.warning(
-                    self.name
-                    + ": execType "
-                    + row["execType"]
-                    + " - order with clOrdID "
-                    + clOrdID
-                    + " not found."
-                )
+                if not info:
+                    var.logger.warning(
+                        self.name
+                        + ": execType "
+                        + row["execType"]
+                        + " - order with clOrdID "
+                        + clOrdID
+                        + " not found."
+                    )
         else:
             if row["execType"] == "New":
                 if "clOrdID" in row:
@@ -520,14 +522,15 @@ class Function(WS, Variables):
                         {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
                     )
                 else:
-                    var.logger.warning(
-                        self.name
-                        + ": execType "
-                        + row["execType"]
-                        + " - order with clOrdID "
-                        + clOrdID
-                        + " not found."
-                    )
+                    if not info:
+                        var.logger.warning(
+                            self.name
+                            + ": execType "
+                            + row["execType"]
+                            + " - order with clOrdID "
+                            + clOrdID
+                            + " not found."
+                        )
             elif row["execType"] == "Replaced":
                 if clOrdID in self.orders:
                     self.orders[clOrdID]["orderID"] = row["orderID"]
