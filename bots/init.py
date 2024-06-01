@@ -172,14 +172,19 @@ class Init(WS, Variables):
             )
             if data:
                 last = start_time
-                start_time = data[-1]["timestamp"] + timedelta(minutes=timeframe)
                 res += data
-                print(
-                    "----> downloaded trade/bucketed, time: "
+                message = (
+                    self.name
+                    + " - loading klines, symbol="
+                    + str(symbol)
+                    + ", startTime="
                     + str(start_time)
-                    + ", rows downloaded:",
-                    len(res),
+                    + ", received: "
+                    + str(len(res))
+                    + " records."
                 )
+                start_time = data[-1]["timestamp"] + timedelta(minutes=timeframe)
+                var.logger.info(message)
                 if last == start_time or target <= data[-1]["timestamp"]:
                     return res
 

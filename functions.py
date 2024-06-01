@@ -450,6 +450,8 @@ class Function(WS, Variables):
             # conform to lot size', last time 2021-05-31
             row["orderID"] = row["text"]
         price = row["price"]
+        info_q = ""
+        info_p = ""
         if row["execType"] == "Canceled":
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
@@ -547,46 +549,47 @@ class Function(WS, Variables):
                 self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                 self.orders[clOrdID]["price"] = price
                 self.orders[clOrdID]["transactTime"] = row["transactTime"]
-        info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
-        info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
         try:
             t = clOrdID.split(".")
             int(t[0])
             emi = ".".join(t[1:3])
         except ValueError:
             emi = clOrdID
-        if not info:
-            message = (
-                row["execType"]
+        if info_q:
+            info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
+            info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
+            if not info:
+                message = (
+                    row["execType"]
+                    + " "
+                    + row["side"]
+                    + ": "
+                    + emi
+                    + " p="
+                    + str(info_p)
+                    + " q="
+                    + info_q
+                )
+                var.queue_info.put(
+                    {
+                        "market": self.name,
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": False,
+                    }
+                )
+            var.logger.info(
+                self.name
                 + " "
-                + row["side"]
-                + ": "
-                + emi
-                + " p="
-                + str(info_p)
-                + " q="
-                + info_q
+                + info
+                + row["execType"]
+                + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
+                row["side"],
+                row["orderID"],
+                clOrdID,
+                str(info_p),
+                info_q,
             )
-            var.queue_info.put(
-                {
-                    "market": self.name,
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": False,
-                }
-            )
-        var.logger.info(
-            self.name
-            + " "
-            + info
-            + row["execType"]
-            + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
-            row["side"],
-            row["orderID"],
-            clOrdID,
-            str(info_p),
-            info_q,
-        )
         if clOrdID in self.orders:
             var.queue_order.put(self.orders[clOrdID])
 

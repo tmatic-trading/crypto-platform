@@ -198,13 +198,14 @@ class Agent(Bybit):
                 threads.append(t)
                 t.start()
             [thread.join() for thread in threads]
-            print(
+            message = (
                 "Bybit - loading trading history, startTime="
                 + str(service.time_converter(startTime / 1000))
                 + ", received: "
                 + str(len(trade_history))
                 + " records."
             )
+            self.logger.info(message)
             if len(trade_history) > histCount:
                 break
             startTime += 604800000  # +7 days
@@ -292,7 +293,7 @@ class Agent(Bybit):
         for number in success:
             if number != 0:
                 self.logger.error(
-                    "The list was expected when the orders were loaded, but for some categories it was not received."
+                    "The list was expected when the orders were loaded, but for some categories it was not received. Reboot"
                 )
                 return -1
         self.setup_orders = myOrders
@@ -337,8 +338,8 @@ class Agent(Bybit):
             Agent.logger.info(
                 "Sending get_wallet_balance() - accountType - " + account_type
             )
-            result = self.session.get_wallet_balance(accountType=account_type)
-            for values in result["result"]["list"]:
+            data = self.session.get_wallet_balance(accountType=account_type)
+            for values in data["result"]["list"]:
                 for coin in values["coin"]:
                     currency = (coin["coin"] + "." + values["accountType"], self.name)
                     account = self.Account[currency]
@@ -372,7 +373,7 @@ class Agent(Bybit):
                 break
 
     def get_position_info(self):
-        def get_in_thread(category, settlCurrency):
+        def get_in_thread(category, settlCurrency, success, num):
             cursor = "no"
             while cursor:
                 Agent.logger.info(
@@ -406,17 +407,27 @@ class Agent(Bybit):
                     if not instrument.marginCallPrice:
                         instrument.marginCallPrice = "inf"
                     instrument.state = values["positionStatus"]
+                if isinstance(result["result"]["list"], list):
+                    success[num] = 0
 
-        threads = []
+        threads, success = [], []
         for category in self.category_list:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
+                    success.append(-1)
                     t = threading.Thread(
-                        target=get_in_thread, args=(category, settlCurrency)
+                        target=get_in_thread,
+                        args=(category, settlCurrency, success, len(success) - 1),
                     )
                     threads.append(t)
                     t.start()
         [thread.join() for thread in threads]
+        for number in success:
+            if number != 0:
+                self.logger.error(
+                    "The list was expected when the positions were loaded, but for some categories and settlCurrency it was not received. Reboot"
+                )
+                self.logNumFatal = -1
 
     def fill_instrument(self, instrument: dict, category: str):
         symbol = (instrument["symbol"], category, self.name)

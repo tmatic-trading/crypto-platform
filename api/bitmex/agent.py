@@ -226,7 +226,7 @@ class Agent(Bitmex):
                 )
         else:
             self.logger.error(
-                "The list was expected when the orders were loaded, but it was not received."
+                "The list was expected when the orders were loaded, but it was not received. Reboot."
             )
             return -1
         self.setup_orders = res
@@ -295,9 +295,9 @@ class Agent(Bitmex):
         Gets current positions
         """
         path = Listing.GET_POSITION_INFO
-        res = Send.request(self, path=path, verb="GET")
-        if res:
-            for values in res:
+        data = Send.request(self, path=path, verb="GET")
+        if isinstance(data, list):
+            for values in data:
                 if values["symbol"] in self.symbol_category:
                     symbol = (
                         values["symbol"],
@@ -317,3 +317,8 @@ class Agent(Bitmex):
                                 instrument.marginCallPrice = values["marginCallPrice"]
                         if "unrealisedPnl" in values:
                             instrument.unrealisedPnl = values["unrealisedPnl"]
+        else:
+            self.logger.error(
+                "The list was expected when the positions were loaded, but it was not received. Reboot."
+            )
+            self.logNumFatal = -1
