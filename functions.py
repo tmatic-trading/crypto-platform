@@ -1325,7 +1325,10 @@ def handler_orderbook(event) -> None:
 
     def refresh() -> None:
         while disp.refresh_handler_orderbook:
-            book_window.title(var.symbol)
+            try:
+                book_window.title(var.symbol)
+            except Exception:
+                pass
             if disp.handler_orderbook_symbol != var.symbol:
                 ws = Markets[var.current_market]
                 entry_price_ask.delete(0, "end")
