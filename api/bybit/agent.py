@@ -47,7 +47,7 @@ class Agent(Bybit):
         for number in success:
             if number != 0:
                 self.logger.error(
-                    "The list was expected when the instruments were loaded, but for some categories it was not received."
+                    "The list was expected when the instruments were loaded, but for some categories it was not received. Reboot"
                 )
                 return -1
 

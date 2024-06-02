@@ -133,6 +133,13 @@ def setup_market(ws: Markets):
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)
+    if ws.logNumFatal:
+        var.logger.info("\n\n")
+        var.logger.info(
+            "Something went wrong. "
+            + ws.name
+            + " is not loading. See logFile.log. Reboot.\n\n"
+        )
 
 
 def merge_orders():
