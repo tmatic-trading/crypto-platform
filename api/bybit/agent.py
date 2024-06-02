@@ -79,8 +79,10 @@ class Agent(Bybit):
             if id:
                 self.user_id = id
                 return
-        self.logNumFatal = 1001
-        message = "A user ID was requested from the exchange but was not received."
+        self.logNumFatal = -1
+        message = (
+            "A user ID was requested from the exchange but was not received. Reboot"
+        )
         Agent.logger.error(message)
 
     def get_instrument(self, symbol: tuple) -> None:
@@ -130,74 +132,83 @@ class Agent(Bybit):
 
             return res
 
-    def trading_history(self, histCount: int, time: datetime) -> list:
-        trade_history = []
-        utc = datetime.now(timezone.utc)
-        if utc - time > timedelta(days=729):
-            self.logger.info(
-                "Bybit only allows you to query trading history for the last "
-                + "2 years. Check the History.ini file."
-            )
-            time = utc - timedelta(days=729)
-            self.logger.info("Time changed to " + str(time))
-        startTime = service.time_converter(time)
-        limit = min(100, histCount)
+    def trading_history(self, histCount: int, time=None) -> list:
+        if time:
+            trade_history = []
+            utc = datetime.now(timezone.utc)
+            if utc - time > timedelta(days=729):
+                self.logger.info(
+                    "Bybit only allows you to query trading history for the last 2 years. Check the History.ini file."
+                )
+                time = utc - timedelta(days=729)
+                self.logger.info("Time changed to " + str(time))
+            startTime = service.time_converter(time)
+            limit = min(100, histCount)
 
-        def get_in_thread(category, startTime, limit):
-            nonlocal trade_history
-            cursor = "no"
-            while cursor:
-                Agent.logger.info(
-                    "Sending get_executions() - category - "
-                    + category
-                    + " - startTime - "
-                    + str(service.time_converter(startTime / 1000))
-                )
-                result = self.session.get_executions(
-                    category=category,
-                    startTime=startTime,
-                    limit=limit,
-                    cursor=cursor,
-                )
-                cursor = result["result"]["nextPageCursor"]
-                res = result["result"]["list"]
-                for row in res:
-                    row["symbol"] = (row["symbol"], category, self.name)
-                    row["execID"] = row["execId"]
-                    row["orderID"] = row["orderId"]
-                    row["category"] = category
-                    row["lastPx"] = float(row["execPrice"])
-                    row["leavesQty"] = float(row["leavesQty"])
-                    row["transactTime"] = service.time_converter(
-                        time=int(row["execTime"]) / 1000, usec=True
+            def get_in_thread(category, startTime, limit, success, num):
+                nonlocal trade_history
+                cursor = "no"
+                while cursor:
+                    Agent.logger.info(
+                        "Sending get_executions() - category - "
+                        + category
+                        + " - startTime - "
+                        + str(service.time_converter(startTime / 1000))
                     )
-                    row["commission"] = float(row["feeRate"])
-                    if row["orderLinkId"]:
-                        row["clOrdID"] = row["orderLinkId"]
-                    row["price"] = float(row["execPrice"])
-                    if category == "spot":
-                        row["settlCurrency"] = (row["feeCurrency"], self.name)
+                    result = self.session.get_executions(
+                        category=category,
+                        startTime=startTime,
+                        limit=limit,
+                        cursor=cursor,
+                    )
+                    cursor = result["result"]["nextPageCursor"]
+                    res = result["result"]["list"]
+                    if isinstance(result["result"]["list"], list):
+                        for row in res:
+                            row["symbol"] = (row["symbol"], category, self.name)
+                            row["execID"] = row["execId"]
+                            row["orderID"] = row["orderId"]
+                            row["category"] = category
+                            row["lastPx"] = float(row["execPrice"])
+                            row["leavesQty"] = float(row["leavesQty"])
+                            row["transactTime"] = service.time_converter(
+                                time=int(row["execTime"]) / 1000, usec=True
+                            )
+                            row["commission"] = float(row["feeRate"])
+                            if row["orderLinkId"]:
+                                row["clOrdID"] = row["orderLinkId"]
+                            row["price"] = float(row["execPrice"])
+                            if category == "spot":
+                                row["settlCurrency"] = (row["feeCurrency"], self.name)
+                            else:
+                                row["settlCurrency"] = self.Instrument[
+                                    row["symbol"]
+                                ].settlCurrency
+                            row["lastQty"] = float(row["execQty"])
+                            row["market"] = self.name
+                            if row["execType"] == "Funding":
+                                if row["side"] == "Sell":
+                                    row["lastQty"] = -row["lastQty"]
+                            row["execFee"] = float(row["execFee"])
+                        trade_history += res
                     else:
-                        row["settlCurrency"] = self.Instrument[
-                            row["symbol"]
-                        ].settlCurrency
-                    row["lastQty"] = float(row["execQty"])
-                    row["market"] = self.name
-                    if row["execType"] == "Funding":
-                        if row["side"] == "Sell":
-                            row["lastQty"] = -row["lastQty"]
-                    row["execFee"] = float(row["execFee"])
-                trade_history += res
+                        success[num] = None
+                        return
 
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
-            threads = []
+            threads, success = [], []
             for category in self.categories:
+                success.append("success")
                 t = threading.Thread(
-                    target=get_in_thread, args=(category, startTime, limit)
+                    target=get_in_thread,
+                    args=(category, startTime, limit, success, len(success) - 1),
                 )
                 threads.append(t)
                 t.start()
             [thread.join() for thread in threads]
+            for s in success:
+                if not s:
+                    return
             message = (
                 "Bybit - loading trading history, startTime="
                 + str(service.time_converter(startTime / 1000))
@@ -303,7 +314,6 @@ class Agent(Bybit):
     def urgent_announcement(self):
         print("___urgent_announcement")
         self.exit()
-        self.logNumFatal = 1001
 
     def place_limit(self, quantity: int, price: float, clOrdID: str, symbol: tuple):
         side = "Buy" if quantity > 0 else "Sell"

@@ -83,7 +83,7 @@ class Init(WS, Variables):
                 if self.logNumFatal == 0:
                     Init.save_history_file(self, time=last_history_time)
                 if len(history) < count_val:
-                    break
+                    return "success"
                 history = WS.trading_history(
                     self, histCount=count_val, time=last_history_time
                 )

@@ -190,8 +190,7 @@ class Init(WS, Variables):
 
             else:
                 message = (
-                    "When downloading trade/bucketed data NoneType was recieved "
-                    + str(data)
+                    "When downloading trade/bucketed data NoneType was recieved. Reboot"
                 )
                 var.logger.error(message)
                 return None
@@ -205,8 +204,8 @@ class Init(WS, Variables):
         frames: dict,
     ) -> Union[dict, None]:
         """
-        Loading usual candlestick data from the exchange server. Data is recorded
-        in files for each algorithm. Every time you reboot the files are
+        Loading kline data from the exchange server. Data is recorded
+        in files for each timeframe. Every time you reboot the files are
         overwritten.
         """
         self.filename = Function.timeframes_data_filename(
@@ -296,10 +295,7 @@ class Init(WS, Variables):
             )
             if not res:
                 message = (
-                    str(symbol)
-                    + " "
-                    + str(timefr)
-                    + " min candle timeframe data was not loaded!"
+                    str(symbol) + " " + str(timefr) + " min kline data was not loaded!"
                 )
                 var.logger.error(message)
                 return
@@ -333,10 +329,9 @@ class Init(WS, Variables):
         [thread.join() for thread in threads]
         for s in success:
             if not s:
-                self.setup_frames = None
                 return
 
-        self.setup_frames = "success"
+        return "success"
 
     def delete_unused_robot(self: Markets) -> None:
         """

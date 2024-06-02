@@ -16,10 +16,7 @@ def exception(method):
     def decorator(*args, **kwargs):
         self: Variables = args[0]
         try:
-            result = method(*args, **kwargs)
-            if self.logNumFatal < 0:
-                self.logNumFatal = 0
-            return result
+            return method(*args, **kwargs)
         except Exception as exception:
             exception_class = exception.__class__.__name__
             message = exception_class + " - " + str(exception)

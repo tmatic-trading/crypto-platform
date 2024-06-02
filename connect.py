@@ -85,11 +85,13 @@ def setup_market(ws: Markets):
         2. Trading history.
     """
 
-    def get_timeframes(ws):
-        return bots.Init.init_timeframes(ws)
+    def get_timeframes(ws, success, num):
+        if bots.Init.init_timeframes(ws):
+            success[num] = "success"
 
-    def get_history(ws):
-        common.Init.load_trading_history(ws)
+    def get_history(ws, success, num):
+        if common.Init.load_trading_history(ws):
+            success[num] = "success"
 
     ws.logNumFatal = -1
     ws.api_is_active = False
@@ -104,25 +106,33 @@ def setup_market(ws: Markets):
             ws.logNumFatal = bots.Init.load_robots(ws)
             if not ws.logNumFatal:
                 algo.init_algo(ws)
-                try:
-                    threads = []
-                    t = threading.Thread(target=get_timeframes, args=(ws,))
-                    threads.append(t)
-                    t.start()
-                    t = threading.Thread(target=get_history, args=(ws,))
-                    threads.append(t)
-                    t.start()
-                    [thread.join() for thread in threads]
-                except Exception:
-                    var.logger.error("The kline data or trade history is not loaded.")
-                    ws.logNumFatal = -1
-                if not ws.setup_frames:
-                    var.logger.info(ws.name + " Error during loading timeframes.")
-                    WS.exit(ws)
-                    ws.logNumFatal = -1
-                    sleep(2)
+                threads, success = [], []
+                success.append(None)
+                t = threading.Thread(
+                    target=get_timeframes,
+                    args=(ws, success, len(success) - 1),
+                )
+                threads.append(t)
+                t.start()
+                success.append(None)
+                t = threading.Thread(
+                    target=get_history,
+                    args=(ws, success, len(success) - 1),
+                )
+                threads.append(t)
+                t.start()
+                [thread.join() for thread in threads]
+                for s in success:
+                    if not s:
+                        var.logger.error(
+                            ws.name + ": The kline data or trade history is not loaded."
+                        )
+                        ws.logNumFatal = -1
+                        sleep(2)
+
             else:
                 var.logger.info("No robots loaded.")
+                sleep(2)
 
 
 def merge_orders():

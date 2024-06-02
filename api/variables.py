@@ -18,7 +18,7 @@ class Variables:
     positions = OrderedDict()
     full_symbol_list = list()
     logger = logging
-    logNumFatal = -1
+    logNumFatal = 0
     timeoutOccurred = ""
     depth = var.order_book_depth
     message_counter = 0

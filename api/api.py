@@ -55,6 +55,7 @@ class WS(Variables):
         except Exception:
             self.logger.error(self.name + " Instruments not loaded. Reboot.")
             return -1
+        self.logNumFatal = 0
         try:
             if Agents[self.name].value.open_orders(self):
                 return -1
@@ -85,15 +86,15 @@ class WS(Variables):
         except Exception:
             self.logger.error(
                 self.name
-                + "The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
+                + ": The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
             )
-            return -1
+            return 1001
         if self.logNumFatal:
             self.logger.error(
                 self.name
-                + "The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
+                + ": The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
             )
-            return -1
+            return 1001
         var.queue_info.put(
             {
                 "market": self.name,
@@ -143,7 +144,7 @@ class WS(Variables):
         self: Markets, symbol: tuple, time: datetime, timeframe: str
     ) -> Union[list, None]:
         """
-        Gets timeframe data.
+        Gets kline data.
         """
 
         return Agents[self.name].value.trade_bucketed(

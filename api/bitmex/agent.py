@@ -162,12 +162,14 @@ class Agent(Bitmex):
         path = Listing.TRADE_BUCKETED.format(
             TIMEFRAME=self.timefrs[timeframe], SYMBOL=symbol[0], TIME=str(time)[:19]
         )
-        values = Send.request(self, path=path, verb="GET")
-        for value in values:
-            value["symbol"] = symbol
-            value["timestamp"] = service.time_converter(time=value["timestamp"])
-
-        return values
+        data = Send.request(self, path=path, verb="GET")
+        if isinstance(data, list):
+            for value in data:
+                value["symbol"] = symbol
+                value["timestamp"] = service.time_converter(time=value["timestamp"])
+            return data
+        else:
+            return None
 
     def trading_history(self, histCount: int, time=None) -> Union[list, str]:
         if time:
@@ -204,8 +206,6 @@ class Agent(Bitmex):
                 return res
             else:
                 self.logNumFatal = 1001
-        else:
-            return "error"
 
     def open_orders(self) -> int:
         path = Listing.OPEN_ORDERS
