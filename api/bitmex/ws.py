@@ -187,7 +187,11 @@ class Bitmex(Variables):
             sleep(0.1)
 
     def ping_pong(self):
-        self.ws.send("ping")
+        try:
+            self.ws.send("ping")
+        except Exception:
+            self.logger.error("Bitmex websocket ping error. Reboot")
+            self.logNumFatal = -1
 
     def __on_message(self, ws, message) -> None:
         """

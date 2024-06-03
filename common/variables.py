@@ -30,7 +30,9 @@ class Variables:
             if tmp in env[market_name]:
                 tmp_list = env[market_name][tmp].replace(",", " ").split()
             for symbol in tmp_list:
-                env[market_name]["SYMBOLS"] += [(symbol, category, market_name)]
+                add_symbol = (symbol, category, market_name)
+                if add_symbol not in env[market_name]["SYMBOLS"]:
+                    env[market_name]["SYMBOLS"] += [add_symbol]
         env[market_name]["CURRENCIES"] = (
             env[market_name]["CURRENCIES"].replace(",", " ").split()
         )
