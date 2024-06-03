@@ -22,6 +22,7 @@ disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
 Bitmex.transaction = Function.transaction
 Bybit.transaction = Function.transaction
+disp.label_f9.config(bg=disp.red_color)
 
 
 def setup():
@@ -46,7 +47,7 @@ def setup():
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
-    disp.label_f9.config(bg=disp.red_color)
+    
 
 
 def setup_market(ws: Markets):
@@ -133,13 +134,13 @@ def setup_market(ws: Markets):
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)
-    if ws.logNumFatal:
-        var.logger.info("\n\n")
-        var.logger.info(
-            "Something went wrong. "
-            + ws.name
-            + " is not loading. See logFile.log. Reboot.\n\n"
-        )
+        if ws.logNumFatal:
+            var.logger.info("\n\n")
+            var.logger.info(
+                "Something went wrong. "
+                + ws.name
+                + " is not loading. See logFile.log. Reboot.\n\n"
+            )
 
 
 def merge_orders():
