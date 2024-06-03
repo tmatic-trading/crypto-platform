@@ -17,7 +17,7 @@ class Agent(Bitmex):
         data = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not isinstance(data, list):
             self.logger.error(
-                "A list was expected when loading instruments, but was not received."
+                "A list was expected when loading instruments, but was not received. Reboot"
             )
             return -1
         for instrument in data:
@@ -32,9 +32,7 @@ class Agent(Bitmex):
                     Agent.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
-                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps "
-                        + "the name of the symbol does not correspond to the "
-                        + "category or such symbol does not exist."
+                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps the name of the symbol does not correspond to the category or such symbol does not exist. Reboot."
                     )
                     return -1
         else:

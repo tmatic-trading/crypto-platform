@@ -1,3 +1,4 @@
+import time
 import logging
 import sqlite3
 import threading
@@ -285,6 +286,7 @@ def setup_logger():
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
+    logging.Formatter.converter = time.gmtime
     ch.setFormatter(formatter)
     handler.setFormatter(formatter)
     logger.addHandler(ch)

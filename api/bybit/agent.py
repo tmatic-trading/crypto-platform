@@ -47,7 +47,7 @@ class Agent(Bybit):
         for number in success:
             if number != 0:
                 self.logger.error(
-                    "The list was expected when the instruments were loaded, but for some categories it was not received. Reboot"
+                    "The list was expected when the instruments were loaded, but for some categories it was not received. Reboot."
                 )
                 return -1
 
@@ -57,7 +57,7 @@ class Agent(Bybit):
                     Agent.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
-                        + ". Check the SYMBOLS in the .env.Bybit file. Perhaps such symbol does not exist"
+                        + ". Check the SYMBOLS in the .env.Bybit file. Perhaps the name of the symbol does not correspond to the category or such symbol does not exist. Reboot."
                     )
                     return -1
         else:
