@@ -944,7 +944,7 @@ class Function(WS, Variables):
                     ),
                 ]
                 tree.update(row=num, values=row)
-                if robot["STATUS"] in ["RESERVED" "NOT IN LIST"]:
+                if robot["STATUS"] in ["RESERVED", "NOT IN LIST"]:
                     if robot["POS"] == 0:
                         tree.paint(row=num, configure="Normal")
                     else:
@@ -1203,19 +1203,20 @@ class Function(WS, Variables):
             dot = clOrdID.find(".")
             if dot != -1:
                 emi = clOrdID[dot + 1 :]
-        if emi in self.robots:
-            robot = self.robots[emi]
-            if robot["STATUS"] == "NOT DEFINED":
-                tree = TreeTable.robots
-                for clOrdID in self.orders:
-                    if emi in clOrdID:
-                        tree.paint(row=robot["y_position"], configure="Red")
-                        break
-                else:
-                    if self.robots[emi]["POS"] == 0:
-                        tree.paint(row=robot["y_position"], configure="Normal")
+        for num, robot in enumerate(self.robots.values()):
+            if emi == robot["EMI"]:
+                if robot["STATUS"] == "NOT DEFINED":
+                    tree = TreeTable.robots
+                    for clOrdID in self.orders:
+                        if emi in clOrdID:
+                            tree.paint(row=num, configure="Red")
+                            break
                     else:
-                        tree.paint(row=robot["y_position"], configure="Red")
+                        if self.robots[emi]["POS"] == 0:
+                            tree.paint(row=num, configure="Normal")
+                        else:
+                            tree.paint(row=num, configure="Red")
+                break
 
 
 def handler_order(event) -> None:
