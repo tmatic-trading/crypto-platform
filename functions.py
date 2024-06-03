@@ -460,6 +460,7 @@ class Function(WS, Variables):
                     {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
                 )
                 del self.orders[clOrdID]
+                Function.not_defined_robot_color(self, clOrdID=clOrdID)
             else:
                 var.logger.warning(
                     self.name
@@ -478,6 +479,7 @@ class Function(WS, Variables):
                         {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
                     )
                 del self.orders[clOrdID]
+                Function.not_defined_robot_color(self, clOrdID=clOrdID)
             else:
                 if not info:
                     var.logger.warning(
@@ -512,6 +514,7 @@ class Function(WS, Variables):
                         "orderID": row["orderID"],
                         "clOrdID": clOrdID,
                     }
+                    Function.not_defined_robot_color(self, emi=_emi)
                 info_p = price
                 info_q = row["orderQty"]
             elif row["execType"] == "Trade":
@@ -921,6 +924,7 @@ class Function(WS, Variables):
                 robot["PNL"],
                 robot["POS"],
             ]
+            robot["y_position"] = num
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 row = [
@@ -940,7 +944,13 @@ class Function(WS, Variables):
                     ),
                 ]
                 tree.update(row=num, values=row)
-            robot["y_position"] = num
+                if robot["STATUS"] in ["RESERVED" "NOT IN LIST"]:
+                    if robot["POS"] == 0:
+                        tree.paint(row=num, configure="Normal")
+                    else:
+                        tree.paint(row=num, configure="Red")
+                elif robot["STATUS"] == "NOT DEFINED":
+                    Function.not_defined_robot_color(self, emi=robot["EMI"])
 
         # Refresh Account table
 
@@ -1182,6 +1192,30 @@ class Function(WS, Variables):
             qty = ""
 
         return qty
+    
+    def not_defined_robot_color(self: Markets, emi=None, clOrdID=None) -> None:
+        """
+        A robot has NOT DEFINED status if it is not listed in the robots 
+        SQLite table, but has an open position or an active order. In this 
+        case, it appears on the screen in red.
+        """
+        if clOrdID:
+            dot = clOrdID.find(".")
+            if dot != -1:
+                emi = clOrdID[dot + 1 :]
+        if emi in self.robots:
+            robot = self.robots[emi]
+            if robot["STATUS"] == "NOT DEFINED":
+                tree = TreeTable.robots
+                for clOrdID in self.orders:
+                    if emi in clOrdID:
+                        tree.paint(row=robot["y_position"], configure="Red")
+                        break
+                else:
+                    if self.robots[emi]["POS"] == 0:
+                        tree.paint(row=robot["y_position"], configure="Normal")
+                    else:
+                        tree.paint(row=robot["y_position"], configure="Red")
 
 
 def handler_order(event) -> None:
@@ -1644,7 +1678,7 @@ def handler_robots(event) -> None:
                     row = ws.robots[val]["y_position"]
                     if ws.robots[emi]["STATUS"] == "WORK":
                         ws.robots[emi]["STATUS"] = "OFF"
-                        TreeTable.robots.paint(row=row, configure="Sell")
+                        TreeTable.robots.paint(row=row, configure="Red")
                     else:
                         ws.robots[emi]["STATUS"] = "WORK"
                         TreeTable.robots.paint(row=row, configure="Normal")
@@ -1778,7 +1812,7 @@ def robot_status(ws: Markets):
             and ws.robots[emi]["POS"] != 0
             and ws.robots[emi]["CATEGORY"] != "spot"
         ):
-            TreeTable.robots.paint(row=row, configure="Sell")
+            TreeTable.robots.paint(row=row, configure="Red")
         else:
             TreeTable.robots.paint(row=row, configure="Normal")
 

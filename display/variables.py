@@ -367,6 +367,7 @@ class TreeviewTable(Variables):
         self.tree.tag_configure("Deselect", background=self.bg_color)
         self.tree.tag_configure("Normal", foreground=self.fg_color)
         self.tree.tag_configure("Error", background=self.red_color, foreground="white")
+        self.tree.tag_configure("Red", foreground=self.red_color)
         self.tree.tag_configure(
             "Market", background=self.title_color, foreground=self.fg_color
         )
