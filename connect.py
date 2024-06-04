@@ -47,7 +47,6 @@ def setup():
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
-    
 
 
 def setup_market(ws: Markets):

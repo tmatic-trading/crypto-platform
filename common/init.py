@@ -1,8 +1,8 @@
-import os
-import time
 import logging
+import os
 import sqlite3
 import threading
+import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 from sqlite3 import Error
@@ -23,11 +23,11 @@ class ListenLogger(logging.Filter):
     def filter(self, record):
         path = record.pathname.replace(var.working_directory, "")[:-3]
         path = path.replace("/", ".")
+        path = path.replace("\\", ".")
         if path[0] == ".":
             path = path[1:]
         record.name = path
         return True
-
 
 
 class Init(WS, Variables):

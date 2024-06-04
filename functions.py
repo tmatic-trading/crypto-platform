@@ -1192,11 +1192,11 @@ class Function(WS, Variables):
             qty = ""
 
         return qty
-    
+
     def not_defined_robot_color(self: Markets, emi=None, clOrdID=None) -> None:
         """
-        A robot has NOT DEFINED status if it is not listed in the robots 
-        SQLite table, but has an open position or an active order. In this 
+        A robot has NOT DEFINED status if it is not listed in the robots
+        SQLite table, but has an open position or an active order. In this
         case, it appears on the screen in red.
         """
         if clOrdID:
