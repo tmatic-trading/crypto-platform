@@ -126,7 +126,7 @@ class Variables:
         "COMMISSION SUM",
         "FUNDING SUM",
     ]
-    logger = logging
+    logger: logging
     connect_sqlite = None
     cursor_sqlite = None
     error_sqlite = None
@@ -145,3 +145,4 @@ class Variables:
     queue_info = queue.Queue()
     queue_order = queue.Queue()
     lock = threading.Lock()
+    working_directory: str

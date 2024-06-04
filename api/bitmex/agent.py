@@ -11,7 +11,6 @@ from .ws import Bitmex
 
 
 class Agent(Bitmex):
-    logger = logging.getLogger(__name__)
 
     def get_active_instruments(self) -> int:
         data = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
@@ -29,7 +28,7 @@ class Agent(Bitmex):
         if self.Instrument.get_keys():
             for symbol in self.symbol_list:
                 if symbol not in self.Instrument.get_keys():
-                    Agent.logger.error(
+                    self.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
                         + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps the name of the symbol does not correspond to the category or such symbol does not exist. Reboot."
@@ -62,7 +61,7 @@ class Agent(Bitmex):
             category = Agent.fill_instrument(self, instrument=instrument)
             self.symbol_category[instrument["symbol"]] = category
         else:
-            Agent.logger.info(str(symbol) + " not found in get_instrument()")
+            self.logger.info(str(symbol) + " not found in get_instrument()")
 
     def fill_instrument(self, instrument: dict) -> str:
         """
@@ -143,13 +142,13 @@ class Agent(Bitmex):
                 self.Instrument[symbol].currentQty = data[0]["currentQty"]
             else:
                 self.positions[symbol] = {"POS": 0}
-            Agent.logger.info(
+            self.logger.info(
                 str(symbol)
                 + " has been added to the positions dictionary for "
                 + self.name
             )
         else:
-            Agent.logger.info(str(symbol) + " not found in get_position()")
+            self.logger.info(str(symbol) + " not found in get_position()")
 
     def trade_bucketed(
         self, symbol: tuple, time: datetime, timeframe: int

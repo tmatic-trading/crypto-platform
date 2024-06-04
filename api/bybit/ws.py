@@ -6,6 +6,7 @@ import services as service
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
+from common.variables import Variables as var
 from services import exceptions_manager
 
 from .pybit.unified_trading import HTTP, WebSocket
@@ -46,7 +47,7 @@ class Bybit(Variables):
         }
         self.account_types = ["UNIFIED", "CONTRACT"]
         self.ws_private = WebSocket
-        self.logger = logging.getLogger(__name__)
+        self.logger = var.logger
         if self.depth == "quote":
             self.orderbook_depth = 1
         else:

@@ -1,3 +1,4 @@
+import os
 import time
 import logging
 import sqlite3
@@ -15,6 +16,18 @@ from display.variables import Variables as disp
 from functions import Function
 
 db_sqlite = var.env["SQLITE_DATABASE"]
+var.working_directory = os.path.abspath(os.getcwd())
+
+
+class ListenLogger(logging.Filter):
+    def filter(self, record):
+        path = record.pathname.replace(var.working_directory, "")[:-3]
+        path = path.replace("/", ".")
+        if path[0] == ".":
+            path = path[1:]
+        record.name = path
+        return True
+
 
 
 class Init(WS, Variables):
@@ -292,6 +305,8 @@ def setup_logger():
     logger.addHandler(ch)
     logger.addHandler(handler)
     logger.info("\n\nhello\n")
+    filter_logger = ListenLogger()
+    logger.addFilter(filter_logger)
 
     return logger
 

@@ -1,4 +1,3 @@
-import logging
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Union
@@ -11,14 +10,13 @@ from .ws import Bybit
 
 @exceptions_manager
 class Agent(Bybit):
-    logger = logging.getLogger(__name__)
 
     def get_active_instruments(self):
         def get_in_thread(category, success, num):
             cursor = "no"
             while cursor:
                 cursor = ""
-                Agent.logger.info(
+                self.logger.info(
                     "Sending get_instruments_info() - category - " + category
                 )
                 result = self.session.get_instruments_info(
@@ -54,7 +52,7 @@ class Agent(Bybit):
         if self.Instrument.get_keys():
             for symbol in self.symbol_list:
                 if symbol not in self.Instrument.get_keys():
-                    Agent.logger.error(
+                    self.logger.error(
                         "Unknown symbol: "
                         + str(symbol)
                         + ". Check the SYMBOLS in the .env.Bybit file. Perhaps the name of the symbol does not correspond to the category or such symbol does not exist. Reboot."
@@ -71,7 +69,7 @@ class Agent(Bybit):
         Returns the user ID and other useful information about the user and
         places it in self.user. If unsuccessful, logNumFatal is not 0.
         """
-        Agent.logger.info("Sending get_uid_wallet_type()")
+        self.logger.info("Sending get_uid_wallet_type()")
         data = self.session.get_uid_wallet_type()
         if isinstance(data, dict):
             self.user = data
@@ -83,10 +81,10 @@ class Agent(Bybit):
         message = (
             "A user ID was requested from the exchange but was not received. Reboot"
         )
-        Agent.logger.error(message)
+        self.logger.error(message)
 
     def get_instrument(self, symbol: tuple) -> None:
-        Agent.logger.info(
+        self.logger.info(
             "In get_instrument - sending get_instruments_info() - symbol - "
             + str(symbol)
         )
@@ -103,7 +101,7 @@ class Agent(Bybit):
     def trade_bucketed(
         self, symbol: tuple, time: datetime, timeframe: str
     ) -> Union[list, None]:
-        Agent.logger.info(
+        self.logger.info(
             "Sending get_kline() - symbol - "
             + str(symbol)
             + " - interval - "
@@ -149,7 +147,7 @@ class Agent(Bybit):
                 nonlocal trade_history
                 cursor = "no"
                 while cursor:
-                    Agent.logger.info(
+                    self.logger.info(
                         "Sending get_executions() - category - "
                         + category
                         + " - startTime - "
@@ -237,7 +235,7 @@ class Agent(Bybit):
             parameters.pop("success")
             parameters.pop("num")
             while cursor:
-                Agent.logger.info(
+                self.logger.info(
                     "Sending open_orders() - parameters - " + str(parameters)
                 )
                 result = self.session.get_open_orders(**parameters)
@@ -345,7 +343,7 @@ class Agent(Bybit):
 
     def get_wallet_balance(self) -> None:
         for account_type in self.account_types:
-            Agent.logger.info(
+            self.logger.info(
                 "Sending get_wallet_balance() - accountType - " + account_type
             )
             data = self.session.get_wallet_balance(accountType=account_type)
@@ -386,7 +384,7 @@ class Agent(Bybit):
         def get_in_thread(category, settlCurrency, success, num):
             cursor = "no"
             while cursor:
-                Agent.logger.info(
+                self.logger.info(
                     "Sending get_positions() - category - "
                     + category
                     + " - settlCurrency - "

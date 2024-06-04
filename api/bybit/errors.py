@@ -1,11 +1,8 @@
-import logging
 import traceback
 from datetime import datetime, timezone
 
 from api.variables import Variables
 from common.variables import Variables as var
-
-logger = logging.getLogger(__name__)
 
 
 def exception(method):
@@ -192,7 +189,7 @@ def exception(method):
                 # os.abort()
             if message:
                 message = message.replace("\n", " ")
-                logger.error(message)
+                var.logger.error(message)
                 var.queue_info.put(
                     {
                         "market": self.name,

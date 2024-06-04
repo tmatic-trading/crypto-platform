@@ -1,5 +1,4 @@
 import json
-import logging
 import threading
 import time
 import traceback
@@ -51,7 +50,7 @@ class Bitmex(Variables):
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.symbol_category = dict()
-        self.logger = logging.getLogger(__name__)
+        self.logger = var.logger
         self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
