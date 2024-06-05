@@ -10,7 +10,6 @@ from .ws import Bybit
 
 @exceptions_manager
 class Agent(Bybit):
-
     def get_active_instruments(self):
         def get_in_thread(category, success, num):
             cursor = "no"

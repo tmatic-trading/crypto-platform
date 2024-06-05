@@ -1032,13 +1032,10 @@ class Function(WS, Variables):
 
         for num, name in enumerate(var.market_list):
             ws = Markets[name]
-            status = "ONLINE"
-            if ws.logNumFatal != 0:
-                if ws.logNumFatal == -1:
-                    status = "RELOADING"
-            compare = service.add_space(
-                [ws.name, ws.account_disp, str(ws.connect_count) + " " + status]
-            )
+            status = str(ws.connect_count) + " " + "ONLINE"
+            if not ws.api_is_active:
+                status = "RELOADING..."
+            compare = service.add_space([ws.name, ws.account_disp, status])
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 tree.update(row=num, values=[compare])
@@ -1157,16 +1154,23 @@ class Function(WS, Variables):
 
     def market_status(self: Markets, status: str, message: str, error=False) -> None:
         row = var.market_list.index(self.name)
-        line = [self.name, self.account_disp, status]
+        if status == "ONLINE":
+            line = [
+                self.name,
+                self.account_disp,
+                str(self.connect_count) + " " + status,
+            ]
+        else:
+            line = [self.name, self.account_disp, status]
         values = service.add_space(line)
         TreeTable.market.update(row=row, values=[values])
         if message:
             info_display(self.name, message)
         if error:
-            TreeTable.market.paint(row=row, configure="Error")
+            TreeTable.market.paint(row=row, configure="Reload")
         else:
             TreeTable.market.paint(row=row, configure="Market")
-        disp.root.update()
+        TreeTable.market.tree.update()
 
     def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
         if volNow > 1000000000:
@@ -1350,8 +1354,15 @@ def handler_orderbook(event) -> None:
     if items:
         tree.update()
         tree.selection_remove(items[0])
-    disp.handler_orderbook_symbol = var.symbol
     ws = Markets[var.current_market]
+    if not ws.api_is_active:
+        info_display(
+            name=ws.name,
+            message=ws.name + ": You cannot add new orders during a reboot.",
+            warning=True,
+        )
+        return
+    disp.handler_orderbook_symbol = var.symbol
 
     def first_price(prices: list) -> float:
         if prices:
@@ -1652,7 +1663,16 @@ def handler_market(event) -> None:
         shift = var.market_list[row_position]
         if shift != var.current_market:
             var.current_market = shift
-            var.symbol = Markets[var.current_market].symbol_list[0]
+            if Markets[var.current_market].api_is_active:
+                TreeTable.market.paint(
+                    row=var.market_list.index(shift), configure="Market"
+                )
+            else:
+                TreeTable.market.paint(
+                    row=var.market_list.index(shift), configure="Reload"
+                )
+            ws = Markets[var.current_market]
+            var.symbol = ws.symbol_list[0]
             clear_tables()
 
 
@@ -1663,6 +1683,15 @@ def handler_robots(event) -> None:
     items = tree.selection()
     if items:
         item = items[0]
+        if not ws.api_is_active:
+            info_display(
+                name=ws.name,
+                message=ws.name
+                + ": You cannot change the bot's status during a reboot.",
+                warning=True,
+            )
+            tree.selection_remove(item)
+            return
         children = tree.get_children()
         row_position = children.index(item)
         for val in ws.robots:

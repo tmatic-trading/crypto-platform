@@ -163,7 +163,22 @@ def finish_setup(ws: Markets):
     ws.message_time = datetime.now(tz=timezone.utc)
 
 
+def reload_market(ws: Markets):
+    ws.api_is_active = False
+    Function.market_status(
+        ws, status="RELOADING...", message="Reloading...", error=True
+    )
+    TreeTable.market.tree.update()
+    setup_market(ws=ws)
+    var.queue_reload.put(ws)
+
+
 def refresh() -> None:
+    while not var.queue_reload.empty():
+        ws = var.queue_reload.get()
+        finish_setup(ws=ws)
+        merge_orders()
+        Function.market_status(ws, status="ONLINE", message="", error=False)
     while not var.queue_info.empty():
         info = var.queue_info.get()
         info_display(
@@ -207,14 +222,9 @@ def refresh() -> None:
                     )
                 sleep(1)
             elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
-                Function.market_status(
-                    ws, status="RELOADING...", message="Reloading...", error=True
-                )
-                TreeTable.market.tree.update()
-                setup_market(ws=ws)
-                finish_setup(ws=ws)
-                merge_orders()
-                Function.market_status(ws, status="ONLINE", message="", error=False)
+                if ws.api_is_active:
+                    t = threading.Thread(target=reload_market, args=(ws,))
+                    t.start()
             else:
                 if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
                     if ws.messageStopped == "":
@@ -227,7 +237,9 @@ def refresh() -> None:
                     disp.f9 = "OFF"
                     disp.label_f9.config(bg=disp.red_color)
                     ws.logNumFatal = 0
-    Function.refresh_on_screen(Markets[var.current_market], utc=utc)
+    ws = Markets[var.current_market]
+    if ws.api_is_active:
+        Function.refresh_on_screen(Markets[var.current_market], utc=utc)
 
 
 def clear_params():

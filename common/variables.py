@@ -144,5 +144,6 @@ class Variables:
     robots_thread_is_active = False
     queue_info = queue.Queue()
     queue_order = queue.Queue()
+    queue_reload = queue.Queue()
     lock = threading.Lock()
     working_directory: str

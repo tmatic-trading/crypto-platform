@@ -366,13 +366,14 @@ class TreeviewTable(Variables):
         self.tree.tag_configure("Sell", foreground=self.red_color)
         self.tree.tag_configure("Deselect", background=self.bg_color)
         self.tree.tag_configure("Normal", foreground=self.fg_color)
-        self.tree.tag_configure("Error", background=self.red_color, foreground="white")
+        self.tree.tag_configure("Reload", foreground=self.red_color)
         self.tree.tag_configure("Red", foreground=self.red_color)
         self.tree.tag_configure(
             "Market", background=self.title_color, foreground=self.fg_color
         )
         if bind:
-            self.tree.bind("<<TreeviewSelect>>", bind)
+            # self.tree.bind("<<TreeviewSelect>>", bind)
+            self.tree.bind("<ButtonRelease-1>", bind)
         self.iid_count = 0
         self.init(size=size)
         if hide:
@@ -420,6 +421,19 @@ class TreeviewTable(Variables):
 
     def paint(self, row: int, configure: str) -> None:
         self.tree.item(self.children[row], tags=configure)
+        if self.tree.selection():
+            selected = len(self.children) - int(self.tree.selection()[0])
+        if self.name == "market":
+            if configure == "Reload" and row == selected:
+                self.style.map(
+                    "market.Treeview",
+                    foreground=[("selected", self.red_color)],
+                )
+            else:
+                self.style.map(
+                    "market.Treeview",
+                    foreground=[("selected", self.fg_color)],
+                )
 
     def clear_all(self):
         self.tree.delete(*self.children)

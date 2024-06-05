@@ -11,7 +11,6 @@ from .ws import Bitmex
 
 
 class Agent(Bitmex):
-
     def get_active_instruments(self) -> int:
         data = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not isinstance(data, list):
