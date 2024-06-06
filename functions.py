@@ -457,7 +457,7 @@ class Function(WS, Variables):
             info_q = row["orderQty"] - row["cumQty"]
             if clOrdID in self.orders:
                 var.queue_order.put(
-                    {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                    {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                 )
                 del self.orders[clOrdID]
                 Function.not_defined_robot_color(self, clOrdID=clOrdID)
@@ -476,7 +476,7 @@ class Function(WS, Variables):
             if clOrdID in self.orders:
                 if not info:
                     var.queue_order.put(
-                        {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                        {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
                 del self.orders[clOrdID]
                 Function.not_defined_robot_color(self, clOrdID=clOrdID)
@@ -522,7 +522,7 @@ class Function(WS, Variables):
                 info_q = row["lastQty"]
                 if clOrdID in self.orders:
                     var.queue_order.put(
-                        {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                        {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
                 else:
                     if not info:
@@ -540,7 +540,7 @@ class Function(WS, Variables):
                     info_p = price
                     info_q = row["leavesQty"]
                     var.queue_order.put(
-                        {"clOrdID": clOrdID, "delete": True, "MARKET": self.name}
+                        {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
                 else:
                     var.logger.warning(
@@ -597,7 +597,7 @@ class Function(WS, Variables):
                 info_q,
             )
         if clOrdID in self.orders:
-            var.queue_order.put(self.orders[clOrdID])
+            var.queue_order.put({"action": "put", "order": self.orders[clOrdID]})
 
     def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -622,7 +622,7 @@ class Function(WS, Variables):
         ]
         if init:
             return row
-        TreeTable.trades.insert(values=row, configure=val["SIDE"])
+        TreeTable.trades.insert(values=row, market=self.name, configure=val["SIDE"])
 
     def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -648,7 +648,7 @@ class Function(WS, Variables):
         if init:
             return row
         configure = "Buy" if val["COMMISS"] <= 0 else "Sell"
-        TreeTable.funding.insert(values=row, configure=configure)
+        TreeTable.funding.insert(values=row, market=self.name, configure=configure)
 
     def orders_display(self: Markets, val: dict) -> None:
         """
@@ -675,7 +675,7 @@ class Function(WS, Variables):
         clOrdID = val["clOrdID"]
         if clOrdID in TreeTable.orders.children:
             TreeTable.orders.delete(iid=clOrdID)
-        TreeTable.orders.insert(values=row, iid=val["clOrdID"], configure=val["SIDE"])
+        TreeTable.orders.insert(values=row, market=self.name, iid=val["clOrdID"], configure=val["SIDE"])
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
         if qty in ["", "None"]:

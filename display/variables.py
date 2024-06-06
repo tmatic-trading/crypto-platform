@@ -398,14 +398,14 @@ class TreeviewTable(Variables):
         self.cache = list()
         blank = ["" for _ in self.title]
         for _ in range(size):
-            self.insert(values=blank)
+            self.insert(values=blank, market="")
             self.cache.append(blank)
 
-    def insert(self, values: list, iid="", configure="") -> None:
+    def insert(self, values: list, market: str, iid="", configure="") -> None:
         if not iid:
             self.iid_count += 1
             iid = self.iid_count
-        self.tree.insert("", 0, iid=iid, values=values, tags=configure)
+        self.tree.insert("", 0, iid=iid, values=values, tags=configure, text=market)
         self.children = self.tree.get_children()
         if len(self.children) > self.max_rows:
             self.delete()
@@ -435,17 +435,23 @@ class TreeviewTable(Variables):
                     foreground=[("selected", self.fg_color)],
                 )
 
-    def clear_all(self):
-        self.tree.delete(*self.children)
+    def clear_all(self, market=None):
+        if not market:
+            self.tree.delete(*self.children)
+        else:
+            for child in self.children:
+                line = self.tree.item(child)                
+                if line["text"] == market:
+                    self.delete(iid=child)                
         self.children = self.tree.get_children()
 
     def append_data(self, rows: list, market: str) -> list:
         data = list()
         if self.children:
             for child in self.children:
-                values = self.tree.item(child)["values"]
-                if values[3] != market:
-                    data.append(values)
+                line = self.tree.item(child)
+                if line["text"] != market:
+                    data.append(line["values"])
         data += rows
         self.clear_all()
         data = list(

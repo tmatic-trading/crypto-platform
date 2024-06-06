@@ -97,6 +97,7 @@ def setup_market(ws: Markets):
     ws.api_is_active = False
     WS.exit(ws)
     while ws.logNumFatal:
+        var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)
         if ws.logNumFatal:
             WS.exit(ws)
@@ -148,7 +149,7 @@ def merge_orders():
         orders_list += Markets[name].orders.values()
     orders_list.sort(key=lambda x: x["transactTime"])
     for order in orders_list:
-        var.queue_order.put(order)
+        var.queue_order.put({"action": "put", "order": order})
 
 
 def finish_setup(ws: Markets):
@@ -188,15 +189,40 @@ def refresh() -> None:
             warning=info["warning"],
         )
     while not var.queue_order.empty():
-        order = var.queue_order.get()
-        ws = Markets[order["MARKET"]]
-        clOrdID = order["clOrdID"]
-        if "delete" in order:
+        """
+        The queue thread-safely displays current orders that can be queued:
+        1. From the websockets of the markets.
+        2. When retrieving current orders from the endpoints when loading or 
+           reloading the market.
+        3. When processing the trading history data.
+
+        Possible queue jobs:
+        1.     "action": "put"
+           Display a row with the new order in the table. If an order with the 
+           same clOrdID already exists, then first remove it from the table 
+           and print the order on the first line.
+        2.     "action": "delete"
+           Delete order by clOrdID.
+        3.     "action": "clear"
+           Before reloading the market, delete all orders of a particular 
+           market from the table, because the reboot process will update 
+           information about current orders, so possibly canceled orders 
+           during the reloading will be removed.
+        """
+        job = var.queue_order.get()     
+        if job["action"] == "delete":
+            clOrdID = job["clOrdID"]
             if clOrdID in TreeTable.orders.children:
                 TreeTable.orders.delete(iid=clOrdID)
-        else:
+        elif job["action"] == "put":
+            order = job["order"]
+            clOrdID = order["clOrdID"]
+            ws = Markets[order["MARKET"]]
             if clOrdID in ws.orders:
                 Function.orders_display(ws, val=order)
+        elif job["action"] == "clear":
+            TreeTable.orders.clear_all(market=job["market"])
+
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
