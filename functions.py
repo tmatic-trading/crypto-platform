@@ -1205,25 +1205,27 @@ class Function(WS, Variables):
         SQLite table, but has an open position or an active order. In this
         case, it appears on the screen in red.
         """
-        if clOrdID:
-            dot = clOrdID.find(".")
-            if dot != -1:
-                emi = clOrdID[dot + 1 :]
-        for num, robot in enumerate(self.robots.values()):
-            if emi == robot["EMI"]:
-                if var.current_market == robot["MARKET"]:
-                    if robot["STATUS"] == "NOT DEFINED":
-                        tree = TreeTable.robots
-                        for clOrdID in self.orders:
-                            if emi in clOrdID:
-                                tree.paint(row=num, configure="Red")
-                                break
-                        else:
-                            if self.robots[emi]["POS"] == 0:
-                                tree.paint(row=num, configure="Normal")
-                            else:
-                                tree.paint(row=num, configure="Red")
-                break
+        if self.name == var.current_market:
+            if clOrdID:
+                dot = clOrdID.find(".")
+                if dot != -1:
+                    emi = clOrdID[dot + 1 :]
+            for num, robot in enumerate(self.robots.values()):
+                if emi == robot["EMI"]:
+                    if var.current_market == robot["MARKET"]:
+                        if robot["STATUS"] == "NOT DEFINED":
+                            if hasattr(TreeTable, "robots"):
+                                tree = TreeTable.robots
+                                for clOrdID in self.orders:
+                                    if emi in clOrdID:
+                                        tree.paint(row=num, configure="Red")
+                                        break
+                                else:
+                                    if self.robots[emi]["POS"] == 0:
+                                        tree.paint(row=num, configure="Normal")
+                                    else:
+                                        tree.paint(row=num, configure="Red")
+                    break
 
 
 def handler_order(event) -> None:

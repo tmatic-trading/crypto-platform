@@ -415,6 +415,7 @@ class Bybit(Variables):
         else:
             self.callback(message)
 
+    
     def ping_pong(self):
         for category in self.categories:
             if self.ws[category].__class__.__name__ == "WebSocket":
