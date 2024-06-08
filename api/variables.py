@@ -21,7 +21,6 @@ class Variables:
     logNumFatal = 0
     timeoutOccurred = ""
     depth = var.order_book_depth
-    message_counter = 0
     connect_count = 0
     user_id = None
     user = dict()

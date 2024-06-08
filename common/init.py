@@ -265,7 +265,9 @@ class Init(WS, Variables):
                     configure = "Buy"
                 else:
                     configure = "Sell"
-                TreeTable.funding.insert(values=values, market=self.name, configure=configure)
+                TreeTable.funding.insert(
+                    values=values, market=self.name, configure=configure
+                )
             sql = (
                 "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
                 + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
@@ -286,7 +288,9 @@ class Init(WS, Variables):
             data = TreeTable.trades.append_data(rows=rows, market=self.name)
             indx = TreeTable.trades.title.index("SIDE")
             for values in data:
-                TreeTable.trades.insert(values=values, market=self.name, configure=values[indx])
+                TreeTable.trades.insert(
+                    values=values, market=self.name, configure=values[indx]
+                )
         else:
             self.logNumFatal = 1001
 

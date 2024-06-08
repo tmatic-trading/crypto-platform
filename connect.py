@@ -192,24 +192,24 @@ def refresh() -> None:
         """
         The queue thread-safely displays current orders that can be queued:
         1. From the websockets of the markets.
-        2. When retrieving current orders from the endpoints when loading or 
+        2. When retrieving current orders from the endpoints when loading or
            reloading the market.
         3. When processing the trading history data.
 
         Possible queue jobs:
         1.     "action": "put"
-           Display a row with the new order in the table. If an order with the 
-           same clOrdID already exists, then first remove it from the table 
+           Display a row with the new order in the table. If an order with the
+           same clOrdID already exists, then first remove it from the table
            and print the order on the first line.
         2.     "action": "delete"
            Delete order by clOrdID.
         3.     "action": "clear"
-           Before reloading the market, delete all orders of a particular 
-           market from the table, because the reboot process will update 
-           information about current orders, so possibly canceled orders 
+           Before reloading the market, delete all orders of a particular
+           market from the table, because the reboot process will update
+           information about current orders, so possibly canceled orders
            during the reloading will be removed.
         """
-        job = var.queue_order.get()     
+        job = var.queue_order.get()
         if job["action"] == "delete":
             clOrdID = job["clOrdID"]
             if clOrdID in TreeTable.orders.children:
@@ -227,17 +227,19 @@ def refresh() -> None:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
         if ws.logNumFatal == 0:
-            if utc > ws.message_time + timedelta(seconds=10):
-                if ws.message_counter == 0:
-                    info_display(ws.name, "No data within 10 sec", warning=True)
-                    WS.ping_pong(ws)
-                    ws.message_counter = 1000000000
-                elif ws.message_counter == 1000000000:
-                    ws.logNumFatal = 1001
-                else:
-                    ws.message_counter = 0
-                ws.message_time = utc
-        if ws.logNumFatal > 0:
+            if ws.api_is_active:
+                if utc > ws.message_time + timedelta(seconds=10):
+                    if Markets[name].ping_pong():
+                        WS.ping_pong(ws)
+                    else:
+                        info_display(
+                            ws.name,
+                            "The websocket does not respond within 10 sec. Reboot",
+                            warning=True,
+                        )
+                        ws.logNumFatal = 1001  # reloading
+                    ws.message_time = utc
+        elif ws.logNumFatal > 0:
             if ws.logNumFatal > 2000:
                 if ws.message2000 == "":
                     ws.message2000 = (

@@ -57,6 +57,7 @@ class Bitmex(Variables):
         self.setup_orders = list()
         self.account_disp = ""
         self.orders = dict()
+        self.pinging = "pong"
 
     def start(self):
         if not self.logNumFatal:
@@ -72,6 +73,7 @@ class Bitmex(Variables):
                     self.__wait_for_tables()
                     if self.logNumFatal == 0:
                         self.logger.info("Data received. Continuing.")
+                        self.pinging = "pong"
 
     def __connect(self, url: str) -> None:
         try:
@@ -185,19 +187,12 @@ class Bitmex(Variables):
                 break
             sleep(0.1)
 
-    def ping_pong(self):
-        try:
-            self.ws.send("ping")
-        except Exception:
-            self.logger.error("Bitmex websocket ping error. Reboot")
-            self.logNumFatal = -1
-
     def __on_message(self, ws, message) -> None:
         """
         Parses websocket messages.
         """
-        self.message_counter = self.message_counter + 1
         if message == "pong":
+            self.pinging = "pong"
             return
 
         def generate_key(keys: list, val: dict, table: str) -> tuple:
@@ -434,3 +429,16 @@ class Bitmex(Variables):
         application is launched.
         """
         pass
+
+    def ping_pong(self):
+        if self.pinging == "pong":
+            self.pinging = "ping"
+            try:
+                self.ws.send("ping")
+            except Exception:
+                self.logger.error("Bitmex websocket ping error. Reboot")
+                self.logNumFatal = -1
+                return False
+            return True
+
+        return False

@@ -1,3 +1,4 @@
+import json
 import threading
 from collections import OrderedDict
 
@@ -70,6 +71,7 @@ class Bybit(Variables):
         self.setup_orders = list()
         self.account_disp = ""
         self.orders = dict()
+        WebSocket._on_message = Bybit._on_message
 
     def start(self):
         for symbol in self.symbol_list:
@@ -96,6 +98,7 @@ class Bybit(Variables):
                 self.ws[category] = WebSocket(
                     testnet=self.testnet, channel_type=category
                 )
+                self.ws[category].pinging = "pong"
             for symbol in lst:
                 if category == "linear":
                     self.logger.info(
@@ -209,6 +212,7 @@ class Bybit(Variables):
                 api_key=self.api_key,
                 api_secret=self.api_secret,
             )
+            self.ws_private.pinging = "pong"
 
         threads = []
         for category in self.categories:
@@ -237,7 +241,6 @@ class Bybit(Variables):
         instrument.bids = bids
 
     def __update_ticker(self, values: dict, category: str) -> None:
-        self.message_counter += 1
         instrument = self.Instrument[(values["symbol"], category, self.name)]
         instrument.volume24h = float(values["volume24h"])
         if "fundingRate" in values:
@@ -400,5 +403,29 @@ class Bybit(Variables):
         """
         pass
 
+    def _on_message(self, message):
+        """
+        Parse incoming messages.
+        """
+        message = json.loads(message)
+        if self._is_custom_pong(message):
+            self.pinging = "pong"
+            return
+        else:
+            self.callback(message)
+
     def ping_pong(self):
-        pass
+        for category in self.categories:
+            if self.ws[category].__class__.__name__ == "WebSocket":
+                if self.ws[category].pinging != "pong":
+                    return False
+                else:
+                    self.ws[category].pinging = "ping"
+                self.ws[category]._send_custom_ping()
+        if self.ws_private.pinging != "pong":
+            return False
+        else:
+            self.ws_private.pinging = "ping"
+        self.ws_private._send_custom_ping()
+
+        return True

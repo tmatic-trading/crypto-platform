@@ -675,7 +675,9 @@ class Function(WS, Variables):
         clOrdID = val["clOrdID"]
         if clOrdID in TreeTable.orders.children:
             TreeTable.orders.delete(iid=clOrdID)
-        TreeTable.orders.insert(values=row, market=self.name, iid=val["clOrdID"], configure=val["SIDE"])
+        TreeTable.orders.insert(
+            values=row, market=self.name, iid=val["clOrdID"], configure=val["SIDE"]
+        )
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
         if qty in ["", "None"]:

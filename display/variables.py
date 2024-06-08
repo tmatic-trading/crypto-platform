@@ -440,9 +440,9 @@ class TreeviewTable(Variables):
             self.tree.delete(*self.children)
         else:
             for child in self.children:
-                line = self.tree.item(child)                
+                line = self.tree.item(child)
                 if line["text"] == market:
-                    self.delete(iid=child)                
+                    self.delete(iid=child)
         self.children = self.tree.get_children()
 
     def append_data(self, rows: list, market: str) -> list:
