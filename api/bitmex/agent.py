@@ -1,4 +1,3 @@
-import logging
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
@@ -80,7 +79,7 @@ class Agent(Bitmex):
             )
             minimumTradeAmount = instrument["lotSize"]
             category = "quanto"
-        else:  # Linear
+        else:  # Linear / "Spot"
             if "underlyingToPositionMultiplier" in instrument:
                 valueOfOneContract = 1 / instrument["underlyingToPositionMultiplier"]
             elif instrument["underlyingToSettleMultiplier"]:
@@ -89,20 +88,32 @@ class Agent(Bitmex):
                     / instrument["underlyingToSettleMultiplier"]
                 )
             minimumTradeAmount = valueOfOneContract * instrument["lotSize"]
-            category = "linear"
+            if "settlCurrency" not in instrument:
+                category = "spot"
+            else:
+                category = "linear"
         myMultiplier = instrument["lotSize"] / minimumTradeAmount
         symbol = (instrument["symbol"], category, self.name)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]
         self.Instrument[symbol].myMultiplier = int(myMultiplier)
         self.Instrument[symbol].multiplier = instrument["multiplier"]
+        if category == "spot":
+            self.Instrument[symbol].fundingRate = "None"
+            self.Instrument[symbol].avgEntryPrice = "None"
+            self.Instrument[symbol].marginCallPrice = "None"
+            self.Instrument[symbol].currentQty = "None"
+            self.Instrument[symbol].unrealisedPnl = "None"
         if "settlCurrency" in instrument:
             self.Instrument[symbol].settlCurrency = (
                 instrument["settlCurrency"],
                 self.name,
             )
         else:
-            self.Instrument[symbol].settlCurrency = None
+            self.Instrument[symbol].settlCurrency = (
+                "None",
+                self.name,
+            )
         self.Instrument[symbol].tickSize = instrument["tickSize"]
         self.Instrument[symbol].price_precision = service.precision(
             number=instrument["tickSize"]
@@ -114,18 +125,22 @@ class Agent(Bitmex):
         )
         self.Instrument[symbol].state = instrument["state"]
         self.Instrument[symbol].volume24h = instrument["volume24h"]
-        if "expire" in instrument and instrument["expire"]:
-            self.Instrument[symbol].expire = service.time_converter(
-                time=instrument["expiry"]
-            )
+        if "expire" in instrument:
+            if instrument["expire"]:
+                self.Instrument[symbol].expire = service.time_converter(
+                    time=instrument["expiry"]
+                )
+            else:
+                self.Instrument[symbol].expire = "Perpetual"
         else:
-            self.Instrument[symbol].expire = "Perpetual"
+            self.Instrument[symbol].expire = "None"
         if "fundingRate" in instrument:
             self.Instrument[symbol].fundingRate = instrument["fundingRate"] * 100
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
         self.Instrument[symbol].baseCoin = instrument["underlying"]
         self.Instrument[symbol].quoteCoin = instrument["quoteCurrency"]
+        self.Instrument[symbol].valueOfOneContract = valueOfOneContract
 
         return category
 
@@ -178,6 +193,7 @@ class Agent(Bitmex):
                 verb="GET",
             )
             if isinstance(res, list):
+                spot_not_included = list()
                 for row in res:
                     if row["symbol"] not in self.symbol_category:
                         Agent.get_instrument(
@@ -193,13 +209,24 @@ class Agent(Bitmex):
                     row["transactTime"] = service.time_converter(
                         time=row["transactTime"], usec=True
                     )
-                    row["settlCurrency"] = (row["settlCurrency"], self.name)
+                    instrument = self.Instrument[row["symbol"]]
+                    if row["symbol"][1] == "spot":
+                        if row["side"] == "Buy":
+                            row["settlCurrency"] = (instrument.quoteCoin, self.name)
+                        else:
+                            row["settlCurrency"] = (instrument.baseCoin, self.name)
+                    else:
+                        row["settlCurrency"] = (row["settlCurrency"], self.name)
                     if row["execType"] == "Funding":
                         if row["foreignNotional"] > 0:
                             row["lastQty"] = -row["lastQty"]
                             row["commission"] = -row["commission"]
                     row["execFee"] = None
-                return res
+                    if row["symbol"][1] != "spot":
+                        spot_not_included.append(row)
+                    else:
+                        self.logger.warning("Tmatic does not support spot trading on Bitmex. The trading history entry with execID " + row["execID"] + " was ignored.")
+                return spot_not_included
             else:
                 self.logNumFatal = 1001
 
@@ -243,6 +270,9 @@ class Agent(Bitmex):
         """
         Places a limit order
         """
+        if symbol[1] == "spot":
+             self.logger.warning("Tmatic does not support spot trading on Bitmex. The order clOrdID " + clOrdID + " was ignored.")
+             return
         path = Listing.ORDER_ACTIONS
         postData = {
             "symbol": symbol[0],

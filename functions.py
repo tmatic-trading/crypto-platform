@@ -31,10 +31,7 @@ class Function(WS, Variables):
         """
         Calculate sumreal and commission
         """
-        instrument = self.Instrument[symbol]
-        coef = abs(
-            instrument.multiplier / self.currency_divisor[instrument.settlCurrency[0]]
-        )
+        coef = self.Instrument[symbol].valueOfOneContract
         if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
             if execFee:
@@ -684,7 +681,7 @@ class Function(WS, Variables):
             return qty
         if qty == 0:
             qty = "0"
-        else:
+        else:            
             instrument = self.Instrument[symbol]
             qty /= instrument.myMultiplier
             qty = "{:.{precision}f}".format(qty, precision=instrument.precision)
@@ -1042,16 +1039,7 @@ class Function(WS, Variables):
                 tree.cache[num] = compare
                 tree.update(row=num, values=[compare])
 
-        """now_width = disp.root.winfo_width()
-        if now_width != disp.all_width or var.current_market != disp.last_market:
-            if now_width > disp.window_width:
-                t = disp.platform_name.ljust((now_width - disp.window_width) // 4)
-                disp.root.title(t)
-            else:
-                disp.root.title(disp.platform_name)
-            disp.all_width = now_width"""
-
-    def close_price(self: Markets, symbol: tuple, pos: int) -> float:
+    def close_price(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
         instrument = self.Instrument[symbol]
         if pos > 0 and instrument.bids:
             close = instrument.bids[0][0]
@@ -1359,6 +1347,9 @@ def handler_orderbook(event) -> None:
         tree.update()
         tree.selection_remove(items[0])
     ws = Markets[var.current_market]
+    if ws.name == "Bitmex" and var.symbol[1] == "spot":
+        warning_window("Tmatic does not support spot trading on Bitmex.")
+        return
     if not ws.api_is_active:
         info_display(
             name=ws.name,
@@ -1625,7 +1616,6 @@ def warning_window(message: str, widget=None, item=None) -> None:
         if widget:
             widget.selection_remove(item)
 
-    # disp.robots_window_trigger = "on"
     warn_window = tk.Toplevel(pady=5)
     warn_window.geometry("400x150+{}+{}".format(450 + randint(0, 7) * 15, 300))
     warn_window.title("Warning")

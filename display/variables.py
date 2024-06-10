@@ -49,7 +49,7 @@ class Variables:
         adaptive_ratio = 1
     window_width = int(screen_width * window_ratio)
     window_height = int(screen_height)
-    root.geometry("{}x{}".format(window_width, window_height))
+    root.geometry("{}x{}".format(window_width, int(window_height * 0.7)))
     all_width = window_width
     left_width = window_width
     last_market = ""

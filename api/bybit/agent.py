@@ -496,6 +496,7 @@ class Agent(Bybit):
             self.Instrument[symbol].fundingRate = "None"
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
+        self.Instrument[symbol].valueOfOneContract = 1
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

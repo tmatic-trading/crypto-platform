@@ -39,6 +39,7 @@ class Instrument:
     tickSize: Union[str, float]
     unrealisedPnl: float = 0
     volume24h: float = 0
+    valueOfOneContract: float
 
     def __iter__(self):
         return Ret.iter(self)
