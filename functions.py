@@ -681,7 +681,7 @@ class Function(WS, Variables):
             return qty
         if qty == 0:
             qty = "0"
-        else:            
+        else:
             instrument = self.Instrument[symbol]
             qty /= instrument.myMultiplier
             qty = "{:.{precision}f}".format(qty, precision=instrument.precision)

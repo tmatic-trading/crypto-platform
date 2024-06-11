@@ -258,9 +258,15 @@ class Bitmex(Variables):
                             instrument = self.Instrument[val["symbol"]]
                             if val["symbol"][1] == "spot":
                                 if val["side"] == "Buy":
-                                    val["settlCurrency"] = (instrument.quoteCoin, self.name)
+                                    val["settlCurrency"] = (
+                                        instrument.quoteCoin,
+                                        self.name,
+                                    )
                                 else:
-                                    val["settlCurrency"] = (instrument.baseCoin, self.name)
+                                    val["settlCurrency"] = (
+                                        instrument.baseCoin,
+                                        self.name,
+                                    )
                             else:
                                 val["settlCurrency"] = (val["settlCurrency"], self.name)
                             val["transactTime"] = service.time_converter(
@@ -274,7 +280,11 @@ class Bitmex(Variables):
                             if val["symbol"][1] != "spot":
                                 self.transaction(row=val)
                             else:
-                                self.logger.warning("Tmatic does not support spot trading on Bitmex. The execution entry with execID " + val["execID"] + " was ignored.")
+                                self.logger.warning(
+                                    "Tmatic does not support spot trading on Bitmex. The execution entry with execID "
+                                    + val["execID"]
+                                    + " was ignored."
+                                )
                         else:
                             self.data[table_name][key] = val
                 elif action == "update":
@@ -372,7 +382,7 @@ class Bitmex(Variables):
             else:
                 instrument.currentQty = values["currentQty"]
                 self.positions[symbol]["POS"] = instrument.currentQty
-            
+
         if instrument.currentQty == 0:
             instrument.avgEntryPrice = 0
             instrument.marginCallPrice = 0

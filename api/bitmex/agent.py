@@ -225,7 +225,11 @@ class Agent(Bitmex):
                     if row["symbol"][1] != "spot":
                         spot_not_included.append(row)
                     else:
-                        self.logger.warning("Tmatic does not support spot trading on Bitmex. The trading history entry with execID " + row["execID"] + " was ignored.")
+                        self.logger.warning(
+                            "Tmatic does not support spot trading on Bitmex. The trading history entry with execID "
+                            + row["execID"]
+                            + " was ignored."
+                        )
                 return spot_not_included
             else:
                 self.logNumFatal = 1001
@@ -271,8 +275,12 @@ class Agent(Bitmex):
         Places a limit order
         """
         if symbol[1] == "spot":
-             self.logger.warning("Tmatic does not support spot trading on Bitmex. The order clOrdID " + clOrdID + " was ignored.")
-             return
+            self.logger.warning(
+                "Tmatic does not support spot trading on Bitmex. The order clOrdID "
+                + clOrdID
+                + " was ignored."
+            )
+            return
         path = Listing.ORDER_ACTIONS
         postData = {
             "symbol": symbol[0],

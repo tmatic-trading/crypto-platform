@@ -188,14 +188,14 @@ class Agent(Bybit):
                                     row["lastQty"] = -row["lastQty"]
                             row["execFee"] = float(row["execFee"])
                         trade_history += res
+                        success[num] = "success"
                     else:
-                        success[num] = None
                         return
 
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             threads, success = [], []
             for category in self.categories:
-                success.append("success")
+                success.append(None)
                 t = threading.Thread(
                     target=get_in_thread,
                     args=(category, startTime, limit, success, len(success) - 1),

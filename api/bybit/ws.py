@@ -405,7 +405,7 @@ class Bybit(Variables):
 
     def _on_message(self, message):
         """
-        Parse incoming messages. This method replaces the original Pybit API 
+        Parse incoming messages. This method replaces the original Pybit API
         method to intercept websocket pings via the pinging variable.
         """
         message = json.loads(message)
@@ -415,7 +415,6 @@ class Bybit(Variables):
         else:
             self.callback(message)
 
-    
     def ping_pong(self):
         for category in self.categories:
             if self.ws[category].__class__.__name__ == "WebSocket":
