@@ -174,7 +174,7 @@ class Agent(Bybit):
                             row["commission"] = float(row["feeRate"])
                             if row["orderLinkId"]:
                                 row["clOrdID"] = row["orderLinkId"]
-                            row["price"] = float(row["execPrice"])
+                            row["price"] = float(row["orderPrice"])
                             if category == "spot":
                                 row["settlCurrency"] = (row["feeCurrency"], self.name)
                             else:

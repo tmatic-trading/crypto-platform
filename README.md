@@ -1,6 +1,6 @@
 ![](https://img.shields.io/badge/Python-3.9+-blue) ![](https://img.shields.io/badge/SQLite-latest-004864)
 
-# Trading platform designed for automated trading on the Bitmex and Bybit crypto exchanges
+# Cryptocurrency platform designed for automated trading on the Bitmex and Bybit crypto exchanges
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/tmaticDark.png)
 

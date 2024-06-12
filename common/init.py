@@ -45,42 +45,107 @@ class Init(WS, Variables):
         Init.file_lock.acquire(True)
         with open("history.ini", "r") as f:
             lst = list(f)
+        saved = ""
         with open("history.ini", "w") as f:
             for row in lst:
                 row = row.replace("\n", "")
                 res = row.split()
-                if res[0] == self.name:
-                    row = res[0] + " " + str(time)[:19]
+                if res:
+                    if res[0] == self.name:
+                        row = res[0] + " " + str(time)[:19]
+                        if not saved:
+                            f.write(row + "\n")
+                        saved = "success"
+                    else:
+                        f.write(row + "\n")
+            if not saved:
+                row = self.name + " " + str(time)[:19]
                 f.write(row + "\n")
         Init.file_lock.release()
 
     def load_trading_history(self: Markets) -> None:
         """
-        Load trading history (if any)
+        This function receives trading history data through tade_history()
+        methods in files called agent.py. Each exchange has its own API
+        features, so the methods differ significantly from each other.
+
+        Trade_history() reads data in 500-line chunks, starting from the date
+        specified in the history.ini file. If trade_history() returned less
+        than 500 rows, then this is a signal that the entire trading history
+        has been received and this function ends its work. The history.ini
+        file records the time of the last transaction.
+
+        If the row with execID already exists in the database, then it is
+        skipped, otherwise it is processed in the transaction() in
+        functions.py and then written to the database.
+
+        The data obtained from different exchanges have unified values:
+
+        "symbol": tuple             Symbol name. Example: ("BTCUSDT", 
+                                    "linear", "Bybit")
+        "execID": str               Execution ID
+        "orderID": str              Order ID
+        "lastPx": float             Execution price
+        "leavesQty": float          The remaining qty not executed
+        "category": str             Instrument type: spot, linear, inverse,
+                                    option, quanto
+        "transactTime": datetime    Executed timestamp
+        "commission": float         Trading fee rate
+        "clOrdID": str              User customized order ID
+        "price": float              Order price
+        "settlCurrency": tuple      Settle coin. Example: ('USDt', 'Bitmex')
+        "lastQty": float            Execution qty
+        "market": str               Exchange name
+        "execType": str             Executed type: Trade, Funding
+        "execFee": float            Executed trading fee
         """
         tm = datetime.now(tz=timezone.utc)
-        with open("history.ini", "r") as f:
-            lst = list(f)
+        try:
+            with open("history.ini", "r") as f:
+                lst = list(f)
+        except FileNotFoundError:
+            var.logger.warning(
+                "The history.ini not found. The history.ini file has been created."
+            )
+            with open("history.ini", "w"):
+                pass
+            lst = list()
         last_history_time = ""
         for row in lst:
             row = row.replace("\n", "")
             res = row.split()
             if res:
                 if res[0] == self.name:
-                    time = " ".join(res[1:])
-                    last_history_time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-                    last_history_time = last_history_time.replace(tzinfo=timezone.utc)
-        if not last_history_time:
-            message = self.name + " was not found in the history.ini file."
-            var.logger.error(message)
-            raise Exception(message)
-        if last_history_time > tm:
-            message = (
-                "history.ini error. The time in the history.ini file is "
-                + "greater than the current time."
+                    _time = " ".join(res[1:])
+                    break
+        else:
+            _time = "2000-01-01 00:0:00"
+            var.logger.warning(
+                "No time found for "
+                + self.name
+                + " from history.ini. Assigned time: "
+                + _time
             )
-            var.logger.error(message)
-            raise Exception(message)
+        try:
+            last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            _time = "2000-01-01 00:0:00"
+            var.logger.warning(
+                "Time format for "
+                + self.name
+                + " from the history.ini is incorrect. Assigned time: "
+                + _time
+            )
+            last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+        last_history_time = last_history_time.replace(tzinfo=timezone.utc)
+        if last_history_time > tm:
+            _time = "2000-01-01 00:0:00"
+            var.logger.warning(
+                "The time in the history.ini file is greater than the current time. Assigned time: "
+                + _time
+            )
+            last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+            last_history_time = last_history_time.replace(tzinfo=timezone.utc)
         count_val = 500
         history = WS.trading_history(self, histCount=count_val, time=last_history_time)
         if isinstance(history, list):

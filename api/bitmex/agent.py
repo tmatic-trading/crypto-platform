@@ -201,6 +201,7 @@ class Agent(Bitmex):
                             symbol=(row["symbol"], "category not defined", self.name),
                         )
                     row["market"] = self.name
+                    row["category"] = self.symbol_category[row["symbol"]]
                     row["symbol"] = (
                         row["symbol"],
                         self.symbol_category[row["symbol"]],
