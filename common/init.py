@@ -81,7 +81,7 @@ class Init(WS, Variables):
 
         The data obtained from different exchanges have unified values:
 
-        "symbol": tuple             Symbol name. Example: ("BTCUSDT", 
+        "symbol": tuple             Symbol name. Example: ("BTCUSDT",
                                     "linear", "Bybit")
         "execID": str               Execution ID
         "orderID": str              Order ID

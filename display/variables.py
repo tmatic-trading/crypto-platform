@@ -64,7 +64,6 @@ class Variables:
     num_robots = 1
     num_book = 20  # Must be even
     col1_book = 0
-    symb_book = ()
 
     pw_main = tk.PanedWindow(
         root, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
@@ -462,8 +461,8 @@ class TreeviewTable(Variables):
 
         return reversed(data[: self.max_rows])
 
-    def set_selection(self):
-        self.tree.selection_add(self.children[0])
+    def set_selection(self, index=0):
+        self.tree.selection_add(self.children[index])
 
     def setup_color_cell(self):
         self._canvas = list()

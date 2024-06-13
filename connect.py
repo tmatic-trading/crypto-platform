@@ -43,7 +43,7 @@ def setup():
     for name in var.market_list:
         finish_setup(Markets[name])
     merge_orders()
-    functions.load_labels()
+    functions.init_tables()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
@@ -160,8 +160,8 @@ def finish_setup(ws: Markets):
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
-    ws.api_is_active = True
     ws.message_time = datetime.now(tz=timezone.utc)
+    ws.api_is_active = True
 
 
 def reload_market(ws: Markets):
@@ -180,6 +180,7 @@ def refresh() -> None:
         finish_setup(ws=ws)
         merge_orders()
         Function.market_status(ws, status="ONLINE", message="", error=False)
+        functions.clear_tables()
     while not var.queue_info.empty():
         info = var.queue_info.get()
         info_display(
@@ -263,14 +264,15 @@ def refresh() -> None:
                     disp.f9 = "OFF"
                     disp.label_f9.config(bg=disp.red_color)
                     ws.logNumFatal = 0
+    var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
     if ws.api_is_active:
         Function.refresh_on_screen(Markets[var.current_market], utc=utc)
+    var.lock_market_switch.release()
 
 
 def clear_params():
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
-    disp.symb_book = ()
 
 
 def robots_thread() -> None:
@@ -306,6 +308,7 @@ def terminal_reload(event) -> None:
     service.close(Markets)
     disp.root.update()
     setup()
+    functions.clear_tables()
 
 
 def trade_state(event) -> None:

@@ -139,4 +139,5 @@ class Variables:
     queue_order = queue.Queue()
     queue_reload = queue.Queue()
     lock = threading.Lock()
+    lock_market_switch = threading.Lock()
     working_directory: str

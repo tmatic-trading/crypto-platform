@@ -1038,6 +1038,10 @@ class Function(WS, Variables):
             if compare != tree.cache[num]:
                 tree.cache[num] = compare
                 tree.update(row=num, values=[compare])
+                configure = "Market" if "ONLINE" in status else "Reload"
+                TreeTable.market.paint(
+                    row=var.market_list.index(ws.name), configure=configure
+                )
 
     def close_price(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
         instrument = self.Instrument[symbol]
@@ -1749,7 +1753,7 @@ def change_color(color: str, container=None) -> None:
             child.config(bg=color)
 
 
-def load_labels() -> None:
+def init_tables() -> None:
     ws = Markets[var.current_market]
     TreeTable.orderbook = TreeviewTable(
         frame=disp.frame_orderbook,
@@ -1800,7 +1804,8 @@ def load_labels() -> None:
         bind=handler_account,
     )
     TreeTable.position.set_selection()
-    TreeTable.market.set_selection()
+    indx = var.market_list.index(var.current_market)
+    TreeTable.market.set_selection(index=indx)
     robot_status(ws)
 
 
@@ -1843,6 +1848,7 @@ def robot_status(ws: Markets):
 
 
 def clear_tables():
+    var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
     TreeTable.position.init(size=len(ws.symbol_list))
     TreeTable.account.init(size=len(ws.Account.get_keys()))
@@ -1850,8 +1856,8 @@ def clear_tables():
     TreeTable.orderbook.init(size=disp.num_book)
     TreeTable.results.init(size=len(ws.Result.get_keys()))
     TreeTable.position.set_selection()
-    # Function.refresh_tables(ws)
     robot_status(ws)
+    var.lock_market_switch.release()
 
 
 change_color(color=disp.title_color, container=disp.root)
