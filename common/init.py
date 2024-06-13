@@ -172,8 +172,10 @@ class Init(WS, Variables):
 
     def account_balances(self: Markets) -> None:
         """
-        Calculates the account by currency according to data from the SQLite
-        'coins' table.
+        Calculates the final trading results for all currencies that were 
+        involved. The data is taken from the SQLite table "coins". 
+        Additionally, accrued funding and paid commissions for the entire 
+        period are calculated.
         """
         data = Function.select_database(
             self,
@@ -244,14 +246,18 @@ class Init(WS, Variables):
 
     def load_orders(self: Markets, myOrders: list) -> None:
         """
-        Load Orders (if any)
+        All open orders received from the exchange endpoint as a result of an 
+        HTTP request are taken into account in the orders array. If the 
+        process of filling the array reveals an order whose emi identifier 
+        does not belong to any of the bots, such a bot will be created with 
+        the NOT DEFINED status.
         """
         self.orders = dict()
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
                 emi = ".".join(val["symbol"][:2])
                 if "clOrdID" not in val:
-                    # The order was placed from the exchange interface
+                    # The order was placed from the exchange web interface
                     var.last_order += 1
                     clOrdID = str(var.last_order) + "." + emi
                     info_display(
@@ -357,7 +363,7 @@ class Init(WS, Variables):
                     values=values, market=self.name, configure=values[indx]
                 )
         else:
-            self.logNumFatal = 1001
+            self.logNumFatal = 1001 # Reboot
 
 
 def setup_logger():

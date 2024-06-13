@@ -153,6 +153,13 @@ def merge_orders():
 
 
 def finish_setup(ws: Markets):
+    """
+    This part of the setup does not interact with HTTP, so there is no need to 
+    load data from different threads to speed up the program and this function 
+    is executed from the main loop. Moreover, the function uses 
+    load_database() to fill data into the Treeview tables, which, according to 
+    Tkinter capabilities, is only possible from the main loop.
+    """
     common.Init.load_database(ws)
     common.Init.account_balances(ws)
     common.Init.load_orders(ws, ws.setup_orders)
