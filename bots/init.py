@@ -65,13 +65,14 @@ class Init(WS, Variables):
                 if defunct["EMI"] == emi:
                     break
             else:
+                emi = defunct["EMI"]
                 if defunct["CATEGORY"] == "spot":
                     status = "RESERVED"
+                    emi = ".".join(symbol[:2])
                 elif symbol in self.symbol_list:
                     status = "NOT DEFINED"
                 else:
                     status = "NOT IN LIST"
-                emi = ".".join(symbol[:2])
                 self.robots[emi] = {
                     "SYMBOL": symbol,
                     "CATEGORY": defunct["CATEGORY"],
@@ -82,7 +83,7 @@ class Init(WS, Variables):
                     "TIMEFR": "None",
                     "CAPITAL": "None",
                 }
-
+                
         # Adding RESERVED robots
         union = ""
         qwr = "select * from ("
