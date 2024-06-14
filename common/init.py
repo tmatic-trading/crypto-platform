@@ -331,13 +331,15 @@ class Init(WS, Variables):
                 row = Function.funding_display(self, val=val, init=True)
                 rows.append(row)
             data = TreeTable.funding.append_data(rows=rows, market=self.name)
+            indx_pnl = TreeTable.funding.title.index("PNL")
+            indx_market = TreeTable.funding.title.index("MARKET")
             for values in data:
-                if float(values[5]) >= 0:
+                if float(values[indx_pnl]) >= 0:
                     configure = "Buy"
                 else:
                     configure = "Sell"
                 TreeTable.funding.insert(
-                    values=values, market=self.name, configure=configure
+                    values=values, market=values[indx_market], configure=configure
                 )
             sql = (
                 "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
@@ -357,10 +359,11 @@ class Init(WS, Variables):
                 row = Function.trades_display(self, val=val, init=True)
                 rows.append(row)
             data = TreeTable.trades.append_data(rows=rows, market=self.name)
-            indx = TreeTable.trades.title.index("SIDE")
+            indx_side = TreeTable.trades.title.index("SIDE")
+            indx_market = TreeTable.trades.title.index("MARKET")
             for values in data:
                 TreeTable.trades.insert(
-                    values=values, market=self.name, configure=values[indx]
+                    values=values, market=values[indx_market], configure=values[indx_side]
                 )
         else:
             self.logNumFatal = 1001 # Reboot
