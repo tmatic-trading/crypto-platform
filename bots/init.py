@@ -83,7 +83,7 @@ class Init(WS, Variables):
                     "TIMEFR": "None",
                     "CAPITAL": "None",
                 }
-                
+
         # Adding RESERVED robots
         union = ""
         qwr = "select * from ("

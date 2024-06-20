@@ -172,9 +172,9 @@ class Init(WS, Variables):
 
     def account_balances(self: Markets) -> None:
         """
-        Calculates the final trading results for all currencies that were 
-        involved. The data is taken from the SQLite table "coins". 
-        Additionally, accrued funding and paid commissions for the entire 
+        Calculates the final trading results for all currencies that were
+        involved. The data is taken from the SQLite table "coins".
+        Additionally, accrued funding and paid commissions for the entire
         period are calculated.
         """
         data = Function.select_database(
@@ -246,10 +246,10 @@ class Init(WS, Variables):
 
     def load_orders(self: Markets, myOrders: list) -> None:
         """
-        All open orders received from the exchange endpoint as a result of an 
-        HTTP request are taken into account in the orders array. If the 
-        process of filling the array reveals an order whose emi identifier 
-        does not belong to any of the bots, such a bot will be created with 
+        All open orders received from the exchange endpoint as a result of an
+        HTTP request are taken into account in the orders array. If the
+        process of filling the array reveals an order whose emi identifier
+        does not belong to any of the bots, such a bot will be created with
         the NOT DEFINED status.
         """
         self.orders = dict()
@@ -363,10 +363,12 @@ class Init(WS, Variables):
             indx_market = TreeTable.trades.title.index("MARKET")
             for values in data:
                 TreeTable.trades.insert(
-                    values=values, market=values[indx_market], configure=values[indx_side]
+                    values=values,
+                    market=values[indx_market],
+                    configure=values[indx_side],
                 )
         else:
-            self.logNumFatal = 1001 # Reboot
+            self.logNumFatal = 1001  # Reboot
 
 
 def setup_logger():

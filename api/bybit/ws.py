@@ -52,19 +52,6 @@ class Bybit(Variables):
             self.orderbook_depth = 1
         else:
             self.orderbook_depth = 50
-        self.currency_divisor = {
-            "USDT": 1,
-            "BTC": 1,
-            "ETH": 1,
-            "EOS": 1,
-            "XRP": 1,
-            "DOT": 1,
-            "ADA": 1,
-            "MANA": 1,
-            "LTC": 1,
-            "SOL": 1,
-            "None": 1,
-        }
         self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
