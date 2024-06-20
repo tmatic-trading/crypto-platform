@@ -1,17 +1,31 @@
 import json
 import time
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Union
 
 import requests
 
+from api.bitmex.api_auth import API_auth as Bitmex_API_auth
+from api.deribit.api_auth import API_auth as Deribit_API_auth
 from api.variables import Variables
 from common.variables import Variables as var
 
-from .api_auth import API_auth
+
+class Auth(Enum):
+    Bitmex = Bitmex_API_auth
+    Deribit = Deribit_API_auth
 
 
 class Send(Variables):
+    """
+    Sending HTTP Requests. This class is common to exchanges with the
+    exception of Bybit, whose requests are processed by a third-party Pybit
+    connector. Each of the exchanges has its own authorization scheme, which
+    can be found in the api_auth.py files and located in folders corresponding
+    to the names of the exchanges.
+    """
+
     def request(
         self,
         path: str = None,
@@ -21,7 +35,7 @@ class Send(Variables):
         theorPrice=None,
     ) -> Union[dict, list, None]:
         """
-        Sends a request to the exchange
+        Sends a request to the exchange.
         """
 
         def info_warn_err(whatNow, textNow, codeNow=0):
@@ -49,7 +63,6 @@ class Send(Variables):
 
         url = self.http_url + path
         cur_retries = 1
-        auth = API_auth(self.api_key, self.api_secret)
         while True:
             stop_retries = cur_retries
             # Makes the request
@@ -84,9 +97,23 @@ class Send(Variables):
                             theorPrice,
                         ),
                     )
-                req = requests.Request(verb, url, json=postData, auth=auth, params=None)
+                req = requests.Request(verb, url, json=postData, params=None)
+                if isinstance(postData, dict):
+                    data = json.dumps(postData)
+                else:
+                    data = postData
+                headers = Auth[self.name].value.generate_headers(
+                    api_key=self.api_key,
+                    api_secret=self.api_secret,
+                    method=verb,
+                    url=url,
+                    path=path,
+                    data=data,
+                )
+                req.headers = headers
                 prepped = self.session.prepare_request(req)
                 response = self.session.send(prepped, timeout=timeout)
+
                 # Make non-200s throw
                 response.raise_for_status()
             except requests.exceptions.HTTPError as e:

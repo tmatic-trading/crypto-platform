@@ -8,6 +8,8 @@ from api.bitmex.agent import Agent as BitmexAgent
 from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
+from api.deribit.agent import Agent as DeribitAgent
+from api.deribit.ws import Deribit
 from common.variables import Variables as var
 
 from .variables import Variables
@@ -15,9 +17,9 @@ from .variables import Variables
 
 class MetaMarket(type):
     dictionary = dict()
-    names = {"Bitmex": Bitmex, "Bybit": Bybit}
+    names = {"Bitmex": Bitmex, "Bybit": Bybit, "Deribit": Deribit}
 
-    def __getitem__(self, item) -> Union[Bitmex, Bybit]:
+    def __getitem__(self, item) -> Union[Bitmex, Bybit, Deribit]:
         if item not in self.names:
             raise ValueError(f"{item} not found")
         if item not in self.dictionary:
@@ -27,13 +29,14 @@ class MetaMarket(type):
             return self.dictionary[item]
 
 
-class Markets(Bitmex, Bybit, metaclass=MetaMarket):
+class Markets(Bitmex, Bybit, Deribit, metaclass=MetaMarket):
     pass
 
 
 class Agents(Enum):
     Bitmex = BitmexAgent
     Bybit = BybitAgent
+    Deribit = DeribitAgent
 
 
 class WS(Variables):

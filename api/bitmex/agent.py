@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import Union
 
 import services as service
+from api.http import Send
 
-from .http import Send
 from .path import Listing
 from .ws import Bitmex
 

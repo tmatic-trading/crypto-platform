@@ -2,10 +2,13 @@ import logging
 from collections import OrderedDict
 from datetime import datetime, timezone
 
+import requests
+
 from common.variables import Variables as var
 
 
 class Variables:
+    name: str
     qwe = 0
     testnet = True
     api_key = ""
@@ -32,3 +35,4 @@ class Variables:
     currency_divisor = dict()
     filename = ""
     api_is_active = False
+    session: requests.Session

@@ -14,7 +14,7 @@ from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
 
-from .api_auth import generate_signature
+from .api_auth import API_auth
 
 
 class Bitmex(Variables):
@@ -30,6 +30,7 @@ class Bitmex(Variables):
     def __init__(self):
         self.name = "Bitmex"
         self.data = dict()
+        self.Api_auth = API_auth
         Setup.variables(self, self.name)
         self.session = requests.Session()
         depth = "quote"
@@ -133,7 +134,7 @@ class Bitmex(Variables):
                 return [
                     "api-nonce: " + str(nonce),
                     "api-signature: "
-                    + generate_signature(
+                    + API_auth.generate_signature(
                         self.api_secret, "GET", "/realtime", nonce, ""
                     ),
                     "api-key:" + self.api_key,

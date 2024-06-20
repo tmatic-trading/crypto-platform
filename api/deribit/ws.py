@@ -2,6 +2,7 @@ import json
 import threading
 from collections import OrderedDict
 
+import requests
 import websocket
 
 import services as service
@@ -12,7 +13,7 @@ from common.variables import Variables as var
 from services import exceptions_manager
 
 
-class Bybit(Variables):
+class Deribit(Variables):
     class Account(metaclass=MetaAccount):
         pass
 
@@ -25,6 +26,7 @@ class Bybit(Variables):
     def __init__(self):
         self.name = "Deribit"
         Setup.variables(self, self.name)
+        self.session = requests.Session()
         self.categories = {
             "future_reversed",
             "future_linear",
@@ -34,12 +36,12 @@ class Bybit(Variables):
             "option_combo_reversed",
             "spot_linear",
         }
-        '''self.settlCurrency_list = {
+        """self.settlCurrency_list = {
             "spot": [],
             "inverse": [],
             "option": [],
             "linear": [],
-        }'''
+        }"""
         self.settleCoin_list = list()
         self.ws = websocket
         self.logger = var.logger
@@ -55,15 +57,15 @@ class Bybit(Variables):
         self.orders = dict()
 
     def start(self):
-        '''for symbol in self.symbol_list:
-            instrument = self.Instrument[symbol]
-            if instrument.category == "linear":
-                self.Result[(instrument.quoteCoin, self.name)]
-            elif instrument.category == "inverse":
-                self.Result[(instrument.baseCoin, self.name)]
-            elif instrument.category == "spot":
-                self.Result[(instrument.baseCoin, self.name)]
-                self.Result[(instrument.quoteCoin, self.name)]'''
+        """for symbol in self.symbol_list:
+        instrument = self.Instrument[symbol]
+        if instrument.category == "linear":
+            self.Result[(instrument.quoteCoin, self.name)]
+        elif instrument.category == "inverse":
+            self.Result[(instrument.baseCoin, self.name)]
+        elif instrument.category == "spot":
+            self.Result[(instrument.baseCoin, self.name)]
+            self.Result[(instrument.quoteCoin, self.name)]"""
 
         self.__connect()
 
@@ -72,3 +74,13 @@ class Bybit(Variables):
         Connecting to websocket.
         """
         self.logger.info("Connecting to websocket")
+
+    def exit(self):
+        """
+        Closes websocket
+        """
+        try:
+            self.ws.close()
+        except Exception:
+            pass
+        self.logNumFatal = -1
