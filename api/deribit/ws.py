@@ -27,21 +27,15 @@ class Deribit(Variables):
         self.name = "Deribit"
         Setup.variables(self, self.name)
         self.session = requests.Session()
-        self.categories = {
-            "future_reversed",
-            "future_linear",
-            "future_combo_reversed",
-            "option_reversed",
-            "option_linear",
-            "option_combo_reversed",
-            "spot_linear",
+        self.define_category = {
+            "future linear": "future L", 
+            "future reversed": "future R", 
+            "future_combo reversed": "future CR", 
+            "spot linear": "spot L", 
+            "option linear": "option L", 
+            "option reversed": "option R", 
+            "option_combo reversed": "option CR",
         }
-        """self.settlCurrency_list = {
-            "spot": [],
-            "inverse": [],
-            "option": [],
-            "linear": [],
-        }"""
         self.settleCoin_list = list()
         self.ws = websocket
         self.logger = var.logger

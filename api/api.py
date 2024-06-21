@@ -13,6 +13,7 @@ from api.deribit.ws import Deribit
 from common.variables import Variables as var
 
 from .variables import Variables
+from services import display_exception
 
 
 class MetaMarket(type):
@@ -55,14 +56,16 @@ class WS(Variables):
         try:
             if Agents[self.name].value.get_active_instruments(self):
                 return -1
-        except Exception:
+        except Exception as exception:
+            display_exception(exception)
             self.logger.error(self.name + " Instruments not loaded. Reboot.")
             return -1
         self.logNumFatal = 0
         try:
             if Agents[self.name].value.open_orders(self):
                 return -1
-        except Exception:
+        except Exception as exception:
+            display_exception(exception)
             self.logger.error(self.name + " Orders not loaded. Reboot.")
             return -1
         try:
@@ -86,7 +89,8 @@ class WS(Variables):
             threads.append(t)
             t.start()
             [thread.join() for thread in threads]
-        except Exception:
+        except Exception as exception:
+            display_exception(exception)
             self.logger.error(
                 self.name
                 + ": The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."

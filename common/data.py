@@ -16,15 +16,96 @@ class Ret:
 
 
 class Instrument:
+    """
+    Stores data for each instrument.
+
+    Description
+    -----------
+    asks: list
+        Asks. The elements are sorted by price in ascending order. There can 
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        defined as ``quote``.
+    avgEntryPrice: float
+        Average entry price
+    baseCoin: str
+        Base coin
+    bids: list
+        Bids. The element is sorted by price in descending order. There can 
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        defined as ``quote``.
+    category: str
+        Possible categories:
+        Bitmex:
+            ``inverse``.
+            ``quanto``,
+            ``linear``, 
+            ``spot``, 
+            ``option``, 
+        Bybit: 
+            ``inverse``, 
+            ``linear``, 
+            ``option``, 
+            ``spot``,
+        Deribt: 
+            ``future L``,   future linear
+            ``future R``,   future reversed
+            ``future CR`,   future_combo reversed
+            ``spot L``,     spot linear
+            ``option L``,   option linear
+            ``option R``,   option reversed
+            ``option CR``,  option_combo reversed
+    currentQty: float
+        Position size
+    expire: datetime
+        Expiration time
+    fundingRate: float
+        Funding rate
+    marginCallPrice: float
+        Position margin call or liquidation price
+    maxOrderQty: float
+        Not used
+    minOrderQty: float
+        Minimum order quantity or lotsize
+    multiplier: int
+        :::For Bitmex only::: How much is one contract worth? You can see this 
+        information under the Bitmex Contract Specifications for each 
+        instrument.
+    myMultiplier: int
+        :::For Bitmex only::: Converts quantity when displayed on screen.
+    precision: int
+        Based on the ``lotSize`` of the instrument. Used to round volumes 
+        ​​when displayed on the screen.
+    price_precision: int
+        Based on the ``tickSize`` of the instrument. Used to round prices 
+        ​​when displayed on the screen.
+    qtyStep: float
+        The step to increase/reduce order quantity. Also called LotSize.
+    quoteCoin: str
+        Quote coin
+    settlCurrency: tuple
+        Settlement currency of the instrument
+    state: str
+        Position status
+    symbol: str
+        Instrument symbol
+    tickSize: float
+        The step to increase/reduce order price.
+    unrealisedPnl: float
+        Unrealised PnL
+    volume24h: float
+        Volume for 24h
+    valueOfOneContract: float
+        :::For Bitmex only::: Used when calculating trade value.
+    """
     asks: list
     avgEntryPrice: float = 0
     baseCoin: str
     bids: list
     category: str
     currentQty: float = 0
-    expire: Union[str, datetime]
+    expire: datetime
     fundingRate: float = 0
-    marginCallPrice: Union[str, float] = 0
+    marginCallPrice: float = 0
     maxOrderQty: float
     minOrderQty: float
     multiplier: int
@@ -33,10 +114,10 @@ class Instrument:
     price_precision: int
     qtyStep: float
     quoteCoin: str
-    settlCurrency: str
+    settlCurrency: tuple
     state: str
     symbol: str
-    tickSize: Union[str, float]
+    tickSize: float
     unrealisedPnl: float = 0
     volume24h: float = 0
     valueOfOneContract: float

@@ -29,7 +29,7 @@ class Function(WS, Variables):
         execFee=None,
     ) -> dict:
         """
-        Calculate sumreal and commission
+        Calculates trade value and commission
         """
         coef = self.Instrument[symbol].valueOfOneContract
         if symbol[1] == "inverse":

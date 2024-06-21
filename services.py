@@ -1,3 +1,4 @@
+import traceback
 from datetime import datetime, timezone
 from typing import Union
 
@@ -97,3 +98,8 @@ def close(markets):
     for name in var.market_list:
         ws = markets[name]
         ws.exit()
+
+def display_exception(exception):
+    traceback.print_exception(
+            type(exception), exception, exception.__traceback__
+        )

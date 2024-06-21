@@ -63,7 +63,11 @@ class Agent(Bitmex):
 
     def fill_instrument(self, instrument: dict) -> str:
         """
-        Filling the instruments dictionary with data
+        Filling the instruments data. 
+
+        The data is stored in the Instrument class using MetaInstrument class. 
+        The data fields of different exchanges are unified through the 
+        Instrument class. See detailed description of the fields there.
         """
         # myMultiplier
         if instrument["isInverse"]:  # Inverse

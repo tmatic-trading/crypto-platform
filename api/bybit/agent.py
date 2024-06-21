@@ -437,6 +437,13 @@ class Agent(Bybit):
                 self.logNumFatal = -1
 
     def fill_instrument(self, instrument: dict, category: str):
+        """
+        Filling the instruments data. 
+
+        The data is stored in the Instrument class using MetaInstrument class. 
+        The data fields of different exchanges are unified through the 
+        Instrument class. See detailed description of the fields there.
+        """
         symbol = (instrument["symbol"], category, self.name)
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = instrument["symbol"]

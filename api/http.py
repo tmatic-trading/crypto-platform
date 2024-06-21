@@ -72,11 +72,7 @@ class Send(Variables):
                     info_warn_err(
                         "INFO",
                         "("
-                        + url[0]
-                        + url[1]
-                        + url[2]
-                        + url[3]
-                        + url[4]
+                        + url[:5]
                         + ") sending %s to %s: %s"
                         % (verb, path, json.dumps(postData or "")),
                     )
@@ -84,11 +80,7 @@ class Send(Variables):
                     info_warn_err(
                         "INFO",
                         "("
-                        + url[0]
-                        + url[1]
-                        + url[2]
-                        + url[3]
-                        + url[4]
+                        + url[:5]
                         + ") sending %s to %s: %s, theor: %s"
                         % (
                             verb,
