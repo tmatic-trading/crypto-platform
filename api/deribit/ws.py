@@ -25,8 +25,10 @@ class Deribit(Variables):
 
     def __init__(self):
         self.name = "Deribit"
+        self.api_version = "/api/v2/"
         Setup.variables(self, self.name)
         self.session = requests.Session()
+        self.symbol_category = dict()
         self.define_category = {
             "future linear": "future L", 
             "future reversed": "future R", 

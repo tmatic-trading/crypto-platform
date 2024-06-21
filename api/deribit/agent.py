@@ -18,8 +18,8 @@ class Agent(Deribit):
         see which instruments are available for trading, or which 
         instruments have recently expired.
         """
-        data = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
-        
+        path = self.api_version + Listing.GET_ACTIVE_INSTRUMENTS
+        data = Send.request(self, path=path, verb="GET")        
         if isinstance(data, dict):
             if "result" in data:
                 if isinstance(data["result"], list):
@@ -33,7 +33,7 @@ class Agent(Deribit):
                     error = "A list was expected when loading instruments, but was not received. Reboot"
             else:
                 error = "When loading instruments 'result' was not received."
-        error = "No incorrect data was received when loading instruments."
+        error = "Invalid data was received when loading tools. " + str(data)
         self.logger.error(error)
 
         
@@ -48,7 +48,8 @@ class Agent(Deribit):
         Instrument class. See detailed description of the fields there.
         """
         pass
-        category = values["kind"] + " " + values["instrument_type"]        
+        category = values["kind"] + " " + values["instrument_type"]
+        self.symbol_category[values["instrument_name"]] = category
         symbol = (values["instrument_name"], category, self.name)
         instrument = self.Instrument[symbol]
         instrument.symbol = values["instrument_name"]    
@@ -92,3 +93,48 @@ class Agent(Deribit):
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
         self.Instrument[symbol].valueOfOneContract = 1
+
+    def open_orders(self) -> int:
+        """
+        Retrieves list of user's open orders across many currencies.
+        """
+        msg = {
+            "jsonrpc" : "2.0",
+            "id" : 1953,
+            "method" : "private/get_open_orders",
+            "params" : {
+            }
+        }
+        path = self.api_version + Listing.OPEN_ORDERS
+        data = Send.request(self, path=path, verb="POST", postData=msg)
+        if isinstance(data, dict):
+            if "result" in data:
+                if isinstance(data["result"], list):
+                    for order in data["result"]:
+                        category = self.symbol_category[order["instrument_name"]]
+                        symbol = (order["instrument_name"], category, self.name)
+                        instrument = self.Instrument[symbol]
+                        order["symbol"] = symbol
+                        order["orderID"] = order["order_id"]
+                        if "label" in order and order["label"]:
+                            order["clOrdID"] = order["label"]
+                        order["orderQty"] = order["amount"]
+                        order["settlCurrency"] = instrument.settlCurrency
+                        order["ordStatus"] = order["order_state"]
+                        order["leavesQty"] = order["amount"] - order["filled_amount"]
+                        order["transactTime"] = service.time_converter(
+                            time=int(order["last_update_timestamp"]) / 1000, usec=True
+                        )
+                    self.setup_orders = data["result"]
+                    os.abort()
+                    return 0
+                else:
+                    error = "The list was expected when the orders were loaded, but was not received. Reboot"
+            else:
+                error = "When loading instruments 'result' was not received."
+        error = "Invalid data was received when loading tools. " + str(data)
+        self.logger.error(error)        
+
+        return -1
+
+        

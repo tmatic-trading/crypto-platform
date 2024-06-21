@@ -54,6 +54,7 @@ class WS(Variables):
             method(self)
 
         try:
+            pass
             if Agents[self.name].value.get_active_instruments(self):
                 return -1
         except Exception as exception:

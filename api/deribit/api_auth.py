@@ -23,7 +23,7 @@ class API_auth(AuthBase):
             verb=method,
             uri=path,
             nonce=nonce,
-            msg=data,
+            msg=data or "",
         )
         authorization = (
             "deri-hmac-sha256 id="
@@ -46,7 +46,7 @@ class API_auth(AuthBase):
         # Generates an API signature. Detals:
                                 https://docs.deribit.com/#authentication
         """
-        request_data = verb + "\n" + uri + "\n" + json.dumps(msg) + "\n"
+        request_data = verb + "\n" + uri + "\n" + msg + "\n"
         stringToSign: str = tstamp + "\n" + nonce + "\n" + request_data
         byte_key = secret.encode()
         message = stringToSign.encode()
