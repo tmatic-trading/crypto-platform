@@ -1,9 +1,7 @@
 import hashlib
 import hmac
-import json
 import random
 import time
-from urllib.parse import urlparse
 
 from requests.auth import AuthBase
 

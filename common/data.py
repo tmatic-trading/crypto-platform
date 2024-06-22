@@ -22,31 +22,31 @@ class Instrument:
     Description
     -----------
     asks: list
-        Asks. The elements are sorted by price in ascending order. There can 
-        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        Asks. The elements are sorted by price in ascending order. There can
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is
         defined as ``quote``.
     avgEntryPrice: float
         Average entry price
     baseCoin: str
         Base coin
     bids: list
-        Bids. The element is sorted by price in descending order. There can 
-        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        Bids. The element is sorted by price in descending order. There can
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is
         defined as ``quote``.
     category: str
         Possible categories:
         Bitmex:
             ``inverse``.
             ``quanto``,
-            ``linear``, 
-            ``spot``, 
-            ``option``, 
-        Bybit: 
-            ``inverse``, 
-            ``linear``, 
-            ``option``, 
+            ``linear``,
             ``spot``,
-        Deribt: 
+            ``option``,
+        Bybit:
+            ``inverse``,
+            ``linear``,
+            ``option``,
+            ``spot``,
+        Deribt:
             ``future L``,   future linear
             ``future R``,   future reversed
             ``future CR`,   future_combo reversed
@@ -67,16 +67,16 @@ class Instrument:
     minOrderQty: float
         Minimum order quantity or lotsize
     multiplier: int
-        :::For Bitmex only::: How much is one contract worth? You can see this 
-        information under the Bitmex Contract Specifications for each 
+        :::For Bitmex only::: How much is one contract worth? You can see this
+        information under the Bitmex Contract Specifications for each
         instrument.
     myMultiplier: int
         :::For Bitmex only::: Converts quantity when displayed on screen.
     precision: int
-        Based on the ``lotSize`` of the instrument. Used to round volumes 
+        Based on the ``lotSize`` of the instrument. Used to round volumes
         ​​when displayed on the screen.
     price_precision: int
-        Based on the ``tickSize`` of the instrument. Used to round prices 
+        Based on the ``tickSize`` of the instrument. Used to round prices
         ​​when displayed on the screen.
     qtyStep: float
         The step to increase/reduce order quantity. Also called LotSize.
@@ -97,6 +97,7 @@ class Instrument:
     valueOfOneContract: float
         :::For Bitmex only::: Used when calculating trade value.
     """
+
     asks: list
     avgEntryPrice: float = 0
     baseCoin: str

@@ -11,9 +11,6 @@ from api.deribit.api_auth import API_auth as Deribit_API_auth
 from api.variables import Variables
 from common.variables import Variables as var
 
-import hashlib
-import hmac
-
 
 class Auth(Enum):
     Bitmex = Bitmex_API_auth

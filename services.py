@@ -99,7 +99,6 @@ def close(markets):
         ws = markets[name]
         ws.exit()
 
+
 def display_exception(exception):
-    traceback.print_exception(
-            type(exception), exception, exception.__traceback__
-        )
+    traceback.print_exception(type(exception), exception, exception.__traceback__)

@@ -11,9 +11,9 @@ from api.bybit.ws import Bybit
 from api.deribit.agent import Agent as DeribitAgent
 from api.deribit.ws import Deribit
 from common.variables import Variables as var
+from services import display_exception
 
 from .variables import Variables
-from services import display_exception
 
 
 class MetaMarket(type):
@@ -54,7 +54,6 @@ class WS(Variables):
             method(self)
 
         try:
-            pass
             if Agents[self.name].value.get_active_instruments(self):
                 return -1
         except Exception as exception:

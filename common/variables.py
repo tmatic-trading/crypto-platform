@@ -22,11 +22,19 @@ class Variables:
     CATEGORIES["QUANTO"] = "quanto"
     CATEGORIES["SPOT"] = "spot"
     CATEGORIES["OPTION"] = "option"
+    CATEGORIES["FUTURE_LINEAR"] = "future linear"
+    CATEGORIES["FUTURE_REVERSED"] = "future reversed"
+    CATEGORIES["FUTURE_COMBO_REVERSED"] = "future_combo reversed"
+    CATEGORIES["SPOT_LINEAR"] = "spot linear"
+    CATEGORIES["OPTION_LINEAR"] = "option linear"
+    CATEGORIES["OPTION_REVERSED"] = "option reversed"
+    CATEGORIES["OPTION_COMBO_REVERSED"] = "option"
     for market_name in market_list:
         env[market_name] = dotenv_values(".env." + market_name)
         env[market_name]["SYMBOLS"] = list()
         for CATEGORY, category in CATEGORIES.items():
             tmp = CATEGORY + "_SYMBOLS"
+            tmp_list = []
             if tmp in env[market_name]:
                 tmp_list = env[market_name][tmp].replace(",", " ").split()
             for symbol in tmp_list:

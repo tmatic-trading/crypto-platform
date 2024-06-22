@@ -4,7 +4,7 @@ from enum import Enum
 class Listing(str, Enum):
     GET_ACTIVE_INSTRUMENTS = "public/get_instruments"
     OPEN_ORDERS = "private/get_open_orders"
-    '''GET_ACCOUNT_INFO = "user"
+    """GET_ACCOUNT_INFO = "user"
     GET_INSTRUMENT_DATA = "instrument?symbol={SYMBOL}"
     GET_POSITION = "position?filter=%7B%22symbol%22%3A%22{SYMBOL}%22%7D"
     TRADE_BUCKETED = (
@@ -18,7 +18,7 @@ class Listing(str, Enum):
     URGENT_ANNOUNCEMENT = "announcement/urgent"
     ORDER_ACTIONS = "order"
     GET_POSITION_INFO = "position"
-    '''
+    """
 
     def __str__(self) -> str:
         return self.value
