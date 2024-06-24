@@ -84,18 +84,50 @@ class Deribit(Variables):
         newth = threading.Thread(target=lambda: self.ws.run_forever())
         newth.daemon = True
         newth.start()
+        timeout, slp = 3, 0.05
         while not self.access_token:
-            time.sleep(0.05)
+            timeout -= slp
+            if timeout <= 0:
+                self.logger.error("Access_token not received. Reboot.")
+                self.logNumFatal = -1
+                return
+            time.sleep(slp)
+        self.logger.info("access_token received")
         print("______________________ access_token received", self.access_token)
+        channels = list()
+        if self.depth == "orderBook":
+            depth = 10
+        else:
+            depth = 1
+        for symbol in self.symbol_list:
+            self.logger.info("ws subscription - orderbook" + " - " + str(symbol))
+            channel = f"book.{symbol[0]}.none.{depth}.100ms" 
+            channels.append(channel)
+        self.__subscribe_public(channels=channels, id="subscription")
+        self.subscriptions = set()
+        self.subscriptions.add(str(channels))
+
+        self.__wait_for_subscription()
+
+        
+
+        time.sleep(10)
         os.abort()
 
     def __on_message(self, ws, message):
         message = json.loads(message)
         print(message)
         if "result" in message:
+            print(type(message["result"]))
             if "access_token" in message["result"]:
                 self.access_token = message["result"]["access_token"]
                 self.refresh_token = message["result"]["refresh_token"]
+            elif message["id"] == "subscription":
+                self.subscriptions.remove(str(message["result"]))
+        elif "method" in message:
+            print("______________method")
+
+
         """if "id" in message:
             self.response[message["id"]] = message["result"]"""
 
@@ -125,10 +157,31 @@ class Deribit(Variables):
     def __on_open(self, ws):
         self.__ws_auth()
 
-    def __subscribe_public():
-        pass
+    def __wait_for_subscription(self):
+        timeout, slp = 3, 0.05
+        while self.subscriptions:
+            timeout -= slp
+            print("__wait", timeout, self.subscriptions)
+            if timeout <= 0:
+                for sub in self.subscriptions:
+                    self.logger.error("Failed to subscribe " + str(sub))
+                self.logNumFatal = -1
+                return
+            time.sleep(slp)
 
-    def __subscribe_private():
+    def __subscribe_public(self, channels: list, id: str):
+        print("++++++++++++++++ sub")
+        msg = \
+            {"jsonrpc": "2.0",
+            "method": "public/subscribe",
+            "id": id,
+            "params": {
+                "channels": channels}
+            }
+        self.ws.send(json.dumps(msg))
+        
+
+    def __subscribe_private(self) -> None:
         pass
 
     def exit(self):
