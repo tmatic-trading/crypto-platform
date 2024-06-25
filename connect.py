@@ -237,7 +237,7 @@ def refresh() -> None:
         if ws.logNumFatal == 0:
             if ws.api_is_active:
                 if utc > ws.message_time + timedelta(seconds=10):
-                    if not Markets[name].ping_pong():
+                    if not WS.ping_pong(ws):
                         info_display(
                             ws.name,
                             "The websocket does not respond within 10 sec. Reboot",

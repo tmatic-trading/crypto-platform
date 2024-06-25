@@ -66,15 +66,14 @@ class Bitmex(Variables):
                 instrument = self.Instrument[symbol]
                 if instrument.settlCurrency:
                     self.Result[(instrument.settlCurrency[0], self.name)]
-            if not self.logNumFatal:
-                self.__reset()
-                self.__connect(self.__get_url())
+            self.__reset()
+            self.__connect(self.__get_url())
+            if self.logNumFatal == 0:
+                self.logger.info("Connected to websocket.")
+                self.__wait_for_tables()
                 if self.logNumFatal == 0:
-                    self.logger.info("Connected to websocket.")
-                    self.__wait_for_tables()
-                    if self.logNumFatal == 0:
-                        self.logger.info("Data received. Continuing.")
-                        self.pinging = "pong"
+                    self.logger.info("Data received. Continuing.")
+                    self.pinging = "pong"
 
     def __connect(self, url: str) -> None:
         try:
@@ -97,10 +96,10 @@ class Bitmex(Variables):
             self.logger.debug("Thread started")
             # Waits for connection established
             time_out = 5
-            while (not self.ws.sock or not self.ws.sock.connected) and time_out:
-                sleep(1)
-                time_out -= 1
-            if not time_out:
+            while (not self.ws.sock or not self.ws.sock.connected) and time_out >= 0:
+                sleep(0.1)
+                time_out -= 0.1
+            if time_out <= 0:
                 self.logger.error("Couldn't connect to websocket!")
                 if self.logNumFatal < 1004:
                     self.logNumFatal = 1004

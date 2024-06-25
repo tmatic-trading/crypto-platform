@@ -1,7 +1,9 @@
 from typing import Union
+
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
+
 
 class MetaMarket(type):
     dictionary = dict()

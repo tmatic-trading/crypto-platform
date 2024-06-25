@@ -48,10 +48,18 @@ class WS(Variables):
         """
 
         def start_ws_in_thread():
-            Markets[self.name].start()
+            try:
+                Markets[self.name].start()
+            except Exception as exception:
+                display_exception(exception)
+                self.logNumFatal = -1
 
         def get_in_thread(method):
-            method(self)
+            try:
+                method(self)
+            except Exception as exception:
+                display_exception(exception)
+                self.logNumFatal = -1
 
         try:
             if Agents[self.name].value.get_active_instruments(self):
@@ -91,17 +99,13 @@ class WS(Variables):
             [thread.join() for thread in threads]
         except Exception as exception:
             display_exception(exception)
-            self.logger.error(
-                self.name
-                + ": The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
-            )
-            return 1001
+            self.logNumFatal = -1
         if self.logNumFatal:
             self.logger.error(
                 self.name
                 + ": The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
             )
-            return 1001
+            return -1
         var.queue_info.put(
             {
                 "market": self.name,
@@ -238,4 +242,4 @@ class WS(Variables):
         Check if websocket is working
         """
 
-        Markets[self.name].ping_pong()
+        return Markets[self.name].ping_pong()
