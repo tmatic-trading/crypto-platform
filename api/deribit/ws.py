@@ -4,6 +4,7 @@ import threading
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
+from typing import Callable
 
 import requests
 import websocket
@@ -57,6 +58,7 @@ class Deribit(Variables):
         self.access_token = ""
         self.pinging = datetime.now(tz=timezone.utc)
         self.heartbeat_interval = 10
+        self.callback_directory = dict()
 
     def start(self):
         for symbol in self.symbol_list:
@@ -74,12 +76,9 @@ class Deribit(Variables):
         if not self.logNumFatal:
             self.logger.info("Connected to websocket.")
             self.__establish_heartbeat()
-            time.sleep(100)
-
             self.__subscribe()
-
             self.__confirm_subscription()
-            time.sleep(10)
+            time.sleep(100)
             os.abort()
 
     def __connect(self) -> None:
@@ -119,6 +118,7 @@ class Deribit(Variables):
 
     def __subscribe(self):
         channels = list()
+        self.subscriptions = set()
 
         # Orderbook
 
@@ -127,18 +127,71 @@ class Deribit(Variables):
         else:
             depth = 1
         for symbol in self.symbol_list:
-            self.logger.info("ws subscription - orderbook" + " - " + str(symbol))
             channel = f"book.{symbol[0]}.none.{depth}.100ms"
+            self.logger.info("ws subscription - Orderbook - channel - " + str(channel))
             channels.append(channel)
-        self.__subscribe_public(channels=channels, id="subscription")
-        self.subscriptions = set()
         self.subscriptions.add(str(channels))
+        self.__subscribe_channels(
+            type="public",
+            channels=channels,
+            id="subscription",
+            callback=self.__update_orderbook,
+        )
+
+        # Ticker
+
+        channels = list()
+        for symbol in self.symbol_list:
+            channel = f"ticker.{symbol[0]}.100ms"
+            self.logger.info("ws subscription - Ticker - channel - " + str(channel))
+            channels.append(channel)
+        self.subscriptions.add(str(channels))
+        self.__subscribe_channels(
+            type="public",
+            channels=channels,
+            id="subscription",
+            callback=self.__update_ticker,
+        )            
+
+        # Portfolio
+
+        channels = ["user.portfolio.any"]
+        self.logger.info("ws subscription - Portfolio - channel - " + str(channels[0]))
+        self.subscriptions.add(str(channels))
+        self.__subscribe_channels(
+            type="private",
+            channels=channels,
+            id="subscription",
+            callback=self.__update_portfolio,
+        )
+
+        # Orders
+
+        channels = ["user.orders.any.any.raw"]
+        self.logger.info("ws subscription - Orders - channel - " + str(channels[0]))
+        self.subscriptions.add(str(channels))
+        self.__subscribe_channels(
+            type="private",
+            channels=channels,
+            id="subscription",
+            callback=self.__handle_order,
+        )
+
+        # User changes (trades, positions, orders)
+
+        channels = ["user.changes.any.any.raw"]
+        self.logger.info("ws subscription - User changes - channel - " + str(channels[0]))
+        self.__subscribe_channels(
+            type="private",
+            channels=channels,
+            id="subscription",
+            callback=self.__update_user_changes,
+        )
 
     def __on_message(self, ws, message):
         message = json.loads(message)
-        print("______message", message)
+        # print("______message", message)
         if "result" in message:
-            print(type(message["result"]))
             id = message["id"]
             if "access_token" in message["result"]:
                 self.access_token = message["result"]["access_token"]
@@ -153,10 +206,15 @@ class Deribit(Variables):
                     time=message["usOut"] / 1000000, usec=True
                 )
         elif "params" in message:
-            if message["params"]["type"] == "test_request":
-                self.__heartbeat_response()
+            if message["method"] == "subscription":
+                self.callback_directory[message["params"]["channel"]](
+                    values=message["params"]["data"]
+                )
+            elif "type" in message["params"]:
+                if message["params"]["type"] == "test_request":
+                    self.__heartbeat_response()
 
-            print("______________params")
+            # print("______________params")
 
         """if "id" in message:
             self.response[message["id"]] = message["result"]"""
@@ -201,6 +259,7 @@ class Deribit(Variables):
         timeout, slp = 3, 0.05
         while self.subscriptions:
             timeout -= slp
+            print("=======", self.subscriptions)
             if timeout <= 0:
                 for sub in self.subscriptions:
                     self.logger.error("Failed to subscribe " + str(sub))
@@ -209,17 +268,18 @@ class Deribit(Variables):
             time.sleep(slp)
         self.logger.info("All subscriptions are successful. Continuing.")
 
-    def __subscribe_public(self, channels: list, id: str):
+    def __subscribe_channels(
+        self, type: str, channels: list, id: str, callback: Callable
+    ):
         msg = {
             "jsonrpc": "2.0",
-            "method": "public/subscribe",
+            "method": type + "/subscribe",
             "id": id,
             "params": {"channels": channels},
         }
+        for channel in channels:
+            self.callback_directory[channel] = callback
         self.ws.send(json.dumps(msg))
-
-    def __subscribe_private(self) -> None:
-        pass
 
     def __establish_heartbeat(self) -> None:
         """
@@ -265,3 +325,24 @@ class Deribit(Variables):
             self.logger.error("Deribit websocket heartbeat error. Reboot")
             return False
         return True
+
+    def __update_orderbook(self, values: dict) -> None:
+        print("_________________________update orderbook")
+
+    def __update_ticker(self, values: dict) -> None:
+        print("______________ user ticker", values)
+
+    def __update_portfolio(self, values: dict) -> None:
+        print("_________________________update portfolio")
+
+    def __handle_order(self, values: dict) -> None:
+        print("_________________________handle order", values)
+
+    def __update_user_changes(self, values: dict) -> None:
+        print("______________ user changes", values)
+        for key, value in values.items():
+            print("_________________", key)
+            print(value)
+
+
+
