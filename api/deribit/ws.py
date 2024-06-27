@@ -59,6 +59,7 @@ class Deribit(Variables):
         self.pinging = datetime.now(tz=timezone.utc)
         self.heartbeat_interval = 10
         self.callback_directory = dict()
+        self.response = dict()
 
     def start(self):
         for symbol in self.symbol_list:
@@ -78,8 +79,6 @@ class Deribit(Variables):
             self.__establish_heartbeat()
             self.__subscribe()
             self.__confirm_subscription()
-            time.sleep(100)
-            os.abort()
 
     def __connect(self) -> None:
         """
@@ -181,6 +180,7 @@ class Deribit(Variables):
 
         channels = ["user.changes.any.any.raw"]
         self.logger.info("ws subscription - User changes - channel - " + str(channels[0]))
+        self.subscriptions.add(str(channels))
         self.__subscribe_channels(
             type="private",
             channels=channels,
@@ -205,6 +205,9 @@ class Deribit(Variables):
                 self.pinging = service.time_converter(
                     time=message["usOut"] / 1000000, usec=True
                 )
+            else:
+                self.response[id]["result"] = message["result"]
+
         elif "params" in message:
             if message["method"] == "subscription":
                 self.callback_directory[message["params"]["channel"]](
@@ -213,11 +216,6 @@ class Deribit(Variables):
             elif "type" in message["params"]:
                 if message["params"]["type"] == "test_request":
                     self.__heartbeat_response()
-
-            # print("______________params")
-
-        """if "id" in message:
-            self.response[message["id"]] = message["result"]"""
 
     def __on_error(self, ws, error):
         """
@@ -229,8 +227,7 @@ class Deribit(Variables):
 
     def __on_close(self, ws):
         self.logger.info("Websocke closed.")
-        self.logNumFatal = -1  # Reboot
-        print("close")
+        self.logNumFatal = -1
 
     def __ws_auth(self) -> None:
         """
@@ -327,13 +324,36 @@ class Deribit(Variables):
         return True
 
     def __update_orderbook(self, values: dict) -> None:
-        print("_________________________update orderbook")
+        category = self.symbol_category[values["instrument_name"]]
+        symbol = (values["instrument_name"], category, self.name)
+        instrument = self.Instrument[symbol]
+        instrument.asks = values["asks"]
+        instrument.bids = values["bids"]
+        #print("_________________________update orderbook", values)
 
     def __update_ticker(self, values: dict) -> None:
-        print("______________ user ticker", values)
+        category = self.symbol_category[values["instrument_name"]]
+        symbol = (values["instrument_name"], category, self.name)
+        instrument = self.Instrument[symbol]
+        instrument.volume24h = values["stats"]["volume"]
+        if "funding_8h" in values:
+            instrument.fundingRate = values["funding_8h"] * 100
+        #print("______________ user ticker", values)
 
     def __update_portfolio(self, values: dict) -> None:
-        print("_________________________update portfolio")
+        account = self.Account[values["currency"]]
+        account.orderMargin = values["initial_margin"]
+        account.positionMagrin = values["maintenance_margin"]
+        account.availableMargin = values["available_withdrawal_funds"]
+        account.marginBalance = values["available_funds"]
+        account.walletBalance = values["balance"]
+        account.unrealisedPnl = values["futures_session_upl"] + values["options_session_upl"]
+        print(values["currency"])
+        print("_________________________maintenance_margin", values["maintenance_margin"])
+        print("_________________________initial_margin", values["initial_margin"])
+        print("_________________________projected_maintenance_margin", values["projected_maintenance_margin"])
+        print("_________________________projected_initial_margin", values["projected_initial_margin"])
+        print("_________________________margin_balance", values["margin_balance"])
 
     def __handle_order(self, values: dict) -> None:
         print("_________________________handle order", values)

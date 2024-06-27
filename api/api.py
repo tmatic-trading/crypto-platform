@@ -100,6 +100,10 @@ class WS(Variables):
         except Exception as exception:
             display_exception(exception)
             self.logNumFatal = -1
+        #import time
+        #import os
+        #time.sleep(100)
+        #os.abort()
         if self.logNumFatal:
             self.logger.error(
                 self.name

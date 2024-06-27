@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
@@ -150,10 +151,54 @@ class Agent(Deribit):
         Returns the user ID and other useful information about the user and
         places it in self.user. If unsuccessful, logNumFatal is not 0.
         """
-        pass
+        path = self.api_version + Listing.GET_ACCOUNT_INFO
+        msg = \
+        {
+        "jsonrpc" : "2.0",
+        "id" : 2515,
+        "method" : "private/get_account_summaries",
+        "params" : {
+            "extended" : True
+        }
+        }
+        data = Send.request(self, path=path, verb="POST", postData=msg)
+        if isinstance(data, dict):
+            self.user_id = data["result"]["id"]
+            for values in data["result"]["summaries"]:
+                account = self.Account[values["currency"]]
+                account.account = data["result"]["id"]
+                account.settlCurrency = values["currency"]
+            return
+        self.logNumFatal = -1
+        message = (
+            "A user ID was requested from the exchange but was not received. Reboot"
+        )
+        self.logger.error(message)
 
     def get_wallet_balance(self) -> None:
-        pass
+        """
+        Receives data on currency accounts through the websocket channel 
+        user.portfolio.any in the api/deribit/ws.py
+        """
+        pass            
 
     def get_position_info(self):
-        pass
+        path = self.api_version + Listing.GET_POSITION_INFO
+        data = Send.request(self, path=path, verb="GET")
+        if isinstance(data, dict):
+            for values in data["result"]:
+                category = self.symbol_category[values["instrument_name"]]
+                symbol = (values["instrument_name"], category, self.name)
+                instrument = self.Instrument[symbol]
+                instrument.currentQty = values["size"]
+                if values["direction"] == "sell":
+                    instrument.currentQty = -instrument.currentQty
+                instrument.avgEntryPrice = values["average_price"]
+                instrument.unrealisedPnl = values["total_profit_loss"]
+                instrument.marginCallPrice = values["estimated_liquidation_price"]
+                instrument.state = "None"
+        else:
+            self.logger.error(
+                "The dict was expected when the positions were loaded, but it was not received. Reboot."
+            )
+            self.logNumFatal = -1

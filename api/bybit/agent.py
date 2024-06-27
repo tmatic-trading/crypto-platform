@@ -372,11 +372,11 @@ class Agent(Bybit):
                     if "unrealisedPnl" in coin:
                         account.unrealisedPnl = float(coin["unrealisedPnl"])
                     account.account = self.user_id
-                    self.Account[currency].commission = 0
-                    self.Account[currency].funding = 0
-                    self.Account[currency].result = 0
-                    self.Account[currency].settlCurrency = currency
-                    self.Account[currency].sumreal = 0
+                    #self.Account[currency].commission = 0
+                    #self.Account[currency].funding = 0
+                    #self.Account[currency].result = 0
+                    account.settlCurrency = currency
+                    #self.Account[currency].sumreal = 0
                 break
 
     def get_position_info(self):
