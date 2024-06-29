@@ -147,7 +147,9 @@ class Init(WS, Variables):
             last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
             last_history_time = last_history_time.replace(tzinfo=timezone.utc)
         count_val = 500
-        history = WS.trading_history(self, histCount=count_val, time=last_history_time)
+        history = WS.trading_history(
+            self, histCount=count_val, start_time=last_history_time
+        )
         if isinstance(history, list):
             while history:
                 for row in history:
@@ -164,7 +166,7 @@ class Init(WS, Variables):
                 if len(history) < count_val:
                     return "success"
                 history = WS.trading_history(
-                    self, histCount=count_val, time=last_history_time
+                    self, histCount=count_val, start_time=last_history_time
                 )
                 if not isinstance(history, list):
                     self.logNumFatal = 1001

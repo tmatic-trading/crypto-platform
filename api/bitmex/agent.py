@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union
 
 import services as service
@@ -7,6 +7,8 @@ from api.http import Send
 
 from .path import Listing
 from .ws import Bitmex
+
+from common.variables import Variables as var
 
 
 class Agent(Bitmex):
@@ -179,17 +181,37 @@ class Agent(Bitmex):
         )
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
-            for value in data:
-                value["symbol"] = symbol
-                value["timestamp"] = service.time_converter(time=value["timestamp"])
-            return data
+            filtered = []
+            for values in data:
+                values["symbol"] = symbol
+                values["timestamp"] = service.time_converter(time=values["timestamp"])
+                if "open" and "high" and "low" and "close" in values:
+                    filtered.append(values)
+                else:
+                    message = (
+                        "Klein's data of "
+                        + str(symbol)
+                        + " "
+                        + str(values["timestamp"])
+                        + " is not complete. Not received: 'open' or 'high' or 'low' or 'closed'. The line is skipped."
+                    )
+                    self.logger.warning(message)
+                    var.queue_info.put(
+                        {
+                            "market": self.name,
+                            "message": message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": True,
+                        }
+                    )
+            return filtered
         else:
             return None
 
-    def trading_history(self, histCount: int, time=None) -> Union[list, str]:
-        if time:
+    def trading_history(self, histCount: int, start_time=None) -> Union[list, str]:
+        if start_time:
             path = Listing.TRADING_HISTORY.format(
-                HISTCOUNT=histCount, TIME=str(time)[:19]
+                HISTCOUNT=histCount, TIME=str(start_time)[:19]
             )
             res = Send.request(
                 self,

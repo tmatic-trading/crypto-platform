@@ -130,7 +130,6 @@ def setup_market(ws: Markets):
                         )
                         ws.logNumFatal = -1
                         sleep(2)
-
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)

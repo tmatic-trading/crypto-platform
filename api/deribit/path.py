@@ -6,6 +6,8 @@ class Listing(str, Enum):
     OPEN_ORDERS = "private/get_open_orders"
     GET_ACCOUNT_INFO = "private/get_account_summaries"
     GET_POSITION_INFO = "private/get_positions"
+    TRADING_HISTORY = "private/get_transaction_log"
+    GET_INSTRUMENT_DATA = "public/get_instrument"
     """
     GET_INSTRUMENT_DATA = "instrument?symbol={SYMBOL}"
     GET_POSITION = "position?filter=%7B%22symbol%22%3A%22{SYMBOL}%22%7D"
@@ -14,9 +16,7 @@ class Listing(str, Enum):
         + "false&partial=true&symbol={SYMBOL}&columns=open%2C%20high%2C%20low%2C"
         + "%20close&startTime={TIME}"
     )
-    TRADING_HISTORY = (
-        "execution/tradeHistory?count={HISTCOUNT}&reverse=false" + "&startTime={TIME}"
-    )
+
     URGENT_ANNOUNCEMENT = "announcement/urgent"
     ORDER_ACTIONS = "order"
     """

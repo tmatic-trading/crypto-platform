@@ -60,6 +60,8 @@ class Deribit(Variables):
         self.heartbeat_interval = 10
         self.callback_directory = dict()
         self.response = dict()
+        self.settleCoin_list = ["BTC", "ETH", "USDC", "USDT", "EURR"]
+        self.ws_request_delay = 5
 
     def start(self):
         for symbol in self.symbol_list:
@@ -150,7 +152,7 @@ class Deribit(Variables):
             channels=channels,
             id="subscription",
             callback=self.__update_ticker,
-        )            
+        )
 
         # Portfolio
 
@@ -179,7 +181,9 @@ class Deribit(Variables):
         # User changes (trades, positions, orders)
 
         channels = ["user.changes.any.any.raw"]
-        self.logger.info("ws subscription - User changes - channel - " + str(channels[0]))
+        self.logger.info(
+            "ws subscription - User changes - channel - " + str(channels[0])
+        )
         self.subscriptions.add(str(channels))
         self.__subscribe_channels(
             type="private",
@@ -329,7 +333,7 @@ class Deribit(Variables):
         instrument = self.Instrument[symbol]
         instrument.asks = values["asks"]
         instrument.bids = values["bids"]
-        #print("_________________________update orderbook", values)
+        # print("_________________________update orderbook", values)
 
     def __update_ticker(self, values: dict) -> None:
         category = self.symbol_category[values["instrument_name"]]
@@ -338,7 +342,7 @@ class Deribit(Variables):
         instrument.volume24h = values["stats"]["volume"]
         if "funding_8h" in values:
             instrument.fundingRate = values["funding_8h"] * 100
-        #print("______________ user ticker", values)
+        # print("______________ user ticker", values)
 
     def __update_portfolio(self, values: dict) -> None:
         account = self.Account[values["currency"]]
@@ -347,12 +351,22 @@ class Deribit(Variables):
         account.availableMargin = values["available_withdrawal_funds"]
         account.marginBalance = values["available_funds"]
         account.walletBalance = values["balance"]
-        account.unrealisedPnl = values["futures_session_upl"] + values["options_session_upl"]
+        account.unrealisedPnl = (
+            values["futures_session_upl"] + values["options_session_upl"]
+        )
         print(values["currency"])
-        print("_________________________maintenance_margin", values["maintenance_margin"])
+        print(
+            "_________________________maintenance_margin", values["maintenance_margin"]
+        )
         print("_________________________initial_margin", values["initial_margin"])
-        print("_________________________projected_maintenance_margin", values["projected_maintenance_margin"])
-        print("_________________________projected_initial_margin", values["projected_initial_margin"])
+        print(
+            "_________________________projected_maintenance_margin",
+            values["projected_maintenance_margin"],
+        )
+        print(
+            "_________________________projected_initial_margin",
+            values["projected_initial_margin"],
+        )
         print("_________________________margin_balance", values["margin_balance"])
 
     def __handle_order(self, values: dict) -> None:
@@ -363,6 +377,3 @@ class Deribit(Variables):
         for key, value in values.items():
             print("_________________", key)
             print(value)
-
-
-

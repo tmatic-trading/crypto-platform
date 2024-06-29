@@ -100,10 +100,6 @@ class WS(Variables):
         except Exception as exception:
             display_exception(exception)
             self.logNumFatal = -1
-        #import time
-        #import os
-        #time.sleep(100)
-        #os.abort()
         if self.logNumFatal:
             self.logger.error(
                 self.name
@@ -166,14 +162,14 @@ class WS(Variables):
             self, symbol=symbol, time=time, timeframe=timeframe
         )
 
-    def trading_history(self: Markets, histCount: int, time: datetime) -> list:
+    def trading_history(self: Markets, histCount: int, start_time: datetime) -> list:
         """
         Gets all trades and funding from the exchange for the period starting
         from 'time'
         """
 
         return Agents[self.name].value.trading_history(
-            self, histCount=histCount, time=time
+            self, histCount=histCount, start_time=start_time
         )
 
     def open_orders(self: Markets) -> list:

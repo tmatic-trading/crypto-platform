@@ -129,17 +129,17 @@ class Agent(Bybit):
 
             return res
 
-    def trading_history(self, histCount: int, time=None) -> list:
-        if time:
+    def trading_history(self, histCount: int, start_time=None) -> list:
+        if start_time:
             trade_history = []
             utc = datetime.now(timezone.utc)
-            if utc - time > timedelta(days=729):
+            if utc - start_time > timedelta(days=729):
                 self.logger.info(
-                    "Bybit only allows you to query trading history for the last 2 years. Check the History.ini file."
+                    "Bybit only allows you to query trading history for the last 2 years. Check the history.ini file."
                 )
-                time = utc - timedelta(days=729)
-                self.logger.info("Time changed to " + str(time))
-            startTime = service.time_converter(time)
+                start_time = utc - timedelta(days=729)
+                self.logger.info("Time changed to " + str(start_time))
+            startTime = service.time_converter(start_time)
             limit = min(100, histCount)
 
             def get_in_thread(category, startTime, limit, success, num):
@@ -181,7 +181,7 @@ class Agent(Bybit):
                                 row["settlCurrency"] = self.Instrument[
                                     row["symbol"]
                                 ].settlCurrency
-                            row["lastQty"] = float(row["execQty"])
+                            row["last"] = float(row["execQty"])
                             row["market"] = self.name
                             if row["execType"] == "Funding":
                                 if row["side"] == "Sell":
@@ -190,6 +190,11 @@ class Agent(Bybit):
                         trade_history += res
                         success[num] = "success"
                     else:
+                        self.logger.error(
+                            "The list was expected when the trading history were loaded, but for the category "
+                            + category
+                            + " it was not received. Reboot."
+                        )
                         return
 
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
@@ -372,11 +377,11 @@ class Agent(Bybit):
                     if "unrealisedPnl" in coin:
                         account.unrealisedPnl = float(coin["unrealisedPnl"])
                     account.account = self.user_id
-                    #self.Account[currency].commission = 0
-                    #self.Account[currency].funding = 0
-                    #self.Account[currency].result = 0
+                    # self.Account[currency].commission = 0
+                    # self.Account[currency].funding = 0
+                    # self.Account[currency].result = 0
                     account.settlCurrency = currency
-                    #self.Account[currency].sumreal = 0
+                    # self.Account[currency].sumreal = 0
                 break
 
     def get_position_info(self):
