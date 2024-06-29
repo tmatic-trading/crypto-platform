@@ -25,7 +25,7 @@ Bybit.transaction = Function.transaction
 disp.label_f9.config(bg=disp.red_color)
 
 
-def setup():
+def setup(reload=False):
     """
     This function works the first time you start the program or when you
     reboot after pressing F3. Markets are loaded using setup_market() in
@@ -36,7 +36,7 @@ def setup():
     var.robots_thread_is_active = False
     threads = []
     for name in var.market_list:
-        t = threading.Thread(target=setup_market, args=(Markets[name],))
+        t = threading.Thread(target=setup_market, args=(Markets[name],reload,))
         threads.append(t)
         t.start()
     [thread.join() for thread in threads]
@@ -49,7 +49,7 @@ def setup():
     thread.start()
 
 
-def setup_market(ws: Markets):
+def setup_market(ws: Markets, reload=False):
     """
     Market reboot. During program operation, when accessing endpoints or
     receiving information from websockets, errors may occur due to the loss of
@@ -95,6 +95,9 @@ def setup_market(ws: Markets):
 
     ws.logNumFatal = -1
     ws.api_is_active = False
+    if reload:
+        WS.exit(ws)
+        sleep(3)        
     while ws.logNumFatal:
         var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)
@@ -139,7 +142,7 @@ def setup_market(ws: Markets):
                 + " is not loading. See logFile.log. Reboot.\n\n"
             )
             WS.exit(ws)
-            sleep(2)
+            sleep(3)
 
 
 def merge_orders():
@@ -176,7 +179,7 @@ def reload_market(ws: Markets):
         ws, status="RELOADING...", message="Reloading...", error=True
     )
     TreeTable.market.tree.update()
-    setup_market(ws=ws)
+    setup_market(ws=ws, reload=True)
     var.queue_reload.put(ws)
 
 

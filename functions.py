@@ -467,26 +467,6 @@ class Function(WS, Variables):
                     + clOrdID
                     + " not found."
                 )
-        elif row["leavesQty"] == 0:
-            info_p = row["lastPx"]
-            info_q = row["lastQty"]
-            if clOrdID in self.orders:
-                if not info:
-                    var.queue_order.put(
-                        {"action": "delete", "clOrdID": clOrdID, "market": self.name}
-                    )
-                del self.orders[clOrdID]
-                Function.not_defined_robot_color(self, clOrdID=clOrdID)
-            else:
-                if not info:
-                    var.logger.warning(
-                        self.name
-                        + ": execType "
-                        + row["execType"]
-                        + " - order with clOrdID "
-                        + clOrdID
-                        + " not found."
-                    )
         else:
             if row["execType"] == "New":
                 if "clOrdID" in row:
@@ -518,6 +498,15 @@ class Function(WS, Variables):
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
                 if clOrdID in self.orders:
+                    precision = self.Instrument[row["symbol"]].precision
+                    if row["side"] == "Sell":
+                        self.orders[clOrdID]["leavesQty"] -= row["lastQty"]
+                    else:
+                        self.orders[clOrdID]["leavesQty"] += row["lastQty"]
+                    self.orders[clOrdID]["leavesQty"] = round(self.orders[clOrdID]["leavesQty"], precision)                
+                    if self.orders[clOrdID]["leavesQty"] == 0:
+                        del self.orders[clOrdID]
+                        Function.not_defined_robot_color(self, clOrdID=clOrdID)
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -536,6 +525,7 @@ class Function(WS, Variables):
                     self.orders[clOrdID]["orderID"] = row["orderID"]
                     info_p = price
                     info_q = row["leavesQty"]
+                    self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -549,9 +539,9 @@ class Function(WS, Variables):
                         + " not found."
                     )
             if clOrdID in self.orders:
-                self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-                self.orders[clOrdID]["price"] = price
-                self.orders[clOrdID]["transactTime"] = row["transactTime"]
+                    #self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+                    self.orders[clOrdID]["price"] = price
+                    self.orders[clOrdID]["transactTime"] = row["transactTime"]
         try:
             t = clOrdID.split(".")
             int(t[0])
@@ -595,6 +585,27 @@ class Function(WS, Variables):
             )
         if clOrdID in self.orders:
             var.queue_order.put({"action": "put", "order": self.orders[clOrdID]})
+
+        '''elif row["leavesQty"] == 0:
+            info_p = row["lastPx"]
+            info_q = row["lastQty"]
+            if clOrdID in self.orders:
+                if not info:
+                    var.queue_order.put(
+                        {"action": "delete", "clOrdID": clOrdID, "market": self.name}
+                    )
+                del self.orders[clOrdID]
+                Function.not_defined_robot_color(self, clOrdID=clOrdID)
+            else:
+                if not info:
+                    var.logger.warning(
+                        self.name
+                        + ": execType "
+                        + row["execType"]
+                        + " - order with clOrdID "
+                        + clOrdID
+                        + " not found."
+                    )'''
 
     def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
