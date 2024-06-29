@@ -192,14 +192,22 @@ class Agent(Bitmex):
                     count += 1
                     last_time = values["timestamp"]
             if count:
+                if count == 1:
+                    t = ("s", "This row is")
+                else:
+                    t = ("", "These rows are")
                 message = (
                     "Kline's data obtained from the Bitmex API is not complete for "
                     + str(symbol)
                     + " at the "
                     + self.timefrs[timeframe]
-                    + " time interval. Some rows do not contain: open, high, low or closed. "
+                    + " time interval. "
                     + str(count)
-                    + " rows missing. The time of the last row is "
+                    + " row"
+                    + t[0]
+                    + " do not contain: open, high, low or closed. "
+                    + t[1]
+                    + " skipped. The time of the last row is "
                     + str(last_time)
                 )
                 self.logger.warning(message)

@@ -181,7 +181,7 @@ class Agent(Bybit):
                                 row["settlCurrency"] = self.Instrument[
                                     row["symbol"]
                                 ].settlCurrency
-                            row["last"] = float(row["execQty"])
+                            row["lastQty"] = float(row["execQty"])
                             row["market"] = self.name
                             if row["execType"] == "Funding":
                                 if row["side"] == "Sell":
