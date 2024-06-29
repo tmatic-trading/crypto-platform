@@ -4,11 +4,10 @@ from typing import Union
 
 import services as service
 from api.http import Send
+from common.variables import Variables as var
 
 from .path import Listing
 from .ws import Bitmex
-
-from common.variables import Variables as var
 
 
 class Agent(Bitmex):
@@ -182,28 +181,36 @@ class Agent(Bitmex):
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
             filtered = []
+            count = 0
+            last_time = ""
             for values in data:
                 values["symbol"] = symbol
                 values["timestamp"] = service.time_converter(time=values["timestamp"])
                 if "open" and "high" and "low" and "close" in values:
                     filtered.append(values)
                 else:
-                    message = (
-                        "Klein's data of "
-                        + str(symbol)
-                        + " "
-                        + str(values["timestamp"])
-                        + " is not complete. Not received: 'open' or 'high' or 'low' or 'closed'. The line is skipped."
-                    )
-                    self.logger.warning(message)
-                    var.queue_info.put(
-                        {
-                            "market": self.name,
-                            "message": message,
-                            "time": datetime.now(tz=timezone.utc),
-                            "warning": True,
-                        }
-                    )
+                    count += 1
+                    last_time = values["timestamp"]
+            if count:
+                message = (
+                    "Kline's data obtained from the Bitmex API is not complete for "
+                    + str(symbol)
+                    + " at the "
+                    + self.timefrs[timeframe]
+                    + " time interval. Some rows do not contain: open, high, low or closed. "
+                    + str(count)
+                    + " rows missing. The time of the last row is "
+                    + str(last_time)
+                )
+                self.logger.warning(message)
+                var.queue_info.put(
+                    {
+                        "market": self.name,
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
+                )
             return filtered
         else:
             return None

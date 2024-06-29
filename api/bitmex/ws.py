@@ -310,6 +310,7 @@ class Bitmex(Variables):
                         key = generate_key(self.keys[table], val, table)
                         self.data[table_name].pop(key)
         except Exception:
+            print("_____________keys", self.keys)
             self.logger.error(
                 traceback.format_exc()
             )  # Error in api.py. Take a look in logfile.log. Restarting...

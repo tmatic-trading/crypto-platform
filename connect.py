@@ -95,7 +95,6 @@ def setup_market(ws: Markets):
 
     ws.logNumFatal = -1
     ws.api_is_active = False
-    WS.exit(ws)
     while ws.logNumFatal:
         var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)
@@ -129,7 +128,6 @@ def setup_market(ws: Markets):
                             ws.name + ": The kline data or trade history is not loaded."
                         )
                         ws.logNumFatal = -1
-                        sleep(2)
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)
@@ -140,6 +138,8 @@ def setup_market(ws: Markets):
                 + ws.name
                 + " is not loading. See logFile.log. Reboot.\n\n"
             )
+            WS.exit(ws)
+            sleep(2)
 
 
 def merge_orders():
