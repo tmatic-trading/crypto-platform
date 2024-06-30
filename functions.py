@@ -36,9 +36,10 @@ class Function(WS, Variables):
             sumreal = qty / price * coef * fund
             if execFee:
                 commiss = execFee
+                funding = execFee
             else:
                 commiss = abs(qty) / price * coef * rate
-            funding = qty / price * coef * rate
+                funding = qty / price * coef * rate
         elif symbol[1] == "spot":
             sumreal = 0
             if execFee:
@@ -50,9 +51,10 @@ class Function(WS, Variables):
             sumreal = -qty * price * coef * fund
             if execFee:
                 commiss = execFee
+                funding = execFee
             else:
                 commiss = abs(qty) * price * coef * rate
-            funding = qty * price * coef * rate
+                funding = qty * price * coef * rate
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
 

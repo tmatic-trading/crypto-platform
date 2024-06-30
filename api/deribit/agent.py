@@ -3,7 +3,7 @@ import os
 import threading
 import time
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Union
 
 import services as service
@@ -226,17 +226,43 @@ class Agent(Deribit):
 
     def trading_history(self, histCount: int, start_time=None) -> list:
         trade_history = []
+        startTime = service.time_converter(start_time)
+        limit = min(200, histCount)
+        step = 8640000000 # +100 days
 
-        def get_in_thread(id, currency, success, num):
+        def get_in_thread(id, currency, start, end, limit, data_type, success, num):
             nonlocal trade_history
-            while time.time() < self.response[id]["request_time"]:
-                if self.response[id]["result"]:
-                    print(id)
-                    # print(self.response[id]["result"])
-                    res = self.response[id]["result"]["logs"]
-                    if isinstance(res, list):
-                        for row in res:
-                            if row["type"] in ["trade", "settlement"]:
+            cursor = 2
+            while cursor > 1:
+                print("______cursor", cursor)
+                params = {
+                    "currency": currency,
+                    "start_timestamp": start,
+                    "end_timestamp": end, # 2524597200000,  # Fri Dec 31 2049 21:00:00 GMT+0000
+                    #"query": "settlement", 
+                    "count": limit,
+                }
+                self.response[id] = {
+                    "request_time": time.time() + self.ws_request_delay,
+                    "result": None,
+                }
+                self.logger.info(
+                    "Sending "
+                    + path
+                    + " - currency - "
+                    + currency
+                    + " - start time - "
+                    + str(service.time_converter(start / 1000))
+                )
+                Agent.ws_request(self, path=path, id=id, params=params)
+                while time.time() < self.response[id]["request_time"]:
+                    if self.response[id]["result"]:
+                        print(id)
+                        print("======================================")
+                        print(self.response[id])
+                        res = self.response[id]["result"][data_type]
+                        if isinstance(res, list):
+                            for row in res:
                                 print("----------------")
                                 print(row)
                                 if not row["instrument_name"] in self.symbol_category:
@@ -248,88 +274,116 @@ class Agent(Deribit):
                                     self.symbol_category[row["instrument_name"]],
                                     self.name,
                                 )
-                                if row["type"] == "settlement":
+                                if data_type == "logs":
+                                    row["execType"] = "Funding"
                                     row["execID"] = (
                                         str(row["user_seq"]) + "_" + currency
                                     )
+                                    row["leavesQty"] = row["position"]
                                 else:
+                                    row["execType"] = "Trade"
                                     row["execID"] = (
                                         str(row["trade_id"]) + self.name + currency
                                     )
                                     row["orderID"] = (
                                         row["order_id"] + self.name + currency
                                     )
-                                    row["category"] = self.symbol_category[
-                                        row["instrument_name"]
-                                    ]
-                                    row["lastPx"] = row["price"]
-                                    row["leavesQty"] = float(row["leavesQty"])
+                                    row["leavesQty"] = 9999999999999 # leavesQty is not supported by Deribit
+                                    row["execFee"] = float(row["fee"])
+                                row["category"] = self.symbol_category[
+                                    row["instrument_name"]
+                                ]
+                                row["lastPx"] = row["price"]
+                                row["transactTime"] = service.time_converter(
+                                    time=row["timestamp"] / 1000, usec=True
+                                )
+                                if row["category"] == "spot":
+                                    row["settlCurrency"] = (row["fee_currency"], self.name)
+                                else:
+                                    row["settlCurrency"] = self.Instrument[
+                                        row["symbol"]
+                                    ].settlCurrency
+                                row["lastQty"] = row["amount"]
+                                row["market"] = self.name
+                                if row["direction"] == "sell":
+                                    row["side"] = "Sell"
+                                else:
+                                    row["side"] = "Buy"
+                                if row["execType"] == "Funding":
+                                    if row["side"] == "Sell":
+                                        row["lastQty"] = -row["lastQty"]
+                                row["commission"] = "Not supported"
+                                print(row["transactTime"])
+                                
                                 trade_history.append(row)
-
-                        success[num] = "success"
+                        else:
+                            self.logger.error(
+                                "The list was expected when the trading history were loaded, but for the currency "
+                                + currency
+                                + " it was not received. Reboot."
+                            )
+                            cursor = -1
+                            break
+                        cursor = len(res)
+                        print("______cursor +", cursor)
+                        if cursor:
+                            start = res[-1]["timestamp"]
                         break
-                    else:
-                        self.logger.error(
-                            "The list was expected when the trading history were loaded, but for the currency "
-                            + currency
-                            + " it was not received. Reboot."
-                        )
-                time.sleep(0.05)
-            else:
-                self.logger.error(
-                    "No response to websocket trading history data request within "
-                    + self.ws_request_delay
-                    + " seconds. Reboot"
-                )
+                    time.sleep(0.05)
+                else:
+                    self.logger.error(
+                        "No response to websocket trading history data request within "
+                        + self.ws_request_delay
+                        + " seconds. Reboot"
+                    )
+                    cursor = -1
+            if cursor > -1:
+                success[num] = "success"
 
         path = Listing.TRADING_HISTORY
-        tm = datetime.now()
+        '''for currency in self.settleCoin_list:
+            '''
+
+        '''path = Listing.TRADING_HISTORY
         for currency in self.settleCoin_list:
             params = {
                 "currency": currency,
                 "start_timestamp": service.time_converter(time=start_time),
                 "end_timestamp": 2524597200000,  # Fri Dec 31 2049 21:00:00 GMT+0000
                 "count": histCount,
-            }
-            id = f"{path}_{currency}"
-            self.response[id] = {
-                "request_time": time.time() + self.ws_request_delay,
-                "result": None,
-            }
-            Agent.ws_request(self, path=path, id=id, params=params)
-        print("_____________time", datetime.now() - tm)
-
-        threads, success = [], []
-        for currency in self.settleCoin_list:
-            success.append(None)
-            id = f"{path}_{currency}"
-            self.logger.info(
-                "Sending "
-                + path
-                + " - currency - "
-                + currency
-                + " - start_time - "
-                + str(start_time)
+            }'''
+        while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
+            endTime = startTime + step
+            if endTime < 1577826000000: # Dec 31 2019 21:00:00 GMT+0000
+                endTime = 1577826000000
+            print("))))))))))))))))))))))))))))))", startTime, service.time_converter(datetime.now(tz=timezone.utc)))
+            threads, success = [], []
+            for currency in ["BTC"]: # self.settleCoin_list:
+                success.append(None)
+                id = f"{path}_{currency}"
+                t = threading.Thread(
+                    target=get_in_thread,
+                    args=(id, currency, startTime, endTime, limit, "trades", success, len(success) - 1),
+                )
+                threads.append(t)
+                t.start()
+            [thread.join() for thread in threads]
+            for s in success:
+                if not s:
+                    return
+            message = (
+                self.name
+                + " - loading trading history, start_time="
+                + str(service.time_converter(startTime / 1000))
+                + ", received: "
+                + str(len(trade_history))
+                + " records."
             )
-            t = threading.Thread(
-                target=get_in_thread,
-                args=(id, currency, success, len(success) - 1),
-            )
-            threads.append(t)
-            t.start()
-        [thread.join() for thread in threads]
-        for s in success:
-            if not s:
-                return
-        message = (
-            self.name
-            + " - loading trading history, start_time="
-            + str(start_time)
-            + ", received: "
-            + str(len(trade_history))
-            + " records."
-        )
-        self.logger.info(message)
+            self.logger.info(message)
+            if len(trade_history) > histCount:
+                break
+            startTime = endTime
+        trade_history.sort(key=lambda x: x["transactTime"])
 
         return trade_history
 

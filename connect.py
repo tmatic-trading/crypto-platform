@@ -36,7 +36,7 @@ def setup(reload=False):
     var.robots_thread_is_active = False
     threads = []
     for name in var.market_list:
-        t = threading.Thread(target=setup_market, args=(Markets[name],reload,))
+        t = threading.Thread(target=setup_market, args=(Markets[name], reload))
         threads.append(t)
         t.start()
     [thread.join() for thread in threads]

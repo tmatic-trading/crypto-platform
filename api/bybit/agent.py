@@ -189,6 +189,7 @@ class Agent(Bybit):
                             row["execFee"] = float(row["execFee"])
                         trade_history += res
                         success[num] = "success"
+
                     else:
                         self.logger.error(
                             "The list was expected when the trading history were loaded, but for the category "
