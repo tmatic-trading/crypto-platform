@@ -111,6 +111,7 @@ class Function(WS, Variables):
                 return data
             except Exception as e:  # var.error_sqlite
                 if "database is locked" not in str(e):
+                    print("_____query:", query)
                     var.logger.error("Sqlite Error: " + str(e) + ")")
                     Function.sql_lock.release()
                     break
@@ -505,7 +506,9 @@ class Function(WS, Variables):
                         self.orders[clOrdID]["leavesQty"] -= row["lastQty"]
                     else:
                         self.orders[clOrdID]["leavesQty"] += row["lastQty"]
-                    self.orders[clOrdID]["leavesQty"] = round(self.orders[clOrdID]["leavesQty"], precision)                
+                    self.orders[clOrdID]["leavesQty"] = round(
+                        self.orders[clOrdID]["leavesQty"], precision
+                    )
                     if self.orders[clOrdID]["leavesQty"] == 0:
                         del self.orders[clOrdID]
                         Function.not_defined_robot_color(self, clOrdID=clOrdID)
@@ -541,9 +544,9 @@ class Function(WS, Variables):
                         + " not found."
                     )
             if clOrdID in self.orders:
-                    #self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-                    self.orders[clOrdID]["price"] = price
-                    self.orders[clOrdID]["transactTime"] = row["transactTime"]
+                # self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+                self.orders[clOrdID]["price"] = price
+                self.orders[clOrdID]["transactTime"] = row["transactTime"]
         try:
             t = clOrdID.split(".")
             int(t[0])
@@ -588,7 +591,7 @@ class Function(WS, Variables):
         if clOrdID in self.orders:
             var.queue_order.put({"action": "put", "order": self.orders[clOrdID]})
 
-        '''elif row["leavesQty"] == 0:
+        """elif row["leavesQty"] == 0:
             info_p = row["lastPx"]
             info_q = row["lastQty"]
             if clOrdID in self.orders:
@@ -607,7 +610,7 @@ class Function(WS, Variables):
                         + " - order with clOrdID "
                         + clOrdID
                         + " not found."
-                    )'''
+                    )"""
 
     def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """

@@ -97,7 +97,7 @@ def setup_market(ws: Markets, reload=False):
     ws.api_is_active = False
     if reload:
         WS.exit(ws)
-        sleep(3)        
+        sleep(3)
     while ws.logNumFatal:
         var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)

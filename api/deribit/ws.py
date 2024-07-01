@@ -229,7 +229,7 @@ class Deribit(Variables):
         if self.logNumFatal < 1010:
             self.logNumFatal = 1010
 
-    def __on_close(self, ws):
+    def __on_close(self, *args):
         self.logger.info("Websocke closed.")
         self.logNumFatal = -1
 
@@ -354,7 +354,7 @@ class Deribit(Variables):
         account.unrealisedPnl = (
             values["futures_session_upl"] + values["options_session_upl"]
         )
-        '''print(values["currency"])
+        """print(values["currency"])
         print(
             "_________________________maintenance_margin", values["maintenance_margin"]
         )
@@ -367,7 +367,7 @@ class Deribit(Variables):
             "_________________________projected_initial_margin",
             values["projected_initial_margin"],
         )
-        print("_________________________margin_balance", values["margin_balance"])'''
+        print("_________________________margin_balance", values["margin_balance"])"""
 
     def __handle_order(self, values: dict) -> None:
         print("_________________________handle order", values)
