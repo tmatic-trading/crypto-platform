@@ -194,7 +194,7 @@ class Deribit(Variables):
 
     def __on_message(self, ws, message):
         message = json.loads(message)
-        # print("______message", message)
+        #print("_________________________________________________________________________________message", message)
         if "result" in message:
             id = message["id"]
             if "access_token" in message["result"]:
@@ -210,8 +210,8 @@ class Deribit(Variables):
                     time=message["usOut"] / 1000000, usec=True
                 )
             else:
-                self.response[id]["result"] = message["result"]
-
+                if id in self.response:
+                    self.response[id]["result"] = message["result"]
         elif "params" in message:
             if message["method"] == "subscription":
                 self.callback_directory[message["params"]["channel"]](
@@ -220,6 +220,10 @@ class Deribit(Variables):
             elif "type" in message["params"]:
                 if message["params"]["type"] == "test_request":
                     self.__heartbeat_response()
+        elif "error" in message:
+            id = message["id"]
+            if id in self.response:
+                self.response[id]["result"] = {"error": message["error"]}
 
     def __on_error(self, ws, error):
         """
@@ -260,7 +264,6 @@ class Deribit(Variables):
         timeout, slp = 3, 0.05
         while self.subscriptions:
             timeout -= slp
-            print("=======", self.subscriptions)
             if timeout <= 0:
                 for sub in self.subscriptions:
                     self.logger.error("Failed to subscribe " + str(sub))

@@ -272,47 +272,22 @@ class Agent(Deribit):
         """
         trade_history = []
         startTime = service.time_converter(start_time)
-        limit = min(200, histCount)  # must be > 1
-        limit = 28
-        step = 86400000  # 8640000000 # +100 days
-        step = 8640000000
-        """msg = \
-        {
-        "jsonrpc" : "2.0",
-        "id" : 5275,
-        "method" : "private/sell",
-        "params" : {
-            "instrument_name" : "BTC-PERPETUAL",
-            "amount" : 40,
-            "type" : "market",
-            "label" : "Btc_Deribit"
-        }
-        }
-        self.ws.send(json.dumps(msg))
-        os.abort()"""
-
+        limit = 500
+        step = 8640000000 # +100 days
         def get_in_thread(path, currency, start, end, limit, data_type, success, num):
             nonlocal trade_history
             cursor = limit
-            print(";;;;;")
-            print(start, service.time_converter(time=start / 1000))
-            print(end, service.time_converter(time=end / 1000))
-            print(limit)
-            last_execID = ""
-            execID = ""
-            continuation = 0
+            continuation = None
             id = f"{path}_{currency}"
-            while cursor > limit - 1:
-                print("______cursor", cursor)
+            while cursor >= limit:
                 params = {
                     "currency": currency,
                     "start_timestamp": start,
-                    "end_timestamp": end,  # 2524597200000,  # Fri Dec 31 2049 21:00:00 GMT+0000
-                    #"query": "settlement, trade",
+                    "end_timestamp": end,
                     "count": limit,
                 }
                 if data_type == "trades":
-                    params["sorting"] = "asc"
+                    params["sorting"] = "desc"
                 if continuation:
                     params["continuation"] = continuation
                 self.response[id] = {
@@ -331,152 +306,126 @@ class Agent(Deribit):
                 )
                 Agent.ws_request(self, path=path, id=id, params=params)
                 while time.time() < self.response[id]["request_time"]:
-                    if self.response[id]["result"]:
-                        print(id)
-                        print("======================================")
-                        #print(self.response[id]["result"])
-                        print(":::::::::::::::::::", id, data_type, "____", *self.response[id]["result"])
-                        res = self.response[id]["result"][data_type]
-                        """for r in res:
-                            t = service.time_converter(time = r["timestamp"]/1000)
-                            if r["type"] == "trade":
-                                print("-------------------")
-                                #print(service.time_converter(time = r["timestamp"]/1000))
-                                #for key, value in r.items():
-                                #    print(key, value)
-                                print(t, r["side"], r["trade_id"], r["amount"], r["price"], r["order_id"], r["instrument_name"])
-                            print("-------------------")
-                            if "label" in r:
-                                l = r["label"]
-                            else:
-                                l = "None"
-                            print(t, r["direction"], r["trade_id"], r["amount"], r["price"], r["order_id"], l)
-                        os.abort()"""
-
+                    res = self.response[id]["result"]
+                    if res:
+                        if "error" in res:
+                            tm = 0.5
+                            self.logger.warning("On request " + path + " - currency - " + currency + " - error - " + res["error"]["message"] + " - wait " + str(tm) + " sec")
+                            time.sleep(tm)
+                            break
+                        res = res[data_type]
                         if data_type == "logs":
                             res = list(filter(lambda x: x["type"] in ["settlement", "trade"], res))
                             continuation = self.response[id]["result"]["continuation"]
-                            print("___________________", continuation)
-
                         if isinstance(res, list):
                             for row in res:
-                                    '''if data_type == "trades" or (
-                                        data_type == "logs"
-                                        and row["type"] in ["settlement", "trade"]
-                                    ):'''
-                                    print("----------------")
-                                    #print(row)
-                                    if (
-                                        not row["instrument_name"]
-                                        in self.symbol_category
-                                    ):
-                                        Agent.get_instrument(
-                                            self, symbol=row["instrument_name"]
-                                        )
-                                    row["symbol"] = (
-                                        row["instrument_name"],
-                                        self.symbol_category[row["instrument_name"]],
-                                        self.name,
+                                if (
+                                    not row["instrument_name"]
+                                    in self.symbol_category
+                                ):
+                                    Agent.get_instrument(
+                                        self, symbol=row["instrument_name"]
                                     )
-                                    if data_type == "logs":
-                                        if row["type"] == "settlement":
-                                            row["execType"] = "Funding"
-                                            row["execID"] = (
-                                                str(row["user_seq"])
-                                                + "_"
-                                                + self.name
-                                                + "_"
-                                                + currency
-                                            )
-                                            row["leavesQty"] = row["position"]
-                                            row["execFee"] = row["total_interest_pl"]
-                                        elif row["type"] == "trade":
-                                            row["execType"] = "Trade"
-                                            row["execID"] = (
-                                                str(row["trade_id"])
-                                                + "_"
-                                                + str(row["user_seq"])
-                                                + "_"
-                                                + self.name
-                                                + "_"
-                                                + currency
-                                            )
-                                            row["orderID"] = (
-                                                row["order_id"]
-                                                + "_"
-                                                + self.name
-                                                + "_"
-                                                + currency
-                                            )
-                                            row[
-                                                "leavesQty"
-                                            ] = 9999999999999  # leavesQty is 
-                                            # not supported by Deribit
-                                            # row["execFee"] = row["commission"]
-                                        if (
-                                            "buy" in row["side"]
-                                            or row["side"] == "long"
-                                        ):
-                                            row["side"] = "Buy"
-                                        elif (
-                                            "sell" in row["side"]
-                                            or row["side"] == "short"
-                                        ):
-                                            row["side"] = "Sell"
-                                    else:
+                                row["symbol"] = (
+                                    row["instrument_name"],
+                                    self.symbol_category[row["instrument_name"]],
+                                    self.name,
+                                )
+                                if data_type == "logs":
+                                    if row["type"] == "settlement":
+                                        row["execType"] = "Funding"
+                                        row["execID"] = (
+                                            str(row["user_seq"])
+                                            + "_"
+                                            + self.name
+                                            + "_"
+                                            + currency
+                                        )
+                                        row["leavesQty"] = row["position"]
+                                        row["execFee"] = row["total_interest_pl"]
+                                    elif row["type"] == "trade":
                                         row["execType"] = "Trade"
                                         row["execID"] = (
                                             str(row["trade_id"])
                                             + "_"
-                                            + str(row["trade_seq"])
+                                            + str(row["user_seq"])
                                             + "_"
                                             + self.name
                                             + "_"
                                             + currency
                                         )
                                         row["orderID"] = (
-                                            row["order_id"] + self.name + currency
+                                            row["order_id"]
+                                            + "_"
+                                            + self.name
+                                            + "_"
+                                            + currency
                                         )
                                         row[
                                             "leavesQty"
-                                        ] = 9999999999999  # leavesQty is not 
-                                        # supported by Deribit
-                                        row["execFee"] = row["fee"]
-                                        if row["direction"] == "sell":
-                                            row["side"] = "Sell"
-                                        else:
-                                            row["side"] = "Buy"
-                                        row["timestamp"] -= 1 # Puts the trades
-                                        # from data_type="trades" in front of 
-                                        # the same trades from data_type="logs"
-                                    if "label" in row:
-                                        row["clOrdID"] = row["label"]
-                                    row["category"] = self.symbol_category[
-                                        row["instrument_name"]
-                                    ]
-                                    row["lastPx"] = row["price"]
-                                    row["transactTime"] = service.time_converter(
-                                        time=row["timestamp"] / 1000, usec=True
+                                        ] = 9999999999999  # leavesQty is not supported by Deribit
+                                        # row["execFee"] = row["commission"]
+                                    if (
+                                        "buy" in row["side"]
+                                        or row["side"] == "long"
+                                    ):
+                                        row["side"] = "Buy"
+                                    elif (
+                                        "sell" in row["side"]
+                                        or row["side"] == "short"
+                                    ):
+                                        row["side"] = "Sell"
+                                else:
+                                    row["execType"] = "Trade"
+                                    row["execID"] = (
+                                        str(row["trade_id"])
+                                        + "_"
+                                        + str(row["trade_seq"])
+                                        + "_"
+                                        + self.name
+                                        + "_"
+                                        + currency
                                     )
-                                    if row["category"] == "spot":
-                                        row["settlCurrency"] = (
-                                            row["fee_currency"],
-                                            self.name,
-                                        )
+                                    row["orderID"] = (
+                                        row["order_id"] + self.name + currency
+                                    )
+                                    row[
+                                        "leavesQty"
+                                    ] = 9999999999999  # leavesQty is not supported by Deribit
+                                    row["execFee"] = row["fee"]
+                                    if row["direction"] == "sell":
+                                        row["side"] = "Sell"
                                     else:
-                                        row["settlCurrency"] = self.Instrument[
-                                            row["symbol"]
-                                        ].settlCurrency
-                                    row["lastQty"] = row["amount"]
-                                    row["market"] = self.name
-                                    if row["execType"] == "Funding":
-                                        if row["side"] == "Sell":
-                                            row["lastQty"] = -row["lastQty"]
-                                    row["commission"] = "Not supported"
-                                    row["price"] = "Not supported"
-                                    print(row["transactTime"])
-
-                                    trade_history.append(row)
+                                        row["side"] = "Buy"
+                                    row["timestamp"] -= 1 # Puts the trades
+                                    # from data_type="trades" in front of the 
+                                    # same trades from data_type="logs"
+                                if "label" in row:
+                                    row["clOrdID"] = row["label"]
+                                row["category"] = self.symbol_category[
+                                    row["instrument_name"]
+                                ]
+                                row["lastPx"] = row["price"]
+                                row["transactTime"] = service.time_converter(
+                                    time=row["timestamp"] / 1000, usec=True
+                                )
+                                if row["category"] == "spot":
+                                    row["settlCurrency"] = (
+                                        row["fee_currency"],
+                                        self.name,
+                                    )
+                                else:
+                                    row["settlCurrency"] = self.Instrument[
+                                        row["symbol"]
+                                    ].settlCurrency
+                                row["lastQty"] = row["amount"]
+                                row["market"] = self.name
+                                if row["execType"] == "Funding":
+                                    if row["side"] == "Sell":
+                                        row["lastQty"] = -row["lastQty"]
+                                row["commission"] = "Not supported"
+                                row["price"] = "Not supported"
+                                trade_history.append(row)
                         else:
                             self.logger.error(
                                 "The list was expected when the trading history were loaded, but for the currency "
@@ -486,14 +435,10 @@ class Agent(Deribit):
                             cursor = -1
                             break
                         cursor = len(res)
-                        print("______________cursor +", cursor)
                         if cursor:
                             end = res[-1]["timestamp"]
-                            last_execID = res[-1]["execID"]
                             if data_type == "trades":
                                 end = res[-1]["timestamp"]
-                            print("__________________________start", start, res[0]["timestamp"], res[-1]["timestamp"], res[0]["timestamp"] - res[-1]["timestamp"], res[-1]["execID"])
-                            time.sleep(0.5)
                         break
                     time.sleep(0.05)
                 else:
@@ -503,27 +448,10 @@ class Agent(Deribit):
                         + " seconds. Reboot"
                     )
                     cursor = -1
-                if execID == last_execID:
-                    print("____________exit", execID, last_execID)
-                    break
-                execID = last_execID
-                if continuation is None:
+                if data_type == "logs" and continuation is None:
                     break
             if cursor > -1:
                 success[num] = "success"
-
-        """for currency in self.settleCoin_list:
-            """
-
-        """path = Listing.TRADING_HISTORY
-        for currency in self.settleCoin_list:
-            params = {
-                "currency": currency,
-                "start_timestamp": service.time_converter(time=start_time),
-                "end_timestamp": 2524597200000,  # Fri Dec 31 2049 21:00:00 GMT+0000
-                "count": histCount,
-            }"""
-
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             endTime = startTime + step
             if endTime < 1577826000000:  # Dec 31 2019 21:00:00 GMT+0000
@@ -531,13 +459,8 @@ class Agent(Deribit):
             get_last_trades = False
             if endTime >= service.time_converter(datetime.now(tz=timezone.utc)):
                 get_last_trades = True
-            print(
-                "))))))))))))))))))))))))))))))",
-                startTime,
-                service.time_converter(datetime.now(tz=timezone.utc)),
-            )
             threads, success = [], []
-            for currency in ["BTC"]:  # self.settleCoin_list:
+            for currency in self.settleCoin_list:#["BTC"]:  # self.settleCoin_list:
                 success.append(None)
                 path = Listing.TRADES_AND_FUNDING_TRANSACTION_LOG
                 t = threading.Thread(
@@ -555,8 +478,7 @@ class Agent(Deribit):
                 )
                 threads.append(t)
                 t.start()
-                '''if get_last_trades:
-                    print("______________________________________get_last_trades")
+                if get_last_trades:
                     success.append(None)
                     path = Listing.TRADES_LAST_5_DAYS
                     t = threading.Thread(
@@ -573,12 +495,11 @@ class Agent(Deribit):
                         ),
                     )
                     threads.append(t)
-                    t.start()'''
+                    t.start()
             [thread.join() for thread in threads]
             for s in success:
                 if not s:
-                    return
-                
+                    return                
             tmp = []
             for el in trade_history:
                 if el not in tmp:
@@ -596,11 +517,9 @@ class Agent(Deribit):
             if len(trade_history) > histCount:
                 break
             startTime = endTime
-        trade_history.sort(key=lambda x: x["transactTime"])
+        trade_history.sort(key=lambda x: x["transactTime"]) 
 
         
-
-        print("___________________________FINISH", len(trade_history))
         for row in trade_history:
             print(
                 row["transactTime"],
@@ -612,58 +531,11 @@ class Agent(Deribit):
                 # row["lastQty"],
                 row["execID"],
             )
+        print("___________________________FINISH", len(trade_history))
 
         os.abort()
 
         return trade_history
-
-        msg = {
-            "method": "private/get_transaction_log",
-            "params": {
-                "currency": "BTC",
-                "start_timestamp": 1717243432000,
-                "end_timestamp": 1719489832000,
-                "count": 50,
-            },
-            "jsonrpc": "2.0",
-            "id": 4,
-        }
-
-        path = self.api_version + "private/get_transaction_log"
-        data = Send.request(self, path=path, verb="POST", postData=msg)
-        for res in data["result"]["logs"]:
-            print("--------------")
-            for key, value in res.items():
-                print(key, value)
-            """print("type", res["type"])
-            print("side", res["side"])
-            if "amount" in res:
-                print("amount", res["amount"])
-            print("interest_pl", res["interest_pl"])
-            print("trade_id", res["trade_id"])
-            print("commission", res["commission"])
-            print("symbol", res["instrument_name"])
-            print("equity", res["equity"])"""
-            print("timestamp", service.time_converter(time=res["timestamp"] / 1000))
-            # print(service.time_converter(time=set["timestamp"] / 1000))
-        # print("___________________history", data)
-
-        msg = {
-            "jsonrpc": "2.0",
-            "id": 8304,
-            "method": "private/get_settlement_history_by_currency",
-            "params": {"currency": "BTC", "type": "settlement", "count": 100},
-        }
-
-        path = self.api_version + "private/get_settlement_history_by_currency"
-        data = Send.request(self, path=path, verb="POST", postData=msg)
-
-        print(data)
-
-        for res in data["result"]["settlements"]:
-            print("----------------")
-            print(res)
-            print(service.time_converter(time=res["timestamp"] / 1000))
 
     def ws_request(self, path: str, id: str, params: dict) -> None:
         msg = {"method": path, "params": params, "jsonrpc": "2.0", "id": id}
