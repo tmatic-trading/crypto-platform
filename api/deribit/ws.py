@@ -194,7 +194,7 @@ class Deribit(Variables):
 
     def __on_message(self, ws, message):
         message = json.loads(message)
-        #print("_________________________________________________________________________________message", message)
+        # print("_________________________________________________________________________________message", message)
         if "result" in message:
             id = message["id"]
             if "access_token" in message["result"]:

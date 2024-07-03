@@ -160,6 +160,10 @@ class Agent(Deribit):
                         order["transactTime"] = service.time_converter(
                             time=int(order["last_update_timestamp"]) / 1000, usec=True
                         )
+                        if order["direction"] == "buy":
+                            order["side"] = "Buy"
+                        else:
+                            order["side"] = "Sell"
                     self.setup_orders = data["result"]
                     return 0
                 else:
@@ -260,20 +264,21 @@ class Agent(Deribit):
 
         Notes
         -----
-        The function gets the same trades from two different endpoints. So 
-        there will be trades with the same execID. It is preferable to save 
+        The function gets the same trades from two different endpoints. So
+        there will be trades with the same execID. It is preferable to save
         trades to the database from the
-        ``private/get_user_trades_by_currency_and_time`` becuase it contains 
-        the label (clOrdID) field. As far Tmatic saves trades with the same 
-        execID only once and ignores repeating trades, this function 
-        corrects the timestamp of the trades from the endpoint mentioned 
-        above for 1ms ahead. Thus after sorting, the trades from the 
+        ``private/get_user_trades_by_currency_and_time`` becuase it contains
+        the label (clOrdID) field. As far Tmatic saves trades with the same
+        execID only once and ignores repeating trades, this function
+        corrects the timestamp of the trades from the endpoint mentioned
+        above for 1ms ahead. Thus after sorting, the trades from the
         ``private/get_user_trades_by_currency_and_time`` are always first.
         """
         trade_history = []
         startTime = service.time_converter(start_time)
         limit = 500
-        step = 8640000000 # +100 days
+        step = 8640000000  # +100 days
+
         def get_in_thread(path, currency, start, end, limit, data_type, success, num):
             nonlocal trade_history
             cursor = limit
@@ -310,19 +315,30 @@ class Agent(Deribit):
                     if res:
                         if "error" in res:
                             tm = 0.5
-                            self.logger.warning("On request " + path + " - currency - " + currency + " - error - " + res["error"]["message"] + " - wait " + str(tm) + " sec")
+                            self.logger.warning(
+                                "On request "
+                                + path
+                                + " - currency - "
+                                + currency
+                                + " - error - "
+                                + res["error"]["message"]
+                                + " - wait "
+                                + str(tm)
+                                + " sec"
+                            )
                             time.sleep(tm)
                             break
                         res = res[data_type]
                         if data_type == "logs":
-                            res = list(filter(lambda x: x["type"] in ["settlement", "trade"], res))
+                            res = list(
+                                filter(
+                                    lambda x: x["type"] in ["settlement", "trade"], res
+                                )
+                            )
                             continuation = self.response[id]["result"]["continuation"]
                         if isinstance(res, list):
                             for row in res:
-                                if (
-                                    not row["instrument_name"]
-                                    in self.symbol_category
-                                ):
+                                if not row["instrument_name"] in self.symbol_category:
                                     Agent.get_instrument(
                                         self, symbol=row["instrument_name"]
                                     )
@@ -365,14 +381,10 @@ class Agent(Deribit):
                                             "leavesQty"
                                         ] = 9999999999999  # leavesQty is not supported by Deribit
                                         # row["execFee"] = row["commission"]
-                                    if (
-                                        "buy" in row["side"]
-                                        or row["side"] == "long"
-                                    ):
+                                    if "buy" in row["side"] or row["side"] == "long":
                                         row["side"] = "Buy"
                                     elif (
-                                        "sell" in row["side"]
-                                        or row["side"] == "short"
+                                        "sell" in row["side"] or row["side"] == "short"
                                     ):
                                         row["side"] = "Sell"
                                 else:
@@ -397,8 +409,8 @@ class Agent(Deribit):
                                         row["side"] = "Sell"
                                     else:
                                         row["side"] = "Buy"
-                                    row["timestamp"] -= 1 # Puts the trades
-                                    # from data_type="trades" in front of the 
+                                    row["timestamp"] -= 1  # Puts the trades
+                                    # from data_type="trades" in front of the
                                     # same trades from data_type="logs"
                                 if "label" in row:
                                     row["clOrdID"] = row["label"]
@@ -452,6 +464,7 @@ class Agent(Deribit):
                     break
             if cursor > -1:
                 success[num] = "success"
+
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             endTime = startTime + step
             if endTime < 1577826000000:  # Dec 31 2019 21:00:00 GMT+0000
@@ -460,7 +473,7 @@ class Agent(Deribit):
             if endTime >= service.time_converter(datetime.now(tz=timezone.utc)):
                 get_last_trades = True
             threads, success = [], []
-            for currency in self.settleCoin_list:#["BTC"]:  # self.settleCoin_list:
+            for currency in self.settleCoin_list:  # ["BTC"]:  # self.settleCoin_list:
                 success.append(None)
                 path = Listing.TRADES_AND_FUNDING_TRANSACTION_LOG
                 t = threading.Thread(
@@ -499,7 +512,7 @@ class Agent(Deribit):
             [thread.join() for thread in threads]
             for s in success:
                 if not s:
-                    return                
+                    return
             tmp = []
             for el in trade_history:
                 if el not in tmp:
@@ -517,9 +530,8 @@ class Agent(Deribit):
             if len(trade_history) > histCount:
                 break
             startTime = endTime
-        trade_history.sort(key=lambda x: x["transactTime"]) 
+        trade_history.sort(key=lambda x: x["transactTime"])
 
-        
         for row in trade_history:
             print(
                 row["transactTime"],
@@ -533,9 +545,91 @@ class Agent(Deribit):
             )
         print("___________________________FINISH", len(trade_history))
 
-        os.abort()
-
         return trade_history
+
+    def trade_bucketed(
+        self, symbol: tuple, start_time: datetime, timeframe: Union[int, str]
+    ) -> Union[list, None]:
+        path = Listing.TRADE_BUCKETED
+        # service.time_converter(datetime.now(tz=timezone.utc))
+        id = f"{path}_{symbol}"
+        start_timestamp = service.time_converter(time=start_time)
+        if isinstance(timeframe, int):
+            number = timeframe * 60 * 1000000
+        else:
+            number = 86400 * 1000000
+        end_timestamp = start_timestamp + number
+        print(
+            "::::::::::::::::::::::::::::::::::::: kline",
+            start_time,
+            service.time_converter(time=end_timestamp / 1000),
+        )
+        params = {
+            "instrument_name": symbol[0],
+            "start_timestamp": start_timestamp,
+            "end_timestamp": end_timestamp,
+            "resolution": str(timeframe),
+        }
+        while True:
+            self.logger.info(
+                "Sending - "
+                + path
+                + " - symbol - "
+                + str(symbol)
+                + " - interval - "
+                + str(timeframe)
+            )
+            self.response[id] = {
+                "request_time": time.time() + self.ws_request_delay,
+                "result": None,
+            }
+            Agent.ws_request(self, path=path, id=id, params=params)
+            while time.time() < self.response[id]["request_time"]:
+                res = self.response[id]["result"]
+                if res:
+                    if "error" in res:
+                        tm = 0.5
+                        self.logger.warning(
+                            "On request "
+                            + path
+                            + " - symbol - "
+                            + str(symbol)
+                            + " - interval - "
+                            + str(timeframe)
+                            + " - error - "
+                            + res["error"]["message"]
+                            + " - wait "
+                            + str(tm)
+                            + " sec"
+                        )
+                        time.sleep(tm)
+                        break
+                    else:
+                        klines = []
+                        for step in range(len(res["ticks"])):
+                            klines.append(
+                                {
+                                    "timestamp": service.time_converter(
+                                        time=res["ticks"][step] / 1000
+                                    ),
+                                    "open": res["open"][step],
+                                    "high": res["high"][step],
+                                    "low": res["low"][step],
+                                    "close": res["close"][step],
+                                }
+                            )
+                        print("_________________kline", len(klines))
+                        return klines
+            else:
+                self.logger.error(
+                    "No response to websocket kline data request within "
+                    + str(self.ws_request_delay)
+                    + " seconds. Reboot"
+                )
+                return
+
+        print("_______________________exit", exit)
+        #os.abort()
 
     def ws_request(self, path: str, id: str, params: dict) -> None:
         msg = {"method": path, "params": params, "jsonrpc": "2.0", "id": id}

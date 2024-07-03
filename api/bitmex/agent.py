@@ -170,13 +170,15 @@ class Agent(Bitmex):
             self.logger.info(str(symbol) + " not found in get_position()")
 
     def trade_bucketed(
-        self, symbol: tuple, time: datetime, timeframe: int
+        self, symbol: tuple, start_time: datetime, timeframe: int
     ) -> Union[list, None]:
         """
         Gets timeframe data. Available time interval: 1m,5m,1h,1d.
         """
         path = Listing.TRADE_BUCKETED.format(
-            TIMEFRAME=self.timefrs[timeframe], SYMBOL=symbol[0], TIME=str(time)[:19]
+            TIMEFRAME=self.timefrs[timeframe],
+            SYMBOL=symbol[0],
+            TIME=str(start_time)[:19],
         )
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):

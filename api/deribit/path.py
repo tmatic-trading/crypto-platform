@@ -9,6 +9,7 @@ class Listing(str, Enum):
     TRADES_AND_FUNDING_TRANSACTION_LOG = "private/get_transaction_log"
     TRADES_LAST_5_DAYS = "private/get_user_trades_by_currency_and_time"
     GET_INSTRUMENT_DATA = "public/get_instrument"
+    TRADE_BUCKETED = "public/get_tradingview_chart_data"
     """
     GET_INSTRUMENT_DATA = "instrument?symbol={SYMBOL}"
     GET_POSITION = "position?filter=%7B%22symbol%22%3A%22{SYMBOL}%22%7D"

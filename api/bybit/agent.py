@@ -98,7 +98,7 @@ class Agent(Bybit):
         print("___get_position", symbol)
 
     def trade_bucketed(
-        self, symbol: tuple, time: datetime, timeframe: str
+        self, symbol: tuple, start_time: datetime, timeframe: str
     ) -> Union[list, None]:
         self.logger.info(
             "Sending get_kline() - symbol - "
@@ -110,7 +110,7 @@ class Agent(Bybit):
             category=symbol[1],
             symbol=symbol[0],
             interval=str(timeframe),
-            start=service.time_converter(time=time),
+            start=service.time_converter(time=start_time),
             limit=1000,
         )
         if kline["result"]["list"]:

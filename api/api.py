@@ -159,7 +159,7 @@ class WS(Variables):
         """
 
         return Agents[self.name].value.trade_bucketed(
-            self, symbol=symbol, time=time, timeframe=timeframe
+            self, symbol=symbol, start_time=time, timeframe=timeframe
         )
 
     def trading_history(self: Markets, histCount: int, start_time: datetime) -> list:
