@@ -325,8 +325,10 @@ class Init(WS, Variables):
                     target=get_in_thread,
                     args=(symbol, timefr, self.frames, len(success) - 1),
                 )
+
                 threads.append(t)
                 t.start()
+
         [thread.join() for thread in threads]
         for s in success:
             if not s:

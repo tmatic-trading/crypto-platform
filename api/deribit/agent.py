@@ -64,7 +64,7 @@ class Agent(Deribit):
             "request_time": time.time() + self.ws_request_delay,
             "result": None,
         }
-        Agent.ws_request(self, path=path, id=id, params=params)
+        Agent.ws_request(self, path=path, id=id, params=params, text="")
         while time.time() < self.response[id]["request_time"]:
             if self.response[id]["result"]:
                 Agent.fill_instrument(self, values=self.response[id]["result"])
@@ -295,171 +295,131 @@ class Agent(Deribit):
                     params["sorting"] = "desc"
                 if continuation:
                     params["continuation"] = continuation
-                self.response[id] = {
-                    "request_time": time.time() + self.ws_request_delay,
-                    "result": None,
-                }
-                self.logger.info(
-                    "Sending "
-                    + path
-                    + " - currency - "
+                text = (
+                    " - "
                     + currency
-                    + " - start - "
+                    + " - period - "
                     + str(service.time_converter(start / 1000))
-                    + " - end - "
+                    + " - "
                     + str(service.time_converter(end / 1000))
                 )
-                Agent.ws_request(self, path=path, id=id, params=params)
-                while time.time() < self.response[id]["request_time"]:
-                    res = self.response[id]["result"]
-                    if res:
-                        if "error" in res:
-                            tm = 0.5
-                            self.logger.warning(
-                                "On request "
-                                + path
-                                + " - currency - "
-                                + currency
-                                + " - error - "
-                                + res["error"]["message"]
-                                + " - wait "
-                                + str(tm)
-                                + " sec"
-                            )
-                            time.sleep(tm)
-                            break
-                        res = res[data_type]
-                        if data_type == "logs":
-                            res = list(
-                                filter(
-                                    lambda x: x["type"] in ["settlement", "trade"], res
+                res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
+                if res:
+                    res = res[data_type]
+                    if data_type == "logs":
+                        res = list(
+                            filter(lambda x: x["type"] in ["settlement", "trade"], res)
+                        )
+                        continuation = self.response[id]["result"]["continuation"]
+                    if isinstance(res, list):
+                        for row in res:
+                            if not row["instrument_name"] in self.symbol_category:
+                                Agent.get_instrument(
+                                    self, symbol=row["instrument_name"]
                                 )
+                            row["symbol"] = (
+                                row["instrument_name"],
+                                self.symbol_category[row["instrument_name"]],
+                                self.name,
                             )
-                            continuation = self.response[id]["result"]["continuation"]
-                        if isinstance(res, list):
-                            for row in res:
-                                if not row["instrument_name"] in self.symbol_category:
-                                    Agent.get_instrument(
-                                        self, symbol=row["instrument_name"]
+                            if data_type == "logs":
+                                if row["type"] == "settlement":
+                                    row["execType"] = "Funding"
+                                    row["execID"] = (
+                                        str(row["user_seq"])
+                                        + "_"
+                                        + self.name
+                                        + "_"
+                                        + currency
                                     )
-                                row["symbol"] = (
-                                    row["instrument_name"],
-                                    self.symbol_category[row["instrument_name"]],
-                                    self.name,
-                                )
-                                if data_type == "logs":
-                                    if row["type"] == "settlement":
-                                        row["execType"] = "Funding"
-                                        row["execID"] = (
-                                            str(row["user_seq"])
-                                            + "_"
-                                            + self.name
-                                            + "_"
-                                            + currency
-                                        )
-                                        row["leavesQty"] = row["position"]
-                                        row["execFee"] = row["total_interest_pl"]
-                                    elif row["type"] == "trade":
-                                        row["execType"] = "Trade"
-                                        row["execID"] = (
-                                            str(row["trade_id"])
-                                            + "_"
-                                            + str(row["user_seq"])
-                                            + "_"
-                                            + self.name
-                                            + "_"
-                                            + currency
-                                        )
-                                        row["orderID"] = (
-                                            row["order_id"]
-                                            + "_"
-                                            + self.name
-                                            + "_"
-                                            + currency
-                                        )
-                                        row[
-                                            "leavesQty"
-                                        ] = 9999999999999  # leavesQty is not supported by Deribit
-                                        # row["execFee"] = row["commission"]
-                                    if "buy" in row["side"] or row["side"] == "long":
-                                        row["side"] = "Buy"
-                                    elif (
-                                        "sell" in row["side"] or row["side"] == "short"
-                                    ):
-                                        row["side"] = "Sell"
-                                else:
+                                    row["leavesQty"] = row["position"]
+                                    row["execFee"] = row["total_interest_pl"]
+                                elif row["type"] == "trade":
                                     row["execType"] = "Trade"
                                     row["execID"] = (
                                         str(row["trade_id"])
                                         + "_"
-                                        + str(row["trade_seq"])
+                                        + str(row["user_seq"])
                                         + "_"
                                         + self.name
                                         + "_"
                                         + currency
                                     )
                                     row["orderID"] = (
-                                        row["order_id"] + self.name + currency
+                                        row["order_id"]
+                                        + "_"
+                                        + self.name
+                                        + "_"
+                                        + currency
                                     )
                                     row[
                                         "leavesQty"
                                     ] = 9999999999999  # leavesQty is not supported by Deribit
-                                    row["execFee"] = row["fee"]
-                                    if row["direction"] == "sell":
-                                        row["side"] = "Sell"
-                                    else:
-                                        row["side"] = "Buy"
-                                    row["timestamp"] -= 1  # Puts the trades
-                                    # from data_type="trades" in front of the
-                                    # same trades from data_type="logs"
-                                if "label" in row:
-                                    row["clOrdID"] = row["label"]
-                                row["category"] = self.symbol_category[
-                                    row["instrument_name"]
-                                ]
-                                row["lastPx"] = row["price"]
-                                row["transactTime"] = service.time_converter(
-                                    time=row["timestamp"] / 1000, usec=True
+                                    # row["execFee"] = row["commission"]
+                                if "buy" in row["side"] or row["side"] == "long":
+                                    row["side"] = "Buy"
+                                elif "sell" in row["side"] or row["side"] == "short":
+                                    row["side"] = "Sell"
+                            else:
+                                row["execType"] = "Trade"
+                                row["execID"] = (
+                                    str(row["trade_id"])
+                                    + "_"
+                                    + str(row["trade_seq"])
+                                    + "_"
+                                    + self.name
+                                    + "_"
+                                    + currency
                                 )
-                                if row["category"] == "spot":
-                                    row["settlCurrency"] = (
-                                        row["fee_currency"],
-                                        self.name,
-                                    )
+                                row["orderID"] = row["order_id"] + self.name + currency
+                                row[
+                                    "leavesQty"
+                                ] = 9999999999999  # leavesQty is not supported by Deribit
+                                row["execFee"] = row["fee"]
+                                if row["direction"] == "sell":
+                                    row["side"] = "Sell"
                                 else:
-                                    row["settlCurrency"] = self.Instrument[
-                                        row["symbol"]
-                                    ].settlCurrency
-                                row["lastQty"] = row["amount"]
-                                row["market"] = self.name
-                                if row["execType"] == "Funding":
-                                    if row["side"] == "Sell":
-                                        row["lastQty"] = -row["lastQty"]
-                                row["commission"] = "Not supported"
-                                row["price"] = "Not supported"
-                                trade_history.append(row)
-                        else:
-                            self.logger.error(
-                                "The list was expected when the trading history were loaded, but for the currency "
-                                + currency
-                                + " it was not received. Reboot."
+                                    row["side"] = "Buy"
+                                row["timestamp"] -= 1  # Puts the trades
+                                # from data_type="trades" in front of the
+                                # same trades from data_type="logs"
+                            if "label" in row:
+                                row["clOrdID"] = row["label"]
+                            row["category"] = self.symbol_category[
+                                row["instrument_name"]
+                            ]
+                            row["lastPx"] = row["price"]
+                            row["transactTime"] = service.time_converter(
+                                time=row["timestamp"] / 1000, usec=True
                             )
-                            cursor = -1
-                            break
-                        cursor = len(res)
-                        if cursor:
-                            end = res[-1]["timestamp"]
-                            if data_type == "trades":
-                                end = res[-1]["timestamp"]
+                            if row["category"] == "spot":
+                                row["settlCurrency"] = (
+                                    row["fee_currency"],
+                                    self.name,
+                                )
+                            else:
+                                row["settlCurrency"] = self.Instrument[
+                                    row["symbol"]
+                                ].settlCurrency
+                            row["lastQty"] = row["amount"]
+                            row["market"] = self.name
+                            if row["execType"] == "Funding":
+                                if row["side"] == "Sell":
+                                    row["lastQty"] = -row["lastQty"]
+                            row["commission"] = "Not supported"
+                            row["price"] = "Not supported"
+                            trade_history.append(row)
+                    else:
+                        self.logger.error(
+                            "The list was expected when the trading history were loaded, but for the currency "
+                            + currency
+                            + " it was not received. Reboot."
+                        )
+                        cursor = -1
                         break
-                    time.sleep(0.05)
-                else:
-                    self.logger.error(
-                        "No response to websocket trading history data request within "
-                        + str(self.ws_request_delay)
-                        + " seconds. Reboot"
-                    )
-                    cursor = -1
+                    cursor = len(res)
+                    if cursor:
+                        end = res[-1]["timestamp"]
                 if data_type == "logs" and continuation is None:
                     break
             if cursor > -1:
@@ -473,7 +433,7 @@ class Agent(Deribit):
             if endTime >= service.time_converter(datetime.now(tz=timezone.utc)):
                 get_last_trades = True
             threads, success = [], []
-            for currency in self.settleCoin_list:  # ["BTC"]:  # self.settleCoin_list:
+            for currency in self.settleCoin_list:
                 success.append(None)
                 path = Listing.TRADES_AND_FUNDING_TRANSACTION_LOG
                 t = threading.Thread(
@@ -545,6 +505,8 @@ class Agent(Deribit):
             )
         print("___________________________FINISH", len(trade_history))
 
+        os.abort()
+
         return trade_history
 
     def trade_bucketed(
@@ -559,31 +521,53 @@ class Agent(Deribit):
         else:
             number = 86400 * 1000000
         end_timestamp = start_timestamp + number
-        print(
-            "::::::::::::::::::::::::::::::::::::: kline",
-            start_time,
-            service.time_converter(time=end_timestamp / 1000),
-        )
         params = {
             "instrument_name": symbol[0],
             "start_timestamp": start_timestamp,
             "end_timestamp": end_timestamp,
             "resolution": str(timeframe),
         }
+        text = " - symbol - " + str(symbol) + " - interval - " + str(timeframe)
+        res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
+        if res:
+            klines = []
+            for step in range(len(res["ticks"])):
+                klines.append(
+                    {
+                        "timestamp": service.time_converter(
+                            time=res["ticks"][step] / 1000
+                        ),
+                        "open": res["open"][step],
+                        "high": res["high"][step],
+                        "low": res["low"][step],
+                        "close": res["close"][step],
+                    }
+                )
+            print("_________________kline", len(klines))
+            return klines
+
+    def ws_request(
+        self, path: str, id: str, params: dict, text: str
+    ) -> Union[list, dict, None]:
+        """
+        Requests data over websocket connection. If an error occurs, it 
+        repeats the request.
+
+        Parameters
+        ----------
+            path - endpoint address
+            id - response key
+            params - request parameters
+            text - additional info saved to the log file
+        """
         while True:
-            self.logger.info(
-                "Sending - "
-                + path
-                + " - symbol - "
-                + str(symbol)
-                + " - interval - "
-                + str(timeframe)
-            )
             self.response[id] = {
                 "request_time": time.time() + self.ws_request_delay,
                 "result": None,
             }
-            Agent.ws_request(self, path=path, id=id, params=params)
+            self.logger.info("Sending " + path + text)
+            msg = {"method": path, "params": params, "jsonrpc": "2.0", "id": id}
+            self.ws.send(json.dumps(msg))
             while time.time() < self.response[id]["request_time"]:
                 res = self.response[id]["result"]
                 if res:
@@ -592,10 +576,7 @@ class Agent(Deribit):
                         self.logger.warning(
                             "On request "
                             + path
-                            + " - symbol - "
-                            + str(symbol)
-                            + " - interval - "
-                            + str(timeframe)
+                            + text
                             + " - error - "
                             + res["error"]["message"]
                             + " - wait "
@@ -605,32 +586,13 @@ class Agent(Deribit):
                         time.sleep(tm)
                         break
                     else:
-                        klines = []
-                        for step in range(len(res["ticks"])):
-                            klines.append(
-                                {
-                                    "timestamp": service.time_converter(
-                                        time=res["ticks"][step] / 1000
-                                    ),
-                                    "open": res["open"][step],
-                                    "high": res["high"][step],
-                                    "low": res["low"][step],
-                                    "close": res["close"][step],
-                                }
-                            )
-                        print("_________________kline", len(klines))
-                        return klines
+                        return res
             else:
                 self.logger.error(
-                    "No response to websocket kline data request within "
+                    "No response to websocket "
+                    + path
+                    + " request within "
                     + str(self.ws_request_delay)
                     + " seconds. Reboot"
                 )
                 return
-
-        print("_______________________exit", exit)
-        #os.abort()
-
-    def ws_request(self, path: str, id: str, params: dict) -> None:
-        msg = {"method": path, "params": params, "jsonrpc": "2.0", "id": id}
-        self.ws.send(json.dumps(msg))
