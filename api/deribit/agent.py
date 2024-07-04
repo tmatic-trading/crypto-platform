@@ -57,27 +57,16 @@ class Agent(Deribit):
 
     def get_instrument(self, symbol: str) -> None:
         path = Listing.GET_INSTRUMENT_DATA
-        self.logger.info("Sending " + path + " - symbol - " + symbol)
         params = {"instrument_name": symbol}
         id = f"{path}_{symbol}"
-        self.response[id] = {
-            "request_time": time.time() + self.ws_request_delay,
-            "result": None,
-        }
-        Agent.ws_request(self, path=path, id=id, params=params, text="")
-        while time.time() < self.response[id]["request_time"]:
-            if self.response[id]["result"]:
-                Agent.fill_instrument(self, values=self.response[id]["result"])
-                break
-            time.sleep(0.05)
+        text = " - symbol - " + symbol
+        res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
+        if isinstance(res, dict):
+            Agent.fill_instrument(self, values=self.response[id]["result"])
         else:
-            self.logger.error(
-                "No response to websocket instrument data request symbol="
-                + symbol
-                + " within "
-                + self.ws_request_delay
-                + " seconds. Reboot"
-            )
+            self.logger("A dict was expected when loading instrument, but was not received. Reboot")
+            self.logNumFatal = 1001
+
 
     def fill_instrument(self, values: dict) -> str:
         """
