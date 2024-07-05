@@ -136,6 +136,7 @@ class Account:
     settlCurrency: str
     unrealisedPnl: float = 0
     walletBalance: float = 0
+    limits: dict
 
     def __iter__(self):
         return Ret.iter(self)

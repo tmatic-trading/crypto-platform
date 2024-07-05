@@ -9,7 +9,7 @@ from typing import Union
 import services as service
 from api.http import Send
 
-from .path import Listing
+from .path import Listing, Matching_engine
 from .ws import Deribit
 
 
@@ -55,18 +55,19 @@ class Agent(Deribit):
 
         return 1001
 
-    def get_instrument(self, symbol: str) -> None:
+    def get_instrument(self, symbol: tuple) -> None:
         path = Listing.GET_INSTRUMENT_DATA
-        params = {"instrument_name": symbol}
-        id = f"{path}_{symbol}"
-        text = " - symbol - " + symbol
+        params = {"instrument_name": symbol[0]}
+        id = f"{path}_{symbol[0]}"
+        text = " - symbol - " + symbol[0]
         res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
         if isinstance(res, dict):
             Agent.fill_instrument(self, values=self.response[id]["result"])
         else:
-            self.logger("A dict was expected when loading instrument, but was not received. Reboot")
+            self.logger(
+                "A dict was expected when loading instrument, but was not received. Reboot"
+            )
             self.logNumFatal = 1001
-
 
     def fill_instrument(self, values: dict) -> str:
         """
@@ -181,9 +182,12 @@ class Agent(Deribit):
         if isinstance(data, dict):
             self.user_id = data["result"]["id"]
             for values in data["result"]["summaries"]:
-                account = self.Account[values["currency"]]
+                currency = (values["currency"], self.name)
+                account = self.Account[currency]
                 account.account = data["result"]["id"]
                 account.settlCurrency = values["currency"]
+                account.limits = values["limits"]
+                account.limits["private/get_transaction_log"] = {"burst": 10, "rate": 2}
             return
         self.logNumFatal = 1001
         message = (
@@ -253,6 +257,7 @@ class Agent(Deribit):
 
         Notes
         -----
+        1.
         The function gets the same trades from two different endpoints. So
         there will be trades with the same execID. It is preferable to save
         trades to the database from the
@@ -262,6 +267,11 @@ class Agent(Deribit):
         corrects the timestamp of the trades from the endpoint mentioned
         above for 1ms ahead. Thus after sorting, the trades from the
         ``private/get_user_trades_by_currency_and_time`` are always first.
+        2.
+        Deribit limits non_matching_engine requests using a special scheme
+        described at https://www.deribit.com/kb/deribit-rate-limits
+        However, they have introduced a special limit for
+        ``private/get_transaction_log`` to only 2 requests per second.
         """
         trade_history = []
         startTime = service.time_converter(start_time)
@@ -292,7 +302,9 @@ class Agent(Deribit):
                     + " - "
                     + str(service.time_converter(end / 1000))
                 )
-                res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
+                res = Agent.ws_request(
+                    self, path=path, id=id, params=params, text=text, currency=currency
+                )
                 if res:
                     res = res[data_type]
                     if data_type == "logs":
@@ -304,7 +316,12 @@ class Agent(Deribit):
                         for row in res:
                             if not row["instrument_name"] in self.symbol_category:
                                 Agent.get_instrument(
-                                    self, symbol=row["instrument_name"]
+                                    self,
+                                    symbol=(
+                                        row["instrument_name"],
+                                        "not defined",
+                                        self.name,
+                                    ),
                                 )
                             row["symbol"] = (
                                 row["instrument_name"],
@@ -344,7 +361,7 @@ class Agent(Deribit):
                                     row[
                                         "leavesQty"
                                     ] = 9999999999999  # leavesQty is not supported by Deribit
-                                    # row["execFee"] = row["commission"]
+                                    row["execFee"] = row["commission"]
                                 if "buy" in row["side"] or row["side"] == "long":
                                     row["side"] = "Buy"
                                 elif "sell" in row["side"] or row["side"] == "short":
@@ -396,7 +413,7 @@ class Agent(Deribit):
                                 if row["side"] == "Sell":
                                     row["lastQty"] = -row["lastQty"]
                             row["commission"] = "Not supported"
-                            row["price"] = "Not supported"
+                            # row["price"] = "Not supported"
                             trade_history.append(row)
                     else:
                         self.logger.error(
@@ -494,8 +511,6 @@ class Agent(Deribit):
             )
         print("___________________________FINISH", len(trade_history))
 
-        os.abort()
-
         return trade_history
 
     def trade_bucketed(
@@ -532,29 +547,67 @@ class Agent(Deribit):
                         "close": res["close"][step],
                     }
                 )
-            print("_________________kline", len(klines))
             return klines
 
     def ws_request(
-        self, path: str, id: str, params: dict, text: str
+        self, path: str, id: str, params: dict, text: str, currency="BTC"
     ) -> Union[list, dict, None]:
         """
-        Requests data over websocket connection. If an error occurs, it 
-        repeats the request.
+        Requests data over websocket connection. If an error occurs, it
+        repeats the request. Request limits are taken into account according
+        to https://www.deribit.com/kb/deribit-rate-limits
 
         Parameters
         ----------
-            path - endpoint address
-            id - response key
-            params - request parameters
-            text - additional info saved to the log file
+            path - Endpoint address.
+            id - Response key.
+            params - Request parameters.
+            text - Aadditional info saved to the log file.
+            currency - By default, limits apply globally for all currencies,
+            but can be enabled for specific customers upon request.
         """
+        account = self.Account[(currency, self.name)]
+        limit = account.limits
+        if path in Matching_engine.PATHS:
+            l = limit["matching_engine"]["trading"]
+            limits = l["total"]
+            maximum_quotes = l["maximum_quotes"]
+            cancel_all = l["cancel_all"]
+            scheme = self.scheme["matching_engine"]
+        else:
+            if path == "private/get_transaction_log":
+                limits = limit[path]
+                scheme = self.scheme[path]
+            else:
+                limits = limit["non_matching_engine"]
+                scheme = self.scheme["non_matching_engine"]
+        count = 0
+        scheme["lock"].acquire(True)
+        for num in range(len(scheme["time"]) - 1, -1, -1):
+            tm = time.time()
+            if tm - scheme["time"][num] < 1:
+                count += 1
+            if tm - scheme["time"][num] > 5:  # Considering 5
+                # seconds withot a single request to return the burst scheme.
+                scheme["time"].pop(num)
+        if scheme["scheme"] == "burst" and len(scheme["time"]) >= limits["burst"]:
+            scheme["scheme"] = "rate"
+        elif not len(scheme["time"]):
+            scheme["scheme"] = "burst"
+        if scheme["scheme"] == "rate":
+            number = min(limits["rate"], count)
+            slp = 1 - (time.time() - scheme["time"][-number])
+            if slp < 0:
+                slp = 0
+            time.sleep(slp)  # Wait if the number of requests per second is exceeded.
+        scheme["lock"].release()
         while True:
             self.response[id] = {
                 "request_time": time.time() + self.ws_request_delay,
                 "result": None,
             }
             self.logger.info("Sending " + path + text)
+            scheme["time"].append(time.time())
             msg = {"method": path, "params": params, "jsonrpc": "2.0", "id": id}
             self.ws.send(json.dumps(msg))
             while time.time() < self.response[id]["request_time"]:

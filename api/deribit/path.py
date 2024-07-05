@@ -25,3 +25,24 @@ class Listing(str, Enum):
 
     def __str__(self) -> str:
         return self.value
+
+
+class Matching_engine:
+    PATHS = {
+        "private/buy",
+        "private/sell",
+        "private/edit",
+        "private/edit_by_label",
+        "private/cancel",
+        "private/cancel_by_label",
+        "private/cancel_all",
+        "private/cancel_all_by_instrument",
+        "private/cancel_all_by_currency",
+        "private/cancel_all_by_kind_or_type",
+        "private/close_position",
+        "private/verify_block_trade",
+        "private/execute_block_trade",
+        "private/move_positions",
+        "private/mass_quote",
+        "private/cancel_quotes",
+    }

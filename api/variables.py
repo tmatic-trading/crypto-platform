@@ -19,7 +19,7 @@ class Variables:
     category_list = list()
     currencies = list()
     positions = OrderedDict()
-    full_symbol_list = list()
+    # full_symbol_list = list()
     logger = logging
     logNumFatal = 0
     timeoutOccurred = ""

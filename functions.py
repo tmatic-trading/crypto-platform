@@ -34,7 +34,7 @@ class Function(WS, Variables):
         coef = self.Instrument[symbol].valueOfOneContract
         if symbol[1] == "inverse":
             sumreal = qty / price * coef * fund
-            if execFee:
+            if execFee is not None:
                 commiss = execFee
                 funding = execFee
             else:
@@ -42,14 +42,14 @@ class Function(WS, Variables):
                 funding = qty / price * coef * rate
         elif symbol[1] == "spot":
             sumreal = 0
-            if execFee:
+            if execFee is not None:
                 commiss = execFee
             else:
                 commiss = abs(qty) * price * coef * rate
             funding = 0
         else:
             sumreal = -qty * price * coef * fund
-            if execFee:
+            if execFee is not None:
                 commiss = execFee
                 funding = execFee
             else:
@@ -59,11 +59,11 @@ class Function(WS, Variables):
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
 
     def add_symbol(self: Markets, symbol: tuple) -> None:
-        if symbol not in self.full_symbol_list:
-            self.full_symbol_list.append(symbol)
-            if symbol not in self.Instrument.get_keys():
-                WS.get_instrument(Markets[symbol[2]], symbol=symbol)
-            # Function.rounding(self)
+        # if symbol not in self.full_symbol_list:
+        #    self.full_symbol_list.append(symbol)
+        if symbol not in self.Instrument.get_keys():
+            WS.get_instrument(self, symbol=symbol)
+        # Function.rounding(self)
         """if symbol not in self.positions:
             WS.get_position(self, symbol=symbol)"""
 
@@ -177,7 +177,10 @@ class Function(WS, Variables):
                         if row["clOrdID"] == "":
                             clientID = 0
                         else:
-                            clientID = int(row["clOrdID"])
+                            try:
+                                clientID = int(row["clOrdID"])
+                            except Exception:
+                                clientID = 0
                     else:
                         emi = row["clOrdID"][dot + 1 :]
                         clientID = row["clOrdID"][:dot]
@@ -616,6 +619,7 @@ class Function(WS, Variables):
         """
         Update trades widget
         """
+        Function.add_symbol(self, symbol=val["SYMBOL"])
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
@@ -641,6 +645,7 @@ class Function(WS, Variables):
         """
         Update funding widget
         """
+        Function.add_symbol(self, symbol=val["SYMBOL"])
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]

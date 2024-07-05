@@ -62,6 +62,23 @@ class Deribit(Variables):
         self.response = dict()
         self.settleCoin_list = ["BTC", "ETH", "USDC", "USDT", "EURR"]
         self.ws_request_delay = 5
+        self.scheme = {
+            "matching_engine": {
+                "lock": threading.Lock(),
+                "scheme": "burst",
+                "time": [],
+            },
+            "non_matching_engine": {
+                "lock": threading.Lock(),
+                "scheme": "burst",
+                "time": [],
+            },
+            "private/get_transaction_log": {
+                "lock": threading.Lock(),
+                "scheme": "burst",
+                "time": [],
+            },
+        }
 
     def start(self):
         for symbol in self.symbol_list:
@@ -115,7 +132,6 @@ class Deribit(Variables):
                 return
             time.sleep(slp)
         self.logger.info("access_token received")
-        print("______________________ access_token received", self.access_token)
 
     def __subscribe(self):
         channels = list()
@@ -194,7 +210,6 @@ class Deribit(Variables):
 
     def __on_message(self, ws, message):
         message = json.loads(message)
-        # print("_________________________________________________________________________________message", message)
         if "result" in message:
             id = message["id"]
             if "access_token" in message["result"]:
@@ -296,7 +311,6 @@ class Deribit(Variables):
             "method": "public/set_heartbeat",
             "params": {"interval": 10},
         }
-        print("_____________heart")
         self.ws.send(json.dumps(msg))
 
     def __heartbeat_response(self) -> None:
@@ -348,7 +362,8 @@ class Deribit(Variables):
         # print("______________ user ticker", values)
 
     def __update_portfolio(self, values: dict) -> None:
-        account = self.Account[values["currency"]]
+        currency = (values["currency"], self.name)
+        account = self.Account[currency]
         account.orderMargin = values["initial_margin"]
         account.positionMagrin = values["maintenance_margin"]
         account.availableMargin = values["available_withdrawal_funds"]
@@ -370,7 +385,11 @@ class Deribit(Variables):
             "_________________________projected_initial_margin",
             values["projected_initial_margin"],
         )
-        print("_________________________margin_balance", values["margin_balance"])"""
+        print("_________________________margin_balance", values["margin_balance"])
+
+        print("+++++++++++++++", self, self.Account[values["currency"]])
+        for el in self.Account[values["currency"]]:
+            print(el.name, el.value)"""
 
     def __handle_order(self, values: dict) -> None:
         print("_________________________handle order", values)

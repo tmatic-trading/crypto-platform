@@ -158,8 +158,8 @@ class Init(WS, Variables):
             else:
                 robot["PNL"] = 0
             robot["lotSize"] = self.Instrument[robot["SYMBOL"]].minOrderQty
-            if robot["SYMBOL"] not in self.full_symbol_list:
-                self.full_symbol_list.append(robot["SYMBOL"])
+            # if robot["SYMBOL"] not in self.full_symbol_list:
+            #    self.full_symbol_list.append(robot["SYMBOL"])
 
         return 0
 
