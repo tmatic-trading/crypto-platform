@@ -100,7 +100,7 @@ class Agent(Deribit):
         instrument.tickSize = values["tick_size"]
         instrument.price_precision = service.precision(number=instrument.tickSize)
         instrument.minOrderQty = values["min_trade_amount"]
-        instrument.qtyStep = values["contract_size"]
+        instrument.qtyStep = instrument.minOrderQty
         instrument.precision = service.precision(number=instrument.qtyStep)
         if values["is_active"]:
             instrument.state = "Normal"
