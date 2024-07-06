@@ -220,10 +220,6 @@ class Deribit(Variables):
             elif id == "establish_heartbeat":
                 if message["result"] == "ok":
                     self.logger.info("Heartbeat established.")
-            elif id == "heartbeat_response":
-                self.pinging = service.time_converter(
-                    time=message["usOut"] / 1000000, usec=True
-                )
             else:
                 if id in self.response:
                     self.response[id]["result"] = message["result"]
@@ -239,6 +235,7 @@ class Deribit(Variables):
             id = message["id"]
             if id in self.response:
                 self.response[id]["result"] = {"error": message["error"]}
+        self.pinging = datetime.now(tz=timezone.utc)
 
     def __on_error(self, ws, error):
         """
@@ -338,7 +335,7 @@ class Deribit(Variables):
 
     def ping_pong(self):
         if datetime.now(tz=timezone.utc) - self.pinging > timedelta(
-            seconds=self.heartbeat_interval + 3
+            seconds=self.heartbeat_interval + 2
         ):
             self.logger.error("Deribit websocket heartbeat error. Reboot")
             return False
@@ -350,7 +347,6 @@ class Deribit(Variables):
         instrument = self.Instrument[symbol]
         instrument.asks = values["asks"]
         instrument.bids = values["bids"]
-        # print("_________________________update orderbook", values)
 
     def __update_ticker(self, values: dict) -> None:
         category = self.symbol_category[values["instrument_name"]]
@@ -359,7 +355,6 @@ class Deribit(Variables):
         instrument.volume24h = values["stats"]["volume"]
         if "funding_8h" in values:
             instrument.fundingRate = values["funding_8h"] * 100
-        # print("______________ user ticker", values)
 
     def __update_portfolio(self, values: dict) -> None:
         currency = (values["currency"], self.name)
