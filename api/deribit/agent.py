@@ -272,6 +272,10 @@ class Agent(Deribit):
         described at https://www.deribit.com/kb/deribit-rate-limits
         However, they have introduced a special limit for
         ``private/get_transaction_log`` to only 2 requests per second.
+        3.
+        In the transaction log, Deribit splits a trade into two transactions 
+        when a position passes through 0, so two trades with the same trade_id 
+        are merged.
         """
         trade_history = []
         startTime = service.time_converter(start_time)
@@ -334,8 +338,6 @@ class Agent(Deribit):
                                     row["execID"] = (
                                         str(row["user_seq"])
                                         + "_"
-                                        + self.name
-                                        + "_"
                                         + currency
                                     )
                                     row["leavesQty"] = row["position"]
@@ -344,10 +346,6 @@ class Agent(Deribit):
                                     row["execType"] = "Trade"
                                     row["execID"] = (
                                         str(row["trade_id"])
-                                        + "_"
-                                        + str(row["user_seq"])
-                                        + "_"
-                                        + self.name
                                         + "_"
                                         + currency
                                     )
@@ -370,10 +368,6 @@ class Agent(Deribit):
                                 row["execType"] = "Trade"
                                 row["execID"] = (
                                     str(row["trade_id"])
-                                    + "_"
-                                    + str(row["trade_seq"])
-                                    + "_"
-                                    + self.name
                                     + "_"
                                     + currency
                                 )
@@ -414,7 +408,33 @@ class Agent(Deribit):
                                     row["lastQty"] = -row["lastQty"]
                             row["commission"] = "Not supported"
                             # row["price"] = "Not supported"
-                            trade_history.append(row)
+                        if res and data_type == "logs":
+
+                            # Merging transactions with the same trade_id
+
+                            transaction = OrderedDict()                         
+                            for row in res:
+                                if row['type'] == "trade":
+                                    if row["trade_id"] in transaction:
+                                        transaction[row["trade_id"]]["amount"] += row["amount"]
+                                        transaction[row["trade_id"]]["execFee"] += row["execFee"] 
+                                        transaction[row["trade_id"]]["lastQty"] += row["lastQty"]
+                                    else:
+                                        transaction[row["trade_id"]] = row
+                                else:
+                                    transaction[row["execID"]] = row
+                                
+                                if "BTC-28JUN24" in row["instrument_name"]:
+                                    print("----------------------------")
+                                    for key, value in row.items():
+                                        if key in ['side', 'trade_id', 'user_seq', 'order_id', 'amount', 'price', 'id', 'transactTime', 'type', 'execFee', 'lastQty']:
+                                            print(key, value)
+                                    print("---")
+                                    print(transaction[row["trade_id"]])
+
+                            trade_history += list(transaction.values())
+                        else:
+                            trade_history += res
                     else:
                         self.logger.error(
                             "The list was expected when the trading history were loaded, but for the currency "
@@ -429,7 +449,7 @@ class Agent(Deribit):
                 if data_type == "logs" and continuation is None:
                     break
             if cursor > -1:
-                success[num] = "success"
+                success[num] = "success"         
 
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             endTime = startTime + step
@@ -506,10 +526,13 @@ class Agent(Deribit):
                 row["side"],
                 row["lastQty"],
                 row["lastPx"],
-                # row["lastQty"],
+                "___lastQty", 
+                row["lastQty"],
                 row["execID"],
             )
         print("___________________________FINISH", len(trade_history))
+
+        #os.abort()
 
         return trade_history
 

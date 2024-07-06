@@ -11,14 +11,7 @@ class Listing(str, Enum):
     GET_INSTRUMENT_DATA = "public/get_instrument"
     TRADE_BUCKETED = "public/get_tradingview_chart_data"
     """
-    GET_INSTRUMENT_DATA = "instrument?symbol={SYMBOL}"
     GET_POSITION = "position?filter=%7B%22symbol%22%3A%22{SYMBOL}%22%7D"
-    TRADE_BUCKETED = (
-        "trade/bucketed?binSize={TIMEFRAME}&count=1000&reverse="
-        + "false&partial=true&symbol={SYMBOL}&columns=open%2C%20high%2C%20low%2C"
-        + "%20close&startTime={TIME}"
-    )
-
     URGENT_ANNOUNCEMENT = "announcement/urgent"
     ORDER_ACTIONS = "order"
     """

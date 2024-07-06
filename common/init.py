@@ -155,8 +155,8 @@ class Init(WS, Variables):
                 for row in history:
                     data = Function.select_database(  # read_database
                         self,
-                        "select EXECID from coins where EXECID='%s' and account=%s"
-                        % (row["execID"], self.user_id),
+                        "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
+                        % (row["execID"], self.user_id, self.name),
                     )
                     if not data:
                         Function.transaction(self, row=row, info=" History ")
