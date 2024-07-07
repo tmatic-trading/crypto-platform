@@ -215,7 +215,10 @@ class Agent(Deribit):
                     instrument.currentQty = -instrument.currentQty
                 instrument.avgEntryPrice = values["average_price"]
                 instrument.unrealisedPnl = values["total_profit_loss"]
-                instrument.marginCallPrice = values["estimated_liquidation_price"]
+                if "estimated_liquidation_price" in values:
+                    instrument.marginCallPrice = values["estimated_liquidation_price"]
+                else:
+                    instrument.marginCallPrice = "None"
                 instrument.state = "None"
         else:
             self.logger.error(
@@ -423,15 +426,6 @@ class Agent(Deribit):
                                         transaction[row["trade_id"]] = row
                                 else:
                                     transaction[row["execID"]] = row
-                                
-                                if "BTC-28JUN24" in row["instrument_name"]:
-                                    print("----------------------------")
-                                    for key, value in row.items():
-                                        if key in ['side', 'trade_id', 'user_seq', 'order_id', 'amount', 'price', 'id', 'transactTime', 'type', 'execFee', 'lastQty']:
-                                            print(key, value)
-                                    print("---")
-                                    print(transaction[row["trade_id"]])
-
                             trade_history += list(transaction.values())
                         else:
                             trade_history += res
