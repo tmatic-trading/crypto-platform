@@ -5,7 +5,8 @@ from datetime import datetime
 from tkinter import ttk
 
 from common.variables import Variables as var
-#from display.robots_menu import Variables as robots_menu
+
+# from display.robots_menu import Variables as robots_menu
 
 if platform.system() == "Windows":
     from ctypes import windll
@@ -146,7 +147,6 @@ class Variables:
     # text_info.configure(state="disabled")
     bg_color = text_info["background"]
 
-
     def back_to_main():
         Variables.menu_robots.pack_forget()
         Variables.pw_rest1.pack(fill="both", expand="yes")
@@ -157,21 +157,23 @@ class Variables:
     menu_robots = tk.Frame(menu_frame, bg="red")
     label_robots = tk.Label(menu_robots, text="Robots Menu")
     label_robots.pack()
-    label_robots_dev = tk.Label(menu_robots, text="This page is under development", fg="red")
+    label_robots_dev = tk.Label(
+        menu_robots, text="This page is under development", fg="red"
+    )
     label_robots_dev.pack()
-    robots_button_back = tk.Button(menu_robots, bg=bg_select_color, text="Back", command=lambda: Variables.back_to_main())
+    robots_button_back = tk.Button(
+        menu_robots,
+        bg=bg_select_color,
+        text="Back",
+        command=lambda: Variables.back_to_main(),
+    )
     robots_button_back.pack()
-
-
 
     # This technical PanedWindow contains most frames and widgets
     pw_rest1 = tk.PanedWindow(
         menu_frame, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
     )
     pw_rest1.pack(fill="both", expand="yes")
-
-
-
 
     # MENU widget
     def on_menu_select(value):
@@ -181,15 +183,13 @@ class Variables:
         print("Selected:", value)
 
     menu_button = tk.Menubutton(frame_state, text="MENU", relief=tk.RAISED)
-    #menu_button.pack(side="left", padx=10)
+    # menu_button.pack(side="left", padx=10)
     main_menu = tk.Menu(menu_button, tearoff=0)
     menu_button.config(menu=main_menu)
-    for option in ["New Robot"]:#, "Reload All", "Settings", "Trading ON", "About"]:
-        main_menu.add_command(label=option, command=lambda value=option: Variables.on_menu_select(value))
-
-
-
-
+    for option in ["New Robot"]:  # , "Reload All", "Settings", "Trading ON", "About"]:
+        main_menu.add_command(
+            label=option, command=lambda value=option: Variables.on_menu_select(value)
+        )
 
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)

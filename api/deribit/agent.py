@@ -8,7 +8,9 @@ from typing import Union
 
 import services as service
 from api.http import Send
+from common.variables import Variables as var
 
+from .error import Status
 from .path import Listing, Matching_engine
 from .ws import Deribit
 
@@ -276,8 +278,8 @@ class Agent(Deribit):
         However, they have introduced a special limit for
         ``private/get_transaction_log`` to only 2 requests per second.
         3.
-        In the transaction log, Deribit splits a trade into two transactions 
-        when a position passes through 0, so two trades with the same trade_id 
+        In the transaction log, Deribit splits a trade into two transactions
+        when a position passes through 0, so two trades with the same trade_id
         are merged.
         """
         trade_history = []
@@ -339,18 +341,14 @@ class Agent(Deribit):
                                 if row["type"] == "settlement":
                                     row["execType"] = "Funding"
                                     row["execID"] = (
-                                        str(row["user_seq"])
-                                        + "_"
-                                        + currency
+                                        str(row["user_seq"]) + "_" + currency
                                     )
                                     row["leavesQty"] = row["position"]
                                     row["execFee"] = row["total_interest_pl"]
                                 elif row["type"] == "trade":
                                     row["execType"] = "Trade"
                                     row["execID"] = (
-                                        str(row["trade_id"])
-                                        + "_"
-                                        + currency
+                                        str(row["trade_id"]) + "_" + currency
                                     )
                                     row["orderID"] = (
                                         row["order_id"]
@@ -369,11 +367,7 @@ class Agent(Deribit):
                                     row["side"] = "Sell"
                             else:
                                 row["execType"] = "Trade"
-                                row["execID"] = (
-                                    str(row["trade_id"])
-                                    + "_"
-                                    + currency
-                                )
+                                row["execID"] = str(row["trade_id"]) + "_" + currency
                                 row["orderID"] = row["order_id"] + self.name + currency
                                 row[
                                     "leavesQty"
@@ -412,16 +406,21 @@ class Agent(Deribit):
                             row["commission"] = "Not supported"
                             # row["price"] = "Not supported"
                         if res and data_type == "logs":
-
                             # Merging transactions with the same trade_id
 
-                            transaction = OrderedDict()                         
+                            transaction = OrderedDict()
                             for row in res:
-                                if row['type'] == "trade":
+                                if row["type"] == "trade":
                                     if row["trade_id"] in transaction:
-                                        transaction[row["trade_id"]]["amount"] += row["amount"]
-                                        transaction[row["trade_id"]]["execFee"] += row["execFee"] 
-                                        transaction[row["trade_id"]]["lastQty"] += row["lastQty"]
+                                        transaction[row["trade_id"]]["amount"] += row[
+                                            "amount"
+                                        ]
+                                        transaction[row["trade_id"]]["execFee"] += row[
+                                            "execFee"
+                                        ]
+                                        transaction[row["trade_id"]]["lastQty"] += row[
+                                            "lastQty"
+                                        ]
                                     else:
                                         transaction[row["trade_id"]] = row
                                 else:
@@ -440,10 +439,13 @@ class Agent(Deribit):
                     cursor = len(res)
                     if cursor:
                         end = res[-1]["timestamp"]
+                else:
+                    cursor = -1
+                    break
                 if data_type == "logs" and continuation is None:
                     break
             if cursor > -1:
-                success[num] = "success"         
+                success[num] = "success"
 
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             endTime = startTime + step
@@ -520,19 +522,31 @@ class Agent(Deribit):
                 row["side"],
                 row["lastQty"],
                 row["lastPx"],
-                "___lastQty", 
+                "___lastQty",
                 row["lastQty"],
                 row["execID"],
             )
         print("___________________________FINISH", len(trade_history))
 
-        #os.abort()
+        # os.abort()
 
         return trade_history
 
     def trade_bucketed(
         self, symbol: tuple, start_time: datetime, timeframe: Union[int, str]
     ) -> Union[list, None]:
+        """
+        Returns kline data in in 1000 rows. Available timeframes: 1, 3, 5, 10,
+        15, 30, 60, 120, 180, 360, 720, 1D
+
+        If None is returned, the request failed. Reboot.
+
+        Parameters
+        ----------
+            symbol - instrument symbol.
+            start_time - beginning of period
+            timeframe - time frame
+        """
         path = Listing.TRADE_BUCKETED
         # service.time_converter(datetime.now(tz=timezone.utc))
         id = f"{path}_{symbol}"
@@ -551,28 +565,68 @@ class Agent(Deribit):
         text = " - symbol - " + str(symbol) + " - interval - " + str(timeframe)
         res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
         if res:
-            klines = []
-            for step in range(len(res["ticks"])):
-                klines.append(
-                    {
-                        "timestamp": service.time_converter(
-                            time=res["ticks"][step] / 1000
-                        ),
-                        "open": res["open"][step],
-                        "high": res["high"][step],
-                        "low": res["low"][step],
-                        "close": res["close"][step],
-                    }
+            if isinstance(res, dict):
+                klines = []
+                for step in range(len(res["ticks"])):
+                    klines.append(
+                        {
+                            "timestamp": service.time_converter(
+                                time=res["ticks"][step] / 1000
+                            ),
+                            "open": res["open"][step],
+                            "high": res["high"][step],
+                            "low": res["low"][step],
+                            "close": res["close"][step],
+                        }
+                    )
+                return klines
+            else:
+                self.logger.error(
+                    "A dict was expected when loading klines, but was not received. Reboot"
                 )
-            return klines
+
+    """def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
+        side = "Buy" if quantity > 0 else "Sell"
+        return self.session.place_order(
+            category=symbol[1],
+            symbol=symbol[0],
+            side=side,
+            orderType="Limit",
+            qty=str(abs(quantity)),
+            price=str(price),
+            orderLinkId=clOrdID,
+        )
+
+    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
+        return self.session.amend_order(
+            category=symbol[1],
+            symbol=symbol[0],
+            orderId=orderID,
+            qty=str(quantity),
+            price=str(price),
+        )
+
+    def remove_order(self, order: dict):
+        return self.session.cancel_order(
+            category=order["SYMBOL"][1],
+            symbol=order["SYMBOL"][0],
+            orderId=order["orderID"],
+        )"""
 
     def ws_request(
         self, path: str, id: str, params: dict, text: str, currency="BTC"
-    ) -> Union[list, dict, None]:
+    ) -> Union[str, list, dict, None]:
         """
-        Requests data over websocket connection. If an error occurs, it
-        repeats the request. Request limits are taken into account according
-        to https://www.deribit.com/kb/deribit-rate-limits
+        Requests data over websocket connection. Request limits are taken
+        into account according to
+        https://www.deribit.com/kb/deribit-rate-limits
+
+        Errors
+        ------
+            WAIT - the request is non-fatal, wait and try again.
+            FATAL - reboot.
+            IGNORE - the error only appears on the screen and does not cause a
+            reboot.
 
         Parameters
         ----------
@@ -632,18 +686,50 @@ class Agent(Deribit):
                 if res:
                     if "error" in res:
                         tm = 0.5
-                        self.logger.warning(
-                            "On request "
-                            + path
-                            + text
-                            + " - error - "
-                            + res["error"]["message"]
-                            + " - wait "
-                            + str(tm)
-                            + " sec"
+                        error_message = res["error"]["message"]
+                        error_code = res["error"]["code"]
+                        logger_message = (
+                            "On request " + path + text + " - error - " + error_message
                         )
-                        time.sleep(tm)
-                        break
+                        if error_code in Status.WAIT:
+                            logger_message += f" - wait {tm} sec"
+                            self.logger.warning(logger_message)
+                            time.sleep(tm)
+                            break
+                        elif error_code in Status.FATAL:
+                            logger_message += " - fatal. Reboot"
+                            self.logger.error(logger_message)
+                            var.queue_info.put(
+                                {
+                                    "market": self.name,
+                                    "message": logger_message,
+                                    "time": datetime.now(tz=timezone.utc),
+                                    "warning": True,
+                                }
+                            )
+                            return
+                        elif error_code in Status.IGNORE:
+                            self.logger.warning(logger_message)
+                            var.queue_info.put(
+                                {
+                                    "market": self.name,
+                                    "message": logger_message,
+                                    "time": datetime.now(tz=timezone.utc),
+                                }
+                            )
+                            return "ignore"
+                        else:
+                            logger_message = " unexpected error ", logger_message
+                            self.logger.warning(logger_message)
+                            var.queue_info.put(
+                                {
+                                    "market": self.name,
+                                    "message": logger_message,
+                                    "time": datetime.now(tz=timezone.utc),
+                                    "warning": True,
+                                }
+                            )
+                            return "ignore"
                     else:
                         return res
             else:

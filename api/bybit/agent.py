@@ -318,7 +318,7 @@ class Agent(Bybit):
         print("___urgent_announcement")
         self.exit()
 
-    def place_limit(self, quantity: int, price: float, clOrdID: str, symbol: tuple):
+    def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
         side = "Buy" if quantity > 0 else "Sell"
         return self.session.place_order(
             category=symbol[1],
@@ -330,7 +330,7 @@ class Agent(Bybit):
             orderLinkId=clOrdID,
         )
 
-    def replace_limit(self, quantity: int, price: float, orderID: str, symbol: tuple):
+    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
         return self.session.amend_order(
             category=symbol[1],
             symbol=symbol[0],
