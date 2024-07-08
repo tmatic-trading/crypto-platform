@@ -605,9 +605,9 @@ class Agent(Deribit):
         }
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
     
-    """def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
-        path = Listing.PLACE_LIMIT.format(SIDE=side)
-        id = f"{path}_{clOrdID}"
+    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
+        path = Listing.REPLACE_LIMIT
+        id = f"{path}_{orderID}"
         text = (
             " - symbol - "
             + str(symbol)
@@ -617,21 +617,13 @@ class Agent(Deribit):
             + str(abs(quantity))
         )
         params = {
-            "instrument_name": symbol[0],
-            "price": price,
-            "amount": abs(quantity),
-            "type": "limit",
-            "label": clOrdID,
+            "order_id": orderID,
+            "amount": quantity,
+            "price": price
         }
-        return self.session.amend_order(
-            category=symbol[1],
-            symbol=symbol[0],
-            orderId=orderID,
-            qty=str(quantity),
-            price=str(price),
-        )
+        return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
-    def remove_order(self, order: dict):
+    """def remove_order(self, order: dict):
         return self.session.cancel_order(
             category=order["SYMBOL"][1],
             symbol=order["SYMBOL"][0],
