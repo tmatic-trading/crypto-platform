@@ -548,7 +548,6 @@ class Agent(Deribit):
             timeframe - time frame
         """
         path = Listing.TRADE_BUCKETED
-        # service.time_converter(datetime.now(tz=timezone.utc))
         id = f"{path}_{symbol}"
         start_timestamp = service.time_converter(time=start_time)
         if isinstance(timeframe, int):
@@ -585,19 +584,45 @@ class Agent(Deribit):
                     "A dict was expected when loading klines, but was not received. Reboot"
                 )
 
-    """def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
-        side = "Buy" if quantity > 0 else "Sell"
-        return self.session.place_order(
-            category=symbol[1],
-            symbol=symbol[0],
-            side=side,
-            orderType="Limit",
-            qty=str(abs(quantity)),
-            price=str(price),
-            orderLinkId=clOrdID,
+    def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
+        side = "buy" if quantity > 0 else "sell"
+        path = Listing.PLACE_LIMIT.format(SIDE=side)
+        id = f"{path}_{clOrdID}"
+        text = (
+            " - symbol - "
+            + str(symbol)
+            + " - price - "
+            + str(price)
+            + " - quantity - "
+            + str(abs(quantity))
         )
-
-    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
+        params = {
+            "instrument_name": symbol[0],
+            "price": price,
+            "amount": abs(quantity),
+            "type": "limit",
+            "label": clOrdID,
+        }
+        return Agent.ws_request(self, path=path, id=id, params=params, text=text)
+    
+    """def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
+        path = Listing.PLACE_LIMIT.format(SIDE=side)
+        id = f"{path}_{clOrdID}"
+        text = (
+            " - symbol - "
+            + str(symbol)
+            + " - price - "
+            + str(price)
+            + " - quantity - "
+            + str(abs(quantity))
+        )
+        params = {
+            "instrument_name": symbol[0],
+            "price": price,
+            "amount": abs(quantity),
+            "type": "limit",
+            "label": clOrdID,
+        }
         return self.session.amend_order(
             category=symbol[1],
             symbol=symbol[0],
@@ -640,10 +665,12 @@ class Agent(Deribit):
         account = self.Account[(currency, self.name)]
         limit = account.limits
         if path in Matching_engine.PATHS:
-            l = limit["matching_engine"]["trading"]
-            limits = l["total"]
-            maximum_quotes = l["maximum_quotes"]
-            cancel_all = l["cancel_all"]
+            lim = limit["matching_engine"]
+            limits = lim["trading"]["total"]
+            if "spot" in lim:
+                limits = lim["spot"]
+            maximum_quotes = lim["maximum_quotes"]
+            cancel_all = lim["cancel_all"]
             scheme = self.scheme["matching_engine"]
         else:
             if path == "private/get_transaction_log":

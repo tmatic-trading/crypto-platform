@@ -11,6 +11,7 @@ import services as service
 from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
+from api.deribit.ws import Deribit
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
@@ -22,6 +23,7 @@ disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
 Bitmex.transaction = Function.transaction
 Bybit.transaction = Function.transaction
+Deribit.transaction = Function.transaction
 disp.label_f9.config(bg=disp.red_color)
 
 

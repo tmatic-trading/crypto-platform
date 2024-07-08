@@ -14,7 +14,7 @@ from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
-from services import exceptions_manager
+from services import display_exception
 
 
 class Deribit(Variables):
@@ -182,7 +182,7 @@ class Deribit(Variables):
             callback=self.__update_portfolio,
         )
 
-        # Orders
+        '''# Orders
 
         channels = ["user.orders.any.any.raw"]
         self.logger.info("ws subscription - Orders - channel - " + str(channels[0]))
@@ -192,7 +192,7 @@ class Deribit(Variables):
             channels=channels,
             id="subscription",
             callback=self.__handle_order,
-        )
+        )'''
 
         # User changes (trades, positions, orders)
 
@@ -209,33 +209,37 @@ class Deribit(Variables):
         )
 
     def __on_message(self, ws, message):
-        message = json.loads(message)
-        if "result" in message:
-            id = message["id"]
-            if "access_token" in message["result"]:
-                self.access_token = message["result"]["access_token"]
-                self.refresh_token = message["result"]["refresh_token"]
-            elif id == "subscription":
-                self.subscriptions.remove(str(message["result"]))
-            elif id == "establish_heartbeat":
-                if message["result"] == "ok":
-                    self.logger.info("Heartbeat established.")
-            else:
+        try:
+            message = json.loads(message)
+            if "result" in message:
+                id = message["id"]
+                if "access_token" in message["result"]:
+                    self.access_token = message["result"]["access_token"]
+                    self.refresh_token = message["result"]["refresh_token"]
+                elif id == "subscription":
+                    self.subscriptions.remove(str(message["result"]))
+                elif id == "establish_heartbeat":
+                    if message["result"] == "ok":
+                        self.logger.info("Heartbeat established.")
+                else:
+                    if id in self.response:
+                        self.response[id]["result"] = message["result"]
+            elif "params" in message:
+                if message["method"] == "subscription":
+                    self.callback_directory[message["params"]["channel"]](
+                        values=message["params"]["data"]
+                    )
+                elif "type" in message["params"]:
+                    if message["params"]["type"] == "test_request":
+                        self.__heartbeat_response()
+            elif "error" in message:
+                id = message["id"]
                 if id in self.response:
-                    self.response[id]["result"] = message["result"]
-        elif "params" in message:
-            if message["method"] == "subscription":
-                self.callback_directory[message["params"]["channel"]](
-                    values=message["params"]["data"]
-                )
-            elif "type" in message["params"]:
-                if message["params"]["type"] == "test_request":
-                    self.__heartbeat_response()
-        elif "error" in message:
-            id = message["id"]
-            if id in self.response:
-                self.response[id]["result"] = {"error": message["error"]}
-        self.pinging = datetime.now(tz=timezone.utc)
+                    self.response[id]["result"] = {"error": message["error"]}
+            self.pinging = datetime.now(tz=timezone.utc)
+        except Exception as exception:
+            display_exception(exception)
+            self.logNumFatal = 1001
 
     def __on_error(self, ws, error):
         """
@@ -391,6 +395,43 @@ class Deribit(Variables):
 
     def __update_user_changes(self, values: dict) -> None:
         print("______________ user changes", values)
-        for key, value in values.items():
+        for key, values in values.items():
+            if key == "orders":
+                for value in values:
+                    category = self.symbol_category[value["instrument_name"]]
+                    symbol = (value["instrument_name"], category, self.name)
+                    side = "Sell" if value["direction"] == "sell" else "Buy"
+                    order_state = ""
+                    if value["order_state"] == "open":
+                        order_state = "New"
+                    elif value["order_state"] == "cancelled":
+                        order_state = "Canceled"
+                    if value["replaced"]:
+                        order_state = "Replaced"
+                    if order_state:
+                        row = {
+                            "leavesQty": value["amount"] - value["filled_amount"],
+                            "price": float(value["price"]),
+                            "symbol": symbol,
+                            "transactTime": service.time_converter(
+                                int(value["last_update_timestamp"]) / 1000, usec=True
+                            ),
+                            "side": side,
+                            "orderID": value["order_id"],
+                            "execType": order_state,
+                            "settlCurrency": self.Instrument[symbol].settlCurrency,
+                            "orderQty": float(value["amount"]),
+                            "cumQty": float(value["filled_amount"]),
+                        }
+                        if value["label"]:
+                            row["clOrdID"] = value["label"]
+                        self.transaction(row=row)
             print("_________________", key)
-            print(value)
+            print(values)
+
+    def transaction(self, **kwargs):
+        """
+        This method is replaced by transaction() from functions.py after the
+        application is launched.
+        """
+        pass

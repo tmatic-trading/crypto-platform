@@ -6,7 +6,6 @@ from tkinter import ttk
 
 from common.variables import Variables as var
 
-
 if platform.system() == "Windows":
     from ctypes import windll
 
@@ -172,7 +171,7 @@ class Variables:
     # menu_button.pack(side="left", padx=10)
     main_menu = tk.Menu(menu_button, tearoff=0)
     menu_button.config(menu=main_menu)
-    for option in ["New Robot" , "Reload All", "Settings", "Trading ON", "About"]:
+    for option in ["New Robot", "Reload All", "Settings", "Trading ON", "About"]:
         main_menu.add_command(
             label=option, command=lambda value=option: Variables.on_menu_select(value)
         )
