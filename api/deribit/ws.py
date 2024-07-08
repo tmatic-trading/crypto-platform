@@ -182,7 +182,7 @@ class Deribit(Variables):
             callback=self.__update_portfolio,
         )
 
-        '''# Orders
+        """# Orders
 
         channels = ["user.orders.any.any.raw"]
         self.logger.info("ws subscription - Orders - channel - " + str(channels[0]))
@@ -192,7 +192,7 @@ class Deribit(Variables):
             channels=channels,
             id="subscription",
             callback=self.__handle_order,
-        )'''
+        )"""
 
         # User changes (trades, positions, orders)
 
@@ -394,7 +394,7 @@ class Deribit(Variables):
         print("_________________________handle order", values)
 
     def __update_user_changes(self, values: dict) -> None:
-        print("______________ user changes", values)
+        print("______________ user changes")
         for key, values in values.items():
             if key == "orders":
                 for value in values:
@@ -406,7 +406,7 @@ class Deribit(Variables):
                         order_state = "New"
                     elif value["order_state"] == "cancelled":
                         order_state = "Canceled"
-                    if value["replaced"]:
+                    if order_state == "New" and value["replaced"]:
                         order_state = "Replaced"
                     if order_state:
                         row = {

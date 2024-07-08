@@ -12,6 +12,7 @@ class Listing(str, Enum):
     TRADE_BUCKETED = "public/get_tradingview_chart_data"
     PLACE_LIMIT = "private/{SIDE}"
     REPLACE_LIMIT = "private/edit"
+    REMOVE_ORDER = "private/cancel"
     """
     GET_POSITION = "position?filter=%7B%22symbol%22%3A%22{SYMBOL}%22%7D"
     URGENT_ANNOUNCEMENT = "announcement/urgent"

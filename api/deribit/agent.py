@@ -604,31 +604,27 @@ class Agent(Deribit):
             "label": clOrdID,
         }
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
-    
+
     def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
         path = Listing.REPLACE_LIMIT
         id = f"{path}_{orderID}"
         text = (
             " - symbol - "
-            + str(symbol)
+            + str(symbol[0])
             + " - price - "
             + str(price)
             + " - quantity - "
             + str(abs(quantity))
         )
-        params = {
-            "order_id": orderID,
-            "amount": quantity,
-            "price": price
-        }
+        params = {"order_id": orderID, "amount": quantity, "price": price}
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
-    """def remove_order(self, order: dict):
-        return self.session.cancel_order(
-            category=order["SYMBOL"][1],
-            symbol=order["SYMBOL"][0],
-            orderId=order["orderID"],
-        )"""
+    def remove_order(self, order: dict):
+        path = Listing.REMOVE_ORDER
+        id = f"{path}_{order['orderID']}"
+        text = " - symbol - " + str(order["SYMBOL"][0])
+        params = {"order_id": order["orderID"]}
+        return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
     def ws_request(
         self, path: str, id: str, params: dict, text: str, currency="BTC"
