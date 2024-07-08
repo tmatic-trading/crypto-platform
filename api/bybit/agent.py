@@ -314,10 +314,6 @@ class Agent(Bybit):
 
         return 0
 
-    '''def urgent_announcement(self):
-        print("___urgent_announcement")
-        self.exit()'''
-
     def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
         side = "Buy" if quantity > 0 else "Sell"
         return self.session.place_order(

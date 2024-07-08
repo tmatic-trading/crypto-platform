@@ -14,7 +14,6 @@ class Listing(str, Enum):
     TRADING_HISTORY = (
         "execution/tradeHistory?count={HISTCOUNT}&reverse=false" + "&startTime={TIME}"
     )
-    #URGENT_ANNOUNCEMENT = "announcement/urgent"
     ORDER_ACTIONS = "order"
     GET_POSITION_INFO = "position"
     OPEN_ORDERS = "order?filter=%7B%22open%22%3A%20true%7D&reverse=false"

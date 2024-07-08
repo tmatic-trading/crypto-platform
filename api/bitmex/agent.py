@@ -304,14 +304,6 @@ class Agent(Bitmex):
 
         return 0
 
-    def urgent_announcement(self) -> list:
-        """
-        Public announcements of the exchange
-        """
-        path = Listing.URGENT_ANNOUNCEMENT
-
-        return Send.request(self, path=path, verb="GET")
-
     def place_limit(
         self, quantity: int, price: float, clOrdID: str, symbol: tuple
     ) -> Union[dict, None]:

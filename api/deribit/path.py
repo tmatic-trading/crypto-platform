@@ -13,11 +13,6 @@ class Listing(str, Enum):
     PLACE_LIMIT = "private/{SIDE}"
     REPLACE_LIMIT = "private/edit"
     REMOVE_ORDER = "private/cancel"
-    """
-    GET_POSITION = "position?filter=%7B%22symbol%22%3A%22{SYMBOL}%22%7D"
-    URGENT_ANNOUNCEMENT = "announcement/urgent"
-    ORDER_ACTIONS = "order"
-    """
 
     def __str__(self) -> str:
         return self.value

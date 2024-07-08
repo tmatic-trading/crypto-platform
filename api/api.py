@@ -179,12 +179,6 @@ class WS(Variables):
 
         return Agents[self.name].value.open_orders(self)
 
-    def urgent_announcement(self: Markets) -> list:
-        """
-        Public announcements of the exchange
-        """
-
-        return Agents[self.name].value.urgent_announcement(self)
 
     def get_funds(self: Markets) -> list:
         """
