@@ -84,7 +84,26 @@ class Variables:
     frame_state.grid(row=0, column=0, sticky="NSWE")
     frame_left.grid_columnconfigure(0, weight=1)
     frame_left.grid_rowconfigure(0, weight=0)
-    label_trading = tk.Label(frame_state, text=" TRADING: ")
+
+    # Menu widget
+    menu_button = tk.Menubutton(frame_state, text=" MENU ", relief=tk.FLAT, padx=0, pady=0)
+    menu_button.pack(side="left", padx=4)
+    main_menu = tk.Menu(menu_button, tearoff=0)
+    menu_button.config(menu=main_menu)
+    for option in ["New Robot", "Reload All", "Settings", "Trading ON", "About"]:
+        main_menu.add_command(
+            label=option, command=lambda value=option: Variables.on_menu_select(value)
+        )
+    def on_menu_select(value):
+        if value == "New Robot":
+            Variables.pw_rest1.pack_forget()
+            Variables.menu_robots.pack(fill="both", expand="yes")
+        print("Selected:", value)
+
+    menu_delimiter = tk.Label(frame_state, text="|")
+    menu_delimiter.pack(side="left", padx=0)
+
+    label_trading = tk.Label(frame_state, text="  TRADING: ")
     label_trading.pack(side="left")
     label_f9 = tk.Label(
         frame_state, width=3, text="OFF", fg="white", bg="red", anchor="c"
@@ -145,36 +164,15 @@ class Variables:
     # text_info.configure(state="disabled")
     bg_color = text_info["background"]
 
-    def back_to_main():
-        Variables.menu_robots.pack_forget()
-        Variables.pw_rest1.pack(fill="both", expand="yes")
-
     menu_frame = tk.Frame(pw_info_rest)
     menu_frame.pack(fill="both", expand="yes")
-
-    menu_robots = tk.Frame(menu_frame, bg="red")
+    menu_robots = tk.Frame(menu_frame)
 
     # This technical PanedWindow contains most frames and widgets
     pw_rest1 = tk.PanedWindow(
         menu_frame, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
     )
     pw_rest1.pack(fill="both", expand="yes")
-
-    # MENU widget
-    def on_menu_select(value):
-        if value == "New Robot":
-            Variables.pw_rest1.pack_forget()
-            Variables.menu_robots.pack(fill="both", expand="yes")
-        print("Selected:", value)
-
-    menu_button = tk.Menubutton(frame_state, text="MENU", relief=tk.RAISED)
-    # menu_button.pack(side="left", padx=10)
-    main_menu = tk.Menu(menu_button, tearoff=0)
-    menu_button.config(menu=main_menu)
-    for option in ["New Robot", "Reload All", "Settings", "Trading ON", "About"]:
-        main_menu.add_command(
-            label=option, command=lambda value=option: Variables.on_menu_select(value)
-        )
 
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
@@ -301,7 +299,7 @@ class Variables:
     pw_rest3.add(pw_rest4)
     pw_rest3.bind(
         "<Configure>",
-        lambda event: resize_width(
+        lambda event: Variables.resize_width(
             event, Variables.pw_rest3, Variables.window_width // 4.5, 3
         ),
     )
@@ -316,7 +314,7 @@ class Variables:
     pw_rest1.add(pw_rest2)
     pw_rest1.bind(
         "<Configure>",
-        lambda event: resize_width(
+        lambda event: Variables.resize_width(
             event, Variables.pw_rest1, Variables.window_width // 9.5, 6
         ),
     )
@@ -331,7 +329,7 @@ class Variables:
     pw_main.add(frame_right)
     pw_main.bind(
         "<Configure>",
-        lambda event: resize_width(event, Variables.pw_main, Variables.window_width, 1),
+        lambda event: Variables.resize_width(event, Variables.pw_main, Variables.window_width, 1),
     )
 
     refresh_var = None
@@ -344,6 +342,14 @@ class Variables:
     order_window_trigger = "off"
     table_limit = 200
     refresh_handler_orderbook = False
+
+    def resize_width(event, pw, start_width, min_ratio):
+        ratio = pw.winfo_width() / start_width
+        if ratio < min_ratio:
+            my_width = pw.winfo_width() // min_ratio
+        else:
+            my_width = start_width
+        pw.paneconfig(pw.panes()[0], width=my_width)
 
 
 class TreeviewTable(Variables):
@@ -591,15 +597,6 @@ def resize_col(event, pw, ratio):
 
 def resize_height(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], height=pw.winfo_height() // ratio)
-
-
-def resize_width(event, pw, start_width, min_ratio):
-    ratio = pw.winfo_width() / start_width
-    if ratio < min_ratio:
-        my_width = pw.winfo_width() // min_ratio
-    else:
-        my_width = start_width
-    pw.paneconfig(pw.panes()[0], width=my_width)
 
 
 def trim_col_width(tview, cols):
