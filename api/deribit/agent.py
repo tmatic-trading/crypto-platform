@@ -513,8 +513,7 @@ class Agent(Deribit):
                 break
             startTime = endTime
         trade_history.sort(key=lambda x: x["transactTime"])
-
-        for row in trade_history:
+        '''for row in trade_history:
             print(
                 row["transactTime"],
                 row["execType"],
@@ -526,7 +525,7 @@ class Agent(Deribit):
                 row["lastQty"],
                 row["execID"],
             )
-        print("___________________________FINISH", len(trade_history))
+        print("___________________________FINISH", len(trade_history))'''
 
         # os.abort()
 
@@ -747,6 +746,7 @@ class Agent(Deribit):
                             return "ignore"
                     else:
                         return res
+                time.sleep(0.05)                
             else:
                 self.logger.error(
                     "No response to websocket "

@@ -298,10 +298,10 @@ class Send(Variables):
                     if self.logNumFatal < 1000:
                         self.logNumFatal = 0
                     break
-            if path == "/announcement/urgent":
+            '''if path == "/announcement/urgent":
                 break
-            else:
-                time.sleep(3)
+            else:'''
+            time.sleep(2)
         self.time_response = datetime.now(tz=timezone.utc)
         if response:
             return response.json()
