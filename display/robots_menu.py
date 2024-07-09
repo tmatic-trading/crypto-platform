@@ -33,6 +33,53 @@ robots_left = tk.Frame(pw_menu_robots)
 #robots_left.pack(fill="both", expand="yes")
 robots_right = tk.Frame(pw_menu_robots)#, bg=disp.bg_color)
 
+
+
+
+
+
+
+def highlight_row(event):
+    tree = event.widget
+    item = tree.identify_row(event.y)
+    tree.tk.call(tree, "tag", "remove", "highlight")
+    tree.tk.call(tree, "tag", "add", "highlight", item)
+    tree.tk.call(tree, "tag", "remove", "selected")
+
+
+menu_table = TreeviewTable(
+        frame=robots_left,
+        name="menu",
+        title=["MENU"],
+        size=6,
+        #bind=handler_orderbook,
+        style="menu.Treeview", 
+        multicolor=False,
+        autoscroll=True,
+    )
+menu_table.tree.tag_configure('highlight', background=disp.bg_select_color)
+menu_table.tree.bind("<Motion>", highlight_row)
+
+jobs = ["Udate", "Check syntax", "Start", "Backtest", "Delete", "Back"]
+
+for num, name in enumerate(jobs):
+    insert = [name]
+    menu_table.update(row=num, values=insert)
+    menu_table.tree.tag_bind(num, '<Motion>', highlight_row)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bot_title = tk.Frame(robots_right)
 bot_title.grid(row=0, column=0, sticky="W", columnspan=2)
 bot_title_label = tk.Label(bot_title, text="New Robot (This page is under development)", fg="red")
@@ -78,12 +125,12 @@ def create_bot(value):
 
 
 robots_button_back = tk.Button(
-    robots_left,
+    robots_right,
     bg=disp.bg_select_color,
     text="Back",
     command=lambda: back_to_main(),
 )
-robots_button_back.pack()
+robots_button_back.grid(row=4, column=0, sticky="W")
 
 pw_menu_robots.add(robots_left)
 pw_menu_robots.add(robots_right)

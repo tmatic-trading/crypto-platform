@@ -1763,7 +1763,13 @@ def handler_robots(event) -> None:
 
 
 def change_color(color: str, container=None) -> None:
-    if "notebook" not in str(container.__dict__):
+    line = container.__dict__.copy()
+    if "children" in line:
+        del line["children"]
+    if "_last_child_ids" in line:
+        del line["_last_child_ids"]
+    line = str(line)
+    if "notebook" not in line and "treeview" not in line:
         container.config(bg=color)
     for child in container.winfo_children():
         if child.winfo_children():

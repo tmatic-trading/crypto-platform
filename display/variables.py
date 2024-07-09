@@ -238,6 +238,10 @@ class Variables:
             background=[("selected", "#b3d7ff")],
             foreground=[("selected", fg_color)],
         )
+        style.map(
+            "menu.Treeview",
+            background=[("selected", "invalid", "#b3d7ff")],
+        )
     style.configure(
         "Treeview",
         foreground=fg_color,
@@ -247,6 +251,12 @@ class Variables:
         fieldbackground=title_color,
         background=title_color,
         rowheight=line_height * 3,
+    )
+    style.configure(
+        "menu.Treeview",
+        fieldbackground=title_color,
+        background=title_color,
+        rowheight=line_height * 2,
     )
     style.configure("Treeview.Heading", foreground=fg_color)
     style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
@@ -450,6 +460,7 @@ class TreeviewTable(Variables):
         self.tree.item(self.children[row], values=values)
 
     def paint(self, row: int, configure: str) -> None:
+        pass
         self.tree.item(self.children[row], tags=configure)
         if self.tree.selection():
             selected = len(self.children) - int(self.tree.selection()[0])
