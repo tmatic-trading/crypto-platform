@@ -10,7 +10,7 @@ import services as service
 from api.http import Send
 from common.variables import Variables as var
 
-from .error import Status
+from .error import ErrorStatus
 from .path import Listing, Matching_engine
 from .ws import Deribit
 
@@ -699,50 +699,40 @@ class Agent(Deribit):
                 res = self.response[id]["result"]
                 if res:
                     if "error" in res:
-                        tm = 0.5
+                        status = ErrorStatus.error_status(res)
                         error_message = res["error"]["message"]
-                        error_code = res["error"]["code"]
                         logger_message = (
                             "On request " + path + text + " - error - " + error_message
                         )
-                        if error_code in Status.WAIT:
+                        queue_message = (
+                            {
+                                "market": self.name,
+                                "message": logger_message,
+                                "time": datetime.now(tz=timezone.utc),
+                                "warning": True,
+                            }
+                        )
+                        if status == "WAIT":
+                            tm = 0.5
                             logger_message += f" - wait {tm} sec"
                             self.logger.warning(logger_message)
                             time.sleep(tm)
                             break
-                        elif error_code in Status.FATAL:
+                        elif status == "FATAL":
                             logger_message += " - fatal. Reboot"
+                            queue_message["message"] = logger_message
                             self.logger.error(logger_message)
-                            var.queue_info.put(
-                                {
-                                    "market": self.name,
-                                    "message": logger_message,
-                                    "time": datetime.now(tz=timezone.utc),
-                                    "warning": True,
-                                }
-                            )
-                            return
-                        elif error_code in Status.IGNORE:
+                            var.queue_info.put(queue_message)
+                            return                                
+                        elif status == "IGNORE":
                             self.logger.warning(logger_message)
-                            var.queue_info.put(
-                                {
-                                    "market": self.name,
-                                    "message": logger_message,
-                                    "time": datetime.now(tz=timezone.utc),
-                                }
-                            )
+                            var.queue_info.put(queue_message)
                             return "ignore"
                         else:
-                            logger_message = " unexpected error ", logger_message
+                            logger_message = " unexpected error " + logger_message
+                            queue_message["message"] = logger_message
                             self.logger.warning(logger_message)
-                            var.queue_info.put(
-                                {
-                                    "market": self.name,
-                                    "message": logger_message,
-                                    "time": datetime.now(tz=timezone.utc),
-                                    "warning": True,
-                                }
-                            )
+                            var.queue_info.put(queue_message)
                             return "ignore"
                     else:
                         return res

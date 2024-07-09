@@ -11,6 +11,12 @@ from api.deribit.api_auth import API_auth as Deribit_API_auth
 from api.variables import Variables
 from common.variables import Variables as var
 
+from api.deribit.error import ErrorStatus as DeribitErrorStatus
+from api.bitmex.error import ErrorStatus as BitmexErrorStatus
+
+class GetErrorStatus(Enum):
+    Bitmex = BitmexErrorStatus
+    Deribit = DeribitErrorStatus
 
 class Auth(Enum):
     Bitmex = Bitmex_API_auth
@@ -65,30 +71,17 @@ class Send(Variables):
         cur_retries = 1
         while True:
             stop_retries = cur_retries
-            # Makes the request
             response = None
             try:
-                if theorPrice is None:
-                    info_warn_err(
-                        "INFO",
-                        "("
-                        + url[:5]
-                        + ") sending %s to %s: %s"
-                        % (verb, path, json.dumps(postData or "")),
-                    )
-                else:
-                    info_warn_err(
-                        "INFO",
-                        "("
-                        + url[:5]
-                        + ") sending %s to %s: %s, theor: %s"
-                        % (
-                            verb,
-                            path,
-                            json.dumps(postData or ""),
-                            theorPrice,
-                        ),
-                    )
+                message = (
+                    "("
+                    + url[:5]
+                    + ") sending %s to %s: %s"
+                    % (verb, path, json.dumps(postData or ""))
+                )
+                if theorPrice:
+                    message += f", theor: {theorPrice}"
+                info_warn_err("INFO", message)
                 req = requests.Request(verb, url, json=postData, params=None)
                 if isinstance(postData, dict):
                     data = json.dumps(postData)
@@ -105,12 +98,19 @@ class Send(Variables):
                 req.headers = headers
                 prepped = self.session.prepare_request(req)
                 response = self.session.send(prepped, timeout=timeout)
-
                 # Make non-200s throw
                 response.raise_for_status()
+                #d print("_________________ok", response)
+                #d print(response.status_code, response.text)
+
+
             except requests.exceptions.HTTPError as e:
                 if response is None:
                     raise e
+                #d print("_________________error", response)
+                #d print(response.status_code, response.text)
+                #d import os
+                #d os.abort()
                 cur_retries += 1
                 # 401 - Auth error. This is fatal.
                 if response.status_code == 401:
@@ -254,7 +254,6 @@ class Send(Variables):
                         "warning": True,
                     }
                 )
-
             except requests.exceptions.ConnectionError as e:
                 info_warn_err(
                     "ERROR",
@@ -280,7 +279,7 @@ class Send(Variables):
                     else:
                         self.myOrderID = self.timeoutOccurred
                     if self.logNumFatal < 1000:
-                        self.logNumFatal = 0
+                        self.logNumFatal = 0                    
                 break
             else:
                 if cur_retries > self.maxRetryRest:

@@ -1,4 +1,7 @@
-class Status:
+from enum import Enum
+
+
+class ErrorStatus(Enum):
     WAIT = {
         10028: "too_many_requests",
         10040: "retry",
@@ -147,3 +150,9 @@ class Status:
         -32700: "Parse error",
         -32000: "Missing params",
     }
+
+    def error_status(error):
+        error_number = error["error"]["code"]
+        for status in ErrorStatus:
+            if error_number in status.value:
+                return status.name
