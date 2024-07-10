@@ -52,14 +52,14 @@ class WS(Variables):
                 Markets[self.name].start()
             except Exception as exception:
                 display_exception(exception)
-                self.logNumFatal = -1
+                self.logNumFatal = "SETUP"
 
         def get_in_thread(method):
             try:
                 method(self)
             except Exception as exception:
                 display_exception(exception)
-                self.logNumFatal = -1
+                self.logNumFatal = "SETUP"
 
         try:
             if Agents[self.name].value.get_active_instruments(self):
@@ -68,7 +68,7 @@ class WS(Variables):
             display_exception(exception)
             self.logger.error(self.name + " Instruments not loaded. Reboot.")
             return -1
-        self.logNumFatal = 0
+        self.logNumFatal = ""
         try:
             if Agents[self.name].value.open_orders(self):
                 return -1
@@ -99,7 +99,7 @@ class WS(Variables):
             [thread.join() for thread in threads]
         except Exception as exception:
             display_exception(exception)
-            self.logNumFatal = -1
+            self.logNumFatal = "SETUP"
         if self.logNumFatal:
             self.logger.error(
                 self.name

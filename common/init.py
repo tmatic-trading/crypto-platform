@@ -161,7 +161,7 @@ class Init(WS, Variables):
                     if not data:
                         Function.transaction(self, row=row, info=" History ")
                 last_history_time = history[-1]["transactTime"]
-                if self.logNumFatal == 0:
+                if not self.logNumFatal:
                     Init.save_history_file(self, time=last_history_time)
                 if len(history) < count_val:
                     return "success"
@@ -169,7 +169,7 @@ class Init(WS, Variables):
                     self, histCount=count_val, start_time=last_history_time
                 )
                 if not isinstance(history, list):
-                    self.logNumFatal = 1001
+                    self.logNumFatal = "SETUP"
                     return
 
     def account_balances(self: Markets) -> None:
@@ -244,7 +244,7 @@ class Init(WS, Variables):
                 self.Result[settlCurrency].result = 0
         else:
             var.logger.error("SQL error in account_balances() function")
-            self.logNumFatal = 1001
+            self.logNumFatal = "SETUP"
 
     def load_orders(self: Markets, myOrders: list) -> None:
         """
@@ -370,7 +370,7 @@ class Init(WS, Variables):
                     configure=values[indx_side],
                 )
         else:
-            self.logNumFatal = 1001  # Reboot
+            self.logNumFatal = "SETUP"  # Reboot
 
 
 def setup_logger():

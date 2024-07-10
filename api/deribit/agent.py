@@ -69,7 +69,7 @@ class Agent(Deribit):
             self.logger(
                 "A dict was expected when loading instrument, but was not received. Reboot"
             )
-            self.logNumFatal = 1001
+            self.logNumFatal = "SETUP"
 
     def fill_instrument(self, values: dict) -> str:
         """
@@ -191,7 +191,7 @@ class Agent(Deribit):
                 account.limits = values["limits"]
                 account.limits["private/get_transaction_log"] = {"burst": 10, "rate": 2}
             return
-        self.logNumFatal = 1001
+        self.logNumFatal = "SETUP"
         message = (
             "A user ID was requested from the exchange but was not received. Reboot"
         )
@@ -226,7 +226,7 @@ class Agent(Deribit):
             self.logger.error(
                 "The dict was expected when the positions were loaded, but it was not received. Reboot."
             )
-            self.logNumFatal = 1001
+            self.logNumFatal = "SETUP"
 
     def trading_history(self, histCount: int, start_time=None) -> list:
         """
@@ -721,11 +721,18 @@ class Agent(Deribit):
                             queue_message["message"] = logger_message
                             self.logger.error(logger_message)
                             var.queue_info.put(queue_message)
+                            self.logNumFatal = status
                             return
                         elif status == "IGNORE":
                             self.logger.warning(logger_message)
                             var.queue_info.put(queue_message)
                             return "ignore"
+                        elif status == "BLOCK":
+                            logger_message += ". Trading stopped."
+                            self.logger.warning(logger_message)
+                            var.queue_info.put(queue_message)
+                            self.logNumFatal = status
+                            return status
                         else:
                             logger_message = " unexpected error " + logger_message
                             queue_message["message"] = logger_message

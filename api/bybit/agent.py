@@ -66,7 +66,7 @@ class Agent(Bybit):
     def get_user(self) -> None:
         """
         Returns the user ID and other useful information about the user and
-        places it in self.user. If unsuccessful, logNumFatal is not 0.
+        places it in self.user. If unsuccessful, logNumFatal is not ''.
         """
         self.logger.info("Sending get_uid_wallet_type()")
         data = self.session.get_uid_wallet_type()
@@ -76,7 +76,7 @@ class Agent(Bybit):
             if id:
                 self.user_id = id
                 return
-        self.logNumFatal = -1
+        self.logNumFatal = "SETUP"
         message = (
             "A user ID was requested from the exchange but was not received. Reboot"
         )
@@ -436,7 +436,7 @@ class Agent(Bybit):
                 self.logger.error(
                     "The list was expected when the positions were loaded, but for some categories and settlCurrency it was not received. Reboot"
                 )
-                self.logNumFatal = -1
+                self.logNumFatal = "SETUP"
 
     def fill_instrument(self, instrument: dict, category: str):
         """

@@ -120,19 +120,21 @@ class Send(Variables):
                     queue_message["message"] = logger_message
                     self.logger.error(logger_message)
                     var.queue_info.put(queue_message)
-                    self.logNumFatal = 1001
+                    self.logNumFatal = status
                     return status
                 elif status == "IGNORE":
                     self.logger.warning(logger_message)
                     var.queue_info.put(queue_message)
                     return status
                 elif status == "BLOCK":
+                    logger_message += ". Trading stopped."
                     self.logger.warning(logger_message)
                     var.queue_info.put(queue_message)
-                    self.logNumFatal = 2001
+                    self.logNumFatal = status
                     return status
             else:
                 if response:
+                    self.logNumFatal = ""
                     return response.json()
                 else:
                     return None

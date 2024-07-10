@@ -1263,7 +1263,7 @@ def handler_order(event) -> None:
                 info_display(ws.name, message)
                 var.logger.info(message)
                 return
-            if ws.logNumFatal == 0:
+            if not ws.logNumFatal:
                 Function.del_order(ws, order=order, clOrdID=clOrdID)
             else:
                 info_display(ws.name, "The operation failed. Websocket closed!")
@@ -1282,7 +1282,7 @@ def handler_order(event) -> None:
             except ValueError:
                 info_display(ws.name, "Price must be numeric!")
                 return
-            if ws.logNumFatal == 0:
+            if not ws.logNumFatal:
                 roundSide = ws.orders[clOrdID]["leavesQty"]
                 if ws.orders[clOrdID]["SIDE"] == "Sell":
                     roundSide = -roundSide

@@ -42,7 +42,7 @@ class Agent(Bitmex):
     def get_user(self) -> Union[dict, None]:
         """
         Returns the user ID and other useful information about the user and
-        places it in self.user. If unsuccessful, logNumFatal is not 0.
+        places it in self.user. If unsuccessful, logNumFatal is not ''.
         """
         result = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
         if result:
@@ -276,7 +276,7 @@ class Agent(Bitmex):
                         )
                 return spot_not_included
             else:
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
 
     def open_orders(self) -> int:
         path = Listing.OPEN_ORDERS
@@ -391,4 +391,4 @@ class Agent(Bitmex):
             self.logger.error(
                 "The list was expected when the positions were loaded, but it was not received. Reboot."
             )
-            self.logNumFatal = -1
+            self.logNumFatal = "SETUP"

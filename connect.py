@@ -95,7 +95,7 @@ def setup_market(ws: Markets, reload=False):
         if common.Init.load_trading_history(ws):
             success[num] = "success"
 
-    ws.logNumFatal = -1
+    ws.logNumFatal = "SETUP"
     ws.api_is_active = False
     if reload:
         WS.exit(ws)
@@ -132,7 +132,7 @@ def setup_market(ws: Markets, reload=False):
                         var.logger.error(
                             ws.name + ": The kline data or trade history is not loaded."
                         )
-                        ws.logNumFatal = -1
+                        ws.logNumFatal = "SETUP"
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)
@@ -238,7 +238,7 @@ def refresh() -> None:
     for name in var.market_list:
         ws = Markets[name]
         utc = datetime.now(tz=timezone.utc)
-        if ws.logNumFatal == 0:
+        if not ws.logNumFatal:
             if ws.api_is_active:
                 if utc > ws.message_time + timedelta(seconds=10):
                     if not WS.ping_pong(ws):
@@ -247,34 +247,22 @@ def refresh() -> None:
                             "The websocket does not respond within 10 sec. Reboot",
                             warning=True,
                         )
-                        ws.logNumFatal = 1001  # reloading
+                        ws.logNumFatal = "FATAL"  # reboot
                     ws.message_time = utc
-        elif ws.logNumFatal > 0:
-            if ws.logNumFatal > 2000:
+        elif not ws.logNumFatal:
+            if ws.logNumFatal == "BLOCK":
                 if ws.message2000 == "":
                     ws.message2000 = (
-                        "Fatal error=" + str(ws.logNumFatal) + ". Market is frozen"
+                        "Fatal error. Trading stopped"
                     )
                     Function.market_status(
                         ws, status="Error", message=ws.message2000, error=True
                     )
                 sleep(1)
-            elif ws.logNumFatal >= 1000 or ws.timeoutOccurred != "":  # reload
+            elif ws.logNumFatal == "FATAL":  # reboot
                 if ws.api_is_active:
                     t = threading.Thread(target=reload_market, args=(ws,))
                     t.start()
-            else:
-                if ws.logNumFatal > 0 and ws.logNumFatal <= 10:
-                    if ws.messageStopped == "":
-                        ws.messageStopped = (
-                            "Error=" + str(ws.logNumFatal) + ". Trading stopped"
-                        )
-                        info_display(name, ws.messageStopped)
-                    if ws.logNumFatal == 2:
-                        info_display(name, "Insufficient available balance!")
-                    disp.f9 = "OFF"
-                    disp.label_f9.config(bg=disp.red_color)
-                    ws.logNumFatal = 0
     var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
     if ws.api_is_active:
@@ -330,7 +318,7 @@ def trade_state(event) -> None:
         disp.f9 = "ON"
         disp.label_f9.config(bg=disp.green_color)
         for market in var.market_list:
-            Markets[market].logNumFatal = 0
+            Markets[market].logNumFatal = ""
             print(market, disp.f9)
     disp.label_f9["text"] = disp.f9
 

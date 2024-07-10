@@ -380,7 +380,7 @@ class Bybit(Variables):
             self.ws_private.exit()
         except Exception:
             pass
-        self.logNumFatal = -1
+        self.logNumFatal = "SETUP"
         self.logger.info(self.name + " - Websocket closed")
 
     def transaction(self, **kwargs):

@@ -121,14 +121,13 @@ class Deribit(Variables):
             time_out -= slp
         if time_out <= 0:
             self.logger.error("Couldn't connect to websocket!")
-            if self.logNumFatal < 1004:
-                self.logNumFatal = 1004
+            self.logNumFatal = "SETUP"
         time_out, slp = 3, 0.05
         while not self.access_token:
             time_out -= slp
             if time_out <= 0:
                 self.logger.error("Access_token not received. Reboot.")
-                self.logNumFatal = -1
+                self.logNumFatal = "SETUP"
                 return
             time.sleep(slp)
         self.logger.info("access_token received")
@@ -239,19 +238,18 @@ class Deribit(Variables):
             self.pinging = datetime.now(tz=timezone.utc)
         except Exception as exception:
             display_exception(exception)
-            self.logNumFatal = 1001
+            self.logNumFatal = "SETUP"
 
     def __on_error(self, ws, error):
         """
         We are here if websocket has fatal errors.
         """
         self.logger.error(type(error).__name__ + " " + str(error))
-        if self.logNumFatal < 1010:
-            self.logNumFatal = 1010
+        self.logNumFatal = "SETUP"
 
     def __on_close(self, *args):
         self.logger.info("Websocke closed.")
-        self.logNumFatal = -1
+        self.logNumFatal = "SETUP"
 
     def __ws_auth(self) -> None:
         """
@@ -283,7 +281,7 @@ class Deribit(Variables):
             if timeout <= 0:
                 for sub in self.subscriptions:
                     self.logger.error("Failed to subscribe " + str(sub))
-                self.logNumFatal = -1
+                self.logNumFatal = "SETUP"
                 return
             time.sleep(slp)
         self.logger.info("All subscriptions are successful. Continuing.")
@@ -335,7 +333,7 @@ class Deribit(Variables):
             self.ws.close()
         except Exception:
             pass
-        self.logNumFatal = -1
+        self.logNumFatal = "SETUP"
 
     def ping_pong(self):
         if datetime.now(tz=timezone.utc) - self.pinging > timedelta(

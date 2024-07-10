@@ -18,20 +18,20 @@ def exception(method):
             exception_class = exception.__class__.__name__
             message = exception_class + " - " + str(exception)
             if exception_class == "ConnectionError":  # requests module
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
             elif exception_class == "SSLError":  # requests module
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
             elif exception_class == "ReadTimeout":  # requests module
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
             elif exception_class == "FailedRequestError":  # pybit http
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
             elif exception_class == "InvalidRequestError":  # pybit http
                 if exception.status_code in [
                     10000,
                     10002,
                     10016,
                 ]:  # Server Timeout or error
-                    self.logNumFatal = 1001
+                    self.logNumFatal = "SETUP"
                 elif exception.status_code == 10001:  # Request parameter error
                     pass
                 elif exception.status_code in [
@@ -48,7 +48,7 @@ def exception(method):
                     100028,
                     110018,
                 ]:  # error sign or the requested symbol is invalid
-                    self.logNumFatal = 2001
+                    self.logNumFatal = "BLOCK"
                 elif exception.status_code in [
                     110004,
                     110006,
@@ -67,11 +67,11 @@ def exception(method):
                     110013,
                     110021,
                 ]:  # Insufficient available balance or margin
-                    self.logNumFatal = 2
+                    self.logNumFatal = "BLOCK"
                 elif (
                     exception.status_code == 181001
                 ):  # category only support linear or option
-                    self.logNumFatal = 3
+                    self.logNumFatal = "IGNORE"
                 elif exception.status_code in [
                     170135,
                     170136,
@@ -171,21 +171,21 @@ def exception(method):
                 ):  # the order is modified during the process of replacing
                     pass
                 else:
-                    self.logNumFatal = 1001
+                    self.logNumFatal = "SETUP"
             elif exception_class == "InvalidChannelTypeError":  # pybit ws
-                self.logNumFatal = 2002
+                self.logNumFatal = "BLOCK"
             elif exception_class == "UnauthorizedExceptionError":  # pybit ws
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
             elif exception_class == "TopicMismatchError":  # pybit ws
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
             elif exception_class == "WebSocketTimeoutException":  # pybit ws
-                self.logNumFatal = 1001
+                self.logNumFatal = "SETUP"
             else:
                 print("_______________________Unexpected Bybit error:", exception_class)
                 traceback.print_exception(
                     type(exception), exception, exception.__traceback__
                 )
-                self.logNumFatal = 1100
+                self.logNumFatal = "SETUP"
                 # os.abort()
             if message:
                 message = message.replace("\n", " ")

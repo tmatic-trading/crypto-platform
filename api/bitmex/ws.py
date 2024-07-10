@@ -68,10 +68,10 @@ class Bitmex(Variables):
                     self.Result[(instrument.settlCurrency[0], self.name)]
             self.__reset()
             self.__connect(self.__get_url())
-            if self.logNumFatal == 0:
+            if not self.logNumFatal:
                 self.logger.info("Connected to websocket.")
                 self.__wait_for_tables()
-                if self.logNumFatal == 0:
+                if not self.logNumFatal:
                     self.logger.info("Data received. Continuing.")
                     self.pinging = "pong"
 
@@ -101,8 +101,7 @@ class Bitmex(Variables):
                 time_out -= 0.1
             if time_out <= 0:
                 self.logger.error("Couldn't connect to websocket!")
-                if self.logNumFatal < 1004:
-                    self.logNumFatal = 1004
+                self.logNumFatal = "SETUP"
             else:
                 # Subscribes symbol by symbol to all tables given
                 for symbolName in map(lambda x: x[0], self.symbol_list):
@@ -112,8 +111,7 @@ class Bitmex(Variables):
                     self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
         except Exception:
             self.logger.error("Exception while connecting to websocket. Restarting...")
-            if self.logNumFatal < 1005:
-                self.logNumFatal = 1005
+            self.logNumFatal = "SETUP"
 
     def __get_url(self) -> str:
         """
@@ -143,8 +141,7 @@ class Bitmex(Variables):
                 return []
         except Exception:
             self.logger.error("Exception while authenticating. Restarting...")
-            if self.logNumFatal < 1006:
-                self.logNumFatal = 1006
+            self.logNumFatal = "SETUP"
             return []
 
     def __wait_for_tables(self) -> None:
@@ -165,8 +162,7 @@ class Bitmex(Variables):
                     + str(table_lack)
                     + " - missing."
                 )
-                if self.logNumFatal < 1007:
-                    self.logNumFatal = 1007
+                self.logNumFatal = "SETUP"
                 break
             sleep(0.1)
         count2 = 0
@@ -182,8 +178,7 @@ class Bitmex(Variables):
                     + str(instr_lack)
                     + " - missing in the instrument table."
                 )
-                if self.logNumFatal < 1008:
-                    self.logNumFatal = 1008
+                self.logNumFatal = "SETUP"
                 break
             sleep(0.1)
 
@@ -314,24 +309,21 @@ class Bitmex(Variables):
             self.logger.error(
                 traceback.format_exc()
             )  # Error in api.py. Take a look in logfile.log. Restarting...
-            if self.logNumFatal < 1009:
-                self.logNumFatal = 1009
+            self.logNumFatal = "SETUP"
 
     def __on_error(self, ws, error) -> None:
         """
         We are here if websocket has fatal errors.
         """
         self.logger.error("Error: %s" % error)
-        if self.logNumFatal < 1010:
-            self.logNumFatal = 1010
+        self.logNumFatal = "SETUP"
 
     def __on_open(self, ws) -> None:
         self.logger.debug("Websocket opened")
 
     def __on_close(self, *args) -> None:
         self.logger.info(self.name + " - Websocket closed")
-        if self.logNumFatal < 1011:
-            self.logNumFatal = 1011
+        self.logNumFatal = "SETUP"
 
     def __reset(self) -> None:
         """
@@ -446,7 +438,7 @@ class Bitmex(Variables):
             self.ws.close()
         except Exception:
             pass
-        self.logNumFatal = -1
+        self.logNumFatal = "SETUP"
 
     def transaction(self, **kwargs):
         """
@@ -462,7 +454,7 @@ class Bitmex(Variables):
                 self.ws.send("ping")
             except Exception:
                 self.logger.error("Bitmex websocket ping error. Reboot")
-                self.logNumFatal = -1
+                self.logNumFatal = "SETUP"
                 return False
             return True
 
