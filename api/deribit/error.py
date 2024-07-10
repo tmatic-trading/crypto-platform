@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class ErrorStatus(Enum):
-    WAIT = {
+    RETRY = {
         10028: "too_many_requests",
         10040: "retry",
         10041: "settlement_in_progress",

@@ -7,16 +7,20 @@ from typing import Union
 import requests
 
 from api.bitmex.api_auth import API_auth as Bitmex_API_auth
+from api.bitmex.error import ErrorStatus as BitmexErrorStatus
 from api.deribit.api_auth import API_auth as Deribit_API_auth
+from api.deribit.error import ErrorStatus as DeribitErrorStatus
 from api.variables import Variables
 from common.variables import Variables as var
 
-from api.deribit.error import ErrorStatus as DeribitErrorStatus
-from api.bitmex.error import ErrorStatus as BitmexErrorStatus
 
 class GetErrorStatus(Enum):
     Bitmex = BitmexErrorStatus
     Deribit = DeribitErrorStatus
+
+    def get_status(name, res):
+        return GetErrorStatus[name].value.error_status(res)
+
 
 class Auth(Enum):
     Bitmex = Bitmex_API_auth
@@ -43,45 +47,20 @@ class Send(Variables):
         """
         Sends a request to the exchange.
         """
-
-        def info_warn_err(whatNow, textNow, codeNow=0):
-            if whatNow == "INFO":
-                self.logger.info(textNow)
-            elif whatNow == "WARN":
-                self.logger.warning(textNow)
-                if codeNow > self.logNumFatal:
-                    self.logNumFatal = codeNow
-            else:
-                self.logger.error(textNow)
-                if codeNow > self.logNumFatal:
-                    var.queue_info.put(
-                        {
-                            "market": self.name,
-                            "message": textNow,
-                            "time": datetime.now(tz=timezone.utc),
-                            "warning": True,
-                        }
-                    )
-                    if codeNow == 3:
-                        self.logNumFatal = 0
-                    else:
-                        self.logNumFatal = codeNow
-
         url = self.http_url + path
         cur_retries = 1
         while True:
-            stop_retries = cur_retries
             response = None
             try:
-                message = (
-                    "("
-                    + url[:5]
-                    + ") sending %s to %s: %s"
-                    % (verb, path, json.dumps(postData or ""))
+                message = "%s: Sending %s to %s: %s" % (
+                    self.name,
+                    verb,
+                    path,
+                    json.dumps(postData or ""),
                 )
                 if theorPrice:
                     message += f", theor: {theorPrice}"
-                info_warn_err("INFO", message)
+                self.logger.info(message)
                 req = requests.Request(verb, url, json=postData, params=None)
                 if isinstance(postData, dict):
                     data = json.dumps(postData)
@@ -100,206 +79,72 @@ class Send(Variables):
                 response = self.session.send(prepped, timeout=timeout)
                 # Make non-200s throw
                 response.raise_for_status()
-                #d print("_________________ok", response)
-                #d print(response.status_code, response.text)
-
-
-            except requests.exceptions.HTTPError as e:
-                if response is None:
-                    raise e
-                #d print("_________________error", response)
-                #d print(response.status_code, response.text)
-                #d import os
-                #d os.abort()
-                cur_retries += 1
-                # 401 - Auth error. This is fatal.
-                if response.status_code == 401:
-                    info_warn_err(
-                        "ERROR",
-                        "API Key or Secret incorrect (401): " + response.text,
-                        2001,
-                    )  # stop all
-
-                # 404 - can be thrown if order does not exist
-                elif response.status_code == 404:
-                    if verb == "DELETE" and postData:
-                        info_warn_err(
-                            "WARN",
-                            "DELETE orderID=%s: not found (404)" % postData["orderID"],
-                            response.status_code,
-                        )
-                    elif verb == "PUT" and postData:
-                        info_warn_err(
-                            "WARN",
-                            "PUT orderID=%s: not found (404)" % postData["orderID"],
-                            response.status_code,
-                        )
+            except Exception as exception:
+                exception = exception.__class__.__name__
+                if exception in ["ConnectionError", "ReadTimeout"]:
+                    status = "RETRY"
+                    error_message = exception + ". Unable to contact API"
+                elif exception == "Timeout":
+                    status = "FATAL"
+                    error_message = exception
+                elif exception == "HTTPError":
+                    res = json.loads(response.text)
+                    status = GetErrorStatus.get_status(self.name, res)
+                    if status:
+                        error_message = res["error"]["message"]
                     else:
-                        info_warn_err(
-                            "ERROR",
-                            "Unable to contact API (404). %s: %s"
-                            % (url, json.dumps(postData or "")),
-                            1001,
-                        )
-
-                # 429 - ratelimit. If orders are posted or put too often
-                elif response.status_code == 429:
-                    info_warn_err(
-                        "WARN",
-                        "Rate limit exceeded (429). %s: %s"
-                        % (url, json.dumps(postData or "")),
-                        response.status_code,
-                    )
-                    time.sleep(1)
-
-                # 503 - The exchange temporary downtime. Try again
-                elif response.status_code == 503:
-                    error = response.json()["error"]
-                    message = error["message"] if error else ""
-                    info_warn_err(
-                        "WARN",
-                        message + " (503). %s: %s" % (url, json.dumps(postData or "")),
-                        response.status_code,
-                    )
-
-                elif response.status_code == 400:
-                    error = response.json()["error"]
-                    message = error["message"].lower() if error else ""
-                    if (
-                        verb == "PUT" and "invalid ordstatus" in message
-                    ):  # move order with origClOrdID does not exist. Probably already executed
-                        info_warn_err(
-                            "WARN",
-                            error["message"]
-                            + " (400). %s: %s" % (url, json.dumps(postData or "")),
-                            response.status_code,
-                        )
-                    elif verb == "POST" and "duplicate clordid" in message:
-                        info_warn_err(
-                            "ERROR",
-                            error["message"]
-                            + " (400). %s: %s" % (url, json.dumps(postData or "")),
-                            1,
-                        )  # impossible situation => stop trading
-                    elif "insufficient available balance" in message:
-                        var.queue_info.put(
-                            {
-                                "market": self.name,
-                                "message": error["message"],
-                                "time": datetime.now(tz=timezone.utc),
-                                "warning": True,
-                            }
-                        )
-                        info_warn_err(
-                            "ERROR",
-                            error["message"]
-                            + " (400). %s: %s" % (url, json.dumps(postData or "")),
-                            2,
-                        )
-                    elif (
-                        "request has expired" in message
-                    ):  # This request has expired - `expires` is in the past
-                        info_warn_err(
-                            "WARN",
-                            error["message"]
-                            + " (400)."
-                            + " Your computer's system time may be incorrect. %s: %s"
-                            % (url, json.dumps(postData or "")),
-                            998,
-                        )
-                    elif (
-                        "too many open orders" in message
-                    ):  # When limit of 200 orders reached
-                        info_warn_err(
-                            "WARN",
-                            error["message"]
-                            + " (400). %s: %s" % (url, json.dumps(postData or "")),
-                            5,
-                        )
-                    else:  # Example: wrong parameters set (tickSize, lotSize, etc)
-                        errCode = 3 if postData else 997
-                        info_warn_err(
-                            "ERROR",
-                            error["message"]
-                            + " (400 else). %s: %s" % (url, json.dumps(postData or "")),
-                            errCode,
-                        )
-                else:  # Unknown error type
-                    errCode = 4 if postData else 996
-                    info_warn_err(
-                        "ERROR",
-                        "Unhandled %s: %s. %s: %s"
-                        % (e, response.text, url, json.dumps(postData or "")),
-                        errCode,
-                    )
-            except (
-                requests.exceptions.Timeout
-            ) as e:  # sometimes there is no answer during timeout period (currently = 7 sec).
-                if postData:  # (POST, PUT or DELETE) => terminal reloads
-                    self.timeoutOccurred = "Timed out on request"  # reloads terminal
-                    errCode = 0
+                        status = "IGNORE"
+                        error_message = "Unexpected HTTPError"
                 else:
-                    errCode = 999
+                    status = "FATAL"
+                    error_message = "Unexpected error " + exception
+                logger_message = "%s: On request %s %s - error - %s" % (
+                    self.name,
+                    verb,
+                    path,
+                    error_message,
+                )
+                queue_message = {
+                    "market": self.name,
+                    "message": logger_message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                }
+                wait = 2
+                if status == "RETRY":
                     cur_retries += 1
-                info_warn_err(
-                    "WARN",
-                    "Timed out on request. %s: %s" % (url, json.dumps(postData or "")),
-                    errCode,
-                )
-                var.queue_info.put(
-                    {
-                        "market": self.name,
-                        "message": "Websocket. Timed out on request",
-                        "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
-                    }
-                )
-            except requests.exceptions.ConnectionError as e:
-                info_warn_err(
-                    "ERROR",
-                    "Unable to contact API: %s. %s: %s"
-                    % (e, url, json.dumps(postData or "")),
-                    1002,
-                )
-                var.queue_info.put(
-                    {
-                        "market": self.name,
-                        "message": "Websocket. Unable to contact API",
-                        "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
-                    }
-                )
-                cur_retries += 1
-            if postData:  # trading orders (POST, PUT, DELETE)
-                if cur_retries == stop_retries:  # means no errors
-                    if self.timeoutOccurred == "":
-                        pos_beg = response.text.find('"orderID":"') + 11
-                        pos_end = response.text.find('"', pos_beg)
-                        self.myOrderID = response.text[pos_beg:pos_end]
-                    else:
-                        self.myOrderID = self.timeoutOccurred
-                    if self.logNumFatal < 1000:
-                        self.logNumFatal = 0                    
-                break
+                    logger_message += f" - wait {wait} sec"
+                    self.logger.warning(logger_message)
+                elif status == "FATAL":
+                    logger_message += " - fatal. Reboot"
+                    queue_message["message"] = logger_message
+                    self.logger.error(logger_message)
+                    var.queue_info.put(queue_message)
+                    self.logNumFatal = 1001
+                    return status
+                elif status == "IGNORE":
+                    self.logger.warning(logger_message)
+                    var.queue_info.put(queue_message)
+                    return status
+                elif status == "BLOCK":
+                    self.logger.warning(logger_message)
+                    var.queue_info.put(queue_message)
+                    self.logNumFatal = 2001
+                    return status
             else:
-                if cur_retries > self.maxRetryRest:
-                    info_warn_err("ERROR", "Max retries hit. Reboot", 1003)
-                    var.queue_info.put(
-                        {
-                            "market": self.name,
-                            "message": "ERROR, Max retries hit. Reboot",
-                            "time": datetime.now(tz=timezone.utc),
-                            "warning": True,
-                        }
-                    )
-                    break
-                if cur_retries == stop_retries:  # means no errors
-                    if self.logNumFatal < 1000:
-                        self.logNumFatal = 0
-                    break
-            time.sleep(2)
-        self.time_response = datetime.now(tz=timezone.utc)
-        if response:
-            return response.json()
-        else:
-            return None
+                if response:
+                    return response.json()
+                else:
+                    return None
+            if cur_retries > self.maxRetryRest:
+                self.logger.error(f"{self.name}: Max retries hit. Reboot")
+                var.queue_info.put(
+                    {
+                        "market": self.name,
+                        "message": "Max retries hit. Reboot",
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
+                )
+                break
+            time.sleep(wait)

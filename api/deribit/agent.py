@@ -513,7 +513,7 @@ class Agent(Deribit):
                 break
             startTime = endTime
         trade_history.sort(key=lambda x: x["transactTime"])
-        '''for row in trade_history:
+        """for row in trade_history:
             print(
                 row["transactTime"],
                 row["execType"],
@@ -525,7 +525,7 @@ class Agent(Deribit):
                 row["lastQty"],
                 row["execID"],
             )
-        print("___________________________FINISH", len(trade_history))'''
+        print("___________________________FINISH", len(trade_history))"""
 
         # os.abort()
 
@@ -704,15 +704,13 @@ class Agent(Deribit):
                         logger_message = (
                             "On request " + path + text + " - error - " + error_message
                         )
-                        queue_message = (
-                            {
-                                "market": self.name,
-                                "message": logger_message,
-                                "time": datetime.now(tz=timezone.utc),
-                                "warning": True,
-                            }
-                        )
-                        if status == "WAIT":
+                        queue_message = {
+                            "market": self.name,
+                            "message": logger_message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": True,
+                        }
+                        if status == "RETRY":
                             tm = 0.5
                             logger_message += f" - wait {tm} sec"
                             self.logger.warning(logger_message)
@@ -723,7 +721,7 @@ class Agent(Deribit):
                             queue_message["message"] = logger_message
                             self.logger.error(logger_message)
                             var.queue_info.put(queue_message)
-                            return                                
+                            return
                         elif status == "IGNORE":
                             self.logger.warning(logger_message)
                             var.queue_info.put(queue_message)
@@ -736,7 +734,7 @@ class Agent(Deribit):
                             return "ignore"
                     else:
                         return res
-                time.sleep(0.05)                
+                time.sleep(0.05)
             else:
                 self.logger.error(
                     "No response to websocket "
