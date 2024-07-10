@@ -121,6 +121,7 @@ class Variables:
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
         frame_right.configure(background=title_color)
+    bg_active = "#ffcccc"
     fg_color = label_trading["foreground"]
     green_color = "#07b66e"
     red_color = "#f53661"
