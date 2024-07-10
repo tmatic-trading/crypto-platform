@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, StringVar
 import os
+import shutil
 import re
 
 from .variables import Variables as disp
@@ -34,8 +35,11 @@ class CustomButton(tk.Menubutton):
     def on_press(self, event):
         if self["state"] != "disabled":
             if self.name == "Back":
+                self.app.selected_bot = ""
                 disp.menu_robots.pack_forget()
                 disp.pw_rest1.pack(fill="both", expand="yes")
+            elif self.name == "Delete":
+                self.app.delete_bot()
             else:
                 print(self.name, self["state"])
 
@@ -63,13 +67,13 @@ class SettingsApp:
 
         # Create initial frames
         self.create_right_frames()
+        self.draw_bot()
 
         # CustomButton array
         self.buttons_center = []
 
         for button in self.button_list:
-            state = "disabled" if button != "Back" else "normal"
-            frame = CustomButton(self.root_frame, self, button, bg=disp.bg_select_color, text=button, bd=0, activebackground=disp.bg_active, state=state)
+            frame = CustomButton(self.root_frame, self, button, bg=disp.bg_select_color, text=button, bd=0, activebackground=disp.bg_active)
             self.buttons_center.append(frame)
 
         self.draw_buttons()
@@ -78,7 +82,16 @@ class SettingsApp:
         #self.buttons_center.sort(key=lambda f: f.winfo_y())
         total_height = 0
         for i, button in enumerate(self.buttons_center):
-            button.update_idletasks()
+            if button.name == "Back":
+                button.configure(state="normal")
+            elif button.name == "Delete":
+                if self.selected_bot != "":
+                    button.configure(state="normal")
+                else:
+                    button.configure(state="disabled")
+            else:
+                button.configure(state="disabled")
+            #button.update_idletasks()#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             button_height = button.winfo_reqheight()
             y_pos = 0
             if i == 0:
@@ -91,14 +104,36 @@ class SettingsApp:
             button.place_configure(x=0, y=y_pos, height=button_height, relwidth=1.0)
             total_height += button_height * 1.5
 
-    def redraw_bot(self):
-        for row in self.rows_list:
-            self.bot_0_label[row].pack(side="left", padx=10)
-            self.bot_1_entry[row].pack_forget()
-            self.bot_1_label[row].pack(side="left", padx=10)
-        self.bot_1_label["Name"].config(text=self.selected_bot)
-        self.button_create.pack_forget()
 
+    def draw_bot(self):
+        for i, row in enumerate(self.rows_list):
+            if self.selected_bot != "":
+                self.bot_0_label[row].pack(side="left", padx=10)
+                self.bot_1_entry[row].pack_forget()
+                self.bot_1_label[row].pack(side="left", padx=10)
+            else:
+                if i < 2:# Only bot's Name and Currency
+                    self.bot_0_label[row].pack(side="left", padx=10)
+                    self.bot_1_entry[row].pack()
+                    self.bot_1_label[row].pack_forget()
+                else:
+                    self.bot_0_label[row].pack_forget()
+                    self.bot_1_entry[row].pack_forget()
+                    self.bot_1_label[row].pack_forget()
+        if self.selected_bot != "":
+            self.bot_1_label["Name"].config(text=self.selected_bot)
+            self.button_create.pack_forget()
+        else:
+            self.button_create.pack()
+            self.button_create.config(state="disabled")
+
+    def delete_bot(self):
+        path = os.path.join(self.algo_dir, self.selected_bot)
+        #files = os.listdir(path)
+        shutil.rmtree(str(path))
+        self.selected_bot = ""
+        self.draw_bot()
+        self.draw_buttons()
 
     def create_bot(self):
         bot_name = self.name_trace.get()
@@ -138,7 +173,9 @@ class SettingsApp:
         file.close()
 
         self.selected_bot = bot_name
-        self.redraw_bot()
+        self.bot_1_entry["Name"].delete(0, tk.END)
+        self.draw_bot()
+        self.draw_buttons()
 
     def trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
@@ -169,8 +206,6 @@ class SettingsApp:
             self.bot_0[row] = tk.Frame(target_frame)
             self.bot_0[row].grid(row=widget_row, column=0, sticky="W")
             self.bot_0_label[row] = tk.Label(self.bot_0[row], text=row)
-            if i < 2 or self.selected_bot != "":
-                self.bot_0_label[row].pack(side="left", padx=10)
             self.bot_1[row] = tk.Frame(target_frame)
             self.bot_1[row].grid(row=widget_row, column=1, sticky="W")
             self.bot_1_entry[row] = ttk.Entry(self.bot_1[row], width=30, style="default.TEntry")
@@ -178,11 +213,7 @@ class SettingsApp:
                 self.bot_1_entry[row].config(textvariable=self.name_trace)
                 self.name_trace.trace_add('write', self.trace_callback)
             self.bot_1_label[row] = tk.Label(self.bot_1[row])
-            if i < 2 or self.selected_bot != "":
-                self.bot_1_entry[row].pack()
-            elif i == 2:
-                self.button_create = tk.Button(self.bot_1[row], activebackground=disp.bg_active, text="Create Bot", command=lambda: self.create_bot())
-                self.button_create.pack()
+        self.button_create = tk.Button(self.bot_1["Created"], activebackground=disp.bg_active, text="Create Bot", command=lambda: self.create_bot(), state="disabled")
 
         target_frame.grid_columnconfigure(0, weight=1)
         target_frame.grid_columnconfigure(1, weight=10)
