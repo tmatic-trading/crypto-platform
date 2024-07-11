@@ -318,7 +318,7 @@ class Agent(Deribit):
                     res = res[data_type]
                     if data_type == "logs":
                         res = list(
-                            filter(lambda x: x["type"] in ["settlement", "trade"], res)
+                            filter(lambda x: x["type"] in ["settlement", "trade", "delivery"], res)
                         )
                         continuation = self.response[id]["result"]["continuation"]
                     if isinstance(res, list):
@@ -353,9 +353,16 @@ class Agent(Deribit):
                                     row["orderID"] = (
                                         row["order_id"]
                                         + "_"
-                                        + self.name
-                                        + "_"
                                         + currency
+                                    )
+                                    row[
+                                        "leavesQty"
+                                    ] = 9999999999999  # leavesQty is not supported by Deribit
+                                    row["execFee"] = row["commission"]
+                                elif row["type"] == "delivery":
+                                    row["execType"] = "Delivery"
+                                    row["execID"] = (
+                                        str(row["user_seq"]) + "_" + currency
                                     )
                                     row[
                                         "leavesQty"
@@ -368,7 +375,7 @@ class Agent(Deribit):
                             else:
                                 row["execType"] = "Trade"
                                 row["execID"] = str(row["trade_id"]) + "_" + currency
-                                row["orderID"] = row["order_id"] + self.name + currency
+                                row["orderID"] = row["order_id"] + "_" + currency
                                 row[
                                     "leavesQty"
                                 ] = 9999999999999  # leavesQty is not supported by Deribit
@@ -385,7 +392,10 @@ class Agent(Deribit):
                             row["category"] = self.symbol_category[
                                 row["instrument_name"]
                             ]
-                            row["lastPx"] = row["price"]
+                            if row["execType"] == "Delivery":
+                                row["lastPx"] = row["mark_price"]
+                            else:                                
+                                row["lastPx"] = row["price"]
                             row["transactTime"] = service.time_converter(
                                 time=row["timestamp"] / 1000, usec=True
                             )

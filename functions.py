@@ -158,6 +158,67 @@ class Function(WS, Variables):
         """
         Trades and funding processing
         """
+        def handle_trade_or_delivery(row, emi, refer, clientID):
+            results = self.Result[row["settlCurrency"]]
+            lastQty = row["lastQty"]
+            leavesQty = row["leavesQty"]
+            if row["side"] == "Sell":
+                lastQty = -row["lastQty"]
+                leavesQty = -row["leavesQty"]
+            calc = Function.calculate(
+                self,
+                symbol=row["symbol"],
+                price=row["lastPx"],
+                qty=lastQty,
+                rate=row["commission"],
+                fund=1,
+                execFee=row["execFee"],
+            )
+            if row["symbol"][1] != "spot":
+                self.robots[emi]["POS"] += lastQty
+                self.robots[emi]["POS"] = round(
+                    self.robots[emi]["POS"],
+                    self.Instrument[row["symbol"]].precision,
+                )
+            self.robots[emi]["VOL"] += abs(lastQty)
+            self.robots[emi]["COMMISS"] += calc["commiss"]
+            self.robots[emi]["SUMREAL"] += calc["sumreal"]
+            self.robots[emi]["LTIME"] = row["transactTime"]
+            results.commission += calc["commiss"]
+            results.sumreal += calc["sumreal"]
+            values = [
+                row["execID"],
+                emi,
+                refer,
+                row["settlCurrency"][0],
+                row["symbol"][0],
+                row["symbol"][1],
+                self.name,
+                row["side"],
+                lastQty,
+                leavesQty,
+                row["price"],
+                0,
+                row["lastPx"],
+                calc["sumreal"],
+                calc["commiss"],
+                clientID,
+                row["transactTime"],
+                self.user_id,
+            ]
+            Function.insert_database(self, values=values)
+            message = {
+                "SYMBOL": row["symbol"],
+                "MARKET": row["market"],
+                "TTIME": row["transactTime"],
+                "SIDE": row["side"],
+                "TRADE_PRICE": row["lastPx"],
+                "QTY": abs(lastQty),
+                "EMI": emi,
+            }
+            if not info:
+                Function.trades_display(self, val=message)  
+
         var.lock.acquire(True)
         try:
             Function.add_symbol(self, symbol=row["symbol"])
@@ -165,7 +226,6 @@ class Function(WS, Variables):
             # Trade
 
             if row["execType"] == "Trade":
-                results = self.Result[row["settlCurrency"]]
                 if "clOrdID" in row:
                     dot = row["clOrdID"].find(".")
                     if (
@@ -233,65 +293,44 @@ class Function(WS, Variables):
                     % (row["execID"], self.user_id),
                 )
                 if not data:
-                    lastQty = row["lastQty"]
-                    leavesQty = row["leavesQty"]
-                    if row["side"] == "Sell":
-                        lastQty = -row["lastQty"]
-                        leavesQty = -row["leavesQty"]
-                    calc = Function.calculate(
-                        self,
-                        symbol=row["symbol"],
-                        price=row["lastPx"],
-                        qty=float(lastQty),
-                        rate=row["commission"],
-                        fund=1,
-                        execFee=row["execFee"],
+                    handle_trade_or_delivery(row, emi, refer, clientID)
+                Function.orders_processing(self, row=row, info=info)
+
+            # Delivery
+
+            elif row["execType"] == "Delivery":
+                results = self.Result[row["settlCurrency"]]
+                position = 0
+                bot_list = []
+                for emi in self.robots:
+                    if (
+                        self.robots[emi]["SYMBOL"] == row["symbol"]
+                        and self.robots[emi]["POS"] != 0
+                    ):
+                        position += self.robots[emi]["POS"]
+                        handle_trade_or_delivery(row, emi, "Delivery", 0)
+                    bot_list.append(emi)
+                diff = row["lastQty"] - position
+                if diff != 0:
+                    message = (
+                        str(row["symbol"])
+                        + " was expired and the delivery amount of "
+                        + str(row["lastQty"])
+                        + " has been distributed among the bots: "
+                        + str(bot_list)
+                        + ", however there is a remainder of "
+                        + str(diff)
+                        + " which is not possible."
                     )
-                    if row["symbol"][1] != "spot":
-                        self.robots[emi]["POS"] += lastQty
-                        self.robots[emi]["POS"] = round(
-                            self.robots[emi]["POS"],
-                            self.Instrument[row["symbol"]].precision,
-                        )
-                    self.robots[emi]["VOL"] += abs(lastQty)
-                    self.robots[emi]["COMMISS"] += calc["commiss"]
-                    self.robots[emi]["SUMREAL"] += calc["sumreal"]
-                    self.robots[emi]["LTIME"] = row["transactTime"]
-                    results.commission += calc["commiss"]
-                    results.sumreal += calc["sumreal"]
-                    values = [
-                        row["execID"],
-                        emi,
-                        refer,
-                        row["settlCurrency"][0],
-                        row["symbol"][0],
-                        row["symbol"][1],
-                        self.name,
-                        row["side"],
-                        lastQty,
-                        leavesQty,
-                        row["price"],
-                        0,
-                        row["lastPx"],
-                        calc["sumreal"],
-                        calc["commiss"],
-                        clientID,
-                        row["transactTime"],
-                        self.user_id,
-                    ]
-                    Function.insert_database(self, values=values)
-                    message = {
-                        "SYMBOL": row["symbol"],
-                        "MARKET": row["market"],
-                        "TTIME": row["transactTime"],
-                        "SIDE": row["side"],
-                        "TRADE_PRICE": row["lastPx"],
-                        "QTY": abs(lastQty),
-                        "EMI": emi,
+                    self.logger.error(message)
+                    var.queue_info.put(
+                    {
+                        "market": self.name,
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": False,
                     }
-                    if not info:
-                        Function.trades_display(self, val=message)
-                    Function.orders_processing(self, row=row, info=info)
+                )            
 
             # Funding
 
