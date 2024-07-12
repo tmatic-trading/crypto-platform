@@ -179,7 +179,6 @@ class WS(Variables):
 
         return Agents[self.name].value.open_orders(self)
 
-
     def get_funds(self: Markets) -> list:
         """
         Cash in the account

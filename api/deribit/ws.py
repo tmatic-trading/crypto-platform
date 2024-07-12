@@ -393,9 +393,9 @@ class Deribit(Variables):
 
     def __update_user_changes(self, values: dict) -> None:
         print("______________ user changes")
-        for key, values in values.items():
+        for key, data in values.items():
             if key == "orders":
-                for value in values:
+                for value in data:
                     category = self.symbol_category[value["instrument_name"]]
                     symbol = (value["instrument_name"], category, self.name)
                     side = "Sell" if value["direction"] == "sell" else "Buy"
@@ -424,8 +424,64 @@ class Deribit(Variables):
                         if value["label"]:
                             row["clOrdID"] = value["label"]
                         self.transaction(row=row)
+            elif key == "positions":
+                for value in data:
+                    symbol = (
+                        value["instrument_name"],
+                        self.symbol_category[values["instrument_name"]],
+                        self.name,
+                    )
+                    instrument = self.Instrument[symbol]
+                    if symbol in self.symbol_list:
+                        if value["direction"] == "sell":
+                            instrument.currentQty = -value["size"]
+                        else:
+                            instrument.currentQty = value["size"]
+                        self.positions[symbol]["POS"] = instrument.currentQty
+                        instrument.avgEntryPrice = value["average_price"]
+                        instrument.unrealisedPnl = value["total_profit_loss"]
+                        # instrument.marginCallPrice is not provided
+            elif key == "trades":
+                for row in data:
+                    row["execType"] = "Trade"
+                    category = self.symbol_category[row["instrument_name"]]
+                    row["symbol"] = (
+                        row["instrument_name"],
+                        category,
+                        self.name,
+                    )
+                    if category == "spot":
+                        row["settlCurrency"] = (
+                            row["fee_currency"],
+                            self.name,
+                        )
+                    else:
+                        row["settlCurrency"] = self.Instrument[
+                            row["symbol"]
+                        ].settlCurrency                                       
+                    row["execID"] = str(row["trade_id"]) + "_" + row["settlCurrency"][0]
+                    row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
+                    row[
+                        "leavesQty"
+                    ] = 9999999999999  # leavesQty is not supported by Deribit
+                    row["execFee"] = row["fee"]
+                    if row["direction"] == "sell":
+                        row["side"] = "Sell"
+                    else:
+                        row["side"] = "Buy"
+                    if "label" in row:
+                        row["clOrdID"] = row["label"]
+                    row["category"] = category
+                    row["lastPx"] = row["price"]
+                    row["transactTime"] = service.time_converter(
+                        time=row["timestamp"] / 1000, usec=True
+                    )
+                    row["lastQty"] = row["amount"]
+                    row["market"] = self.name
+                    row["commission"] = "Not supported"
+                    self.transaction(row=row)
             print("_________________", key)
-            print(values)
+            print(data)
 
     def transaction(self, **kwargs):
         """

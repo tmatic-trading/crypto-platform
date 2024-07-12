@@ -252,9 +252,7 @@ def refresh() -> None:
         elif not ws.logNumFatal:
             if ws.logNumFatal == "BLOCK":
                 if ws.message2000 == "":
-                    ws.message2000 = (
-                        "Fatal error. Trading stopped"
-                    )
+                    ws.message2000 = "Fatal error. Trading stopped"
                     Function.market_status(
                         ws, status="Error", message=ws.message2000, error=True
                     )

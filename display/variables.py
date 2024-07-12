@@ -86,7 +86,9 @@ class Variables:
     frame_left.grid_rowconfigure(0, weight=0)
 
     # Menu widget
-    menu_button = tk.Menubutton(frame_state, text=" MENU ", relief=tk.FLAT, padx=0, pady=0)
+    menu_button = tk.Menubutton(
+        frame_state, text=" MENU ", relief=tk.FLAT, padx=0, pady=0
+    )
     menu_button.pack(side="left", padx=4)
     main_menu = tk.Menu(menu_button, tearoff=0)
     menu_button.config(menu=main_menu)
@@ -94,6 +96,7 @@ class Variables:
         main_menu.add_command(
             label=option, command=lambda value=option: Variables.on_menu_select(value)
         )
+
     def on_menu_select(value):
         if value == "New Robot":
             Variables.pw_rest1.pack_forget()
@@ -340,7 +343,9 @@ class Variables:
     pw_main.add(frame_right)
     pw_main.bind(
         "<Configure>",
-        lambda event: Variables.resize_width(event, Variables.pw_main, Variables.window_width, 1),
+        lambda event: Variables.resize_width(
+            event, Variables.pw_main, Variables.window_width, 1
+        ),
     )
 
     refresh_var = None

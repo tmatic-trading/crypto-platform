@@ -158,6 +158,7 @@ class Function(WS, Variables):
         """
         Trades and funding processing
         """
+
         def handle_trade_or_delivery(row, emi, refer, clientID):
             results = self.Result[row["settlCurrency"]]
             lastQty = row["lastQty"]
@@ -217,7 +218,7 @@ class Function(WS, Variables):
                 "EMI": emi,
             }
             if not info:
-                Function.trades_display(self, val=message)  
+                Function.trades_display(self, val=message)
 
         var.lock.acquire(True)
         try:
@@ -324,13 +325,13 @@ class Function(WS, Variables):
                     )
                     self.logger.error(message)
                     var.queue_info.put(
-                    {
-                        "market": self.name,
-                        "message": message,
-                        "time": datetime.now(tz=timezone.utc),
-                        "warning": False,
-                    }
-                )            
+                        {
+                            "market": self.name,
+                            "message": message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": False,
+                        }
+                    )
 
             # Funding
 
