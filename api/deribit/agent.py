@@ -409,9 +409,9 @@ class Agent(Deribit):
                             )
                             row["lastQty"] = row["amount"]
                             row["market"] = self.name
-                            if row["execType"] == "Funding":
+                            '''if row["execType"] == "Funding":
                                 if row["side"] == "Sell":
-                                    row["lastQty"] = -row["lastQty"]
+                                    row["lastQty"] = -row["lastQty"]'''
                             row["commission"] = "Not supported"
                             # row["price"] = "Not supported"
                         if res and data_type == "logs":
