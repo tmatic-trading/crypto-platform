@@ -32,7 +32,7 @@ class Function(WS, Variables):
         Calculates trade value and commission
         """
         coef = self.Instrument[symbol].valueOfOneContract
-        if symbol[1] == "inverse":
+        if symbol[1] in ["inverse", "future reversed"]:
             sumreal = qty / price * coef * fund
             if execFee is not None:
                 commiss = execFee
@@ -40,7 +40,7 @@ class Function(WS, Variables):
             else:
                 commiss = abs(qty) / price * coef * rate
                 funding = qty / price * coef * rate
-        elif symbol[1] == "spot":
+        elif symbol[1] in ["spot", "spot linear"]:
             sumreal = 0
             if execFee is not None:
                 commiss = execFee
@@ -343,6 +343,11 @@ class Function(WS, Variables):
                     "PRICE": row["price"],
                 }
                 position = 0
+                if row["execID"] == "1720080003108792_BTC":
+                    for key, value in self.robots.items():
+                        print("----------------------")
+                        print(key, "--", value)
+                    print(row)
                 for emi in self.robots:
                     if (
                         self.robots[emi]["SYMBOL"] == row["symbol"]
