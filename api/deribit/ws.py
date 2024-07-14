@@ -458,7 +458,7 @@ class Deribit(Variables):
                     else:
                         row["settlCurrency"] = self.Instrument[
                             row["symbol"]
-                        ].settlCurrency                                       
+                        ].settlCurrency
                     row["execID"] = str(row["trade_id"]) + "_" + row["settlCurrency"][0]
                     row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
                     row[

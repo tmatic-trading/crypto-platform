@@ -59,8 +59,6 @@ class Function(WS, Variables):
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
 
     def add_symbol(self: Markets, symbol: tuple) -> None:
-        # if symbol not in self.full_symbol_list:
-        #    self.full_symbol_list.append(symbol)
         if symbol not in self.Instrument.get_keys():
             WS.get_instrument(self, symbol=symbol)
         # Function.rounding(self)

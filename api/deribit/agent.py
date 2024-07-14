@@ -355,16 +355,22 @@ class Agent(Deribit):
                                 if row["type"] == "settlement":
                                     row["execType"] = "Funding"
                                     row["execID"] = (
-                                        str(row["user_seq"]) + "_" + row["settlCurrency"][0]
+                                        str(row["user_seq"])
+                                        + "_"
+                                        + row["settlCurrency"][0]
                                     )
                                     row["leavesQty"] = row["position"]
                                     row["execFee"] = row["total_interest_pl"]
                                 elif row["type"] == "trade":
                                     row["execType"] = "Trade"
                                     row["execID"] = (
-                                        str(row["trade_id"]) + "_" + row["settlCurrency"][0]
+                                        str(row["trade_id"])
+                                        + "_"
+                                        + row["settlCurrency"][0]
                                     )
-                                    row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
+                                    row["orderID"] = (
+                                        row["order_id"] + "_" + row["settlCurrency"][0]
+                                    )
                                     row[
                                         "leavesQty"
                                     ] = 9999999999999  # leavesQty is not supported by Deribit
@@ -372,7 +378,9 @@ class Agent(Deribit):
                                 elif row["type"] == "delivery":
                                     row["execType"] = "Delivery"
                                     row["execID"] = (
-                                        str(row["user_seq"]) + "_" + row["settlCurrency"][0]
+                                        str(row["user_seq"])
+                                        + "_"
+                                        + row["settlCurrency"][0]
                                     )
                                     row[
                                         "leavesQty"
@@ -384,8 +392,12 @@ class Agent(Deribit):
                                     row["side"] = "Sell"
                             else:
                                 row["execType"] = "Trade"
-                                row["execID"] = str(row["trade_id"]) + "_" + row["settlCurrency"][0]
-                                row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
+                                row["execID"] = (
+                                    str(row["trade_id"]) + "_" + row["settlCurrency"][0]
+                                )
+                                row["orderID"] = (
+                                    row["order_id"] + "_" + row["settlCurrency"][0]
+                                )
                                 row[
                                     "leavesQty"
                                 ] = 9999999999999  # leavesQty is not supported by Deribit
@@ -409,9 +421,9 @@ class Agent(Deribit):
                             )
                             row["lastQty"] = row["amount"]
                             row["market"] = self.name
-                            '''if row["execType"] == "Funding":
+                            """if row["execType"] == "Funding":
                                 if row["side"] == "Sell":
-                                    row["lastQty"] = -row["lastQty"]'''
+                                    row["lastQty"] = -row["lastQty"]"""
                             row["commission"] = "Not supported"
                             # row["price"] = "Not supported"
                         if res and data_type == "logs":

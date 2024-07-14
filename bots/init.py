@@ -158,8 +158,6 @@ class Init(WS, Variables):
             else:
                 robot["PNL"] = 0
             robot["lotSize"] = self.Instrument[robot["SYMBOL"]].minOrderQty
-            # if robot["SYMBOL"] not in self.full_symbol_list:
-            #    self.full_symbol_list.append(robot["SYMBOL"])
 
         return 0
 
@@ -195,7 +193,7 @@ class Init(WS, Variables):
                 )
                 var.logger.error(message)
                 return None
-        self.logNumFatal = 0
+        self.logNumFatal = ""
         return res
 
     def load_frames(

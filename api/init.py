@@ -16,7 +16,6 @@ class Setup(Variables):
             self.http_url = var.env[name][testnet + "HTTP_URL"]
             self.symbol_list = var.env[name]["SYMBOLS"]
             self.currencies = var.env[name]["CURRENCIES"]
-            # self.full_symbol_list = self.symbol_list.copy()
             tmp_pos = {y: 0 for y in var.name_position}
             self.category_list = list()
             for symbol in self.symbol_list:
