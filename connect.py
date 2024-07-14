@@ -249,18 +249,17 @@ def refresh() -> None:
                         )
                         ws.logNumFatal = "FATAL"  # reboot
                     ws.message_time = utc
-        elif not ws.logNumFatal:
-            if ws.logNumFatal == "BLOCK":
-                if ws.message2000 == "":
-                    ws.message2000 = "Fatal error. Trading stopped"
-                    Function.market_status(
-                        ws, status="Error", message=ws.message2000, error=True
-                    )
-                sleep(1)
-            elif ws.logNumFatal == "FATAL":  # reboot
-                if ws.api_is_active:
-                    t = threading.Thread(target=reload_market, args=(ws,))
-                    t.start()
+        elif ws.logNumFatal == "BLOCK":
+            if ws.message2000 == "":
+                ws.message2000 = "Fatal error. Trading stopped"
+                Function.market_status(
+                    ws, status="Error", message=ws.message2000, error=True
+                )
+            sleep(1)
+        elif ws.logNumFatal == "FATAL":  # reboot
+            if ws.api_is_active:
+                t = threading.Thread(target=reload_market, args=(ws,))
+                t.start()
     var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
     if ws.api_is_active:

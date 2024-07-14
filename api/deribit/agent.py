@@ -771,4 +771,5 @@ class Agent(Deribit):
                     + str(self.ws_request_delay)
                     + " seconds. Reboot"
                 )
+                self.logNumFatal = "FATAL"
                 return
