@@ -2,6 +2,8 @@ import os
 import re
 import shutil
 import tkinter as tk
+from tkinter import font
+import time
 
 # from pygments.token import Token
 import traceback
@@ -82,18 +84,33 @@ class CustomButton(tk.Menubutton):
 
     def on_press(self, event):
         if self["state"] != "disabled":
-            if self.name == "Back":
+            if self.name == "New Bot":
                 self.app.selected_bot = ""
-                disp.menu_robots.pack_forget()
-                disp.pw_rest1.pack(fill="both", expand="yes")
+                self.app.action = self.name
+                comment = f"\nCreate a bot.\nEvery new bot\nmust have\na unique name."
+                self.app.show_bot(comment)
+                self.app.draw_buttons()
+            elif self.name == "Back":
+                if self.app.action == "Duplicate":
+                    self.app.action = ""
+                    self.app.show_bot("")
+                    self.app.draw_buttons()
+                else:
+                    #self.app.selected_bot = ""
+                    #self.app.show_bot("")
+                    #self.app.draw_buttons()
+                    disp.menu_robots.pack_forget()
+                    disp.pw_rest1.pack(fill="both", expand="yes")
             elif self.name == "Delete":
                 self.app.delete_bot()
             elif self.name == "Syntax":
-                bot_name = self.app.selected_bot
-                # path = os.path.join(self.app.algo_dir, bot_name)
-                # content = self.app.read_file(f"{str(path)}/strategy.py")
                 content = self.app.strategy_text.get("1.0", tk.END)
-                self.open_popup(bot_name, content)
+                self.open_popup(self.app.selected_bot, content)
+            elif self.name == "Duplicate":
+                self.app.action = self.name
+                comment = f"\nYou are about to duplicate the bot named '{self.app.selected_bot}'.\nSince every new bot must have a unique title,\nchoose any name that differs from '{self.app.selected_bot}'.\n\nThe newly created bot will get the same algorithm code\nas the '{self.app.selected_bot}' currently has."
+                self.app.show_bot(comment)
+                self.app.draw_buttons()
             else:
                 print(self.name, self["state"])
 
@@ -111,32 +128,37 @@ class CustomButton(tk.Menubutton):
 class SettingsApp:
     def __init__(self, root):
         self.root_frame = root
+
+        self.pop_up = None
+        self.selected_bot = ""# "112"
+        self.bot_path = ""
+        self.algo_dir = f"{os.getcwd()}/algo/"
+        self.action = ""
+
         self.button_list = [
+            "New Bot",
             "Syntax",
             "Backtest",
             "Activate",
             "Update",
+            "Merge",
             "Duplicate",
             "Delete",
             "Back",
         ]
         self.rows_list = [
             "Name",
-            "Currency",
             "Created",
             "Updated",
             "Status",
-            "Timeframe",
-            "Capital",
-            "Leverage",
-            "PNL",
         ]
-        self.selected_bot = ""  # "112"
-        self.algo_dir = f"{os.getcwd()}/algo/"
-        self.bots_list = [
-            x[0].replace(self.algo_dir, "") for x in os.walk(self.algo_dir)
-        ]
-        self.pop_up = None
+        '''"Timeframe",
+        "Capital",
+        "Leverage",
+        "PNL",'''
+
+        # Keeps all bots' names in the array
+        self.bots_list = []
 
         # Keeps the bot's algorithm derived from strategy.py file
         self.bot_algo = ""
@@ -145,8 +167,8 @@ class SettingsApp:
         self.name_trace = StringVar(name="Name" + str(self))
 
         # Create initial frames
-        self.create_right_frames()
-        self.show_bot()
+        self.bot_info_frame()
+        self.show_bot("New bot")
 
         # CustomButton array
         self.buttons_center = []
@@ -163,24 +185,42 @@ class SettingsApp:
             )
             self.buttons_center.append(frame)
 
+        self.collect_bots()
         self.draw_buttons()
 
+    def collect_bots(self):
+        '''Reviews all created bots in the algo directory and puts them in the array'''
+        self.bots_list = [
+            x[0].replace(self.algo_dir, "") for x in os.walk(self.algo_dir)
+        ]
+
     def draw_buttons(self):
+        '''Draws bot menu buttons accordingly'''
         # self.buttons_center.sort(key=lambda f: f.winfo_y())
         total_height = 0
         for i, button in enumerate(self.buttons_center):
-            if button.name == "Back":
+            if button.name == "New Bot":
+                if self.selected_bot == "":
+                    button.configure(state="disabled")
+                else:
+                    button.configure(state="normal")
+            elif button.name == "Back":
                 button.configure(state="normal")
             elif button.name == "Delete":
-                if self.selected_bot != "":
-                    button.configure(state="normal")
-                else:
+                if self.selected_bot == "" or self.action == "Duplicate":
                     button.configure(state="disabled")
+                else:
+                    button.configure(state="normal")
             elif button.name == "Syntax":
-                if self.selected_bot != "":
-                    button.configure(state="normal")
-                else:
+                if self.selected_bot == "" or self.action == "Duplicate":
                     button.configure(state="disabled")
+                else:
+                    button.configure(state="normal")
+            elif button.name == "Duplicate":
+                if self.selected_bot == "" or self.action == "Duplicate":
+                    button.configure(state="disabled")
+                else:
+                    button.configure(state="normal")
             else:
                 button.configure(state="disabled")
             # button.update_idletasks()#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -196,47 +236,62 @@ class SettingsApp:
             button.place_configure(x=0, y=y_pos, height=button_height, relwidth=1.0)
             total_height += button_height * 1.5
 
-    def show_bot(self):
-        """Shows the bot's info when self.selected_bot != "". Otherwise hides"""
-        for i, row in enumerate(self.rows_list):
-            if self.selected_bot != "":
-                self.col_0_label[row].pack(anchor="w", padx=10)
-                self.col_1_entry[row].pack_forget()
-                self.col_1_label[row].pack(anchor="w", padx=10)
-            else:
-                if i < 2:  # Only bot's Name and Currency
-                    self.col_0_label[row].pack(anchor="w", padx=10)
-                    self.col_1_entry[row].pack(anchor="w")
-                    self.col_1_label[row].pack_forget()
+    def show_bot(self, comment):
+        """Shows the bot's info when bot is selected. Otherwise hides"""
+        for item in self.rows_list:
+            if self.selected_bot == "" or self.action != "":
+                if item == "Name":
+                    self.info_name[item].pack(anchor="w")
+                    self.info_entry[item].pack(anchor="w")
+                    self.info_entry[item].delete(0, tk.END)
+                    if self.action == "Duplicate":
+                        self.info_entry[item].insert(0, self.selected_bot)
+                    self.button_create.pack(anchor="w")
+                    self.button_create.config(state="disabled")
+                    self.strategy.grid_forget()
+                    self.bot_algo = ""
+                    self.pw_info.forget(self.bot_note)
+                    if self.action != "":
+                        self.label_comment.config(text=comment)
+                        self.pw_info.add(self.frame_comment)
                 else:
-                    self.col_0_label[row].pack_forget()
-                    self.col_1_entry[row].pack_forget()
-                    self.col_1_label[row].pack_forget()
-        if self.selected_bot != "":
-            self.col_1_label["Name"].config(text=self.selected_bot)
-            self.button_create.pack_forget()
-            self.strategy_text.grid(row=0, column=0, sticky="NSEW")
-            self.strategy_scroll.grid(row=0, column=1, sticky="NS")
-
-            path = os.path.join(self.algo_dir, self.selected_bot)
-            file = open(f"{path}/strategy.py", "r")
-            self.bot_algo = file.read()
-            file.close()
-            self.insert_code(self.strategy_text, self.bot_algo)
-        else:
-            self.button_create.pack()
-            self.button_create.config(state="disabled")
-            self.strategy_text.grid_forget()
-            self.strategy_scroll.grid_forget()
-            self.bot_algo = ""
+                    self.info_name[item].pack_forget()
+                self.info_value[item].config(text="")
+                self.info_value[item].pack_forget()
+            else:
+                if item == "Name":
+                    self.info_value[item].config(text=self.selected_bot)
+                    self.info_entry[item].pack_forget()
+                    self.button_create.pack_forget()
+                    self.strategy.grid(row=self.strategy_row, column=0, sticky="NSWE", columnspan=2)
+                    if self.bot_path == "":
+                        self.bot_path = os.path.join(self.algo_dir, self.selected_bot)
+                    self.bot_algo = self.read_file(f"{self.bot_path}/strategy.py")
+                    self.insert_code(self.strategy_text, self.bot_algo)
+                    self.pw_info.forget(self.frame_comment)
+                    self.pw_info.add(self.bot_note)
+                elif item == "Created":
+                    my_time = time.ctime(os.path.getctime(self.bot_path))
+                    t_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(my_time))
+                    self.info_value[item].config(text=t_stamp)
+                elif item == "Updated":
+                    my_time = time.ctime(os.path.getmtime(self.bot_path))
+                    t_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(my_time))
+                    self.info_value[item].config(text=t_stamp)
+                elif item == "Status":
+                    self.info_value[item].config(text="Suspended")
+                self.info_name[item].pack(anchor="w")
+                self.info_value[item].pack(anchor="w")
 
     def delete_bot(self):
-        path = os.path.join(self.algo_dir, self.selected_bot)
+        #path = os.path.join(self.algo_dir, self.selected_bot)
         # files = os.listdir(path)
-        shutil.rmtree(str(path))
+        shutil.rmtree(str(self.bot_path))
         self.selected_bot = ""
-        self.show_bot()
+        self.bot_path = ""
+        self.show_bot("")
         self.draw_buttons()
+        self.collect_bots()
 
     def insert_code(self, text_widget, code):
         """Function to insert Python code into a Tkinter Text widget with syntax highlighting"""
@@ -270,89 +325,132 @@ class SettingsApp:
 
     def create_bot(self):
         bot_name = self.name_trace.get()
-        path = os.path.join(self.algo_dir, bot_name)
+        self.bot_path = os.path.join(self.algo_dir, bot_name)
         # Create a new directory with the name as the new bot's name
-        os.mkdir(path)
+        os.mkdir(self.bot_path)
         # Create the '__init__.py' file in the new directory. This file is empty
-        self.create_file(f"{str(path)}/__init__.py")
+        self.create_file(f"{str(self.bot_path)}/__init__.py")
         # Load the content of 'init.py' file
         content = self.read_file(f"{self.algo_dir}init.py")
         # Create new 'init.py' file in the new directory
-        self.create_file(f"{str(path)}/init.py")
+        self.create_file(f"{str(self.bot_path)}/init.py")
         # Write the initial content into the new 'init.py' file
-        self.write_file(f"{str(path)}/init.py", content)
+        self.write_file(f"{str(self.bot_path)}/init.py", content)
         # Create new 'strategy.py' file in the new directory
-        self.create_file(f"{str(path)}/strategy.py")
+        self.create_file(f"{str(self.bot_path)}/strategy.py")
         # Write the initial content into the new 'strategy.py' file
         self.write_file(
-            f"{str(path)}/strategy.py",
+            f"{str(self.bot_path)}/strategy.py",
             "import services as service\nfrom api.api import Markets\nfrom common.data import Instrument\nfrom functions import Function\n",
         )
         # Create new '.gitignore' file in the new directory
-        self.create_file(f"{str(path)}/.gitignore")
+        self.create_file(f"{str(self.bot_path)}/.gitignore")
         # Write the initial content into the new '.gitignore' file
         self.write_file(
-            f"{str(path)}/.gitignore",
+            f"{str(self.bot_path)}/.gitignore",
             "*\n!__init__.py\n!.gitignore\n!init.py\n!strategy.py\n",
         )
 
         self.selected_bot = bot_name
-        self.col_1_entry["Name"].delete(0, tk.END)
-        self.show_bot()
+        self.action = ""
+        self.show_bot("")
         self.draw_buttons()
+        self.collect_bots()
 
     def trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
         if bot_name in self.bots_list or bot_name != self.name_trace.get():
-            self.col_1_entry[name].config(style=f"used.TEntry")
+            self.info_entry[name].config(style=f"used.TEntry")
             self.button_create.config(state="disabled")
         else:
-            self.col_1_entry[name].config(style=f"free.TEntry")
+            self.info_entry[name].config(style=f"free.TEntry")
             self.button_create.config(state="normal")
 
-    def create_right_frames(self):
-        target_frame = robots_right
-        widget_row = 0
-        self.bot_top = tk.Frame(target_frame)
-        self.bot_top.grid(row=widget_row, column=0, sticky="EW", columnspan=2)
-        self.setting_label = tk.Label(
-            self.bot_top, text="This page is under development", fg="red"
+    def bot_info_frame(self):
+        #target_frame = robots_right
+        frame_row = 0
+        top_frame = tk.Frame(info_frame)
+        top_frame.grid(row=frame_row, column=0, sticky="NSEW", columnspan=2)
+        under_dev_label = tk.Label(
+            top_frame, text="This page is under development", fg="red"
         )
-        self.setting_label.pack(side="left", padx=10)
+        under_dev_label.pack(anchor="center")
 
-        widget_row += 1
-        self.col_0 = tk.Frame(target_frame)
-        self.col_0.grid(row=widget_row, column=0, sticky="W")
-        self.col_1 = tk.Frame(target_frame)
-        self.col_1.grid(row=widget_row, column=1, sticky="W")
+        empty_frame = []
+        empty_frame_label = []
+        for i in range(10):
+            frame_row += 1
+            empty_frame.append(tk.Frame(info_frame))
+            empty_frame[i].grid(row=frame_row, column=0, sticky="NSEW")
+            empty_frame_label.append(tk.Label(empty_frame[i], text=" "))
+            empty_frame_label[i].pack(anchor="w")
+
+        filled_frame = tk.Frame(info_frame)
+        filled_frame.grid(row=1, column=1, sticky="NSEW", rowspan=frame_row)
+
+        self.pw_info = tk.PanedWindow(
+            filled_frame,
+            orient=tk.HORIZONTAL,
+            bd=0,
+            sashwidth=0,
+            height=1,
+        )
+        self.pw_info.pack(fill="both", expand="yes")
+
+        info_left = tk.Frame(self.pw_info)
+
+        if disp.ostype == "Mac":
+            self.bot_note = ttk.Notebook(self.pw_info, padding=(-9, 0, -9, -9))
+        else:
+            self.bot_note = ttk.Notebook(self.pw_info, padding=0)
+        bot_positions = tk.Frame(self.bot_note)
+        bot_orders = tk.Frame(self.bot_note)
+        bot_trades = tk.Frame(self.bot_note)
+        bot_results = tk.Frame(self.bot_note)
+        self.bot_note.add(bot_positions, text="Positions")
+        self.bot_note.add(bot_orders, text="Orders")
+        self.bot_note.add(bot_trades, text="Trades")
+        self.bot_note.add(bot_results, text="Results")
+
+        self.pw_info.add(info_left)
+        self.pw_info.bind(
+            "<Configure>",
+            lambda event: disp.resize_width(event, self.pw_info, disp.window_width // 5.5, 4),
+        )
+
+        self.frame_comment = tk.Frame(self.pw_info)
+        self.label_comment = tk.Label(self.frame_comment)
+        self.label_comment.pack(anchor="center")
 
         # Widgets dictionaries for bot's data according to self.rows_list
-        self.col_0_label = {}
-        self.col_1_entry = {}
-        self.col_1_label = {}
-
-        for i, row in enumerate(self.rows_list):
-            self.col_0_label[row] = tk.Label(self.col_0, text=row)
-            self.col_1_entry[row] = ttk.Entry(
-                self.col_1, width=30, style="default.TEntry"
-            )
-            if row == "Name":
-                self.col_1_entry[row].config(textvariable=self.name_trace)
+        self.info_name = {}
+        self.info_value = {}
+        self.info_entry = {}
+        current_font = font.nametofont(under_dev_label.cget("font"))
+        spec_font = current_font.copy()
+        spec_font.config(weight="bold")#, slant="italic")#, size=9)#, underline="True")
+        for item in self.rows_list:
+            self.info_name[item] = tk.Label(info_left, text=item, font=spec_font)
+            self.info_value[item] = tk.Label(info_left, text="")
+            if item == "Name":
+                self.info_entry[item] = ttk.Entry(
+                    info_left, width=24, style="free.TEntry", textvariable=self.name_trace
+                )
                 self.name_trace.trace_add("write", self.trace_callback)
-            self.col_1_label[row] = tk.Label(self.col_1)
         self.button_create = tk.Button(
-            self.col_1,
+            info_left,
             activebackground=disp.bg_active,
             text="Create Bot",
             command=lambda: self.create_bot(),
             state="disabled",
         )
 
-        widget_row += 1
-        self.strategy = tk.Frame(target_frame)
-        self.strategy.grid(row=widget_row, column=0, sticky="NSWE", columnspan=2)
-
+        # Frame for Bot's algorithm loaded from the strategy.py file
+        frame_row += 1
+        self.strategy_row = frame_row
+        self.strategy = tk.Frame(info_frame)
+        self.strategy.grid(row=frame_row, column=0, sticky="NSWE", columnspan=2)
         self.strategy_scroll = AutoScrollbar(self.strategy, orient="vertical")
         self.strategy_text = tk.Text(
             self.strategy, highlightthickness=0, yscrollcommand=self.strategy_scroll.set
@@ -364,13 +462,15 @@ class SettingsApp:
         self.strategy.grid_columnconfigure(1, weight=0)
         self.strategy.grid_rowconfigure(0, weight=1)
 
-        target_frame.grid_columnconfigure(0, weight=1)
-        target_frame.grid_columnconfigure(1, weight=10)
-        for i in range(widget_row):
-            target_frame.grid_rowconfigure(i, weight=0)
-            if i == widget_row - 1:
-                # The following row is for self.strategy widget
-                target_frame.grid_rowconfigure(widget_row, weight=1)
+        info_frame.grid_columnconfigure(0, weight=0)
+        info_frame.grid_columnconfigure(1, weight=1)
+        for i in range(frame_row):
+            if i == frame_row - 1:
+                # self.strategy frame
+                info_frame.grid_rowconfigure(frame_row, weight=1)
+            else:
+                info_frame.grid_rowconfigure(i, weight=0)
+
 
 
 # ws = Markets[var.current_market]
@@ -386,14 +486,14 @@ pw_menu_robots = tk.PanedWindow(
 )
 pw_menu_robots.pack(fill="both", expand="yes")
 
-robots_left = tk.Frame(pw_menu_robots, relief="sunken", borderwidth=1)
-robots_right = tk.Frame(pw_menu_robots)  # , bg=disp.bg_color)
+menu_frame = tk.Frame(pw_menu_robots, relief="sunken", borderwidth=1)
+info_frame = tk.Frame(pw_menu_robots)  # , bg=disp.bg_color)
 
-pw_menu_robots.add(robots_left)
-pw_menu_robots.add(robots_right)
+pw_menu_robots.add(menu_frame)
+pw_menu_robots.add(info_frame)
 pw_menu_robots.bind(
     "<Configure>",
     lambda event: disp.resize_width(event, pw_menu_robots, disp.window_width // 9.5, 6),
 )
 
-buttons_menu = SettingsApp(robots_left)
+buttons_menu = SettingsApp(menu_frame)
