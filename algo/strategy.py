@@ -3,15 +3,6 @@ from api.api import Markets
 from common.data import Instrument
 from functions import Function
 
-from .tools import Tool
-
-
-btcusd = Tool(market="Deribit", ticker="BTCUSD")
-
-#print("_____________", btcusd.instrument.baseCoin)
-
-
-
 
 def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     ws = Markets[robot["MARKET"]]
@@ -19,7 +10,7 @@ def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     quantaty = robot["lotSize"] * robot["CAPITAL"]
     emi = robot["EMI"]
     symbol = robot["SYMBOL"]
-    indent = frame[-1]["hi"] / 10 #(frame[-1]["hi"] - frame[-1]["lo"]) / 3
+    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
     sell_price = service.ticksize_rounding(
         price=(instrument.asks[0][0] + indent), ticksize=instrument.tickSize
     )
