@@ -92,13 +92,13 @@ class Variables:
     menu_button.pack(side="left", padx=4)
     main_menu = tk.Menu(menu_button, tearoff=0)
     menu_button.config(menu=main_menu)
-    for option in ["New Robot", "Reload All", "Settings", "Trading ON", "About"]:
+    for option in ["Trading ON", "Reload All", "Bot Menu", "Settings", "About"]:
         main_menu.add_command(
             label=option, command=lambda value=option: Variables.on_menu_select(value)
         )
 
     def on_menu_select(value):
-        if value == "New Robot":
+        if value == "Bot Menu":
             Variables.pw_rest1.pack_forget()
             Variables.menu_robots.pack(fill="both", expand="yes")
         print("Selected:", value)
