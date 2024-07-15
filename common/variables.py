@@ -11,6 +11,38 @@ from dotenv import dotenv_values
 if not os.path.isfile(".env"):
     print("The .env file does not exist.")
     exit(1)
+    
+
+class ListenLogger(logging.Filter):
+    def filter(self, record):
+        path = record.pathname.replace(os.path.abspath(os.getcwd()), "")[:-3]
+        path = path.replace("/", ".")
+        path = path.replace("\\", ".")
+        if path[0] == ".":
+            path = path[1:]
+        record.name = path
+        return True
+
+
+def setup_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    handler = logging.FileHandler("logfile.log")
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    logging.Formatter.converter = time.gmtime
+    ch.setFormatter(formatter)
+    handler.setFormatter(formatter)
+    logger.addHandler(ch)
+    logger.addHandler(handler)
+    logger.info("\n\nhello\n")
+    filter_logger = ListenLogger()
+    logger.addFilter(filter_logger)
+
+    return logger
+
 
 
 class Variables:
@@ -134,7 +166,7 @@ class Variables:
         "COMMISSION SUM",
         "FUNDING SUM",
     ]
-    logger: logging
+    logger: logging = setup_logger()
     connect_sqlite = None
     cursor_sqlite = None
     error_sqlite = None

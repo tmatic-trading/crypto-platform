@@ -3,6 +3,15 @@ from api.api import Markets
 from common.data import Instrument
 from functions import Function
 
+from .tools import Tool
+
+
+btcusd = Tool(market="Deribit", ticker="BTCUSD")
+
+#print("_____________", btcusd.instrument.baseCoin)
+
+
+
 
 def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
     ws = Markets[robot["MARKET"]]
