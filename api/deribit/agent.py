@@ -213,8 +213,6 @@ class Agent(Deribit):
                 symbol = (values["instrument_name"], category, self.name)
                 instrument = self.Instrument[symbol]
                 instrument.currentQty = values["size"]
-                if values["direction"] == "sell":
-                    instrument.currentQty = -instrument.currentQty
                 instrument.avgEntryPrice = values["average_price"]
                 instrument.unrealisedPnl = values["total_profit_loss"]
                 if "estimated_liquidation_price" in values:

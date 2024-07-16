@@ -392,7 +392,8 @@ class Deribit(Variables):
         print("_________________________handle order", values)
 
     def __update_user_changes(self, values: dict) -> None:
-        print("______________ user changes")
+        print(":::::::::::::::::::::::::::::::::::::::::::::::::::::: user changes")
+        print(values)
         for key, data in values.items():
             if key == "orders":
                 for value in data:
@@ -433,10 +434,7 @@ class Deribit(Variables):
                     )
                     instrument = self.Instrument[symbol]
                     if symbol in self.symbol_list:
-                        if value["direction"] == "sell":
-                            instrument.currentQty = -value["size"]
-                        else:
-                            instrument.currentQty = value["size"]
+                        instrument.currentQty = value["size"]
                         self.positions[symbol]["POS"] = instrument.currentQty
                         instrument.avgEntryPrice = value["average_price"]
                         instrument.unrealisedPnl = value["total_profit_loss"]
@@ -480,7 +478,7 @@ class Deribit(Variables):
                     row["market"] = self.name
                     row["commission"] = "Not supported"
                     self.transaction(row=row)
-            print("_________________", key)
+            print(":::::::::::::", key)
             print(data)
 
     def transaction(self, **kwargs):
