@@ -1,4 +1,4 @@
-'''
+"""
 Provide database transformations for the following operations:
 1) New: insert (robots)
 2) Activate: update STATUS (robots)
@@ -6,18 +6,17 @@ Provide database transformations for the following operations:
 4) Merge: delete record (robots), update EMI (coins)
 5) Duplicate: insert (robots)
 6) Delete: delete record (robots), update EMI (coins)
-'''
+"""
 
 import os
 import re
 import shutil
-import tkinter as tk
-from tkinter import font
 import time
+import tkinter as tk
 
 # from pygments.token import Token
 import traceback
-from tkinter import StringVar, ttk
+from tkinter import StringVar, font, ttk
 
 from pygments import lex
 from pygments.lexers import PythonLexer
@@ -25,7 +24,6 @@ from pygments.styles import get_style_by_name
 
 from .variables import AutoScrollbar
 from .variables import Variables as disp
-
 
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
@@ -62,9 +60,12 @@ class CustomButton(tk.Menubutton):
             self.app.pop_up.title(action)
             tk.Label(self.app.pop_up, text=content).pack(anchor="center", pady=25)
             tk.Label(self.app.pop_up, text="Enter a unique name").pack(anchor="center")
-            self.bot_entry["Name"] = ttk.Entry(self.app.pop_up,
-                    width=20, style="free.TEntry", textvariable=self.name_trace
-                )
+            self.bot_entry["Name"] = ttk.Entry(
+                self.app.pop_up,
+                width=20,
+                style="free.TEntry",
+                textvariable=self.name_trace,
+            )
             self.bot_entry["Name"].pack(anchor="center")
             self.name_trace.trace_add("write", self.trace_callback)
             self.button = tk.Button(
@@ -80,9 +81,12 @@ class CustomButton(tk.Menubutton):
             self.app.pop_up.title(f"{action}: {bot_name}")
             tk.Label(self.app.pop_up, text=content).pack(anchor="center", pady=25)
             tk.Label(self.app.pop_up, text="Enter a unique name").pack(anchor="center")
-            self.bot_entry["Name"] = ttk.Entry(self.app.pop_up,
-                    width=20, style="free.TEntry", textvariable=self.name_trace
-                )
+            self.bot_entry["Name"] = ttk.Entry(
+                self.app.pop_up,
+                width=20,
+                style="free.TEntry",
+                textvariable=self.name_trace,
+            )
             self.bot_entry["Name"].pack(anchor="center")
             self.name_trace.trace_add("write", self.trace_callback)
             self.button = tk.Button(
@@ -99,7 +103,9 @@ class CustomButton(tk.Menubutton):
             self.app.pop_up.title(f"Check syntax for: {bot_name}")
             is_syntax_correct, error_message = self.check_syntax(content)
             if is_syntax_correct:
-                tk.Label(self.app.pop_up, text="The bot's code is correct").pack(anchor="center", pady=100)
+                tk.Label(self.app.pop_up, text="The bot's code is correct").pack(
+                    anchor="center", pady=100
+                )
             else:
                 scroll = AutoScrollbar(self.app.pop_up, orient="vertical")
                 text = tk.Text(
@@ -120,17 +126,22 @@ class CustomButton(tk.Menubutton):
             self.app.pop_up.title(f"Delete: {bot_name}")
             tk.Label(self.app.pop_up, text=content).pack(anchor="center", pady=25)
             self.var.set(0)
-            confirm = tk.Checkbutton(self.app.pop_up, text="Confirm operation", variable=self.var, command=self.check_button)
+            confirm = tk.Checkbutton(
+                self.app.pop_up,
+                text="Confirm operation",
+                variable=self.var,
+                command=self.check_button,
+            )
             confirm.pack(anchor="center")
             self.button = tk.Button(
-                    self.app.pop_up,
-                    activebackground=disp.bg_active,
-                    text="Delete Bot",
-                    command=lambda: self.app.delete_bot(bot_name),
-                    state="disabled",
-                )
+                self.app.pop_up,
+                activebackground=disp.bg_active,
+                text="Delete Bot",
+                command=lambda: self.app.delete_bot(bot_name),
+                state="disabled",
+            )
             self.button.pack(anchor="center")
-    
+
     def check_button(self):
         if self.var.get() == 1:
             self.button.config(state="normal")
@@ -216,10 +227,10 @@ class SettingsApp:
             "Updated",
             "Status",
         ]
-        '''"Timeframe",
+        """"Timeframe",
         "Capital",
         "Leverage",
-        "PNL",'''
+        "PNL","""
 
         # CustomButton array
         self.buttons_center = []
@@ -245,7 +256,7 @@ class SettingsApp:
         self.bot_algo = ""
 
         # To trace whether a new bot's name is unique
-        #self.name_trace = StringVar(name="Name" + str(self))
+        # self.name_trace = StringVar(name="Name" + str(self))
 
         # Create initial frames
         self.bot_info_frame()
@@ -253,17 +264,17 @@ class SettingsApp:
         self.draw_buttons()
 
     def collect_bots(self):
-        '''Reviews all created bots in the algo directory and puts them in the array'''
+        """Reviews all created bots in the algo directory and puts them in the array"""
         self.bots_list = [
             x[0].replace(self.algo_dir, "") for x in os.walk(self.algo_dir)
-        ]               
+        ]
 
     def num_of_bots(self):
-        '''Returns number of bots created'''
+        """Returns number of bots created"""
         return len(self.bots_list) - 2
 
     def draw_buttons(self):
-        '''Draws bot menu buttons accordingly'''
+        """Draws bot menu buttons accordingly"""
         # self.buttons_center.sort(key=lambda f: f.winfo_y())
         y_pos = 0
         for i, button in enumerate(self.buttons_center):
@@ -278,17 +289,29 @@ class SettingsApp:
                 else:
                     button.configure(state="normal")
             elif button.name == "Syntax":
-                if self.selected_bot == "" or self.action == "Duplicate" or self.action == "Home":
+                if (
+                    self.selected_bot == ""
+                    or self.action == "Duplicate"
+                    or self.action == "Home"
+                ):
                     button.configure(state="disabled")
                 else:
                     button.configure(state="normal")
             elif button.name == "Duplicate":
-                if self.selected_bot == "" or self.action == "Duplicate" or self.action == "Home":
+                if (
+                    self.selected_bot == ""
+                    or self.action == "Duplicate"
+                    or self.action == "Home"
+                ):
                     button.configure(state="disabled")
                 else:
                     button.configure(state="normal")
             elif button.name == "Delete":
-                if self.selected_bot == "" or self.action == "Duplicate" or self.action == "Home":
+                if (
+                    self.selected_bot == ""
+                    or self.action == "Duplicate"
+                    or self.action == "Home"
+                ):
                     button.configure(state="disabled")
                 else:
                     button.configure(state="normal")
@@ -307,7 +330,9 @@ class SettingsApp:
             else:
                 if button.name == "Last Viewed" or button.name == "Syntax":
                     y_pos += int(self.button_height / 2.5)
-            button.place_configure(x=0, y=y_pos, height=self.button_height, relwidth=1.0)
+            button.place_configure(
+                x=0, y=y_pos, height=self.button_height, relwidth=1.0
+            )
             y_pos += int(self.button_height * 1.333)
 
     def show_bot(self, comment):
@@ -324,11 +349,15 @@ class SettingsApp:
                     self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
                     self.insert_code(self.strategy_text, self.bot_algo)
                 elif item == "Created":
-                    my_time = time.ctime(os.path.getctime(f"{bot_path}/{self.strategy_file}"))
+                    my_time = time.ctime(
+                        os.path.getctime(f"{bot_path}/{self.strategy_file}")
+                    )
                     t_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(my_time))
                     self.info_value[item].config(text=t_stamp)
                 elif item == "Updated":
-                    my_time = time.ctime(os.path.getmtime(f"{bot_path}/{self.strategy_file}"))
+                    my_time = time.ctime(
+                        os.path.getmtime(f"{bot_path}/{self.strategy_file}")
+                    )
                     t_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(my_time))
                     self.info_value[item].config(text=t_stamp)
                 elif item == "Status":
@@ -436,14 +465,20 @@ class SettingsApp:
     def created_bots_menu(self):
         # Menu to choose one of the created bots
         self.bots_button = tk.Menubutton(
-            self.brief_frame, text="SELECT FROM CREATED BOTS", relief=tk.FLAT, padx=0, pady=0, activebackground=disp.bg_active
+            self.brief_frame,
+            text="SELECT FROM CREATED BOTS",
+            relief=tk.FLAT,
+            padx=0,
+            pady=0,
+            activebackground=disp.bg_active,
         )
         main_menu = tk.Menu(self.bots_button, tearoff=0)
         self.bots_button.config(menu=main_menu)
         for option in self.bots_list:
-               if option != "__pycache__" and option != "":
+            if option != "__pycache__" and option != "":
                 main_menu.add_command(
-                    label=option, command=lambda value=option: self.on_menu_select(value)
+                    label=option,
+                    command=lambda value=option: self.on_menu_select(value),
                 )
 
     def bot_info_frame(self):
@@ -453,12 +488,18 @@ class SettingsApp:
         row_num = 0
         for key, value in self.button_list.items():
             if key == "Home":
-                tk.Label(self.menu_usage, text="USE ONE OF THE MENU BUTTONS:").pack(anchor="w")
+                tk.Label(self.menu_usage, text="USE ONE OF THE MENU BUTTONS:").pack(
+                    anchor="w"
+                )
             else:
                 if row_num % 2 == 0:
-                    tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(anchor="w", padx=25, pady=10)
+                    tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(
+                        anchor="w", padx=25, pady=10
+                    )
                 else:
-                    tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(anchor="w", padx=25)
+                    tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(
+                        anchor="w", padx=25
+                    )
                 row_num += 1
 
         self.main_frame = tk.Frame(info_frame)
@@ -510,7 +551,9 @@ class SettingsApp:
         self.pw_info.add(bot_note)
         self.pw_info.bind(
             "<Configure>",
-            lambda event: disp.resize_width(event, self.pw_info, disp.window_width // 5.5, 4),
+            lambda event: disp.resize_width(
+                event, self.pw_info, disp.window_width // 5.5, 4
+            ),
         )
 
         # Widgets dictionaries for bot's data according to self.rows_list
@@ -518,7 +561,9 @@ class SettingsApp:
         self.info_value = {}
         current_font = font.nametofont(under_dev_label.cget("font"))
         spec_font = current_font.copy()
-        spec_font.config(weight="bold")#, slant="italic")#, size=9)#, underline="True")
+        spec_font.config(
+            weight="bold"
+        )  # , slant="italic")#, size=9)#, underline="True")
         for item in self.rows_list:
             self.info_name[item] = tk.Label(info_left, text=item, font=spec_font)
             self.info_value[item] = tk.Label(info_left, text="")
@@ -545,6 +590,7 @@ class SettingsApp:
         for i in range(frame_row):
             self.main_frame.grid_rowconfigure(i, weight=0)
         self.main_frame.grid_rowconfigure(frame_row, weight=1)
+
 
 # ws = Markets[var.current_market]
 # for val in ws.robots:

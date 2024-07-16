@@ -11,7 +11,7 @@ from dotenv import dotenv_values
 if not os.path.isfile(".env"):
     print("The .env file does not exist.")
     exit(1)
-    
+
 
 class ListenLogger(logging.Filter):
     def filter(self, record):
@@ -42,7 +42,6 @@ def setup_logger():
     logger.addFilter(filter_logger)
 
     return logger
-
 
 
 class Variables:

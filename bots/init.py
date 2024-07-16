@@ -6,11 +6,10 @@ import services as service
 from api.api import WS, Markets
 from api.init import Variables
 from bots.variables import Variables as bot
+from common.data import Bot
 from common.variables import Variables as var
 from display.functions import info_display
 from functions import Function
-
-from common.data import Bot
 
 
 class Init(WS, Variables):
@@ -53,7 +52,7 @@ class Init(WS, Variables):
             )
 
         # Searching for unclosed positions by robots that are not in the 'robots' table
-            
+
         qwr = (
             "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, "
             + "sum(QTY) POS from coins where MARKET = '"
@@ -89,7 +88,7 @@ class Init(WS, Variables):
                 }
 
         # Adding RESERVED robots
-                
+
         union = ""
         qwr = "select * from ("
         for symbol in self.symbol_list:
@@ -129,7 +128,7 @@ class Init(WS, Variables):
             }
 
         # Loading all transactions and calculating financial results for each robot
-            
+
         for emi, robot in self.robots.items():
             Function.add_symbol(self, symbol=self.robots[emi]["SYMBOL"])
             if isinstance(emi, tuple):
@@ -375,5 +374,3 @@ def load_bots():
         bot.timefr = value["TIMEFR"]
         bot.created = value["DAT"]
         bot.status = "WORK"
-
-

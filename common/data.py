@@ -150,7 +150,7 @@ class Result:
 
     def __iter__(self):
         return Ret.iter(self)
-    
+
 
 class BotData:
     name: str
@@ -175,7 +175,7 @@ class MetaInstrument(type):
             name = item[2]
             if name not in self.market:
                 self.market[name] = OrderedDict()
-            self.market[name][item] = self.all[item]        
+            self.market[name][item] = self.all[item]
         return self.all[item]
 
     def keys(self):
@@ -202,7 +202,6 @@ class MetaAccount(type):
                 self.market[name] = OrderedDict()
             self.market[name][item] = self.all[item]
         return self.all[item]
-
 
     def keys(self):
         name = self.__qualname__.split(".")[0]
@@ -239,7 +238,7 @@ class MetaResult(type):
         name = self.__qualname__.split(".")[0]
         if name in MetaResult.market:
             return MetaResult.market[name].keys()
-        
+
 
 class MetaBot(type):
     all = dict()
@@ -249,7 +248,7 @@ class MetaBot(type):
             self.all[item] = BotData()
         return self.all[item]
 
-    '''def keys(self):
+    """def keys(self):
         name = self.__qualname__.split(".")[0]
         if name in MetaBot.market:
             for symbol in MetaBot.market[name]:
@@ -258,8 +257,8 @@ class MetaBot(type):
     def get_keys(self):
         name = self.__qualname__.split(".")[0]
         if name in MetaBot.market:
-            return MetaBot.market[name].keys()'''
-    
+            return MetaBot.market[name].keys()"""
+
 
 class Bot(metaclass=MetaBot):
     pass
