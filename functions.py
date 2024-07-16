@@ -306,7 +306,6 @@ class Function(WS, Variables):
                         self.robots[emi]["SYMBOL"] == row["symbol"]
                         and self.robots[emi]["POS"] != 0
                     ):
-                        print("___________robot pos", self.robots[emi]["POS"], position, row["lastQty"])
                         position += self.robots[emi]["POS"]
                         handle_trade_or_delivery(row, emi, "Delivery", 0)
                     bot_list.append(emi)

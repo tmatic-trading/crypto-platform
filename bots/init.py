@@ -10,6 +10,8 @@ from common.variables import Variables as var
 from display.functions import info_display
 from functions import Function
 
+from common.data import Bot
+
 
 class Init(WS, Variables):
     def load_robots(self: Markets) -> dict:
@@ -49,7 +51,9 @@ class Init(WS, Variables):
                 self.robots[emi]["CATEGORY"],
                 self.name,
             )
+
         # Searching for unclosed positions by robots that are not in the 'robots' table
+            
         qwr = (
             "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, "
             + "sum(QTY) POS from coins where MARKET = '"
@@ -85,6 +89,7 @@ class Init(WS, Variables):
                 }
 
         # Adding RESERVED robots
+                
         union = ""
         qwr = "select * from ("
         for symbol in self.symbol_list:
@@ -124,6 +129,7 @@ class Init(WS, Variables):
             }
 
         # Loading all transactions and calculating financial results for each robot
+            
         for emi, robot in self.robots.items():
             Function.add_symbol(self, symbol=self.robots[emi]["SYMBOL"])
             if isinstance(emi, tuple):
@@ -350,3 +356,24 @@ class Init(WS, Variables):
             elif self.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
                 info_display(self.name, "Robot EMI=" + emi + ". Deleting from 'robots'")
                 del self.robots[emi]
+
+
+def load_bots():
+    """
+    Loading bots into the new Bot class is under development.
+    """
+
+    qwr = "select * from robots order by SORT;"
+
+    data = Function.select_database("self", qwr)
+    for value in data:
+        name = value["EMI"]
+        bot = Bot[name]
+        bot.name = value["EMI"]
+        bot.position = dict()
+        bot.result = dict()
+        bot.timefr = value["TIMEFR"]
+        bot.created = value["DAT"]
+        bot.status = "WORK"
+
+

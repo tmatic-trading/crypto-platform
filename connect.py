@@ -50,6 +50,8 @@ def setup(reload=False):
     thread = threading.Thread(target=robots_thread)
     thread.start()
 
+    bots.load_bots()
+
 
 def setup_market(ws: Markets, reload=False):
     """

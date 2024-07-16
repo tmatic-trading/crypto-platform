@@ -150,6 +150,19 @@ class Result:
 
     def __iter__(self):
         return Ret.iter(self)
+    
+
+class BotData:
+    name: str
+    market: str
+    position: dict
+    timefr: int
+    result: dict
+    status: str
+    created: str
+
+    def __iter__(self):
+        return Ret.iter(self)
 
 
 class MetaInstrument(type):
@@ -162,10 +175,8 @@ class MetaInstrument(type):
             name = item[2]
             if name not in self.market:
                 self.market[name] = OrderedDict()
-            self.market[name][item] = self.all[item]
-            return self.all[item]
-        else:
-            return self.all[item]
+            self.market[name][item] = self.all[item]        
+        return self.all[item]
 
     def keys(self):
         name = self.__qualname__.split(".")[0]
@@ -190,9 +201,8 @@ class MetaAccount(type):
             if name not in self.market:
                 self.market[name] = OrderedDict()
             self.market[name][item] = self.all[item]
-            return self.all[item]
-        else:
-            return self.all[item]
+        return self.all[item]
+
 
     def keys(self):
         name = self.__qualname__.split(".")[0]
@@ -217,9 +227,7 @@ class MetaResult(type):
             if name not in self.market:
                 self.market[name] = OrderedDict()
             self.market[name][item] = self.all[item]
-            return self.all[item]
-        else:
-            return self.all[item]
+        return self.all[item]
 
     def keys(self):
         name = self.__qualname__.split(".")[0]
@@ -231,3 +239,27 @@ class MetaResult(type):
         name = self.__qualname__.split(".")[0]
         if name in MetaResult.market:
             return MetaResult.market[name].keys()
+        
+
+class MetaBot(type):
+    all = dict()
+
+    def __getitem__(self, item) -> BotData:
+        if item not in self.all:
+            self.all[item] = BotData()
+        return self.all[item]
+
+    '''def keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaBot.market:
+            for symbol in MetaBot.market[name]:
+                yield symbol
+
+    def get_keys(self):
+        name = self.__qualname__.split(".")[0]
+        if name in MetaBot.market:
+            return MetaBot.market[name].keys()'''
+    
+
+class Bot(metaclass=MetaBot):
+    pass
