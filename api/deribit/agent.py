@@ -350,6 +350,8 @@ class Agent(Deribit):
                                     row["symbol"]
                                 ].settlCurrency
                             if data_type == "logs":
+                                if row["type"] == "delivery":
+                                    print("_____________history", row)
                                 if row["type"] == "settlement":
                                     row["execType"] = "Funding"
                                     row["execID"] = (

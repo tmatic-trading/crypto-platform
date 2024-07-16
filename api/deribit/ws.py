@@ -359,6 +359,8 @@ class Deribit(Variables):
             instrument.fundingRate = values["funding_8h"] * 100
 
     def __update_portfolio(self, values: dict) -> None:
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! update_portfolio")
+        print(values)
         currency = (values["currency"], self.name)
         account = self.Account[currency]
         account.orderMargin = values["initial_margin"]
