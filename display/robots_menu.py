@@ -1,11 +1,15 @@
 """
-Provide database transformations for the following operations:
-1) New: insert (robots)
-2) Activate: update STATUS (robots)
-3) Update: update TIMEFRAME, UPDATED (robots)
-4) Merge: delete record (robots), update EMI (coins)
-5) Duplicate: insert (robots)
-6) Delete: delete record (robots), update EMI (coins)
+1) Provide database transformations for the following operations:
+- New: insert (robots)
+- Activate: update STATUS (robots)
+- Update: update TIMEFRAME, UPDATED (robots)
+- Merge: delete record (robots), update EMI (coins)
+- Duplicate: insert (robots)
+- Delete: delete record (robots), update EMI (coins)
+2) When bot is active, the following services must be disabled:
+- Update (the respective fields must be disabled)
+- Merge
+- Delete
 """
 
 import os
@@ -103,9 +107,10 @@ class CustomButton(tk.Menubutton):
             self.app.pop_up.title(f"Check syntax for: {bot_name}")
             is_syntax_correct, error_message = self.check_syntax(content)
             if is_syntax_correct:
-                tk.Label(self.app.pop_up, text="The bot's code is correct").pack(
+                tk.Label(self.app.pop_up, text="The bot's code syntax is correct").pack(
                     anchor="center", pady=100
                 )
+                self.app.insert_code(self.app.strategy_text, self.app.strategy_text.get("1.0", tk.END))
             else:
                 scroll = AutoScrollbar(self.app.pop_up, orient="vertical")
                 text = tk.Text(
@@ -153,7 +158,7 @@ class CustomButton(tk.Menubutton):
             # Compile the code to check for syntax errors
             compiled_code = compile(code, "<string>", "exec")
             # Execute the compiled code to check for runtime errors
-            exec(compiled_code, {})
+            # exec(compiled_code, {})
             return True, None
         except (SyntaxError, Exception) as e:
             return False, traceback.format_exc()
@@ -163,39 +168,32 @@ class CustomButton(tk.Menubutton):
             if self.name == "Home":
                 self.app.action = "Home"
                 self.app.show_bot("")
-                self.app.draw_buttons()
+                #self.app.draw_buttons()
             elif self.name == "New Bot":
                 content = f"\nCreate a bot. Every new bot\nmust have a unique name."
                 self.open_popup(self.name, "", content)
+            elif self.name == "Syntax":
+                content = self.app.strategy_text.get("1.0", tk.END)
+                self.open_popup(self.name, self.app.selected_bot, content)
+            elif self.name == "Update":
+                self.app.write_file(f"{self.app.get_bot_path(self.app.selected_bot)}/{self.app.strategy_file}", self.app.strategy_text.get("1.0", tk.END))
+                self.app.algo_changed = None
+                self.app.draw_buttons()
             elif self.name == "Duplicate":
                 content = f"\nYou are about to duplicate bot named '{self.app.selected_bot}'.\nThe newly created bot will get the same set\nof parameters as '{self.app.selected_bot}' currently has."
                 self.open_popup(self.name, self.app.selected_bot, content)
             elif self.name == "Delete":
                 content = f"\nAfter you press the 'Delete Bot' button,\nthe '/algo/{self.app.selected_bot}/' subdirectory will be erased\nand this bot will no longer exist.\n\nThe 'EMI' fields in the database for this bot\nwill take the 'SYMBOL' fields values."
                 self.open_popup(self.name, self.app.selected_bot, content)
-            elif self.name == "Syntax":
-                content = self.app.strategy_text.get("1.0", tk.END)
-                self.open_popup(self.name, self.app.selected_bot, content)
             elif self.name == "Last Viewed":
                 self.app.action = self.name
                 self.app.show_bot("")
-                self.app.draw_buttons()
+                #self.app.draw_buttons()
             elif self.name == "Back":
                 disp.menu_robots.pack_forget()
                 disp.pw_rest1.pack(fill="both", expand="yes")
             else:
                 print(self.name, self["state"])
-
-    def set_background_color(self, frame, checked):
-        """Set background color for selected button"""
-        '''if frame != self.app.selected_frame or checked == "true":
-            self.app.selected_frame.config(bg=self.app.market_color[self.app.selected_frame.market])
-            self.app.selected_frame = frame
-            frame.config(bg=self.app.bg_select_color)
-            self.app.click_market = "true"
-            self.app.set_market_fields(frame.market)
-            self.app.click_market = "false"'''
-
 
 class SettingsApp:
     def __init__(self, root):
@@ -255,23 +253,21 @@ class SettingsApp:
         # Keeps the bot's algorithm derived from strategy.py file
         self.bot_algo = ""
 
-        # To trace whether a new bot's name is unique
-        # self.name_trace = StringVar(name="Name" + str(self))
+        # If bot's algorithm is changed by user, than the value in not None
+        self.algo_changed = None
 
         # Create initial frames
         self.bot_info_frame()
         self.show_bot("")
-        self.draw_buttons()
+        #self.draw_buttons()
 
     def collect_bots(self):
-        """Reviews all created bots in the algo directory and puts them in the array"""
-        self.bots_list = [
-            x[0].replace(self.algo_dir, "") for x in os.walk(self.algo_dir)
-        ]
-
-    def num_of_bots(self):
-        """Returns number of bots created"""
-        return len(self.bots_list) - 2
+        """Reviews all created bots in the algo directory and puts them in array"""
+        self.bots_list.clear()
+        for x in os.walk(self.algo_dir):
+            my_dir = x[0].replace(self.algo_dir, "")
+            if my_dir != "" and my_dir != "__pycache__" and my_dir.find("/") == -1:
+                self.bots_list.append(my_dir)
 
     def draw_buttons(self):
         """Draws bot menu buttons accordingly"""
@@ -284,34 +280,24 @@ class SettingsApp:
                 else:
                     button.configure(state="normal")
             elif button.name == "New Bot":
-                if self.action == "New Bot":
-                    button.configure(state="disabled")
-                else:
-                    button.configure(state="normal")
+                button.configure(state="normal")
             elif button.name == "Syntax":
-                if (
-                    self.selected_bot == ""
-                    or self.action == "Duplicate"
-                    or self.action == "Home"
-                ):
+                if self.selected_bot == "" or self.action == "Home":
                     button.configure(state="disabled")
                 else:
                     button.configure(state="normal")
+            elif button.name == "Update":
+                if self.selected_bot == "" or self.action == "Home" or self.algo_changed == None:
+                    button.configure(state="disabled", bg=disp.bg_select_color)
+                else:
+                    button.configure(state="normal", bg="gold")
             elif button.name == "Duplicate":
-                if (
-                    self.selected_bot == ""
-                    or self.action == "Duplicate"
-                    or self.action == "Home"
-                ):
+                if self.selected_bot == "" or self.action == "Home":
                     button.configure(state="disabled")
                 else:
                     button.configure(state="normal")
             elif button.name == "Delete":
-                if (
-                    self.selected_bot == ""
-                    or self.action == "Duplicate"
-                    or self.action == "Home"
-                ):
+                if self.selected_bot == "" or self.action == "Home":
                     button.configure(state="disabled")
                 else:
                     button.configure(state="normal")
@@ -365,11 +351,13 @@ class SettingsApp:
         else:
             self.main_frame.pack_forget()
             self.brief_frame.pack(fill="both", expand="yes")
-            if self.num_of_bots() != 0:
+            if len(self.bots_list) != 0:
                 self.bots_button.pack(anchor="w", padx=25, pady=25)
                 self.menu_usage.pack(anchor="w", padx=25)
             else:
                 self.menu_usage.pack(anchor="w", padx=25, pady=25)
+        self.algo_changed = None
+        self.draw_buttons()
 
     def create_file(self, file_name):
         os.mknod(file_name)
@@ -381,7 +369,7 @@ class SettingsApp:
         return content
 
     def write_file(self, file_name, content):
-        file = open(file_name, "a")
+        file = open(file_name, "w")
         file.write(content)
         file.close()
 
@@ -437,14 +425,15 @@ class SettingsApp:
         self.collect_bots()
         self.created_bots_menu()
         self.show_bot("")
-        self.draw_buttons()
+        #self.draw_buttons()
         self.pop_up.destroy()
 
     def insert_code(self, text_widget, code):
         """Function to insert Python code into a Tkinter Text widget with syntax highlighting"""
         text_widget.delete(1.0, tk.END)
         lexer = PythonLexer()
-        style = get_style_by_name("default")  # You can change the style if desired
+        # You can change the style if desired. More info at https://pygments.org/styles/
+        style = get_style_by_name("default")
 
         for token, content in lex(code, lexer):
             tag_name = str(token)
@@ -460,7 +449,7 @@ class SettingsApp:
         self.selected_bot = value
         self.action = "Last Viewed"
         self.show_bot("")
-        self.draw_buttons()
+        #self.draw_buttons()
 
     def created_bots_menu(self):
         # Menu to choose one of the created bots
@@ -475,13 +464,24 @@ class SettingsApp:
         main_menu = tk.Menu(self.bots_button, tearoff=0)
         self.bots_button.config(menu=main_menu)
         for option in self.bots_list:
-            if option != "__pycache__" and option != "":
-                main_menu.add_command(
-                    label=option,
-                    command=lambda value=option: self.on_menu_select(value),
-                )
+            main_menu.add_command(
+                label=option,
+                command=lambda value=option: self.on_menu_select(value),
+            )
+
+    def on_strategy_change(self, event):
+        value = self.strategy_text.get("1.0", tk.END)
+        if value != self.bot_algo:
+            if self.algo_changed == None:
+                self.algo_changed = "changed"
+                self.draw_buttons()
+        else:
+            if self.algo_changed != "":
+                self.algo_changed = None
+                self.draw_buttons()
 
     def bot_info_frame(self):
+        '''Frames, grids, widgets are here'''
         self.brief_frame = tk.Frame(info_frame)
         self.created_bots_menu()
         self.menu_usage = tk.Frame(self.brief_frame)
@@ -578,6 +578,7 @@ class SettingsApp:
         self.strategy_text = tk.Text(
             self.strategy, highlightthickness=0, yscrollcommand=self.strategy_scroll.set
         )
+        self.strategy_text.bind('<KeyRelease>', self.on_strategy_change)
         self.strategy_scroll.config(command=self.strategy_text.yview)
         self.strategy_text.grid(row=0, column=0, sticky="NSEW")
         self.strategy_scroll.grid(row=0, column=1, sticky="NS")
