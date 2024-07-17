@@ -157,7 +157,7 @@ class BotData:
     market: str
     position: dict
     timefr: int
-    result: dict
+    pnl: dict
     status: str
     created: str
 
@@ -246,18 +246,16 @@ class MetaBot(type):
     def __getitem__(self, item) -> BotData:
         if item not in self.all:
             self.all[item] = BotData()
+            self.all[item].position = dict()
+            self.all[item].pnl = dict()
         return self.all[item]
 
-    """def keys(self):
-        name = self.__qualname__.split(".")[0]
-        if name in MetaBot.market:
-            for symbol in MetaBot.market[name]:
-                yield symbol
+    def items(self):
+        for name, values in MetaBot.all.items():
+            yield name, values
 
-    def get_keys(self):
-        name = self.__qualname__.split(".")[0]
-        if name in MetaBot.market:
-            return MetaBot.market[name].keys()"""
+    def keys(self):
+        return MetaBot.all.keys()
 
 
 class Bot(metaclass=MetaBot):

@@ -10,6 +10,8 @@ from common.variables import Variables as var
 from services import exceptions_manager
 
 from .pybit.unified_trading import HTTP, WebSocket
+from common.data import Bot
+from uuid import uuid4
 
 
 @exceptions_manager
@@ -417,3 +419,25 @@ class Bybit(Variables):
         self.ws_private._send_custom_ping()
 
         return True
+    
+    def unsubscribe_symbol(self, symbol: tuple):
+        category = self.Instrument[symbol].category
+        arg_ticker = f"tickers.{symbol[0]}"
+        arg_orderbook = f"orderbook.{self.orderbook_depth}.{symbol[0]}"
+        unsubscription_args = list()
+        if arg_ticker in self.ws[category].callback_directory:
+            unsubscription_args.append(arg_ticker)
+            self.ws[category].callback_directory.pop(arg_ticker)
+        if arg_orderbook in self.ws[category].callback_directory:
+            unsubscription_args.append(arg_orderbook)
+            self.ws[category].callback_directory.pop(arg_ticker)
+        req_id = str(uuid4())
+        unsubscription_message = json.dumps(
+            {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
+        )
+        self.ws[category].ws.send(unsubscription_message)
+        if arg_ticker in self.ws[category].callback_directory:
+            self.ws[category].callback_directory.pop(arg_ticker)
+        if arg_orderbook in self.ws[category].callback_directory:
+            self.ws[category].callback_directory.pop(arg_ticker)
+        

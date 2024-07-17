@@ -369,8 +369,31 @@ def load_bots():
         name = value["EMI"]
         bot = Bot[name]
         bot.name = value["EMI"]
-        bot.position = dict()
-        bot.result = dict()
         bot.timefr = value["TIMEFR"]
         bot.created = value["DAT"]
-        bot.status = "WORK"
+        bot.status = "ON"
+
+    # Searching for unclosed positions by robots that are not in the 'robots' table
+
+    qwr = (
+        "select SYMBOL, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
+        + "EMI, SYMBOL, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
+        + "TTIME from coins where SIDE <> 'Fund' group by EMI, SYMBOL, "
+        + "MARKET) res where POS <> 0;"
+    )
+    data = Function.select_database("self", qwr)
+    for value in data:
+        name = value["EMI"]
+        if name not in Bot.keys():
+            bot = Bot[name]
+            symbol = (value["SYMBOL"], value["MARKET"])
+            bot.name = value["EMI"]
+            bot.position[symbol] = value["POS"]
+            bot.pnl[symbol] = value["PNL"]
+            bot.status = "NOT DEFINED"
+        
+
+    '''for name, bot in Bot.items():
+        for value in bot:
+            print(value.name, value.value)'''
+
