@@ -105,13 +105,24 @@ class Bitmex(Variables):
             else:
                 # Subscribes symbol by symbol to all tables given
                 for symbolName in map(lambda x: x[0], self.symbol_list):
-                    subscriptions = []
-                    for sub in self.table_subscription:
-                        subscriptions += [sub + ":" + symbolName]
-                    self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
+                    self.subscribe_symbol(symbol=symbolName)
         except Exception:
             self.logger.error("Exception while connecting to websocket. Restarting...")
             self.logNumFatal = "SETUP"
+
+    def subscribe_symbol(self, symbol: str) -> None:
+        subscriptions = []
+        for sub in self.table_subscription:
+            subscriptions += [sub + ":" + symbol]
+        self.logger.info("ws subscribe - " + subscriptions)
+        self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
+
+    def unsubscribe_symbol(self, symbol: str) -> None:
+        subscriptions = []
+        for sub in self.table_subscription:
+            subscriptions += [sub + ":" + symbol]
+        self.logger.info("ws unsubscribe - " + subscriptions)
+        self.ws.send(json.dumps({"op": "unsubscribe", "args": subscriptions}))
 
     def __get_url(self) -> str:
         """

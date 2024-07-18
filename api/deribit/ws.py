@@ -48,7 +48,7 @@ class Deribit(Variables):
         if self.depth == "quote":
             self.orderbook_depth = 1
         else:
-            self.orderbook_depth = 50
+            self.orderbook_depth = 10
         self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
@@ -138,12 +138,8 @@ class Deribit(Variables):
 
         # Orderbook
 
-        if self.depth == "orderBook":
-            depth = 10
-        else:
-            depth = 1
         for symbol in self.symbol_list:
-            channel = f"book.{symbol[0]}.none.{depth}.100ms"
+            channel = f"book.{symbol[0]}.none.{self.orderbook_depth}.100ms"
             self.logger.info("ws subscription - Orderbook - channel - " + str(channel))
             channels.append(channel)
         self.subscriptions.add(str(channels))
@@ -215,7 +211,7 @@ class Deribit(Variables):
                 if "access_token" in message["result"]:
                     self.access_token = message["result"]["access_token"]
                     self.refresh_token = message["result"]["refresh_token"]
-                elif id == "subscription":
+                elif id == "subscription":        
                     self.subscriptions.remove(str(message["result"]))
                 elif id == "establish_heartbeat":
                     if message["result"] == "ok":
@@ -271,7 +267,7 @@ class Deribit(Variables):
     def __on_open(self, ws):
         self.__ws_auth()
 
-    def __confirm_subscription(self):
+    def __confirm_subscription(self, action="subscribe"):
         """
         Checks that all subscriptions are successful.
         """
@@ -280,7 +276,7 @@ class Deribit(Variables):
             timeout -= slp
             if timeout <= 0:
                 for sub in self.subscriptions:
-                    self.logger.error("Failed to subscribe " + str(sub))
+                    self.logger.error("Failed to " + action + " " + str(sub))
                 self.logNumFatal = "SETUP"
                 return
             time.sleep(slp)
@@ -369,24 +365,6 @@ class Deribit(Variables):
         account.unrealisedPnl = (
             values["futures_session_upl"] + values["options_session_upl"]
         )
-        """print(values["currency"])
-        print(
-            "_________________________maintenance_margin", values["maintenance_margin"]
-        )
-        print("_________________________initial_margin", values["initial_margin"])
-        print(
-            "_________________________projected_maintenance_margin",
-            values["projected_maintenance_margin"],
-        )
-        print(
-            "_________________________projected_initial_margin",
-            values["projected_initial_margin"],
-        )
-        print("_________________________margin_balance", values["margin_balance"])
-
-        print("+++++++++++++++", self, self.Account[values["currency"]])
-        for el in self.Account[values["currency"]]:
-            print(el.name, el.value)"""
 
     def __handle_order(self, values: dict) -> None:
         print("_________________________handle order", values)
@@ -480,6 +458,47 @@ class Deribit(Variables):
                     self.transaction(row=row)
             print(":::::::::::::", key)
             print(data)
+
+    def subscribe_symbol(self, symbol: str) -> None:
+        channel = [f"book.{symbol[0]}.none.{self.orderbook_depth}.100ms"]
+        self.logger.info("ws subscription - Orderbook - channel - " + str(channel))
+        self.subscriptions.add(str(channel))
+        self.__subscribe_channels(
+            type="public",
+            channels=channel,
+            id="subscription",
+            callback=self.__update_orderbook,
+        )
+        channel = [f"ticker.{symbol[0]}.100ms"]
+        self.logger.info("ws subscription - Ticker - channel - " + str(channel))
+        self.subscriptions.add(str(channel))
+        self.__subscribe_channels(
+            type="public",
+            channels=channel,
+            id="subscription",
+            callback=self.__update_ticker,
+        )
+        self.__confirm_subscription()
+
+    def unsubscribe_symbol(self, symbol: str) -> None:
+        msg = \
+            {
+            "jsonrpc" : "2.0",
+            "id" : "subscription",
+            "method" : "public/unsubscribe",
+            "params" : {"channels" : None}
+            }
+        channel = [f"book.{symbol}.none.{self.orderbook_depth}.100ms"]
+        self.logger.info("ws unsubscribe - Orderbook - channel - " + str(channel))
+        self.subscriptions.add(str(channel))
+        msg["params"]["channels"] = channel
+        self.ws.send(json.dumps(msg))
+        channel = [f"ticker.{symbol}.100ms"]
+        self.logger.info("ws unsubscribe - Ticker - channel - " + str(channel))
+        self.subscriptions.add(str(channel))
+        msg["params"]["channels"] = channel
+        self.ws.send(json.dumps(msg))
+        self.__confirm_subscription(action="unsubscribe")
 
     def transaction(self, **kwargs):
         """

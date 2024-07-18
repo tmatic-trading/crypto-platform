@@ -89,110 +89,7 @@ class Bybit(Variables):
                 )
                 self.ws[category].pinging = "pong"
             for symbol in lst:
-                if category == "linear":
-                    self.logger.info(
-                        "ws subscription - orderbook_stream - category - "
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].orderbook_stream(
-                        depth=self.orderbook_depth,
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_orderbook(
-                            values=x["data"], category="linear"
-                        ),
-                    )
-                    self.logger.info(
-                        "ws subscription - ticker_stream - category - "
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].ticker_stream(
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_ticker(
-                            values=x["data"], category="linear"
-                        ),
-                    )
-                elif category == "inverse":
-                    self.logger.info(
-                        "ws subscription - orderbook_stream - category - "
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].orderbook_stream(
-                        depth=self.orderbook_depth,
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_orderbook(
-                            values=x["data"], category="inverse"
-                        ),
-                    )
-                    self.logger.info(
-                        "ws subscription - ticker_stream - category - "
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].ticker_stream(
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_ticker(
-                            values=x["data"], category="inverse"
-                        ),
-                    )
-                elif category == "spot":
-                    self.logger.info(
-                        "ws subscription - orderbook_stream - category - "
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].orderbook_stream(
-                        depth=self.orderbook_depth,
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_orderbook(
-                            values=x["data"], category="spot"
-                        ),
-                    )
-                    self.logger.info(
-                        "ws subscription - ticker_stream - category - "
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].ticker_stream(
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_ticker(
-                            values=x["data"], category="spot"
-                        ),
-                    )
-                elif category == "option":
-                    self.logger.info(
-                        "ws subscription - orderbook_stream - category - "
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].orderbook_stream(
-                        depth=self.orderbook_depth,
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_orderbook(
-                            values=x["data"], category="option"
-                        ),
-                    )
-                    self.logger.info(
-                        "ws subscription - ticker_stream - category -"
-                        + category
-                        + " - symbol - "
-                        + str(symbol)
-                    )
-                    self.ws[category].ticker_stream(
-                        symbol=symbol[0],
-                        callback=lambda x: self.__update_ticker(
-                            values=x["data"], category="option"
-                        ),
-                    )
+                self.subscribe_symbol(symbol=symbol, category=category)
 
         def private_in_thread():
             self.ws_private = WebSocket(
@@ -419,6 +316,112 @@ class Bybit(Variables):
         self.ws_private._send_custom_ping()
 
         return True
+    
+    def subscribe_symbol(self, symbol: str, category: str) -> None:
+        if category == "linear":
+            self.logger.info(
+                "ws subscription - orderbook_stream - category - "
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].orderbook_stream(
+                depth=self.orderbook_depth,
+                symbol=symbol[0],
+                callback=lambda x: self.__update_orderbook(
+                    values=x["data"], category="linear"
+                ),
+            )
+            self.logger.info(
+                "ws subscription - ticker_stream - category - "
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].ticker_stream(
+                symbol=symbol[0],
+                callback=lambda x: self.__update_ticker(
+                    values=x["data"], category="linear"
+                ),
+            )
+        elif category == "inverse":
+            self.logger.info(
+                "ws subscription - orderbook_stream - category - "
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].orderbook_stream(
+                depth=self.orderbook_depth,
+                symbol=symbol[0],
+                callback=lambda x: self.__update_orderbook(
+                    values=x["data"], category="inverse"
+                ),
+            )
+            self.logger.info(
+                "ws subscription - ticker_stream - category - "
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].ticker_stream(
+                symbol=symbol[0],
+                callback=lambda x: self.__update_ticker(
+                    values=x["data"], category="inverse"
+                ),
+            )
+        elif category == "spot":
+            self.logger.info(
+                "ws subscription - orderbook_stream - category - "
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].orderbook_stream(
+                depth=self.orderbook_depth,
+                symbol=symbol[0],
+                callback=lambda x: self.__update_orderbook(
+                    values=x["data"], category="spot"
+                ),
+            )
+            self.logger.info(
+                "ws subscription - ticker_stream - category - "
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].ticker_stream(
+                symbol=symbol[0],
+                callback=lambda x: self.__update_ticker(
+                    values=x["data"], category="spot"
+                ),
+            )
+        elif category == "option":
+            self.logger.info(
+                "ws subscription - orderbook_stream - category - "
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].orderbook_stream(
+                depth=self.orderbook_depth,
+                symbol=symbol[0],
+                callback=lambda x: self.__update_orderbook(
+                    values=x["data"], category="option"
+                ),
+            )
+            self.logger.info(
+                "ws subscription - ticker_stream - category -"
+                + category
+                + " - symbol - "
+                + str(symbol)
+            )
+            self.ws[category].ticker_stream(
+                symbol=symbol[0],
+                callback=lambda x: self.__update_ticker(
+                    values=x["data"], category="option"
+                ),
+            )
     
     def unsubscribe_symbol(self, symbol: tuple):
         category = self.Instrument[symbol].category
