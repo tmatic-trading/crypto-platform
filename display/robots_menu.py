@@ -208,14 +208,14 @@ class SettingsApp:
 
         self.button_list = {
             "Home": "The main page of the bot's menu",
-            "New Bot": "Creates a new one with a unique name",
-            "Syntax": "Checks whether the bot's algo code is correct",
-            "Backtest": "Allows to backtest the bot's trading algorithm (under development)",
-            "Activate": "Activates or suspends trading according to bot's algo",
-            "Update": "Records parameters of selected bot",
+            "New Bot": "Creates bot with a new unique name",
+            "Syntax": "Checks whether the bot's algo code syntax is correct",
+            "Backtest": "Allows to backtest the bot's trading algorithm",
+            "Activate": "Activates or suspends trading according to bot's algorithm",
+            "Update": f"Records algo code of selected bot into its {self.strategy_file} file",
             "Merge": "Allows to merge two bots into one",
             "Duplicate": "Replicates selected bot, creating a new one with the same parameters",
-            "Delete": "Erases selected bot from directory",
+            "Delete": "This operation completely removes selected bot",
             "Last Viewed": "Shows the last bot selected",
             "Back": "Returns to the main area of Tmatic",
         }
@@ -326,6 +326,7 @@ class SettingsApp:
         if self.selected_bot != "" and self.action != "Home":
             self.menu_usage.pack_forget()
             self.bots_button.pack_forget()
+            self.bots_label.pack_forget()
             self.brief_frame.pack_forget()
             self.main_frame.pack(fill="both", expand="yes")
             bot_path = self.get_bot_path(self.selected_bot)
@@ -352,10 +353,11 @@ class SettingsApp:
             self.main_frame.pack_forget()
             self.brief_frame.pack(fill="both", expand="yes")
             if len(self.bots_list) != 0:
-                self.bots_button.pack(anchor="w", padx=25, pady=25)
-                self.menu_usage.pack(anchor="w", padx=25)
+                self.bots_label.pack(anchor="n")
+                self.bots_button.pack(anchor="n")
+                self.menu_usage.pack(anchor="n", pady=50)
             else:
-                self.menu_usage.pack(anchor="w", padx=25, pady=25)
+                self.menu_usage.pack(anchor="n", pady=50)
         self.algo_changed = None
         self.draw_buttons()
 
@@ -422,6 +424,7 @@ class SettingsApp:
             self.action = ""
         self.menu_usage.pack_forget()
         self.bots_button.pack_forget()
+        self.bots_label.pack_forget()
         self.collect_bots()
         self.created_bots_menu()
         self.show_bot("")
@@ -455,8 +458,8 @@ class SettingsApp:
         # Menu to choose one of the created bots
         self.bots_button = tk.Menubutton(
             self.brief_frame,
-            text="SELECT FROM CREATED BOTS",
-            relief=tk.FLAT,
+            text=" LIST OF CREATED BOTS ",
+            relief=tk.GROOVE,
             padx=0,
             pady=0,
             activebackground=disp.bg_active,
@@ -480,13 +483,43 @@ class SettingsApp:
                 self.algo_changed = None
                 self.draw_buttons()
 
+    def ignore_text_input(self, event):
+        return "break"
+
     def bot_info_frame(self):
         '''Frames, grids, widgets are here'''
+        label_example = tk.Label(text="")
+        current_font = font.nametofont(label_example.cget("font"))
+        spec_font = current_font.copy()
+        spec_font.config(
+            weight="bold"
+        )  # , slant="italic")#, size=9)#, underline="True")
+
         self.brief_frame = tk.Frame(info_frame)
+        self.bots_label = tk.Label(self.brief_frame, text="\n\nSelect bot from:", font=spec_font)
         self.created_bots_menu()
         self.menu_usage = tk.Frame(self.brief_frame)
+
         row_num = 0
+        col_num = 0
+        usage = {}
         for key, value in self.button_list.items():
+            usage[key] = tk.Frame(self.menu_usage)
+            usage[key].grid(row=row_num, column=col_num, padx=5)
+            tk.Label(usage[key], text=key, font=spec_font).pack(anchor="w")
+            text = tk.Text(usage[key], width=20, height=5, bg=disp.title_color, wrap=tk.WORD, bd=0, highlightthickness=0)
+            text.pack(anchor="w")
+            text.bind("<Key>", self.ignore_text_input)
+            text.insert(tk.END, value)
+            col_num += 1
+            if row_num == 0:
+                self.menu_usage.grid_columnconfigure(col_num, weight=0)
+            if col_num == 4:
+                self.menu_usage.grid_rowconfigure(row_num, weight=0)
+                col_num = 0
+                row_num += 1
+
+        '''for key, value in self.button_list.items():
             if key == "Home":
                 tk.Label(self.menu_usage, text="USE ONE OF THE MENU BUTTONS:").pack(
                     anchor="w"
@@ -500,7 +533,7 @@ class SettingsApp:
                     tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(
                         anchor="w", padx=25
                     )
-                row_num += 1
+                row_num += 1'''
 
         self.main_frame = tk.Frame(info_frame)
         frame_row = 0
@@ -559,11 +592,6 @@ class SettingsApp:
         # Widgets dictionaries for bot's data according to self.rows_list
         self.info_name = {}
         self.info_value = {}
-        current_font = font.nametofont(under_dev_label.cget("font"))
-        spec_font = current_font.copy()
-        spec_font.config(
-            weight="bold"
-        )  # , slant="italic")#, size=9)#, underline="True")
         for item in self.rows_list:
             self.info_name[item] = tk.Label(info_left, text=item, font=spec_font)
             self.info_value[item] = tk.Label(info_left, text="")
