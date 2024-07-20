@@ -31,8 +31,9 @@ class Function(WS, Variables):
         """
         Calculates trade value and commission
         """
-        coef = self.Instrument[symbol].valueOfOneContract
-        if symbol[1] in ["inverse", "future reversed"]:
+        instrument = self.Instrument[symbol]
+        coef = instrument.valueOfOneContract
+        if instrument.category in ["inverse", "future reversed"]:
             sumreal = qty / price * coef * fund
             if execFee is not None:
                 commiss = execFee
@@ -40,7 +41,7 @@ class Function(WS, Variables):
             else:
                 commiss = abs(qty) / price * coef * rate
                 funding = qty / price * coef * rate
-        elif symbol[1] in ["spot", "spot linear"]:
+        elif instrument.category in ["spot", "spot linear"]:
             sumreal = 0
             if execFee is not None:
                 commiss = execFee
@@ -58,12 +59,9 @@ class Function(WS, Variables):
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
 
-    def add_symbol(self: Markets, symbol: tuple) -> None:
-        if symbol not in self.Instrument.get_keys():
-            WS.get_instrument(self, symbol=symbol)
-        # Function.rounding(self)
-        """if symbol not in self.positions:
-            WS.get_position(self, symbol=symbol)"""
+    def add_symbol(self: Markets, symbol: str, ticker: str, category: str) -> None:
+        if (symbol, self.name) not in self.Instrument.get_keys():
+            WS.get_instrument(self, ticker=ticker, category=category)
 
     def timeframes_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
         return "data/" + symbol[0] + "_" + symbol[1] + "_" + str(timefr) + ".txt"
@@ -128,10 +126,10 @@ class Function(WS, Variables):
             try:
                 Function.sql_lock.acquire(True)
                 var.cursor_sqlite.execute(
-                    "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,CATEGORY,MARKET,\
-                        SIDE,QTY,QTY_REST,PRICE,THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,\
-                            CLORDID,TTIME,ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,\
-                                ?,?,?,?,?,?,?,?)",
+                    "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,"
+                    + "TICKER,CATEGORY,MARKET,SIDE,QTY,QTY_REST,PRICE,"
+                    + "THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,CLORDID,TTIME,"
+                    + "ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     values,
                 )
                 var.connect_sqlite.commit()
@@ -173,11 +171,12 @@ class Function(WS, Variables):
                 fund=1,
                 execFee=row["execFee"],
             )
-            if row["symbol"][1] != "spot":
+            instrument = self.Instrument[row["symbol"]]
+            if row["category"] != "spot":
                 self.robots[emi]["POS"] += lastQty
                 self.robots[emi]["POS"] = round(
                     self.robots[emi]["POS"],
-                    self.Instrument[row["symbol"]].precision,
+                    instrument.precision,
                 )
             self.robots[emi]["VOL"] += abs(lastQty)
             self.robots[emi]["COMMISS"] += calc["commiss"]
@@ -191,7 +190,8 @@ class Function(WS, Variables):
                 refer,
                 row["settlCurrency"][0],
                 row["symbol"][0],
-                row["symbol"][1],
+                instrument.ticker,
+                row["category"],
                 self.name,
                 row["side"],
                 lastQty,
@@ -214,13 +214,21 @@ class Function(WS, Variables):
                 "TRADE_PRICE": row["lastPx"],
                 "QTY": abs(lastQty),
                 "EMI": emi,
+                "TICKER": instrument.ticker,
+                "CATEGORY": instrument.category,
             }
             if not info:
                 Function.trades_display(self, val=message)
 
         var.lock.acquire(True)
         try:
-            Function.add_symbol(self, symbol=row["symbol"])
+            Function.add_symbol(
+                self,
+                symbol=row["symbol"][0],
+                ticker=row["ticker"],
+                category=row["category"],
+            )
+            instrument = self.Instrument[row["symbol"]]
 
             # Trade
 
@@ -231,7 +239,7 @@ class Function(WS, Variables):
                         dot == -1
                     ):  # The transaction was done from the exchange web interface,
                         # the clOrdID field is missing or clOrdID does not have EMI number
-                        emi = ".".join(row["symbol"][:2])
+                        emi = row["symbol"][0]
                         refer = ""
                         if row["clOrdID"] == "":
                             clientID = 0
@@ -245,11 +253,11 @@ class Function(WS, Variables):
                         clientID = row["clOrdID"][:dot]
                         refer = emi
                 else:
-                    emi = ".".join(row["symbol"][:2])
+                    emi = row["symbol"][0]
                     clientID = 0
                     refer = ""
                 if emi not in self.robots:
-                    emi = ".".join(row["symbol"][:2])
+                    emi = row["symbol"][0]
                     if emi not in self.robots:
                         if row["symbol"] in self.symbol_list:
                             status = "RESERVED"
@@ -260,7 +268,7 @@ class Function(WS, Variables):
                             "TIMEFR": None,
                             "EMI": emi,
                             "SYMBOL": row["symbol"],
-                            "CATEGORY": row["symbol"][1],
+                            "CATEGORY": row["category"],
                             "MARKET": self.name,
                             "POS": 0,
                             "VOL": 0,
@@ -341,11 +349,7 @@ class Function(WS, Variables):
                     "PRICE": row["price"],
                 }
                 position = 0
-                if row["execID"] == "1720080003108792_BTC":
-                    for key, value in self.robots.items():
-                        print("----------------------")
-                        print(key, "--", value)
-                    print(row)
+                instrument = self.Instrument[row["symbol"]]
                 for emi in self.robots:
                     if (
                         self.robots[emi]["SYMBOL"] == row["symbol"]
@@ -365,13 +369,15 @@ class Function(WS, Variables):
                         message["EMI"] = self.robots[emi]["EMI"]
                         message["QTY"] = self.robots[emi]["POS"]
                         message["COMMISS"] = calc["funding"]
+                        message["TICKER"] = instrument.ticker
                         values = [
                             row["execID"],
                             self.robots[emi]["EMI"],
                             "",
                             row["settlCurrency"][0],
                             row["symbol"][0],
-                            row["symbol"][1],
+                            instrument.ticker,
+                            row["category"],
                             self.name,
                             "Fund",
                             self.robots[emi]["POS"],
@@ -404,7 +410,7 @@ class Function(WS, Variables):
                         fund=0,
                         execFee=row["execFee"],
                     )
-                    emi = ".".join(row["symbol"][:2])
+                    emi = row["symbol"][0]
                     if emi not in self.robots:
                         var.logger.error(
                             "Funding could not appear until the EMI="
@@ -416,13 +422,15 @@ class Function(WS, Variables):
                     message["EMI"] = self.robots[emi]["EMI"]
                     message["QTY"] = diff
                     message["COMMISS"] = calc["funding"]
+                    message["TICKER"] = instrument.ticker
                     values = [
                         row["execID"],
                         self.robots[emi]["EMI"],
                         "",
                         row["settlCurrency"][0],
                         row["symbol"][0],
-                        row["symbol"][1],
+                        instrument.ticker,
+                        row["category"],
                         self.name,
                         "Fund",
                         diff,
@@ -450,12 +458,12 @@ class Function(WS, Variables):
                     "clOrdID" not in row
                 ):  # The order was placed from the exchange web interface
                     var.last_order += 1
-                    clOrdID = str(var.last_order) + "." + ".".join(row["symbol"][:2])
+                    clOrdID = str(var.last_order) + "." + row["symbol"][0]
                     self.orders[clOrdID] = {
                         "leavesQty": row["leavesQty"],
                         "price": row["price"],
                         "SYMBOL": row["symbol"],
-                        "CATEGORY": row["symbol"][1],
+                        "CATEGORY": row["category"],
                         "MARKET": self.name,
                         "transactTime": row["transactTime"],
                         "SIDE": row["side"],
@@ -532,7 +540,7 @@ class Function(WS, Variables):
                         "leavesQty": row["leavesQty"],
                         "price": row["price"],
                         "SYMBOL": row["symbol"],
-                        "CATEGORY": row["symbol"][1],
+                        "CATEGORY": row["category"],
                         "MARKET": self.name,
                         "transactTime": row["transactTime"],
                         "SIDE": row["side"],
@@ -548,10 +556,7 @@ class Function(WS, Variables):
                 info_q = row["lastQty"]
                 if clOrdID in self.orders:
                     precision = self.Instrument[row["symbol"]].precision
-                    if row["side"] == "Sell":
-                        self.orders[clOrdID]["leavesQty"] -= row["lastQty"]
-                    else:
-                        self.orders[clOrdID]["leavesQty"] += row["lastQty"]
+                    self.orders[clOrdID]["leavesQty"] -= row["lastQty"]
                     self.orders[clOrdID]["leavesQty"] = round(
                         self.orders[clOrdID]["leavesQty"], precision
                     )
@@ -662,14 +667,19 @@ class Function(WS, Variables):
         """
         Update trades widget
         """
-        Function.add_symbol(self, symbol=val["SYMBOL"])
+        Function.add_symbol(
+            self,
+            symbol=val["SYMBOL"][0],
+            ticker=val["TICKER"],
+            category=val["CATEGORY"],
+        )
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
         row = [
             tm,
             val["SYMBOL"][0],
-            val["SYMBOL"][1],
+            val["CATEGORY"],
             val["MARKET"],
             val["SIDE"],
             Function.format_price(
@@ -688,14 +698,19 @@ class Function(WS, Variables):
         """
         Update funding widget
         """
-        Function.add_symbol(self, symbol=val["SYMBOL"])
+        Function.add_symbol(
+            self,
+            symbol=val["SYMBOL"][0],
+            ticker=val["TICKER"],
+            category=val["CATEGORY"],
+        )
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
         row = [
             tm,
             val["SYMBOL"][0],
-            val["SYMBOL"][1],
+            val["CATEGORY"],
             val["MARKET"],
             Function.format_price(
                 self,
@@ -756,12 +771,13 @@ class Function(WS, Variables):
         if not isinstance(number, str):
             precision = self.Instrument[symbol].price_precision
             number = "{:.{precision}f}".format(number, precision=precision)
-            dot = number.find(".")
-            if dot == -1:
-                number = number + "."
-            n = len(number) - 1 - number.find(".")
-            for _ in range(precision - n):
-                number = number + "0"
+            if precision:
+                dot = number.find(".")
+                if dot == -1:
+                    number = number + "."
+                n = len(number) - 1 - number.find(".")
+                for _ in range(precision - n):
+                    number = number + "0"
 
         return number
 
@@ -830,7 +846,7 @@ class Function(WS, Variables):
             instrument = self.Instrument[symbol]
             compare = [
                 symbol[0],
-                symbol[1],
+                instrument.category,
                 instrument.currentQty,
                 instrument.avgEntryPrice,
                 instrument.unrealisedPnl,
@@ -844,7 +860,7 @@ class Function(WS, Variables):
                 tree.cache[num] = compare
                 row = [
                     symbol[0],
-                    symbol[1],
+                    instrument.category,
                     Function.volume(self, qty=instrument.currentQty, symbol=symbol),
                     Function.format_price(
                         self, number=instrument.avgEntryPrice, symbol=symbol
@@ -978,7 +994,7 @@ class Function(WS, Variables):
             compare = [
                 robot["EMI"],
                 symbol[0],
-                symbol[1],
+                robot["CATEGORY"],
                 self.Instrument[symbol].settlCurrency[0],
                 robot["TIMEFR"],
                 robot["CAPITAL"],
@@ -993,7 +1009,7 @@ class Function(WS, Variables):
                 row = [
                     robot["EMI"],
                     symbol[0],
-                    symbol[1],
+                    robot["CATEGORY"],
                     self.Instrument[symbol].settlCurrency[0],
                     robot["TIMEFR"],
                     robot["CAPITAL"],
@@ -1049,7 +1065,7 @@ class Function(WS, Variables):
 
         results = dict()
         for symbol, position in self.positions.items():
-            if symbol[2] == var.current_market:
+            if symbol[1] == var.current_market:
                 if position["POS"] != 0:
                     price = Function.close_price(
                         self, symbol=symbol, pos=position["POS"]
@@ -1068,7 +1084,7 @@ class Function(WS, Variables):
                             results[currency] += calc["sumreal"]
                         else:
                             results[currency] = calc["sumreal"]
-        for num, currency in enumerate(self.Result.keys()):  # self.currencies
+        for num, currency in enumerate(self.Result.keys()):
             result = self.Result[currency]
             result.result = 0
             if currency in results:
@@ -1368,9 +1384,9 @@ def handler_order(event) -> None:
             )
             label1["text"] = (
                 "market\t"
-                + ws.orders[clOrdID]["SYMBOL"][2]
+                + ws.orders[clOrdID]["SYMBOL"][1]
                 + "\nsymbol\t"
-                + ".".join(ws.orders[clOrdID]["SYMBOL"][:2])
+                + ws.orders[clOrdID]["SYMBOL"][0]
                 + "\nside\t"
                 + ws.orders[clOrdID]["SIDE"]
                 + "\nclOrdID\t"

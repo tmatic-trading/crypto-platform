@@ -23,7 +23,6 @@ class Agent(Bitmex):
                 self,
                 instrument=instrument,
             )
-            self.symbol_category[instrument["symbol"]] = category
         if self.Instrument.get_keys():
             for symbol in self.symbol_list:
                 if symbol not in self.Instrument.get_keys():
@@ -49,18 +48,17 @@ class Agent(Bitmex):
             self.user_id = result["id"]
             self.user = result
 
-    def get_instrument(self, symbol: tuple):
+    def get_instrument(self, ticker: str, category=None) -> None:
         """
         Adds fields such as: isInverse, multiplier...
         """
-        path = Listing.GET_INSTRUMENT_DATA.format(SYMBOL=symbol[0])
+        path = Listing.GET_INSTRUMENT_DATA.format(SYMBOL=ticker)
         res = Send.request(self, path=path, verb="GET")
         if res:
             instrument = res[0]
-            category = Agent.fill_instrument(self, instrument=instrument)
-            self.symbol_category[instrument["symbol"]] = category
+            Agent.fill_instrument(self, instrument=instrument)
         else:
-            self.logger.info(str(symbol) + " not found in get_instrument()")
+            self.logger.info(ticker + " not found in get_instrument()")
 
     def fill_instrument(self, instrument: dict) -> str:
         """
@@ -97,10 +95,17 @@ class Agent(Bitmex):
                 category = "spot"
             else:
                 category = "linear"
+        self.symbol_category[instrument["symbol"]] = category
         myMultiplier = instrument["lotSize"] / minimumTradeAmount
-        symbol = (instrument["symbol"], category, self.name)
+        if category == "spot":
+            symb = instrument["underlying"] + "/" + instrument["quoteCurrency"]
+        else:
+            symb = instrument["symbol"]
+        symbol = (symb, self.name)
+        self.ticker[instrument["symbol"]] = symb
         self.Instrument[symbol].category = category
-        self.Instrument[symbol].symbol = instrument["symbol"]
+        self.Instrument[symbol].symbol = symb
+        self.Instrument[symbol].ticker = instrument["symbol"]
         self.Instrument[symbol].myMultiplier = int(myMultiplier)
         self.Instrument[symbol].multiplier = instrument["multiplier"]
         if category == "spot":
@@ -153,7 +158,8 @@ class Agent(Bitmex):
         """
         Gets instrument position when instrument is not in the symbol_list
         """
-        path = Listing.GET_POSITION.format(SYMBOL=symbol[0])
+        ticker = self.Instrument[symbol].ticker
+        path = Listing.GET_POSITION.format(SYMBOL=ticker)
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
             if data:
@@ -177,7 +183,7 @@ class Agent(Bitmex):
         """
         path = Listing.TRADE_BUCKETED.format(
             TIMEFRAME=self.timefrs[timeframe],
-            SYMBOL=symbol[0],
+            SYMBOL=self.Instrument[symbol].ticker,
             TIME=str(start_time)[:19],
         )
         data = Send.request(self, path=path, verb="GET")
@@ -238,23 +244,23 @@ class Agent(Bitmex):
             if isinstance(res, list):
                 spot_not_included = list()
                 for row in res:
+                    row["ticker"] = row["symbol"]
                     if row["symbol"] not in self.symbol_category:
                         Agent.get_instrument(
                             self,
-                            symbol=(row["symbol"], "category not defined", self.name),
+                            ticker=row["symbol"],
                         )
                     row["market"] = self.name
                     row["category"] = self.symbol_category[row["symbol"]]
                     row["symbol"] = (
-                        row["symbol"],
-                        self.symbol_category[row["symbol"]],
+                        self.ticker[row["symbol"]],
                         self.name,
                     )
                     row["transactTime"] = service.time_converter(
                         time=row["transactTime"], usec=True
                     )
                     instrument = self.Instrument[row["symbol"]]
-                    if row["symbol"][1] == "spot":
+                    if instrument.category == "spot":
                         if row["side"] == "Buy":
                             row["settlCurrency"] = (instrument.quoteCoin, self.name)
                         else:
@@ -266,7 +272,7 @@ class Agent(Bitmex):
                             row["lastQty"] = -row["lastQty"]
                             row["commission"] = -row["commission"]
                     row["execFee"] = None
-                    if row["symbol"][1] != "spot":
+                    if instrument.category != "spot":
                         spot_not_included.append(row)
                     else:
                         self.logger.warning(
@@ -288,8 +294,7 @@ class Agent(Bitmex):
         if isinstance(res, list):
             for order in res:
                 order["symbol"] = (
-                    order["symbol"],
-                    self.symbol_category[order["symbol"]],
+                    self.ticker[order["symbol"]],
                     self.name,
                 )
                 order["transactTime"] = service.time_converter(
@@ -310,16 +315,25 @@ class Agent(Bitmex):
         """
         Places a limit order
         """
-        if symbol[1] == "spot":
-            self.logger.warning(
+        if self.Instrument[symbol].category == "spot":
+            message = (
                 "Tmatic does not support spot trading on Bitmex. The order clOrdID "
                 + clOrdID
                 + " was ignored."
             )
+            self.logger.warning(message)
+            queue_message = {
+                "market": self.name,
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": True,
+            }
+            var.queue_info.put(queue_message)
             return
         path = Listing.ORDER_ACTIONS
+        ticker = self.Instrument[symbol].ticker
         postData = {
-            "symbol": symbol[0],
+            "symbol": ticker,
             "orderQty": quantity,
             "price": price,
             "clOrdID": clOrdID,
@@ -335,8 +349,9 @@ class Agent(Bitmex):
         Moves a limit order
         """
         path = Listing.ORDER_ACTIONS
+        ticker = self.Instrument[symbol].ticker
         postData = {
-            "symbol": symbol,
+            "symbol": ticker,
             "price": price,
             "orderID": orderID,
             "leavesQty": abs(quantity),
@@ -370,8 +385,7 @@ class Agent(Bitmex):
             for values in data:
                 if values["symbol"] in self.symbol_category:
                     symbol = (
-                        values["symbol"],
-                        self.symbol_category[values["symbol"]],
+                        self.ticker[values["symbol"]],
                         self.name,
                     )
                     instrument = self.Instrument[symbol]

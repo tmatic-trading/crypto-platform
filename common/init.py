@@ -2,7 +2,6 @@
 import os
 import sqlite3
 import threading
-import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 from sqlite3 import Error
@@ -170,14 +169,19 @@ class Init(WS, Variables):
         """
         data = Function.select_database(
             self,
-            "select SYMBOL, CATEGORY from "
+            "select SYMBOL, TICKER, CATEGORY from "
             + "coins where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY"
             % (self.user_id, self.name),
         )
         if isinstance(data, list):
-            symbols = list(map(lambda x: (x["SYMBOL"], x["CATEGORY"], self.name), data))
-            for symbol in symbols:
-                Function.add_symbol(self, symbol=symbol)
+            symbols = list(map(lambda x: (x["SYMBOL"], self.name), data))
+            for row in data:
+                Function.add_symbol(
+                    self,
+                    symbol=row["SYMBOL"],
+                    ticker=row["TICKER"],
+                    category=row["CATEGORY"],
+                )
             if not symbols:
                 symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
             sql = (
@@ -195,6 +199,7 @@ class Init(WS, Variables):
                     + "sum(funding) funding from ("
                 )
                 for symbol in symbols:
+                    instrument = self.Instrument[symbol]
                     sql += (
                         union
                         + "select IFNULL(sum(COMMISS),0.0) commiss, "
@@ -209,7 +214,7 @@ class Init(WS, Variables):
                         + "' and SYMBOL = '"
                         + symbol[0]
                         + "' and CATEGORY = '"
-                        + symbol[1]
+                        + instrument.category
                         + "'),0.0) funding from "
                         + "coins where SIDE <> 'Fund' and ACCOUNT = "
                         + str(self.user_id)
@@ -220,7 +225,7 @@ class Init(WS, Variables):
                         + "' and SYMBOL = '"
                         + symbol[0]
                         + "' and CATEGORY = '"
-                        + symbol[1]
+                        + instrument.category
                         + "'"
                     )
                     union = "union "
@@ -246,7 +251,7 @@ class Init(WS, Variables):
         self.orders = dict()
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
-                emi = ".".join(val["symbol"][:2])
+                emi = val["symbol"][0]
                 if "clOrdID" not in val:
                     # The order was placed from the exchange web interface
                     var.last_order += 1
@@ -263,7 +268,7 @@ class Init(WS, Variables):
                 else:
                     clOrdID = val["clOrdID"]
                     s = clOrdID.split(".")
-                    emi = ".".join(s[1:3])
+                    emi = s[1]
                     if emi not in self.robots:
                         self.robots[emi] = {
                             "STATUS": "NOT DEFINED",
@@ -287,13 +292,14 @@ class Init(WS, Variables):
                         )
                         info_display(self.name, message)
                         var.logger.info(message)
+                category = self.Instrument[val["symbol"]].category
                 self.orders[clOrdID] = {}
                 self.orders[clOrdID]["EMI"] = emi
                 self.orders[clOrdID]["leavesQty"] = val["leavesQty"]
                 self.orders[clOrdID]["transactTime"] = val["transactTime"]
                 self.orders[clOrdID]["price"] = val["price"]
                 self.orders[clOrdID]["SYMBOL"] = val["symbol"]
-                self.orders[clOrdID]["CATEGORY"] = val["symbol"][1]
+                self.orders[clOrdID]["CATEGORY"] = category
                 self.orders[clOrdID]["MARKET"] = self.name
                 self.orders[clOrdID]["SIDE"] = val["side"]
                 self.orders[clOrdID]["orderID"] = val["orderID"]
@@ -305,7 +311,7 @@ class Init(WS, Variables):
         """
         if self.user_id:
             sql = (
-                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, QTY,"
+                "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, QTY,"
                 + "PRICE, TTIME, COMMISS from "
                 + "coins where SIDE = 'Fund' and ACCOUNT = "
                 + str(self.user_id)
@@ -318,7 +324,7 @@ class Init(WS, Variables):
             data = Function.select_database(self, sql)
             rows = list()
             for val in data:
-                val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
+                val["SYMBOL"] = (val["SYMBOL"], self.name)
                 row = Function.funding_display(self, val=val, init=True)
                 rows.append(row)
             data = TreeTable.funding.append_data(rows=rows, market=self.name)
@@ -333,7 +339,7 @@ class Init(WS, Variables):
                     values=values, market=values[indx_market], configure=configure
                 )
             sql = (
-                "select ID, EMI, SYMBOL, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
+                "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
                 + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
                 + "coins where SIDE <> 'Fund' and ACCOUNT = "
                 + str(self.user_id)
@@ -346,7 +352,7 @@ class Init(WS, Variables):
             data = Function.select_database(self, sql)
             rows = list()
             for val in data:
-                val["SYMBOL"] = (val["SYMBOL"], val["CATEGORY"], self.name)
+                val["SYMBOL"] = (val["SYMBOL"], self.name)
                 row = Function.trades_display(self, val=val, init=True)
                 rows.append(row)
             data = TreeTable.trades.append_data(rows=rows, market=self.name)
@@ -390,6 +396,7 @@ def setup_database_connecion() -> None:
         MARKET varchar(20) DEFAULT NULL,
         CURRENCY varchar(10) DEFAULT NULL,
         SYMBOL varchar(20) DEFAULT NULL,
+        TICKER varchar(20) DEFAULT NULL,
         CATEGORY varchar(10) DEFAULT NULL,
         SIDE varchar(4) DEFAULT NULL,
         QTY decimal(20,8) DEFAULT NULL,

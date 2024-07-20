@@ -1,17 +1,16 @@
 import json
 import threading
 from collections import OrderedDict
+from uuid import uuid4
 
 import services as service
 from api.init import Setup
 from api.variables import Variables
-from common.data import MetaAccount, MetaInstrument, MetaResult
+from common.data import Bot, MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
 from services import exceptions_manager
 
 from .pybit.unified_trading import HTTP, WebSocket
-from common.data import Bot
-from uuid import uuid4
 
 
 @exceptions_manager
@@ -61,6 +60,7 @@ class Bybit(Variables):
         self.account_disp = ""
         self.orders = dict()
         WebSocket._on_message = Bybit._on_message
+        self.ticker = dict()
 
     def start(self):
         for symbol in self.symbol_list:
@@ -82,7 +82,10 @@ class Bybit(Variables):
         self.logger.info("Connecting to websocket")
 
         def subscribe_in_thread(category):
-            lst = list(filter(lambda x: x[1] == category, self.symbol_list))
+            lst = list()
+            for symbol in self.symbol_list:
+                if self.Instrument[symbol].category == category:
+                    lst.append(symbol)
             if lst:
                 self.ws[category] = WebSocket(
                     testnet=self.testnet, channel_type=category
@@ -114,9 +117,9 @@ class Bybit(Variables):
         self.ws_private.order_stream(callback=self.__handle_order)
         self.ws_private.execution_stream(callback=self.__handle_execution)
 
-    def __update_orderbook(self, values: dict, category: tuple) -> None:
-        symbol = (values["s"], category, self.name)
-        instrument = self.Instrument[symbol]
+    def __update_orderbook(self, values: dict, category: str) -> None:
+        symbol = self.ticker[(values["s"], category)]
+        instrument = self.Instrument[(symbol, self.name)]
         asks = values["a"]
         bids = values["b"]
         asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
@@ -127,7 +130,8 @@ class Bybit(Variables):
         instrument.bids = bids
 
     def __update_ticker(self, values: dict, category: str) -> None:
-        instrument = self.Instrument[(values["symbol"], category, self.name)]
+        symbol = self.ticker[(values["symbol"], category)]
+        instrument = self.Instrument[(symbol, self.name)]
         instrument.volume24h = float(values["volume24h"])
         if "fundingRate" in values:
             instrument.fundingRate = float(values["fundingRate"]) * 100
@@ -162,7 +166,8 @@ class Bybit(Variables):
 
     def __update_position(self, values: dict) -> None:
         for value in values["data"]:
-            symbol = (value["symbol"], value["category"], self.name)
+            symbol = self.ticker[(value["symbol"], value["category"])]
+            symbol = (symbol, self.name)
             if symbol in self.symbol_list:
                 instrument = self.Instrument[symbol]
                 if value["side"] == "Sell":
@@ -204,8 +209,10 @@ class Bybit(Variables):
             else:
                 orderStatus = ""
             if orderStatus:
-                symbol = (value["symbol"], value["category"], self.name)
+                symbol = (self.ticker[(value["symbol"], value["category"])], self.name)
                 row = {
+                    "ticker": value["symbol"],
+                    "category": value["category"],
                     "leavesQty": float(value["leavesQty"]),
                     "price": float(value["price"]),
                     "symbol": symbol,
@@ -225,7 +232,8 @@ class Bybit(Variables):
 
     def __handle_execution(self, values):
         for row in values["data"]:
-            row["symbol"] = (row["symbol"], row["category"], self.name)
+            row["ticker"] = row["symbol"]
+            row["symbol"] = (self.ticker[(row["symbol"], row["category"])], self.name)
             instrument = self.Instrument[row["symbol"]]
             row["execID"] = row["execId"]
             row["orderID"] = row["orderId"]
@@ -270,7 +278,7 @@ class Bybit(Variables):
         """
         Closes websocket
         """
-        for category in self.category_list:
+        for category in self.categories:
             try:
                 self.ws[category].exit()
             except Exception:
@@ -316,8 +324,9 @@ class Bybit(Variables):
         self.ws_private._send_custom_ping()
 
         return True
-    
-    def subscribe_symbol(self, symbol: str, category: str) -> None:
+
+    def subscribe_symbol(self, symbol: tuple, category: str) -> None:
+        ticker = self.Instrument[symbol].ticker
         if category == "linear":
             self.logger.info(
                 "ws subscription - orderbook_stream - category - "
@@ -327,7 +336,7 @@ class Bybit(Variables):
             )
             self.ws[category].orderbook_stream(
                 depth=self.orderbook_depth,
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_orderbook(
                     values=x["data"], category="linear"
                 ),
@@ -339,7 +348,7 @@ class Bybit(Variables):
                 + str(symbol)
             )
             self.ws[category].ticker_stream(
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_ticker(
                     values=x["data"], category="linear"
                 ),
@@ -353,7 +362,7 @@ class Bybit(Variables):
             )
             self.ws[category].orderbook_stream(
                 depth=self.orderbook_depth,
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_orderbook(
                     values=x["data"], category="inverse"
                 ),
@@ -365,7 +374,7 @@ class Bybit(Variables):
                 + str(symbol)
             )
             self.ws[category].ticker_stream(
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_ticker(
                     values=x["data"], category="inverse"
                 ),
@@ -379,7 +388,7 @@ class Bybit(Variables):
             )
             self.ws[category].orderbook_stream(
                 depth=self.orderbook_depth,
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_orderbook(
                     values=x["data"], category="spot"
                 ),
@@ -391,7 +400,7 @@ class Bybit(Variables):
                 + str(symbol)
             )
             self.ws[category].ticker_stream(
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_ticker(
                     values=x["data"], category="spot"
                 ),
@@ -405,7 +414,7 @@ class Bybit(Variables):
             )
             self.ws[category].orderbook_stream(
                 depth=self.orderbook_depth,
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_orderbook(
                     values=x["data"], category="option"
                 ),
@@ -417,16 +426,18 @@ class Bybit(Variables):
                 + str(symbol)
             )
             self.ws[category].ticker_stream(
-                symbol=symbol[0],
+                symbol=ticker,
                 callback=lambda x: self.__update_ticker(
                     values=x["data"], category="option"
                 ),
             )
-    
+
     def unsubscribe_symbol(self, symbol: tuple):
-        category = self.Instrument[symbol].category
-        arg_ticker = f"tickers.{symbol[0]}"
-        arg_orderbook = f"orderbook.{self.orderbook_depth}.{symbol[0]}"
+        instrument = self.Instrument[symbol]
+        ticker = instrument.ticker
+        category = instrument.category
+        arg_ticker = f"tickers.{ticker}"
+        arg_orderbook = f"orderbook.{self.orderbook_depth}.{ticker}"
         unsubscription_args = list()
         if arg_ticker in self.ws[category].callback_directory:
             unsubscription_args.append(arg_ticker)
@@ -443,4 +454,3 @@ class Bybit(Variables):
             self.ws[category].callback_directory.pop(arg_ticker)
         if arg_orderbook in self.ws[category].callback_directory:
             self.ws[category].callback_directory.pop(arg_ticker)
-        

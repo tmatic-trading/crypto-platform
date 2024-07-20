@@ -87,7 +87,10 @@ class Instrument:
     state: str
         Position status
     symbol: str
-        Instrument symbol
+        A unique value corresponding to the ticker, except in the spot
+        category, where the symbol matches "baseCoin/quoteCoin".
+    ticker: str
+        Symbol of the instrument in the exchange classification.
     tickSize: float
         The step to increase/reduce order price.
     unrealisedPnl: float
@@ -118,6 +121,7 @@ class Instrument:
     settlCurrency: tuple
     state: str
     symbol: str
+    ticker: str
     tickSize: float
     unrealisedPnl: float = 0
     volume24h: float = 0
@@ -172,7 +176,7 @@ class MetaInstrument(type):
     def __getitem__(self, item) -> Instrument:
         if item not in self.all:
             self.all[item] = Instrument()
-            name = item[2]
+            name = item[1]
             if name not in self.market:
                 self.market[name] = OrderedDict()
             self.market[name][item] = self.all[item]

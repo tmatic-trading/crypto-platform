@@ -1,5 +1,4 @@
 import json
-import os
 import threading
 import time
 from collections import OrderedDict
@@ -79,6 +78,7 @@ class Deribit(Variables):
                 "time": [],
             },
         }
+        self.ticker = dict()
 
     def start(self):
         for symbol in self.symbol_list:
@@ -134,15 +134,16 @@ class Deribit(Variables):
 
     def __subscribe(self):
         channels = list()
-        self.subscriptions = set()
+        self.subscriptions = list()
 
         # Orderbook
 
         for symbol in self.symbol_list:
-            channel = f"book.{symbol[0]}.none.{self.orderbook_depth}.100ms"
+            ticker = self.Instrument[symbol].ticker
+            channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
             self.logger.info("ws subscription - Orderbook - channel - " + str(channel))
             channels.append(channel)
-        self.subscriptions.add(str(channels))
+        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="public",
             channels=channels,
@@ -154,10 +155,11 @@ class Deribit(Variables):
 
         channels = list()
         for symbol in self.symbol_list:
-            channel = f"ticker.{symbol[0]}.100ms"
+            ticker = self.Instrument[symbol].ticker
+            channel = f"ticker.{ticker}.100ms"
             self.logger.info("ws subscription - Ticker - channel - " + str(channel))
             channels.append(channel)
-        self.subscriptions.add(str(channels))
+        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="public",
             channels=channels,
@@ -169,7 +171,7 @@ class Deribit(Variables):
 
         channels = ["user.portfolio.any"]
         self.logger.info("ws subscription - Portfolio - channel - " + str(channels[0]))
-        self.subscriptions.add(str(channels))
+        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="private",
             channels=channels,
@@ -181,7 +183,7 @@ class Deribit(Variables):
 
         channels = ["user.orders.any.any.raw"]
         self.logger.info("ws subscription - Orders - channel - " + str(channels[0]))
-        self.subscriptions.add(str(channels))
+        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="private",
             channels=channels,
@@ -195,7 +197,7 @@ class Deribit(Variables):
         self.logger.info(
             "ws subscription - User changes - channel - " + str(channels[0])
         )
-        self.subscriptions.add(str(channels))
+        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="private",
             channels=channels,
@@ -211,8 +213,10 @@ class Deribit(Variables):
                 if "access_token" in message["result"]:
                     self.access_token = message["result"]["access_token"]
                     self.refresh_token = message["result"]["refresh_token"]
-                elif id == "subscription":        
-                    self.subscriptions.remove(str(message["result"]))
+                elif id == "subscription":
+                    for subscription in self.subscriptions:
+                        if set(subscription) <= set(message["result"]):
+                            self.subscriptions.remove(subscription)
                 elif id == "establish_heartbeat":
                     if message["result"] == "ok":
                         self.logger.info("Heartbeat established.")
@@ -340,15 +344,13 @@ class Deribit(Variables):
         return True
 
     def __update_orderbook(self, values: dict) -> None:
-        category = self.symbol_category[values["instrument_name"]]
-        symbol = (values["instrument_name"], category, self.name)
+        symbol = (self.ticker[values["instrument_name"]], self.name)
         instrument = self.Instrument[symbol]
         instrument.asks = values["asks"]
         instrument.bids = values["bids"]
 
     def __update_ticker(self, values: dict) -> None:
-        category = self.symbol_category[values["instrument_name"]]
-        symbol = (values["instrument_name"], category, self.name)
+        symbol = (self.ticker[values["instrument_name"]], self.name)
         instrument = self.Instrument[symbol]
         instrument.volume24h = values["stats"]["volume"]
         if "funding_8h" in values:
@@ -370,15 +372,14 @@ class Deribit(Variables):
         print("_________________________handle order", values)
 
     def __update_user_changes(self, values: dict) -> None:
-        print(":::::::::::::::::::::::::::::::::::::::::::::::::::::: user changes")
-        print(values)
         for key, data in values.items():
             if key == "orders":
                 for value in data:
                     category = self.symbol_category[value["instrument_name"]]
-                    symbol = (value["instrument_name"], category, self.name)
+                    symbol = (self.ticker[value["instrument_name"]], self.name)
                     side = "Sell" if value["direction"] == "sell" else "Buy"
                     order_state = ""
+                    instrument = self.Instrument[symbol]
                     if value["order_state"] == "open":
                         order_state = "New"
                     elif value["order_state"] == "cancelled":
@@ -387,6 +388,8 @@ class Deribit(Variables):
                         order_state = "Replaced"
                     if order_state:
                         row = {
+                            "ticker": value["instrument_name"],
+                            "category": instrument.category,
                             "leavesQty": value["amount"] - value["filled_amount"],
                             "price": float(value["price"]),
                             "symbol": symbol,
@@ -396,7 +399,7 @@ class Deribit(Variables):
                             "side": side,
                             "orderID": value["order_id"],
                             "execType": order_state,
-                            "settlCurrency": self.Instrument[symbol].settlCurrency,
+                            "settlCurrency": instrument.settlCurrency,
                             "orderQty": float(value["amount"]),
                             "cumQty": float(value["filled_amount"]),
                         }
@@ -406,8 +409,7 @@ class Deribit(Variables):
             elif key == "positions":
                 for value in data:
                     symbol = (
-                        value["instrument_name"],
-                        self.symbol_category[values["instrument_name"]],
+                        self.ticker[value["instrument_name"]],
                         self.name,
                     )
                     instrument = self.Instrument[symbol]
@@ -420,10 +422,10 @@ class Deribit(Variables):
             elif key == "trades":
                 for row in data:
                     row["execType"] = "Trade"
+                    row["ticker"] = row["instrument_name"]
                     category = self.symbol_category[row["instrument_name"]]
                     row["symbol"] = (
-                        row["instrument_name"],
-                        category,
+                        self.ticker[row["instrument_name"]],
                         self.name,
                     )
                     if category == "spot":
@@ -456,13 +458,12 @@ class Deribit(Variables):
                     row["market"] = self.name
                     row["commission"] = "Not supported"
                     self.transaction(row=row)
-            print(":::::::::::::", key)
-            print(data)
 
     def subscribe_symbol(self, symbol: str) -> None:
-        channel = [f"book.{symbol[0]}.none.{self.orderbook_depth}.100ms"]
+        ticker = self.Instrument[symbol].ticker
+        channel = [f"book.{ticker}.none.{self.orderbook_depth}.100ms"]
         self.logger.info("ws subscription - Orderbook - channel - " + str(channel))
-        self.subscriptions.add(str(channel))
+        self.subscriptions.append(channel)
         self.__subscribe_channels(
             type="public",
             channels=channel,
@@ -471,7 +472,7 @@ class Deribit(Variables):
         )
         channel = [f"ticker.{symbol[0]}.100ms"]
         self.logger.info("ws subscription - Ticker - channel - " + str(channel))
-        self.subscriptions.add(str(channel))
+        self.subscriptions.append(channel)
         self.__subscribe_channels(
             type="public",
             channels=channel,
@@ -481,21 +482,20 @@ class Deribit(Variables):
         self.__confirm_subscription()
 
     def unsubscribe_symbol(self, symbol: str) -> None:
-        msg = \
-            {
-            "jsonrpc" : "2.0",
-            "id" : "subscription",
-            "method" : "public/unsubscribe",
-            "params" : {"channels" : None}
-            }
+        msg = {
+            "jsonrpc": "2.0",
+            "id": "subscription",
+            "method": "public/unsubscribe",
+            "params": {"channels": None},
+        }
         channel = [f"book.{symbol}.none.{self.orderbook_depth}.100ms"]
         self.logger.info("ws unsubscribe - Orderbook - channel - " + str(channel))
-        self.subscriptions.add(str(channel))
+        self.subscriptions.append(channel)
         msg["params"]["channels"] = channel
         self.ws.send(json.dumps(msg))
         channel = [f"ticker.{symbol}.100ms"]
         self.logger.info("ws unsubscribe - Ticker - channel - " + str(channel))
-        self.subscriptions.add(str(channel))
+        self.subscriptions.append(channel)
         msg["params"]["channels"] = channel
         self.ws.send(json.dumps(msg))
         self.__confirm_subscription(action="unsubscribe")

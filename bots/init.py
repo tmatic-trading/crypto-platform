@@ -35,7 +35,7 @@ class Init(WS, Variables):
                 + "select * from robots where SYMBOL = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
-                + symbol[1]
+                + self.Instrument[symbol].category
                 + "' "
             )
             union = "union "
@@ -47,7 +47,6 @@ class Init(WS, Variables):
             self.robots[emi]["STATUS"] = "WORK"
             self.robots[emi]["SYMBOL"] = (
                 self.robots[emi]["SYMBOL"],
-                self.robots[emi]["CATEGORY"],
                 self.name,
             )
 
@@ -63,7 +62,7 @@ class Init(WS, Variables):
         )
         defuncts = Function.select_database(self, qwr)
         for defunct in defuncts:
-            symbol = (defunct["SYMBOL"], defunct["CATEGORY"], self.name)
+            symbol = (defunct["SYMBOL"], self.name)
             for emi in self.robots:
                 if defunct["EMI"] == emi:
                     break
@@ -71,7 +70,7 @@ class Init(WS, Variables):
                 emi = defunct["EMI"]
                 if defunct["CATEGORY"] == "spot":
                     status = "RESERVED"
-                    emi = ".".join(symbol[:2])
+                    emi = symbol[0]
                 elif symbol in self.symbol_list:
                     status = "NOT DEFINED"
                 else:
@@ -99,7 +98,7 @@ class Init(WS, Variables):
                 + "SYMBOL, CATEGORY, ACCOUNT, MARKET) res where EMI = '"
                 + symbol[0]
                 + "' and CATEGORY = '"
-                + symbol[1]
+                + self.Instrument[symbol].category
                 + "' "
             )
             union = "union "
@@ -109,17 +108,17 @@ class Init(WS, Variables):
         reserved = Function.select_database(self, qwr)
         for symbol in self.symbol_list:
             for res in reserved:
-                if symbol == (res["SYMBOL"], res["CATEGORY"], self.name):
+                if symbol == (res["SYMBOL"], self.name):
                     pos = reserved[0]["POS"]
                     break
             else:
                 pos = 0
             # if pos != 0:
-            emi = ".".join(symbol[:2])
+            emi = symbol[0]
             self.robots[emi] = {
                 "EMI": emi,
                 "SYMBOL": symbol,
-                "CATEGORY": symbol[1],
+                "CATEGORY": self.Instrument[symbol].category,
                 "MARKET": self.name,
                 "POS": pos,
                 "STATUS": "RESERVED",
@@ -130,7 +129,13 @@ class Init(WS, Variables):
         # Loading all transactions and calculating financial results for each robot
 
         for emi, robot in self.robots.items():
-            Function.add_symbol(self, symbol=self.robots[emi]["SYMBOL"])
+            instrument = self.Instrument[robot["SYMBOL"]]
+            Function.add_symbol(
+                self,
+                symbol=robot["SYMBOL"][0],
+                ticker=instrument.ticker,
+                category=instrument.category,
+            )
             if isinstance(emi, tuple):
                 _emi = emi[0]
             else:
@@ -369,9 +374,12 @@ def load_bots():
         name = value["EMI"]
         bot = Bot[name]
         bot.name = value["EMI"]
+        bot.market = value["MARKET"]
         bot.timefr = value["TIMEFR"]
         bot.created = value["DAT"]
         bot.status = "ON"
+
+    # Subscribe to instruments for which bots have open positions
 
     # Searching for unclosed positions by robots that are not in the 'robots' table
 
@@ -391,9 +399,7 @@ def load_bots():
             bot.position[symbol] = value["POS"]
             bot.pnl[symbol] = value["PNL"]
             bot.status = "NOT DEFINED"
-        
 
-    '''for name, bot in Bot.items():
+    """for name, bot in Bot.items():
         for value in bot:
-            print(value.name, value.value)'''
-
+            print(value.name, value.value)"""

@@ -137,12 +137,14 @@ class WS(Variables):
 
         return Agents[self.name].value.get_user(self)
 
-    def get_instrument(self: Markets, symbol: tuple) -> None:
+    def get_instrument(self: Markets, ticker: str, category: str) -> None:
         """
         Gets a specific instrument by symbol name and category.
         """
 
-        return Agents[self.name].value.get_instrument(self, symbol=symbol)
+        return Agents[self.name].value.get_instrument(
+            self, ticker=ticker, category=category
+        )
 
     def get_position(self: Markets, symbol: tuple) -> None:
         """

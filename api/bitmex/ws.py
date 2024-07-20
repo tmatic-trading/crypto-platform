@@ -13,6 +13,7 @@ from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
+from services import display_exception
 
 from .api_auth import API_auth
 
@@ -59,6 +60,7 @@ class Bitmex(Variables):
         self.account_disp = ""
         self.orders = dict()
         self.pinging = "pong"
+        self.ticker = dict()
 
     def start(self):
         if not self.logNumFatal:
@@ -104,9 +106,13 @@ class Bitmex(Variables):
                 self.logNumFatal = "SETUP"
             else:
                 # Subscribes symbol by symbol to all tables given
-                for symbolName in map(lambda x: x[0], self.symbol_list):
+                for symbolName in map(
+                    lambda x: self.Instrument[(x[0], self.name)].ticker,
+                    self.symbol_list,
+                ):
                     self.subscribe_symbol(symbol=symbolName)
-        except Exception:
+        except Exception as exception:
+            display_exception(exception)
             self.logger.error("Exception while connecting to websocket. Restarting...")
             self.logNumFatal = "SETUP"
 
@@ -114,7 +120,7 @@ class Bitmex(Variables):
         subscriptions = []
         for sub in self.table_subscription:
             subscriptions += [sub + ":" + symbol]
-        self.logger.info("ws subscribe - " + subscriptions)
+        self.logger.info("ws subscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
 
     def unsubscribe_symbol(self, symbol: str) -> None:
@@ -216,10 +222,9 @@ class Bitmex(Variables):
                 if table_name not in self.data:
                     self.data[table_name] = OrderedDict()
                 if action == "partial":  # table snapshot
-                    self.logger.debug("%s: partial" % table)
                     self.keys[table] = message["keys"]
                     if table == "quote":
-                        self.keys[table] = ["symbol", "category", "market"]
+                        self.keys[table] = ["symbol", "market"]
                     elif table == "trade":
                         self.keys[table] = ["trdMatchID"]
                     elif table == "execution":
@@ -227,11 +232,11 @@ class Bitmex(Variables):
                     elif table == "margin":
                         self.keys[table] = ["currency", "market"]
                     elif table in ["instrument", "orderBook10", "position"]:
-                        self.keys[table].append("category")
                         self.keys[table].append("market")
+
                     for val in message["data"]:
                         for key in self.keys[table]:
-                            if key not in ["category", "market"]:
+                            if key not in ["market"]:
                                 if key not in val:
                                     break
                         else:
@@ -255,14 +260,15 @@ class Bitmex(Variables):
                             val["category"] = self.symbol_category[val["symbol"]]
                             self.__update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
+                            val["ticker"] = val["symbol"]
                             val["symbol"] = (
-                                val["symbol"],
-                                self.symbol_category[val["symbol"]],
+                                self.ticker[val["symbol"]],
                                 self.name,
                             )
                             val["market"] = self.name
                             instrument = self.Instrument[val["symbol"]]
-                            if val["symbol"][1] == "spot":
+                            val["category"] = instrument.category
+                            if instrument.category == "spot":
                                 if val["side"] == "Buy":
                                     val["settlCurrency"] = (
                                         instrument.quoteCoin,
@@ -283,14 +289,15 @@ class Bitmex(Variables):
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
                             val["execFee"] = None
-                            if val["symbol"][1] != "spot":
+                            if instrument.category != "spot":
                                 self.transaction(row=val)
                             else:
-                                self.logger.warning(
+                                message = (
                                     "Tmatic does not support spot trading on Bitmex. The execution entry with execID "
                                     + val["execID"]
                                     + " was ignored."
                                 )
+                                self.logger.warning(message)
                         else:
                             self.data[table_name][key] = val
                 elif action == "update":
@@ -360,6 +367,7 @@ class Bitmex(Variables):
         There is only one Instrument array for the "instrument", "position",
         "quote", "orderBook10" websocket streams.
         """
+        symbol = (self.ticker[symbol[0]], self.name)
         instrument = self.Instrument[symbol]
         if quote:
             if "askPrice" in values:
@@ -378,7 +386,7 @@ class Bitmex(Variables):
         There is only one Instrument array for the "instrument", "position",
         "quote", "orderBook10" websocket streams.
         """
-        symbol = (values["symbol"], values["category"], self.name)
+        symbol = (self.ticker[values["symbol"]], self.name)
         instrument = self.Instrument[symbol]
         if "currentQty" in values:
             if values["currentQty"] is None:
@@ -406,6 +414,7 @@ class Bitmex(Variables):
                     instrument.marginCallPrice = values["marginCallPrice"]
 
     def __update_instrument(self, symbol: tuple, values: dict):
+        symbol = (self.ticker[values["symbol"]], self.name)
         instrument = self.Instrument[symbol]
         if "fundingRate" in values:
             instrument.fundingRate = values["fundingRate"] * 100

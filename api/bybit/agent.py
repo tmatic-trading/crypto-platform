@@ -82,16 +82,15 @@ class Agent(Bybit):
         )
         self.logger.error(message)
 
-    def get_instrument(self, symbol: tuple) -> None:
+    def get_instrument(self, ticker: str, category: str) -> None:
         self.logger.info(
-            "In get_instrument - sending get_instruments_info() - symbol - "
-            + str(symbol)
+            "Sending get_instruments_info() - symbol - " + ticker + " " + category
         )
         instrument_info = self.session.get_instruments_info(
-            symbol=symbol[0], category=symbol[1]
+            symbol=ticker, category=category
         )
         Agent.fill_instrument(
-            self, instrument=instrument_info["result"]["list"][0], category=symbol[1]
+            self, instrument=instrument_info["result"]["list"][0], category=category
         )
 
     def get_position(self, symbol: tuple = False):
@@ -106,9 +105,10 @@ class Agent(Bybit):
             + " - interval - "
             + str(timeframe)
         )
+        instrument = self.Instrument[symbol]
         kline = self.session.get_kline(
-            category=symbol[1],
-            symbol=symbol[0],
+            category=instrument.category,
+            symbol=instrument.ticker,
             interval=str(timeframe),
             start=service.time_converter(time=start_time),
             limit=1000,
@@ -162,7 +162,17 @@ class Agent(Bybit):
                     res = result["result"]["list"]
                     if isinstance(result["result"]["list"], list):
                         for row in res:
-                            row["symbol"] = (row["symbol"], category, self.name)
+                            if (row["symbol"], category) not in self.ticker:
+                                Agent.get_instrument(
+                                    self,
+                                    ticker=row["symbol"],
+                                    category=category,
+                                )
+                            row["ticker"] = (row["symbol"],)
+                            row["symbol"] = (
+                                self.ticker[(row["symbol"], category)],
+                                self.name,
+                            )
                             row["execID"] = row["execId"]
                             row["orderID"] = row["orderId"]
                             row["category"] = category
@@ -248,8 +258,7 @@ class Agent(Bybit):
                 parameters["cursor"] = result["result"]["nextPageCursor"]
                 for order in result["result"]["list"]:
                     order["symbol"] = (
-                        order["symbol"],
-                        parameters["category"],
+                        self.ticker[(order["symbol"], parameters["category"])],
                         self.name,
                     )
                     order["orderID"] = order["orderId"]
@@ -316,9 +325,10 @@ class Agent(Bybit):
 
     def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
         side = "Buy" if quantity > 0 else "Sell"
+        instrument = self.Instrument[symbol]
         return self.session.place_order(
-            category=symbol[1],
-            symbol=symbol[0],
+            category=instrument.category,
+            symbol=instrument.ticker,
             side=side,
             orderType="Limit",
             qty=str(abs(quantity)),
@@ -327,9 +337,10 @@ class Agent(Bybit):
         )
 
     def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
+        instrument = self.Instrument[symbol]
         return self.session.amend_order(
-            category=symbol[1],
-            symbol=symbol[0],
+            category=instrument.category,
+            symbol=instrument.ticker,
             orderId=orderID,
             qty=str(quantity),
             price=str(price),
@@ -337,7 +348,7 @@ class Agent(Bybit):
 
     def remove_order(self, order: dict):
         return self.session.cancel_order(
-            category=order["SYMBOL"][1],
+            category=self.Instrument[order["SYMBOL"]].category,
             symbol=order["SYMBOL"][0],
             orderId=order["orderID"],
         )
@@ -399,7 +410,7 @@ class Agent(Bybit):
                 )
                 cursor = result["result"]["nextPageCursor"]
                 for values in result["result"]["list"]:
-                    symbol = (values["symbol"], category, self.name)
+                    symbol = (self.ticker[(values["symbol"], category)], self.name)
                     instrument = self.Instrument[symbol]
                     if symbol in self.positions:
                         self.positions[symbol]["POS"] = float(values["size"])
@@ -420,7 +431,7 @@ class Agent(Bybit):
                     success[num] = 0
 
         threads, success = [], []
-        for category in self.category_list:
+        for category in self.categories:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
                     success.append(-1)
@@ -446,9 +457,15 @@ class Agent(Bybit):
         The data fields of different exchanges are unified through the
         Instrument class. See detailed description of the fields there.
         """
-        symbol = (instrument["symbol"], category, self.name)
+        if category == "spot":
+            symb = instrument["baseCoin"] + "/" + instrument["quoteCoin"]
+        else:
+            symb = instrument["symbol"]
+        symbol = (symb, self.name)
+        self.ticker[(instrument["symbol"], category)] = symb
         self.Instrument[symbol].category = category
-        self.Instrument[symbol].symbol = instrument["symbol"]
+        self.Instrument[symbol].symbol = symb
+        self.Instrument[symbol].ticker = instrument["symbol"]
         self.Instrument[symbol].baseCoin = instrument["baseCoin"]
         self.Instrument[symbol].quoteCoin = instrument["quoteCoin"]
         if "settleCoin" in instrument:

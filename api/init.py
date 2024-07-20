@@ -17,12 +17,8 @@ class Setup(Variables):
             self.symbol_list = var.env[name]["SYMBOLS"]
             self.currencies = var.env[name]["CURRENCIES"]
             tmp_pos = {y: 0 for y in var.name_position}
-            self.category_list = list()
-            for symbol in self.symbol_list:
-                if symbol[1] not in self.category_list:
-                    self.category_list.append(symbol[1])
             for symbol in self.symbol_list:
                 self.positions[symbol] = tmp_pos.copy()
                 self.positions[symbol]["SYMB"] = symbol
                 self.positions[symbol]["SYMBOL"] = symbol[0]
-                self.positions[symbol]["CAT"] = symbol[1]
+                self.positions[symbol]["CAT"] = "None"

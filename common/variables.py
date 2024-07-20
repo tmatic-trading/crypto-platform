@@ -48,7 +48,7 @@ class Variables:
     env = dotenv_values(".env")
     market_list = env["MARKET_LIST"].replace(",", " ").split()
     CATEGORIES = OrderedDict()
-    CATEGORIES["LINEAR"] = "linear"
+    '''CATEGORIES["LINEAR"] = "linear"
     CATEGORIES["INVERSE"] = "inverse"
     CATEGORIES["QUANTO"] = "quanto"
     CATEGORIES["SPOT"] = "spot"
@@ -59,10 +59,14 @@ class Variables:
     CATEGORIES["SPOT_LINEAR"] = "spot linear"
     CATEGORIES["OPTION_LINEAR"] = "option linear"
     CATEGORIES["OPTION_REVERSED"] = "option reversed"
-    CATEGORIES["OPTION_COMBO_REVERSED"] = "option"
+    CATEGORIES["OPTION_COMBO_REVERSED"] = "option"'''
     for market_name in market_list:
         env[market_name] = dotenv_values(".env." + market_name)
+        symbols = env[market_name]["SYMBOLS"].replace(",", " ").split()
         env[market_name]["SYMBOLS"] = list()
+        for symb in symbols:
+            env[market_name]["SYMBOLS"].append((symb, market_name))
+        """env[market_name]["SYMBOLS"] = list()
         for CATEGORY, category in CATEGORIES.items():
             tmp = CATEGORY + "_SYMBOLS"
             tmp_list = []
@@ -71,7 +75,7 @@ class Variables:
             for symbol in tmp_list:
                 add_symbol = (symbol, category, market_name)
                 if add_symbol not in env[market_name]["SYMBOLS"]:
-                    env[market_name]["SYMBOLS"] += [add_symbol]
+                    env[market_name]["SYMBOLS"] += [add_symbol]"""
         env[market_name]["CURRENCIES"] = (
             env[market_name]["CURRENCIES"].replace(",", " ").split()
         )

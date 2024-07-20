@@ -1,5 +1,4 @@
 import json
-import os
 import threading
 import time
 from collections import OrderedDict
@@ -57,11 +56,11 @@ class Agent(Deribit):
 
         return 1001
 
-    def get_instrument(self, symbol: tuple) -> None:
+    def get_instrument(self, ticker: str, category=None) -> None:
         path = Listing.GET_INSTRUMENT_DATA
-        params = {"instrument_name": symbol[0]}
-        id = f"{path}_{symbol[0]}"
-        text = " - symbol - " + symbol[0]
+        params = {"instrument_name": ticker}
+        id = f"{path}_{ticker}"
+        text = " - symbol - " + ticker
         res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
         if isinstance(res, dict):
             Agent.fill_instrument(self, values=self.response[id]["result"])
@@ -81,9 +80,15 @@ class Agent(Deribit):
         """
         category = values["kind"] + " " + values["instrument_type"]
         self.symbol_category[values["instrument_name"]] = category
-        symbol = (values["instrument_name"], category, self.name)
+        if "spot" in category:
+            symb = values["base_currency"] + "/" + values["quote_currency"]
+        else:
+            symb = values["instrument_name"]
+        symbol = (symb, self.name)
+        self.ticker[values["instrument_name"]] = symb
         instrument = self.Instrument[symbol]
-        instrument.symbol = values["instrument_name"]
+        instrument.symbol = symb
+        instrument.ticker = values["instrument_name"]
         instrument.category = category
         instrument.baseCoin = values["base_currency"]
         instrument.quoteCoin = values["quote_currency"]
@@ -111,16 +116,16 @@ class Agent(Deribit):
         instrument.multiplier = 1
         instrument.myMultiplier = 1
         if category == "spot":
-            self.Instrument[symbol].fundingRate = "None"
-            self.Instrument[symbol].avgEntryPrice = "None"
-            self.Instrument[symbol].marginCallPrice = "None"
-            self.Instrument[symbol].currentQty = "None"
-            self.Instrument[symbol].unrealisedPnl = "None"
+            instrument.fundingRate = "None"
+            instrument.avgEntryPrice = "None"
+            instrument.marginCallPrice = "None"
+            instrument.currentQty = "None"
+            instrument.unrealisedPnl = "None"
         if category == "option":
-            self.Instrument[symbol].fundingRate = "None"
-        self.Instrument[symbol].asks = [[0, 0]]
-        self.Instrument[symbol].bids = [[0, 0]]
-        self.Instrument[symbol].valueOfOneContract = 1
+            instrument.fundingRate = "None"
+        instrument.asks = [[0, 0]]
+        instrument.bids = [[0, 0]]
+        instrument.valueOfOneContract = 1
 
     def open_orders(self) -> int:
         """
@@ -138,8 +143,7 @@ class Agent(Deribit):
             if "result" in data:
                 if isinstance(data["result"], list):
                     for order in data["result"]:
-                        category = self.symbol_category[order["instrument_name"]]
-                        symbol = (order["instrument_name"], category, self.name)
+                        symbol = (self.ticker[order["instrument_name"]], self.name)
                         instrument = self.Instrument[symbol]
                         order["symbol"] = symbol
                         order["orderID"] = order["order_id"]
@@ -209,8 +213,7 @@ class Agent(Deribit):
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, dict):
             for values in data["result"]:
-                category = self.symbol_category[values["instrument_name"]]
-                symbol = (values["instrument_name"], category, self.name)
+                symbol = (self.ticker[values["instrument_name"]], self.name)
                 instrument = self.Instrument[symbol]
                 instrument.currentQty = values["size"]
                 instrument.avgEntryPrice = values["average_price"]
@@ -327,17 +330,12 @@ class Agent(Deribit):
                         for row in res:
                             if not row["instrument_name"] in self.symbol_category:
                                 Agent.get_instrument(
-                                    self,
-                                    symbol=(
-                                        row["instrument_name"],
-                                        "not defined",
-                                        self.name,
-                                    ),
+                                    self, ticker=row["instrument_name"]
                                 )
                             category = self.symbol_category[row["instrument_name"]]
+                            row["ticker"] = row["instrument_name"]
                             row["symbol"] = (
-                                row["instrument_name"],
-                                category,
+                                self.ticker[row["instrument_name"]],
                                 self.name,
                             )
                             if category == "spot":
@@ -350,8 +348,6 @@ class Agent(Deribit):
                                     row["symbol"]
                                 ].settlCurrency
                             if data_type == "logs":
-                                if row["type"] == "delivery":
-                                    print("_____________history", row)
                                 if row["type"] == "settlement":
                                     row["execType"] = "Funding"
                                     row["execID"] = (
@@ -576,7 +572,7 @@ class Agent(Deribit):
             number = 86400 * 1000000
         end_timestamp = start_timestamp + number
         params = {
-            "instrument_name": symbol[0],
+            "instrument_name": self.Instrument[symbol].ticker,
             "start_timestamp": start_timestamp,
             "end_timestamp": end_timestamp,
             "resolution": str(timeframe),
@@ -617,7 +613,7 @@ class Agent(Deribit):
             + str(abs(quantity))
         )
         params = {
-            "instrument_name": symbol[0],
+            "instrument_name": self.Instrument[symbol].ticker,
             "price": price,
             "amount": abs(quantity),
             "type": "limit",

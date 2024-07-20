@@ -67,18 +67,19 @@ pip3 install -r requirements.txt
 The "coins" table receives data from the websocket execution stream or trade history endpoint. Explanations for the columns of the "coins" table:
 * ID - row number in the database.
 * EXECID - unique code that exchange assigns to any transaction.
-* EMI is the identification name of the bot taken from the "clOrdID" field, usually the same as the EMI field of the SQLite "robots" table. If the "clOrdID" field is empty, then the EMI field contains the value "symbol" and "category" separated by a dot between them execution. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then "symbol" value is also assigned.
+* EMI is the identification name of the bot taken from the "clOrdID" field, usually the same as the EMI field of the SQLite "robots" table. If the "clOrdID" field is empty, then the EMI field contains the value "symbol". If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then "symbol" value is also assigned.
 
 | execution|myBot is in the "robots" table|EMI|
 | ------------- |:------------------:|:-----:|
-| {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD", category: "inverse"}|yes|myBot|
-| {"clOrdID": "", "symbol": "XBTUSD", category: "inverse"}|-|XBTUSD.inverse|
-| {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD", category: "inverse"}|no|XBTUSD.inverse|
+| {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}|yes|myBot|
+| {"clOrdID": "", "symbol": "XBTUSD"}|-|XBTUSD|
+| {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}|no|XBTUSD|
 
 * REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```
 * MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
-* SYMBOL - instrument symbol, for example "XBTUSD".
+* SYMBOL - unique instrument symbol within the exchange corresponding to the ticker, with the exception of the spot category, where the symbol matches "baseCoin/quoteCoin", examble "BTC/USDT".
+* TICKER - symbol of the instrument in the exchange classification, for example “XBTUSD”.
 * CATEGORY - instrument category. Possible values: "linear", "inverse", "quanto", "spot", "option".
 * SIDE - side of a transaction: "Buy", "Sell", "Fund" - "funding".
 * QTY - transaction volume.
