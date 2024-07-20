@@ -136,11 +136,7 @@ TESTNET = "True"
 Create a new file named ```.env.Bitmex``` in the root folder of the program with your settings for the Bitmex exchange if it is in the MARKET_LIST. The file might look like this:
 
 ```python
-LINEAR_SYMBOLS = "XBTUSDT, SOLUSDT"
-INVERSE_SYMBOLS = "XBTUSD"
-QUANTO_SYMBOLS = "ETHUSD"
-SPOT_SYMBOLS = ""
-OPTION_SYMBOLS = ""
+SYMBOLS = "XBTUSDT, SOLUSDT, XBTUSD, ETHUSD"
 CURRENCIES = "XBt, USDt"
 HTTP_URL = "https://www.bitmex.com/api/v1/"
 WS_URL = "wss://ws.bitmex.com/realtime"
@@ -155,11 +151,7 @@ TESTNET_API_SECRET = "your testnet API secret"
 Create a new file named ```.env.Bybit``` in the root folder of the program with your settings for the Bybit exchange if it is in the MARKET_LIST. The file might look like this:
 
 ```python
-LINEAR_SYMBOLS = "BTCUSDT, ETHUSDT"
-INVERSE_SYMBOLS = "BTCUSD"
-QUANTO_SYMBOLS = ""
-SPOT_SYMBOLS = "BTCUSDT, ETHUSDT"
-OPTION_SYMBOLS = ""
+SYMBOLS = "BTCUSDT, ETHUSDT, BTCUSD, BTC/USDT, ETH/USDT"
 CURRENCIES = "BTC, USDT"
 HTTP_URL = "https://api.bybit.com/v5"
 WS_URL = "wss://api.bybit.com/v5"
