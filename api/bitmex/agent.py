@@ -95,7 +95,6 @@ class Agent(Bitmex):
                 category = "spot"
             else:
                 category = "linear"
-        self.symbol_category[instrument["symbol"]] = category
         myMultiplier = instrument["lotSize"] / minimumTradeAmount
         if category == "spot":
             symb = instrument["underlying"] + "/" + instrument["quoteCurrency"]
@@ -245,21 +244,22 @@ class Agent(Bitmex):
                 spot_not_included = list()
                 for row in res:
                     row["ticker"] = row["symbol"]
-                    if row["symbol"] not in self.symbol_category:
+                    if row["symbol"] not in self.ticker[row["symbol"]]:
                         Agent.get_instrument(
                             self,
                             ticker=row["symbol"],
                         )
+                    
                     row["market"] = self.name
-                    row["category"] = self.symbol_category[row["symbol"]]
                     row["symbol"] = (
                         self.ticker[row["symbol"]],
                         self.name,
                     )
+                    instrument = self.Instrument[row["symbol"]]
+                    row["category"] = instrument.category
                     row["transactTime"] = service.time_converter(
                         time=row["transactTime"], usec=True
                     )
-                    instrument = self.Instrument[row["symbol"]]
                     if instrument.category == "spot":
                         if row["side"] == "Buy":
                             row["settlCurrency"] = (instrument.quoteCoin, self.name)
@@ -383,7 +383,7 @@ class Agent(Bitmex):
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
             for values in data:
-                if values["symbol"] in self.symbol_category:
+                if values["symbol"] in self.ticker:
                     symbol = (
                         self.ticker[values["symbol"]],
                         self.name,

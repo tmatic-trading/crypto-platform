@@ -31,7 +31,6 @@ class Deribit(Variables):
         self.api_version = "/api/v2/"
         Setup.variables(self, self.name)
         self.session = requests.Session()
-        self.symbol_category = dict()
         self.define_category = {
             "future linear": "future L",
             "future reversed": "future R",
@@ -375,7 +374,6 @@ class Deribit(Variables):
         for key, data in values.items():
             if key == "orders":
                 for value in data:
-                    category = self.symbol_category[value["instrument_name"]]
                     symbol = (self.ticker[value["instrument_name"]], self.name)
                     side = "Sell" if value["direction"] == "sell" else "Buy"
                     order_state = ""
@@ -423,20 +421,18 @@ class Deribit(Variables):
                 for row in data:
                     row["execType"] = "Trade"
                     row["ticker"] = row["instrument_name"]
-                    category = self.symbol_category[row["instrument_name"]]
                     row["symbol"] = (
                         self.ticker[row["instrument_name"]],
                         self.name,
                     )
-                    if category == "spot":
+                    instrument = self.Instrument[row["symbol"]]
+                    if instrument.category == "spot":
                         row["settlCurrency"] = (
                             row["fee_currency"],
                             self.name,
                         )
                     else:
-                        row["settlCurrency"] = self.Instrument[
-                            row["symbol"]
-                        ].settlCurrency
+                        row["settlCurrency"] = instrument.settlCurrency
                     row["execID"] = str(row["trade_id"]) + "_" + row["settlCurrency"][0]
                     row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
                     row[
@@ -449,7 +445,7 @@ class Deribit(Variables):
                         row["side"] = "Buy"
                     if "label" in row:
                         row["clOrdID"] = row["label"]
-                    row["category"] = category
+                    row["category"] = instrument.category
                     row["lastPx"] = row["price"]
                     row["transactTime"] = service.time_converter(
                         time=row["timestamp"] / 1000, usec=True

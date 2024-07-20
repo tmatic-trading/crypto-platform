@@ -51,7 +51,6 @@ class Bitmex(Variables):
         }
         self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
-        self.symbol_category = dict()
         self.logger = var.logger
         self.robots = OrderedDict()
         self.frames = dict()
@@ -207,9 +206,7 @@ class Bitmex(Variables):
             self.pinging = "pong"
             return
 
-        def generate_key(keys: list, val: dict, table: str) -> tuple:
-            if "symbol" in keys:
-                val["category"] = self.symbol_category[val["symbol"]]
+        def generate_key(keys: list, val: dict) -> tuple:
             val["market"] = self.name
             return tuple((val[key]) for key in keys)
 
@@ -240,7 +237,7 @@ class Bitmex(Variables):
                                 if key not in val:
                                     break
                         else:
-                            key = generate_key(self.keys[table], val, table)
+                            key = generate_key(self.keys[table], val)
                             self.data[table_name][key] = val
                             if table == "orderBook10":
                                 self.__update_orderbook(symbol=key, values=val)
@@ -255,9 +252,8 @@ class Bitmex(Variables):
                                 )
                 elif action == "insert":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val=val, table=table)
+                        key = generate_key(self.keys[table], val=val)
                         if table == "quote":
-                            val["category"] = self.symbol_category[val["symbol"]]
                             self.__update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
                             val["ticker"] = val["symbol"]
@@ -302,7 +298,7 @@ class Bitmex(Variables):
                             self.data[table_name][key] = val
                 elif action == "update":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val=val, table=table)
+                        key = generate_key(self.keys[table], val=val)
                         if key not in self.data[table_name]:
                             return  # No key to update
                         if table == "orderBook10":
@@ -320,7 +316,7 @@ class Bitmex(Variables):
                                 self.data[table_name].pop(key)
                 elif action == "delete":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val, table)
+                        key = generate_key(self.keys[table], val)
                         self.data[table_name].pop(key)
         except Exception:
             print("_____________keys", self.keys)

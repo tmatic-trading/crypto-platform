@@ -79,7 +79,6 @@ class Agent(Deribit):
         Instrument class. See detailed description of the fields there.
         """
         category = values["kind"] + " " + values["instrument_type"]
-        self.symbol_category[values["instrument_name"]] = category
         if "spot" in category:
             symb = values["base_currency"] + "/" + values["quote_currency"]
         else:
@@ -328,25 +327,23 @@ class Agent(Deribit):
                         continuation = self.response[id]["result"]["continuation"]
                     if isinstance(res, list):
                         for row in res:
-                            if not row["instrument_name"] in self.symbol_category:
+                            if not row["instrument_name"] in self.ticker:
                                 Agent.get_instrument(
                                     self, ticker=row["instrument_name"]
                                 )
-                            category = self.symbol_category[row["instrument_name"]]
                             row["ticker"] = row["instrument_name"]
                             row["symbol"] = (
                                 self.ticker[row["instrument_name"]],
                                 self.name,
                             )
-                            if category == "spot":
+                            instrument = self.Instrument[row["symbol"]]
+                            if instrument.category == "spot":
                                 row["settlCurrency"] = (
                                     row["fee_currency"],
                                     self.name,
                                 )
                             else:
-                                row["settlCurrency"] = self.Instrument[
-                                    row["symbol"]
-                                ].settlCurrency
+                                row["settlCurrency"] = instrument.settlCurrency
                             if data_type == "logs":
                                 if row["type"] == "settlement":
                                     row["execType"] = "Funding"
@@ -407,7 +404,7 @@ class Agent(Deribit):
                                 # same trades from data_type="logs"
                             if "label" in row:
                                 row["clOrdID"] = row["label"]
-                            row["category"] = category
+                            row["category"] = instrument.category
                             if row["execType"] == "Delivery":
                                 row["lastPx"] = row["mark_price"]
                             else:
