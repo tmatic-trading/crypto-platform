@@ -249,7 +249,7 @@ class Agent(Bitmex):
                             self,
                             ticker=row["symbol"],
                         )
-                    
+
                     row["market"] = self.name
                     row["symbol"] = (
                         self.ticker[row["symbol"]],

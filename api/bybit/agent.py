@@ -509,7 +509,10 @@ class Agent(Bybit):
         self.Instrument[symbol].precision = service.precision(
             number=self.Instrument[symbol].qtyStep
         )
-        self.Instrument[symbol].state = instrument["status"]
+        if instrument["status"] == "Trading":
+            self.Instrument[symbol].state = "Open"
+        else:
+            self.Instrument[symbol].state = instrument["status"]
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
         if category == "spot":

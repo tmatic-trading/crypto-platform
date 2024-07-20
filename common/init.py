@@ -379,6 +379,7 @@ def setup_database_connecion() -> None:
         CREATE TABLE IF NOT EXISTS robots (
         EMI varchar(20) DEFAULT NULL UNIQUE,
         SYMBOL varchar(20) DEFAULT NULL,
+        TICKER varchar(20) DEFAULT NULL,
         CATEGORY varchar(10) DEFAULT NULL,
         MARKET varchar(20) DEFAULT NULL,
         SORT tinyint DEFAULT NULL,

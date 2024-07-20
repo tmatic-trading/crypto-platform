@@ -78,9 +78,9 @@ The "coins" table receives data from the websocket execution stream or trade his
 * REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```
 * MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
-* SYMBOL - unique instrument symbol within the exchange corresponding to the ticker, with the exception of the spot category, where the symbol matches "baseCoin/quoteCoin", examble "BTC/USDT".
-* TICKER - symbol of the instrument in the exchange classification, for example “XBTUSD”.
-* CATEGORY - instrument category. Possible values: "linear", "inverse", "quanto", "spot", "option".
+* TICKER - instrument symbol is the same as presented in the exchange API.
+* SYMBOL - unique instrument symbol within the exchange corresponding to the ticker, with the exception of the spot category, where the symbol matches as "instrument baseCoin / instrument quoteCoin", examble "BTC/USDT".
+* CATEGORY - instrument category. Possible values ​​depend on the specific exchange. Example: "linear", "inverse", "quanto", "spot", "option", etc.
 * SIDE - side of a transaction: "Buy", "Sell", "Fund" - "funding".
 * QTY - transaction volume.
 * QTY_REST - rest of transaction volume after partial execution.
@@ -96,8 +96,9 @@ The "coins" table receives data from the websocket execution stream or trade his
 
 Explanations for the columns of the SQLite "robots" table:
 * EMI - bot identity name.
-* SYMBOL - instrument symbol, for example "XBTUSD".
-* CATEGORY - instrument category. Possible values: "linear", "inverse", "quanto", "spot", "option".
+* TICKER - instrument symbol is the same as presented in the exchange API.
+* SYMBOL - unique instrument symbol. Corresponds to TICKER except in the spot category, where SYMBOL matches as "instrument baseCoin / instrument quoteCoin", for example "BTC/USDT".
+* CATEGORY - instrument category. Possible values ​​depend on the specific exchange. Example: "linear", "inverse", "quanto", "spot", "option", etc.
 * MARKET - name of the exchange.
 * SORT - allows you to do your own sorting when reading from the database.
 * DAT - time the current row was written to the database.
@@ -230,10 +231,10 @@ Make a new database entry in the "robots" table, for example:
 
 ```SQL
 INSERT INTO robots (
-  EMI, SYMBOL, CATEGORY, MARKET, SORT, TIMEFR, CAPITAL, MARGIN
+  EMI, SYMBOL, TICKER, CATEGORY, MARKET, SORT, TIMEFR, CAPITAL, MARGIN
   )
   values (
-    "myBot", "XBTUSDT", "linear", "Bitmex", 1, 1, 1, 1
+    "myBot", "XBTUSDT", "XBTUSDT", "linear", "Bitmex", 1, 1, 1, 1
     );
 ```
 

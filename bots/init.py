@@ -1,3 +1,4 @@
+import os
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
@@ -53,7 +54,7 @@ class Init(WS, Variables):
         # Searching for unclosed positions by robots that are not in the 'robots' table
 
         qwr = (
-            "select SYMBOL, CATEGORY, EMI, POS from (select EMI, SYMBOL, CATEGORY, "
+            "select SYMBOL, TICKER, CATEGORY, EMI, POS from (select EMI, SYMBOL, TICKER, CATEGORY, "
             + "sum(QTY) POS from coins where MARKET = '"
             + self.name
             + "' and account = "
@@ -77,6 +78,7 @@ class Init(WS, Variables):
                     status = "NOT IN LIST"
                 self.robots[emi] = {
                     "SYMBOL": symbol,
+                    "TICKER": defunct["TICKER"],
                     "CATEGORY": defunct["CATEGORY"],
                     "MARKET": self.name,
                     "POS": defunct["POS"],
@@ -93,7 +95,7 @@ class Init(WS, Variables):
         for symbol in self.symbol_list:
             qwr += (
                 union
-                + "select * from (select EMI, SYMBOL, CATEGORY, ACCOUNT, MARKET, "
+                + "select * from (select EMI, SYMBOL, TICKER, CATEGORY, ACCOUNT, MARKET, "
                 + "sum(QTY) POS from coins where SIDE <> 'Fund' group by EMI, "
                 + "SYMBOL, CATEGORY, ACCOUNT, MARKET) res where EMI = '"
                 + symbol[0]
@@ -118,6 +120,7 @@ class Init(WS, Variables):
             self.robots[emi] = {
                 "EMI": emi,
                 "SYMBOL": symbol,
+                "TICKER": self.Instrument[symbol].ticker,
                 "CATEGORY": self.Instrument[symbol].category,
                 "MARKET": self.name,
                 "POS": pos,
@@ -129,12 +132,11 @@ class Init(WS, Variables):
         # Loading all transactions and calculating financial results for each robot
 
         for emi, robot in self.robots.items():
-            instrument = self.Instrument[robot["SYMBOL"]]
             Function.add_symbol(
                 self,
                 symbol=robot["SYMBOL"][0],
-                ticker=instrument.ticker,
-                category=instrument.category,
+                ticker=robot["TICKER"],
+                category=robot["CATEGORY"],
             )
             if isinstance(emi, tuple):
                 _emi = emi[0]
@@ -369,7 +371,7 @@ def load_bots():
 
     qwr = "select * from robots order by SORT;"
 
-    data = Function.select_database("self", qwr)
+    data = Function.select_database("None", qwr)
     for value in data:
         name = value["EMI"]
         bot = Bot[name]
@@ -379,28 +381,89 @@ def load_bots():
         bot.created = value["DAT"]
         bot.status = "ON"
 
-    # Subscribe to instruments for which bots have open positions
-
-    # Searching for unclosed positions by robots that are not in the 'robots' table
+    # Searching for unclosed positions by bots that are not in the 'robots'
+    # table. If found, EMI becomes the default SYMBOL name. If such a SYMBOL
+    # is not subscribed, it is added to the subscription.
 
     qwr = (
-        "select SYMBOL, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
-        + "EMI, SYMBOL, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
+        "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
+        + "EMI, SYMBOL, TICKER, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
         + "TTIME from coins where SIDE <> 'Fund' group by EMI, SYMBOL, "
         + "MARKET) res where POS <> 0;"
     )
-    data = Function.select_database("self", qwr)
+    data = Function.select_database("None", qwr)
+    add_subscription = list()
     for value in data:
-        name = value["EMI"]
-        print("-----")
-        print(value)
-        if name not in Bot.keys():
-            bot = Bot[name]
-            symbol = (value["SYMBOL"], value["MARKET"])
-            bot.name = value["EMI"]
-            bot.position[symbol] = value["POS"]
-            bot.pnl[symbol] = value["PNL"]
-            bot.status = "NOT DEFINED"
+        if value["MARKET"] in var.market_list:
+            name = value["EMI"]
+            if name not in Bot.keys():
+                ws = Markets[value["MARKET"]]
+                Function.add_symbol(
+                    ws,
+                    symbol=value["SYMBOL"],
+                    ticker=value["TICKER"],
+                    category=value["CATEGORY"],
+                )
+                if isinstance(list(ws.ticker.keys())[0], str):
+                    symbol = ws.ticker[value["TICKER"]]
+                else:
+                    symbol = ws.ticker[(value["TICKER"], value["CATEGORY"])]
+
+                # Change EMI to default SYMBOL name.
+
+                if symbol != value["EMI"]:
+                    print("-----", name)
+                    print(value)
+
+                    qwr = "select ID, EMI, SYMBOL from coins where EMI = '%s'" % (
+                        value["EMI"]
+                    )
+                    data = Function.select_database("None", qwr)
+
+                    print("______________", data)
+                    for row in data:
+                        print("-----------")
+                        print(row)
+                        qwr = "update coins set EMI = '%s' where ID = %s;" % (
+                            symbol,
+                            row["ID"],
+                        )
+                        print("+++++++++++++", qwr)
+                        Function.update_database("None", qwr)
+
+                # Warning if the instrument has already expired.
+
+                symb = (symbol, ws.name)
+                if symb not in ws.symbol_list:
+                    print("_______symb", symb)
+                    if ws.Instrument[symb].state == "Open":
+                        add_subscription.append(symb)
+                    else:
+                        message = (
+                            "The "
+                            + str(symb)
+                            + " instrument has already expired, but there are still positions that should not exist. Check your trading history."
+                        )
+                        var.logger.warning(message)
+                        var.queue_info.put(
+                            {
+                                "market": ws.name,
+                                "message": message,
+                                "time": datetime.now(tz=timezone.utc),
+                                "warning": True,
+                            }
+                        )
+
+                    '''bot = Bot[name]
+                    symbol = (value["SYMBOL"], value["MARKET"])
+                    bot.name = value["EMI"]
+                    bot.position[symbol] = value["POS"]
+                    bot.pnl[symbol] = value["PNL"]
+                    bot.status = "NOT DEFINED"'''
+        print("    ")
+
+    print("________add subscription", add_subscription)
+    os.abort()
 
     """for name, bot in Bot.items():
         for value in bot:

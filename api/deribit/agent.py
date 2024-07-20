@@ -109,7 +109,7 @@ class Agent(Deribit):
         instrument.qtyStep = instrument.minOrderQty
         instrument.precision = service.precision(number=instrument.qtyStep)
         if values["is_active"]:
-            instrument.state = "Normal"
+            instrument.state = "Open"
         else:
             instrument.state = "Inactive"
         instrument.multiplier = 1

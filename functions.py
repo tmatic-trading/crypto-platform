@@ -150,6 +150,31 @@ class Function(WS, Variables):
                     var.connect_sqlite.rollback()
                     Function.sql_lock.release()
 
+    def update_database(self: Markets, query: list) -> None:
+        err_locked = 0
+        while True:
+            try:
+                Function.sql_lock.acquire(True)
+                var.cursor_sqlite.execute(query)
+                var.connect_sqlite.commit()
+                Function.sql_lock.release()
+                break
+            except Exception as e:  # var.error_sqlite
+                if "database is locked" not in str(e):
+                    print("_____query:", query)
+                    var.logger.error("Sqlite Error: " + str(e) + ")")
+                    Function.sql_lock.release()
+                    break
+                else:
+                    err_locked += 1
+                    var.logger.error(
+                        "Sqlite Error: Database is locked (attempt: "
+                        + str(err_locked)
+                        + ")"
+                    )
+                    var.connect_sqlite.rollback()
+                    Function.sql_lock.release()
+
     def transaction(self: Markets, row: dict, info: str = "") -> None:
         """
         Trades and funding processing

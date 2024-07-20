@@ -57,11 +57,11 @@ class Instrument:
     currentQty: float
         Position size
     expire: datetime
-        Expiration time
+        Expiration time.
     fundingRate: float
-        Funding rate
+        Funding rate.
     marginCallPrice: float
-        Position margin call or liquidation price
+        Position margin call or liquidation price.
     maxOrderQty: float
         Not used
     minOrderQty: float
@@ -81,11 +81,11 @@ class Instrument:
     qtyStep: float
         The step to increase/reduce order quantity. Also called LotSize.
     quoteCoin: str
-        Quote coin
+        Quote coin.
     settlCurrency: tuple
-        Settlement currency of the instrument
+        Settlement currency of the instrument.
     state: str
-        Position status
+        Instrument status.
     symbol: str
         A unique value corresponding to the ticker, except in the spot
         category, where the symbol matches "baseCoin/quoteCoin".
@@ -94,7 +94,7 @@ class Instrument:
     tickSize: float
         The step to increase/reduce order price.
     unrealisedPnl: float
-        Unrealised PnL
+        Unrealised PnL.
     volume24h: float
         Volume for 24h
     valueOfOneContract: float
