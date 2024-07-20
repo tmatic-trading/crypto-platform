@@ -244,7 +244,7 @@ class Agent(Bitmex):
                 spot_not_included = list()
                 for row in res:
                     row["ticker"] = row["symbol"]
-                    if row["symbol"] not in self.ticker[row["symbol"]]:
+                    if row["symbol"] not in self.ticker:
                         Agent.get_instrument(
                             self,
                             ticker=row["symbol"],

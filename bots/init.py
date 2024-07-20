@@ -392,6 +392,8 @@ def load_bots():
     data = Function.select_database("self", qwr)
     for value in data:
         name = value["EMI"]
+        print("-----")
+        print(value)
         if name not in Bot.keys():
             bot = Bot[name]
             symbol = (value["SYMBOL"], value["MARKET"])
