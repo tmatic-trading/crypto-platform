@@ -10,8 +10,8 @@ from bots.variables import Variables as bot
 from common.data import Bot
 from common.variables import Variables as var
 from display.functions import info_display
-from functions import Function
 from display.variables import TreeTable
+from functions import Function
 
 
 class Init(WS, Variables):
@@ -363,7 +363,7 @@ class Init(WS, Variables):
             elif self.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
                 info_display(self.name, "Robot EMI=" + emi + ". Deleting from 'robots'")
                 del self.robots[emi]
-                
+
 
 def add_subscription(subscriptions: list) -> None:
     for symbol in subscriptions:
@@ -384,13 +384,14 @@ def load_bots() -> None:
 
     data = Function.select_database("None", qwr)
     for value in data:
-        name = value["EMI"]
-        bot = Bot[name]
-        bot.name = value["EMI"]
-        bot.market = value["MARKET"]
-        bot.timefr = value["TIMEFR"]
-        bot.created = value["DAT"]
-        bot.status = "ON"
+        if value["MARKET"] in var.market_list:
+            bot = Bot[value["EMI"]]
+            bot.name = value["EMI"]
+            bot.market = value["MARKET"]
+            bot.timefr = value["TIMEFR"]
+            bot.created = value["DAT"]
+            bot.status = "ON"
+            bot.position = dict()
 
     # Searching for unclosed positions by bots that are not in the 'robots'
     # table. If found, EMI becomes the default SYMBOL name. If such a SYMBOL
@@ -409,7 +410,6 @@ def load_bots() -> None:
             name = value["EMI"]
             if name not in Bot.keys():
                 ws = Markets[value["MARKET"]]
-                print("______________positions", ws.positions)
                 Function.add_symbol(
                     ws,
                     symbol=value["SYMBOL"],
@@ -424,9 +424,6 @@ def load_bots() -> None:
                 # Change EMI to default SYMBOL name.
 
                 if symbol != value["EMI"]:
-                    print("-----", name)
-                    print(value)
-
                     qwr = "select ID, EMI, SYMBOL from coins where EMI = '%s'" % (
                         value["EMI"]
                     )
@@ -456,19 +453,44 @@ def load_bots() -> None:
                                 "warning": True,
                             }
                         )
-
-                    '''bot = Bot[name]
-                    symbol = (value["SYMBOL"], value["MARKET"])
-                    bot.name = value["EMI"]
-                    bot.position[symbol] = value["POS"]
-                    bot.pnl[symbol] = value["PNL"]
-                    bot.status = "NOT DEFINED"'''
-        print("    ")
-
-    print("________add subscription", subscriptions)
     add_subscription(subscriptions=subscriptions)
-    #d os.abort()
 
-    """for name, bot in Bot.items():
-        for value in bot:
-            print(value.name, value.value)"""
+    # Loading trades and summing up the results for each bot.
+
+    for name in Bot.keys():
+        qwr = (
+            "select SYMBOL, MARKET, TICKER, ifnull(sum(SUMREAL), 0) SUMREAL, "
+            + "ifnull(sum(case when SIDE = 'Fund' then 0 else QTY end), 0) "
+            + "POS, ifnull(sum(case when SIDE = 'Fund' then 0 else abs(QTY) "
+            + "end), 0) VOL, ifnull(sum(COMMISS), 0) COMMISS, "
+            + "ifnull(max(TTIME), '1900-01-01 01:01:01.000000') LTIME from "
+            + "coins where EMI = '%s' group by SYMBOL;" % (name)
+        )
+        data = Function.select_database("None", qwr)
+        for value in data:
+            symbol = (value["SYMBOL"], value["MARKET"])
+            ws = Markets[value["MARKET"]]
+            instrument = ws.Instrument[symbol]
+            bot = Bot[name]
+            precision = instrument.precision
+            bot.position[symbol] = {
+                "symbol": value["SYMBOL"],
+                "market": value["MARKET"],
+                "ticker": value["TICKER"],
+                "position": round(float(value["POS"]), precision),
+                "volume": round(float(value["VOL"]), precision),
+                "sumreal": float(value["SUMREAL"]),
+                "commiss": float(value["COMMISS"]),
+                "ltime": service.time_converter(time=value["LTIME"], usec=True),
+                "pnl": 0,
+                "lotSize": instrument.minOrderQty,
+            }
+            if instrument.category == "spot":
+                bot.position[symbol]["pnl"] = "None"
+                bot.position[symbol]["position"] = "None"
+
+    for name in Bot.keys():
+        bot = Bot[name]
+        print("--------", name, bot.market)
+        for item in bot:
+            print(item.name, item.value)

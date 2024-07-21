@@ -16,11 +16,11 @@ class Setup(Variables):
             self.http_url = var.env[name][testnet + "HTTP_URL"]
             self.symbol_list = var.env[name]["SYMBOLS"]
             self.currencies = var.env[name]["CURRENCIES"]
-            #d tmp_pos = {y: 0 for y in var.name_position}
+            # d tmp_pos = {y: 0 for y in var.name_position}
             for symbol in self.symbol_list:
                 self.positions[symbol] = {"POS": 0}
-                #d self.positions[symbol] = tmp_pos.copy()                
-                #d self.positions[symbol]["SYMB"] = symbol
-                #d self.positions[symbol]["POS"] = 0
-                #d self.positions[symbol]["SYMBOL"] = symbol[0]
-                #d self.positions[symbol]["CAT"] = "None"
+                # d self.positions[symbol] = tmp_pos.copy()
+                # d self.positions[symbol]["SYMB"] = symbol
+                # d self.positions[symbol]["POS"] = 0
+                # d self.positions[symbol]["SYMBOL"] = symbol[0]
+                # d self.positions[symbol]["CAT"] = "None"

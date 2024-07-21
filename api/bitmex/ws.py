@@ -122,7 +122,7 @@ class Bitmex(Variables):
             subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
         self.logger.info("ws subscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
-        self.__wait_for_tables() # subscription confirmation
+        self.__wait_for_tables()  # subscription confirmation
 
     def unsubscribe_symbol(self, symbol: str) -> None:
         subscriptions = []
@@ -130,7 +130,7 @@ class Bitmex(Variables):
             subscriptions += [sub + ":" + symbol]
         self.logger.info("ws unsubscribe - " + subscriptions)
         self.ws.send(json.dumps({"op": "unsubscribe", "args": subscriptions}))
-        self.__wait_for_tables() # unsubscription confirmation
+        self.__wait_for_tables()  # unsubscription confirmation
 
     def __get_url(self) -> str:
         """

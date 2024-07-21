@@ -65,7 +65,7 @@ class Agent(Deribit):
         if isinstance(res, dict):
             Agent.fill_instrument(self, values=self.response[id]["result"])
         else:
-            self.logger(
+            self.logger.error(
                 "A dict was expected when loading instrument, but was not received. Reboot"
             )
             self.logNumFatal = "SETUP"

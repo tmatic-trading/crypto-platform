@@ -91,7 +91,9 @@ class CustomButton(tk.Menubutton):
                 tk.Label(self.app.pop_up, text="The bot's code syntax is correct").pack(
                     anchor="n", pady=100
                 )
-                self.app.insert_code(self.app.strategy_text, self.app.strategy_text.get("1.0", tk.END))
+                self.app.insert_code(
+                    self.app.strategy_text, self.app.strategy_text.get("1.0", tk.END)
+                )
             else:
                 scroll = AutoScrollbar(self.app.pop_up, orient="vertical")
                 text = tk.Text(
@@ -112,7 +114,9 @@ class CustomButton(tk.Menubutton):
             self.app.pop_up.title(f"{action}: {bot_name}")
             content = f"\n\nTo merge bot named '{self.app.selected_bot}'\nplease select one of the bots below\navailable to be merged with:"
             tk.Label(self.app.pop_up, text=content).pack(anchor="n")
-            cbox = ttk.Combobox(self.app.pop_up, width=15, textvariable="", state="readonly")
+            cbox = ttk.Combobox(
+                self.app.pop_up, width=15, textvariable="", state="readonly"
+            )
             bots = []
             for option in self.app.bots_list:
                 if option != self.app.selected_bot:
@@ -120,7 +124,10 @@ class CustomButton(tk.Menubutton):
             cbox["values"] = tuple(bots)
             cbox.current(0)
             cbox.pack(anchor="n")
-            tk.Label(self.app.pop_up, text=f"\nAs a result of merge operation\nthe selected bot will be deleted.\nAll its records in the database\nwill move on to bot '{self.app.selected_bot}'").pack(anchor="center")
+            tk.Label(
+                self.app.pop_up,
+                text=f"\nAs a result of merge operation\nthe selected bot will be deleted.\nAll its records in the database\nwill move on to bot '{self.app.selected_bot}'",
+            ).pack(anchor="center")
             self.var.set(0)
             confirm = tk.Checkbutton(
                 self.app.pop_up,
@@ -133,7 +140,9 @@ class CustomButton(tk.Menubutton):
                 self.app.pop_up,
                 activebackground=disp.bg_active,
                 text="Merge Bot",
-                command=lambda: self.app.merge_bot(bot_name, cbox["values"][cbox.current()]),
+                command=lambda: self.app.merge_bot(
+                    bot_name, cbox["values"][cbox.current()]
+                ),
                 state="disabled",
             )
             self.button.pack(anchor="n")
@@ -202,13 +211,16 @@ class CustomButton(tk.Menubutton):
             if self.name == "Home":
                 self.app.action = "Home"
                 self.app.show_bot("")
-                #self.app.draw_buttons()
+                # self.app.draw_buttons()
             elif self.name == "New Bot":
                 self.open_popup(self.name, "")
             elif self.name == "Syntax":
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Update":
-                self.app.write_file(f"{self.app.get_bot_path(self.app.selected_bot)}/{self.app.strategy_file}", self.app.strategy_text.get("1.0", tk.END))
+                self.app.write_file(
+                    f"{self.app.get_bot_path(self.app.selected_bot)}/{self.app.strategy_file}",
+                    self.app.strategy_text.get("1.0", tk.END),
+                )
                 self.app.algo_changed = None
                 self.app.draw_buttons()
             elif self.name == "Merge":
@@ -220,12 +232,13 @@ class CustomButton(tk.Menubutton):
             elif self.name == "Last Viewed":
                 self.app.action = self.name
                 self.app.show_bot("")
-                #self.app.draw_buttons()
+                # self.app.draw_buttons()
             elif self.name == "Back":
                 disp.menu_robots.pack_forget()
                 disp.pw_rest1.pack(fill="both", expand="yes")
             else:
                 print(self.name, self["state"])
+
 
 class SettingsApp:
     def __init__(self, root):
@@ -291,7 +304,7 @@ class SettingsApp:
         # Create initial frames
         self.bot_info_frame()
         self.show_bot("")
-        #self.draw_buttons()
+        # self.draw_buttons()
 
     def collect_bots(self):
         """Reviews all created bots in the algo directory and puts them in array"""
@@ -319,12 +332,20 @@ class SettingsApp:
                 else:
                     button.configure(state="normal")
             elif button.name == "Update":
-                if self.selected_bot == "" or self.action == "Home" or self.algo_changed == None:
+                if (
+                    self.selected_bot == ""
+                    or self.action == "Home"
+                    or self.algo_changed == None
+                ):
                     button.configure(state="disabled", bg=disp.bg_select_color)
                 else:
                     button.configure(state="normal", bg="gold")
             elif button.name == "Merge":
-                if self.selected_bot == "" or self.action == "Home" or len(self.bots_list) < 2:
+                if (
+                    self.selected_bot == ""
+                    or self.action == "Home"
+                    or len(self.bots_list) < 2
+                ):
                     button.configure(state="disabled")
                 else:
                     button.configure(state="normal")
@@ -447,7 +468,7 @@ class SettingsApp:
         bot_path = self.get_bot_path(selected_bot)
         shutil.rmtree(str(bot_path))
         self.after_popup(bot_name)
-        #print(bot_name, second_bot)
+        # print(bot_name, second_bot)
 
     def delete_bot(self, bot_name):
         bot_path = self.get_bot_path(bot_name)
@@ -471,7 +492,7 @@ class SettingsApp:
         self.collect_bots()
         self.created_bots_menu()
         self.show_bot("")
-        #self.draw_buttons()
+        # self.draw_buttons()
         self.pop_up.destroy()
 
     def insert_code(self, text_widget, code):
@@ -495,7 +516,7 @@ class SettingsApp:
         self.selected_bot = value
         self.action = "Last Viewed"
         self.show_bot("")
-        #self.draw_buttons()
+        # self.draw_buttons()
 
     def created_bots_menu(self):
         # Menu to choose one of the created bots
@@ -530,7 +551,7 @@ class SettingsApp:
         return "break"
 
     def bot_info_frame(self):
-        '''Frames, grids, widgets are here'''
+        """Frames, grids, widgets are here"""
         label_example = tk.Label(text="")
         current_font = font.nametofont(label_example.cget("font"))
         spec_font = current_font.copy()
@@ -539,7 +560,9 @@ class SettingsApp:
         )  # , slant="italic")#, size=9)#, underline="True")
 
         self.brief_frame = tk.Frame(info_frame)
-        self.bots_label = tk.Label(self.brief_frame, text="\n\nSelect bot from:", font=spec_font)
+        self.bots_label = tk.Label(
+            self.brief_frame, text="\n\nSelect bot from:", font=spec_font
+        )
         self.created_bots_menu()
         self.menu_usage = tk.Frame(self.brief_frame)
 
@@ -550,7 +573,15 @@ class SettingsApp:
             usage[key] = tk.Frame(self.menu_usage)
             usage[key].grid(row=row_num, column=col_num, padx=5)
             tk.Label(usage[key], text=key, font=spec_font).pack(anchor="w")
-            text = tk.Text(usage[key], width=20, height=5, bg=disp.title_color, wrap=tk.WORD, bd=0, highlightthickness=0)
+            text = tk.Text(
+                usage[key],
+                width=20,
+                height=5,
+                bg=disp.title_color,
+                wrap=tk.WORD,
+                bd=0,
+                highlightthickness=0,
+            )
             text.pack(anchor="w")
             text.bind("<Key>", self.ignore_text_input)
             text.insert(tk.END, value)
@@ -562,7 +593,7 @@ class SettingsApp:
                 col_num = 0
                 row_num += 1
 
-        '''for key, value in self.button_list.items():
+        """for key, value in self.button_list.items():
             if key == "Home":
                 tk.Label(self.menu_usage, text="USE ONE OF THE MENU BUTTONS:").pack(
                     anchor="w"
@@ -576,7 +607,7 @@ class SettingsApp:
                     tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(
                         anchor="w", padx=25
                     )
-                row_num += 1'''
+                row_num += 1"""
 
         self.main_frame = tk.Frame(info_frame)
         frame_row = 0
@@ -649,7 +680,7 @@ class SettingsApp:
         self.strategy_text = tk.Text(
             self.strategy, highlightthickness=0, yscrollcommand=self.strategy_scroll.set
         )
-        self.strategy_text.bind('<KeyRelease>', self.on_strategy_change)
+        self.strategy_text.bind("<KeyRelease>", self.on_strategy_change)
         self.strategy_scroll.config(command=self.strategy_text.yview)
         self.strategy_text.grid(row=0, column=0, sticky="NSEW")
         self.strategy_scroll.grid(row=0, column=1, sticky="NS")
