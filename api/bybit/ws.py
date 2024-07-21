@@ -92,7 +92,7 @@ class Bybit(Variables):
                 )
                 self.ws[category].pinging = "pong"
             for symbol in lst:
-                self.subscribe_symbol(symbol=symbol, category=category)
+                self.subscribe_symbol(symbol=symbol)
 
         def private_in_thread():
             self.ws_private = WebSocket(
@@ -134,7 +134,8 @@ class Bybit(Variables):
         instrument = self.Instrument[(symbol, self.name)]
         instrument.volume24h = float(values["volume24h"])
         if "fundingRate" in values:
-            instrument.fundingRate = float(values["fundingRate"]) * 100
+            if values["fundingRate"]:
+                instrument.fundingRate = float(values["fundingRate"]) * 100
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:
@@ -325,8 +326,10 @@ class Bybit(Variables):
 
         return True
 
-    def subscribe_symbol(self, symbol: tuple, category: str) -> None:
-        ticker = self.Instrument[symbol].ticker
+    def subscribe_symbol(self, symbol: tuple) -> None:
+        instrument = self.Instrument[symbol]
+        ticker = instrument.ticker
+        category = instrument.category
         if category == "linear":
             self.logger.info(
                 "ws subscription - orderbook_stream - category - "

@@ -11,6 +11,7 @@ from common.data import Bot
 from common.variables import Variables as var
 from display.functions import info_display
 from functions import Function
+from display.variables import TreeTable
 
 
 class Init(WS, Variables):
@@ -362,9 +363,19 @@ class Init(WS, Variables):
             elif self.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
                 info_display(self.name, "Robot EMI=" + emi + ". Deleting from 'robots'")
                 del self.robots[emi]
+                
+
+def add_subscription(subscriptions: list) -> None:
+    for symbol in subscriptions:
+        ws = Markets[symbol[1]]
+        ws.positions[symbol] = {"POS": 0}
+        ws.symbol_list.append(symbol)
+        if symbol[1] == var.current_market:
+            TreeTable.position.init(size=len(ws.symbol_list))
+        ws.subscribe_symbol(symbol=symbol)
 
 
-def load_bots():
+def load_bots() -> None:
     """
     Loading bots into the new Bot class is under development.
     """
@@ -392,12 +403,13 @@ def load_bots():
         + "MARKET) res where POS <> 0;"
     )
     data = Function.select_database("None", qwr)
-    add_subscription = list()
+    subscriptions = list()
     for value in data:
         if value["MARKET"] in var.market_list:
             name = value["EMI"]
             if name not in Bot.keys():
                 ws = Markets[value["MARKET"]]
+                print("______________positions", ws.positions)
                 Function.add_symbol(
                     ws,
                     symbol=value["SYMBOL"],
@@ -419,30 +431,21 @@ def load_bots():
                         value["EMI"]
                     )
                     data = Function.select_database("None", qwr)
-
-                    print("______________", data)
                     for row in data:
-                        print("-----------")
-                        print(row)
                         qwr = "update coins set EMI = '%s' where ID = %s;" % (
                             symbol,
                             row["ID"],
                         )
-                        print("+++++++++++++", qwr)
                         Function.update_database("None", qwr)
-
-                # Warning if the instrument has already expired.
-
                 symb = (symbol, ws.name)
                 if symb not in ws.symbol_list:
-                    print("_______symb", symb)
                     if ws.Instrument[symb].state == "Open":
-                        add_subscription.append(symb)
+                        subscriptions.append(symb)
                     else:
                         message = (
                             "The "
                             + str(symb)
-                            + " instrument has already expired, but there are still positions that should not exist. Check your trading history."
+                            + " instrument has already expired, but in the database there are still positions that should not exist. Check your trading history."
                         )
                         var.logger.warning(message)
                         var.queue_info.put(
@@ -462,8 +465,9 @@ def load_bots():
                     bot.status = "NOT DEFINED"'''
         print("    ")
 
-    print("________add subscription", add_subscription)
-    os.abort()
+    print("________add subscription", subscriptions)
+    add_subscription(subscriptions=subscriptions)
+    #d os.abort()
 
     """for name, bot in Bot.items():
         for value in bot:

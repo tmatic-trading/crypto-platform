@@ -221,7 +221,6 @@ class Agent(Deribit):
                     instrument.marginCallPrice = values["estimated_liquidation_price"]
                 else:
                     instrument.marginCallPrice = "None"
-                instrument.state = "None"
         else:
             self.logger.error(
                 "The dict was expected when the positions were loaded, but it was not received. Reboot."

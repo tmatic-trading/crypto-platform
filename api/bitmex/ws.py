@@ -105,22 +105,24 @@ class Bitmex(Variables):
                 self.logNumFatal = "SETUP"
             else:
                 # Subscribes symbol by symbol to all tables given
-                for symbolName in map(
-                    lambda x: self.Instrument[(x[0], self.name)].ticker,
-                    self.symbol_list,
-                ):
-                    self.subscribe_symbol(symbol=symbolName)
+                for symbol in self.symbol_list:
+                    subscriptions = []
+                    for sub in self.table_subscription:
+                        subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
+                    self.logger.info("ws subscribe - " + str(subscriptions))
+                    self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
         except Exception as exception:
             display_exception(exception)
             self.logger.error("Exception while connecting to websocket. Restarting...")
             self.logNumFatal = "SETUP"
 
-    def subscribe_symbol(self, symbol: str) -> None:
+    def subscribe_symbol(self, symbol: tuple) -> None:
         subscriptions = []
         for sub in self.table_subscription:
-            subscriptions += [sub + ":" + symbol]
+            subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
         self.logger.info("ws subscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
+        self.__wait_for_tables() # subscription confirmation
 
     def unsubscribe_symbol(self, symbol: str) -> None:
         subscriptions = []
@@ -128,6 +130,7 @@ class Bitmex(Variables):
             subscriptions += [sub + ":" + symbol]
         self.logger.info("ws unsubscribe - " + subscriptions)
         self.ws.send(json.dumps({"op": "unsubscribe", "args": subscriptions}))
+        self.__wait_for_tables() # unsubscription confirmation
 
     def __get_url(self) -> str:
         """
@@ -179,12 +182,12 @@ class Bitmex(Variables):
                     + " - missing."
                 )
                 self.logNumFatal = "SETUP"
-                break
+                return
             sleep(0.1)
-        count2 = 0
-        while (count <= 30) and (len(self.data["instrument"]) != len(self.symbol_list)):
-            count2 += 1
-            if count2 > 30:  # fails after 3 seconds
+        count = 0
+        while len(self.data["instrument"]) != len(self.symbol_list):
+            count += 1
+            if count > 30:  # fails after 3 seconds
                 instr_lack = self.symbol_list.copy()
                 for instrument in self.data["instrument"].values():
                     if instrument["symbol"] in self.symbol_list:
@@ -195,7 +198,7 @@ class Bitmex(Variables):
                     + " - missing in the instrument table."
                 )
                 self.logNumFatal = "SETUP"
-                break
+                return
             sleep(0.1)
 
     def __on_message(self, ws, message) -> None:

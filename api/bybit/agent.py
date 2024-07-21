@@ -457,6 +457,9 @@ class Agent(Bybit):
         The data fields of different exchanges are unified through the
         Instrument class. See detailed description of the fields there.
         """
+        if instrument["symbol"] == "BTC-26JUL24":
+            print("----")
+            print(instrument)
         if category == "spot":
             symb = instrument["baseCoin"] + "/" + instrument["quoteCoin"]
         else:
