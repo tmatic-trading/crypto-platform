@@ -865,7 +865,10 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
-        tree = TreeTable.position
+
+        # Refresh instrument table
+
+        tree = TreeTable.instrument
 
         for num, symbol in enumerate(self.symbol_list):
             instrument = self.Instrument[symbol]
@@ -899,7 +902,7 @@ class Function(WS, Variables):
                 ]
                 tree.update(row=num, values=row)
 
-        # Refresh Orderbook table
+        # Refresh orderbook table
 
         tree = TreeTable.orderbook
 
@@ -996,7 +999,7 @@ class Function(WS, Variables):
             side="asks",
         )
 
-        # Refresh Robots table
+        # Refresh robots table
 
         tree = TreeTable.robots
 
@@ -1056,7 +1059,7 @@ class Function(WS, Variables):
                 elif robot["STATUS"] == "NOT DEFINED":
                     Function.not_defined_robot_color(self, emi=robot["EMI"])
 
-        # Refresh Account table
+        # Refresh account table
 
         tree = TreeTable.account
 
@@ -1084,27 +1087,28 @@ class Function(WS, Variables):
                 ]
                 tree.update(row=num, values=row)
 
-        # Refresh Results table
+        # Refresh result table
 
         tree = TreeTable.results
 
         results = dict()
-        for symbol, position in self.positions.items():
-            if symbol[1] == var.current_market:
-                if position["POS"] != 0:
+        for symbol in self.symbol_list:
+            instrument = self.Instrument[symbol]
+            if "spot" not in instrument.category:
+                if instrument.currentQty != 0:
                     price = Function.close_price(
-                        self, symbol=symbol, pos=position["POS"]
+                        self, symbol=symbol, pos=instrument.currentQty
                     )
                     if price:
                         calc = Function.calculate(
                             self,
                             symbol=symbol,
                             price=price,
-                            qty=-position["POS"],
+                            qty=-instrument.currentQty,
                             rate=0,
                             fund=1,
                         )
-                        currency = self.Instrument[symbol].settlCurrency
+                        currency = instrument.settlCurrency
                         if currency in results:
                             results[currency] += calc["sumreal"]
                         else:
@@ -1130,7 +1134,7 @@ class Function(WS, Variables):
                 ]
                 tree.update(row=num, values=row)
 
-        # Refresh Market table
+        # Refresh market table
 
         tree = TreeTable.market
 
@@ -1147,6 +1151,23 @@ class Function(WS, Variables):
                 TreeTable.market.paint(
                     row=var.market_list.index(ws.name), configure=configure
                 )
+
+        # Refresh position table
+                
+        tree = TreeTable.position
+        
+        for market in var.market_list:
+            ws = Markets[market]
+            if ws.positions:
+                if market not in tree.cache:
+                    tree.insert_hierarchical(iid=market, )
+                    tree.cache[market] = market
+                for position in ws.positions:
+                    pass
+            else:
+                if market in tree.cache:
+                    tree.delete(iid=market)
+                    del tree.cache[market]
 
     def close_price(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
         instrument = self.Instrument[symbol]
@@ -1735,7 +1756,7 @@ def warning_window(message: str, widget=None, item=None) -> None:
     tex.pack(expand=1)
 
 
-def handler_position(event) -> None:
+def handler_instrument(event) -> None:
     tree = event.widget
     items = tree.selection()
     TreeTable.orderbook.clear_color_cell()
@@ -1875,12 +1896,12 @@ def init_tables() -> None:
         multicolor=True,
         autoscroll=True,
     )
-    TreeTable.position = TreeviewTable(
-        frame=disp.frame_position,
-        name="position",
-        title=var.name_position,
+    TreeTable.instrument = TreeviewTable(
+        frame=disp.frame_instrument,
+        name="instrument",
+        title=var.name_instrument,
         size=len(ws.symbol_list),
-        bind=handler_position,
+        bind=handler_instrument,
         hide=["9", "8", "2"],
     )
     TreeTable.robots = TreeviewTable(
@@ -1914,7 +1935,15 @@ def init_tables() -> None:
         title=var.name_results,
         bind=handler_account,
     )
-    TreeTable.position.set_selection()
+    TreeTable.position = TreeviewTable(
+        frame=disp.frame_positions,
+        name="position",
+        #d size=len(ws.Result.get_keys()),
+        title=var.name_position,
+        #d bind=handler_account,
+        hierarchy=True, 
+    )
+    TreeTable.instrument.set_selection()
     indx = var.market_list.index(var.current_market)
     TreeTable.market.set_selection(index=indx)
     robot_status(ws)
@@ -1961,12 +1990,12 @@ def robot_status(ws: Markets):
 def clear_tables():
     var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
-    TreeTable.position.init(size=len(ws.symbol_list))
+    TreeTable.instrument.init(size=len(ws.symbol_list))
     TreeTable.account.init(size=len(ws.Account.get_keys()))
     TreeTable.robots.init(size=len(ws.robots))
     TreeTable.orderbook.init(size=disp.num_book)
     TreeTable.results.init(size=len(ws.Result.get_keys()))
-    TreeTable.position.set_selection()
+    TreeTable.instrument.set_selection()
     robot_status(ws)
     var.lock_market_switch.release()
 

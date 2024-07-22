@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime
-from typing import Any, Union
+from typing import Any, Union, Iterable
 
 
 class Ret:
@@ -254,7 +254,7 @@ class MetaBot(type):
             self.all[item].pnl = dict()
         return self.all[item]
 
-    def items(self):
+    def items(self) -> Iterable[tuple[str, BotData]]:
         for name, values in MetaBot.all.items():
             yield name, values
 

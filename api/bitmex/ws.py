@@ -388,16 +388,13 @@ class Bitmex(Variables):
         symbol = (self.ticker[values["symbol"]], self.name)
         instrument = self.Instrument[symbol]
         if "currentQty" in values:
-            if values["currentQty"] is None:
-                self.positions[symbol]["POS"] = 0
-            else:
+            if values["currentQty"]:
                 instrument.currentQty = values["currentQty"]
-                self.positions[symbol]["POS"] = instrument.currentQty
-
         if instrument.currentQty == 0:
             instrument.avgEntryPrice = 0
             instrument.marginCallPrice = 0
             instrument.unrealisedPnl = 0
+            del self.positions[symbol]
         else:
             if "avgEntryPrice" in values:
                 instrument.avgEntryPrice = values["avgEntryPrice"]

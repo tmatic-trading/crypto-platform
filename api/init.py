@@ -17,8 +17,8 @@ class Setup(Variables):
             self.symbol_list = var.env[name]["SYMBOLS"]
             self.currencies = var.env[name]["CURRENCIES"]
             # d tmp_pos = {y: 0 for y in var.name_position}
-            for symbol in self.symbol_list:
-                self.positions[symbol] = {"POS": 0}
+            # d for symbol in self.symbol_list:
+            # d    self.positions[symbol] = {"POS": 0}
                 # d self.positions[symbol] = tmp_pos.copy()
                 # d self.positions[symbol]["SYMB"] = symbol
                 # d self.positions[symbol]["POS"] = 0

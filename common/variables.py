@@ -109,7 +109,7 @@ class Variables:
         "volume24h",
         "lotSize",
     ]
-    name_position = [
+    name_instrument = [
         "SYMBOL",
         "CAT",
         "POS",
@@ -168,6 +168,15 @@ class Variables:
         "PNL SUM",
         "COMMISSION SUM",
         "FUNDING SUM",
+    ]
+    name_position = [
+        "MARKET",
+        "SYMBOL",
+        "CATEGORY", 
+        "TICKER", 
+        "POS",
+        "ENTRY",
+        "PNL",
     ]
     logger: logging = setup_logger()
     connect_sqlite = None
