@@ -278,6 +278,8 @@ class Agent(Bybit):
                     order["transactTime"] = service.time_converter(
                         time=int(order["updatedTime"]) / 1000, usec=True
                     )
+                    if order["symbol"] not in self.symbol_list:
+                        self.symbol_list.append(order["symbol"])
                 myOrders += result["result"]["list"]
                 if isinstance(result["result"]["list"], list):
                     success[num] = 0
@@ -412,12 +414,6 @@ class Agent(Bybit):
                 for values in result["result"]["list"]:
                     symbol = (self.ticker[(values["symbol"], category)], self.name)
                     instrument = self.Instrument[symbol]
-                    if symbol in self.positions:
-                        self.positions[symbol]["POS"] = float(values["size"])
-                        if values["side"] == "Sell":
-                            self.positions[symbol]["POS"] = -self.positions[symbol][
-                                "POS"
-                            ]
                     instrument.currentQty = float(values["size"])
                     if values["side"] == "Sell":
                         instrument.currentQty = -instrument.currentQty

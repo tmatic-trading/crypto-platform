@@ -254,6 +254,9 @@ class Function(WS, Variables):
                 category=row["category"],
             )
             instrument = self.Instrument[row["symbol"]]
+            if "clOrdID" in row:                          
+                if "." not in row["clOrdID"]:
+                    del row["clOrdID"]
 
             # Trade
 

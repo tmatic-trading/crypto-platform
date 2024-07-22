@@ -27,7 +27,7 @@ class Bybit(Variables):
     def __init__(self):
         self.name = "Bybit"
         Setup.variables(self, self.name)
-        self.session = HTTP(
+        self.session: HTTP = HTTP(
             api_key=self.api_key,
             api_secret=self.api_secret,
             testnet=self.testnet,
@@ -86,11 +86,6 @@ class Bybit(Variables):
             for symbol in self.symbol_list:
                 if self.Instrument[symbol].category == category:
                     lst.append(symbol)
-            if lst:
-                self.ws[category] = WebSocket(
-                    testnet=self.testnet, channel_type=category
-                )
-                self.ws[category].pinging = "pong"
             for symbol in lst:
                 self.subscribe_symbol(symbol=symbol)
 
@@ -175,7 +170,6 @@ class Bybit(Variables):
                     instrument.currentQty = -float(value["size"])
                 else:
                     instrument.currentQty = float(value["size"])
-                self.positions[symbol]["POS"] = instrument.currentQty
                 instrument.avgEntryPrice = float(value["entryPrice"])
                 if value["liqPrice"] == "":
                     if instrument.currentQty == 0:
@@ -330,6 +324,11 @@ class Bybit(Variables):
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
         category = instrument.category
+        if not self.ws[category].__class__.__name__ == "WebSocket":
+            self.ws[category] = WebSocket(
+                testnet=self.testnet, channel_type=category
+            )
+            self.ws[category].pinging = "pong"
         if category == "linear":
             self.logger.info(
                 "ws subscription - orderbook_stream - category - "

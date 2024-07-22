@@ -162,10 +162,7 @@ class Agent(Bitmex):
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
             if data:
-                self.positions[symbol] = {"POS": data[0]["currentQty"]}
                 self.Instrument[symbol].currentQty = data[0]["currentQty"]
-            else:
-                self.positions[symbol] = {"POS": 0}
             self.logger.info(
                 str(symbol)
                 + " has been added to the positions dictionary for "
@@ -300,6 +297,8 @@ class Agent(Bitmex):
                 order["transactTime"] = service.time_converter(
                     time=order["transactTime"], usec=True
                 )
+                if order["symbol"] not in self.symbol_list:
+                    self.symbol_list.append(order["symbol"])
         else:
             self.logger.error(
                 "The list was expected when the orders were loaded, but it was not received. Reboot."

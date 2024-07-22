@@ -49,7 +49,7 @@ class Bitmex(Variables):
             # "order",
             # "trade",
         }
-        self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000}
+        self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000, "MATIc": 1000000} # MATIc is probably incorrect
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.logger = var.logger
         self.robots = OrderedDict()
@@ -394,7 +394,6 @@ class Bitmex(Variables):
             instrument.avgEntryPrice = 0
             instrument.marginCallPrice = 0
             instrument.unrealisedPnl = 0
-            del self.positions[symbol]
         else:
             if "avgEntryPrice" in values:
                 instrument.avgEntryPrice = values["avgEntryPrice"]

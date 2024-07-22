@@ -413,7 +413,6 @@ class Deribit(Variables):
                     instrument = self.Instrument[symbol]
                     if symbol in self.symbol_list:
                         instrument.currentQty = value["size"]
-                        self.positions[symbol]["POS"] = instrument.currentQty
                         instrument.avgEntryPrice = value["average_price"]
                         instrument.unrealisedPnl = value["total_profit_loss"]
                         # instrument.marginCallPrice is not provided

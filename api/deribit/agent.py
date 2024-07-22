@@ -159,6 +159,8 @@ class Agent(Deribit):
                             order["side"] = "Buy"
                         else:
                             order["side"] = "Sell"
+                        if symbol not in self.symbol_list:
+                            self.symbol_list.append(symbol)
                     self.setup_orders = data["result"]
                     return 0
                 else:
