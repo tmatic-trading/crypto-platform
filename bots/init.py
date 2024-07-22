@@ -370,8 +370,6 @@ def add_subscription(subscriptions: list) -> None:
         ws = Markets[symbol[1]]
         ws.positions[symbol] = {"POS": 0}
         ws.symbol_list.append(symbol)
-        if symbol[1] == var.current_market:
-            TreeTable.position.init(size=len(ws.symbol_list))
         ws.subscribe_symbol(symbol=symbol)
 
 
