@@ -385,6 +385,7 @@ class TreeviewTable(Variables):
         multicolor=False,
         autoscroll=False,
         hierarchy=False, 
+        lines=None, 
     ) -> None:
         self.title = title
         self.max_rows = 200
@@ -395,6 +396,7 @@ class TreeviewTable(Variables):
         self.size = size
         self.count = 0
         self.hierarchy = hierarchy
+        self.lines = lines
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)
         if hierarchy:
@@ -424,6 +426,7 @@ class TreeviewTable(Variables):
         self.tree.grid(row=0, column=0, sticky="NSEW")
         scroll.grid(row=0, column=1, sticky="NS")
         self.children = list()
+        self.children_hierarchical = dict()
         self.tree.tag_configure("Select", background=self.bg_select_color)
         self.tree.tag_configure("Buy", foreground=self.green_color)
         self.tree.tag_configure("Sell", foreground=self.red_color)
@@ -431,6 +434,10 @@ class TreeviewTable(Variables):
         self.tree.tag_configure("Normal", foreground=self.fg_color)
         self.tree.tag_configure("Reload", foreground=self.red_color)
         self.tree.tag_configure("Red", foreground=self.red_color)
+        if self.ostype != "Mac":
+            self.tree.tag_configure("Gray", background="gray92")
+        else:
+            self.tree.tag_configure("Gray", background=self.title_color)
         self.tree.tag_configure(
             "Market", background=self.title_color, foreground=self.fg_color
         )
@@ -458,10 +465,25 @@ class TreeviewTable(Variables):
     def init(self, size):
         self.clear_all()
         self.cache = dict()
+        if self.hierarchy:
+            self.init_hierarchical()
+            return
         blank = ["" for _ in self.title]
         for num in range(size):
             self.insert(values=blank, market="")
             self.cache[num] = blank
+
+    def init_hierarchical(self):
+        self.tree.column("#0", anchor=tk.W, width=60)
+        self.tree.column("1", anchor=tk.W)
+        for line in self.lines:
+            self.tree.insert("", tk.END, text=line, iid=line, open=True, tags="Gray")
+            self.cache[line] = line
+            iid = line+"_notification"
+            self.cache[iid] = iid
+            self.tree.insert(line, tk.END, text = 'No positions', iid=line+"_notification", open=True)
+            self.children_hierarchical[line] = self.tree.get_children(line)
+        self.children = self.tree.get_children()
 
     def insert(self, values: list, market: str, iid="", configure="") -> None:
         if not iid:
@@ -472,9 +494,9 @@ class TreeviewTable(Variables):
         if len(self.children) > self.max_rows:
             self.delete()
 
-    def insert_hierarchical(self, iid: str, values=[], configure=""):
-        if not values:
-            self.tree.insert("", 0, text=iid, open=True)
+    def insert_hierarchical(self, parent: str, iid: str, values: list, configure="", text=""):
+        self.tree.insert(parent, tk.END, iid=iid, values=values, tags=configure, text=text)
+        self.children_hierarchical[parent] = self.tree.get_children(parent)
 
     def delete(self, iid="") -> None:
         if not iid:
@@ -482,8 +504,15 @@ class TreeviewTable(Variables):
         self.tree.delete(iid)
         self.children = self.tree.get_children()
 
+    def delete_hierarchical(self, parent, iid="") -> None:
+        self.tree.delete(iid)
+        self.children_hierarchical[parent] = self.tree.get_children(parent)
+
     def update(self, row: int, values: list) -> None:
         self.tree.item(self.children[row], values=values)
+
+    def update_hierarchical(self, parent: str, iid: str, values: list) -> None:
+        self.tree.item(iid, values=values)
 
     def paint(self, row: int, configure: str) -> None:
         pass

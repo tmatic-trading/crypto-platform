@@ -457,12 +457,14 @@ def load_bots() -> None:
 
     for name in Bot.keys():
         qwr = (
-            "select SYMBOL, MARKET, TICKER, ifnull(sum(SUMREAL), 0) SUMREAL, "
-            + "ifnull(sum(case when SIDE = 'Fund' then 0 else QTY end), 0) "
-            + "POS, ifnull(sum(case when SIDE = 'Fund' then 0 else abs(QTY) "
-            + "end), 0) VOL, ifnull(sum(COMMISS), 0) COMMISS, "
-            + "ifnull(max(TTIME), '1900-01-01 01:01:01.000000') LTIME from "
-            + "coins where EMI = '%s' group by SYMBOL;" % (name)
+            "select * from (select SYMBOL, CATEGORY, MARKET, TICKER, "
+            + "ifnull(sum(SUMREAL), 0) SUMREAL, ifnull(sum(case when SIDE = "
+            + "'Fund' then 0 else QTY end), 0) POS, ifnull(sum(case when SIDE "
+            + "= 'Fund' then 0 else abs(QTY) end), 0) VOL, ifnull(sum(COMMISS)"
+            + ", 0) COMMISS, ifnull(max(TTIME), '1900-01-01 01:01:01.000000') "
+            + "LTIME from coins where EMI = '"
+            + name
+            + "' group by SYMBOL) T where POS <> 0;"
         )
         data = Function.select_database("None", qwr)
         for value in data:
@@ -472,7 +474,9 @@ def load_bots() -> None:
             bot = Bot[name]
             precision = instrument.precision
             bot.position[symbol] = {
+                "emi": name, 
                 "symbol": value["SYMBOL"],
+                "category": value["CATEGORY"],
                 "market": value["MARKET"],
                 "ticker": value["TICKER"],
                 "position": round(float(value["POS"]), precision),
@@ -487,10 +491,10 @@ def load_bots() -> None:
                 bot.position[symbol]["pnl"] = "None"
                 bot.position[symbol]["position"] = "None"
 
-    for name in Bot.keys():
+    '''for name in Bot.keys():
         bot = Bot[name]
         print("--------", name, bot.market)
         for item in bot:
-            print(item.name, item.value)
+            print(item.name, item.value)'''
 
 

@@ -171,11 +171,10 @@ class Variables:
     ]
     name_position = [
         "MARKET",
+        "BOT NAME", 
         "SYMBOL",
         "CATEGORY", 
-        "TICKER", 
         "POS",
-        "ENTRY",
         "PNL",
     ]
     logger: logging = setup_logger()

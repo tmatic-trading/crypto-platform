@@ -45,7 +45,7 @@ def setup(reload=False):
     for name in var.market_list:
         finish_setup(Markets[name])
     merge_orders()
-    # d bots.load_bots()
+    #d bots.load_bots()
     functions.init_tables()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
