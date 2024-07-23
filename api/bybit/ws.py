@@ -39,15 +39,8 @@ class Bybit(Variables):
             "option": [],
             "linear": [],
         }
-        self.settleCoin_list = list()
-        self.ws = {
-            "spot": WebSocket,
-            "inverse": WebSocket,
-            "option": WebSocket,
-            "linear": WebSocket,
-        }
         self.account_types = ["UNIFIED", "CONTRACT"]
-        self.ws_private = WebSocket
+        self.settleCoin_list = list()
         self.logger = var.logger
         if self.depth == "quote":
             self.orderbook_depth = 1
@@ -80,6 +73,13 @@ class Bybit(Variables):
         Connecting to websocket.
         """
         self.logger.info("Connecting to websocket")
+        self.ws = {
+            "spot": WebSocket,
+            "inverse": WebSocket,
+            "option": WebSocket,
+            "linear": WebSocket,
+        }
+        self.ws_private = WebSocket
 
         def subscribe_in_thread(category):
             lst = list()
