@@ -122,18 +122,24 @@ class Function(WS, Variables):
                     )
                     Function.sql_lock.release()
 
-    def insert_database(self: Markets, values: list) -> None:
+    def insert_database(self: Markets, values: list, table: str) -> None:
         err_locked = 0
         while True:
             try:
                 Function.sql_lock.acquire(True)
-                var.cursor_sqlite.execute(
-                    "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,"
-                    + "TICKER,CATEGORY,MARKET,SIDE,QTY,QTY_REST,PRICE,"
-                    + "THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,CLORDID,TTIME,"
-                    + "ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    values,
-                )
+                if table == "coins":
+                    var.cursor_sqlite.execute(
+                        "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,"
+                        + "TICKER,CATEGORY,MARKET,SIDE,QTY,QTY_REST,PRICE,"
+                        + "THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,CLORDID,TTIME,"
+                        + "ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        values,
+                    )
+                elif table == "robots":
+                    var.cursor_sqlite.execute(
+                        "insert into robots (EMI,STATE) VALUES (?,?)",
+                        values,
+                    )
                 var.connect_sqlite.commit()
                 Function.sql_lock.release()
                 break
@@ -232,7 +238,7 @@ class Function(WS, Variables):
                 row["transactTime"],
                 self.user_id,
             ]
-            Function.insert_database(self, values=values)
+            Function.insert_database(self, values=values, table="coins")
             message = {
                 "SYMBOL": row["symbol"],
                 "MARKET": row["market"],
@@ -421,7 +427,7 @@ class Function(WS, Variables):
                             row["transactTime"],
                             self.user_id,
                         ]
-                        Function.insert_database(self, values=values)
+                        Function.insert_database(self, values=values, table="coins")
                         self.robots[emi]["COMMISS"] += calc["funding"]
                         self.robots[emi]["LTIME"] = row["transactTime"]
                         results.funding += calc["funding"]
@@ -474,7 +480,7 @@ class Function(WS, Variables):
                         row["transactTime"],
                         self.user_id,
                     ]
-                    Function.insert_database(self, values=values)
+                    Function.insert_database(self, values=values, table="coins")
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = row["transactTime"]
                     results.funding += calc["funding"]

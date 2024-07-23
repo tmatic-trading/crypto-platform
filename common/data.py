@@ -260,6 +260,9 @@ class MetaBot(type):
 
     def keys(self):
         return MetaBot.all.keys()
+    
+    def remove(self, item):
+        del self.all[item]
 
 
 class Bot(metaclass=MetaBot):

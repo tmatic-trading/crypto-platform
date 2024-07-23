@@ -18,6 +18,7 @@ from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
+from display.robots_menu import buttons_menu
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
@@ -45,7 +46,9 @@ def setup(reload=False):
     for name in var.market_list:
         finish_setup(Markets[name])
     merge_orders()
-    #d bots.load_bots()
+    bots.load_bots()
+    buttons_menu.create_bots_menu()
+    buttons_menu.show_bot()
     functions.init_tables()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)

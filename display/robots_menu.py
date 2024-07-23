@@ -29,6 +29,8 @@ from pygments.styles import get_style_by_name
 
 from .variables import AutoScrollbar
 from .variables import Variables as disp
+from common.data import Bot
+#from functions import Function
 
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
@@ -48,7 +50,7 @@ class CustomButton(tk.Menubutton):
     def trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
-        if bot_name in self.app.bots_list or bot_name != self.name_trace.get():
+        if bot_name in Bot.keys() or bot_name != self.name_trace.get():
             self.bot_entry[name].config(style=f"used.TEntry")
             self.button.config(state="disabled")
         else:
@@ -118,7 +120,7 @@ class CustomButton(tk.Menubutton):
                 self.app.pop_up, width=15, textvariable="", state="readonly"
             )
             bots = []
-            for option in self.app.bots_list:
+            for option in Bot.keys():
                 if option != self.app.selected_bot:
                     bots.append(option)
             cbox["values"] = tuple(bots)
@@ -210,7 +212,7 @@ class CustomButton(tk.Menubutton):
         if self["state"] != "disabled":
             if self.name == "Home":
                 self.app.action = "Home"
-                self.app.show_bot("")
+                self.app.show_bot()
                 # self.app.draw_buttons()
             elif self.name == "New Bot":
                 self.open_popup(self.name, "")
@@ -231,14 +233,13 @@ class CustomButton(tk.Menubutton):
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Last Viewed":
                 self.app.action = self.name
-                self.app.show_bot("")
+                self.app.show_bot()
                 # self.app.draw_buttons()
             elif self.name == "Back":
                 disp.menu_robots.pack_forget()
                 disp.pw_rest1.pack(fill="both", expand="yes")
             else:
                 print(self.name, self["state"])
-
 
 class SettingsApp:
     def __init__(self, root):
@@ -270,10 +271,6 @@ class SettingsApp:
             "Updated",
             "Status",
         ]
-        """"Timeframe",
-        "Capital",
-        "Leverage",
-        "PNL","""
 
         # CustomButton array
         self.buttons_center = []
@@ -292,10 +289,10 @@ class SettingsApp:
             self.button_height = frame.winfo_reqheight()
 
         # Keeps all bots' names in the array
-        self.bots_list = []
-        self.collect_bots()
+        #self.bots_list = []
+        #self.collect_bots()
 
-        # Keeps the bot's algorithm derived from strategy.py file
+        # Keeps the selected bot's algorithm derived from strategy.py file
         self.bot_algo = ""
 
         # If bot's algorithm is changed by user, than the value in not None
@@ -303,16 +300,14 @@ class SettingsApp:
 
         # Create initial frames
         self.bot_info_frame()
-        self.show_bot("")
-        # self.draw_buttons()
 
-    def collect_bots(self):
+    '''def collect_bots(self):
         """Reviews all created bots in the algo directory and puts them in array"""
         self.bots_list.clear()
         for x in os.walk(self.algo_dir):
             my_dir = x[0].replace(self.algo_dir, "")
             if my_dir != "" and my_dir != "__pycache__" and my_dir.find("/") == -1:
-                self.bots_list.append(my_dir)
+                self.bots_list.append(my_dir)'''
 
     def draw_buttons(self):
         """Draws bot menu buttons accordingly"""
@@ -344,7 +339,7 @@ class SettingsApp:
                 if (
                     self.selected_bot == ""
                     or self.action == "Home"
-                    or len(self.bots_list) < 2
+                    or len(Bot.keys()) < 2
                 ):
                     button.configure(state="disabled")
                 else:
@@ -379,7 +374,7 @@ class SettingsApp:
             )
             y_pos += int(self.button_height * 1.333)
 
-    def show_bot(self, comment):
+    def show_bot(self):
         """Shows the bot's info when bot is selected. Otherwise hides"""
         if self.selected_bot != "" and self.action != "Home":
             self.menu_usage.pack_forget()
@@ -410,7 +405,7 @@ class SettingsApp:
         else:
             self.main_frame.pack_forget()
             self.brief_frame.pack(fill="both", expand="yes")
-            if len(self.bots_list) != 0:
+            if len(Bot.keys()) != 0:
                 self.bots_label.pack(anchor="n")
                 self.bots_button.pack(anchor="n")
                 self.menu_usage.pack(anchor="n", pady=50)
@@ -462,22 +457,27 @@ class SettingsApp:
             f"{str(bot_path)}/.gitignore",
             f"*\n!__init__.py\n!.gitignore\n!init.py\n!{self.strategy_file}\n",
         )
+        Bot[bot_name].status = "Suspended"
+        #Function.insert_database(self, values=[bot_name, Bot[bot_name].status], table="robots")
         self.after_popup(bot_name)
 
-    def merge_bot(self, bot_name, selected_bot):
-        bot_path = self.get_bot_path(selected_bot)
+    def merge_bot(self, bot_name, bot_to_delete):
+        bot_path = self.get_bot_path(bot_to_delete)
         shutil.rmtree(str(bot_path))
+        Bot.remove(bot_to_delete)
         self.after_popup(bot_name)
-        # print(bot_name, second_bot)
 
     def delete_bot(self, bot_name):
         bot_path = self.get_bot_path(bot_name)
         shutil.rmtree(str(bot_path))
+        Bot.remove(bot_name)
         self.after_popup("")
 
-    def duplicate_bot(self, bot_name, new_bot):
-        shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(new_bot))
-        self.after_popup(new_bot)
+    def duplicate_bot(self, bot_name, copy_bot):
+        shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
+        Bot[bot_name].status = "Suspended"
+        #Function.insert_database(self, values=[bot_name, Bot[bot_name].status], table="robots")
+        self.after_popup(copy_bot)
 
     def after_popup(self, bot_name):
         if bot_name != "":
@@ -489,10 +489,8 @@ class SettingsApp:
         self.menu_usage.pack_forget()
         self.bots_button.pack_forget()
         self.bots_label.pack_forget()
-        self.collect_bots()
-        self.created_bots_menu()
-        self.show_bot("")
-        # self.draw_buttons()
+        self.create_bots_menu()
+        self.show_bot()
         self.pop_up.destroy()
 
     def insert_code(self, text_widget, code):
@@ -515,10 +513,9 @@ class SettingsApp:
     def on_menu_select(self, value):
         self.selected_bot = value
         self.action = "Last Viewed"
-        self.show_bot("")
-        # self.draw_buttons()
+        self.show_bot()
 
-    def created_bots_menu(self):
+    def create_bots_menu(self):
         # Menu to choose one of the created bots
         self.bots_button = tk.Menubutton(
             self.brief_frame,
@@ -530,13 +527,13 @@ class SettingsApp:
         )
         main_menu = tk.Menu(self.bots_button, tearoff=0)
         self.bots_button.config(menu=main_menu)
-        for option in self.bots_list:
+        for option in Bot.keys():
             main_menu.add_command(
                 label=option,
                 command=lambda value=option: self.on_menu_select(value),
             )
 
-    def on_strategy_change(self, event):
+    def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
             if self.algo_changed == None:
@@ -563,7 +560,6 @@ class SettingsApp:
         self.bots_label = tk.Label(
             self.brief_frame, text="\n\nSelect bot from:", font=spec_font
         )
-        self.created_bots_menu()
         self.menu_usage = tk.Frame(self.brief_frame)
 
         row_num = 0
@@ -680,7 +676,7 @@ class SettingsApp:
         self.strategy_text = tk.Text(
             self.strategy, highlightthickness=0, yscrollcommand=self.strategy_scroll.set
         )
-        self.strategy_text.bind("<KeyRelease>", self.on_strategy_change)
+        self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
         self.strategy_scroll.config(command=self.strategy_text.yview)
         self.strategy_text.grid(row=0, column=0, sticky="NSEW")
         self.strategy_scroll.grid(row=0, column=1, sticky="NS")
