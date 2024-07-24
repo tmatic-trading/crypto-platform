@@ -389,7 +389,7 @@ def setup_database_connecion() -> None:
         TIMEFR tinyint DEFAULT 0,
         CAPITAL int DEFAULT 0,
         MARGIN int DEFAULT 0,
-        STATUS varchar(10) DEFAULT 'Suspended',
+        STATE varchar(10) DEFAULT 'Suspended',
         UPDATED timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
 
         sql_create_coins = """

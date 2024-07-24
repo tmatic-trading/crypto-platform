@@ -1175,8 +1175,8 @@ class Function(WS, Variables):
             compare = [
                 name,
                 bot.timefr, 
-                bot.status, 
-                "-", 
+                bot.state, 
+                bot.updated, 
             ]
             iid = name
             if iid in tree.children:
