@@ -437,52 +437,58 @@ class SettingsApp:
         return os.path.join(self.algo_dir, bot_name)
 
     def create_bot(self, bot_name):
-        bot_path = self.get_bot_path(bot_name)
-        # Create a new directory with the name as the new bot's name
-        os.mkdir(bot_path)
-        # Create the '__init__.py' file in the new directory. This file is empty
-        self.create_file(f"{str(bot_path)}/__init__.py")
-        # Load the content of 'init.py' file
-        content = self.read_file(f"{self.algo_dir}init.py")
-        # Create new 'init.py' file in the new directory
-        self.create_file(f"{str(bot_path)}/init.py")
-        # Write the initial content into the new 'init.py' file
-        self.write_file(f"{str(bot_path)}/init.py", content)
-        # Create new 'strategy.py' file in the new directory
-        self.create_file(f"{str(bot_path)}/{self.strategy_file}")
-        # Write the initial content into the new 'strategy.py' file
-        self.write_file(
-            f"{str(bot_path)}/{self.strategy_file}",
-            "import services as service\nfrom api.api import Markets\nfrom common.data import Instrument\nfrom functions import Function\n",
-        )
-        # Create new '.gitignore' file in the new directory
-        self.create_file(f"{str(bot_path)}/.gitignore")
-        # Write the initial content into the new '.gitignore' file
-        self.write_file(
-            f"{str(bot_path)}/.gitignore",
-            f"*\n!__init__.py\n!.gitignore\n!init.py\n!{self.strategy_file}\n",
-        )
-        Bot[bot_name].status = "Suspended"
-        # service.insert_database(values=[bot_name, Bot[bot_name].status], table="robots")
-        self.after_popup(bot_name)
+        err = service.insert_database(values=[bot_name, "Suspended", 0], table="robots")
+        if err is None:
+            bot_path = self.get_bot_path(bot_name)
+            # Create a new directory with the name as the new bot's name
+            os.mkdir(bot_path)
+            # Create the '__init__.py' file in the new directory. This file is empty
+            self.create_file(f"{str(bot_path)}/__init__.py")
+            # Load the content of 'init.py' file
+            content = self.read_file(f"{self.algo_dir}init.py")
+            # Create new 'init.py' file in the new directory
+            self.create_file(f"{str(bot_path)}/init.py")
+            # Write the initial content into the new 'init.py' file
+            self.write_file(f"{str(bot_path)}/init.py", content)
+            # Create new 'strategy.py' file in the new directory
+            self.create_file(f"{str(bot_path)}/{self.strategy_file}")
+            # Write the initial content into the new 'strategy.py' file
+            self.write_file(
+                f"{str(bot_path)}/{self.strategy_file}",
+                "import services as service\nfrom api.api import Markets\nfrom common.data import Instrument\nfrom functions import Function\n",
+            )
+            # Create new '.gitignore' file in the new directory
+            self.create_file(f"{str(bot_path)}/.gitignore")
+            # Write the initial content into the new '.gitignore' file
+            self.write_file(
+                f"{str(bot_path)}/.gitignore",
+                f"*\n!__init__.py\n!.gitignore\n!init.py\n!{self.strategy_file}\n",
+            )
+            Bot[bot_name].status = "Suspended"
+            self.after_popup(bot_name)
 
     def merge_bot(self, bot_name, bot_to_delete):
-        bot_path = self.get_bot_path(bot_to_delete)
-        shutil.rmtree(str(bot_path))
-        Bot.remove(bot_to_delete)
-        self.after_popup(bot_name)
+        err = service.update_database(query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'")
+        if err is None:
+            bot_path = self.get_bot_path(bot_to_delete)
+            shutil.rmtree(str(bot_path))
+            Bot.remove(bot_to_delete)
+            self.after_popup(bot_name)
 
     def delete_bot(self, bot_name):
-        bot_path = self.get_bot_path(bot_name)
-        shutil.rmtree(str(bot_path))
-        Bot.remove(bot_name)
-        self.after_popup("")
+        err = service.update_database(query=f"DELETE FROM robots WHERE EMI = '{bot_name}'")
+        if err is None:
+            bot_path = self.get_bot_path(bot_name)
+            shutil.rmtree(str(bot_path))
+            Bot.remove(bot_name)
+            self.after_popup("")
 
     def duplicate_bot(self, bot_name, copy_bot):
-        shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
-        Bot[copy_bot].status = "Suspended"
-        # service.insert_database(values=[bot_name, Bot[bot_name].status], table="robots")
-        self.after_popup(copy_bot)
+        err = service.insert_database(values=[copy_bot, "Suspended", 0], table="robots")
+        if err is None:
+            shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
+            Bot[copy_bot].status = "Suspended"
+            self.after_popup(copy_bot)
 
     def after_popup(self, bot_name):
         if bot_name != "":
