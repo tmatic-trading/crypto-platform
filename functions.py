@@ -784,6 +784,7 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
+
         # Refresh instrument table
 
         tree = TreeTable.instrument
@@ -1084,8 +1085,23 @@ class Function(WS, Variables):
         # d print("___market", datetime.now() - tm)
 
         # Refresh position table
-
+                
         tree = TreeTable.position
+                
+        def update_position_line(iid: str, compare: list):
+            if iid in tree.children_hierarchical[market]:
+                if iid not in tree.cache:
+                    tree.cache[iid] = []
+                if compare != tree.cache[iid]:
+                    tree.cache[iid] = compare.copy()
+                    compare[3] = Function.volume(
+                        self,
+                        qty=compare[3],
+                        symbol=symbol,
+                    )
+                    tree.update_hierarchical(parent=market, iid=iid, values=compare)
+            else:
+                tree.insert_hierarchical(parent=market, iid=iid, values=compare)        
 
         tm = datetime.now()
         pos_by_market = {market: [] for market in var.market_list}
@@ -1096,16 +1112,17 @@ class Function(WS, Variables):
         for market in pos_by_market.keys():
             rest = dict()
             pos = pos_by_market[market]
-            notificate = False
+            notificate = True
             for position in pos:
                 symbol = (position["symbol"], market)
                 if symbol not in rest:
                     rest[symbol] = 0
                 iid = position["emi"]
                 if position["position"] == 0:
-                    tree.delete_hierarchical(parent=market, iid=iid)
+                    if iid in tree.children_hierarchical[market]:
+                        tree.delete_hierarchical(parent=market, iid=iid)
                 else:
-                    notificate = True
+                    notificate = False
                     rest[symbol] += position["position"]
                     compare = [
                         position["emi"],
@@ -1114,10 +1131,7 @@ class Function(WS, Variables):
                         position["position"],
                         position["pnl"],
                     ]
-                    if iid in tree.children_hierarchical[market]:
-                        tree.update_hierarchical(parent=market, iid=iid, values=compare)
-                    else:
-                        tree.insert_hierarchical(parent=market, iid=iid, values=compare)
+                    update_position_line(iid, compare)
             ws = Markets[market]
             for symbol in ws.symbol_list:
                 instrument = ws.Instrument[symbol]
@@ -1126,26 +1140,22 @@ class Function(WS, Variables):
                         position = instrument.currentQty - rest[symbol]
                     else:
                         position = instrument.currentQty
-                    if position != 0:
-                        notificate = True
+                    iid = market + instrument.symbol
+                    if position == 0:
+                        if iid in tree.children_hierarchical[market]:
+                            tree.delete_hierarchical(parent=market, iid=iid)
+                    else:
+                        notificate = False
                         compare = [
-                            "None",
+                            "----",
                             instrument.symbol,
                             instrument.category,
                             position,
                             "-",
                         ]
-                        iid = market + instrument.symbol
-                        if iid in tree.children_hierarchical[market]:
-                            tree.update_hierarchical(
-                                parent=market, iid=iid, values=compare
-                            )
-                        else:
-                            tree.insert_hierarchical(
-                                parent=market, iid=iid, values=compare
-                            )
+                        update_position_line(iid, compare)
             notification = market + "_notification"
-            if not notificate:
+            if notificate:
                 if notification not in tree.children_hierarchical[market]:
                     tree.insert_hierarchical(
                         parent=market, iid=notification, text="No positions"
@@ -1153,7 +1163,7 @@ class Function(WS, Variables):
             else:
                 if notification in tree.children_hierarchical[market]:
                     tree.delete_hierarchical(parent=market, iid=notification)
-        # print("___position", datetime.now() - tm)
+        #d print("___position", datetime.now() - tm)
 
     def close_price(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
         instrument = self.Instrument[symbol]
