@@ -474,7 +474,7 @@ def load_bots() -> None:
             bot = Bot[name]
             precision = instrument.precision
             bot.position[symbol] = {
-                "emi": name, 
+                "emi": name,
                 "symbol": value["SYMBOL"],
                 "category": value["CATEGORY"],
                 "market": value["MARKET"],
@@ -491,10 +491,8 @@ def load_bots() -> None:
                 bot.position[symbol]["pnl"] = "None"
                 bot.position[symbol]["position"] = "None"
 
-    '''for name in Bot.keys():
+    """for name in Bot.keys():
         bot = Bot[name]
         print("--------", name, bot.market)
         for item in bot:
-            print(item.name, item.value)'''
-
-
+            print(item.name, item.value)"""

@@ -171,9 +171,9 @@ class Variables:
     ]
     name_position = [
         "MARKET",
-        "BOT NAME", 
+        "BOT NAME",
         "SYMBOL",
-        "CATEGORY", 
+        "CATEGORY",
         "POS",
         "PNL",
     ]

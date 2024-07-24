@@ -6,7 +6,7 @@ from uuid import uuid4
 import services as service
 from api.init import Setup
 from api.variables import Variables
-from common.data import Bot, MetaAccount, MetaInstrument, MetaResult
+from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
 from services import exceptions_manager
 
@@ -325,9 +325,7 @@ class Bybit(Variables):
         ticker = instrument.ticker
         category = instrument.category
         if not self.ws[category].__class__.__name__ == "WebSocket":
-            self.ws[category] = WebSocket(
-                testnet=self.testnet, channel_type=category
-            )
+            self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
             self.ws[category].pinging = "pong"
         if category == "linear":
             self.logger.info(

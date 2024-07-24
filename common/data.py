@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime
-from typing import Any, Union, Iterable
+from typing import Any, Iterable, Union
 
 
 class Ret:
@@ -260,7 +260,7 @@ class MetaBot(type):
 
     def keys(self):
         return MetaBot.all.keys()
-    
+
     def remove(self, item):
         del self.all[item]
 

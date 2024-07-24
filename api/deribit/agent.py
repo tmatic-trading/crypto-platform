@@ -2,7 +2,7 @@ import json
 import threading
 import time
 from collections import OrderedDict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Union
 
 import services as service

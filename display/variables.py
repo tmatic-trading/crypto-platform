@@ -85,33 +85,7 @@ class Variables:
     frame_left.grid_columnconfigure(0, weight=1)
     frame_left.grid_rowconfigure(0, weight=0)
 
-    # Menu widget
-    menu_button = tk.Menubutton(
-        frame_state, text=" MENU ", relief=tk.FLAT, padx=0, pady=0
-    )
-    menu_button.pack(side="left", padx=4)
-    main_menu = tk.Menu(menu_button, tearoff=0)
-    menu_button.config(menu=main_menu)
-    for option in ["Trading ON", "Reload All", "Bot Menu", "Settings", "About"]:
-        main_menu.add_command(
-            label=option, command=lambda value=option: Variables.on_menu_select(value)
-        )
-
-    def on_menu_select(value):
-        if value == "Bot Menu":
-            Variables.pw_rest1.pack_forget()
-            Variables.menu_robots.pack(fill="both", expand="yes")
-        print("Selected:", value)
-
-    menu_delimiter = tk.Label(frame_state, text="|")
-    menu_delimiter.pack(side="left", padx=0)
-
     label_trading = tk.Label(frame_state, text="  TRADING: ")
-    label_trading.pack(side="left")
-    label_f9 = tk.Label(
-        frame_state, width=3, text="OFF", fg="white", bg="red", anchor="c"
-    )
-    label_f9.pack(side="left")
 
     # Color map
     if ostype == "Mac":
@@ -131,7 +105,37 @@ class Variables:
     white_color = "#FFFFFF"
     fg_select_color = fg_color
 
-    label_time = tk.Label(frame_state, anchor="e", foreground=fg_color)
+    frame_state.config(background=title_color)
+    label_trading.config(background=title_color)
+
+    # Menu widget
+    menu_button = tk.Menubutton(
+        frame_state, text=" MENU ", relief=tk.FLAT, padx=0, pady=0, bg=title_color
+    )
+    menu_button.pack(side="left", padx=4)
+    main_menu = tk.Menu(menu_button, tearoff=0)
+    menu_button.config(menu=main_menu)
+    for option in ["Trading ON", "Reload All", "Bot Menu", "Settings", "About"]:
+        main_menu.add_command(
+            label=option, command=lambda value=option: Variables.on_menu_select(value)
+        )
+
+    def on_menu_select(value):
+        if value == "Bot Menu":
+            Variables.pw_rest1.pack_forget()
+            Variables.menu_robots.pack(fill="both", expand="yes")
+        print("Selected:", value)
+
+    menu_delimiter = tk.Label(frame_state, text="|", bg=title_color)
+    menu_delimiter.pack(side="left", padx=0)
+
+    label_trading.pack(side="left")
+    label_f9 = tk.Label(
+        frame_state, width=3, text="OFF", fg="white", bg="red", anchor="c"
+    )
+    label_f9.pack(side="left")
+
+    label_time = tk.Label(frame_state, anchor="e", foreground=fg_color, bg=title_color)
     label_time.pack(side="right")
 
     # Paned window: up - information field, down - the rest interface
@@ -384,8 +388,8 @@ class TreeviewTable(Variables):
         hide=[],
         multicolor=False,
         autoscroll=False,
-        hierarchy=False, 
-        lines=None, 
+        hierarchy=False,
+        lines=None,
     ) -> None:
         self.title = title
         self.max_rows = 200
@@ -409,7 +413,7 @@ class TreeviewTable(Variables):
         self.tree = ttk.Treeview(
             frame, style=style, columns=columns, show=show, selectmode="browse"
         )
-        for num, name in enumerate(title, start=1):            
+        for num, name in enumerate(title, start=1):
             if hierarchy:
                 if num == 1:
                     num = "#0"
@@ -479,9 +483,11 @@ class TreeviewTable(Variables):
         for line in self.lines:
             self.tree.insert("", tk.END, text=line, iid=line, open=True, tags="Gray")
             self.cache[line] = line
-            iid = line+"_notification"
+            iid = line + "_notification"
             self.cache[iid] = iid
-            self.tree.insert(line, tk.END, text = 'No positions', iid=line+"_notification", open=True)
+            self.tree.insert(
+                line, tk.END, text="No positions", iid=line + "_notification", open=True
+            )
             self.children_hierarchical[line] = self.tree.get_children(line)
         self.children = self.tree.get_children()
 
@@ -494,8 +500,12 @@ class TreeviewTable(Variables):
         if len(self.children) > self.max_rows:
             self.delete()
 
-    def insert_hierarchical(self, parent: str, iid: str, values: list, configure="", text=""):
-        self.tree.insert(parent, tk.END, iid=iid, values=values, tags=configure, text=text)
+    def insert_hierarchical(
+        self, parent: str, iid: str, values: list, configure="", text=""
+    ):
+        self.tree.insert(
+            parent, tk.END, iid=iid, values=values, tags=configure, text=text
+        )
         self.children_hierarchical[parent] = self.tree.get_children(parent)
 
     def delete(self, iid="") -> None:

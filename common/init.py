@@ -252,7 +252,7 @@ class Init(WS, Variables):
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
                 emi = val["symbol"][0]
-                if "clOrdID" in val:                          
+                if "clOrdID" in val:
                     if "." not in val["clOrdID"]:
                         del val["clOrdID"]
                 if "clOrdID" not in val:

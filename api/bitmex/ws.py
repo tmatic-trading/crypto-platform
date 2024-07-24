@@ -49,7 +49,12 @@ class Bitmex(Variables):
             # "order",
             # "trade",
         }
-        self.currency_divisor = {"XBt": 100000000, "USDt": 1000000, "BMEx": 1000000, "MATIc": 1000000} # MATIc is probably incorrect
+        self.currency_divisor = {
+            "XBt": 100000000,
+            "USDt": 1000000,
+            "BMEx": 1000000,
+            "MATIc": 1000000,
+        }  # MATIc is probably incorrect
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.logger = var.logger
         self.robots = OrderedDict()
@@ -283,6 +288,10 @@ class Bitmex(Variables):
                             val["transactTime"] = service.time_converter(
                                 time=val["transactTime"], usec=True
                             )
+                            if "lastQty" in val:
+                                val["lastQty"] *= instrument.valueOfOneContract
+                            if "leavesQty" in val:
+                                val["leavesQty"] *= instrument.valueOfOneContract
                             if val["execType"] == "Funding":
                                 if val["foreignNotional"] > 0:
                                     val["lastQty"] = -val["lastQty"]
@@ -370,13 +379,27 @@ class Bitmex(Variables):
         instrument = self.Instrument[symbol]
         if quote:
             if "askPrice" in values:
-                instrument.asks = [[values["askPrice"], values["askSize"]]]
+                instrument.asks = [
+                    [
+                        values["askPrice"],
+                        values["askSize"] * instrument.valueOfOneContract,
+                    ]
+                ]
             if "bidPrice" in values:
-                instrument.bids = [[values["bidPrice"], values["bidSize"]]]
+                instrument.bids = [
+                    [
+                        values["bidPrice"],
+                        values["bidSize"] * instrument.valueOfOneContract,
+                    ]
+                ]
         else:
             if "asks" in values:
+                for ask in values["asks"]:
+                    ask[1] *= instrument.valueOfOneContract
                 instrument.asks = values["asks"]
             if "bids" in values:
+                for bid in values["bids"]:
+                    bid[1] *= instrument.valueOfOneContract
                 instrument.bids = values["bids"]
         self.frames_hi_lo_values(symbol=symbol)
 
@@ -389,7 +412,9 @@ class Bitmex(Variables):
         instrument = self.Instrument[symbol]
         if "currentQty" in values:
             if values["currentQty"]:
-                instrument.currentQty = values["currentQty"]
+                instrument.currentQty = (
+                    values["currentQty"] * instrument.valueOfOneContract
+                )
         if instrument.currentQty == 0:
             instrument.avgEntryPrice = 0
             instrument.marginCallPrice = 0

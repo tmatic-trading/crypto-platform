@@ -19,7 +19,7 @@ class Agent(Bitmex):
             )
             return -1
         for instrument in data:
-            category = Agent.fill_instrument(
+            Agent.fill_instrument(
                 self,
                 instrument=instrument,
             )
@@ -127,10 +127,10 @@ class Agent(Bitmex):
         self.Instrument[symbol].price_precision = service.precision(
             number=instrument["tickSize"]
         )
-        self.Instrument[symbol].minOrderQty = instrument["lotSize"]
-        self.Instrument[symbol].qtyStep = instrument["lotSize"]
+        self.Instrument[symbol].minOrderQty = instrument["lotSize"] * valueOfOneContract
+        self.Instrument[symbol].qtyStep = instrument["lotSize"] * valueOfOneContract
         self.Instrument[symbol].precision = service.precision(
-            number=self.Instrument[symbol].qtyStep / myMultiplier
+            number=instrument["lotSize"] / myMultiplier
         )
         self.Instrument[symbol].state = instrument["state"]
         self.Instrument[symbol].volume24h = instrument["volume24h"]
@@ -157,12 +157,15 @@ class Agent(Bitmex):
         """
         Gets instrument position when instrument is not in the symbol_list
         """
-        ticker = self.Instrument[symbol].ticker
+        instrument = self.Instrument[symbol]
+        ticker = instrument.ticker
         path = Listing.GET_POSITION.format(SYMBOL=ticker)
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
             if data:
-                self.Instrument[symbol].currentQty = data[0]["currentQty"]
+                instrument.currentQty = (
+                    data[0]["currentQty"] * instrument.valueOfOneContract
+                )
             self.logger.info(
                 str(symbol)
                 + " has been added to the positions dictionary for "
@@ -264,6 +267,10 @@ class Agent(Bitmex):
                             row["settlCurrency"] = (instrument.baseCoin, self.name)
                     else:
                         row["settlCurrency"] = (row["settlCurrency"], self.name)
+                    if "lastQty" in row:
+                        row["lastQty"] *= instrument.valueOfOneContract
+                    if "leavesQty" in row:
+                        row["leavesQty"] *= instrument.valueOfOneContract
                     if row["execType"] == "Funding":
                         if row["foreignNotional"] > 0:
                             row["lastQty"] = -row["lastQty"]
@@ -294,6 +301,10 @@ class Agent(Bitmex):
                     self.ticker[order["symbol"]],
                     self.name,
                 )
+                instrument = self.Instrument[order["symbol"]]
+                order["orderQty"] *= instrument.valueOfOneContract
+                order["leavesQty"] *= instrument.valueOfOneContract
+                order["cumQty"] *= instrument.valueOfOneContract
                 order["transactTime"] = service.time_converter(
                     time=order["transactTime"], usec=True
                 )
@@ -389,7 +400,9 @@ class Agent(Bitmex):
                     )
                     instrument = self.Instrument[symbol]
                     if "currentQty" in values:
-                        instrument.currentQty = values["currentQty"]
+                        instrument.currentQty = (
+                            values["currentQty"] * instrument.valueOfOneContract
+                        )
                     if instrument.currentQty != 0:
                         if "avgEntryPrice" in values:
                             instrument.avgEntryPrice = values["avgEntryPrice"]

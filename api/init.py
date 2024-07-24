@@ -19,8 +19,8 @@ class Setup(Variables):
             # d tmp_pos = {y: 0 for y in var.name_position}
             # d for symbol in self.symbol_list:
             # d    self.positions[symbol] = {"POS": 0}
-                # d self.positions[symbol] = tmp_pos.copy()
-                # d self.positions[symbol]["SYMB"] = symbol
-                # d self.positions[symbol]["POS"] = 0
-                # d self.positions[symbol]["SYMBOL"] = symbol[0]
-                # d self.positions[symbol]["CAT"] = "None"
+            # d self.positions[symbol] = tmp_pos.copy()
+            # d self.positions[symbol]["SYMB"] = symbol
+            # d self.positions[symbol]["POS"] = 0
+            # d self.positions[symbol]["SYMBOL"] = symbol[0]
+            # d self.positions[symbol]["CAT"] = "None"

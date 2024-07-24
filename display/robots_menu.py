@@ -27,10 +27,12 @@ from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.styles import get_style_by_name
 
+from common.data import Bot
+
 from .variables import AutoScrollbar
 from .variables import Variables as disp
-from common.data import Bot
-#from functions import Function
+
+# from functions import Function
 
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
@@ -241,6 +243,7 @@ class CustomButton(tk.Menubutton):
             else:
                 print(self.name, self["state"])
 
+
 class SettingsApp:
     def __init__(self, root):
         self.root_frame = root
@@ -289,8 +292,8 @@ class SettingsApp:
             self.button_height = frame.winfo_reqheight()
 
         # Keeps all bots' names in the array
-        #self.bots_list = []
-        #self.collect_bots()
+        # self.bots_list = []
+        # self.collect_bots()
 
         # Keeps the selected bot's algorithm derived from strategy.py file
         self.bot_algo = ""
@@ -458,7 +461,7 @@ class SettingsApp:
             f"*\n!__init__.py\n!.gitignore\n!init.py\n!{self.strategy_file}\n",
         )
         Bot[bot_name].status = "Suspended"
-        #Function.insert_database(self, values=[bot_name, Bot[bot_name].status], table="robots")
+        # Function.insert_database(self, values=[bot_name, Bot[bot_name].status], table="robots")
         self.after_popup(bot_name)
 
     def merge_bot(self, bot_name, bot_to_delete):
@@ -476,7 +479,7 @@ class SettingsApp:
     def duplicate_bot(self, bot_name, copy_bot):
         shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
         Bot[bot_name].status = "Suspended"
-        #Function.insert_database(self, values=[bot_name, Bot[bot_name].status], table="robots")
+        # Function.insert_database(self, values=[bot_name, Bot[bot_name].status], table="robots")
         self.after_popup(copy_bot)
 
     def after_popup(self, bot_name):

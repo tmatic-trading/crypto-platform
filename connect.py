@@ -15,10 +15,10 @@ from api.deribit.ws import Deribit
 from bots.variables import Variables as bot
 from common.variables import Variables as var
 from display.functions import info_display
+from display.robots_menu import buttons_menu
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
-from display.robots_menu import buttons_menu
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))

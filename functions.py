@@ -10,12 +10,11 @@ import services as service
 from api.api import WS, Markets
 from api.variables import Variables
 from bots.variables import Variables as bot
+from common.data import Bot
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import TreeTable, TreeviewTable
 from display.variables import Variables as disp
-
-from common.data import Bot
 
 
 class Function(WS, Variables):
@@ -34,30 +33,29 @@ class Function(WS, Variables):
         Calculates trade value and commission
         """
         instrument = self.Instrument[symbol]
-        coef = instrument.valueOfOneContract
         if instrument.category in ["inverse", "future reversed"]:
-            sumreal = qty / price * coef * fund
+            sumreal = qty / price * fund
             if execFee is not None:
                 commiss = execFee
                 funding = execFee
             else:
-                commiss = abs(qty) / price * coef * rate
-                funding = qty / price * coef * rate
+                commiss = abs(qty) / price * rate
+                funding = qty / price * rate
         elif instrument.category in ["spot", "spot linear"]:
             sumreal = 0
             if execFee is not None:
                 commiss = execFee
             else:
-                commiss = abs(qty) * price * coef * rate
+                commiss = abs(qty) * price * rate
             funding = 0
         else:
-            sumreal = -qty * price * coef * fund
+            sumreal = -qty * price * fund
             if execFee is not None:
                 commiss = execFee
                 funding = execFee
             else:
-                commiss = abs(qty) * price * coef * rate
-                funding = qty * price * coef * rate
+                commiss = abs(qty) * price * rate
+                funding = qty * price * rate
 
         return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
 
@@ -262,7 +260,7 @@ class Function(WS, Variables):
                 category=row["category"],
             )
             instrument = self.Instrument[row["symbol"]]
-            if "clOrdID" in row:                          
+            if "clOrdID" in row:
                 if "." not in row["clOrdID"]:
                     del row["clOrdID"]
 
@@ -798,7 +796,6 @@ class Function(WS, Variables):
             qty = "0"
         else:
             instrument = self.Instrument[symbol]
-            qty /= instrument.myMultiplier
             qty = "{:.{precision}f}".format(qty, precision=instrument.precision)
 
         return qty
@@ -876,7 +873,6 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
-
         # Refresh instrument table
 
         tree = TreeTable.instrument
@@ -913,13 +909,14 @@ class Function(WS, Variables):
                     instrument.fundingRate,
                 ]
                 tree.update(row=num, values=row)
-        #d print("___instrument", datetime.now() - tm)
+        # d print("___instrument", datetime.now() - tm)
 
         # Refresh orderbook table
 
         tree = TreeTable.orderbook
 
         tm = datetime.now()
+
         def display_order_book_values(
             val: list,
             start: int,
@@ -1012,7 +1009,7 @@ class Function(WS, Variables):
             direct=-1,
             side="asks",
         )
-        #d print("___orderbook", datetime.now() - tm)
+        # d print("___orderbook", datetime.now() - tm)
 
         # Refresh robots table
 
@@ -1073,8 +1070,8 @@ class Function(WS, Variables):
                     else:
                         tree.paint(row=num, configure="Red")
                 elif robot["STATUS"] == "NOT DEFINED":
-                    Function.not_defined_robot_color(self, emi=robot["EMI"])        
-        #d print("___robot", datetime.now() - tm)
+                    Function.not_defined_robot_color(self, emi=robot["EMI"])
+        # d print("___robot", datetime.now() - tm)
 
         # Refresh account table
 
@@ -1104,7 +1101,7 @@ class Function(WS, Variables):
                     format_number(number=account.availableMargin),
                 ]
                 tree.update(row=num, values=row)
-        #d print("___account", datetime.now() - tm)
+        # d print("___account", datetime.now() - tm)
 
         # Refresh result table
 
@@ -1153,7 +1150,7 @@ class Function(WS, Variables):
                     format_number(number=-result.funding),
                 ]
                 tree.update(row=num, values=row)
-        #d print("___result", datetime.now() - tm)
+        # d print("___result", datetime.now() - tm)
 
         # Refresh market table
 
@@ -1173,10 +1170,10 @@ class Function(WS, Variables):
                 TreeTable.market.paint(
                     row=var.market_list.index(ws.name), configure=configure
                 )
-        #d print("___market", datetime.now() - tm)
+        # d print("___market", datetime.now() - tm)
 
         # Refresh position table
-                
+
         tree = TreeTable.position
 
         tm = datetime.now()
@@ -1193,56 +1190,59 @@ class Function(WS, Variables):
                 symbol = (position["symbol"], market)
                 if symbol not in rest:
                     rest[symbol] = 0
-                iid = position["emi"]+market+position["symbol"]
+                iid = position["emi"]
                 if position["position"] == 0:
                     tree.delete_hierarchical(parent=market, iid=iid)
                 else:
                     notificate = True
                     rest[symbol] += position["position"]
                     compare = [
-                        position["emi"], 
-                        position["symbol"], 
-                        position["category"], 
-                        position["position"], 
-                        position["pnl"], 
+                        position["emi"],
+                        position["symbol"],
+                        position["category"],
+                        position["position"],
+                        position["pnl"],
                     ]
                     if iid in tree.children_hierarchical[market]:
                         tree.update_hierarchical(parent=market, iid=iid, values=compare)
                     else:
                         tree.insert_hierarchical(parent=market, iid=iid, values=compare)
-                    
             ws = Markets[market]
             for symbol in ws.symbol_list:
                 instrument = ws.Instrument[symbol]
                 if "spot" not in instrument.category:
                     if symbol in rest:
-                        
                         position = instrument.currentQty - rest[symbol]
                     else:
                         position = instrument.currentQty
                     if position != 0:
                         notificate = True
                         compare = [
-                            " - ", 
-                            instrument.symbol, 
-                            instrument.category, 
-                            position, 
-                            " - ", 
+                            "None",
+                            instrument.symbol,
+                            instrument.category,
+                            position,
+                            "-",
                         ]
-                        iid = market+instrument.symbol
+                        iid = market + instrument.symbol
                         if iid in tree.children_hierarchical[market]:
-                            tree.update_hierarchical(parent=market, iid=iid, values=compare)
+                            tree.update_hierarchical(
+                                parent=market, iid=iid, values=compare
+                            )
                         else:
-                            tree.insert_hierarchical(parent=market, iid=iid, values=compare)
-            
-                notification = market+"_notification"
-                if not notificate:
-                    if notification not in tree.children_hierarchical[market]:
-                        tree.insert_hierarchical(parent=market, iid=notification, text='No positions')
-                else:
-                    if notification in tree.children_hierarchical[market]:
-                        tree.delete_hierarchical(parent=market, iid=notification)
-        #d print("___position", datetime.now() - tm)
+                            tree.insert_hierarchical(
+                                parent=market, iid=iid, values=compare
+                            )
+            notification = market + "_notification"
+            if not notificate:
+                if notification not in tree.children_hierarchical[market]:
+                    tree.insert_hierarchical(
+                        parent=market, iid=notification, text="No positions"
+                    )
+            else:
+                if notification in tree.children_hierarchical[market]:
+                    tree.delete_hierarchical(parent=market, iid=notification)
+        # print("___position", datetime.now() - tm)
 
     def close_price(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
         instrument = self.Instrument[symbol]
@@ -2014,9 +2014,9 @@ def init_tables() -> None:
         frame=disp.frame_positions,
         name="position",
         title=var.name_position,
-        #d bind=handler_account,
-        hierarchy=True, 
-        lines=var.market_list, 
+        # d bind=handler_account,
+        hierarchy=True,
+        lines=var.market_list,
     )
     TreeTable.instrument.set_selection()
     indx = var.market_list.index(var.current_market)
@@ -2075,4 +2075,4 @@ def clear_tables():
     var.lock_market_switch.release()
 
 
-change_color(color=disp.title_color, container=disp.root)
+# change_color(color=disp.title_color, container=disp.root)
