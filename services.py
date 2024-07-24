@@ -146,17 +146,18 @@ def insert_database(values: list, table: str) -> None:
                 )
             elif table == "robots":
                 var.cursor_sqlite.execute(
-                    "insert into robots (EMI,STATE) VALUES (?,?)",
+                    "insert into robots (EMI,STATUS,TIMEFR) VALUES (?,?,?)",
                     values,
                 )
             var.connect_sqlite.commit()
             var.sql_lock.release()
-            break
+            return None
         except Exception as e:  # var.error_sqlite
             if "database is locked" not in str(e):
-                var.logger.error("Sqlite Error: " + str(e) + " execID=" + values[0])
+                err_str = f"Sqlite Error: {str(e)} for: {values[0]}"
+                var.logger.error(err_str)
                 var.sql_lock.release()
-                break
+                return err_str
             else:
                 err_locked += 1
                 var.logger.error(
@@ -175,13 +176,13 @@ def update_database(query: list) -> None:
             var.cursor_sqlite.execute(query)
             var.connect_sqlite.commit()
             var.sql_lock.release()
-            break
+            return None
         except Exception as e:  # var.error_sqlite
             if "database is locked" not in str(e):
-                print("_____query:", query)
-                var.logger.error("Sqlite Error: " + str(e) + ")")
+                err_str = f"Sqlite Error: {str(e)}"
+                var.logger.error(err_str)
                 var.sql_lock.release()
-                break
+                return err_str
             else:
                 err_locked += 1
                 var.logger.error(
