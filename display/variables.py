@@ -286,10 +286,14 @@ class Variables:
     # Positions frame
     frame_positions = tk.Frame(notebook)
 
+    # Positions frame
+    frame_bots = tk.Frame(notebook)
+
     notebook.add(frame_trades, text="Trades")
     notebook.add(frame_funding, text="Funding")
     notebook.add(frame_results, text="Results")
     notebook.add(frame_positions, text="Positions")
+    notebook.add(frame_bots, text="Bots")
     pw_orders_trades.add(frame_orders)
     pw_orders_trades.add(notebook)
     pw_orders_trades.bind(
@@ -487,8 +491,10 @@ class TreeviewTable(Variables):
             return
         blank = ["" for _ in self.title]
         for num in range(size):
-            self.insert(values=blank, market="")
+            #self.insert(values=blank, market="")
+            self.tree.insert("", tk.END, iid=num, values=blank)
             self.cache[num] = blank
+        self.children = self.tree.get_children()
 
     def init_hierarchical(self):
         self.tree.column("#0", anchor=tk.W, width=60)
@@ -504,7 +510,7 @@ class TreeviewTable(Variables):
             self.children_hierarchical[line] = self.tree.get_children(line)
         self.children = self.tree.get_children()
 
-    def insert(self, values: list, market: str, iid="", configure="") -> None:
+    def insert(self, values: list, market="", iid="", configure="") -> None:
         if not iid:
             self.iid_count += 1
             iid = self.iid_count
@@ -532,7 +538,7 @@ class TreeviewTable(Variables):
         self.children_hierarchical[parent] = self.tree.get_children(parent)
 
     def update(self, row: int, values: list) -> None:
-        self.tree.item(self.children[row], values=values)
+        self.tree.item(row, values=values)
 
     def update_hierarchical(self, parent: str, iid: str, values: list) -> None:
         self.tree.item(iid, values=values)
@@ -675,6 +681,7 @@ class TreeTable:
     funding: TreeviewTable
     orders: TreeviewTable
     position: TreeviewTable
+    bots: TreeviewTable
 
 
 def text_ignore(event):

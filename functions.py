@@ -1164,6 +1164,30 @@ class Function(WS, Variables):
                 if notification in tree.children_hierarchical[market]:
                     tree.delete_hierarchical(parent=market, iid=notification)
         #d print("___position", datetime.now() - tm)
+                    
+        # Refresh bots table
+                
+        tree = TreeTable.bots
+
+        tm = datetime.now()
+        for name in Bot.keys():
+            bot = Bot[name]
+            compare = [
+                name,
+                bot.timefr, 
+                bot.status, 
+                "-", 
+            ]
+            iid = name
+            if iid in tree.children:
+                if iid not in tree.cache:
+                    tree.cache[iid] = []
+                if compare != tree.cache[iid]:
+                    tree.cache[iid] = compare.copy()
+                    tree.update(row=iid, values=compare)
+            else:
+                tree.insert(iid=iid, values=compare)           
+        #d print("___bots", datetime.now() - tm)
 
     def close_price(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
         instrument = self.Instrument[symbol]
@@ -1862,6 +1886,9 @@ def handler_robots(event) -> None:
                     item=item,
                 )
 
+def handler_bots(event) -> None:
+    pass
+
 
 def change_color(color: str, container=None) -> None:
     line = container.__dict__.copy()
@@ -1939,10 +1966,18 @@ def init_tables() -> None:
         hierarchy=True,
         lines=var.market_list,
     )
+    TreeTable.bots = TreeviewTable(
+        frame=disp.frame_bots,
+        name="bots",
+        title=var.name_bots,
+        bind=handler_bots,
+        hierarchy=False,
+    )
     TreeTable.instrument.set_selection()
     indx = var.market_list.index(var.current_market)
     TreeTable.market.set_selection(index=indx)
     robot_status(ws)
+
 
 
 TreeTable.orders = TreeviewTable(
