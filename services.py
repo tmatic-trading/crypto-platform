@@ -102,3 +102,92 @@ def close(markets):
 
 def display_exception(exception):
     traceback.print_exception(type(exception), exception, exception.__traceback__)
+
+
+def select_database(query: str) -> list:
+    err_locked = 0
+    while True:
+        try:
+            var.sql_lock.acquire(True)
+            var.cursor_sqlite.execute(query)
+            orig = var.cursor_sqlite.fetchall()
+            var.sql_lock.release()
+            data = []
+            if orig:
+                data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
+            return data
+        except Exception as e:  # var.error_sqlite
+            if "database is locked" not in str(e):
+                print("_____query:", query)
+                var.logger.error("Sqlite Error: " + str(e) + ")")
+                var.sql_lock.release()
+                break
+            else:
+                err_locked += 1
+                var.logger.error(
+                    "Sqlite Error: Database is locked (attempt: "
+                    + str(err_locked)
+                    + ")"
+                )
+                var.sql_lock.release()
+
+def insert_database(values: list, table: str) -> None:
+    err_locked = 0
+    while True:
+        try:
+            var.sql_lock.acquire(True)
+            if table == "coins":
+                var.cursor_sqlite.execute(
+                    "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,"
+                    + "TICKER,CATEGORY,MARKET,SIDE,QTY,QTY_REST,PRICE,"
+                    + "THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,CLORDID,TTIME,"
+                    + "ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    values,
+                )
+            elif table == "robots":
+                var.cursor_sqlite.execute(
+                    "insert into robots (EMI,STATE) VALUES (?,?)",
+                    values,
+                )
+            var.connect_sqlite.commit()
+            var.sql_lock.release()
+            break
+        except Exception as e:  # var.error_sqlite
+            if "database is locked" not in str(e):
+                var.logger.error("Sqlite Error: " + str(e) + " execID=" + values[0])
+                var.sql_lock.release()
+                break
+            else:
+                err_locked += 1
+                var.logger.error(
+                    "Sqlite Error: Database is locked (attempt: "
+                    + str(err_locked)
+                    + ")"
+                )
+                var.connect_sqlite.rollback()
+                var.sql_lock.release()
+
+def update_database(query: list) -> None:
+    err_locked = 0
+    while True:
+        try:
+            var.sql_lock.acquire(True)
+            var.cursor_sqlite.execute(query)
+            var.connect_sqlite.commit()
+            var.sql_lock.release()
+            break
+        except Exception as e:  # var.error_sqlite
+            if "database is locked" not in str(e):
+                print("_____query:", query)
+                var.logger.error("Sqlite Error: " + str(e) + ")")
+                var.sql_lock.release()
+                break
+            else:
+                err_locked += 1
+                var.logger.error(
+                    "Sqlite Error: Database is locked (attempt: "
+                    + str(err_locked)
+                    + ")"
+                )
+                var.connect_sqlite.rollback()
+                var.sql_lock.release()

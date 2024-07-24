@@ -6,6 +6,7 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from sqlite3 import Error
 
+import services as service
 from api.api import WS, Markets
 from api.init import Variables
 from common.variables import Variables as var
@@ -141,8 +142,7 @@ class Init(WS, Variables):
         if isinstance(history, list):
             while history:
                 for row in history:
-                    data = Function.select_database(  # read_database
-                        self,
+                    data = service.select_database(  # read_database
                         "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
                         % (row["execID"], self.user_id, self.name),
                     )
@@ -167,8 +167,7 @@ class Init(WS, Variables):
         Additionally, accrued funding and paid commissions for the entire
         period are calculated.
         """
-        data = Function.select_database(
-            self,
+        data = service.select_database(
             "select SYMBOL, TICKER, CATEGORY from "
             + "coins where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY"
             % (self.user_id, self.name),
@@ -190,7 +189,7 @@ class Init(WS, Variables):
                 + "' AND ACCOUNT = "
                 + str(self.user_id)
             )
-            data = Function.select_database(self, sql)
+            data = service.select_database(sql)
             for cur in data:
                 currency = cur["CURRENCY"]
                 union = ""
@@ -230,7 +229,7 @@ class Init(WS, Variables):
                     )
                     union = "union "
                 sql += ") T"
-                data = Function.select_database(self, sql)
+                data = service.select_database(sql)
                 settlCurrency = (currency, self.name)
                 self.Result[settlCurrency].commission = float(data[0]["commiss"])
                 self.Result[settlCurrency].funding = float(data[0]["funding"])
@@ -324,7 +323,7 @@ class Init(WS, Variables):
                 + "order by TTIME desc limit "
                 + str(disp.table_limit)
             )
-            data = Function.select_database(self, sql)
+            data = service.select_database(sql)
             rows = list()
             for val in data:
                 val["SYMBOL"] = (val["SYMBOL"], self.name)
@@ -352,7 +351,7 @@ class Init(WS, Variables):
                 + "order by TTIME desc limit "
                 + str(disp.table_limit)
             )
-            data = Function.select_database(self, sql)
+            data = service.select_database(sql)
             rows = list()
             for val in data:
                 val["SYMBOL"] = (val["SYMBOL"], self.name)

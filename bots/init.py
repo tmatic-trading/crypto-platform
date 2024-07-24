@@ -42,7 +42,7 @@ class Init(WS, Variables):
             )
             union = "union "
         qwr += ") T where MARKET = '" + self.name + "' order by SORT"
-        data = Function.select_database(self, qwr)
+        data = service.select_database(qwr)
         for robot in data:
             emi = robot["EMI"]
             self.robots[emi] = robot
@@ -62,7 +62,7 @@ class Init(WS, Variables):
             + str(self.user_id)
             + " and SIDE <> 'Fund' group by EMI, SYMBOL, CATEGORY) res where POS <> 0"
         )
-        defuncts = Function.select_database(self, qwr)
+        defuncts = service.select_database(qwr)
         for defunct in defuncts:
             symbol = (defunct["SYMBOL"], self.name)
             for emi in self.robots:
@@ -108,7 +108,7 @@ class Init(WS, Variables):
         qwr += (
             ") T where MARKET = '" + self.name + "' and ACCOUNT = " + str(self.user_id)
         )
-        reserved = Function.select_database(self, qwr)
+        reserved = service.select_database(qwr)
         for symbol in self.symbol_list:
             for res in reserved:
                 if symbol == (res["SYMBOL"], self.name):
@@ -153,7 +153,7 @@ class Init(WS, Variables):
                 + "= '%s' AND EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
                 % (self.name, _emi, self.user_id, robot["CATEGORY"])
             )
-            data = Function.select_database(self, sql)
+            data = service.select_database(sql)
             for row in data:
                 for col in row:
                     robot[col] = row[col]
@@ -380,7 +380,7 @@ def load_bots() -> None:
 
     qwr = "select * from robots order by SORT;"
 
-    data = Function.select_database("None", qwr)
+    data = service.select_database(qwr)
     for value in data:
         if value["MARKET"] in var.market_list:
             bot = Bot[value["EMI"]]
@@ -401,7 +401,7 @@ def load_bots() -> None:
         + "TTIME from coins where SIDE <> 'Fund' group by EMI, SYMBOL, "
         + "MARKET) res where POS <> 0;"
     )
-    data = Function.select_database("None", qwr)
+    data = service.select_database(qwr)
     subscriptions = list()
     for value in data:
         if value["MARKET"] in var.market_list:
@@ -425,13 +425,13 @@ def load_bots() -> None:
                     qwr = "select ID, EMI, SYMBOL from coins where EMI = '%s'" % (
                         value["EMI"]
                     )
-                    data = Function.select_database("None", qwr)
+                    data = service.select_database(qwr)
                     for row in data:
                         qwr = "update coins set EMI = '%s' where ID = %s;" % (
                             symbol,
                             row["ID"],
                         )
-                        Function.update_database("None", qwr)
+                        service.update_database(query=qwr)
                 symb = (symbol, ws.name)
                 if symb not in ws.symbol_list:
                     if ws.Instrument[symb].state == "Open":
@@ -466,7 +466,7 @@ def load_bots() -> None:
             + name
             + "' group by SYMBOL) T where POS <> 0;"
         )
-        data = Function.select_database("None", qwr)
+        data = service.select_database(qwr)
         for value in data:
             symbol = (value["SYMBOL"], value["MARKET"])
             ws = Markets[value["MARKET"]]

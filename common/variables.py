@@ -191,4 +191,5 @@ class Variables:
     queue_reload = queue.Queue()
     lock = threading.Lock()
     lock_market_switch = threading.Lock()
+    sql_lock = threading.Lock()
     working_directory: str

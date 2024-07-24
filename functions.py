@@ -93,94 +93,6 @@ class Function(WS, Variables):
 
         return r + val
 
-    def select_database(self: Markets, query: str) -> list:
-        err_locked = 0
-        while True:
-            try:
-                Function.sql_lock.acquire(True)
-                var.cursor_sqlite.execute(query)
-                orig = var.cursor_sqlite.fetchall()
-                Function.sql_lock.release()
-                data = []
-                if orig:
-                    data = list(map(lambda x: dict(zip(orig[0].keys(), x)), orig))
-                return data
-            except Exception as e:  # var.error_sqlite
-                if "database is locked" not in str(e):
-                    print("_____query:", query)
-                    var.logger.error("Sqlite Error: " + str(e) + ")")
-                    Function.sql_lock.release()
-                    break
-                else:
-                    err_locked += 1
-                    var.logger.error(
-                        "Sqlite Error: Database is locked (attempt: "
-                        + str(err_locked)
-                        + ")"
-                    )
-                    Function.sql_lock.release()
-
-    def insert_database(self: Markets, values: list, table: str) -> None:
-        err_locked = 0
-        while True:
-            try:
-                Function.sql_lock.acquire(True)
-                if table == "coins":
-                    var.cursor_sqlite.execute(
-                        "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,"
-                        + "TICKER,CATEGORY,MARKET,SIDE,QTY,QTY_REST,PRICE,"
-                        + "THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,CLORDID,TTIME,"
-                        + "ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        values,
-                    )
-                elif table == "robots":
-                    var.cursor_sqlite.execute(
-                        "insert into robots (EMI,STATE) VALUES (?,?)",
-                        values,
-                    )
-                var.connect_sqlite.commit()
-                Function.sql_lock.release()
-                break
-            except Exception as e:  # var.error_sqlite
-                if "database is locked" not in str(e):
-                    var.logger.error("Sqlite Error: " + str(e) + " execID=" + values[0])
-                    Function.sql_lock.release()
-                    break
-                else:
-                    err_locked += 1
-                    var.logger.error(
-                        "Sqlite Error: Database is locked (attempt: "
-                        + str(err_locked)
-                        + ")"
-                    )
-                    var.connect_sqlite.rollback()
-                    Function.sql_lock.release()
-
-    def update_database(self: Markets, query: list) -> None:
-        err_locked = 0
-        while True:
-            try:
-                Function.sql_lock.acquire(True)
-                var.cursor_sqlite.execute(query)
-                var.connect_sqlite.commit()
-                Function.sql_lock.release()
-                break
-            except Exception as e:  # var.error_sqlite
-                if "database is locked" not in str(e):
-                    print("_____query:", query)
-                    var.logger.error("Sqlite Error: " + str(e) + ")")
-                    Function.sql_lock.release()
-                    break
-                else:
-                    err_locked += 1
-                    var.logger.error(
-                        "Sqlite Error: Database is locked (attempt: "
-                        + str(err_locked)
-                        + ")"
-                    )
-                    var.connect_sqlite.rollback()
-                    Function.sql_lock.release()
-
     def transaction(self: Markets, row: dict, info: str = "") -> None:
         """
         Trades and funding processing
@@ -236,7 +148,7 @@ class Function(WS, Variables):
                 row["transactTime"],
                 self.user_id,
             ]
-            Function.insert_database(self, values=values, table="coins")
+            service.insert_database(values=values, table="coins")
             message = {
                 "SYMBOL": row["symbol"],
                 "MARKET": row["market"],
@@ -329,7 +241,6 @@ class Function(WS, Variables):
                             )
                         var.logger.info(message)
                 data = Function.select_database(  # read_database
-                    self,
                     "select EXECID from coins where EXECID='%s' and account=%s"
                     % (row["execID"], self.user_id),
                 )
@@ -425,7 +336,7 @@ class Function(WS, Variables):
                             row["transactTime"],
                             self.user_id,
                         ]
-                        Function.insert_database(self, values=values, table="coins")
+                        service.insert_database(values=values, table="coins")
                         self.robots[emi]["COMMISS"] += calc["funding"]
                         self.robots[emi]["LTIME"] = row["transactTime"]
                         results.funding += calc["funding"]
@@ -478,7 +389,7 @@ class Function(WS, Variables):
                         row["transactTime"],
                         self.user_id,
                     ]
-                    Function.insert_database(self, values=values, table="coins")
+                    service.insert_database(values=values, table="coins")
                     self.robots[emi]["COMMISS"] += calc["funding"]
                     self.robots[emi]["LTIME"] = row["transactTime"]
                     results.funding += calc["funding"]
@@ -866,7 +777,7 @@ class Function(WS, Variables):
         """
         # adaptive_screen(self)
         if utc.hour != var.refresh_hour:
-            Function.select_database(self, "select count(*) cou from robots")
+            service.select_database("select count(*) cou from robots")
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening SQLite")
         disp.label_time["text"] = time.asctime(time.gmtime())
