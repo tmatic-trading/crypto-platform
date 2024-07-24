@@ -53,6 +53,7 @@ class Variables:
     all_width = window_width
     left_width = window_width
     last_market = ""
+    pw_ratios = {}
 
     if platform.system() == "Windows":
         ostype = "Windows"
@@ -144,6 +145,7 @@ class Variables:
     )
     pw_info_rest.grid(row=1, column=0, sticky="NSEW")
     frame_left.grid_rowconfigure(1, weight=1)
+    pw_ratios[pw_info_rest] = 9
 
     # Information field
     frame_info = tk.Frame(pw_info_rest)
@@ -227,6 +229,7 @@ class Variables:
         pw_rest4, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
     )
     pw_orders_trades.pack(fill="both", expand="yes")
+    pw_ratios[pw_orders_trades] = 2
 
     # Frame for active orders
     frame_orders = tk.Frame(pw_orders_trades)
@@ -290,25 +293,32 @@ class Variables:
     pw_orders_trades.add(frame_orders)
     pw_orders_trades.add(notebook)
     pw_orders_trades.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_orders_trades, 2)
+        "<Configure>", lambda event: resize_height(event, Variables.pw_orders_trades, Variables.pw_ratios[Variables.pw_orders_trades])
+    )
+    pw_orders_trades.bind(
+        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_orders_trades)
     )
 
     # Paned window: up - currencies (account), down - robots
-    pw_account_robo = tk.PanedWindow(
+    pw_bottom = tk.PanedWindow(
         pw_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
     )
-    pw_account_robo.pack(fill="both", expand="yes")
+    pw_bottom.pack(fill="both", expand="yes")
+    pw_ratios[pw_bottom] = 2
 
     # Frame for currencies (account)
-    frame_account = tk.Frame(pw_account_robo)
+    frame_account = tk.Frame(pw_bottom)
 
     # Frame for the robots table
-    frame_robots = tk.Frame(pw_account_robo)
+    frame_robots = tk.Frame(pw_bottom)
 
-    pw_account_robo.add(frame_account)
-    pw_account_robo.add(frame_robots)
-    pw_account_robo.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_account_robo, 2)
+    pw_bottom.add(frame_account)
+    pw_bottom.add(frame_robots)
+    pw_bottom.bind(
+        "<Configure>", lambda event: resize_height(event, Variables.pw_bottom, Variables.pw_ratios[Variables.pw_bottom])
+    )
+    pw_bottom.bind(
+        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_bottom)
     )
 
     pw_rest4.add(frame_instrument)
@@ -327,7 +337,7 @@ class Variables:
     )
 
     pw_rest2.add(pw_rest3)
-    pw_rest2.add(pw_account_robo)
+    pw_rest2.add(pw_bottom)
     pw_rest2.bind(
         "<Configure>", lambda event: resize_height(event, Variables.pw_rest2, 1.4)
     )
@@ -344,7 +354,10 @@ class Variables:
     pw_info_rest.add(frame_info)
     pw_info_rest.add(menu_frame)
     pw_info_rest.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_info_rest, 9)
+        "<Configure>", lambda event: resize_height(event, Variables.pw_info_rest, Variables.pw_ratios[Variables.pw_info_rest])
+    )
+    pw_info_rest.bind(
+        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_info_rest)
     )
 
     pw_main.add(frame_left)
@@ -674,6 +687,11 @@ def resize_col(event, pw, ratio):
 
 def resize_height(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], height=pw.winfo_height() // ratio)
+
+
+def on_sash_move(event, pw):
+    panes = pw.winfo_children()
+    Variables.pw_ratios[pw] = pw.winfo_height() / panes[0].winfo_height()
 
 
 def trim_col_width(tview, cols):

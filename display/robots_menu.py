@@ -53,10 +53,10 @@ class CustomButton(tk.Menubutton):
         name = var.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
         if bot_name in Bot.keys() or bot_name != self.name_trace.get():
-            self.bot_entry[name].config(style=f"used.TEntry")
+            self.bot_entry[name].config(style="used.TEntry")
             self.button.config(state="disabled")
         else:
-            self.bot_entry[name].config(style=f"free.TEntry")
+            self.bot_entry[name].config(style="free.TEntry")
             self.button.config(state="normal")
 
     def open_popup(self, action, bot_name):
@@ -67,7 +67,7 @@ class CustomButton(tk.Menubutton):
 
         if action == "New Bot":
             self.app.pop_up.title(action)
-            content = f"\nCreate bot. Every new bot\nmust have a unique name."
+            content = "\nCreate bot. Every new bot\nmust have a unique name."
             tk.Label(self.app.pop_up, text=content).pack(anchor="n", pady=25)
             tk.Label(self.app.pop_up, text="Enter a unique name").pack(anchor="n")
             self.bot_entry["Name"] = ttk.Entry(
@@ -333,7 +333,7 @@ class SettingsApp:
                 if (
                     self.selected_bot == ""
                     or self.action == "Home"
-                    or self.algo_changed == None
+                    or self.algo_changed is None
                 ):
                     button.configure(state="disabled", bg=disp.bg_select_color)
                 else:
@@ -418,7 +418,8 @@ class SettingsApp:
         self.draw_buttons()
 
     def create_file(self, file_name):
-        os.mknod(file_name)
+        #os.mknod(file_name)
+        open(file_name, "w",).close()
 
     def read_file(self, file_name):
         file = open(file_name, "r")
@@ -478,7 +479,7 @@ class SettingsApp:
 
     def duplicate_bot(self, bot_name, copy_bot):
         shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
-        Bot[bot_name].status = "Suspended"
+        Bot[copy_bot].status = "Suspended"
         # Function.insert_database(self, values=[bot_name, Bot[bot_name].status], table="robots")
         self.after_popup(copy_bot)
 
@@ -539,11 +540,11 @@ class SettingsApp:
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
-            if self.algo_changed == None:
+            if self.algo_changed is None:
                 self.algo_changed = "changed"
                 self.draw_buttons()
         else:
-            if self.algo_changed != "":
+            if self.algo_changed is not None:
                 self.algo_changed = None
                 self.draw_buttons()
 
