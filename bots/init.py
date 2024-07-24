@@ -382,13 +382,15 @@ def load_bots() -> None:
 
     data = service.select_database(qwr)
     for value in data:
-        if value["MARKET"] in var.market_list:
+        #if value["MARKET"] in var.market_list:
+        if 0 == 0:
             bot = Bot[value["EMI"]]
-            bot.name = value["EMI"]
-            bot.market = value["MARKET"]
+            #bot.name = value["EMI"]
+            #bot.market = value["MARKET"]
             bot.timefr = value["TIMEFR"]
             bot.created = value["DAT"]
-            bot.status = "ON"
+            bot.updated = value["UPDATED"]
+            bot.state = value["STATE"]
             bot.position = dict()
 
     # Searching for unclosed positions by bots that are not in the 'robots'

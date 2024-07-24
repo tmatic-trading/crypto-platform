@@ -1,7 +1,7 @@
 """
 1) Provide database transformations for the following operations:
 - New: insert (robots)
-- Activate: update STATUS (robots)
+- Activate: update STATE (robots)
 - Update: update TIMEFRAME, UPDATED (robots)
 - Merge: delete record (robots), update EMI (coins)
 - Duplicate: insert (robots)
@@ -16,7 +16,7 @@
 import os
 import re
 import shutil
-import time
+from datetime import datetime, timezone
 import tkinter as tk
 
 # from pygments.token import Token
@@ -39,7 +39,7 @@ ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
 
 
-class CustomButton(tk.Menubutton):
+class CustomButton(tk.Button):
     def __init__(self, master, app, button, **kwargs):
         super().__init__(master, **kwargs)
         self.app = app
@@ -53,7 +53,7 @@ class CustomButton(tk.Menubutton):
     def trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
-        if bot_name in Bot.keys() or bot_name != self.name_trace.get():
+        if bot_name in Bot.keys() or bot_name != self.name_trace.get() or bot_name == "":
             self.bot_entry[name].config(style="used.TEntry")
             self.button.config(state="disabled")
         else:
@@ -68,9 +68,7 @@ class CustomButton(tk.Menubutton):
 
         if action == "New Bot":
             self.app.pop_up.title(action)
-            content = "\nCreate bot. Every new bot\nmust have a unique name."
-            tk.Label(self.app.pop_up, text=content).pack(anchor="n", pady=25)
-            tk.Label(self.app.pop_up, text="Enter a unique name").pack(anchor="n")
+            tk.Label(self.app.pop_up, text="\n\n\nCreate new bot\nwith a unique name:").pack(anchor="n")
             self.bot_entry["Name"] = ttk.Entry(
                 self.app.pop_up,
                 width=20,
@@ -79,15 +77,22 @@ class CustomButton(tk.Menubutton):
             )
             self.bot_entry["Name"].pack(anchor="n")
             self.name_trace.trace_add("write", self.trace_callback)
+            tk.Label(self.app.pop_up, text="Select timeframe:").pack(anchor="n")
+            timeframe = ttk.Combobox(
+                self.app.pop_up, width=7, textvariable="", state="readonly"
+            )
+            timeframe["values"] = self.app.timeframes
+            timeframe.current(1)
+            timeframe.pack(anchor="n")
             self.button = tk.Button(
                 self.app.pop_up,
                 activebackground=disp.bg_active,
                 text="Create Bot",
-                command=lambda: self.app.create_bot(self.name_trace.get()),
+                command=lambda: self.app.create_bot(self.name_trace.get(), timeframe["values"][timeframe.current()]),
                 state="disabled",
             )
             self.bot_entry["Name"].delete(0, tk.END)
-            self.button.pack(anchor="n")
+            self.button.pack(anchor="n", pady=25)
         elif action == "Syntax":
             self.app.pop_up.title(f"Check syntax for: {bot_name}")
             content = self.app.strategy_text.get("1.0", tk.END)
@@ -255,6 +260,7 @@ class SettingsApp:
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
         self.action = ""
+        self.timeframes = ("1 min", "5 min", "60 min")
 
         self.button_list = {
             "Home": "The main page of the bot's menu",
@@ -273,7 +279,8 @@ class SettingsApp:
             "Name",
             "Created",
             "Updated",
-            "Status",
+            "Timeframe",
+            "State",
         ]
 
         # CustomButton array
@@ -387,25 +394,20 @@ class SettingsApp:
             self.brief_frame.pack_forget()
             self.main_frame.pack(fill="both", expand="yes")
             bot_path = self.get_bot_path(self.selected_bot)
+            bot = Bot[self.selected_bot]
             for item in self.rows_list:
                 if item == "Name":
                     self.info_value[item].config(text=self.selected_bot)
                     self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
                     self.insert_code(self.strategy_text, self.bot_algo)
                 elif item == "Created":
-                    my_time = time.ctime(
-                        os.path.getctime(f"{bot_path}/{self.strategy_file}")
-                    )
-                    t_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(my_time))
-                    self.info_value[item].config(text=t_stamp)
+                    self.info_value[item].config(text=bot.created)
                 elif item == "Updated":
-                    my_time = time.ctime(
-                        os.path.getmtime(f"{bot_path}/{self.strategy_file}")
-                    )
-                    t_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(my_time))
-                    self.info_value[item].config(text=t_stamp)
-                elif item == "Status":
-                    self.info_value[item].config(text="Suspended")
+                    self.info_value[item].config(text=bot.updated)
+                elif item == "Timeframe":
+                    self.info_value[item].config(text=f"{bot.timefr} min")
+                elif item == "State":
+                    self.info_value[item].config(text=bot.state)
         else:
             self.main_frame.pack_forget()
             self.brief_frame.pack(fill="both", expand="yes")
@@ -435,9 +437,14 @@ class SettingsApp:
 
     def get_bot_path(self, bot_name):
         return os.path.join(self.algo_dir, bot_name)
+    
+    def get_time(self):
+        my_time = str(datetime.now(tz=timezone.utc)).split(".")
+        return my_time[0]
 
-    def create_bot(self, bot_name):
-        err = service.insert_database(values=[bot_name, "Suspended", 0], table="robots")
+    def create_bot(self, bot_name, timeframe):
+        tf = timeframe.split(" ")
+        err = service.insert_database(values=[bot_name, "Suspended", tf[0]], table="robots")
         if err is None:
             bot_path = self.get_bot_path(bot_name)
             # Create a new directory with the name as the new bot's name
@@ -464,7 +471,11 @@ class SettingsApp:
                 f"{str(bot_path)}/.gitignore",
                 f"*\n!__init__.py\n!.gitignore\n!init.py\n!{self.strategy_file}\n",
             )
-            Bot[bot_name].status = "Suspended"
+            time_now = self.get_time()
+            Bot[bot_name].state = "Suspended"
+            Bot[bot_name].timefr = tf[0]
+            Bot[bot_name].created = time_now
+            Bot[bot_name].updated = time_now
             self.after_popup(bot_name)
 
     def merge_bot(self, bot_name, bot_to_delete):
@@ -484,10 +495,14 @@ class SettingsApp:
             self.after_popup("")
 
     def duplicate_bot(self, bot_name, copy_bot):
-        err = service.insert_database(values=[copy_bot, "Suspended", 0], table="robots")
+        err = service.insert_database(values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots")
         if err is None:
             shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
-            Bot[copy_bot].status = "Suspended"
+            time_now = self.get_time()
+            Bot[copy_bot].state = "Suspended"
+            Bot[copy_bot].timefr = Bot[bot_name].timefr
+            Bot[copy_bot].created = time_now
+            Bot[copy_bot].updated = time_now
             self.after_popup(copy_bot)
 
     def after_popup(self, bot_name):

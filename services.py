@@ -146,7 +146,7 @@ def insert_database(values: list, table: str) -> None:
                 )
             elif table == "robots":
                 var.cursor_sqlite.execute(
-                    "insert into robots (EMI,STATUS,TIMEFR) VALUES (?,?,?)",
+                    "insert into robots (EMI,STATE,TIMEFR) VALUES (?,?,?)",
                     values,
                 )
             var.connect_sqlite.commit()

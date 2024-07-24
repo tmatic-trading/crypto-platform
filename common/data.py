@@ -157,13 +157,14 @@ class Result:
 
 
 class BotData:
-    name: str
-    market: str
+    #name: str
+    #market: str
     position: dict
     timefr: int
     pnl: dict
-    status: str
+    state: str
     created: str
+    updated: str
 
     def __iter__(self):
         return Ret.iter(self)
