@@ -105,6 +105,7 @@ class Variables:
     red_color = "#f53661"
     white_color = "#FFFFFF"
     fg_select_color = fg_color
+    bg_changed = "gold"
 
     frame_state.config(background=title_color)
     label_trading.config(background=title_color)
