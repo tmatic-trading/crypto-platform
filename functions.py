@@ -240,7 +240,7 @@ class Function(WS, Variables):
                                 }
                             )
                         var.logger.info(message)
-                data = Function.select_database(  # read_database
+                data = service.select_database(  # read_database
                     "select EXECID from coins where EXECID='%s' and account=%s"
                     % (row["execID"], self.user_id),
                 )
