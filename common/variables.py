@@ -122,6 +122,7 @@ class Variables:
         "FUND",
     ]
     name_account = [
+        "MARKET",
         "CURRENCY",
         "WALLET_BAL",
         "UNRLZD_PNL",
@@ -164,7 +165,7 @@ class Variables:
         "MARKET",
     ]
     name_results = [
-        "MARKET", 
+        "MARKET",
         "CURRENCY",
         "PNL SUM",
         "COMMISSION SUM",

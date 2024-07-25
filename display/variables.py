@@ -297,10 +297,16 @@ class Variables:
     pw_orders_trades.add(frame_orders)
     pw_orders_trades.add(notebook)
     pw_orders_trades.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_orders_trades, Variables.pw_ratios[Variables.pw_orders_trades])
+        "<Configure>",
+        lambda event: resize_height(
+            event,
+            Variables.pw_orders_trades,
+            Variables.pw_ratios[Variables.pw_orders_trades],
+        ),
     )
     pw_orders_trades.bind(
-        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_orders_trades)
+        "<ButtonRelease-1>",
+        lambda event: on_sash_move(event, Variables.pw_orders_trades),
     )
 
     # Paned window: up - currencies (account), down - robots
@@ -319,7 +325,10 @@ class Variables:
     pw_bottom.add(frame_account)
     pw_bottom.add(frame_robots)
     pw_bottom.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_bottom, Variables.pw_ratios[Variables.pw_bottom])
+        "<Configure>",
+        lambda event: resize_height(
+            event, Variables.pw_bottom, Variables.pw_ratios[Variables.pw_bottom]
+        ),
     )
     pw_bottom.bind(
         "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_bottom)
@@ -358,7 +367,10 @@ class Variables:
     pw_info_rest.add(frame_info)
     pw_info_rest.add(menu_frame)
     pw_info_rest.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_info_rest, Variables.pw_ratios[Variables.pw_info_rest])
+        "<Configure>",
+        lambda event: resize_height(
+            event, Variables.pw_info_rest, Variables.pw_ratios[Variables.pw_info_rest]
+        ),
     )
     pw_info_rest.bind(
         "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_info_rest)
@@ -491,7 +503,7 @@ class TreeviewTable(Variables):
             return
         blank = ["" for _ in self.title]
         for num in range(size):
-            #self.insert(values=blank, market="")
+            # self.insert(values=blank, market="")
             self.tree.insert("", tk.END, iid=num, values=blank)
             self.cache[num] = blank
         self.children = self.tree.get_children()
@@ -502,11 +514,11 @@ class TreeviewTable(Variables):
         for line in self.lines:
             self.tree.insert("", tk.END, text=line, iid=line, open=True, tags="Gray")
             self.cache[line] = line
-            '''iid = line + "_notification"
+            """iid = line + "_notification"
             self.cache[iid] = iid
             self.tree.insert(
                 line, tk.END, text="No positions", iid=line + "_notification", open=True
-            )'''
+            )"""
             self.children_hierarchical[line] = self.tree.get_children(line)
         self.children = self.tree.get_children()
 

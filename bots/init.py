@@ -382,11 +382,11 @@ def load_bots() -> None:
 
     data = service.select_database(qwr)
     for value in data:
-        #if value["MARKET"] in var.market_list:
+        # if value["MARKET"] in var.market_list:
         if 0 == 0:
             bot = Bot[value["EMI"]]
-            #bot.name = value["EMI"]
-            #bot.market = value["MARKET"]
+            # bot.name = value["EMI"]
+            # bot.market = value["MARKET"]
             bot.timefr = value["TIMEFR"]
             bot.created = value["DAT"]
             bot.updated = value["UPDATED"]

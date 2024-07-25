@@ -784,7 +784,6 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
-
         current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
 
         # Refresh instrument table
@@ -991,42 +990,51 @@ class Function(WS, Variables):
 
         tree = TreeTable.account
 
+        def form_result_line(compare):
+            for num in range(1, 7):
+                compare[num] = format_number(compare[num])
+            return compare
+
         tm = datetime.now()
-        for num, settlCurrency in enumerate(self.Account.keys()):
-            account = self.Account[settlCurrency]
-            compare = [
-                settlCurrency[0],
-                account.walletBalance,
-                account.unrealisedPnl,
-                account.marginBalance,
-                account.orderMargin,
-                account.positionMagrin,
-                account.availableMargin,
-            ]
-            if compare != tree.cache[num]:
-                tree.cache[num] = compare
-                row = [
+        for market in var.market_list:
+            ws = Markets[market]
+            for settlCurrency in self.Account.keys():
+                account = self.Account[settlCurrency]
+                compare = [
                     settlCurrency[0],
-                    format_number(number=account.walletBalance),
-                    format_number(number=account.unrealisedPnl),
-                    format_number(number=account.marginBalance),
-                    format_number(number=account.orderMargin),
-                    format_number(number=account.positionMagrin),
-                    format_number(number=account.availableMargin),
+                    account.walletBalance,
+                    account.unrealisedPnl,
+                    account.marginBalance,
+                    account.orderMargin,
+                    account.positionMagrin,
+                    account.availableMargin,
                 ]
-                tree.update(row=num, values=row)
+                iid = market + settlCurrency[0]
+                if iid in tree.children_hierarchical[market]:
+                    if iid not in tree.cache:
+                        tree.cache[iid] = []
+                    if compare != tree.cache[iid]:
+                        tree.cache[iid] = compare.copy()
+                        tree.update_hierarchical(
+                            parent=market, iid=iid, values=form_result_line(compare)
+                        )
+                else:
+                    tree.insert_hierarchical(
+                        parent=market, iid=iid, values=form_result_line(compare)
+                    )
         # d print("___account", datetime.now() - tm)
 
         # Refresh result table
-                
+
         if current_notebook_tab == "Results":
             tree = TreeTable.results
+
             def form_result_line(compare):
                 compare[1] = format_number(compare[1])
                 compare[2] = format_number(compare[2])
                 compare[3] = format_number(compare[3])
                 return compare
-            
+
             for market in var.market_list:
                 ws = Markets[market]
                 results = dict()
@@ -1051,7 +1059,7 @@ class Function(WS, Variables):
                                     results[currency] += calc["sumreal"]
                                 else:
                                     results[currency] = calc["sumreal"]
-                for num, currency in enumerate(ws.Result.keys()):
+                for currency in ws.Result.keys():
                     result = ws.Result[currency]
                     result.result = 0
                     if currency in results:
@@ -1062,21 +1070,26 @@ class Function(WS, Variables):
                         -result.commission,
                         -result.funding,
                     ]
-                    iid = market+currency[0]
+                    iid = market + currency[0]
                     if iid in tree.children_hierarchical[market]:
                         if iid not in tree.cache:
                             tree.cache[iid] = []
                         if compare != tree.cache[iid]:
-                            tree.cache[num] = compare.copy()
-                            tree.update_hierarchical(parent=market, iid=iid, values=form_result_line(compare))
+                            tree.cache[iid] = compare.copy()
+                            tree.update_hierarchical(
+                                parent=market, iid=iid, values=form_result_line(compare)
+                            )
                     else:
-                        tree.insert_hierarchical(parent=market, iid=iid, values=form_result_line(compare))
+                        tree.insert_hierarchical(
+                            parent=market, iid=iid, values=form_result_line(compare)
+                        )
             # d print("___result", datetime.now() - tm)
 
         # Refresh position table
-                
-        elif current_notebook_tab == "Positions":        
-            tree = TreeTable.position                    
+
+        elif current_notebook_tab == "Positions":
+            tree = TreeTable.position
+
             def update_position_line(iid: str, compare: list):
                 def form_position_line(compare):
                     compare[3] = Function.volume(
@@ -1085,15 +1098,19 @@ class Function(WS, Variables):
                         symbol=symbol,
                     )
                     return compare
-                
+
                 if iid in tree.children_hierarchical[market]:
                     if iid not in tree.cache:
                         tree.cache[iid] = []
                     if compare != tree.cache[iid]:
                         tree.cache[iid] = compare.copy()
-                        tree.update_hierarchical(parent=market, iid=iid, values=form_position_line(compare))
+                        tree.update_hierarchical(
+                            parent=market, iid=iid, values=form_position_line(compare)
+                        )
                 else:
-                    tree.insert_hierarchical(parent=market, iid=iid, values=form_position_line(compare))
+                    tree.insert_hierarchical(
+                        parent=market, iid=iid, values=form_position_line(compare)
+                    )
 
             tm = datetime.now()
             pos_by_market = {market: [] for market in var.market_list}
@@ -1155,20 +1172,20 @@ class Function(WS, Variables):
                 else:
                     if notification in tree.children_hierarchical[market]:
                         tree.delete_hierarchical(parent=market, iid=notification)
-            #d print("___position", datetime.now() - tm)
-                        
+            # d print("___position", datetime.now() - tm)
+
         # Refresh bots table
 
-        elif current_notebook_tab == "Bots":                
+        elif current_notebook_tab == "Bots":
             tree = TreeTable.bots
             tm = datetime.now()
             for name in Bot.keys():
                 bot = Bot[name]
                 compare = [
                     name,
-                    bot.timefr, 
-                    bot.state, 
-                    bot.updated, 
+                    bot.timefr,
+                    bot.state,
+                    bot.updated,
                 ]
                 iid = name
                 if iid in tree.children:
@@ -1178,9 +1195,9 @@ class Function(WS, Variables):
                         tree.cache[iid] = compare.copy()
                         tree.update(row=iid, values=compare)
                 else:
-                    tree.insert(iid=iid, values=compare)           
-            #d print("___bots", datetime.now() - tm)
-                        
+                    tree.insert(iid=iid, values=compare)
+            # d print("___bots", datetime.now() - tm)
+
         # Refresh market table
 
         tree = TreeTable.market
@@ -1609,7 +1626,7 @@ def handler_orderbook(event) -> None:
         if quantity.get() and price_ask.get() and emi_number.get():
             try:
                 qnt = abs(
-                    float(quantity.get()) # * ws.Instrument[var.symbol].myMultiplier
+                    float(quantity.get())  # * ws.Instrument[var.symbol].myMultiplier
                 )
                 price = float(price_ask.get())
                 res = "yes"
@@ -1641,7 +1658,7 @@ def handler_orderbook(event) -> None:
         if quantity.get() and price_bid.get() and emi_number.get():
             try:
                 qnt = abs(
-                    float(quantity.get()) #  * ws.Instrument[var.symbol].myMultiplier
+                    float(quantity.get())  #  * ws.Instrument[var.symbol].myMultiplier
                 )
                 price = float(price_bid.get())
                 res = "yes"
@@ -1898,6 +1915,7 @@ def handler_robots(event) -> None:
                     item=item,
                 )
 
+
 def handler_bots(event) -> None:
     pass
 
@@ -1951,8 +1969,9 @@ def init_tables() -> None:
         frame=disp.frame_account,
         name="account",
         title=var.name_account,
-        size=len(ws.Account.get_keys()),
         bind=handler_account,
+        hierarchy=True,
+        lines=var.market_list,
     )
     TreeTable.market = TreeviewTable(
         frame=disp.frame_market,
@@ -1968,7 +1987,7 @@ def init_tables() -> None:
         name="results",
         title=var.name_results,
         hierarchy=True,
-        lines=var.market_list, 
+        lines=var.market_list,
     )
     TreeTable.position = TreeviewTable(
         frame=disp.frame_positions,
@@ -1988,7 +2007,6 @@ def init_tables() -> None:
     indx = var.market_list.index(var.current_market)
     TreeTable.market.set_selection(index=indx)
     robot_status(ws)
-
 
 
 TreeTable.orders = TreeviewTable(

@@ -16,11 +16,11 @@
 import os
 import re
 import shutil
-from datetime import datetime, timezone
 import tkinter as tk
 
 # from pygments.token import Token
 import traceback
+from datetime import datetime, timezone
 from tkinter import StringVar, font, ttk
 
 from pygments import lex
@@ -32,7 +32,6 @@ from common.data import Bot
 
 from .variables import AutoScrollbar
 from .variables import Variables as disp
-
 
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
@@ -52,7 +51,11 @@ class CustomButton(tk.Button):
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
-        if bot_name in Bot.keys() or bot_name != self.name_trace.get() or bot_name == "":
+        if (
+            bot_name in Bot.keys()
+            or bot_name != self.name_trace.get()
+            or bot_name == ""
+        ):
             self.bot_entry[name].config(style="used.TEntry")
             self.button.config(state="disabled")
         else:
@@ -67,7 +70,9 @@ class CustomButton(tk.Button):
 
         if action == "New Bot":
             self.app.pop_up.title(action)
-            tk.Label(self.app.pop_up, text="\n\n\nCreate new bot\nwith a unique name:").pack(anchor="n")
+            tk.Label(
+                self.app.pop_up, text="\n\n\nCreate new bot\nwith a unique name:"
+            ).pack(anchor="n")
             self.bot_entry["Name"] = ttk.Entry(
                 self.app.pop_up,
                 width=20,
@@ -87,7 +92,9 @@ class CustomButton(tk.Button):
                 self.app.pop_up,
                 activebackground=disp.bg_active,
                 text="Create Bot",
-                command=lambda: self.app.create_bot(self.name_trace.get(), timeframe["values"][timeframe.current()]),
+                command=lambda: self.app.create_bot(
+                    self.name_trace.get(), timeframe["values"][timeframe.current()]
+                ),
                 state="disabled",
             )
             self.bot_entry["Name"].delete(0, tk.END)
@@ -227,7 +234,9 @@ class CustomButton(tk.Button):
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Update":
                 tf_value = self.app.timeframe_trace.get().split(" ")
-                err = service.update_database(query=f"UPDATE robots SET TIMEFR = {tf_value[0]}, UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{self.app.selected_bot}'")
+                err = service.update_database(
+                    query=f"UPDATE robots SET TIMEFR = {tf_value[0]}, UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{self.app.selected_bot}'"
+                )
                 if err is None:
                     self.app.write_file(
                         f"{self.app.get_bot_path(self.app.selected_bot)}/{self.app.strategy_file}",
@@ -267,7 +276,7 @@ class SettingsApp:
         self.action = ""
         self.timeframes = ("1 min", "5 min", "60 min")
         self.timeframe_trace = StringVar(name=f"timeframe{self}")
-        self.timeframe_trace.trace_add('write', self.timeframe_trace_callback)
+        self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
 
         self.button_list = {
             "Home": "The main page of the bot's menu",
@@ -351,8 +360,7 @@ class SettingsApp:
                 if (
                     self.selected_bot == ""
                     or self.action == "Home"
-                    or (self.algo_changed is None
-                    and self.timeframe_changed is None)
+                    or (self.algo_changed is None and self.timeframe_changed is None)
                 ):
                     button.configure(state="disabled", bg=disp.bg_select_color)
                 else:
@@ -398,7 +406,10 @@ class SettingsApp:
 
     def timeframe_trace_callback(self, name, index, mode):
         value = self.timeframe_trace.get().split(" ")
-        if self.selected_bot in Bot.keys() and int(value[0]) != Bot[self.selected_bot].timefr:
+        if (
+            self.selected_bot in Bot.keys()
+            and int(value[0]) != Bot[self.selected_bot].timefr
+        ):
             if self.timeframe_changed is None:
                 self.timeframe_changed = "changed"
                 self.draw_buttons()
@@ -427,7 +438,9 @@ class SettingsApp:
                 elif item == "Updated":
                     self.info_value[item].config(text=bot.updated)
                 elif item == "Timeframe":
-                    self.tm_box.current(self.tm_box["values"].index(f"{bot.timefr} min"))
+                    self.tm_box.current(
+                        self.tm_box["values"].index(f"{bot.timefr} min")
+                    )
                 elif item == "State":
                     self.info_value[item].config(text=bot.state)
         else:
@@ -443,8 +456,11 @@ class SettingsApp:
         self.draw_buttons()
 
     def create_file(self, file_name):
-        #os.mknod(file_name)
-        open(file_name, "w",).close()
+        # os.mknod(file_name)
+        open(
+            file_name,
+            "w",
+        ).close()
 
     def read_file(self, file_name):
         file = open(file_name, "r")
@@ -459,14 +475,16 @@ class SettingsApp:
 
     def get_bot_path(self, bot_name):
         return os.path.join(self.algo_dir, bot_name)
-    
+
     def get_time(self):
         my_time = str(datetime.now(tz=timezone.utc)).split(".")
         return my_time[0]
 
     def create_bot(self, bot_name, timeframe):
         tf = timeframe.split(" ")
-        err = service.insert_database(values=[bot_name, "Suspended", tf[0]], table="robots")
+        err = service.insert_database(
+            values=[bot_name, "Suspended", tf[0]], table="robots"
+        )
         if err is None:
             bot_path = self.get_bot_path(bot_name)
             # Create a new directory with the name as the new bot's name
@@ -501,7 +519,9 @@ class SettingsApp:
             self.after_popup(bot_name)
 
     def merge_bot(self, bot_name, bot_to_delete):
-        err = service.update_database(query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'")
+        err = service.update_database(
+            query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'"
+        )
         if err is None:
             bot_path = self.get_bot_path(bot_to_delete)
             shutil.rmtree(str(bot_path))
@@ -509,7 +529,9 @@ class SettingsApp:
             self.after_popup(bot_name)
 
     def delete_bot(self, bot_name):
-        err = service.update_database(query=f"DELETE FROM robots WHERE EMI = '{bot_name}'")
+        err = service.update_database(
+            query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+        )
         if err is None:
             bot_path = self.get_bot_path(bot_name)
             shutil.rmtree(str(bot_path))
@@ -517,7 +539,9 @@ class SettingsApp:
             self.after_popup("")
 
     def duplicate_bot(self, bot_name, copy_bot):
-        err = service.insert_database(values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots")
+        err = service.insert_database(
+            values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
+        )
         if err is None:
             shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
             time_now = self.get_time()
@@ -715,7 +739,12 @@ class SettingsApp:
             self.info_name[item].pack(anchor="w")
             if item == "Timeframe":
                 pass
-                self.tm_box = ttk.Combobox(info_left, width=7, textvariable=self.timeframe_trace, state="readonly")
+                self.tm_box = ttk.Combobox(
+                    info_left,
+                    width=7,
+                    textvariable=self.timeframe_trace,
+                    state="readonly",
+                )
                 self.tm_box["values"] = self.timeframes
                 self.tm_box.pack(anchor="w")
             else:

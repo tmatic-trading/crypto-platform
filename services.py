@@ -131,6 +131,7 @@ def select_database(query: str) -> list:
                 )
                 var.sql_lock.release()
 
+
 def insert_database(values: list, table: str) -> None:
     err_locked = 0
     while True:
@@ -167,6 +168,7 @@ def insert_database(values: list, table: str) -> None:
                 )
                 var.connect_sqlite.rollback()
                 var.sql_lock.release()
+
 
 def update_database(query: list) -> None:
     err_locked = 0

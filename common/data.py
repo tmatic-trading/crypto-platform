@@ -157,8 +157,8 @@ class Result:
 
 
 class BotData:
-    #name: str
-    #market: str
+    # name: str
+    # market: str
     position: dict
     timefr: int
     pnl: dict
