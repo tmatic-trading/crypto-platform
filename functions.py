@@ -998,8 +998,8 @@ class Function(WS, Variables):
         tm = datetime.now()
         for market in var.market_list:
             ws = Markets[market]
-            for settlCurrency in self.Account.keys():
-                account = self.Account[settlCurrency]
+            for settlCurrency in ws.Account.keys():
+                account = ws.Account[settlCurrency]
                 compare = [
                     settlCurrency[0],
                     account.walletBalance,
