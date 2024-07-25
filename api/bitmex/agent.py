@@ -320,7 +320,7 @@ class Agent(Bitmex):
         return 0
 
     def place_limit(
-        self, quantity: int, price: float, clOrdID: str, symbol: tuple
+        self, quantity: float, price: float, clOrdID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
         Places a limit order
@@ -341,10 +341,10 @@ class Agent(Bitmex):
             var.queue_info.put(queue_message)
             return
         path = Listing.ORDER_ACTIONS
-        ticker = self.Instrument[symbol].ticker
+        instrument = self.Instrument[symbol]
         postData = {
-            "symbol": ticker,
-            "orderQty": quantity,
+            "symbol": instrument.ticker,
+            "orderQty": round(quantity / instrument.valueOfOneContract),
             "price": price,
             "clOrdID": clOrdID,
             "ordType": "Limit",
@@ -353,18 +353,18 @@ class Agent(Bitmex):
         return Send.request(self, path=path, postData=postData, verb="POST")
 
     def replace_limit(
-        self, quantity: int, price: float, orderID: str, symbol: tuple
+        self, quantity: float, price: float, orderID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
         Moves a limit order
         """
         path = Listing.ORDER_ACTIONS
-        ticker = self.Instrument[symbol].ticker
+        instrument = self.Instrument[symbol]
         postData = {
-            "symbol": ticker,
+            "symbol": instrument.ticker,
             "price": price,
             "orderID": orderID,
-            "leavesQty": abs(quantity),
+            "leavesQty": round(abs(quantity / instrument.valueOfOneContract)),
             "ordType": "Limit",
         }
 
