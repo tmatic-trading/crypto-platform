@@ -164,6 +164,7 @@ class Variables:
         "MARKET",
     ]
     name_results = [
+        "MARKET", 
         "CURRENCY",
         "PNL SUM",
         "COMMISSION SUM",

@@ -502,11 +502,11 @@ class TreeviewTable(Variables):
         for line in self.lines:
             self.tree.insert("", tk.END, text=line, iid=line, open=True, tags="Gray")
             self.cache[line] = line
-            iid = line + "_notification"
+            '''iid = line + "_notification"
             self.cache[iid] = iid
             self.tree.insert(
                 line, tk.END, text="No positions", iid=line + "_notification", open=True
-            )
+            )'''
             self.children_hierarchical[line] = self.tree.get_children(line)
         self.children = self.tree.get_children()
 
@@ -520,7 +520,7 @@ class TreeviewTable(Variables):
             self.delete()
 
     def insert_hierarchical(
-        self, parent: str, iid: str, values: list, configure="", text=""
+        self, parent: str, iid: str, values=[], configure="", text=""
     ):
         self.tree.insert(
             parent, tk.END, iid=iid, values=values, tags=configure, text=text
