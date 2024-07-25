@@ -33,7 +33,6 @@ from common.data import Bot
 from .variables import AutoScrollbar
 from .variables import Variables as disp
 
-#from functions import Function
 
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
@@ -50,7 +49,7 @@ class CustomButton(tk.Button):
         self.name_trace = StringVar(name="Name" + str(self))
         self.bind("<ButtonPress-1>", self.on_press)
 
-    def trace_callback(self, var, index, mode):
+    def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
         if bot_name in Bot.keys() or bot_name != self.name_trace.get() or bot_name == "":
@@ -76,14 +75,14 @@ class CustomButton(tk.Button):
                 textvariable=self.name_trace,
             )
             self.bot_entry["Name"].pack(anchor="n")
-            self.name_trace.trace_add("write", self.trace_callback)
+            self.name_trace.trace_add("write", self.name_trace_callback)
             tk.Label(self.app.pop_up, text="Select timeframe:").pack(anchor="n")
-            timeframe = ttk.Combobox(
-                self.app.pop_up, width=7, textvariable="", state="readonly"
-            )
+
+            timeframe = ttk.Combobox(self.app.pop_up, width=7, state="readonly")
             timeframe["values"] = self.app.timeframes
             timeframe.current(1)
             timeframe.pack(anchor="n")
+
             self.button = tk.Button(
                 self.app.pop_up,
                 activebackground=disp.bg_active,
@@ -168,7 +167,7 @@ class CustomButton(tk.Button):
                 textvariable=self.name_trace,
             )
             self.bot_entry["Name"].pack(anchor="n")
-            self.name_trace.trace_add("write", self.trace_callback)
+            self.name_trace.trace_add("write", self.name_trace_callback)
             self.button = tk.Button(
                 self.app.pop_up,
                 activebackground=disp.bg_active,
@@ -227,12 +226,18 @@ class CustomButton(tk.Button):
             elif self.name == "Syntax":
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Update":
-                self.app.write_file(
-                    f"{self.app.get_bot_path(self.app.selected_bot)}/{self.app.strategy_file}",
-                    self.app.strategy_text.get("1.0", tk.END),
-                )
-                self.app.algo_changed = None
-                self.app.draw_buttons()
+                tf_value = self.app.timeframe_trace.get().split(" ")
+                err = service.update_database(query=f"UPDATE robots SET TIMEFR = {tf_value[0]}, UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{self.app.selected_bot}'")
+                if err is None:
+                    self.app.write_file(
+                        f"{self.app.get_bot_path(self.app.selected_bot)}/{self.app.strategy_file}",
+                        self.app.strategy_text.get("1.0", tk.END),
+                    )
+                    Bot[self.app.selected_bot].timefr = int(tf_value[0])
+                    Bot[self.app.selected_bot].updated = self.app.get_time()
+                    self.app.algo_changed = None
+                    self.app.timeframe_changed = None
+                    self.app.draw_buttons()
             elif self.name == "Merge":
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Duplicate":
@@ -261,6 +266,8 @@ class SettingsApp:
         self.strategy_file = "strategy.py"
         self.action = ""
         self.timeframes = ("1 min", "5 min", "60 min")
+        self.timeframe_trace = StringVar(name=f"timeframe{self}")
+        self.timeframe_trace.trace_add('write', self.timeframe_trace_callback)
 
         self.button_list = {
             "Home": "The main page of the bot's menu",
@@ -309,6 +316,9 @@ class SettingsApp:
         # If bot's algorithm is changed by user, than the value in not None
         self.algo_changed = None
 
+        # If bot's timeframe is changed by user, than the value in not None
+        self.timeframe_changed = None
+
         # Create initial frames
         self.bot_info_frame()
 
@@ -341,7 +351,8 @@ class SettingsApp:
                 if (
                     self.selected_bot == ""
                     or self.action == "Home"
-                    or self.algo_changed is None
+                    or (self.algo_changed is None
+                    and self.timeframe_changed is None)
                 ):
                     button.configure(state="disabled", bg=disp.bg_select_color)
                 else:
@@ -385,6 +396,17 @@ class SettingsApp:
             )
             y_pos += int(self.button_height * 1.333)
 
+    def timeframe_trace_callback(self, name, index, mode):
+        value = self.timeframe_trace.get().split(" ")
+        if self.selected_bot in Bot.keys() and int(value[0]) != Bot[self.selected_bot].timefr:
+            if self.timeframe_changed is None:
+                self.timeframe_changed = "changed"
+                self.draw_buttons()
+        else:
+            if self.timeframe_changed is not None:
+                self.timeframe_changed = None
+                self.draw_buttons()
+
     def show_bot(self):
         """Shows the bot's info when bot is selected. Otherwise hides"""
         if self.selected_bot != "" and self.action != "Home":
@@ -405,7 +427,7 @@ class SettingsApp:
                 elif item == "Updated":
                     self.info_value[item].config(text=bot.updated)
                 elif item == "Timeframe":
-                    self.info_value[item].config(text=f"{bot.timefr} min")
+                    self.tm_box.current(self.tm_box["values"].index(f"{bot.timefr} min"))
                 elif item == "State":
                     self.info_value[item].config(text=bot.state)
         else:
@@ -473,7 +495,7 @@ class SettingsApp:
             )
             time_now = self.get_time()
             Bot[bot_name].state = "Suspended"
-            Bot[bot_name].timefr = tf[0]
+            Bot[bot_name].timefr = int(tf[0])
             Bot[bot_name].created = time_now
             Bot[bot_name].updated = time_now
             self.after_popup(bot_name)
@@ -690,9 +712,15 @@ class SettingsApp:
         self.info_value = {}
         for item in self.rows_list:
             self.info_name[item] = tk.Label(info_left, text=item, font=spec_font)
-            self.info_value[item] = tk.Label(info_left, text="")
             self.info_name[item].pack(anchor="w")
-            self.info_value[item].pack(anchor="w")
+            if item == "Timeframe":
+                pass
+                self.tm_box = ttk.Combobox(info_left, width=7, textvariable=self.timeframe_trace, state="readonly")
+                self.tm_box["values"] = self.timeframes
+                self.tm_box.pack(anchor="w")
+            else:
+                self.info_value[item] = tk.Label(info_left, text="")
+                self.info_value[item].pack(anchor="w")
 
         # Frame for Bot's algorithm loaded from the strategy.py file
         frame_row += 1
