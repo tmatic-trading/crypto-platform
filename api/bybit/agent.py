@@ -422,7 +422,6 @@ class Agent(Bybit):
                     instrument.marginCallPrice = values["liqPrice"]
                     if not instrument.marginCallPrice:
                         instrument.marginCallPrice = "inf"
-                    instrument.state = values["positionStatus"]
                 if isinstance(result["result"]["list"], list):
                     success[num] = 0
 

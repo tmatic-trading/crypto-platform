@@ -406,7 +406,6 @@ def load_bots() -> None:
     data = service.select_database(qwr)
     subscriptions = list()
     for value in data:
-        #d print("____________", value["SYMBOL"], value["MARKET"], value["POS"])
         if value["MARKET"] in var.market_list:
             name = value["EMI"]
             if name not in Bot.keys():
@@ -437,14 +436,15 @@ def load_bots() -> None:
                         service.update_database(query=qwr)
                 symb = (symbol, ws.name)
                 if symb not in ws.symbol_list:
-                    #d print("state", ws.Instrument[symb].state)
                     if ws.Instrument[symb].state == "Open":
                         subscriptions.append(symb)
                     else:
                         message = (
                             "The "
                             + str(symb)
-                            + " instrument has already expired, but in the database there are still positions that should not exist. Check your trading history."
+                            + " instrument has a "
+                            + ws.Instrument[symb].state
+                            + " status, but is normally Open. The instrument has probably expired, but in the database there are still positions that should not exist. Check your trading history."
                         )
                         var.logger.warning(message)
                         var.queue_info.put(
@@ -473,7 +473,7 @@ def load_bots() -> None:
         data = service.select_database(qwr)
         for value in data:
             symbol = (value["SYMBOL"], value["MARKET"])
-            if value["MARKET"] in var.market_list:                
+            if value["MARKET"] in var.market_list:
                 ws = Markets[value["MARKET"]]
                 instrument = ws.Instrument[symbol]
                 bot = Bot[name]
