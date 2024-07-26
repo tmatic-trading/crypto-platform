@@ -264,6 +264,7 @@ class Bitmex(Variables):
                         if table == "quote":
                             self.__update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
+                            print("________exec Bitmex", val)
                             val["ticker"] = val["symbol"]
                             val["symbol"] = (
                                 self.ticker[val["symbol"]],

@@ -19,15 +19,14 @@ import os
 import re
 import shutil
 import tkinter as tk
-
 import traceback
 from datetime import datetime, timezone
 from tkinter import StringVar, font, ttk
 
-from pygments.token import Token
 from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.styles import get_style_by_name
+from pygments.token import Token
 
 import services as service
 from common.data import Bot
@@ -38,13 +37,18 @@ from .variables import Variables as disp
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
 
-ttk.Style().map('changed.TCombobox',
-          selectbackground=[('readonly', 'SystemButtonFace')],
-          selectforeground=[('readonly', 'SystemWindowText')],
-          fieldbackground=[('readonly', disp.bg_changed)])
-ttk.Style().map('default.TCombobox',
-          selectbackground=[('readonly', 'SystemButtonFace')],
-          selectforeground=[('readonly', 'SystemWindowText')])
+ttk.Style().map(
+    "changed.TCombobox",
+    selectbackground=[("readonly", "SystemButtonFace")],
+    selectforeground=[("readonly", "SystemWindowText")],
+    fieldbackground=[("readonly", disp.bg_changed)],
+)
+ttk.Style().map(
+    "default.TCombobox",
+    selectbackground=[("readonly", "SystemButtonFace")],
+    selectforeground=[("readonly", "SystemWindowText")],
+)
+
 
 class CustomButton(tk.Button):
     def __init__(self, master, app, button, **kwargs):
@@ -144,7 +148,7 @@ class CustomButton(tk.Button):
                 tk.Label(
                     self.app.pop_up,
                     text=f"\n\n\n\n\nNo available bots to be merged with.\nOnly bots with state 'Suspended' allowed.",
-                ).pack(anchor="center")                
+                ).pack(anchor="center")
             else:
                 content = f"\n\nTo merge bot named '{self.app.selected_bot}'\nplease select one of the bots below\navailable to be merged with:"
                 tk.Label(self.app.pop_up, text=content).pack(anchor="n")
@@ -278,7 +282,10 @@ class CustomButton(tk.Button):
                     self.app.timeframe_changed = None
                     self.app.draw_buttons()
                     self.app.tm_box.config(style=f"default.TCombobox")
-                    self.app.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
+                    self.app.strategy_text.config(
+                        highlightbackground=disp.title_color,
+                        highlightcolor=disp.title_color,
+                    )
             elif self.name == "Merge":
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Duplicate":
@@ -389,14 +396,26 @@ class SettingsApp:
                     button.configure(state="normal")
             elif button.name == "Activate":
                 if self.selected_bot == "" or self.action == "Home":
-                    button.configure(state="disabled", text="Activate", bg=disp.bg_select_color)
+                    button.configure(
+                        state="disabled", text="Activate", bg=disp.bg_select_color
+                    )
                 elif self.selected_bot != "":
                     if Bot[self.selected_bot].state == "Active":
-                        button.configure(state="normal", text="Suspend", bg=disp.red_color, fg=disp.white_color)
+                        button.configure(
+                            state="normal",
+                            text="Suspend",
+                            bg=disp.red_color,
+                            fg=disp.white_color,
+                        )
                         self.strategy_text.config(state="disabled")
                         self.tm_box.config(state="disabled")
                     else:
-                        button.configure(state="normal", text="Activate", bg=disp.bg_select_color, fg=disp.fg_color)
+                        button.configure(
+                            state="normal",
+                            text="Activate",
+                            bg=disp.bg_select_color,
+                            fg=disp.fg_color,
+                        )
                         self.strategy_text.config(state="normal")
                         self.tm_box.config(state="readonly")
             elif button.name == "Update":
@@ -477,7 +496,9 @@ class SettingsApp:
                 if item == "Name":
                     self.info_value[item].config(text=self.selected_bot)
                     self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
-                    self.insert_code(self.strategy_text, self.bot_algo, self.selected_bot)
+                    self.insert_code(
+                        self.strategy_text, self.bot_algo, self.selected_bot
+                    )
                 elif item == "Created":
                     self.info_value[item].config(text=bot.created)
                 elif item == "Updated":
@@ -665,12 +686,17 @@ class SettingsApp:
         if value != self.bot_algo:
             if self.algo_changed is None:
                 self.algo_changed = "changed"
-                self.strategy_text.config(highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed)
+                self.strategy_text.config(
+                    highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed
+                )
                 self.draw_buttons()
         else:
             if self.algo_changed is not None:
                 self.algo_changed = None
-                self.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
+                self.strategy_text.config(
+                    highlightbackground=disp.title_color,
+                    highlightcolor=disp.title_color,
+                )
                 self.draw_buttons()
 
     def ignore_text_input(self, event):
@@ -803,7 +829,7 @@ class SettingsApp:
                     width=7,
                     textvariable=self.timeframe_trace,
                     state="readonly",
-                    style="default.TCombobox"
+                    style="default.TCombobox",
                 )
                 self.tm_box["values"] = self.timeframes
                 self.tm_box.pack(anchor="w")
@@ -817,7 +843,11 @@ class SettingsApp:
         self.strategy.grid(row=frame_row, column=0, sticky="NSWE", columnspan=2)
         self.strategy_scroll = AutoScrollbar(self.strategy, orient="vertical")
         self.strategy_text = tk.Text(
-            self.strategy, highlightthickness=3, highlightbackground=disp.title_color, highlightcolor=disp.title_color, yscrollcommand=self.strategy_scroll.set
+            self.strategy,
+            highlightthickness=3,
+            highlightbackground=disp.title_color,
+            highlightcolor=disp.title_color,
+            yscrollcommand=self.strategy_scroll.set,
         )
         self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
         self.strategy_scroll.config(command=self.strategy_text.yview)
@@ -832,6 +862,7 @@ class SettingsApp:
         for i in range(frame_row):
             self.main_frame.grid_rowconfigure(i, weight=0)
         self.main_frame.grid_rowconfigure(frame_row, weight=1)
+
 
 pw_menu_robots = tk.PanedWindow(
     disp.menu_robots,

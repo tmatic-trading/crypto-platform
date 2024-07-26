@@ -254,20 +254,22 @@ class Function(WS, Variables):
                 results = self.Result[row["settlCurrency"]]
                 position = 0
                 bot_list = []
+                lastQty = row["lastQty"]
                 for emi in self.robots:
                     if (
                         self.robots[emi]["SYMBOL"] == row["symbol"]
                         and self.robots[emi]["POS"] != 0
                     ):
-                        position += self.robots[emi]["POS"]
+                        position += abs(self.robots[emi]["POS"])
+                        row["lastQty"] = abs(self.robots[emi]["POS"])
                         handle_trade_or_delivery(row, emi, "Delivery", 0)
-                    bot_list.append(emi)
-                diff = row["lastQty"] + position
+                        bot_list.append(emi)
+                diff = lastQty - position
                 if diff != 0:
                     message = (
                         str(row["symbol"])
                         + " was expired and the delivery amount of "
-                        + str(row["lastQty"])
+                        + str(lastQty)
                         + " has been distributed among the bots: "
                         + str(bot_list)
                         + ", however there is a remainder of "
