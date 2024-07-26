@@ -313,6 +313,7 @@ class Function(WS, Variables):
                             execFee=row["execFee"],
                         )
                         message["MARKET"] = self.robots[emi]["MARKET"]
+                        message["CATEGORY"] = instrument.category
                         message["EMI"] = self.robots[emi]["EMI"]
                         message["QTY"] = self.robots[emi]["POS"]
                         message["COMMISS"] = calc["funding"]

@@ -264,7 +264,6 @@ class Bitmex(Variables):
                         if table == "quote":
                             self.__update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
-                            print("________exec Bitmex", val)
                             val["ticker"] = val["symbol"]
                             val["symbol"] = (
                                 self.ticker[val["symbol"]],
@@ -297,6 +296,8 @@ class Bitmex(Variables):
                                 if val["foreignNotional"] > 0:
                                     val["lastQty"] = -val["lastQty"]
                                     val["commission"] = -val["commission"]
+                            elif val["execType"] == "Settlement":
+                                val["execType"] = "Delivery"
                             val["execFee"] = None
                             if instrument.category != "spot":
                                 self.transaction(row=val)

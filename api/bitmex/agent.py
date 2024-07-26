@@ -275,6 +275,8 @@ class Agent(Bitmex):
                         if row["foreignNotional"] > 0:
                             row["lastQty"] = -row["lastQty"]
                             row["commission"] = -row["commission"]
+                    elif row["execType"] == "Settlement":
+                        row["execType"] = "Delivery"
                     row["execFee"] = None
                     if instrument.category != "spot":
                         spot_not_included.append(row)
