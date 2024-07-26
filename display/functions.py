@@ -12,6 +12,8 @@ def noll(val: str, length: int) -> str:
 
 
 def info_display(name: str, message: str, tm=None, warning=False) -> None:
+    if name:
+        name += ": "
     if not tm:
         tm = datetime.now(tz=timezone.utc)
     disp.text_info.insert(
@@ -26,7 +28,6 @@ def info_display(name: str, message: str, tm=None, warning=False) -> None:
         + " "
         + " "
         + name
-        + ": "
         + message
         + "\n",
     )

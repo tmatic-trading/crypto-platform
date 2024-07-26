@@ -20,6 +20,7 @@ from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
 
+
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 disp.root.bind("<F9>", lambda event: trade_state(event))
 Bitmex.transaction = Function.transaction

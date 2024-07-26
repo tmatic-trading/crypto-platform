@@ -406,6 +406,7 @@ def load_bots() -> None:
     data = service.select_database(qwr)
     subscriptions = list()
     for value in data:
+        #d print("____________", value["SYMBOL"], value["MARKET"], value["POS"])
         if value["MARKET"] in var.market_list:
             name = value["EMI"]
             if name not in Bot.keys():
@@ -436,6 +437,7 @@ def load_bots() -> None:
                         service.update_database(query=qwr)
                 symb = (symbol, ws.name)
                 if symb not in ws.symbol_list:
+                    #d print("state", ws.Instrument[symb].state)
                     if ws.Instrument[symb].state == "Open":
                         subscriptions.append(symb)
                     else:
@@ -447,7 +449,7 @@ def load_bots() -> None:
                         var.logger.warning(message)
                         var.queue_info.put(
                             {
-                                "market": ws.name,
+                                "market": "",
                                 "message": message,
                                 "time": datetime.now(tz=timezone.utc),
                                 "warning": True,
@@ -471,27 +473,50 @@ def load_bots() -> None:
         data = service.select_database(qwr)
         for value in data:
             symbol = (value["SYMBOL"], value["MARKET"])
-            ws = Markets[value["MARKET"]]
-            instrument = ws.Instrument[symbol]
-            bot = Bot[name]
-            precision = instrument.precision
-            bot.position[symbol] = {
-                "emi": name,
-                "symbol": value["SYMBOL"],
-                "category": value["CATEGORY"],
-                "market": value["MARKET"],
-                "ticker": value["TICKER"],
-                "position": round(float(value["POS"]), precision),
-                "volume": round(float(value["VOL"]), precision),
-                "sumreal": float(value["SUMREAL"]),
-                "commiss": float(value["COMMISS"]),
-                "ltime": service.time_converter(time=value["LTIME"], usec=True),
-                "pnl": 0,
-                "lotSize": instrument.minOrderQty,
-            }
-            if instrument.category == "spot":
-                bot.position[symbol]["pnl"] = "None"
-                bot.position[symbol]["position"] = "None"
+            if value["MARKET"] in var.market_list:                
+                ws = Markets[value["MARKET"]]
+                instrument = ws.Instrument[symbol]
+                bot = Bot[name]
+                precision = instrument.precision
+                bot.position[symbol] = {
+                    "emi": name,
+                    "symbol": value["SYMBOL"],
+                    "category": value["CATEGORY"],
+                    "market": value["MARKET"],
+                    "ticker": value["TICKER"],
+                    "position": round(float(value["POS"]), precision),
+                    "volume": round(float(value["VOL"]), precision),
+                    "sumreal": float(value["SUMREAL"]),
+                    "commiss": float(value["COMMISS"]),
+                    "ltime": service.time_converter(time=value["LTIME"], usec=True),
+                    "pnl": 0,
+                    "lotSize": instrument.minOrderQty,
+                }
+                if instrument.category == "spot":
+                    bot.position[symbol]["pnl"] = "None"
+                    bot.position[symbol]["position"] = "None"
+            else:
+                message = (
+                    name
+                    + " bot has open position on "
+                    + str(symbol)
+                    + ", but "
+                    + value["MARKET"]
+                    + " is not enabled. Position on "
+                    + str(symbol)
+                    + " ignored. Add "
+                    + value["MARKET"]
+                    + " to the .env file."
+                )
+                var.logger.warning(message)
+                var.queue_info.put(
+                    {
+                        "market": "",
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
+                )
 
     """for name in Bot.keys():
         bot = Bot[name]

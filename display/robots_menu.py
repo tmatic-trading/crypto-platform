@@ -36,13 +36,18 @@ from .variables import Variables as disp
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
 
-ttk.Style().map('changed.TCombobox',
-          selectbackground=[('readonly', 'SystemButtonFace')],
-          selectforeground=[('readonly', 'SystemWindowText')],
-          fieldbackground=[('readonly', disp.bg_changed)])
-ttk.Style().map('default.TCombobox',
-          selectbackground=[('readonly', 'SystemButtonFace')],
-          selectforeground=[('readonly', 'SystemWindowText')])
+ttk.Style().map(
+    "changed.TCombobox",
+    selectbackground=[("readonly", "SystemButtonFace")],
+    selectforeground=[("readonly", "SystemWindowText")],
+    fieldbackground=[("readonly", disp.bg_changed)],
+)
+ttk.Style().map(
+    "default.TCombobox",
+    selectbackground=[("readonly", "SystemButtonFace")],
+    selectforeground=[("readonly", "SystemWindowText")],
+)
+
 
 class CustomButton(tk.Button):
     def __init__(self, master, app, button, **kwargs):
@@ -265,7 +270,10 @@ class CustomButton(tk.Button):
                     self.app.timeframe_changed = None
                     self.app.draw_buttons()
                     self.app.tm_box.config(style=f"default.TCombobox")
-                    self.app.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
+                    self.app.strategy_text.config(
+                        highlightbackground=disp.title_color,
+                        highlightcolor=disp.title_color,
+                    )
             elif self.name == "Merge":
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Duplicate":
@@ -379,9 +387,19 @@ class SettingsApp:
                     button.configure(state="disabled", text="Activate")
                 elif self.selected_bot != "":
                     if Bot[self.selected_bot].state == "Active":
-                        button.configure(state="normal", text="Suspend", bg=disp.red_color, fg="white")
+                        button.configure(
+                            state="normal",
+                            text="Suspend",
+                            bg=disp.red_color,
+                            fg="white",
+                        )
                     else:
-                        button.configure(state="normal", text="Activate", bg=disp.bg_select_color, fg=disp.fg_color)
+                        button.configure(
+                            state="normal",
+                            text="Activate",
+                            bg=disp.bg_select_color,
+                            fg=disp.fg_color,
+                        )
             elif button.name == "Update":
                 if (
                     self.selected_bot == ""
@@ -638,12 +656,17 @@ class SettingsApp:
         if value != self.bot_algo:
             if self.algo_changed is None:
                 self.algo_changed = "changed"
-                self.strategy_text.config(highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed)
+                self.strategy_text.config(
+                    highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed
+                )
                 self.draw_buttons()
         else:
             if self.algo_changed is not None:
                 self.algo_changed = None
-                self.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
+                self.strategy_text.config(
+                    highlightbackground=disp.title_color,
+                    highlightcolor=disp.title_color,
+                )
                 self.draw_buttons()
 
     def ignore_text_input(self, event):
@@ -774,7 +797,7 @@ class SettingsApp:
                     width=7,
                     textvariable=self.timeframe_trace,
                     state="readonly",
-                    style="default.TCombobox"
+                    style="default.TCombobox",
                 )
                 self.tm_box["values"] = self.timeframes
                 self.tm_box.pack(anchor="w")
@@ -788,7 +811,11 @@ class SettingsApp:
         self.strategy.grid(row=frame_row, column=0, sticky="NSWE", columnspan=2)
         self.strategy_scroll = AutoScrollbar(self.strategy, orient="vertical")
         self.strategy_text = tk.Text(
-            self.strategy, highlightthickness=3, highlightbackground=disp.title_color, highlightcolor=disp.title_color, yscrollcommand=self.strategy_scroll.set
+            self.strategy,
+            highlightthickness=3,
+            highlightbackground=disp.title_color,
+            highlightcolor=disp.title_color,
+            yscrollcommand=self.strategy_scroll.set,
         )
         self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
         self.strategy_scroll.config(command=self.strategy_text.yview)
