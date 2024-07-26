@@ -90,11 +90,11 @@ class Variables:
 
     # Color map
     if ostype == "Mac":
-        title_color = label_trading["background"]
+        title_color = frame_state["background"]
         bg_select_color = "systemSelectedTextBackgroundColor"
     else:
         label_trading.config(bg="gray82")
-        title_color = label_trading["background"]
+        title_color = frame_state["background"]
         bg_select_color = "#b3d7ff"
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
