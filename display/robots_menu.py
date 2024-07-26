@@ -1,16 +1,18 @@
 """
 1) Provide database transformations for the following operations:
-- New: insert (robots)
-- Activate: update STATE (robots)
-- Update: update TIMEFRAME, UPDATED (robots)
-- Merge: delete record (robots), update EMI (coins)
-- Duplicate: insert (robots)
-- Delete: delete record (robots), update EMI (coins)
-2) When bot is active, the following services must be disabled:
-- Update (the respective fields, i.g. strategy, must be disabled)
-- Merge
-- Delete (no active orders allowed)
-3) Merge operation is capable only with inactive bots. No active orders are allowed for the bot being deleted.
+- (done) New: insert (robots)
+- (done) Activate: update STATE (robots)
+- (done) Update: update TIMEFRAME, UPDATED (robots)
+- (done) Merge: delete record (robots), update EMI (coins)
+- (done) Duplicate: insert (robots)
+- (done) Delete: delete record (robots), update EMI (coins)
+2) Bots with 'Active' state are not allowed for the following services:
+- (done) Update: the respective fields, i.g. strategy, must be disabled
+- (done) Merge: bot destined to be deleted must have 'Suspended' state
+- (done) Delete
+3) Bots with active orders are not allowed for the following services:
+- Delete: no active orders allowed
+- Merge: no active orders allowed for the bot is being deleted
 """
 
 import os
@@ -18,11 +20,11 @@ import re
 import shutil
 import tkinter as tk
 
-# from pygments.token import Token
 import traceback
 from datetime import datetime, timezone
 from tkinter import StringVar, font, ttk
 
+from pygments.token import Token
 from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.styles import get_style_by_name
@@ -36,18 +38,13 @@ from .variables import Variables as disp
 ttk.Style().configure("free.TEntry", foreground=disp.fg_color)
 ttk.Style().configure("used.TEntry", foreground="red")
 
-ttk.Style().map(
-    "changed.TCombobox",
-    selectbackground=[("readonly", "SystemButtonFace")],
-    selectforeground=[("readonly", "SystemWindowText")],
-    fieldbackground=[("readonly", disp.bg_changed)],
-)
-ttk.Style().map(
-    "default.TCombobox",
-    selectbackground=[("readonly", "SystemButtonFace")],
-    selectforeground=[("readonly", "SystemWindowText")],
-)
-
+ttk.Style().map('changed.TCombobox',
+          selectbackground=[('readonly', 'SystemButtonFace')],
+          selectforeground=[('readonly', 'SystemWindowText')],
+          fieldbackground=[('readonly', disp.bg_changed)])
+ttk.Style().map('default.TCombobox',
+          selectbackground=[('readonly', 'SystemButtonFace')],
+          selectforeground=[('readonly', 'SystemWindowText')])
 
 class CustomButton(tk.Button):
     def __init__(self, master, app, button, **kwargs):
@@ -78,7 +75,8 @@ class CustomButton(tk.Button):
         if self.app.pop_up:
             self.app.pop_up.destroy()
         self.app.pop_up = tk.Toplevel()
-        self.app.pop_up.geometry("750x350")
+        win_height = 350
+        self.app.pop_up.geometry(f"750x{win_height}")
 
         if action == "New Bot":
             self.app.pop_up.title(action)
@@ -119,9 +117,7 @@ class CustomButton(tk.Button):
                 tk.Label(self.app.pop_up, text="The bot's code syntax is correct").pack(
                     anchor="n", pady=100
                 )
-                self.app.insert_code(
-                    self.app.strategy_text, self.app.strategy_text.get("1.0", tk.END)
-                )
+                self.app.insert_code(self.app.strategy_text, content, bot_name)
             else:
                 scroll = AutoScrollbar(self.app.pop_up, orient="vertical")
                 text = tk.Text(
@@ -140,40 +136,46 @@ class CustomButton(tk.Button):
                 text.config(state="disabled")
         elif action == "Merge":
             self.app.pop_up.title(f"{action}: {bot_name}")
-            content = f"\n\nTo merge bot named '{self.app.selected_bot}'\nplease select one of the bots below\navailable to be merged with:"
-            tk.Label(self.app.pop_up, text=content).pack(anchor="n")
-            cbox = ttk.Combobox(
-                self.app.pop_up, width=15, textvariable="", state="readonly"
-            )
             bots = []
-            for option in Bot.keys():
-                if option != self.app.selected_bot:
-                    bots.append(option)
-            cbox["values"] = tuple(bots)
-            cbox.current(0)
-            cbox.pack(anchor="n")
-            tk.Label(
-                self.app.pop_up,
-                text=f"\nAs a result of merge operation\nthe selected bot will be deleted.\nAll its records in the database\nwill move on to bot '{self.app.selected_bot}'",
-            ).pack(anchor="center")
-            self.var.set(0)
-            confirm = tk.Checkbutton(
-                self.app.pop_up,
-                text="Confirm operation",
-                variable=self.var,
-                command=self.check_button,
-            )
-            confirm.pack(anchor="n")
-            self.button = tk.Button(
-                self.app.pop_up,
-                activebackground=disp.bg_active,
-                text="Merge Bot",
-                command=lambda: self.app.merge_bot(
-                    bot_name, cbox["values"][cbox.current()]
-                ),
-                state="disabled",
-            )
-            self.button.pack(anchor="n")
+            for item in Bot.keys():
+                if item != self.app.selected_bot and Bot[item].state == "Suspended":
+                    bots.append(item)
+            if len(bots) < 1:
+                tk.Label(
+                    self.app.pop_up,
+                    text=f"\n\n\n\n\nNo available bots to be merged with.\nOnly bots with state 'Suspended' allowed.",
+                ).pack(anchor="center")                
+            else:
+                content = f"\n\nTo merge bot named '{self.app.selected_bot}'\nplease select one of the bots below\navailable to be merged with:"
+                tk.Label(self.app.pop_up, text=content).pack(anchor="n")
+                cbox = ttk.Combobox(
+                    self.app.pop_up, width=15, textvariable="", state="readonly"
+                )
+                cbox["values"] = tuple(bots)
+                cbox.current(0)
+                cbox.pack(anchor="n")
+                tk.Label(
+                    self.app.pop_up,
+                    text=f"\nAs a result of merge operation\nthe selected bot will be deleted.\nAll its records in the database\nwill move on to bot '{self.app.selected_bot}'",
+                ).pack(anchor="center")
+                self.var.set(0)
+                confirm = tk.Checkbutton(
+                    self.app.pop_up,
+                    text="Confirm operation",
+                    variable=self.var,
+                    command=self.check_button,
+                )
+                confirm.pack(anchor="n")
+                self.button = tk.Button(
+                    self.app.pop_up,
+                    activebackground=disp.bg_active,
+                    text="Merge Bot",
+                    command=lambda: self.app.merge_bot(
+                        bot_name, cbox["values"][cbox.current()]
+                    ),
+                    state="disabled",
+                )
+                self.button.pack(anchor="n")
         elif action == "Duplicate":
             self.app.pop_up.title(f"{action}: {bot_name}")
             content = f"\nYou are about to duplicate bot named '{self.app.selected_bot}'.\nThe newly created bot will get the same set\nof parameters as '{self.app.selected_bot}' currently has."
@@ -199,24 +201,30 @@ class CustomButton(tk.Button):
             self.button.pack(anchor="n")
         elif action == "Delete":
             self.app.pop_up.title(f"Delete: {bot_name}")
-            content = f"\n\nAfter you press the 'Delete Bot' button,\nthe '/algo/{self.app.selected_bot}/' subdirectory will be erased\nand this bot will no longer exist.\n\nThe 'EMI' fields in the database for this bot\nwill take the 'SYMBOL' fields values."
-            tk.Label(self.app.pop_up, text=content).pack(anchor="n")
-            self.var.set(0)
-            confirm = tk.Checkbutton(
-                self.app.pop_up,
-                text="Confirm operation",
-                variable=self.var,
-                command=self.check_button,
-            )
-            confirm.pack(anchor="n")
-            self.button = tk.Button(
-                self.app.pop_up,
-                activebackground=disp.bg_active,
-                text="Delete Bot",
-                command=lambda: self.app.delete_bot(bot_name),
-                state="disabled",
-            )
-            self.button.pack(anchor="n")
+            if Bot[bot_name].state == "Active":
+                tk.Label(
+                    self.app.pop_up,
+                    text=f"\n\n\n\n\nThe delete operation is not allowed\nif the bot is in the 'Active' state.\n\nClick the 'Suspend' button before deleting.",
+                ).pack(anchor="center")
+            else:
+                content = f"\n\nAfter you press the 'Delete Bot' button,\nthe '/algo/{self.app.selected_bot}/' subdirectory will be erased\nand this bot will no longer exist.\n\nThe 'EMI' fields in the database for this bot\nwill take the 'SYMBOL' fields values."
+                tk.Label(self.app.pop_up, text=content).pack(anchor="n")
+                self.var.set(0)
+                confirm = tk.Checkbutton(
+                    self.app.pop_up,
+                    text="Confirm operation",
+                    variable=self.var,
+                    command=self.check_button,
+                )
+                confirm.pack(anchor="n")
+                self.button = tk.Button(
+                    self.app.pop_up,
+                    activebackground=disp.bg_active,
+                    text="Delete Bot",
+                    command=lambda: self.app.delete_bot(bot_name),
+                    state="disabled",
+                )
+                self.button.pack(anchor="n")
 
     def check_button(self):
         if self.var.get() == 1:
@@ -270,10 +278,7 @@ class CustomButton(tk.Button):
                     self.app.timeframe_changed = None
                     self.app.draw_buttons()
                     self.app.tm_box.config(style=f"default.TCombobox")
-                    self.app.strategy_text.config(
-                        highlightbackground=disp.title_color,
-                        highlightcolor=disp.title_color,
-                    )
+                    self.app.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
             elif self.name == "Merge":
                 self.open_popup(self.name, self.app.selected_bot)
             elif self.name == "Duplicate":
@@ -384,22 +389,16 @@ class SettingsApp:
                     button.configure(state="normal")
             elif button.name == "Activate":
                 if self.selected_bot == "" or self.action == "Home":
-                    button.configure(state="disabled", text="Activate")
+                    button.configure(state="disabled", text="Activate", bg=disp.bg_select_color)
                 elif self.selected_bot != "":
                     if Bot[self.selected_bot].state == "Active":
-                        button.configure(
-                            state="normal",
-                            text="Suspend",
-                            bg=disp.red_color,
-                            fg="white",
-                        )
+                        button.configure(state="normal", text="Suspend", bg=disp.red_color, fg=disp.white_color)
+                        self.strategy_text.config(state="disabled")
+                        self.tm_box.config(state="disabled")
                     else:
-                        button.configure(
-                            state="normal",
-                            text="Activate",
-                            bg=disp.bg_select_color,
-                            fg=disp.fg_color,
-                        )
+                        button.configure(state="normal", text="Activate", bg=disp.bg_select_color, fg=disp.fg_color)
+                        self.strategy_text.config(state="normal")
+                        self.tm_box.config(state="readonly")
             elif button.name == "Update":
                 if (
                     self.selected_bot == ""
@@ -478,7 +477,7 @@ class SettingsApp:
                 if item == "Name":
                     self.info_value[item].config(text=self.selected_bot)
                     self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
-                    self.insert_code(self.strategy_text, self.bot_algo)
+                    self.insert_code(self.strategy_text, self.bot_algo, self.selected_bot)
                 elif item == "Created":
                     self.info_value[item].config(text=bot.created)
                 elif item == "Updated":
@@ -566,23 +565,31 @@ class SettingsApp:
 
     def merge_bot(self, bot_name, bot_to_delete):
         err = service.update_database(
-            query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'"
+            query=f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
         )
         if err is None:
-            bot_path = self.get_bot_path(bot_to_delete)
-            shutil.rmtree(str(bot_path))
-            Bot.remove(bot_to_delete)
-            self.after_popup(bot_name)
+            err = service.update_database(
+                query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'"
+            )
+            if err is None:
+                bot_path = self.get_bot_path(bot_to_delete)
+                shutil.rmtree(str(bot_path))
+                Bot.remove(bot_to_delete)
+                self.after_popup(bot_name)
 
     def delete_bot(self, bot_name):
         err = service.update_database(
-            query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+            query=f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
         )
         if err is None:
-            bot_path = self.get_bot_path(bot_name)
-            shutil.rmtree(str(bot_path))
-            Bot.remove(bot_name)
-            self.after_popup("")
+            err = service.update_database(
+                query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+            )
+            if err is None:
+                bot_path = self.get_bot_path(bot_name)
+                shutil.rmtree(str(bot_path))
+                Bot.remove(bot_name)
+                self.after_popup("")
 
     def duplicate_bot(self, bot_name, copy_bot):
         err = service.insert_database(
@@ -611,22 +618,23 @@ class SettingsApp:
         self.show_bot()
         self.pop_up.destroy()
 
-    def insert_code(self, text_widget, code):
+    def insert_code(self, text_widget, code, bot_name):
         """Function to insert Python code into a Tkinter Text widget with syntax highlighting"""
+        self.strategy_text.config(state="normal")
         text_widget.delete(1.0, tk.END)
         lexer = PythonLexer()
         # You can change the style if desired. More info at https://pygments.org/styles/
         style = get_style_by_name("default")
-
         for token, content in lex(code, lexer):
             tag_name = str(token)
             text_widget.insert(tk.END, content, tag_name)
-
             # Configure the tag if it hasn't been already
             if not text_widget.tag_cget(tag_name, "foreground"):
                 color = style.style_for_token(token).get("color")
                 if color:
                     text_widget.tag_configure(tag_name, foreground="#" + color)
+        if Bot[bot_name] == "Active":
+            self.strategy_text.config(state="disabled")
 
     def on_menu_select(self, value):
         self.selected_bot = value
@@ -642,6 +650,7 @@ class SettingsApp:
             padx=0,
             pady=0,
             activebackground=disp.bg_active,
+            bg=disp.bg_select_color,
         )
         main_menu = tk.Menu(self.bots_button, tearoff=0)
         self.bots_button.config(menu=main_menu)
@@ -656,17 +665,12 @@ class SettingsApp:
         if value != self.bot_algo:
             if self.algo_changed is None:
                 self.algo_changed = "changed"
-                self.strategy_text.config(
-                    highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed
-                )
+                self.strategy_text.config(highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed)
                 self.draw_buttons()
         else:
             if self.algo_changed is not None:
                 self.algo_changed = None
-                self.strategy_text.config(
-                    highlightbackground=disp.title_color,
-                    highlightcolor=disp.title_color,
-                )
+                self.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
                 self.draw_buttons()
 
     def ignore_text_input(self, event):
@@ -681,6 +685,7 @@ class SettingsApp:
             weight="bold"
         )  # , slant="italic")#, size=9)#, underline="True")
 
+        # Frame to depict menu page after Home button pressing
         self.brief_frame = tk.Frame(info_frame)
         self.bots_label = tk.Label(
             self.brief_frame, text="\n\nSelect bot from:", font=spec_font
@@ -731,6 +736,7 @@ class SettingsApp:
                     )
                 row_num += 1"""
 
+        # Frame to depict selected bot info
         self.main_frame = tk.Frame(info_frame)
         frame_row = 0
         top_frame = tk.Frame(self.main_frame)
@@ -797,7 +803,7 @@ class SettingsApp:
                     width=7,
                     textvariable=self.timeframe_trace,
                     state="readonly",
-                    style="default.TCombobox",
+                    style="default.TCombobox"
                 )
                 self.tm_box["values"] = self.timeframes
                 self.tm_box.pack(anchor="w")
@@ -811,11 +817,7 @@ class SettingsApp:
         self.strategy.grid(row=frame_row, column=0, sticky="NSWE", columnspan=2)
         self.strategy_scroll = AutoScrollbar(self.strategy, orient="vertical")
         self.strategy_text = tk.Text(
-            self.strategy,
-            highlightthickness=3,
-            highlightbackground=disp.title_color,
-            highlightcolor=disp.title_color,
-            yscrollcommand=self.strategy_scroll.set,
+            self.strategy, highlightthickness=3, highlightbackground=disp.title_color, highlightcolor=disp.title_color, yscrollcommand=self.strategy_scroll.set
         )
         self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
         self.strategy_scroll.config(command=self.strategy_text.yview)
@@ -830,11 +832,6 @@ class SettingsApp:
         for i in range(frame_row):
             self.main_frame.grid_rowconfigure(i, weight=0)
         self.main_frame.grid_rowconfigure(frame_row, weight=1)
-
-
-# ws = Markets[var.current_market]
-# for val in ws.robots:
-# print(Markets)
 
 pw_menu_robots = tk.PanedWindow(
     disp.menu_robots,
