@@ -134,15 +134,15 @@ class Agent(Bitmex):
         )
         self.Instrument[symbol].state = instrument["state"]
         self.Instrument[symbol].volume24h = instrument["volume24h"]
-        if "expire" in instrument:
-            if instrument["expire"]:
+        if "expiry" in instrument:
+            if instrument["expiry"]:
                 self.Instrument[symbol].expire = service.time_converter(
                     time=instrument["expiry"]
                 )
             else:
                 self.Instrument[symbol].expire = "Perpetual"
         else:
-            self.Instrument[symbol].expire = "None"
+            self.Instrument[symbol].expire = "Perpetual"
         if "fundingRate" in instrument:
             self.Instrument[symbol].fundingRate = instrument["fundingRate"] * 100
         self.Instrument[symbol].asks = [[0, 0]]
