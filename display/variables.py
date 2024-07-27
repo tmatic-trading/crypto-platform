@@ -25,12 +25,15 @@ class AutoScrollbar(tk.Scrollbar):
             self.grid()
         tk.Scrollbar.set(self, low, high)
 
+
 class CustomButton(tk.Frame):
-    def __init__(self, master, text, bg, height, pady, command=None, menu_items=None, **kwargs):
+    def __init__(
+        self, master, text, bg, height, pady, command=None, menu_items=None, **kwargs
+    ):
         super().__init__(master, **kwargs)
         self.label = tk.Label(self, text=text, bg=bg, height=height, pady=pady)
         self.label.pack(fill="both")
-        #self.config(bg=bg)
+        # self.config(bg=bg)
         self.command = command
         self.bg = bg
         self.name = text
@@ -45,7 +48,9 @@ class CustomButton(tk.Frame):
         self.menu = tk.Menu(self, tearoff=0)
         if menu_items:
             for item in menu_items:
-                self.menu.add_command(label=item, command=lambda value=item: self.on_command(value))
+                self.menu.add_command(
+                    label=item, command=lambda value=item: self.on_command(value)
+                )
 
     def on_command(self, value):
         self.menu_visible = False
@@ -59,16 +64,16 @@ class CustomButton(tk.Frame):
     def on_leave(self, event):
         if self.state == "Normal":
             self.label.config(bg=Variables.bg_select_color, fg=Variables.fg_normal)
-            #self.config(bg=Variables.bg_select_color)
+            # self.config(bg=Variables.bg_select_color)
         elif self.state == "Active":
             self.label.config(bg=Variables.red_color, fg=Variables.white_color)
-            #self.config(bg=Variables.red_color)
+            # self.config(bg=Variables.red_color)
         elif self.state == "Changed":
             self.label.config(bg=Variables.bg_changed, fg=Variables.black_color)
-            #self.config(bg=Variables.bg_changed)
+            # self.config(bg=Variables.bg_changed)
         else:
             self.label.config(bg=self.bg)
-            #self.config(bg=self.bg)
+            # self.config(bg=self.bg)
 
     def on_press(self, event):
         if self.menu_items:
@@ -83,26 +88,39 @@ class CustomButton(tk.Frame):
                 self.menu.post(x, y)
                 self.menu_visible = True
                 # Bind a global event to detect clicks outside the button
-                #self.master.bind_all("<Button-1>", self.check_click_outside)
+                # self.master.bind_all("<Button-1>", self.check_click_outside)
         else:
-            if self.state != "Disabled":# and self.command:
+            if self.state != "Disabled":  # and self.command:
                 self.command(self.name)
 
     def check_click_outside(self, event):
         # Get the menu bounds
-        menu_x1, menu_y1, menu_x2, menu_y2 = self.menu.winfo_rootx(), self.menu.winfo_rooty(), self.menu.winfo_rootx() + self.menu.winfo_width(), self.menu.winfo_rooty() + self.menu.winfo_height()
+        menu_x1, menu_y1, menu_x2, menu_y2 = (
+            self.menu.winfo_rootx(),
+            self.menu.winfo_rooty(),
+            self.menu.winfo_rootx() + self.menu.winfo_width(),
+            self.menu.winfo_rooty() + self.menu.winfo_height(),
+        )
         # Check if the click is outside the button and the menu
-        if not (self.winfo_containing(event.x_root, event.y_root) == self or (menu_x1 <= event.x_root <= menu_x2 and menu_y1 <= event.y_root <= menu_y2)):
+        if not (
+            self.winfo_containing(event.x_root, event.y_root) == self
+            or (
+                menu_x1 <= event.x_root <= menu_x2
+                and menu_y1 <= event.y_root <= menu_y2
+            )
+        ):
             self.menu.unpost()
             self.menu_visible = False
             # Unbind the global event
             self.master.unbind_all("<Button-1>")
+
 
 def on_menu_select(value):
     if value == "Bot Menu":
         Variables.pw_rest1.pack_forget()
         Variables.menu_robots.pack(fill="both", expand="yes")
     print("Selected:", value)
+
 
 class Variables:
     root = tk.Tk()
@@ -133,6 +151,13 @@ class Variables:
     last_market = ""
     pw_ratios = {}
 
+    if platform.system() == "Windows":
+        ostype = "Windows"
+    elif platform.system() == "Darwin":
+        ostype = "Mac"
+    else:
+        ostype = "Linux"
+
     num_robots = 1
     num_book = 20  # Must be even
     col1_book = 0
@@ -160,7 +185,7 @@ class Variables:
     label_trading = tk.Label(frame_state, text="  TRADING: ")
 
     # Color map and styles
-    bg_active = "grey80"##ffcccc"
+    bg_active = "grey80"  ##ffcccc"
     fg_color = label_trading["foreground"]
     fg_select_color = fg_color
     bg_changed = "gold"
@@ -172,25 +197,89 @@ class Variables:
     symbol_width = tkinter.font.Font().measure("01234567890.") / 12
     button_height = 20
     style = ttk.Style()
+
+    # Paned window: up - information field, down - the rest interface
+    pw_info_rest = tk.PanedWindow(
+        frame_left, orient=tk.VERTICAL, sashrelief="raised", bd=0
+    )
+
+    menu_frame = tk.Frame(pw_info_rest)
+    menu_frame.pack(fill="both", expand="yes")
+
+    # This technical PanedWindow contains most frames and widgets
+    pw_rest1 = tk.PanedWindow(
+        menu_frame, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
+    )
+    pw_rest1.pack(fill="both", expand="yes")
+
+    # This technical PanedWindow contains orderbook, positions, orders,
+    # trades, fundings, results, currencies, robots
+    pw_rest2 = tk.PanedWindow(
+        pw_rest1,
+        orient=tk.VERTICAL,
+        sashrelief="raised",
+        bd=0,
+        sashwidth=0,
+        height=1,
+    )
+    pw_rest2.pack(fill="both", expand="yes")
+
+    # This technical PanedWindow contains orderbook, positions, orders,
+    # trades, fundings, results
+    pw_rest3 = tk.PanedWindow(
+        pw_rest2, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
+    )
+    pw_rest3.pack(fill="both", expand="yes")
+
+    # This technical PanedWindow contains positions, orders, trades, fundings,
+    # results
+    pw_rest4 = tk.PanedWindow(
+        pw_rest3,
+        orient=tk.VERTICAL,
+        sashrelief="raised",
+        bd=0,
+        sashwidth=0,
+        height=1,
+    )
+    pw_rest4.pack(fill="both", expand="yes")
+
+    # Paned window: up - orders, down - trades, fundings, results
+    pw_orders_trades = tk.PanedWindow(
+        pw_rest4, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
+    )
+    pw_orders_trades.pack(fill="both", expand="yes")
+    pw_ratios[pw_orders_trades] = 2
+
+    # Notebook tabs: Trades / Funding / Results
+    if ostype == "Mac":
+        notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
+    else:
+        notebook = ttk.Notebook(pw_orders_trades, padding=0)
+        style.theme_use("default")
     style.configure("free.TEntry", foreground=fg_color)
     style.configure("used.TEntry", foreground=red_color)
-    #bg_combobox = style.lookup('TCombobox', 'fieldbackground')
-    style.map('changed.TCombobox',
-          selectbackground=[('readonly', "")],
-          selectforeground=[('readonly', fg_color)],
-          fieldbackground=[('readonly', bg_changed)])
-    style.map('default.TCombobox',
-          selectbackground=[('readonly', "")],
-          selectforeground=[('readonly', fg_color)])
+    # bg_combobox = style.lookup('TCombobox', 'fieldbackground')
+    style.map(
+        "changed.TCombobox",
+        selectbackground=[("readonly", "")],
+        selectforeground=[("readonly", fg_color)],
+        fieldbackground=[("readonly", bg_changed)],
+    )
+    style.map(
+        "default.TCombobox",
+        selectbackground=[("readonly", "")],
+        selectforeground=[("readonly", fg_color)],
+    )
     if platform.system() == "Darwin":
-        ostype = "Mac"
+        # ostype = "Mac"
         title_color = frame_state["background"]
         bg_select_color = "systemSelectedTextBackgroundColor"
     else:
-        if platform.system() == "Windows":
-            ostype = "Windows"
-        else:
-            ostype = "Linux"
+        frame_state.configure(bg="grey82")
+        # if platform.system() == "Windows":
+        #     ostype = "Windows"
+        # else:
+        #     ostype = "Linux"
         style.map(
             "Treeview",
             background=[("selected", "#b3d7ff")],
@@ -226,17 +315,25 @@ class Variables:
     style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
     style.configure("TNotebook.Tab", background="gray92")
     fg_disabled = tk.Entry()["disabledforeground"]
-    bg_disabled = bg_select_color#tk.Entry()["disabledbackground"]
+    bg_disabled = bg_select_color  # tk.Entry()["disabledbackground"]
     fg_normal = tk.Entry()["foreground"]
 
-    #frame_state.config(background=title_color)
-    #label_trading.config(background=title_color)
+    # frame_state.config(background=title_color)
+    # label_trading.config(background=title_color)
 
     # Menu widget
-    '''menu_button = tk.Menubutton(
+    """menu_button = tk.Menubutton(
         frame_state, text=" MENU ", relief=tk.FLAT, padx=0, pady=0, bg=title_color
-    )'''
-    menu_button = CustomButton(frame_state, text=" MENU ", height=1, pady=0, command=on_menu_select, menu_items=["Trading ON", "Reload All", "Bot Menu", "Settings", "About"], bg=title_color)
+    )"""
+    menu_button = CustomButton(
+        frame_state,
+        text=" MENU ",
+        height=1,
+        pady=0,
+        command=on_menu_select,
+        menu_items=["Trading ON", "Reload All", "Bot Menu", "Settings", "About"],
+        bg=title_color,
+    )
     menu_button.pack(side="left", padx=4)
 
     menu_delimiter = tk.Label(frame_state, text="|", bg=title_color)
@@ -251,10 +348,6 @@ class Variables:
     label_time = tk.Label(frame_state, anchor="e", foreground=fg_color, bg=title_color)
     label_time.pack(side="right")
 
-    # Paned window: up - information field, down - the rest interface
-    pw_info_rest = tk.PanedWindow(
-        frame_left, orient=tk.VERTICAL, sashrelief="raised", bd=0
-    )
     pw_info_rest.grid(row=1, column=0, sticky="NSEW")
     frame_left.grid_rowconfigure(1, weight=1)
     pw_ratios[pw_info_rest] = 9
@@ -288,73 +381,19 @@ class Variables:
     # text_info.configure(state="disabled")
     bg_color = text_info["background"]
 
-    menu_frame = tk.Frame(pw_info_rest)
-    menu_frame.pack(fill="both", expand="yes")
     menu_robots = tk.Frame(menu_frame)
-
-    # This technical PanedWindow contains most frames and widgets
-    pw_rest1 = tk.PanedWindow(
-        menu_frame, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
-    )
-    pw_rest1.pack(fill="both", expand="yes")
 
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
 
-    # This technical PanedWindow contains orderbook, positions, orders,
-    # trades, fundings, results, currencies, robots
-    pw_rest2 = tk.PanedWindow(
-        pw_rest1,
-        orient=tk.VERTICAL,
-        sashrelief="raised",
-        bd=0,
-        sashwidth=0,
-        height=1,
-    )
-    pw_rest2.pack(fill="both", expand="yes")
-
-    # This technical PanedWindow contains orderbook, positions, orders,
-    # trades, fundings, results
-    pw_rest3 = tk.PanedWindow(
-        pw_rest2, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
-    )
-    pw_rest3.pack(fill="both", expand="yes")
-
     # Frame for the order book
     frame_orderbook = tk.Frame(pw_rest3)
-
-    # This technical PanedWindow contains positions, orders, trades, fundings,
-    # results
-    pw_rest4 = tk.PanedWindow(
-        pw_rest3,
-        orient=tk.VERTICAL,
-        sashrelief="raised",
-        bd=0,
-        sashwidth=0,
-        height=1,
-    )
-    pw_rest4.pack(fill="both", expand="yes")
 
     # Frame for instruments and their positions
     frame_instrument = tk.Frame(pw_rest4)
 
-    # Paned window: up - orders, down - trades, fundings, results
-    pw_orders_trades = tk.PanedWindow(
-        pw_rest4, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
-    )
-    pw_orders_trades.pack(fill="both", expand="yes")
-    pw_ratios[pw_orders_trades] = 2
-
     # Frame for active orders
     frame_orders = tk.Frame(pw_orders_trades)
-
-
-    # Notebook tabs: Trades / Funding / Results
-    if ostype == "Mac":
-        notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
-    else:
-        notebook = ttk.Notebook(pw_orders_trades, padding=0)
-        style.theme_use("default")
 
     # Trades frame
     frame_trades = tk.Frame(notebook)
@@ -550,7 +589,7 @@ class TreeviewTable(Variables):
         self.tree.tag_configure("Reload", foreground=self.red_color)
         self.tree.tag_configure("Red", foreground=self.red_color)
         if self.ostype != "Mac":
-            self.tree.tag_configure("Gray", background="gray92")
+            self.tree.tag_configure("Gray", background="gray90")
         else:
             self.tree.tag_configure("Gray", background=self.title_color)
         self.tree.tag_configure(

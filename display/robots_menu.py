@@ -19,21 +19,21 @@ import os
 import re
 import shutil
 import tkinter as tk
-
 import traceback
 from datetime import datetime, timezone
 from tkinter import StringVar, font, ttk
 
-from pygments.token import Token
 from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.styles import get_style_by_name
+from pygments.token import Token
 
 import services as service
 from common.data import Bot
 
 from .variables import AutoScrollbar, CustomButton
 from .variables import Variables as disp
+
 
 class SettingsApp:
     def __init__(self, root):
@@ -85,10 +85,10 @@ class SettingsApp:
                 command=self.on_click,
                 height=2,
                 pady=0,
-                #activebackground=disp.bg_active,
+                # activebackground=disp.bg_active,
             )
             self.buttons_center.append(frame)
-            #self.button_height = frame.winfo_reqheight()
+            # self.button_height = frame.winfo_reqheight()
 
         # Keeps all bots' names in the array
         # self.bots_list = []
@@ -192,7 +192,7 @@ class SettingsApp:
                 button.label.config(bg=disp.bg_changed, fg=disp.black_color)
             else:
                 button.label.config(bg=disp.bg_disabled, fg=disp.fg_disabled)
-            '''if i == 0:
+            """if i == 0:
                 y_pos = int(self.button_height / 1.7)
             else:
                 if button.name == "Syntax" or button.name == "Update" or button.name == "Last Viewed":
@@ -200,7 +200,7 @@ class SettingsApp:
             button.place_configure(
                 x=0, y=y_pos, height=self.button_height, relwidth=1.0
             )
-            y_pos += int(self.button_height) + 1'''
+            y_pos += int(self.button_height) + 1"""
             button.pack(fill="both", pady=2)
 
     def name_trace_callback(self, var, index, mode):
@@ -290,7 +290,7 @@ class SettingsApp:
                 tk.Label(
                     self.pop_up,
                     text=f"\n\n\n\n\nNo available bots to be merged with.\nOnly bots with state 'Suspended' allowed.",
-                ).pack(anchor="center")                
+                ).pack(anchor="center")
             else:
                 content = f"\n\nTo merge bot named '{self.selected_bot}'\nplease select one of the bots below\navailable to be merged with:"
                 tk.Label(self.pop_up, text=content).pack(anchor="n")
@@ -423,7 +423,10 @@ class SettingsApp:
                 self.timeframe_changed = None
                 self.draw_buttons()
                 self.tm_box.config(style=f"default.TCombobox")
-                self.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
+                self.strategy_text.config(
+                    highlightbackground=disp.title_color,
+                    highlightcolor=disp.title_color,
+                )
         elif name == "Merge":
             self.open_popup(name, self.selected_bot)
         elif name == "Duplicate":
@@ -467,7 +470,9 @@ class SettingsApp:
                 if item == "Name":
                     self.info_value[item].config(text=self.selected_bot)
                     self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
-                    self.insert_code(self.strategy_text, self.bot_algo, self.selected_bot)
+                    self.insert_code(
+                        self.strategy_text, self.bot_algo, self.selected_bot
+                    )
                 elif item == "Created":
                     self.info_value[item].config(text=bot.created)
                 elif item == "Updated":
@@ -640,7 +645,7 @@ class SettingsApp:
             padx=0,
             pady=0,
             activebackground=disp.bg_active,
-            #bg=disp.bg_select_color,
+            # bg=disp.bg_select_color,
         )
         main_menu = tk.Menu(self.bots_button, tearoff=0)
         self.bots_button.config(menu=main_menu)
@@ -655,12 +660,17 @@ class SettingsApp:
         if value != self.bot_algo:
             if self.algo_changed is None:
                 self.algo_changed = "changed"
-                self.strategy_text.config(highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed)
+                self.strategy_text.config(
+                    highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed
+                )
                 self.draw_buttons()
         else:
             if self.algo_changed is not None:
                 self.algo_changed = None
-                self.strategy_text.config(highlightbackground=disp.title_color, highlightcolor=disp.title_color)
+                self.strategy_text.config(
+                    highlightbackground=disp.title_color,
+                    highlightcolor=disp.title_color,
+                )
                 self.draw_buttons()
 
     def ignore_text_input(self, event):
@@ -793,7 +803,7 @@ class SettingsApp:
                     width=7,
                     textvariable=self.timeframe_trace,
                     state="readonly",
-                    style="default.TCombobox"
+                    style="default.TCombobox",
                 )
                 self.tm_box["values"] = self.timeframes
                 self.tm_box.pack(anchor="w")
@@ -807,7 +817,11 @@ class SettingsApp:
         self.strategy.grid(row=frame_row, column=0, sticky="NSWE", columnspan=2)
         self.strategy_scroll = AutoScrollbar(self.strategy, orient="vertical")
         self.strategy_text = tk.Text(
-            self.strategy, highlightthickness=3, highlightbackground=disp.title_color, highlightcolor=disp.title_color, yscrollcommand=self.strategy_scroll.set
+            self.strategy,
+            highlightthickness=3,
+            highlightbackground=disp.title_color,
+            highlightcolor=disp.title_color,
+            yscrollcommand=self.strategy_scroll.set,
         )
         self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
         self.strategy_scroll.config(command=self.strategy_text.yview)
@@ -822,6 +836,7 @@ class SettingsApp:
         for i in range(frame_row):
             self.main_frame.grid_rowconfigure(i, weight=0)
         self.main_frame.grid_rowconfigure(frame_row, weight=1)
+
 
 pw_menu_robots = tk.PanedWindow(
     disp.menu_robots,
