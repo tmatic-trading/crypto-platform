@@ -39,7 +39,6 @@ class CustomButton(tk.Frame):
         self.name = text
         self.state = None
         self.menu_items = menu_items
-        self.menu_visible = False
         self.label.bind("<ButtonPress-1>", self.on_press)
         self.label.bind("<Enter>", self.on_enter)
         self.label.bind("<Leave>", self.on_leave)
@@ -53,7 +52,7 @@ class CustomButton(tk.Frame):
                 )
 
     def on_command(self, value):
-        self.menu_visible = False
+        self.master.unbind_all("<Button-1>")
         self.command(value)
 
     def on_enter(self, event):
@@ -77,21 +76,22 @@ class CustomButton(tk.Frame):
 
     def on_press(self, event):
         if self.menu_items:
-            if self.menu_visible:
-                self.menu.unpost()
-                self.menu_visible = False
-            else:
+            if not self.is_bound_to_click():
                 # Get the coordinates of the button relative to the root window
                 x = self.winfo_rootx()
                 y = self.winfo_rooty() + self.winfo_height()
                 # Show the menu at the bottom-left corner of the button
                 self.menu.post(x, y)
-                self.menu_visible = True
                 # Bind a global event to detect clicks outside the button
-                # self.master.bind_all("<Button-1>", self.check_click_outside)
+                self.master.bind_all("<Button-1>", self.check_click_outside)
         else:
             if self.state != "Disabled":  # and self.command:
                 self.command(self.name)
+
+    def is_bound_to_click(self):
+        # Check if <Button-1> is bound globally
+        bind_list = self.master.bind_all()
+        return '<Button-1>' in bind_list
 
     def check_click_outside(self, event):
         # Get the menu bounds
@@ -110,16 +110,14 @@ class CustomButton(tk.Frame):
             )
         ):
             self.menu.unpost()
-            self.menu_visible = False
             # Unbind the global event
             self.master.unbind_all("<Button-1>")
 
 
-def on_menu_select(value):
-    if value == "Bot Menu":
-        Variables.pw_rest1.pack_forget()
-        Variables.menu_robots.pack(fill="both", expand="yes")
-    print("Selected:", value)
+    def on_menu_select(value):
+        if value == "Bot Menu":
+            Variables.pw_rest1.pack_forget()
+            Variables.menu_robots.pack(fill="both", expand="yes")
 
 
 class Variables:
@@ -330,7 +328,7 @@ class Variables:
         text=" MENU ",
         height=1,
         pady=0,
-        command=on_menu_select,
+        command=CustomButton.on_menu_select,
         menu_items=["Trading ON", "Reload All", "Bot Menu", "Settings", "About"],
         bg=title_color,
     )
