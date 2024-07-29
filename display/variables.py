@@ -57,7 +57,8 @@ class CustomButton(tk.Frame):
         self.command(value)
 
     def on_enter(self, event):
-        self.label.config(bg=Variables.bg_active)
+        if self.state != "Disabled":
+            self.label.config(bg=Variables.bg_active)
 
     def on_leave(self, event):
         self.label.config(bg=self.bg, fg=self.fg)
