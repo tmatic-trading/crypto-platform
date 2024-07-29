@@ -27,9 +27,7 @@ class AutoScrollbar(tk.Scrollbar):
 
 
 class CustomButton(tk.Frame):
-    def __init__(
-        self, master, text, bg, fg, command=None, menu_items=None, **kwargs
-    ):
+    def __init__(self, master, text, bg, fg, command=None, menu_items=None, **kwargs):
         super().__init__(master, **kwargs)
         self.label = tk.Label(self, text=text, bg=bg, fg=fg)
         self.label.pack(fill="both")
@@ -80,7 +78,7 @@ class CustomButton(tk.Frame):
     def is_bound_to_click(self):
         # Check if <Button-1> is bound globally
         bind_list = self.master.bind_all()
-        return '<Button-1>' in bind_list
+        return "<Button-1>" in bind_list
 
     def check_click_outside(self, event):
         # Get the menu bounds
@@ -101,7 +99,6 @@ class CustomButton(tk.Frame):
             self.menu.unpost()
             # Unbind the global event
             self.master.unbind_all("<Button-1>")
-
 
     def on_menu_select(value):
         if value == "Bot Menu":
@@ -527,6 +524,7 @@ class TreeviewTable(Variables):
         autoscroll=False,
         hierarchy=False,
         lines=None,
+        rollup=False,
     ) -> None:
         self.title = title
         self.max_rows = 200
@@ -538,6 +536,7 @@ class TreeviewTable(Variables):
         self.count = 0
         self.hierarchy = hierarchy
         self.lines = lines
+        self.rollup = rollup
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)
         if hierarchy:
@@ -788,6 +787,14 @@ class TreeviewTable(Variables):
 
     def on_scroll_resize(self):
         self.on_window_resize("scroll")
+
+    def on_rollup(self, iid=None):
+        for child in self.children:
+            if child != iid:
+                self.tree.item(child, open=False)
+
+    """if TreeTable.account.rollup:
+        TreeTable.account.on_rollup(items[0])"""
 
 
 class TreeTable:
