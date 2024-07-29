@@ -28,17 +28,18 @@ class AutoScrollbar(tk.Scrollbar):
 
 class CustomButton(tk.Frame):
     def __init__(
-        self, master, text, bg, height, pady, command=None, menu_items=None, **kwargs
+        self, master, text, bg, fg, command=None, menu_items=None, **kwargs
     ):
         super().__init__(master, **kwargs)
-        self.label = tk.Label(self, text=text, bg=bg, height=height, pady=pady)
+        self.label = tk.Label(self, text=text, bg=bg, fg=fg)
         self.label.pack(fill="both")
         # self.config(bg=bg)
-        self.command = command
-        self.bg = bg
         self.name = text
-        self.state = None
+        self.bg = bg
+        self.fg = fg
+        self.command = command
         self.menu_items = menu_items
+        self.state = None
         self.label.bind("<ButtonPress-1>", self.on_press)
         self.label.bind("<Enter>", self.on_enter)
         self.label.bind("<Leave>", self.on_leave)
@@ -56,23 +57,10 @@ class CustomButton(tk.Frame):
         self.command(value)
 
     def on_enter(self, event):
-        if self.state != "Disabled":
-            self.label.config(bg=Variables.bg_active)
-            self.config(bg=Variables.bg_active)
+        self.label.config(bg=Variables.bg_active)
 
     def on_leave(self, event):
-        if self.state == "Normal":
-            self.label.config(bg=Variables.bg_select_color, fg=Variables.fg_normal)
-            # self.config(bg=Variables.bg_select_color)
-        elif self.state == "Active":
-            self.label.config(bg=Variables.red_color, fg=Variables.white_color)
-            # self.config(bg=Variables.red_color)
-        elif self.state == "Changed":
-            self.label.config(bg=Variables.bg_changed, fg=Variables.black_color)
-            # self.config(bg=Variables.bg_changed)
-        else:
-            self.label.config(bg=self.bg)
-            # self.config(bg=self.bg)
+        self.label.config(bg=self.bg, fg=self.fg)
 
     def on_press(self, event):
         if self.menu_items:
@@ -183,7 +171,6 @@ class Variables:
     label_trading = tk.Label(frame_state, text="  TRADING: ")
 
     # Color map and styles
-    bg_active = "grey80"  ##ffcccc"
     fg_color = label_trading["foreground"]
     fg_select_color = fg_color
     bg_changed = "gold"
@@ -272,6 +259,7 @@ class Variables:
         # ostype = "Mac"
         title_color = frame_state["background"]
         bg_select_color = "systemSelectedTextBackgroundColor"
+        bg_active = bg_select_color
     else:
         frame_state.configure(bg="grey82")
         # if platform.system() == "Windows":
@@ -290,6 +278,7 @@ class Variables:
         title_color = frame_state["background"]
         label_trading.config(bg=title_color)
         bg_select_color = "#b3d7ff"
+        bg_active = bg_select_color
         sell_bg_color = "#feede0"
         buy_bg_color = "#e3f3cf"
         frame_right.configure(background=title_color)
@@ -313,7 +302,7 @@ class Variables:
     style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
     style.configure("TNotebook.Tab", background="gray92")
     fg_disabled = tk.Entry()["disabledforeground"]
-    bg_disabled = bg_select_color  # tk.Entry()["disabledbackground"]
+    bg_disabled = title_color  # tk.Entry()["disabledbackground"]
     fg_normal = tk.Entry()["foreground"]
 
     # frame_state.config(background=title_color)
@@ -325,12 +314,11 @@ class Variables:
     )"""
     menu_button = CustomButton(
         frame_state,
-        text=" MENU ",
-        height=1,
-        pady=0,
+        " MENU ",
+        title_color,
+        fg_color,
         command=CustomButton.on_menu_select,
         menu_items=["Trading ON", "Reload All", "Bot Menu", "Settings", "About"],
-        bg=title_color,
     )
     menu_button.pack(side="left", padx=4)
 
