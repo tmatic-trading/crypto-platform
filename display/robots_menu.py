@@ -81,10 +81,9 @@ class SettingsApp:
             frame = CustomButton(
                 self.root_frame,
                 button,
-                bg=disp.bg_select_color,
+                bg=disp.title_color,
+                fg=disp.fg_normal,
                 command=self.on_click,
-                height=2,
-                pady=0,
                 # activebackground=disp.bg_active,
             )
             self.buttons_center.append(frame)
@@ -185,13 +184,18 @@ class SettingsApp:
                 button.state = "Disabled"
             # button.update_idletasks()
             if button.state == "Normal":
-                button.label.config(bg=disp.bg_select_color, fg=disp.fg_normal)
+                button.bg = disp.title_color
+                button.fg = disp.fg_normal
             elif button.state == "Active":
-                button.label.config(bg=disp.red_color, fg=disp.white_color)
+                button.bg = disp.red_color
+                button.fg = disp.white_color
             elif button.state == "Changed":
-                button.label.config(bg=disp.bg_changed, fg=disp.black_color)
+                button.bg = disp.bg_changed
+                button.fg = disp.black_color
             else:
-                button.label.config(bg=disp.bg_disabled, fg=disp.fg_disabled)
+                button.bg = disp.title_color
+                button.fg = disp.fg_disabled
+            button.label.config(bg=button.bg, fg=button.fg)
             """if i == 0:
                 y_pos = int(self.button_height / 1.7)
             else:
