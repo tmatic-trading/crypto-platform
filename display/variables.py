@@ -101,6 +101,7 @@ class CustomButton(tk.Frame):
             self.master.unbind_all("<Button-1>")
 
     def on_menu_select(value):
+        print("______________on_menu_select")
         if value == "Bot Menu":
             Variables.pw_rest1.pack_forget()
             Variables.menu_robots.pack(fill="both", expand="yes")
@@ -291,10 +292,9 @@ class Variables:
         rowheight=line_height * 3,
     )
     style.configure(
-        "menu.Treeview",
+        "bot_menu.Treeview",
         fieldbackground=title_color,
         background=title_color,
-        rowheight=line_height * 2,
     )
     style.configure("Treeview.Heading", foreground=fg_color)
     style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
@@ -391,7 +391,7 @@ class Variables:
     # Positions frame
     frame_positions = tk.Frame(notebook)
 
-    # Positions frame
+    # Bots frame
     frame_bots = tk.Frame(notebook)
 
     notebook.add(frame_trades, text="Trades")
@@ -523,7 +523,7 @@ class TreeviewTable(Variables):
         multicolor=False,
         autoscroll=False,
         hierarchy=False,
-        lines=None,
+        lines=[],
         rollup=False,
     ) -> None:
         self.title = title
@@ -547,7 +547,12 @@ class TreeviewTable(Variables):
             length = len(title) + 1
         columns = [num for num in range(1, length)]
         self.tree = ttk.Treeview(
-            frame, style=style, columns=columns, show=show, selectmode="browse"
+            frame,
+            style=style,
+            columns=columns,
+            show=show,
+            selectmode="browse",
+            height=self.size,
         )
         for num, name in enumerate(title, start=1):
             if hierarchy:
@@ -570,7 +575,7 @@ class TreeviewTable(Variables):
         self.tree.tag_configure("Select", background=self.bg_select_color)
         self.tree.tag_configure("Buy", foreground=self.green_color)
         self.tree.tag_configure("Sell", foreground=self.red_color)
-        self.tree.tag_configure("Deselect", background=self.bg_color)
+        self.tree.tag_configure("White", background=self.bg_color)
         self.tree.tag_configure("Normal", foreground=self.fg_color)
         self.tree.tag_configure("Reload", foreground=self.red_color)
         self.tree.tag_configure("Red", foreground=self.red_color)
@@ -582,7 +587,7 @@ class TreeviewTable(Variables):
             "Market", background=self.title_color, foreground=self.fg_color
         )
         if bind:
-            self.tree.bind("<ButtonRelease-1>", bind)
+            self.tree.bind("<<TreeviewSelect>>", bind)
         self.iid_count = 0
         self.init(size=size)
         if hide:
@@ -616,16 +621,12 @@ class TreeviewTable(Variables):
         self.children = self.tree.get_children()
 
     def init_hierarchical(self):
-        self.tree.column("#0", anchor=tk.W, width=60)
-        self.tree.column("1", anchor=tk.W)
+        self.tree.column("#0", anchor=tk.W)
+        if len(self.title) > 1:
+            self.tree.column("1", anchor=tk.W)
         for line in self.lines:
             self.tree.insert("", tk.END, text=line, iid=line, open=True, tags="Gray")
             self.cache[line] = line
-            """iid = line + "_notification"
-            self.cache[iid] = iid
-            self.tree.insert(
-                line, tk.END, text="No positions", iid=line + "_notification", open=True
-            )"""
             self.children_hierarchical[line] = self.tree.get_children(line)
         self.children = self.tree.get_children()
 
@@ -645,6 +646,7 @@ class TreeviewTable(Variables):
             parent, tk.END, iid=iid, values=values, tags=configure, text=text
         )
         self.children_hierarchical[parent] = self.tree.get_children(parent)
+        self.children = self.tree.get_children()
 
     def delete(self, iid="") -> None:
         if not iid:
@@ -789,12 +791,10 @@ class TreeviewTable(Variables):
         self.on_window_resize("scroll")
 
     def on_rollup(self, iid=None):
+        parent = iid.split("!")
         for child in self.children:
-            if child != iid:
+            if child != parent[0]:
                 self.tree.item(child, open=False)
-
-    """if TreeTable.account.rollup:
-        TreeTable.account.on_rollup(items[0])"""
 
 
 class TreeTable:
@@ -809,6 +809,8 @@ class TreeTable:
     orders: TreeviewTable
     position: TreeviewTable
     bots: TreeviewTable
+    bot_menu: TreeviewTable
+    bot_info: TreeviewTable
 
 
 def text_ignore(event):

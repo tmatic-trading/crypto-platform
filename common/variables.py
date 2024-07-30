@@ -180,10 +180,18 @@ class Variables:
         "PNL",
     ]
     name_bots = [
-        "BOT",
+        "BOT NAME",
         "TIMEFR",
         "STATUS",
         "UPDATED",
+    ]
+    name_bot_menu = ["AVAILABLE BOTS"]
+    name_bot = [
+        "BOT NAME",
+        "TIMEFR",
+        "STATUS",
+        "UPDATED",
+        "CREATED",
     ]
     logger: logging = setup_logger()
     connect_sqlite = None

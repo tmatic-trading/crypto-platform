@@ -6,6 +6,7 @@ from decimal import Decimal
 from random import randint
 from typing import Union
 
+import display.bot_menu as bot_menu
 import services as service
 from api.api import WS, Markets
 from api.variables import Variables
@@ -2005,6 +2006,23 @@ def init_tables() -> None:
         title=var.name_bots,
         bind=handler_bots,
         hierarchy=False,
+    )
+    TreeTable.bot_menu = TreeviewTable(
+        frame=bot_menu.menu_frame,
+        name="bot_menu",
+        title=var.name_bot_menu,
+        style="bot_menu.Treeview",
+        bind=bot_menu.handler_bot_menu,
+        autoscroll=True,
+        hierarchy=True,
+        rollup=True,
+    )
+    TreeTable.bot_info = TreeviewTable(
+        frame=bot_menu.frame_bot_info,
+        name="bot_info",
+        title=var.name_bot,
+        size=1,
+        autoscroll=True,
     )
     TreeTable.instrument.set_selection()
     indx = var.market_list.index(var.current_market)

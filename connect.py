@@ -14,8 +14,8 @@ from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
 from bots.variables import Variables as bot
 from common.variables import Variables as var
+from display.bot_menu import buttons_menu
 from display.functions import info_display
-from display.robots_menu import buttons_menu
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
@@ -47,9 +47,9 @@ def setup(reload=False):
         finish_setup(Markets[name])
     merge_orders()
     bots.load_bots()
+    functions.init_tables()
     buttons_menu.create_bots_menu()
     buttons_menu.show_bot()
-    functions.init_tables()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
