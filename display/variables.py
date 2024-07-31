@@ -640,10 +640,15 @@ class TreeviewTable(Variables):
             self.delete()
 
     def insert_hierarchical(
-        self, parent: str, iid: str, values=[], configure="", text=""
+        self, parent: str, iid: str, values=[], configure="", text="", new=False
     ):
+        if new:
+            if "New_bot!" in self.children:
+                indx = self.children.index("New_bot!")
+        else:
+            indx = tk.END
         self.tree.insert(
-            parent, tk.END, iid=iid, values=values, tags=configure, text=text
+            parent, indx, iid=iid, values=values, tags=configure, text=text
         )
         self.children_hierarchical[parent] = self.tree.get_children(parent)
         self.children = self.tree.get_children()
@@ -654,7 +659,7 @@ class TreeviewTable(Variables):
         self.tree.delete(iid)
         self.children = self.tree.get_children()
 
-    def delete_hierarchical(self, parent, iid="") -> None:
+    def delete_hierarchical(self, parent: str, iid="") -> None:
         self.tree.delete(iid)
         self.children_hierarchical[parent] = self.tree.get_children(parent)
 
@@ -829,7 +834,7 @@ def resize_height(event, pw, ratio):
 
 def on_sash_move(event, pw):
     panes = pw.winfo_children()
-    Variables.pw_ratios[pw] = pw.winfo_height() / panes[0].winfo_height()
+    Variables.pw_ratios[pw] = pw.winfo_height() / panes[1].winfo_height()
 
 
 def trim_col_width(tview, cols):

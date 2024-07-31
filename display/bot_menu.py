@@ -541,7 +541,7 @@ class SettingsApp:
         my_time = str(datetime.now(tz=timezone.utc)).split(".")
         return my_time[0]
 
-    def create_bot(self, bot_name, timeframe):
+    def create_bot(self, bot_name, timeframe) -> bool:
         tf = timeframe.split(" ")
         err = service.insert_database(
             values=[bot_name, "Suspended", tf[0]], table="robots"
@@ -577,7 +577,9 @@ class SettingsApp:
             Bot[bot_name].timefr = int(tf[0])
             Bot[bot_name].created = time_now
             Bot[bot_name].updated = time_now
-            self.after_popup(bot_name)
+            self.insert_bot_menu(name=bot_name, new=True)
+
+            return True
 
     def merge_bot(self, bot_name, bot_to_delete):
         err = service.update_database(
@@ -657,6 +659,17 @@ class SettingsApp:
         self.action = "Last Viewed"
         self.show_bot()
 
+    def insert_bot_menu(self, name: str, new=False) -> None:
+        tree = TreeTable.bot_menu
+        tree.insert_hierarchical(
+            parent="", iid=name, text=name, configure="Gray", new=new
+        )
+        for option in self.bot_options.keys():
+            iid = f"{name}!{option}"
+            tree.insert_hierarchical(
+                parent=name, iid=iid, text=option, configure="White"
+            )
+
     def create_bots_menu(self):
         # Menu to choose one of the created bots
         print("_________________create_bots_menu")
@@ -681,12 +694,7 @@ class SettingsApp:
 
         tree = TreeTable.bot_menu
         for name in Bot.keys():
-            tree.insert_hierarchical(parent="", iid=name, text=name, configure="Gray")
-            for option in self.bot_options.keys():
-                iid = f"{name}!{option}"
-                tree.insert_hierarchical(
-                    parent=name, iid=iid, text=option, configure="White"
-                )
+            self.insert_bot_menu(name)
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")
 
@@ -901,7 +909,7 @@ class SettingsApp:
                 new_state = "Suspended"
             else:
                 new_state = "Active"
-            TEXT = "The bot {NAME} has the state <{STATE}>. You are about to change the state to <{CHANGE}>."
+            TEXT = "The bot {NAME} has the state ``{STATE}``. You are about to change the state to ``{CHANGE}``."
 
             return TEXT.format(NAME=bot_name, STATE=bot.state, CHANGE=new_state)
 
@@ -934,8 +942,8 @@ class SettingsApp:
         )
         self.button.pack(anchor="nw", padx=50, pady=10)
 
-    def parameters(self, bot_name: str):
-        def on_button(num):
+    def parameters(self, bot_name: str) -> None:
+        def on_button(num: int) -> None:
             timefr = tuple(self.timeframes.values())[num]
             err = service.update_database(
                 query=f"UPDATE robots SET TIMEFR = {timefr}"
@@ -953,9 +961,12 @@ class SettingsApp:
                 ] = f"{bot_name} timeframe changed to {tuple(self.timeframes.keys())[num]}."
 
         bot = Bot[bot_name]
-        tk.Label(self.brief_frame, text="Select timeframe:", bg=disp.bg_color, justify=tk.LEFT).pack(
-            anchor="nw", padx=self.padx, pady=self.pady
-        )
+        tk.Label(
+            self.brief_frame,
+            text="Select timeframe:",
+            bg=disp.bg_color,
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
         timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
         timeframe["values"] = tuple(self.timeframes.keys())
         timeframe.current(1)
@@ -972,8 +983,104 @@ class SettingsApp:
         )
         res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
 
-    def merge(self, bot_name: str):
-        print("_______merge_______", bot_name)
+    def merge(self, bot_name: str) -> None:
+        def bot_list() -> list:
+            bots = []
+            for item in Bot.keys():
+                if item != bot_name and Bot[item].state == "Suspended":
+                    bots.append(item)
+            if not bots:
+                for child in buttons_menu.brief_frame.winfo_children():
+                    child.destroy()
+                tk.Label(
+                    self.brief_frame,
+                    text=(
+                        f"No available bots to be merged with. "
+                        + f"Only bots with state <Suspended> allowed."
+                    ),
+                    bg=disp.bg_color,
+                    justify=tk.LEFT,
+                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+
+            return bots
+
+        def merge_bot(bot_name: str, bot_to_delete: str) -> None:
+            err = service.update_database(
+                query=f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
+            )
+            if err is None:
+                err = service.update_database(
+                    query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'"
+                )
+                if err is None:
+                    bot_path = self.get_bot_path(bot_to_delete)
+                    shutil.rmtree(str(bot_path))
+                    res_label[
+                        "text"
+                    ] = (
+                        f"``{bot_name}`` and ``{bot_to_delete}`` have been merged. "
+                        + f"``{bot_to_delete}`` is no longer available."
+                    )
+                    TreeTable.bot_menu.delete(iid=bot_to_delete)
+                    Bot.remove(bot_to_delete)
+                    bots = bot_list()
+                    if bots:
+                        cbox["values"] = tuple(bots)
+                        cbox.current(0)
+                        cbox.update_idletasks()
+
+        bots = bot_list()
+        if bots:
+            content = (
+                f"To merge bot named ``{bot_name}`` "
+                + f"please select one of the bots below available to be "
+                + f"merged with:"
+            )
+            tk.Label(
+                self.brief_frame,
+                text=content,
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+            cbox = ttk.Combobox(
+                self.brief_frame, width=15, textvariable="", state="readonly"
+            )
+            cbox["values"] = tuple(bots)
+            cbox.current(0)
+            cbox.pack(anchor="nw", padx=50, pady=0)
+            tk.Label(
+                self.brief_frame,
+                text=(
+                    f"As a result of merge operation the selected bot will be "
+                    + f"deleted. All its records in the database will move on "
+                    + f"to bot ``{bot_name}``."
+                ),
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+            self.check_var.set(0)
+            confirm = tk.Checkbutton(
+                self.brief_frame,
+                text="Confirm operation",
+                variable=self.check_var,
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+                highlightthickness=0,
+                command=self.check_button,
+            )
+            confirm.pack(anchor="nw")
+            self.button = tk.Button(
+                self.brief_frame,
+                activebackground=disp.bg_active,
+                text="Merge Bot",
+                command=lambda: merge_bot(bot_name, cbox["values"][cbox.current()]),
+                state="disabled",
+            )
+            self.button.pack(anchor="nw", padx=50, pady=10)
+        res_label = tk.Label(
+            self.brief_frame, text="", bg=disp.bg_color, fg="#777777", justify=tk.LEFT
+        )
+        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
 
     def dublicate(self, bot_name: str):
         print("_______dublicate_______", bot_name)
@@ -982,6 +1089,16 @@ class SettingsApp:
         print("_______delete_______", bot_name)
 
     def new_bot(self):
+        def add(bot_name: str, timeframe: str) -> None:
+            print("_____", type(timeframe))
+            res = self.create_bot(bot_name=bot_name, timeframe=timeframe)
+            if res:
+                res_label["text"] = (
+                    f"New bot ``{bot_name}`` added to the database.\n\n"
+                    + self.new_bot_text
+                )
+                self.wrap("None")
+
         values = ["" for _ in var.name_bot]
         TreeTable.bot_info.update(row=0, values=values)
         tk.Label(
@@ -1012,20 +1129,21 @@ class SettingsApp:
             self.brief_frame,
             activebackground=disp.bg_active,
             text="Create Bot",
-            command=lambda: self.create_bot(
+            command=lambda: add(
                 self.name_trace.get(), timeframe["values"][timeframe.current()]
             ),
             state="disabled",
         )
         self.bot_entry["Name"].delete(0, tk.END)
         self.button.pack(anchor="nw", padx=50, pady=20)
-        tk.Label(
+        res_label = tk.Label(
             self.brief_frame,
             text=self.new_bot_text,
             bg=disp.bg_color,
             fg="#777777",
             justify=tk.LEFT,
-        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        )
+        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
         self.wrap("None")
 
     def show(self, bot_name):
