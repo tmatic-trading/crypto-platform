@@ -21,11 +21,9 @@ from display.variables import Variables as disp
 from functions import Function
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
-disp.root.bind("<F9>", lambda event: trade_state(event))
 Bitmex.transaction = Function.transaction
 Bybit.transaction = Function.transaction
 Deribit.transaction = Function.transaction
-disp.label_f9.config(bg=disp.red_color)
 
 
 def setup(reload=False):
@@ -312,19 +310,6 @@ def terminal_reload(event) -> None:
     setup()
     functions.clear_tables()
     disp.f3 = False
-
-
-def trade_state(event) -> None:
-    if disp.f9 == "ON":
-        disp.f9 = "OFF"
-        disp.label_f9.config(bg=disp.red_color)
-    elif disp.f9 == "OFF":
-        disp.f9 = "ON"
-        disp.label_f9.config(bg=disp.green_color)
-        for market in var.market_list:
-            Markets[market].logNumFatal = ""
-            print(market, disp.f9)
-    disp.label_f9["text"] = disp.f9
 
 
 def on_closing(root, refresh_var):
