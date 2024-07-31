@@ -190,6 +190,8 @@ def reload_market(ws: Markets):
 
 
 def refresh() -> None:
+    if disp.f3:
+        terminal_reload("None")
     while not var.queue_reload.empty():
         ws = var.queue_reload.get()
         finish_setup(ws=ws)
@@ -309,6 +311,7 @@ def terminal_reload(event) -> None:
     disp.root.update()
     setup()
     functions.clear_tables()
+    disp.f3 = False
 
 
 def trade_state(event) -> None:

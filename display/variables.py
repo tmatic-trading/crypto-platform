@@ -493,6 +493,7 @@ class Variables:
     refresh_var = None
     nfo_display_counter = 0
     f9 = "OFF"
+    f3 = False
     robots_window_trigger = "off"
     info_display_counter = 0
     handler_orderbook_symbol = tuple()
