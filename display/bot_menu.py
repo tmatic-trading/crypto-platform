@@ -20,9 +20,9 @@ import re
 import shutil
 import tkinter as tk
 import traceback
+from collections import OrderedDict
 from datetime import datetime, timezone
 from tkinter import StringVar, font, ttk
-from typing import Callable
 
 from pygments import lex
 from pygments.lexers import PythonLexer
@@ -31,10 +31,10 @@ from pygments.token import Token
 
 import services as service
 from common.data import Bot
+from common.variables import Variables as var
 
 from .variables import AutoScrollbar, CustomButton, TreeTable
 from .variables import Variables as disp
-from common.variables import Variables as var
 
 
 class SettingsApp:
@@ -47,7 +47,7 @@ class SettingsApp:
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
         self.action = ""
-        self.timeframes = ("1 min", "5 min", "60 min")
+        self.timeframes = OrderedDict([("1 min", 1), ("5 min", 5), ("60 min", 60)])
         self.timeframe_trace = StringVar(name=f"timeframe{self}")
         self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
         self.bot_entry = {}
@@ -260,7 +260,7 @@ class SettingsApp:
             tk.Label(self.pop_up, text="Select timeframe:").pack(anchor="n")
 
             timeframe = ttk.Combobox(self.pop_up, width=7, state="readonly")
-            timeframe["values"] = self.timeframes
+            timeframe["values"] = tuple(self.timeframes.keys())
             timeframe.current(1)
             timeframe.pack(anchor="n")
 
@@ -693,7 +693,7 @@ class SettingsApp:
         # Init option frames
 
         self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
-        self.brief_frame.bind('<Configure>', self.wrap)
+        self.brief_frame.bind("<Configure>", self.wrap)
         """self.frame_activate = tk.Frame(self.brief_frame)
         self.frame_parameters = tk.Frame(self.brief_frame)
         self.frame_merge = tk.Frame(self.brief_frame)
@@ -902,11 +902,11 @@ class SettingsApp:
             else:
                 new_state = "Active"
             TEXT = "The bot {NAME} has the state <{STATE}>. You are about to change the state to <{CHANGE}>."
+
             return TEXT.format(NAME=bot_name, STATE=bot.state, CHANGE=new_state)
-        
+
         def change_state() -> None:
             nonlocal new_state
-            print("___change state")
             err = service.update_database(
                 query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{self.selected_bot}'"
             )
@@ -917,13 +917,13 @@ class SettingsApp:
                 text_label["text"] = return_text()
 
         new_state = ""
-        bot = Bot[bot_name]        
-        #d tk.Label(self.brief_frame, text="", bg=disp.bg_color).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        bot = Bot[bot_name]
+        # d tk.Label(self.brief_frame, text="", bg=disp.bg_color).pack(anchor="nw", padx=self.padx, pady=self.pady)
         text_label = tk.Label(
             self.brief_frame,
-            text=return_text(), 
+            text=return_text(),
             bg=disp.bg_color,
-            justify=tk.LEFT, 
+            justify=tk.LEFT,
         )
         text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
         self.button = tk.Button(
@@ -935,7 +935,42 @@ class SettingsApp:
         self.button.pack(anchor="nw", padx=50, pady=10)
 
     def parameters(self, bot_name: str):
-        print("_______parameters_______", bot_name)
+        def on_button(num):
+            timefr = tuple(self.timeframes.values())[num]
+            err = service.update_database(
+                query=f"UPDATE robots SET TIMEFR = {timefr}"
+                + f", UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{bot_name}'"
+            )
+            if err is None:
+                bot.timefr = timefr
+                bot.updated = self.get_time()
+                self.algo_changed = None
+                self.timeframe_changed = None
+                values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+                TreeTable.bot_info.update(row=0, values=values)
+                res_label[
+                    "text"
+                ] = f"{bot_name} timeframe changed to {tuple(self.timeframes.keys())[num]}."
+
+        bot = Bot[bot_name]
+        tk.Label(self.brief_frame, text="Select timeframe:", bg=disp.bg_color, justify=tk.LEFT).pack(
+            anchor="nw", padx=self.padx, pady=self.pady
+        )
+        timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
+        timeframe["values"] = tuple(self.timeframes.keys())
+        timeframe.current(1)
+        timeframe.pack(anchor="nw", padx=50, pady=0)
+        self.button = tk.Button(
+            self.brief_frame,
+            activebackground=disp.bg_active,
+            text="Update",
+            command=lambda: on_button(timeframe.current()),
+        )
+        self.button.pack(anchor="nw", padx=50, pady=10)
+        res_label = tk.Label(
+            self.brief_frame, text="", bg=disp.bg_color, fg="#777777", justify=tk.LEFT
+        )
+        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
 
     def merge(self, bot_name: str):
         print("_______merge_______", bot_name)
@@ -953,7 +988,7 @@ class SettingsApp:
             self.brief_frame,
             text="Create a new bot with a unique name:",
             bg=disp.bg_color,
-            justify=tk.LEFT, 
+            justify=tk.LEFT,
         ).pack(anchor="nw", padx=self.padx, pady=self.pady)
         self.bot_entry["Name"] = ttk.Entry(
             self.brief_frame,
@@ -963,11 +998,14 @@ class SettingsApp:
         )
         self.bot_entry["Name"].pack(anchor="nw", padx=50, pady=0)
         self.name_trace.trace_add("write", self.name_trace_callback)
-        tk.Label(self.brief_frame, text="Select timeframe:", bg=disp.bg_color, justify=tk.LEFT).pack(
-            anchor="nw", padx=self.padx, pady=self.pady
-        )
+        tk.Label(
+            self.brief_frame,
+            text="Select timeframe:",
+            bg=disp.bg_color,
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
         timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
-        timeframe["values"] = self.timeframes
+        timeframe["values"] = tuple(self.timeframes.keys())
         timeframe.current(1)
         timeframe.pack(anchor="nw", padx=50, pady=0)
         self.button = tk.Button(
@@ -981,9 +1019,13 @@ class SettingsApp:
         )
         self.bot_entry["Name"].delete(0, tk.END)
         self.button.pack(anchor="nw", padx=50, pady=20)
-        tk.Label(self.brief_frame, text=self.new_bot_text, bg=disp.bg_color, fg="#777777", justify=tk.LEFT).pack(
-            anchor="nw", padx=self.padx, pady=self.pady
-        )
+        tk.Label(
+            self.brief_frame,
+            text=self.new_bot_text,
+            bg=disp.bg_color,
+            fg="#777777",
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
         self.wrap("None")
 
     def show(self, bot_name):
