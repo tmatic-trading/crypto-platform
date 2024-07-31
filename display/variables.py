@@ -5,6 +5,7 @@ from datetime import datetime
 from tkinter import ttk
 
 from common.variables import Variables as var
+from api.api import Markets
 
 if platform.system() == "Windows":
     from ctypes import windll
@@ -27,10 +28,11 @@ class AutoScrollbar(tk.Scrollbar):
 
 
 class CustomButton(tk.Frame):
-    def __init__(self, master, text, bg, fg, command=None, menu_items=None, **kwargs):
+    def __init__(self, root, master, text, bg, fg, command=None, menu_items=None, **kwargs):
         super().__init__(master, **kwargs)
         self.label = tk.Label(self, text=text, bg=bg, fg=fg)
         self.label.pack(fill="both")
+        self.root = root
         # self.config(bg=bg)
         self.name = text
         self.bg = bg
@@ -38,20 +40,62 @@ class CustomButton(tk.Frame):
         self.command = command
         self.menu_items = menu_items
         self.state = None
-        self.label.bind("<ButtonPress-1>", self.on_press)
-        self.label.bind("<Enter>", self.on_enter)
-        self.label.bind("<Leave>", self.on_leave)
 
         # Initialize the menu
         self.menu = tk.Menu(self, tearoff=0)
         if menu_items:
             for item in menu_items:
+                if item == "<F3> Reload All":
+                    self.menu.add_separator()
                 self.menu.add_command(
                     label=item, command=lambda value=item: self.on_command(value)
                 )
 
+        # Tracks if the menu is posted or not as there is no direct built-in method to check if the tk.Menu widget is currently posted (visible) or not.
+        self.menu_posted = False
+
+        self.label.bind("<ButtonPress-1>", self.on_press)        
+        root.bind("<Button>", self.check_click_outside)
+        root.bind("<Escape>", self.on_escape_button)
+        self.label.bind("<Enter>", self.on_enter)
+        self.label.bind("<Leave>", self.on_leave)
+
+    def hide_menu(self):
+        self.menu.unpost()
+        self.menu_posted = False
+
+    def on_escape_button(self, event):
+        '''This function triggers the unpost() method
+        since not every OS or Python version makes it by
+        default after ESC press'''
+        if self.menu_posted:
+            self.hide_menu()
+
+    def check_click_outside(self, event):
+        '''This function triggers the unpost() method
+        since not every OS or Python version makes it by
+        default after a mouse-click outside the button'''
+        mouse_x = self.winfo_pointerx()
+        mouse_y = self.winfo_pointery()
+        # Get the button bounds
+        menu_x1, menu_y1, menu_x2, menu_y2 = (
+            self.label.winfo_rootx(),
+            self.label.winfo_rooty(),
+            self.label.winfo_rootx() + self.label.winfo_width(),
+            self.label.winfo_rooty() + self.label.winfo_height(),
+        )
+        # Check if the click is outside the button
+        if not (menu_x1 <= mouse_x <= menu_x2
+                and menu_y1 <= mouse_y <= menu_y2
+        ):
+            if self.menu_posted:
+                self.hide_menu()
+        else:
+            if Variables.ostype == "Mac":
+                self.menu_posted = False
+
     def on_command(self, value):
-        self.master.unbind_all("<Button-1>")
+        self.menu_posted = False
         self.command(value)
 
     def on_enter(self, event):
@@ -63,52 +107,24 @@ class CustomButton(tk.Frame):
 
     def on_press(self, event):
         if self.menu_items:
-            if not self.is_bound_to_click():
+            if self.menu_posted:
+                self.hide_menu()
+            else:
                 # Get the coordinates of the button relative to the root window
                 x = self.winfo_rootx()
                 y = self.winfo_rooty() + self.winfo_height()
                 # Show the menu at the bottom-left corner of the button
                 self.menu.post(x, y)
-                # Bind a global event to detect clicks outside the button
-                self.master.bind_all("<Button-1>", self.check_click_outside)
+                self.menu_posted = True
         else:
-            if self.state != "Disabled":  # and self.command:
+            if self.state != "Disabled":
                 self.command(self.name)
-
-    def is_bound_to_click(self):
-        # Check if <Button-1> is bound globally
-        bind_list = self.master.bind_all()
-        return "<Button-1>" in bind_list
-
-    def check_click_outside(self, event):
-        # Get the menu bounds
-        menu_x1, menu_y1, menu_x2, menu_y2 = (
-            self.menu.winfo_rootx(),
-            self.menu.winfo_rooty(),
-            self.menu.winfo_rootx() + self.menu.winfo_width(),
-            self.menu.winfo_rooty() + self.menu.winfo_height(),
-        )
-        # Check if the click is outside the button and the menu
-        if not (
-            self.winfo_containing(event.x_root, event.y_root) == self
-            or (
-                menu_x1 <= event.x_root <= menu_x2
-                and menu_y1 <= event.y_root <= menu_y2
-            )
-        ):
-            self.menu.unpost()
-            # Unbind the global event
-            self.master.unbind_all("<Button-1>")
-
-    def on_menu_select(value):
-        print("______________on_menu_select")
-        if value == "Bot Menu":
-            Variables.pw_rest1.pack_forget()
-            Variables.menu_robots.pack(fill="both", expand="yes")
 
 
 class Variables:
     root = tk.Tk()
+    root.bind("<F7>", lambda event: on_bot_menu(event))
+    root.bind("<F9>", lambda event: on_trade_state(event))
     platform_name = "Tmatic"
     root.title(platform_name)
     screen_width = root.winfo_screenwidth()
@@ -310,13 +326,24 @@ class Variables:
     """menu_button = tk.Menubutton(
         frame_state, text=" MENU ", relief=tk.FLAT, padx=0, pady=0, bg=title_color
     )"""
+
+    def on_menu_select(value):
+        print("______________on_menu_select")
+        if value == "<F7> Bot Menu":
+            on_bot_menu("none")
+        elif value == "<F9> Trading State":
+            on_trade_state("none")
+        elif value == "<F3> Reload All":
+            on_f3_reload()
+
     menu_button = CustomButton(
+        root,
         frame_state,
         " MENU ",
         title_color,
         fg_color,
-        command=CustomButton.on_menu_select,
-        menu_items=["Trading ON", "Reload All", "Bot Menu", "Settings", "About"],
+        command=on_menu_select,
+        menu_items=["<F9> Trading State", "<F7> Bot Menu", "<F3> Reload All"],#, "Settings", "About"],
     )
     menu_button.pack(side="left", padx=4)
 
@@ -325,7 +352,7 @@ class Variables:
 
     label_trading.pack(side="left")
     label_f9 = tk.Label(
-        frame_state, width=3, text="OFF", fg="white", bg="red", anchor="c"
+        frame_state, width=3, text="OFF", fg=white_color, bg=red_color, anchor="c"
     )
     label_f9.pack(side="left")
 
@@ -509,6 +536,26 @@ class Variables:
         else:
             my_width = start_width
         pw.paneconfig(pw.panes()[0], width=my_width)
+
+def on_trade_state(event) -> None:
+    if Variables.f9 == "ON":
+        Variables.f9 = "OFF"
+        Variables.label_f9.config(bg=Variables.red_color)
+    elif Variables.f9 == "OFF":
+        Variables.f9 = "ON"
+        Variables.label_f9.config(bg=Variables.green_color)
+        for market in var.market_list:
+            Markets[market].logNumFatal = 0
+    Variables.label_f9["text"] = Variables.f9
+
+def on_f3_reload() -> None:
+    Variables.menu_robots.pack_forget()
+    Variables.pw_rest1.pack(fill="both", expand="yes")
+    Variables.f3 = True
+
+def on_bot_menu(event) -> None:
+    Variables.pw_rest1.pack_forget()
+    Variables.menu_robots.pack(fill="both", expand="yes")
 
 
 class TreeviewTable(Variables):

@@ -95,6 +95,7 @@ class SettingsApp:
         for button in self.button_list:
             frame = CustomButton(
                 self.root_frame,
+                self.root_frame,
                 button,
                 bg=disp.title_color,
                 fg=disp.fg_normal,
