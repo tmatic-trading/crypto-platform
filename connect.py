@@ -303,6 +303,8 @@ def robots_thread() -> None:
 
 
 def terminal_reload(event) -> None:
+    disp.menu_robots.pack_forget()
+    disp.pw_rest1.pack(fill="both", expand="yes")
     var.robots_thread_is_active = ""
     functions.info_display("Tmatic", "Restarting...")
     service.close(Markets)
