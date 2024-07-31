@@ -84,6 +84,8 @@ class SettingsApp:
         }
         self.padx = 10
         self.pady = 5
+        with open("display/new_bot_text.txt", "r") as f:
+            self.new_bot_text = f.read()
 
         self.info_value = {}
 
@@ -893,7 +895,7 @@ class SettingsApp:
         self.main_frame.grid_rowconfigure(frame_row, weight=1)"""
 
     def activate(self, bot_name: str) -> str:
-        def return_text():
+        def return_text() -> str:
             nonlocal new_state
             if bot.state == "Active":
                 new_state = "Suspended"
@@ -916,7 +918,7 @@ class SettingsApp:
 
         new_state = ""
         bot = Bot[bot_name]        
-        #tk.Label(self.brief_frame, text="", bg=disp.bg_color).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        #d tk.Label(self.brief_frame, text="", bg=disp.bg_color).pack(anchor="nw", padx=self.padx, pady=self.pady)
         text_label = tk.Label(
             self.brief_frame,
             text=return_text(), 
@@ -929,15 +931,8 @@ class SettingsApp:
             activebackground=disp.bg_active,
             text="Update",
             command=lambda: change_state(),
-            #state="disabled",
         )
         self.button.pack(anchor="nw", padx=50, pady=10)
-        '''err = service.update_database(
-                        query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{self.selected_bot}'"
-                    )
-                    if err is None:
-                        Bot[self.selected_bot].state = new_state
-                        self.show_bot()'''
 
     def parameters(self, bot_name: str):
         print("_______parameters_______", bot_name)
@@ -986,6 +981,10 @@ class SettingsApp:
         )
         self.bot_entry["Name"].delete(0, tk.END)
         self.button.pack(anchor="nw", padx=50, pady=20)
+        tk.Label(self.brief_frame, text=self.new_bot_text, bg=disp.bg_color, fg="#777777", justify=tk.LEFT).pack(
+            anchor="nw", padx=self.padx, pady=self.pady
+        )
+        self.wrap("None")
 
     def show(self, bot_name):
         bot = Bot[bot_name]

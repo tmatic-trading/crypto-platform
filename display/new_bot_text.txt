@@ -1,0 +1,16 @@
+Since Timatic is an automated trading tool, you first need to set up a strategy.
+
+You can create as many strategies (bots) as you want. Each bot has its own strategy.py file, and they are all stored in separate folders in the algo folder. So the path to strategy.py might look like algo/mybot/strategy.py.
+
+Timatic stores all the transactions you have made on the specific exchange connected to Tmatic since the beginning of your trading activity. These transactions include: trades, funding and delivery of expired instruments. So you can monitor the open position, PNL, funding received and fees paid by you, divided by currencies, for the entire period since the beginning of your trading. The above also applies to each strategy. You can monitor and manage positions, see the PNL of each position and the strategy as a whole, divided by currencies.
+
+Bot management may include:
+
+<New Bot> creates bot with a new unique name.
+<Syntax> checks whether the bot's algo code syntax is correct.
+<Backtest> allows to backtest the bot's trading algorithm.
+<State> activates or suspends trading according to bot's algorithm.
+<Parameters> changes the parameters associated with the bot.
+<Merge> unites two bots into one. Bot being deleted must have no active orders.
+<Duplicate> replicates selected bot, creating a new one with the same parameters.
+<Delete> this operation completely removes selected bot.
