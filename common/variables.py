@@ -189,7 +189,7 @@ class Variables:
     name_bot = [
         "BOT NAME",
         "TIMEFR",
-        "STATUS",
+        "STATE",
         "UPDATED",
         "CREATED",
     ]

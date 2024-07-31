@@ -34,6 +34,7 @@ from common.data import Bot
 
 from .variables import AutoScrollbar, CustomButton, TreeTable
 from .variables import Variables as disp
+from common.variables import Variables as var
 
 
 class SettingsApp:
@@ -75,12 +76,14 @@ class SettingsApp:
             "State",
         ]
         self.bot_options = {
-            "Activate": self.activate,
+            "State": self.activate,
             "Parameters": self.parameters,
             "Merge": self.merge,
             "Duplicate": self.dublicate,
             "Delete": self.delete,
         }
+        self.padx = 10
+        self.pady = 5
 
         self.info_value = {}
 
@@ -688,6 +691,7 @@ class SettingsApp:
         # Init option frames
 
         self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
+        self.brief_frame.bind('<Configure>', self.wrap)
         """self.frame_activate = tk.Frame(self.brief_frame)
         self.frame_parameters = tk.Frame(self.brief_frame)
         self.frame_merge = tk.Frame(self.brief_frame)
@@ -888,8 +892,52 @@ class SettingsApp:
             self.main_frame.grid_rowconfigure(i, weight=0)
         self.main_frame.grid_rowconfigure(frame_row, weight=1)"""
 
-    def activate(self, bot_name: str):
-        print("_______activate_______", bot_name)
+    def activate(self, bot_name: str) -> str:
+        def return_text():
+            nonlocal new_state
+            if bot.state == "Active":
+                new_state = "Suspended"
+            else:
+                new_state = "Active"
+            TEXT = "The bot {NAME} has the state <{STATE}>. You are about to change the state to <{CHANGE}>."
+            return TEXT.format(NAME=bot_name, STATE=bot.state, CHANGE=new_state)
+        
+        def change_state() -> None:
+            nonlocal new_state
+            print("___change state")
+            err = service.update_database(
+                query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{self.selected_bot}'"
+            )
+            if err is None:
+                bot.state = new_state
+                values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+                TreeTable.bot_info.update(row=0, values=values)
+                text_label["text"] = return_text()
+
+        new_state = ""
+        bot = Bot[bot_name]        
+        #tk.Label(self.brief_frame, text="", bg=disp.bg_color).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        text_label = tk.Label(
+            self.brief_frame,
+            text=return_text(), 
+            bg=disp.bg_color,
+            justify=tk.LEFT, 
+        )
+        text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+        self.button = tk.Button(
+            self.brief_frame,
+            activebackground=disp.bg_active,
+            text="Update",
+            command=lambda: change_state(),
+            #state="disabled",
+        )
+        self.button.pack(anchor="nw", padx=50, pady=10)
+        '''err = service.update_database(
+                        query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{self.selected_bot}'"
+                    )
+                    if err is None:
+                        Bot[self.selected_bot].state = new_state
+                        self.show_bot()'''
 
     def parameters(self, bot_name: str):
         print("_______parameters_______", bot_name)
@@ -904,11 +952,14 @@ class SettingsApp:
         print("_______delete_______", bot_name)
 
     def new_bot(self):
+        values = ["" for _ in var.name_bot]
+        TreeTable.bot_info.update(row=0, values=values)
         tk.Label(
             self.brief_frame,
             text="Create a new bot with a unique name:",
             bg=disp.bg_color,
-        ).pack(anchor="nw", padx=10, pady=5)
+            justify=tk.LEFT, 
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
         self.bot_entry["Name"] = ttk.Entry(
             self.brief_frame,
             width=20,
@@ -917,8 +968,8 @@ class SettingsApp:
         )
         self.bot_entry["Name"].pack(anchor="nw", padx=50, pady=0)
         self.name_trace.trace_add("write", self.name_trace_callback)
-        tk.Label(self.brief_frame, text="Select timeframe:", bg=disp.bg_color).pack(
-            anchor="nw", padx=10, pady=5
+        tk.Label(self.brief_frame, text="Select timeframe:", bg=disp.bg_color, justify=tk.LEFT).pack(
+            anchor="nw", padx=self.padx, pady=self.pady
         )
         timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
         timeframe["values"] = self.timeframes
@@ -934,35 +985,38 @@ class SettingsApp:
             state="disabled",
         )
         self.bot_entry["Name"].delete(0, tk.END)
-        self.button.pack(anchor="nw", padx=50, pady=30)
+        self.button.pack(anchor="nw", padx=50, pady=20)
 
+    def show(self, bot_name):
+        bot = Bot[bot_name]
+        values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+        TreeTable.bot_info.update(row=0, values=values)
 
-# d Activate", "Parameters", "Merge", "Duplicate", "Delete
+    def wrap(self, event):
+        for child in buttons_menu.brief_frame.winfo_children():
+            if type(child) is tk.Label:
+                child.config(wraplength=self.brief_frame.winfo_width() - self.padx * 2)
 
 
 def handler_bot_menu(event) -> None:
     tree = event.widget
-    option = tree.selection()[0]
-
-    TreeTable.bot_menu.on_rollup(option)
-
-    option = option.split("!")
+    iid = tree.selection()[0]
+    TreeTable.bot_menu.on_rollup(iid)
+    option = iid.split("!")
     parent = option[0]
     if len(option) == 1:
         option = ""
     else:
         option = option[1]
-    print("______", parent, option)
     for child in buttons_menu.brief_frame.winfo_children():
         child.destroy()
-
     if parent == "Back":
         disp.menu_robots.pack_forget()
         disp.pw_rest1.pack(fill="both", expand="yes")
     elif parent == "New_bot":
         buttons_menu.new_bot()
     elif not option:
-        pass
+        buttons_menu.show(parent)
     else:
         buttons_menu.bot_options[option](bot_name=parent)
 
