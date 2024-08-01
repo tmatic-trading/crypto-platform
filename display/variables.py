@@ -212,11 +212,11 @@ class Variables:
     )
     pw_rest1.pack(fill="both", expand="yes")
 
-    # This technical PanedWindow contains orderbook, positions, orders,
-    # trades, fundings, results, currencies, robots
+    # This technical PanedWindow contains orderbook, instruments, positions,
+    # orders, trades, fundings, results, account, bots
     pw_rest2 = tk.PanedWindow(
         pw_rest1,
-        orient=tk.VERTICAL,
+        orient=tk.HORIZONTAL,
         sashrelief="raised",
         bd=0,
         sashwidth=0,
@@ -224,38 +224,20 @@ class Variables:
     )
     pw_rest2.pack(fill="both", expand="yes")
 
-    # This technical PanedWindow contains orderbook, positions, orders,
-    # trades, fundings, results
+    # This technical PanedWindow contains instruments, positions, orders,
+    # trades, fundings, results, account, bots
     pw_rest3 = tk.PanedWindow(
-        pw_rest2, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
+        pw_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0
     )
     pw_rest3.pack(fill="both", expand="yes")
 
     # This technical PanedWindow contains positions, orders, trades, fundings,
-    # results
+    # results, account, bots
     pw_rest4 = tk.PanedWindow(
-        pw_rest3,
-        orient=tk.VERTICAL,
-        sashrelief="raised",
-        bd=0,
-        sashwidth=0,
-        height=1,
+        pw_rest3, orient=tk.VERTICAL, sashrelief="raised", bd=0
     )
     pw_rest4.pack(fill="both", expand="yes")
 
-    # Paned window: up - orders, down - trades, fundings, results
-    pw_orders_trades = tk.PanedWindow(
-        pw_rest4, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
-    )
-    pw_orders_trades.pack(fill="both", expand="yes")
-    pw_ratios[pw_orders_trades] = 2
-
-    # Notebook tabs: Trades / Funding / Results
-    if ostype == "Mac":
-        notebook = ttk.Notebook(pw_orders_trades, padding=(-9, 0, -9, -9))
-    else:
-        notebook = ttk.Notebook(pw_orders_trades, padding=0)
-        style.theme_use("default")
     style.configure("free.TEntry", foreground=fg_color)
     style.configure("used.TEntry", foreground=red_color)
     # bg_combobox = style.lookup('TCombobox', 'fieldbackground')
@@ -276,6 +258,7 @@ class Variables:
         bg_select_color = "systemSelectedTextBackgroundColor"
         bg_active = bg_select_color
     else:
+        style.theme_use("default")
         frame_state.configure(bg="grey82")
         # if platform.system() == "Windows":
         #     ostype = "Windows"
@@ -361,7 +344,6 @@ class Variables:
 
     pw_info_rest.grid(row=1, column=0, sticky="NSEW")
     frame_left.grid_rowconfigure(1, weight=1)
-    pw_ratios[pw_info_rest] = 9
 
     # Information field
     frame_info = tk.Frame(pw_info_rest)
@@ -392,19 +374,32 @@ class Variables:
     # text_info.configure(state="disabled")
     bg_color = text_info["background"]
 
+    # Intended to display the main area of the terminal or the minor pages (bots info, settings)
     menu_robots = tk.Frame(menu_frame)
 
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
 
     # Frame for the order book
-    frame_orderbook = tk.Frame(pw_rest3)
+    frame_orderbook = tk.Frame(pw_rest2)
 
     # Frame for instruments and their positions
-    frame_instrument = tk.Frame(pw_rest4)
+    frame_instrument = tk.Frame(pw_rest3)
+
+    # Bots frame
+    frame_bots = tk.Frame(pw_rest4)
+
+    # Notebook tabs: Orders | Positions | Trades | Funding | Account | Results
+    if ostype == "Mac":
+        notebook = ttk.Notebook(pw_rest4, padding=(-9, 0, -9, -9))
+    else:
+        notebook = ttk.Notebook(pw_rest4, padding=0)
 
     # Frame for active orders
-    frame_orders = tk.Frame(pw_orders_trades)
+    frame_orders = tk.Frame(notebook)
+
+    # Positions frame
+    frame_positions = tk.Frame(notebook)
 
     # Trades frame
     frame_trades = tk.Frame(notebook)
@@ -412,79 +407,57 @@ class Variables:
     # Funding frame
     frame_funding = tk.Frame(notebook)
 
-    # Results frame
+    # Account frame
+    frame_account = tk.Frame(notebook)
+
+    # Financial results by currencies
     frame_results = tk.Frame(notebook)
 
-    # Positions frame
-    frame_positions = tk.Frame(notebook)
+    # Frame for the robots table (obsolete, will be deleted)
+    frame_robots = tk.Frame()
 
-    # Bots frame
-    frame_bots = tk.Frame(notebook)
+    pw_ratios[pw_info_rest] = 9
+    pw_ratios[pw_rest3] = 4
+    pw_ratios[pw_rest4] = 2
 
+    notebook.add(frame_orders, text="Orders")
+    notebook.add(frame_positions, text="Positions")
     notebook.add(frame_trades, text="Trades")
     notebook.add(frame_funding, text="Funding")
+    notebook.add(frame_account, text="Account")
     notebook.add(frame_results, text="Results")
-    notebook.add(frame_positions, text="Positions")
-    notebook.add(frame_bots, text="Bots")
-    pw_orders_trades.add(frame_orders)
-    pw_orders_trades.add(notebook)
-    pw_orders_trades.bind(
-        "<Configure>",
-        lambda event: resize_height(
-            event,
-            Variables.pw_orders_trades,
-            Variables.pw_ratios[Variables.pw_orders_trades],
-        ),
-    )
-    pw_orders_trades.bind(
-        "<ButtonRelease-1>",
-        lambda event: on_sash_move(event, Variables.pw_orders_trades),
-    )
 
-    # Paned window: up - currencies (account), down - robots
-    pw_bottom = tk.PanedWindow(
-        pw_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0, height=1
-    )
-    pw_bottom.pack(fill="both", expand="yes")
-    pw_ratios[pw_bottom] = 2
-
-    # Frame for currencies (account)
-    frame_account = tk.Frame(pw_bottom)
-
-    # Frame for the robots table
-    frame_robots = tk.Frame(pw_bottom)
-
-    pw_bottom.add(frame_account)
-    pw_bottom.add(frame_robots)
-    pw_bottom.bind(
-        "<Configure>",
-        lambda event: resize_height(
-            event, Variables.pw_bottom, Variables.pw_ratios[Variables.pw_bottom]
-        ),
-    )
-    pw_bottom.bind(
-        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_bottom)
-    )
-
-    pw_rest4.add(frame_instrument)
-    pw_rest4.add(pw_orders_trades)
+    pw_rest4.add(notebook)
+    pw_rest4.add(frame_bots)
     pw_rest4.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_rest4, 5)
+        "<Configure>",
+        lambda event: resize_height(
+            event, Variables.pw_rest4, Variables.pw_ratios[Variables.pw_rest4]
+        ),
+    )
+    pw_rest4.bind(
+        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_rest4)
     )
 
-    pw_rest3.add(frame_orderbook)
+    pw_rest3.add(frame_instrument)
     pw_rest3.add(pw_rest4)
     pw_rest3.bind(
         "<Configure>",
-        lambda event: Variables.resize_width(
-            event, Variables.pw_rest3, Variables.window_width // 4.5, 3
+        lambda event: resize_height(
+            event, Variables.pw_rest3, Variables.pw_ratios[Variables.pw_rest3]
         ),
     )
+    pw_rest3.bind(
+        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_rest3)
+    )
 
+    pw_rest2.add(frame_orderbook)
     pw_rest2.add(pw_rest3)
-    pw_rest2.add(pw_bottom)
     pw_rest2.bind(
-        "<Configure>", lambda event: resize_height(event, Variables.pw_rest2, 1.4)
+        "<Configure>",
+        lambda event: Variables.resize_width(
+            event, Variables.pw_rest2, Variables.window_width // 5.5, 4.5
+        ),
     )
 
     pw_rest1.add(frame_market)
