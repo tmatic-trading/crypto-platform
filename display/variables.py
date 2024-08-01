@@ -130,16 +130,16 @@ class Variables:
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     if screen_width > 1440:
-        window_ratio = 0.7
+        window_ratio = 0.75
         adaptive_ratio = 0.9
     elif screen_width > 1366:
-        window_ratio = 0.72
+        window_ratio = 0.77
         adaptive_ratio = 0.93
     elif screen_width > 1280:
-        window_ratio = 0.75
+        window_ratio = 0.8
         adaptive_ratio = 0.95
     elif screen_width > 1024:
-        window_ratio = 0.8
+        window_ratio = 0.85
         adaptive_ratio = 0.97
     else:
         window_ratio = 1

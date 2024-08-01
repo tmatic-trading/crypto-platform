@@ -928,7 +928,7 @@ class Function(WS, Variables):
         )
         # d print("___orderbook", datetime.now() - tm)
 
-        # Refresh robots table
+        '''# Refresh robots table
 
         tree = TreeTable.robots
 
@@ -988,49 +988,50 @@ class Function(WS, Variables):
                         tree.paint(row=num, configure="Red")
                 elif robot["STATUS"] == "NOT DEFINED":
                     Function.not_defined_robot_color(self, emi=robot["EMI"])
-        # d print("___robot", datetime.now() - tm)
+        # d print("___robot", datetime.now() - tm)'''
 
         # Refresh account table
 
-        tree = TreeTable.account
+        if current_notebook_tab == "Account":
+            tree = TreeTable.account
 
-        def form_result_line(compare):
-            for num in range(1, 7):
-                compare[num] = format_number(compare[num])
-            return compare
+            def form_result_line(compare):
+                for num in range(1, 7):
+                    compare[num] = format_number(compare[num])
+                return compare
 
-        tm = datetime.now()
-        for market in var.market_list:
-            ws = Markets[market]
-            for settlCurrency in ws.Account.keys():
-                account = ws.Account[settlCurrency]
-                compare = [
-                    settlCurrency[0],
-                    account.walletBalance,
-                    account.unrealisedPnl,
-                    account.marginBalance,
-                    account.orderMargin,
-                    account.positionMagrin,
-                    account.availableMargin,
-                ]
-                iid = market + settlCurrency[0]
-                if iid in tree.children_hierarchical[market]:
-                    if iid not in tree.cache:
-                        tree.cache[iid] = []
-                    if compare != tree.cache[iid]:
-                        tree.cache[iid] = compare.copy()
-                        tree.update_hierarchical(
+            tm = datetime.now()
+            for market in var.market_list:
+                ws = Markets[market]
+                for settlCurrency in ws.Account.keys():
+                    account = ws.Account[settlCurrency]
+                    compare = [
+                        settlCurrency[0],
+                        account.walletBalance,
+                        account.unrealisedPnl,
+                        account.marginBalance,
+                        account.orderMargin,
+                        account.positionMagrin,
+                        account.availableMargin,
+                    ]
+                    iid = market + settlCurrency[0]
+                    if iid in tree.children_hierarchical[market]:
+                        if iid not in tree.cache:
+                            tree.cache[iid] = []
+                        if compare != tree.cache[iid]:
+                            tree.cache[iid] = compare.copy()
+                            tree.update_hierarchical(
+                                parent=market, iid=iid, values=form_result_line(compare)
+                            )
+                    else:
+                        tree.insert_hierarchical(
                             parent=market, iid=iid, values=form_result_line(compare)
                         )
-                else:
-                    tree.insert_hierarchical(
-                        parent=market, iid=iid, values=form_result_line(compare)
-                    )
-        # d print("___account", datetime.now() - tm)
+            # d print("___account", datetime.now() - tm)
 
         # Refresh result table
 
-        if current_notebook_tab == "Results":
+        elif current_notebook_tab == "Results":
             tree = TreeTable.results
 
             def form_result_line(compare):
@@ -1180,27 +1181,27 @@ class Function(WS, Variables):
 
         # Refresh bots table
 
-        elif current_notebook_tab == "Bots":
-            tree = TreeTable.bots
-            tm = datetime.now()
-            for name in Bot.keys():
-                bot = Bot[name]
-                compare = [
-                    name,
-                    bot.timefr,
-                    bot.state,
-                    bot.updated,
-                ]
-                iid = name
-                if iid in tree.children:
-                    if iid not in tree.cache:
-                        tree.cache[iid] = []
-                    if compare != tree.cache[iid]:
-                        tree.cache[iid] = compare.copy()
-                        tree.update(row=iid, values=compare)
-                else:
-                    tree.insert(iid=iid, values=compare)
-            # d print("___bots", datetime.now() - tm)
+        tree = TreeTable.bots
+
+        tm = datetime.now()
+        for name in Bot.keys():
+            bot = Bot[name]
+            compare = [
+                name,
+                bot.timefr,
+                bot.state,
+                bot.updated,
+            ]
+            iid = name
+            if iid in tree.children:
+                if iid not in tree.cache:
+                    tree.cache[iid] = []
+                if compare != tree.cache[iid]:
+                    tree.cache[iid] = compare.copy()
+                    tree.update(row=iid, values=compare)
+            else:
+                tree.insert(iid=iid, values=compare)
+        # d print("___bots", datetime.now() - tm)
 
         # Refresh market table
 
