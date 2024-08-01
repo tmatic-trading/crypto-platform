@@ -2019,11 +2019,19 @@ def init_tables() -> None:
         rollup=True,
     )
     TreeTable.bot_info = TreeviewTable(
-        frame=bot_menu.frame_bot_info,
+        frame=bot_menu.frame_bot_parameters,
         name="bot_info",
         title=var.name_bot,
         size=1,
         autoscroll=True,
+    )
+    TreeTable.bot_position = TreeviewTable(
+        frame=bot_menu.frame_bot_tables,
+        name="bot_position",
+        title=var.name_bot_position,
+        bind=bot_menu.handler_bot_menu,
+        autoscroll=True,
+        hierarchy=True,
     )
     TreeTable.instrument.set_selection()
     indx = var.market_list.index(var.current_market)

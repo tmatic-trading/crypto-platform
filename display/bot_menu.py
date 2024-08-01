@@ -119,110 +119,7 @@ class SettingsApp:
         self.timeframe_changed = None
 
         # Create initial frames
-        self.bot_info_frame()
-
-    '''def collect_bots(self):
-        """Reviews all created bots in the algo directory and puts them in array"""
-        self.bots_list.clear()
-        for x in os.walk(self.algo_dir):
-            my_dir = x[0].replace(self.algo_dir, "")
-            if my_dir != "" and my_dir != "__pycache__" and my_dir.find("/") == -1:
-                self.bots_list.append(my_dir)'''
-
-    def draw_buttons(self):
-        """Draws bot menu buttons accordingly"""
-        # self.buttons_center.sort(key=lambda f: f.winfo_y())
-        print("_______________draw_buttons")
-        """y_pos = 0
-        for i, button in enumerate(self.buttons_center):
-            if button.name == "Home":
-                if self.action != "Last Viewed":
-                    button.state = "Disabled"
-                else:
-                    button.state = "Normal"
-            elif button.name == "New Bot":
-                button.state = "Normal"
-            elif button.name == "Syntax":
-                if self.selected_bot == "" or self.action == "Home":
-                    button.state = "Disabled"
-                else:
-                    button.state = "Normal"
-            elif button.name == "Activate":
-                if self.selected_bot == "" or self.action == "Home":
-                    button.state = "Disabled"
-                    button.label.config(text="Activate")
-                elif self.selected_bot != "":
-                    if Bot[self.selected_bot].state == "Active":
-                        button.state = "Active"
-                        button.label.config(text="Suspend")
-                        self.strategy_text.config(state="disabled")
-                        self.tm_box.config(state="disabled")
-                    else:
-                        button.state = "Normal"
-                        button.label.config(text="Activate")
-                        self.strategy_text.config(state="normal")
-                        self.tm_box.config(state="readonly")
-            elif button.name == "Update":
-                if (
-                    self.selected_bot == ""
-                    or self.action == "Home"
-                    or (self.algo_changed is None and self.timeframe_changed is None)
-                ):
-                    button.state = "Disabled"
-                else:
-                    button.state = "Changed"
-            elif button.name == "Merge":
-                if (
-                    self.selected_bot == ""
-                    or self.action == "Home"
-                    or len(Bot.keys()) < 2
-                ):
-                    button.state = "Disabled"
-                else:
-                    button.state = "Normal"
-            elif button.name == "Duplicate":
-                if self.selected_bot == "" or self.action == "Home":
-                    button.state = "Disabled"
-                else:
-                    button.state = "Normal"
-            elif button.name == "Delete":
-                if self.selected_bot == "" or self.action == "Home":
-                    button.state = "Disabled"
-                else:
-                    button.state = "Normal"
-            elif button.name == "Last Viewed":
-                if self.selected_bot == "" or self.action == "Last Viewed":
-                    button.state = "Disabled"
-                else:
-                    button.state = "Normal"
-            elif button.name == "Back":
-                button.state = "Normal"
-            else:
-                button.state = "Disabled"
-            # button.update_idletasks()
-            if button.state == "Normal":
-                button.bg = disp.title_color
-                button.fg = disp.fg_normal
-            elif button.state == "Active":
-                button.bg = disp.red_color
-                button.fg = disp.white_color
-            elif button.state == "Changed":
-                button.bg = disp.bg_changed
-                button.fg = disp.black_color
-            else:
-                button.bg = disp.title_color
-                button.fg = disp.fg_disabled
-            button.label.config(bg=button.bg, fg=button.fg)
-            button.pack(fill="both", pady=2)"""
-        """if i == 0:
-                y_pos = int(self.button_height / 1.7)
-            else:
-                if button.name == "Syntax" or button.name == "Update" or button.name == "Last Viewed":
-                    y_pos += int(self.button_height / 2)
-            button.place_configure(
-                x=0, y=y_pos, height=self.button_height, relwidth=1.0
-            )
-            y_pos += int(self.button_height) + 1"""
+        #self.bot_info_frame()
 
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
@@ -442,7 +339,6 @@ class SettingsApp:
                 Bot[self.selected_bot].updated = self.get_time()
                 self.algo_changed = None
                 self.timeframe_changed = None
-                self.draw_buttons()
                 self.tm_box.config(style=f"default.TCombobox")
                 self.strategy_text.config(
                     highlightbackground=disp.title_color,
@@ -470,16 +366,13 @@ class SettingsApp:
             if self.timeframe_changed is None:
                 self.timeframe_changed = "changed"
                 self.tm_box.config(style=f"changed.TCombobox")
-                self.draw_buttons()
         else:
             if self.timeframe_changed is not None:
                 self.timeframe_changed = None
                 self.tm_box.config(style=f"default.TCombobox")
-                self.draw_buttons()
 
     def show_bot(self):
         """Shows the bot's info when bot is selected. Otherwise hides"""
-        print("______________show_bot")
         if self.selected_bot != "" and self.action != "Home":
             # d self.menu_usage.pack_forget()
             # d self.bots_button.pack_forget()
@@ -515,7 +408,6 @@ class SettingsApp:
             else:
                 self.menu_usage.pack(anchor="n", pady=50)"""
         self.algo_changed = None
-        self.draw_buttons()
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -673,53 +565,13 @@ class SettingsApp:
 
     def create_bots_menu(self):
         # Menu to choose one of the created bots
-        print("_________________create_bots_menu")
-        """self.bots_button = tk.Menubutton(
-            self.brief_frame,
-            text=" LIST OF CREATED BOTS ",
-            relief=tk.GROOVE,
-            padx=0,
-            pady=0,
-            activebackground=disp.bg_active,
-            # bg=disp.bg_select_color,
-        )
-        main_menu = tk.Menu(self.bots_button, tearoff=0)
-        self.bots_button.config(menu=main_menu)
-        for option in Bot.keys():
-            main_menu.add_command(
-                label=option,
-                command=lambda value=option: self.on_menu_select(value),
-            )"""
-
-        # new
-
         tree = TreeTable.bot_menu
         for name in Bot.keys():
             self.insert_bot_menu(name)
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")
-
-        # Init option frames
-
         self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
         self.brief_frame.bind("<Configure>", self.wrap)
-        """self.frame_activate = tk.Frame(self.brief_frame)
-        self.frame_parameters = tk.Frame(self.brief_frame)
-        self.frame_merge = tk.Frame(self.brief_frame)
-        self.frame_dublicate = tk.Frame(self.brief_frame)
-        self.frame_delete = tk.Frame(self.brief_frame)
-
-        self.label_activate = tk.Label(self.frame_activate, text="Activate")
-        self.label_parameters = tk.Label(self.frame_parameters, text="Parameters")
-        self.label_merge = tk.Label(self.frame_merge, text="Merge")
-        self.label_dublicate = tk.Label(self.frame_dublicate, text="Dublicate")
-        self.label_delete = tk.Label(self.frame_delete, text="Delete")
-
-        self.label_activate.pack()
-        self.label_parameters.pack()
-        self.label_merge.pack()
-        self.label_dublicate.pack()
-        self.label_delete.pack()"""
 
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
@@ -729,7 +581,6 @@ class SettingsApp:
                 self.strategy_text.config(
                     highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed
                 )
-                self.draw_buttons()
         else:
             if self.algo_changed is not None:
                 self.algo_changed = None
@@ -737,171 +588,9 @@ class SettingsApp:
                     highlightbackground=disp.title_color,
                     highlightcolor=disp.title_color,
                 )
-                self.draw_buttons()
 
     def ignore_text_input(self, event):
         return "break"
-
-    def bot_info_frame(self):
-        """Frames, grids, widgets are here"""
-        label_example = tk.Label(text="")
-        current_font = font.nametofont(label_example.cget("font"))
-        spec_font = current_font.copy()
-        spec_font.config(
-            weight="bold"
-        )  # , slant="italic")#, size=9)#, underline="True")
-
-        # Frame to depict menu page after Home button pressing
-
-        """ self.bots_label = tk.Label(
-             self.brief_frame, text="\n\nSelect bot from:", font=spec_font
-         )
-        self.menu_usage = tk.Frame(self.brief_frame)
-
-        # This block draws the bots' menu titles with its description
-        row_num = 0
-        col_num = 0
-        usage = {}
-        for key, value in self.button_list.items():
-            usage[key] = tk.Frame(self.menu_usage)
-            usage[key].grid(row=row_num, column=col_num, padx=5)
-            tk.Label(usage[key], text=key, font=spec_font).pack(anchor="w")
-            text = tk.Text(
-                usage[key],
-                width=20,
-                height=5,
-                bg=disp.title_color,
-                wrap=tk.WORD,
-                bd=0,
-                highlightthickness=0,
-            )
-            text.pack(anchor="w")
-            text.bind("<Key>", self.ignore_text_input)
-            text.insert(tk.END, value)
-            col_num += 1
-            if row_num == 0:
-                self.menu_usage.grid_columnconfigure(col_num, weight=0)
-            if col_num == 4:
-                self.menu_usage.grid_rowconfigure(row_num, weight=0)
-                col_num = 0
-                row_num += 1"""
-
-        """for key, value in self.button_list.items():
-            if key == "Home":
-                tk.Label(self.menu_usage, text="USE ONE OF THE MENU BUTTONS:").pack(
-                    anchor="w"
-                )
-            else:
-                if row_num % 2 == 0:
-                    tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(
-                        anchor="w", padx=25, pady=10
-                    )
-                else:
-                    tk.Label(self.menu_usage, text=f"'{key}' {value}").pack(
-                        anchor="w", padx=25
-                    )
-                row_num += 1"""
-
-        # Frame to depict selected bot info
-        # d self.main_frame = tk.Frame(info_frame)
-        """frame_row = 0
-        top_frame = tk.Frame(self.main_frame)
-        top_frame.grid(row=frame_row, column=0, sticky="NSEW", columnspan=2)
-        under_dev_label = tk.Label(
-            top_frame, text="This page is under development", fg=disp.red_color
-        )
-        under_dev_label.pack(anchor="center")
-
-        empty_frame = []
-        empty_frame_label = []
-        for i in range(10):
-            frame_row += 1
-            empty_frame.append(tk.Frame(self.main_frame))
-            empty_frame[i].grid(row=frame_row, column=0, sticky="NSEW")
-            empty_frame_label.append(tk.Label(empty_frame[i], text=" "))
-            empty_frame_label[i].pack(anchor="w")
-
-        filled_frame = tk.Frame(self.main_frame)
-        filled_frame.grid(row=1, column=1, sticky="NSEW", rowspan=frame_row)
-
-        self.pw_info = tk.PanedWindow(
-            filled_frame,
-            orient=tk.HORIZONTAL,
-            bd=0,
-            sashwidth=0,
-            height=1,
-        )
-        self.pw_info.pack(fill="both", expand="yes")
-
-        info_left = tk.Frame(self.pw_info)
-
-        if disp.ostype == "Mac":
-            bot_note = ttk.Notebook(self.pw_info, padding=(-9, 0, -9, -9))
-        else:
-            bot_note = ttk.Notebook(self.pw_info, padding=0)
-        bot_positions = tk.Frame(bot_note)
-        bot_orders = tk.Frame(bot_note)
-        bot_trades = tk.Frame(bot_note)
-        bot_results = tk.Frame(bot_note)
-        bot_note.add(bot_positions, text="Positions")
-        bot_note.add(bot_orders, text="Orders")
-        bot_note.add(bot_trades, text="Trades")
-        bot_note.add(bot_results, text="Results")
-
-        self.pw_info.add(info_left)
-        self.pw_info.add(bot_note)
-        self.pw_info.bind(
-            "<Configure>",
-            lambda event: disp.resize_width(
-                event, self.pw_info, disp.window_width // 5.5, 4
-            ),
-        )
-
-        # Widgets dictionaries for bot's data according to self.rows_list
-        self.info_name = {}
-        self.info_value = {}
-        for item in self.rows_list:
-            self.info_name[item] = tk.Label(info_left, text=item, font=spec_font)
-            self.info_name[item].pack(anchor="w")
-            if item == "Timeframe":
-                self.tm_box = ttk.Combobox(
-                    info_left,
-                    width=7,
-                    textvariable=self.timeframe_trace,
-                    state="readonly",
-                    style="default.TCombobox",
-                )
-                self.tm_box["values"] = self.timeframes
-                self.tm_box.pack(anchor="w")
-            else:
-                self.info_value[item] = tk.Label(info_left, text="")
-                self.info_value[item].pack(anchor="w")
-
-        # Frame for Bot's algorithm loaded from the strategy.py file
-        frame_row += 1
-        self.strategy = tk.Frame(self.main_frame)
-        self.strategy.grid(row=frame_row, column=0, sticky="NSWE", columnspan=2)
-        self.strategy_scroll = AutoScrollbar(self.strategy, orient="vertical")
-        self.strategy_text = tk.Text(
-            self.strategy,
-            highlightthickness=3,
-            highlightbackground=disp.title_color,
-            highlightcolor=disp.title_color,
-            yscrollcommand=self.strategy_scroll.set,
-        )
-        self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
-        self.strategy_scroll.config(command=self.strategy_text.yview)
-        self.strategy_text.grid(row=0, column=0, sticky="NSEW")
-        self.strategy_scroll.grid(row=0, column=1, sticky="NS")
-        self.strategy.grid_columnconfigure(0, weight=1)
-        self.strategy.grid_columnconfigure(1, weight=0)
-        self.strategy.grid_rowconfigure(0, weight=1)
-
-        self.main_frame.grid_columnconfigure(0, weight=0)
-        self.main_frame.grid_columnconfigure(1, weight=1)
-        for i in range(frame_row):
-            self.main_frame.grid_rowconfigure(i, weight=0)
-        self.main_frame.grid_rowconfigure(frame_row, weight=1)"""
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
@@ -910,7 +599,7 @@ class SettingsApp:
                 new_state = "Suspended"
             else:
                 new_state = "Active"
-            TEXT = "The bot {NAME} has the state ``{STATE}``. You are about to change the state to ``{CHANGE}``."
+            TEXT = "The bot ``{NAME}`` has the state ``{STATE}``. You are about to change the state to ``{CHANGE}``."
 
             return TEXT.format(NAME=bot_name, STATE=bot.state, CHANGE=new_state)
 
@@ -925,6 +614,7 @@ class SettingsApp:
                 TreeTable.bot_info.update(row=0, values=values)
                 text_label["text"] = return_text()
 
+        self.switch(option="option")
         new_state = ""
         bot = Bot[bot_name]
         text_label = tk.Label(
@@ -960,6 +650,7 @@ class SettingsApp:
                     "text"
                 ] = f"{bot_name} timeframe changed to {tuple(self.timeframes.keys())[num]}."
 
+        self.switch(option="option")
         bot = Bot[bot_name]
         tk.Label(
             self.brief_frame,
@@ -1027,6 +718,7 @@ class SettingsApp:
                         cbox.current(0)
                         cbox.update_idletasks()
 
+        self.switch(option="option")
         bots = bot_list()
         if bots:
             content = (
@@ -1099,7 +791,8 @@ class SettingsApp:
                     f"New bot ``{copy_bot}`` added to the database.\n\n"
                 )
                 self.wrap("None")
-
+        
+        self.switch(option="option")
         tk.Label(
             self.brief_frame,
             text=(
@@ -1171,7 +864,8 @@ class SettingsApp:
                     TreeTable.bot_info.update(row=0, values=values)
                     res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
                     self.wrap("None")
-            
+
+        self.switch(option="option")
         tk.Label(
         self.brief_frame,
         text=(
@@ -1209,12 +903,10 @@ class SettingsApp:
         def add(bot_name: str, timeframe: str) -> None:
             res = self.create_bot(bot_name=bot_name, timeframe=timeframe)
             if res:
-                res_label["text"] = (
-                    f"New bot ``{bot_name}`` added to the database.\n\n"
-                    + self.new_bot_text
-                )
-                self.wrap("None")
+                TreeTable.bot_menu.set_selection(index=bot_name)
+                self.switch(option="table")
 
+        self.switch(option="option")
         values = ["" for _ in var.name_bot]
         TreeTable.bot_info.update(row=0, values=values)
         tk.Label(
@@ -1263,6 +955,7 @@ class SettingsApp:
         self.wrap("None")
 
     def show(self, bot_name):
+        self.switch(option="table")
         bot = Bot[bot_name]
         values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
         TreeTable.bot_info.update(row=0, values=values)
@@ -1272,6 +965,15 @@ class SettingsApp:
             if type(child) is tk.Label:
                 child.config(wraplength=self.brief_frame.winfo_width() - self.padx * 2)
 
+    def switch(self, option: str) -> None:
+        if option == "table":
+            info_left.pack_forget()
+            info_right.pack_forget()
+            pw_bot_info.pack(fill="both", expand=True)
+        else:
+            pw_bot_info.pack_forget()
+            info_left.pack(fill="both", side="left")
+            info_right.pack(fill="both", expand=True, side="left")
 
 def handler_bot_menu(event) -> None:
     tree = event.widget
@@ -1304,15 +1006,38 @@ pw_menu_robots = tk.PanedWindow(
     height=1,
 )
 pw_menu_robots.pack(fill="both", expand="yes")
-
 menu_frame = tk.Frame(pw_menu_robots)
 info_frame = tk.Frame(pw_menu_robots, bg=disp.bg_color)  # , bg=disp.bg_color)
-frame_bot_info = tk.Frame(info_frame)  # , bg=disp.bg_color)
-frame_bot_info.pack(fill="both", anchor="n")
-info_left = tk.Frame(info_frame, bg="#999999")
-info_right = tk.Frame(info_frame, bg="#999999")
+frame_bot_parameters = tk.Frame(info_frame)  # , bg=disp.bg_color)
+frame_bot_parameters.pack(fill="both", anchor="n")
+
+frame_bot_info = tk.Frame(info_frame)
+frame_bot_info.pack(fill="both", expand=True, anchor="n")
+
+
+
+info_left = tk.Frame(frame_bot_info, bg="#999999")
+info_right = tk.Frame(frame_bot_info, bg="#999999")
 info_left.pack(fill="both", side="left")
 info_right.pack(fill="both", expand=True, side="left")
+
+
+pw_bot_info = tk.PanedWindow(
+    frame_bot_info,
+    orient=tk.VERTICAL,
+    bd=0,
+    sashwidth=0,
+    height=1,
+)
+
+frame_bot_tables = tk.Frame(pw_bot_info)
+frame_bot_strategy = tk.Frame(pw_bot_info)
+pw_bot_info.add(frame_bot_tables)
+pw_bot_info.add(frame_bot_strategy)
+
+
+
+
 
 pw_menu_robots.add(menu_frame)
 pw_menu_robots.add(info_frame)

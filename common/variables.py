@@ -173,7 +173,7 @@ class Variables:
     ]
     name_position = [
         "MARKET",
-        "BOT",
+        "BOT NAME",
         "SYMBOL",
         "CATEGORY",
         "POS",
@@ -192,6 +192,13 @@ class Variables:
         "STATE",
         "UPDATED",
         "CREATED",
+    ]
+    name_bot_position = [
+        "MARKET",
+        "SYMBOL",
+        "CATEGORY",
+        "POSITION",
+        "PNL",
     ]
     logger: logging = setup_logger()
     connect_sqlite = None

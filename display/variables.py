@@ -739,7 +739,7 @@ class TreeviewTable(Variables):
         return reversed(data[: self.max_rows])
 
     def set_selection(self, index=0):
-        self.tree.selection_add(self.children[index])
+        self.tree.selection_add(index)
 
     def setup_color_cell(self):
         self._canvas = list()
@@ -843,6 +843,7 @@ class TreeTable:
     bots: TreeviewTable
     bot_menu: TreeviewTable
     bot_info: TreeviewTable
+    bot_position: TreeviewTable
 
 
 def text_ignore(event):
