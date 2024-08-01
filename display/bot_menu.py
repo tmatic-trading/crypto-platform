@@ -621,7 +621,7 @@ class SettingsApp:
             Bot[copy_bot].timefr = Bot[bot_name].timefr
             Bot[copy_bot].created = time_now
             Bot[copy_bot].updated = time_now
-            self.after_popup(copy_bot)
+            #self.after_popup(copy_bot)
 
     def after_popup(self, bot_name):
         if bot_name != "":
@@ -927,7 +927,6 @@ class SettingsApp:
 
         new_state = ""
         bot = Bot[bot_name]
-        # d tk.Label(self.brief_frame, text="", bg=disp.bg_color).pack(anchor="nw", padx=self.padx, pady=self.pady)
         text_label = tk.Label(
             self.brief_frame,
             text=return_text(),
@@ -980,7 +979,7 @@ class SettingsApp:
         )
         self.button.pack(anchor="nw", padx=50, pady=10)
         res_label = tk.Label(
-            self.brief_frame, text="", bg=disp.bg_color, fg="#777777", justify=tk.LEFT
+            self.brief_frame, text="", bg=disp.bg_color, fg=disp.gray_color, justify=tk.LEFT
         )
         res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
 
@@ -1016,9 +1015,7 @@ class SettingsApp:
                 if err is None:
                     bot_path = self.get_bot_path(bot_to_delete)
                     shutil.rmtree(str(bot_path))
-                    res_label[
-                        "text"
-                    ] = (
+                    res_label["text"] = (
                         f"``{bot_name}`` and ``{bot_to_delete}`` have been merged. "
                         + f"``{bot_to_delete}`` is no longer available."
                     )
@@ -1079,19 +1076,79 @@ class SettingsApp:
             )
             self.button.pack(anchor="nw", padx=50, pady=10)
         res_label = tk.Label(
-            self.brief_frame, text="", bg=disp.bg_color, fg="#777777", justify=tk.LEFT
+            self.brief_frame, text="", bg=disp.bg_color, fg=disp.gray_color, justify=tk.LEFT
         )
         res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
 
     def dublicate(self, bot_name: str):
-        print("_______dublicate_______", bot_name)
+        def add_copy_bot(bot_name: str) -> None:
+            copy_bot = self.name_trace.get()
+            err = service.insert_database(
+                values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
+            )
+            if err is None:
+                shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
+                time_now = self.get_time()
+                bot = Bot[copy_bot]
+                bot.state = "Suspended"
+                bot.timefr = Bot[bot_name].timefr
+                bot.created = time_now
+                bot.updated = time_now
+                self.insert_bot_menu(name=copy_bot, new=True)
+                res_label["text"] = (
+                    f"New bot ``{copy_bot}`` added to the database.\n\n"
+                )
+                self.wrap("None")
+
+        tk.Label(
+            self.brief_frame,
+            text=(
+                f"You are about to duplicate ``{bot_name}``. The newly "
+                + f"created bot will get the same set of parameters as "
+                + f"``{bot_name}`` currently has."
+            ),
+            bg=disp.bg_color,
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        tk.Label(
+            self.brief_frame,
+            text="Enter a unique name",
+            bg=disp.bg_color,
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        self.bot_entry["Name"] = ttk.Entry(
+            self.brief_frame,
+            width=20,
+            style="free.TEntry",
+            textvariable=self.name_trace,
+        )
+        self.bot_entry["Name"].pack(anchor="nw", padx=50, pady=0)
+        self.name_trace.trace_add("write", self.name_trace_callback)
+        self.button = tk.Button(
+            self.brief_frame,
+            activebackground=disp.bg_active,
+            text="Duplicate Bot",
+            command=lambda: add_copy_bot(bot_name),
+            state="disabled",
+        )
+        self.bot_entry["Name"].delete(0, tk.END)
+        self.bot_entry["Name"].insert(0, bot_name)
+        self.button.pack(anchor="nw", padx=50, pady=20)
+        res_label = tk.Label(
+            self.brief_frame,
+            text="",
+            bg=disp.bg_color,
+            fg=disp.gray_color,
+            justify=tk.LEFT,
+        )
+        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+        self.wrap("None")
 
     def delete(self, bot_name: str):
         print("_______delete_______", bot_name)
 
     def new_bot(self):
         def add(bot_name: str, timeframe: str) -> None:
-            print("_____", type(timeframe))
             res = self.create_bot(bot_name=bot_name, timeframe=timeframe)
             if res:
                 res_label["text"] = (
@@ -1141,7 +1198,7 @@ class SettingsApp:
             self.brief_frame,
             text=self.new_bot_text,
             bg=disp.bg_color,
-            fg="#777777",
+            fg=disp.gray_color,
             justify=tk.LEFT,
         )
         res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)

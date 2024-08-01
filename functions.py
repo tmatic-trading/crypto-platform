@@ -928,7 +928,7 @@ class Function(WS, Variables):
         )
         # d print("___orderbook", datetime.now() - tm)
 
-        '''# Refresh robots table
+        """# Refresh robots table
 
         tree = TreeTable.robots
 
@@ -988,7 +988,7 @@ class Function(WS, Variables):
                         tree.paint(row=num, configure="Red")
                 elif robot["STATUS"] == "NOT DEFINED":
                     Function.not_defined_robot_color(self, emi=robot["EMI"])
-        # d print("___robot", datetime.now() - tm)'''
+        # d print("___robot", datetime.now() - tm)"""
 
         # Refresh account table
 

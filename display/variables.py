@@ -4,8 +4,8 @@ import tkinter.font
 from datetime import datetime
 from tkinter import ttk
 
-from common.variables import Variables as var
 from api.api import Markets
+from common.variables import Variables as var
 
 if platform.system() == "Windows":
     from ctypes import windll
@@ -28,7 +28,9 @@ class AutoScrollbar(tk.Scrollbar):
 
 
 class CustomButton(tk.Frame):
-    def __init__(self, root, master, text, bg, fg, command=None, menu_items=None, **kwargs):
+    def __init__(
+        self, root, master, text, bg, fg, command=None, menu_items=None, **kwargs
+    ):
         super().__init__(master, **kwargs)
         self.label = tk.Label(self, text=text, bg=bg, fg=fg)
         self.label.pack(fill="both")
@@ -54,7 +56,7 @@ class CustomButton(tk.Frame):
         # Tracks if the menu is posted or not as there is no direct built-in method to check if the tk.Menu widget is currently posted (visible) or not.
         self.menu_posted = False
 
-        self.label.bind("<ButtonPress-1>", self.on_press)        
+        self.label.bind("<ButtonPress-1>", self.on_press)
         root.bind("<Button>", self.check_click_outside)
         root.bind("<Escape>", self.on_escape_button)
         self.label.bind("<Enter>", self.on_enter)
@@ -65,16 +67,16 @@ class CustomButton(tk.Frame):
         self.menu_posted = False
 
     def on_escape_button(self, event):
-        '''This function triggers the unpost() method
+        """This function triggers the unpost() method
         since not every OS or Python version makes it by
-        default after ESC press'''
+        default after ESC press"""
         if self.menu_posted:
             self.hide_menu()
 
     def check_click_outside(self, event):
-        '''This function triggers the unpost() method
+        """This function triggers the unpost() method
         since not every OS or Python version makes it by
-        default after a mouse-click outside the button'''
+        default after a mouse-click outside the button"""
         mouse_x = self.winfo_pointerx()
         mouse_y = self.winfo_pointery()
         # Get the button bounds
@@ -85,9 +87,7 @@ class CustomButton(tk.Frame):
             self.label.winfo_rooty() + self.label.winfo_height(),
         )
         # Check if the click is outside the button
-        if not (menu_x1 <= mouse_x <= menu_x2
-                and menu_y1 <= mouse_y <= menu_y2
-        ):
+        if not (menu_x1 <= mouse_x <= menu_x2 and menu_y1 <= mouse_y <= menu_y2):
             if self.menu_posted:
                 self.hide_menu()
         else:
@@ -193,6 +193,7 @@ class Variables:
     red_color = "#f53661"
     white_color = "#FFFFFF"
     black_color = "#000000"
+    gray_color = "#777777"
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
     symbol_width = tkinter.font.Font().measure("01234567890.") / 12
     button_height = 20
@@ -226,16 +227,12 @@ class Variables:
 
     # This technical PanedWindow contains instruments, positions, orders,
     # trades, fundings, results, account, bots
-    pw_rest3 = tk.PanedWindow(
-        pw_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0
-    )
+    pw_rest3 = tk.PanedWindow(pw_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0)
     pw_rest3.pack(fill="both", expand="yes")
 
     # This technical PanedWindow contains positions, orders, trades, fundings,
     # results, account, bots
-    pw_rest4 = tk.PanedWindow(
-        pw_rest3, orient=tk.VERTICAL, sashrelief="raised", bd=0
-    )
+    pw_rest4 = tk.PanedWindow(pw_rest3, orient=tk.VERTICAL, sashrelief="raised", bd=0)
     pw_rest4.pack(fill="both", expand="yes")
 
     style.configure("free.TEntry", foreground=fg_color)
@@ -326,7 +323,11 @@ class Variables:
         title_color,
         fg_color,
         command=on_menu_select,
-        menu_items=["<F9> Trading State", "<F7> Bot Menu", "<F3> Reload All"],#, "Settings", "About"],
+        menu_items=[
+            "<F9> Trading State",
+            "<F7> Bot Menu",
+            "<F3> Reload All",
+        ],  # , "Settings", "About"],
     )
     menu_button.pack(side="left", padx=4)
 
@@ -510,6 +511,7 @@ class Variables:
             my_width = start_width
         pw.paneconfig(pw.panes()[0], width=my_width)
 
+
 def on_trade_state(event) -> None:
     if Variables.f9 == "ON":
         Variables.f9 = "OFF"
@@ -521,10 +523,12 @@ def on_trade_state(event) -> None:
             Markets[market].logNumFatal = 0
     Variables.label_f9["text"] = Variables.f9
 
+
 def on_f3_reload() -> None:
     Variables.menu_robots.pack_forget()
     Variables.pw_rest1.pack(fill="both", expand="yes")
     Variables.f3 = True
+
 
 def on_bot_menu(event) -> None:
     Variables.pw_rest1.pack_forget()

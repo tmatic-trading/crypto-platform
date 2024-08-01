@@ -266,7 +266,7 @@ class Agent(Bitmex):
                         else:
                             row["settlCurrency"] = (instrument.baseCoin, self.name)
                     else:
-                        row["settlCurrency"] = (row["settlCurrency"], self.name)
+                        row["settlCurrency"] = instrument.settlCurrency
                     if "lastQty" in row:
                         row["lastQty"] *= instrument.valueOfOneContract
                     if "leavesQty" in row:
