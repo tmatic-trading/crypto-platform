@@ -1145,7 +1145,65 @@ class SettingsApp:
         self.wrap("None")
 
     def delete(self, bot_name: str):
-        print("_______delete_______", bot_name)
+        def delete_bot(bot_name: str) -> None:
+            err = service.update_database(
+            query=f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
+            )
+            if err is None:
+                err = service.update_database(
+                    query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+                )
+                if err is None:
+                    bot_path = self.get_bot_path(bot_name)
+                    shutil.rmtree(str(bot_path))
+                    Bot.remove(bot_name)
+                    TreeTable.bot_menu.delete(iid=bot_name)
+                    for child in buttons_menu.brief_frame.winfo_children():
+                        child.destroy()
+                    res_label = tk.Label(
+                        self.brief_frame,
+                        text=f"``{bot_name}`` has been deleted.",
+                        bg=disp.bg_color,
+                        fg=disp.gray_color,
+                        justify=tk.LEFT,
+                    )
+                    values = ["" for _ in var.name_bot]
+                    TreeTable.bot_info.update(row=0, values=values)
+                    res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+                    self.wrap("None")
+            
+        tk.Label(
+        self.brief_frame,
+        text=(
+            f"After you press the ``Delete bot`` button, the "
+            + f"``/algo/{bot_name}/`` subdirectory will be "
+            + f"erased and this bot will no longer exist. Each database "
+            + f"record belonging to the ``{bot_name}`` changes the value of the "
+            + f"``EMI`` field to the default value from the ``SYMBOL`` field."
+        ),
+        bg=disp.bg_color,
+        justify=tk.LEFT,
+    ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        self.check_var.set(0)
+        confirm = tk.Checkbutton(
+            self.brief_frame,
+            text="Confirm operation",
+            variable=self.check_var,
+            bg=disp.bg_color,
+            justify=tk.LEFT,
+            highlightthickness=0,
+            command=self.check_button,
+        )
+        confirm.pack(anchor="nw")
+        self.button = tk.Button(
+            self.brief_frame,
+            activebackground=disp.bg_active,
+            text="Delete bot",
+            command=lambda: delete_bot(bot_name),
+            state="disabled",
+        )
+        self.button.pack(anchor="nw", padx=50, pady=10)
+        self.wrap("None")
 
     def new_bot(self):
         def add(bot_name: str, timeframe: str) -> None:
