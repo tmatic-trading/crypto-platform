@@ -1042,7 +1042,7 @@ pw_bot_info = tk.PanedWindow(
 )
 
 frame_bot_strategy = tk.Frame(pw_bot_info)
-tk.Label(frame_bot_strategy, text="text").pack()
+tk.Label(frame_bot_strategy, text="Under development").pack()
 
 if disp.ostype == "Mac":
     bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))

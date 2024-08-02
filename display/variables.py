@@ -123,7 +123,7 @@ class CustomButton(tk.Frame):
 
 class Variables:
     root = tk.Tk()
-    root.bind("<F7>", lambda event: on_bot_menu(event))
+    root.bind("<F7>", lambda event: Variables.on_bot_menu(event))
     root.bind("<F9>", lambda event: on_trade_state(event))
     platform_name = "Tmatic"
     root.title(platform_name)
@@ -310,7 +310,7 @@ class Variables:
     def on_menu_select(value):
         print("______________on_menu_select")
         if value == "<F7> Bot Menu":
-            on_bot_menu("none")
+            Variables.on_bot_menu("None")
         elif value == "<F9> Trading State":
             on_trade_state("none")
         elif value == "<F3> Reload All":
@@ -520,6 +520,10 @@ class Variables:
         panes = pw.winfo_children()
         Variables.pw_ratios[pw] = pw.winfo_height() / panes[1].winfo_height()
 
+    def on_bot_menu(event) -> None:
+        Variables.pw_rest1.pack_forget()
+        Variables.menu_robots.pack(fill="both", expand="yes")
+
 
 def on_trade_state(event) -> None:
     if Variables.f9 == "ON":
@@ -537,11 +541,6 @@ def on_f3_reload() -> None:
     Variables.menu_robots.pack_forget()
     Variables.pw_rest1.pack(fill="both", expand="yes")
     Variables.f3 = True
-
-
-def on_bot_menu(event) -> None:
-    Variables.pw_rest1.pack_forget()
-    Variables.menu_robots.pack(fill="both", expand="yes")
 
 
 class TreeviewTable(Variables):

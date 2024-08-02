@@ -1982,8 +1982,11 @@ def handler_robots(event) -> None:
                 )
 
 
-def handler_bots(event) -> None:
-    pass
+def handler_bot(event) -> None:
+    tree = event.widget
+    iid = tree.selection()[0]
+    disp.on_bot_menu("None")
+    bot_menu.buttons_menu.show(iid)
 
 
 def change_color(color: str, container=None) -> None:
@@ -2067,7 +2070,7 @@ def init_tables() -> None:
         frame=disp.frame_bots,
         name="bots",
         title=var.name_bots,
-        bind=handler_bots,
+        bind=handler_bot,
         hierarchy=False,
     )
     TreeTable.bot_menu = TreeviewTable(
