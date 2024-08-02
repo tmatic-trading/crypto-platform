@@ -899,12 +899,12 @@ class SettingsApp:
         self.button.pack(anchor="nw", padx=50, pady=10)
         self.wrap("None")
 
-    def new_bot(self):
+    def new(self):
         def add(bot_name: str, timeframe: str) -> None:
             res = self.create_bot(bot_name=bot_name, timeframe=timeframe)
             if res:
                 TreeTable.bot_menu.set_selection(index=bot_name)
-                self.switch(option="table")
+                self.show(bot_name)
 
         self.switch(option="option")
         values = ["" for _ in var.name_bot]
@@ -955,10 +955,13 @@ class SettingsApp:
         self.wrap("None")
 
     def show(self, bot_name):
+        disp.bot_name = bot_name
+        disp.refresh_bot_info = True
         self.switch(option="table")
         bot = Bot[bot_name]
+        print("==============", bot_name)
         values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
-        TreeTable.bot_info.update(row=0, values=values)
+        TreeTable.bot_info.update(row=0, values=values)      
 
     def wrap(self, event):
         for child in buttons_menu.brief_frame.winfo_children():
@@ -969,7 +972,7 @@ class SettingsApp:
         if option == "table":
             info_left.pack_forget()
             info_right.pack_forget()
-            pw_bot_info.pack(fill="both", expand=True)
+            pw_bot_info.pack(fill="both", expand="yes")
         else:
             pw_bot_info.pack_forget()
             info_left.pack(fill="both", side="left")
@@ -990,11 +993,14 @@ def handler_bot_menu(event) -> None:
     if parent == "Back":
         disp.menu_robots.pack_forget()
         disp.pw_rest1.pack(fill="both", expand="yes")
+        disp.refresh_bot_info = False
     elif parent == "New_bot":
-        buttons_menu.new_bot()
+        disp.refresh_bot_info = False
+        buttons_menu.new()
     elif not option:
         buttons_menu.show(parent)
     else:
+        disp.refresh_bot_info = False
         buttons_menu.bot_options[option](bot_name=parent)
 
 
@@ -1025,17 +1031,28 @@ info_right.pack(fill="both", expand=True, side="left")
 pw_bot_info = tk.PanedWindow(
     frame_bot_info,
     orient=tk.VERTICAL,
+    sashrelief="raised", 
     bd=0,
-    sashwidth=0,
-    height=1,
 )
 
-frame_bot_tables = tk.Frame(pw_bot_info)
+if disp.ostype == "Mac":
+    bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
+else:
+    bot_note = ttk.Notebook(pw_bot_info, padding=0)
+bot_positions = tk.Frame(bot_note)
+bot_orders = tk.Frame(bot_note)
+bot_trades = tk.Frame(bot_note)
+bot_results = tk.Frame(bot_note)
+bot_note.add(bot_positions, text="Positions")
+bot_note.add(bot_orders, text="Orders")
+bot_note.add(bot_trades, text="Trades")
+bot_note.add(bot_results, text="Results")
+
+
 frame_bot_strategy = tk.Frame(pw_bot_info)
-pw_bot_info.add(frame_bot_tables)
+tk.Label(frame_bot_strategy, text="text").pack()
+pw_bot_info.add(bot_note)
 pw_bot_info.add(frame_bot_strategy)
-
-
 
 
 

@@ -502,6 +502,8 @@ class Variables:
     order_window_trigger = "off"
     table_limit = 200
     refresh_handler_orderbook = False
+    refresh_bot_info = False
+    bot_name = ""
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
