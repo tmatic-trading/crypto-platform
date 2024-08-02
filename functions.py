@@ -2016,6 +2016,7 @@ def init_tables() -> None:
         bind=handler_account,
         hierarchy=True,
         lines=var.market_list,
+        hide=["3", "5", "6"],
     )
     TreeTable.market = TreeviewTable(
         frame=disp.frame_market,
