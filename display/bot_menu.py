@@ -1041,8 +1041,8 @@ pw_bot_info = tk.PanedWindow(
     bd=0,
 )
 
-pw_ratios = {}
-pw_ratios[pw_bot_info] = 2.5
+frame_bot_strategy = tk.Frame(pw_bot_info)
+tk.Label(frame_bot_strategy, text="text").pack()
 
 if disp.ostype == "Mac":
     bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
@@ -1057,21 +1057,14 @@ bot_note.add(bot_orders, text="Orders")
 bot_note.add(bot_trades, text="Trades")
 bot_note.add(bot_results, text="Results")
 
-
-def on_sash_move(event, pw):
-    panes = pw.winfo_children()
-    pw_ratios[pw] = pw.winfo_height() / panes[0].winfo_height()
-
-
-frame_bot_strategy = tk.Frame(pw_bot_info)
-tk.Label(frame_bot_strategy, text="text").pack()
 pw_bot_info.add(bot_note)
 pw_bot_info.add(frame_bot_strategy)
+disp.pw_ratios[pw_bot_info] = 2.5
 pw_bot_info.bind(
     "<Configure>",
-    lambda event: disp.resize_height(event, pw_bot_info, pw_ratios[pw_bot_info]),
+    lambda event: disp.resize_height(event, pw_bot_info, disp.pw_ratios[pw_bot_info]),
 )
-pw_bot_info.bind("<ButtonRelease-1>", lambda event: on_sash_move(event, pw_bot_info))
+pw_bot_info.bind("<ButtonRelease-1>", lambda event: disp.on_sash_move(event, pw_bot_info))
 
 pw_menu_robots.add(menu_frame)
 pw_menu_robots.add(info_frame)
