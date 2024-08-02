@@ -420,8 +420,6 @@ class Variables:
     pw_ratios[pw_info_rest] = 9
     pw_ratios[pw_rest3] = 4
     pw_ratios[pw_rest4] = 2
-    pw_bot_info = "bot_menu.py"
-    pw_ratios[pw_bot_info] = 2
 
     notebook.add(frame_orders, text="Orders")
     notebook.add(frame_positions, text="Positions")
@@ -439,7 +437,7 @@ class Variables:
         ),
     )
     pw_rest4.bind(
-        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_rest4)
+        "<ButtonRelease-1>", lambda event: Variables.on_sash_move(event, Variables.pw_rest4)
     )
 
     pw_rest3.add(frame_instrument)
@@ -451,7 +449,7 @@ class Variables:
         ),
     )
     pw_rest3.bind(
-        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_rest3)
+        "<ButtonRelease-1>", lambda event: Variables.on_sash_move(event, Variables.pw_rest3)
     )
 
     pw_rest2.add(frame_orderbook)
@@ -481,7 +479,7 @@ class Variables:
         ),
     )
     pw_info_rest.bind(
-        "<ButtonRelease-1>", lambda event: on_sash_move(event, Variables.pw_info_rest)
+        "<ButtonRelease-1>", lambda event: Variables.on_sash_move(event, Variables.pw_info_rest)
     )
 
     pw_main.add(frame_left)
@@ -517,6 +515,10 @@ class Variables:
 
     def resize_height(event, pw, ratio):
         pw.paneconfig(pw.panes()[0], height=pw.winfo_height() // ratio)
+
+    def on_sash_move(event, pw):
+        panes = pw.winfo_children()
+        Variables.pw_ratios[pw] = pw.winfo_height() / panes[1].winfo_height()
 
 
 def on_trade_state(event) -> None:
@@ -870,11 +872,6 @@ def text_ignore(event):
 
 def resize_col(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], width=pw.winfo_width() // ratio)
-
-
-def on_sash_move(event, pw):
-    panes = pw.winfo_children()
-    Variables.pw_ratios[pw] = pw.winfo_height() / panes[1].winfo_height()
 
 
 def trim_col_width(tview, cols):
