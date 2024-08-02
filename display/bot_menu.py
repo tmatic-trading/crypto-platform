@@ -119,7 +119,7 @@ class SettingsApp:
         self.timeframe_changed = None
 
         # Create initial frames
-        #self.bot_info_frame()
+        # self.bot_info_frame()
 
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
@@ -513,7 +513,7 @@ class SettingsApp:
             Bot[copy_bot].timefr = Bot[bot_name].timefr
             Bot[copy_bot].created = time_now
             Bot[copy_bot].updated = time_now
-            #self.after_popup(copy_bot)
+            # self.after_popup(copy_bot)
 
     def after_popup(self, bot_name):
         if bot_name != "":
@@ -670,7 +670,11 @@ class SettingsApp:
         )
         self.button.pack(anchor="nw", padx=50, pady=10)
         res_label = tk.Label(
-            self.brief_frame, text="", bg=disp.bg_color, fg=disp.gray_color, justify=tk.LEFT
+            self.brief_frame,
+            text="",
+            bg=disp.bg_color,
+            fg=disp.gray_color,
+            justify=tk.LEFT,
         )
         res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
 
@@ -768,7 +772,11 @@ class SettingsApp:
             )
             self.button.pack(anchor="nw", padx=50, pady=10)
         res_label = tk.Label(
-            self.brief_frame, text="", bg=disp.bg_color, fg=disp.gray_color, justify=tk.LEFT
+            self.brief_frame,
+            text="",
+            bg=disp.bg_color,
+            fg=disp.gray_color,
+            justify=tk.LEFT,
         )
         res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
 
@@ -779,7 +787,9 @@ class SettingsApp:
                 values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
             )
             if err is None:
-                shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
+                shutil.copytree(
+                    self.get_bot_path(bot_name), self.get_bot_path(copy_bot)
+                )
                 time_now = self.get_time()
                 bot = Bot[copy_bot]
                 bot.state = "Suspended"
@@ -787,11 +797,9 @@ class SettingsApp:
                 bot.created = time_now
                 bot.updated = time_now
                 self.insert_bot_menu(name=copy_bot, new=True)
-                res_label["text"] = (
-                    f"New bot ``{copy_bot}`` added to the database.\n\n"
-                )
+                res_label["text"] = f"New bot ``{copy_bot}`` added to the database.\n\n"
                 self.wrap("None")
-        
+
         self.switch(option="option")
         tk.Label(
             self.brief_frame,
@@ -840,7 +848,7 @@ class SettingsApp:
     def delete(self, bot_name: str):
         def delete_bot(bot_name: str) -> None:
             err = service.update_database(
-            query=f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
+                query=f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
             )
             if err is None:
                 err = service.update_database(
@@ -867,17 +875,17 @@ class SettingsApp:
 
         self.switch(option="option")
         tk.Label(
-        self.brief_frame,
-        text=(
-            f"After you press the ``Delete bot`` button, the "
-            + f"``/algo/{bot_name}/`` subdirectory will be "
-            + f"erased and this bot will no longer exist. Each database "
-            + f"record belonging to the ``{bot_name}`` changes the value of the "
-            + f"``EMI`` field to the default value from the ``SYMBOL`` field."
-        ),
-        bg=disp.bg_color,
-        justify=tk.LEFT,
-    ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+            self.brief_frame,
+            text=(
+                f"After you press the ``Delete bot`` button, the "
+                + f"``/algo/{bot_name}/`` subdirectory will be "
+                + f"erased and this bot will no longer exist. Each database "
+                + f"record belonging to the ``{bot_name}`` changes the value of the "
+                + f"``EMI`` field to the default value from the ``SYMBOL`` field."
+            ),
+            bg=disp.bg_color,
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
         self.check_var.set(0)
         confirm = tk.Checkbutton(
             self.brief_frame,
@@ -959,9 +967,8 @@ class SettingsApp:
         disp.refresh_bot_info = True
         self.switch(option="table")
         bot = Bot[bot_name]
-        print("==============", bot_name)
         values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
-        TreeTable.bot_info.update(row=0, values=values)      
+        TreeTable.bot_info.update(row=0, values=values)
 
     def wrap(self, event):
         for child in buttons_menu.brief_frame.winfo_children():
@@ -977,6 +984,7 @@ class SettingsApp:
             pw_bot_info.pack_forget()
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
+
 
 def handler_bot_menu(event) -> None:
     tree = event.widget
@@ -1021,7 +1029,6 @@ frame_bot_info = tk.Frame(info_frame)
 frame_bot_info.pack(fill="both", expand=True, anchor="n")
 
 
-
 info_left = tk.Frame(frame_bot_info, bg="#999999")
 info_right = tk.Frame(frame_bot_info, bg="#999999")
 info_left.pack(fill="both", side="left")
@@ -1030,7 +1037,7 @@ info_right.pack(fill="both", expand=True, side="left")
 pw_bot_info = tk.PanedWindow(
     frame_bot_info,
     orient=tk.VERTICAL,
-    sashrelief="raised", 
+    sashrelief="raised",
     bd=0,
 )
 
@@ -1055,6 +1062,7 @@ def on_sash_move(event, pw):
     panes = pw.winfo_children()
     pw_ratios[pw] = pw.winfo_height() / panes[0].winfo_height()
 
+
 frame_bot_strategy = tk.Frame(pw_bot_info)
 tk.Label(frame_bot_strategy, text="text").pack()
 pw_bot_info.add(bot_note)
@@ -1063,9 +1071,7 @@ pw_bot_info.bind(
     "<Configure>",
     lambda event: disp.resize_height(event, pw_bot_info, pw_ratios[pw_bot_info]),
 )
-pw_bot_info.bind(
-    "<ButtonRelease-1>", lambda event: on_sash_move(event, pw_bot_info)
-)
+pw_bot_info.bind("<ButtonRelease-1>", lambda event: on_sash_move(event, pw_bot_info))
 
 pw_menu_robots.add(menu_frame)
 pw_menu_robots.add(info_frame)

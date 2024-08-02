@@ -671,6 +671,13 @@ class TreeviewTable(Variables):
         if len(self.children) > self.max_rows:
             self.delete()
 
+    def insert_parent(self, parent: str, configure="", text="") -> None:
+        if not text:
+            text = parent
+        self.tree.insert("", tk.END, text=text, iid=parent, open=True, tags=configure)
+        self.children = self.tree.get_children()
+        self.children_hierarchical[parent] = self.tree.get_children(parent)
+
     def insert_hierarchical(
         self, parent: str, iid: str, values=[], configure="", text="", new=False
     ):
@@ -684,16 +691,20 @@ class TreeviewTable(Variables):
         )
         self.children_hierarchical[parent] = self.tree.get_children(parent)
         self.children = self.tree.get_children()
+        self.cache[iid] = values
 
     def delete(self, iid="") -> None:
         if not iid:
             iid = self.children[len(self.children) - 1]
         self.tree.delete(iid)
         self.children = self.tree.get_children()
+        if iid in self.children_hierarchical:
+            del self.children_hierarchical[iid]
 
     def delete_hierarchical(self, parent: str, iid="") -> None:
         self.tree.delete(iid)
         self.children_hierarchical[parent] = self.tree.get_children(parent)
+        del self.cache[iid]
 
     def update(self, row: int, values: list) -> None:
         self.tree.item(row, values=values)
