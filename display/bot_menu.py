@@ -601,7 +601,7 @@ class SettingsApp:
                 new_state = "Suspended"
             else:
                 new_state = "Active"
-            TEXT = "The bot ``{NAME}`` has the state ``{STATE}``. You are about to change the state to ``{CHANGE}``."
+            TEXT = "The bot ``{NAME}`` has state ``{STATE}``. You are about to change the state to ``{CHANGE}``."
 
             return TEXT.format(NAME=bot_name, STATE=bot.state, CHANGE=new_state)
 
@@ -882,8 +882,8 @@ class SettingsApp:
                 f"After you press the ``Delete bot`` button, the "
                 + f"``/algo/{bot_name}/`` subdirectory will be "
                 + f"erased and this bot will no longer exist. Each database "
-                + f"record belonging to the ``{bot_name}`` changes the value of the "
-                + f"``EMI`` field to the default value from the ``SYMBOL`` field."
+                + f"record belonging to the ``{bot_name}`` will change its ``EMI`` "
+                + f"field value to the default one taken from the ``SYMBOL`` field."
             ),
             bg=disp.bg_color,
             justify=tk.LEFT,
