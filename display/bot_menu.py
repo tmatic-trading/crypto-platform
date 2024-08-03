@@ -23,6 +23,7 @@ import traceback
 from collections import OrderedDict
 from datetime import datetime, timezone
 from tkinter import StringVar, font, ttk
+from typing import Union
 
 from pygments import lex
 from pygments.lexers import PythonLexer
@@ -706,18 +707,11 @@ class SettingsApp:
                 query=f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
             )
             if err is None:
-                err = service.update_database(
-                    query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'"
-                )
-                if err is None:
-                    bot_path = self.get_bot_path(bot_to_delete)
-                    shutil.rmtree(str(bot_path))
+                if self.delete_all_bot_info(bot_name):
                     res_label["text"] = (
                         f"``{bot_name}`` and ``{bot_to_delete}`` have been merged. "
                         + f"``{bot_to_delete}`` is no longer available."
                     )
-                    TreeTable.bot_menu.delete(iid=bot_to_delete)
-                    Bot.remove(bot_to_delete)
                     bots = bot_list()
                     if bots:
                         cbox["values"] = tuple(bots)
@@ -853,14 +847,7 @@ class SettingsApp:
                 query=f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
             )
             if err is None:
-                err = service.update_database(
-                    query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
-                )
-                if err is None:
-                    bot_path = self.get_bot_path(bot_name)
-                    shutil.rmtree(str(bot_path))
-                    Bot.remove(bot_name)
-                    TreeTable.bot_menu.delete(iid=bot_name)
+                if self.delete_all_bot_info(bot_name):
                     for child in buttons_menu.brief_frame.winfo_children():
                         child.destroy()
                     res_label = tk.Label(
@@ -874,7 +861,6 @@ class SettingsApp:
                     TreeTable.bot_info.update(row=0, values=values)
                     res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
                     self.wrap("None")
-
         self.switch(option="option")
         tk.Label(
             self.brief_frame,
@@ -969,10 +955,9 @@ class SettingsApp:
             bot_trades_sub[disp.bot_name].pack_forget()
         disp.bot_name = bot_name
         disp.refresh_bot_info = True
-        init_bot_trades(bot_name=bot_name)
-        refresh_bot_orders()
+        init_bot_trades(bot_name=bot_name)        
         bot_trades_sub[bot_name].pack(fill="both", expand="yes")
-        disp.root.update_idletasks()
+        refresh_bot_orders()
         self.switch(option="table")
         bot = Bot[bot_name]
         values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
@@ -992,6 +977,20 @@ class SettingsApp:
             pw_bot_info.pack_forget()
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
+
+    def delete_all_bot_info(self, bot_name) -> Union[bool, None]:
+        err = service.update_database(
+        query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+        )
+        if err is None:
+            bot_path = self.get_bot_path(bot_name)
+            shutil.rmtree(str(bot_path))
+            Bot.remove(bot_name)
+            TreeTable.bot_menu.delete(iid=bot_name)                    
+            bot_trades_sub[disp.bot_name].destroy()
+            del trade_treeTable[bot_name]
+
+            return True
 
 def init_bot_trades(bot_name: str) -> None:    
     if bot_name not in trade_treeTable:
