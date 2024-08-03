@@ -589,29 +589,10 @@ class Function(WS, Variables):
                 str(info_p),
                 info_q,
             )
+        
         if clOrdID in self.orders:
             var.queue_order.put({"action": "put", "order": self.orders[clOrdID]})
-
-        """elif row["leavesQty"] == 0:
-            info_p = row["lastPx"]
-            info_q = row["lastQty"]
-            if clOrdID in self.orders:
-                if not info:
-                    var.queue_order.put(
-                        {"action": "delete", "clOrdID": clOrdID, "market": self.name}
-                    )
-                del self.orders[clOrdID]
-                Function.not_defined_robot_color(self, clOrdID=clOrdID)
-            else:
-                if not info:
-                    var.logger.warning(
-                        self.name
-                        + ": execType "
-                        + row["execType"]
-                        + " - order with clOrdID "
-                        + clOrdID
-                        + " not found."
-                    )"""
+        disp.bot_orders_processing = True
 
     def trades_display(
         self: Markets, val: dict, table: TreeviewTable, init=False
@@ -1212,10 +1193,12 @@ class Function(WS, Variables):
                         tree.delete(iid="notification")
                 # d print(datetime.now() - tm)
 
-            # Refresh bot trade table
+            # Refresh bot orders table
 
-            elif current_bot_note_tab == "Trades":
-                pass
+            elif current_bot_note_tab == "Orders":
+                if disp.bot_orders_processing:
+                    bot_menu.refresh_bot_orders()
+                    disp.bot_orders_processing = False
 
     def update_position_line(
         self,
@@ -1874,6 +1857,29 @@ def init_bot_treetable_trades():
     for bot_name in Bot.keys():
         bot_menu.init_bot_trades(bot_name)
 
+'''def init_bot_treetable_orders():
+    bot_order_list = dict()
+    for order in  TreeTable.orders.children:
+        emi = order.split(".")[1]
+        if emi not in bot_order_list:
+            bot_order_list[emi] = list()
+        bot_order_list[emi].append(order)
+    for bot_name in Bot.keys():
+
+            
+    
+    rows = TreeTable.orders.children
+        lst = []
+        for child in tree.children:
+            if child.split(".")[1] == disp.bot_name:
+                lst.append(child)
+        tree = TreeTable.bot_orders
+        tree.clear_all()
+        for row in lst:
+            print(row)
+
+    for bot_name in Bot.keys():'''
+
 def init_tables() -> None:
     ws = Markets[var.current_market]
     TreeTable.orderbook = TreeviewTable(
@@ -1985,6 +1991,14 @@ TreeTable.funding = TreeviewTable(
     size=0,
     title=var.name_funding,
     bind=handler_account,
+    hide=["8", "3", "5"],
+)
+TreeTable.bot_orders = TreeviewTable(
+    frame=bot_menu.bot_orders,
+    name="bot orders",
+    size=0,
+    title=var.name_bot_order,
+    bind=handler_order,
     hide=["8", "3", "5"],
 )
 

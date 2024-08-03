@@ -970,6 +970,7 @@ class SettingsApp:
         disp.bot_name = bot_name
         disp.refresh_bot_info = True
         init_bot_trades(bot_name=bot_name)
+        refresh_bot_orders()
         bot_trades_sub[bot_name].pack(fill="both", expand="yes")
         disp.root.update_idletasks()
         self.switch(option="table")
@@ -1026,6 +1027,15 @@ def init_bot_trades(bot_name: str) -> None:
                     market=row[indx_market],
                     configure=row[indx_side],
                 )
+def refresh_bot_orders():
+    tree = TreeTable.orders
+    bot_tree = TreeTable.bot_orders    
+    indx_side = bot_tree.title.index("SIDE")
+    bot_tree.clear_all()
+    for child in tree.children:
+        if child.split(".")[1] == disp.bot_name:
+            row = tree.tree.item(child)["values"]
+            bot_tree.insert(values=row, iid=child, configure=row[indx_side])
 
 def handler_bot_menu(event) -> None:
     tree = event.widget

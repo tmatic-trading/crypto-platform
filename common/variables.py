@@ -210,6 +210,16 @@ class Variables:
         "QTY",
         "BOT NAME",
     ]
+    name_bot_order = [
+        "TIME",
+        "SYMBOL",
+        "CATEGORY",
+        "MARKET",
+        "SIDE",
+        "PRICE",
+        "QTY",
+        "BOT NAME",
+    ]
     logger: logging = setup_logger()
     connect_sqlite = None
     cursor_sqlite = None

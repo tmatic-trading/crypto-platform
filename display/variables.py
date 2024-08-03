@@ -507,6 +507,7 @@ class Variables:
     refresh_bot_info = False
     bot_name = ""
     bot_trades = dict()
+    bot_orders_processing = False
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
@@ -865,6 +866,7 @@ class TreeTable:
     bot_menu: TreeviewTable
     bot_info: TreeviewTable
     bot_position: TreeviewTable
+    bot_orders: TreeviewTable
 
 
 def text_ignore(event):
