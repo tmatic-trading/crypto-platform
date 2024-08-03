@@ -308,7 +308,6 @@ class Variables:
     )"""
 
     def on_menu_select(value):
-        print("______________on_menu_select")
         if value == "<F7> Bot Menu":
             Variables.on_bot_menu("None")
         elif value == "<F9> Trading State":
@@ -437,7 +436,8 @@ class Variables:
         ),
     )
     pw_rest4.bind(
-        "<ButtonRelease-1>", lambda event: Variables.on_sash_move(event, Variables.pw_rest4)
+        "<ButtonRelease-1>",
+        lambda event: Variables.on_sash_move(event, Variables.pw_rest4),
     )
 
     pw_rest3.add(frame_instrument)
@@ -449,7 +449,8 @@ class Variables:
         ),
     )
     pw_rest3.bind(
-        "<ButtonRelease-1>", lambda event: Variables.on_sash_move(event, Variables.pw_rest3)
+        "<ButtonRelease-1>",
+        lambda event: Variables.on_sash_move(event, Variables.pw_rest3),
     )
 
     pw_rest2.add(frame_orderbook)
@@ -479,7 +480,8 @@ class Variables:
         ),
     )
     pw_info_rest.bind(
-        "<ButtonRelease-1>", lambda event: Variables.on_sash_move(event, Variables.pw_info_rest)
+        "<ButtonRelease-1>",
+        lambda event: Variables.on_sash_move(event, Variables.pw_info_rest),
     )
 
     pw_main.add(frame_left)
@@ -504,6 +506,7 @@ class Variables:
     refresh_handler_orderbook = False
     refresh_bot_info = False
     bot_name = ""
+    bot_trades = dict()
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
@@ -850,7 +853,6 @@ class TreeviewTable(Variables):
 
 class TreeTable:
     instrument: TreeviewTable
-    robots: TreeviewTable
     account: TreeviewTable
     orderbook: TreeviewTable
     market: TreeviewTable

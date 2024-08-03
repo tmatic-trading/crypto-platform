@@ -355,7 +355,9 @@ class Init(WS, Variables):
             rows = list()
             for val in data:
                 val["SYMBOL"] = (val["SYMBOL"], self.name)
-                row = Function.trades_display(self, val=val, init=True)
+                row = Function.trades_display(
+                    self, val=val, table=TreeTable.trades, init=True
+                )
                 rows.append(row)
             data = TreeTable.trades.append_data(rows=rows, market=self.name)
             indx_side = TreeTable.trades.title.index("SIDE")

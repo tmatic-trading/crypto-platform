@@ -29,11 +29,13 @@ from pygments.lexers import PythonLexer
 from pygments.styles import get_style_by_name
 from pygments.token import Token
 
+import functions
 import services as service
+from api.api import Markets
 from common.data import Bot
 from common.variables import Variables as var
 
-from .variables import AutoScrollbar, CustomButton, TreeTable
+from .variables import AutoScrollbar, CustomButton, TreeTable, TreeviewTable
 from .variables import Variables as disp
 
 
@@ -963,8 +965,13 @@ class SettingsApp:
         self.wrap("None")
 
     def show(self, bot_name):
+        if disp.bot_name and bot_name != disp.bot_name:
+            bot_trades_sub[disp.bot_name].pack_forget()
         disp.bot_name = bot_name
         disp.refresh_bot_info = True
+        init_bot_trades(bot_name=bot_name)
+        bot_trades_sub[bot_name].pack(fill="both", expand="yes")
+        disp.root.update_idletasks()
         self.switch(option="table")
         bot = Bot[bot_name]
         values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
@@ -985,6 +992,40 @@ class SettingsApp:
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
 
+def init_bot_trades(bot_name: str) -> None:    
+    if bot_name not in trade_treeTable:
+        bot_trades_sub[bot_name] = tk.Frame(bot_trades)
+        trade_treeTable[bot_name] = TreeviewTable(
+            frame=bot_trades_sub[bot_name],
+            name="bot trades",
+            size=0,
+            title=var.name_bot_trade,
+        )
+        sql = (
+            "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, ABS(QTY) "
+            + "as QTY, TRADE_PRICE, TTIME from coins where EMI == '"
+            + bot_name
+            + "' and SIDE <> 'Fund' order by TTIME limit "
+            + str(disp.table_limit)
+        )
+        data = service.select_database(sql)
+        indx_side = trade_treeTable[bot_name].title.index("SIDE")
+        indx_market = trade_treeTable[bot_name].title.index("MARKET")
+        for val in data:
+            val["SYMBOL"] = (val["SYMBOL"], val["MARKET"])
+            # Displays trades only if you have a subscription to this market in the .env file
+            if val["MARKET"] in var.market_list:
+                row = functions.Function.trades_display(
+                    Markets[val["MARKET"]],
+                    val=val,
+                    table=trade_treeTable[bot_name],
+                    init=True,
+                )
+                trade_treeTable[bot_name].insert(
+                    values=row,
+                    market=row[indx_market],
+                    configure=row[indx_side],
+                )
 
 def handler_bot_menu(event) -> None:
     tree = event.widget
@@ -1041,6 +1082,9 @@ pw_bot_info = tk.PanedWindow(
     bd=0,
 )
 
+trade_treeTable = dict()
+bot_trades_sub = dict()
+
 frame_bot_strategy = tk.Frame(pw_bot_info)
 tk.Label(frame_bot_strategy, text="Under development").pack()
 
@@ -1048,10 +1092,10 @@ if disp.ostype == "Mac":
     bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
 else:
     bot_note = ttk.Notebook(pw_bot_info, padding=0)
-bot_positions = tk.Frame(bot_note)
-bot_orders = tk.Frame(bot_note)
-bot_trades = tk.Frame(bot_note)
-bot_results = tk.Frame(bot_note)
+bot_positions = tk.Frame(bot_note, bg=disp.bg_color)
+bot_orders = tk.Frame(bot_note, bg=disp.bg_color)
+bot_trades = tk.Frame(bot_note, bg=disp.bg_color)
+bot_results = tk.Frame(bot_note, bg=disp.bg_color)
 bot_note.add(bot_positions, text="Positions")
 bot_note.add(bot_orders, text="Orders")
 bot_note.add(bot_trades, text="Trades")
@@ -1064,7 +1108,9 @@ pw_bot_info.bind(
     "<Configure>",
     lambda event: disp.resize_height(event, pw_bot_info, disp.pw_ratios[pw_bot_info]),
 )
-pw_bot_info.bind("<ButtonRelease-1>", lambda event: disp.on_sash_move(event, pw_bot_info))
+pw_bot_info.bind(
+    "<ButtonRelease-1>", lambda event: disp.on_sash_move(event, pw_bot_info)
+)
 
 pw_menu_robots.add(menu_frame)
 pw_menu_robots.add(info_frame)

@@ -13,7 +13,6 @@ from api.variables import Variables
 from bots.variables import Variables as bot
 from common.data import Bot
 from common.variables import Variables as var
-from display import bot_menu
 from display.functions import info_display
 from display.variables import TreeTable, TreeviewTable
 from display.variables import Variables as disp
@@ -163,7 +162,11 @@ class Function(WS, Variables):
                 "CATEGORY": instrument.category,
             }
             if not info:
-                Function.trades_display(self, val=message)
+                Function.trades_display(self, table=TreeTable.trades, val=message)
+                if emi in Bot.keys():
+                    Function.trades_display(
+                        self, table=bot_menu.trade_treeTable[emi], val=message
+                    )
 
         var.lock.acquire(True)
         try:
@@ -464,7 +467,6 @@ class Function(WS, Variables):
                     {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                 )
                 del self.orders[clOrdID]
-                Function.not_defined_robot_color(self, clOrdID=clOrdID)
             else:
                 var.logger.warning(
                     self.name
@@ -498,7 +500,6 @@ class Function(WS, Variables):
                         "orderID": row["orderID"],
                         "clOrdID": clOrdID,
                     }
-                    Function.not_defined_robot_color(self, emi=_emi)
                 info_p = price
                 info_q = row["orderQty"]
             elif row["execType"] == "Trade":
@@ -512,7 +513,6 @@ class Function(WS, Variables):
                     )
                     if self.orders[clOrdID]["leavesQty"] == 0:
                         del self.orders[clOrdID]
-                        Function.not_defined_robot_color(self, clOrdID=clOrdID)
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -613,7 +613,9 @@ class Function(WS, Variables):
                         + " not found."
                     )"""
 
-    def trades_display(self: Markets, val: dict, init=False) -> Union[None, list]:
+    def trades_display(
+        self: Markets, val: dict, table: TreeviewTable, init=False
+    ) -> Union[None, list]:
         """
         Update trades widget
         """
@@ -642,7 +644,7 @@ class Function(WS, Variables):
         ]
         if init:
             return row
-        TreeTable.trades.insert(values=row, market=self.name, configure=val["SIDE"])
+        table.insert(values=row, market=self.name, configure=val["SIDE"])
 
     def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -1033,29 +1035,6 @@ class Function(WS, Variables):
 
         elif current_notebook_tab == "Positions":
             tree = TreeTable.position
-
-            """def update_position_line(iid: str, compare: list):
-                def form_position_line(compare):
-                    compare[3] = Function.volume(
-                        self,
-                        qty=compare[3],
-                        symbol=symbol,
-                    )
-                    return compare
-
-                if iid in tree.children_hierarchical[market]:
-                    if iid not in tree.cache:
-                        tree.cache[iid] = []
-                    if compare != tree.cache[iid]:
-                        tree.cache[iid] = compare.copy()
-                        tree.update_hierarchical(
-                            parent=market, iid=iid, values=form_position_line(compare)
-                        )
-                else:
-                    tree.insert_hierarchical(
-                        parent=market, iid=iid, values=form_position_line(compare)
-                    )"""
-
             tm = datetime.now()
             pos_by_market = {market: [] for market in var.market_list}
             for name in Bot.keys():
@@ -1178,7 +1157,7 @@ class Function(WS, Variables):
                 )
         # d print("___market", datetime.now() - tm)
 
-        # Refresh bot info tables in bot_menu
+        # Refresh bot menu tables
 
         if disp.refresh_bot_info:
             current_bot_note_tab = bot_menu.bot_note.tab(
@@ -1186,31 +1165,6 @@ class Function(WS, Variables):
             )
             if current_bot_note_tab == "Positions":
                 tree = TreeTable.bot_position
-
-                def update_position_line_bot(iid: str, compare: list):
-                    def form_position_line_bot(compare):
-                        compare[2] = Function.volume(
-                            self,
-                            qty=compare[2],
-                            symbol=symbol,
-                        )
-                        return compare
-
-                    if iid in tree.children_hierarchical[market]:
-                        if compare != tree.cache[iid]:
-                            tree.cache[iid] = compare.copy()
-                            tree.update_hierarchical(
-                                parent=market,
-                                iid=iid,
-                                values=form_position_line_bot(compare),
-                            )
-                    else:
-                        tree.insert_hierarchical(
-                            parent=market,
-                            iid=iid,
-                            values=form_position_line_bot(compare),
-                        )
-
                 tm = datetime.now()
                 pos_by_market = {market: False for market in var.market_list}
                 bot = Bot[disp.bot_name]
@@ -1257,6 +1211,11 @@ class Function(WS, Variables):
                     if len(tree.children) > 1 and "notification" in tree.children:
                         tree.delete(iid="notification")
                 # d print(datetime.now() - tm)
+
+            # Refresh bot trade table
+
+            elif current_bot_note_tab == "Trades":
+                pass
 
     def update_position_line(
         self,
@@ -1431,34 +1390,6 @@ class Function(WS, Variables):
             qty = ""
 
         return qty
-
-    def not_defined_robot_color(self: Markets, emi=None, clOrdID=None) -> None:
-        """
-        A robot has NOT DEFINED status if it is not listed in the robots
-        SQLite table, but has an open position or an active order. In this
-        case, it appears on the screen in red.
-        """
-        if self.name == var.current_market:
-            if clOrdID:
-                dot = clOrdID.find(".")
-                if dot != -1:
-                    emi = clOrdID[dot + 1 :]
-            for num, robot in enumerate(self.robots.values()):
-                if emi == robot["EMI"]:
-                    if var.current_market == robot["MARKET"]:
-                        if robot["STATUS"] == "NOT DEFINED":
-                            if hasattr(TreeTable, "robots"):
-                                tree = TreeTable.robots
-                                for clOrdID in self.orders:
-                                    if emi in clOrdID:
-                                        tree.paint(row=num, configure="Red")
-                                        break
-                                else:
-                                    if self.robots[emi]["POS"] == 0:
-                                        tree.paint(row=num, configure="Normal")
-                                    else:
-                                        tree.paint(row=num, configure="Red")
-                    break
 
 
 def handler_order(event) -> None:
@@ -1915,73 +1846,6 @@ def handler_market(event) -> None:
             clear_tables()
 
 
-def handler_robots(event) -> None:
-    emi = None
-    ws = Markets[var.current_market]
-    tree = event.widget
-    items = tree.selection()
-    if items:
-        item = items[0]
-        if not ws.api_is_active:
-            info_display(
-                name=ws.name,
-                message=ws.name
-                + ": You cannot change the bot's status during a reboot.",
-                warning=True,
-            )
-            tree.selection_remove(item)
-            return
-        children = tree.get_children()
-        row_position = children.index(item)
-        for val in ws.robots:
-            if ws.robots[val]["y_position"] == row_position:
-                emi = val
-                break
-        if emi:
-            if ws.robots[emi]["STATUS"] not in [
-                "NOT IN LIST",
-                "NOT DEFINED",
-                "RESERVED",
-            ]:
-
-                def callback():
-                    row = ws.robots[val]["y_position"]
-                    if ws.robots[emi]["STATUS"] == "WORK":
-                        ws.robots[emi]["STATUS"] = "OFF"
-                        TreeTable.robots.paint(row=row, configure="Red")
-                    else:
-                        ws.robots[emi]["STATUS"] = "WORK"
-                        TreeTable.robots.paint(row=row, configure="Normal")
-                    on_closing()
-
-                def on_closing():
-                    disp.robots_window_trigger = "off"
-                    robot_window.destroy()
-                    tree.selection_remove(item)
-
-                if disp.robots_window_trigger == "off":
-                    disp.robots_window_trigger = "on"
-                    robot_window = tk.Toplevel(disp.root, padx=30, pady=8)
-                    cx = disp.root.winfo_pointerx()
-                    cy = disp.root.winfo_pointery()
-                    robot_window.geometry("250x50+{}+{}".format(cx - 150, cy - 50))
-                    robot_window.title("EMI=" + emi)
-                    robot_window.protocol("WM_DELETE_WINDOW", on_closing)
-                    robot_window.attributes("-topmost", 1)
-                    text = emi + " - Disable"
-                    if ws.robots[emi]["STATUS"] == "OFF":
-                        text = emi + " - Enable"
-                    status = tk.Button(robot_window, text=text, command=callback)
-                    status.pack()
-                    change_color(color=disp.title_color, container=robot_window)
-            else:
-                warning_window(
-                    "You cannot change the " + ws.robots[emi]["STATUS"] + " status.",
-                    widget=tree,
-                    item=item,
-                )
-
-
 def handler_bot(event) -> None:
     tree = event.widget
     iid = tree.selection()[0]
@@ -2006,6 +1870,9 @@ def change_color(color: str, container=None) -> None:
         elif type(child) is tk.Button:
             child.config(bg=color)
 
+def init_bot_treetable_trades():
+    for bot_name in Bot.keys():
+        bot_menu.init_bot_trades(bot_name)
 
 def init_tables() -> None:
     ws = Markets[var.current_market]
@@ -2025,14 +1892,6 @@ def init_tables() -> None:
         size=len(ws.symbol_list),
         bind=handler_instrument,
         hide=["9", "8", "2"],
-    )
-    TreeTable.robots = TreeviewTable(
-        frame=disp.frame_robots,
-        name="robots",
-        title=var.name_robots,
-        size=len(ws.robots),
-        bind=handler_robots,
-        hide=["6", "3"],
     )
     TreeTable.account = TreeviewTable(
         frame=disp.frame_account,
@@ -2097,11 +1956,11 @@ def init_tables() -> None:
         autoscroll=True,
         hierarchy=True,
         lines=var.market_list,
-    )
+    )    
     TreeTable.instrument.set_selection()
     indx = var.market_list.index(var.current_market)
     TreeTable.market.set_selection(index=indx)
-    robot_status(ws)
+    init_bot_treetable_trades()
 
 
 TreeTable.orders = TreeviewTable(
@@ -2130,28 +1989,14 @@ TreeTable.funding = TreeviewTable(
 )
 
 
-def robot_status(ws: Markets):
-    for row, emi in enumerate(ws.robots):
-        if ws.robots[emi]["STATUS"] in ["NOT IN LIST", "OFF", "NOT DEFINED"] or (
-            ws.robots[emi]["STATUS"] == "RESERVED"
-            and ws.robots[emi]["POS"] != 0
-            and ws.robots[emi]["CATEGORY"] != "spot"
-        ):
-            TreeTable.robots.paint(row=row, configure="Red")
-        else:
-            TreeTable.robots.paint(row=row, configure="Normal")
-
-
 def clear_tables():
     var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
     TreeTable.instrument.init(size=len(ws.symbol_list))
     TreeTable.account.init(size=len(ws.Account.get_keys()))
-    TreeTable.robots.init(size=len(ws.robots))
     TreeTable.orderbook.init(size=disp.num_book)
     TreeTable.results.init(size=len(ws.Result.get_keys()))
     TreeTable.instrument.set_selection()
-    robot_status(ws)
     var.lock_market_switch.release()
 
 

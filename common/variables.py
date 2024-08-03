@@ -144,7 +144,7 @@ class Variables:
     name_order = [
         "TIME",
         "SYMBOL",
-        "CAT",
+        "CATEGORY",
         "MARKET",
         "SIDE",
         "PRICE",
@@ -154,7 +154,7 @@ class Variables:
     name_funding = [
         "TIME",
         "SYMBOL",
-        "CAT",
+        "CATEGORY",
         "MARKET",
         "PRICE",
         "PNL",
@@ -199,6 +199,16 @@ class Variables:
         "CATEGORY",
         "POSITION",
         "PNL",
+    ]
+    name_bot_trade = [
+        "TIME",
+        "SYMBOL",
+        "CATEGORY",
+        "MARKET",
+        "SIDE",
+        "PRICE",
+        "QTY",
+        "BOT NAME",
     ]
     logger: logging = setup_logger()
     connect_sqlite = None
