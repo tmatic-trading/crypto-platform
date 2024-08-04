@@ -1003,12 +1003,14 @@ class Function(WS, Variables):
                     pos_by_market[symbol[1]].append(bot.position[symbol])
             for market in pos_by_market.keys():
                 rest = dict()
+                rest_volume = dict()
                 pos = pos_by_market[market]
                 notificate = True
                 for position in pos:
                     symbol = (position["symbol"], market)
                     if symbol not in rest:
                         rest[symbol] = 0
+                        rest_volume[symbol] = 0
                     iid = position["emi"] + "!" + position["symbol"]
                     if position["position"] == 0:
                         if iid in tree.children_hierarchical[market]:
@@ -1016,6 +1018,7 @@ class Function(WS, Variables):
                     else:
                         notificate = False
                         rest[symbol] += position["position"]
+                        rest_volume[symbol] += position["volume"]
                         compare = [
                             position["emi"],
                             position["symbol"],
@@ -1028,7 +1031,7 @@ class Function(WS, Variables):
                             self,
                             iid=iid,
                             compare=compare,
-                            column=3,
+                            columns=[3, 4],
                             symbol=symbol,
                             market=market,
                             tree=tree,
@@ -1041,6 +1044,10 @@ class Function(WS, Variables):
                             position = instrument.currentQty - rest[symbol]
                         else:
                             position = instrument.currentQty
+                        if symbol in rest_volume:
+                            volume = instrument.volume - rest_volume[symbol]
+                        else:
+                            volume = instrument.volume
                         iid = market + instrument.symbol
                         if position == 0:
                             if iid in tree.children_hierarchical[market]:
@@ -1052,13 +1059,14 @@ class Function(WS, Variables):
                                 instrument.symbol,
                                 instrument.category,
                                 position,
+                                volume, 
                                 "-",
                             ]
                             Function.update_position_line(
                                 self,
                                 iid=iid,
                                 compare=compare,
-                                column=3,
+                                columns=[3, 4],
                                 symbol=symbol,
                                 market=market,
                                 tree=tree,
@@ -1153,7 +1161,7 @@ class Function(WS, Variables):
                                 self,
                                 iid=iid,
                                 compare=compare,
-                                column=2,
+                                columns=[2, 3],
                                 symbol=symbol,
                                 market=market,
                                 tree=tree,
@@ -1262,17 +1270,18 @@ class Function(WS, Variables):
         self,
         iid: str,
         compare: list,
-        column: int,
+        columns: list,
         symbol: tuple,
         market: str,
         tree: TreeviewTable,
     ) -> None:
         def form_line(compare):
-            compare[column] = Function.volume(
-                self,
-                qty=compare[column],
-                symbol=symbol,
-            )
+            for column in columns:
+                compare[column] = Function.volume(
+                    self,
+                    qty=compare[column],
+                    symbol=symbol,
+                )
             return compare
 
         if iid in tree.children_hierarchical[market]:
