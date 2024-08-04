@@ -36,7 +36,7 @@ from api.api import Markets
 from common.data import Bot
 from common.variables import Variables as var
 
-from .variables import AutoScrollbar, CustomButton, TreeTable, TreeviewTable
+from .variables import TreeTable, TreeviewTable
 from .variables import Variables as disp
 
 
@@ -57,27 +57,6 @@ class SettingsApp:
         self.name_trace = StringVar(name="Name" + str(self))
         self.check_var = tk.IntVar()
         self.button = None
-
-        self.button_list = {
-            "Home": "The main page of the bot's menu",
-            "New Bot": "Creates bot with a new unique name",
-            "Syntax": "Checks whether the bot's algo code syntax is correct",
-            "Backtest": "Allows to backtest the bot's trading algorithm",
-            "Activate": "Activates or suspends trading according to bot's algorithm",
-            "Update": f"Records algo code of selected bot into its {self.strategy_file} file",
-            "Merge": "Unites two bots into one. Bot being deleted must have no active orders",
-            "Duplicate": "Replicates selected bot, creating a new one with the same parameters",
-            "Delete": "This operation completely removes selected bot",
-            "Last Viewed": "Shows the last bot selected",
-            "Back": "Returns to the main area of Tmatic",
-        }
-        self.rows_list = [
-            "Name",
-            "Created",
-            "Updated",
-            "Timeframe",
-            "State",
-        ]
         self.bot_options = {
             "State": self.activate,
             "Parameters": self.parameters,
@@ -91,26 +70,6 @@ class SettingsApp:
             self.new_bot_text = f.read()
 
         self.info_value = {}
-
-        # CustomButton array
-        self.buttons_center = []
-
-        for button in self.button_list:
-            frame = CustomButton(
-                self.root_frame,
-                self.root_frame,
-                button,
-                bg=disp.title_color,
-                fg=disp.fg_normal,
-                command=self.on_click,
-                # activebackground=disp.bg_active,
-            )
-            self.buttons_center.append(frame)
-            # self.button_height = frame.winfo_reqheight()
-
-        # Keeps all bots' names in the array
-        # self.bots_list = []
-        # self.collect_bots()
 
         # Keeps the selected bot's algorithm derived from strategy.py file
         self.bot_algo = ""
@@ -138,161 +97,6 @@ class SettingsApp:
             self.bot_entry[name].config(style="free.TEntry")
             self.button.config(state="normal")
 
-    def open_popup(self, action, bot_name):
-        if self.pop_up:
-            self.pop_up.destroy()
-        self.pop_up = tk.Toplevel()
-        win_height = 350
-        self.pop_up.geometry(f"750x{win_height}")
-
-        if action == "New Bot":
-            self.pop_up.title(action)
-            tk.Label(
-                self.pop_up, text="\n\n\nCreate a new bot\nwith a unique name:"
-            ).pack(anchor="n")
-            self.bot_entry["Name"] = ttk.Entry(
-                self.pop_up,
-                width=20,
-                style="free.TEntry",
-                textvariable=self.name_trace,
-            )
-            self.bot_entry["Name"].pack(anchor="n")
-            self.name_trace.trace_add("write", self.name_trace_callback)
-            tk.Label(self.pop_up, text="Select timeframe:").pack(anchor="n")
-
-            timeframe = ttk.Combobox(self.pop_up, width=7, state="readonly")
-            timeframe["values"] = tuple(self.timeframes.keys())
-            timeframe.current(1)
-            timeframe.pack(anchor="n")
-
-            self.button = tk.Button(
-                self.pop_up,
-                activebackground=disp.bg_active,
-                text="Create Bot",
-                command=lambda: self.create_bot(
-                    self.name_trace.get(), timeframe["values"][timeframe.current()]
-                ),
-                state="disabled",
-            )
-            self.bot_entry["Name"].delete(0, tk.END)
-            self.button.pack(anchor="n", pady=25)
-        elif action == "Syntax":
-            self.pop_up.title(f"Check syntax for: {bot_name}")
-            content = self.strategy_text.get("1.0", tk.END)
-            is_syntax_correct, error_message = self.check_syntax(content)
-            if is_syntax_correct:
-                tk.Label(self.pop_up, text="The bot's code syntax is correct").pack(
-                    anchor="n", pady=100
-                )
-                self.insert_code(self.strategy_text, content, bot_name)
-            else:
-                scroll = AutoScrollbar(self.pop_up, orient="vertical")
-                text = tk.Text(
-                    self.pop_up,
-                    highlightthickness=0,
-                    yscrollcommand=scroll.set,
-                    bg=disp.title_color,
-                )
-                scroll.config(command=text.yview)
-                text.grid(row=0, column=0, sticky="NSEW")
-                scroll.grid(row=0, column=1, sticky="NS")
-                self.pop_up.grid_columnconfigure(0, weight=1)
-                self.pop_up.grid_columnconfigure(1, weight=0)
-                self.pop_up.grid_rowconfigure(0, weight=1)
-                text.insert(tk.END, error_message)
-                text.config(state="disabled")
-        elif action == "Merge":
-            self.pop_up.title(f"{action}: {bot_name}")
-            bots = []
-            for item in Bot.keys():
-                if item != self.selected_bot and Bot[item].state == "Suspended":
-                    bots.append(item)
-            if len(bots) < 1:
-                tk.Label(
-                    self.pop_up,
-                    text=f"\n\n\n\n\nNo available bots to be merged with.\nOnly bots with state 'Suspended' allowed.",
-                ).pack(anchor="center")
-            else:
-                content = f"\n\nTo merge bot named '{self.selected_bot}'\nplease select one of the bots below\navailable to be merged with:"
-                tk.Label(self.pop_up, text=content).pack(anchor="n")
-                cbox = ttk.Combobox(
-                    self.pop_up, width=15, textvariable="", state="readonly"
-                )
-                cbox["values"] = tuple(bots)
-                cbox.current(0)
-                cbox.pack(anchor="n")
-                tk.Label(
-                    self.pop_up,
-                    text=f"\nAs a result of merge operation\nthe selected bot will be deleted.\nAll its records in the database\nwill move on to bot '{self.selected_bot}'",
-                ).pack(anchor="center")
-                self.check_var.set(0)
-                confirm = tk.Checkbutton(
-                    self.pop_up,
-                    text="Confirm operation",
-                    variable=self.check_var,
-                    command=self.check_button,
-                )
-                confirm.pack(anchor="n")
-                self.button = tk.Button(
-                    self.pop_up,
-                    activebackground=disp.bg_active,
-                    text="Merge Bot",
-                    command=lambda: self.merge_bot(
-                        bot_name, cbox["values"][cbox.current()]
-                    ),
-                    state="disabled",
-                )
-                self.button.pack(anchor="n")
-        elif action == "Duplicate":
-            self.pop_up.title(f"{action}: {bot_name}")
-            content = f"\nYou are about to duplicate bot named '{self.selected_bot}'.\nThe newly created bot will get the same set\nof parameters as '{self.selected_bot}' currently has."
-            tk.Label(self.pop_up, text=content).pack(anchor="n", pady=25)
-            tk.Label(self.pop_up, text="Enter a unique name").pack(anchor="n")
-            self.bot_entry["Name"] = ttk.Entry(
-                self.pop_up,
-                width=20,
-                style="free.TEntry",
-                textvariable=self.name_trace,
-            )
-            self.bot_entry["Name"].pack(anchor="n")
-            self.name_trace.trace_add("write", self.name_trace_callback)
-            self.button = tk.Button(
-                self.pop_up,
-                activebackground=disp.bg_active,
-                text="Duplicate Bot",
-                command=lambda: self.duplicate_bot(bot_name, self.name_trace.get()),
-                state="disabled",
-            )
-            self.bot_entry["Name"].delete(0, tk.END)
-            self.bot_entry["Name"].insert(0, bot_name)
-            self.button.pack(anchor="n")
-        elif action == "Delete":
-            self.pop_up.title(f"Delete: {bot_name}")
-            if Bot[bot_name].state == "Active":
-                tk.Label(
-                    self.pop_up,
-                    text=f"\n\n\n\n\nThe delete operation is not allowed\nif the bot is in the 'Active' state.\n\nClick the 'Suspend' button before deleting.",
-                ).pack(anchor="center")
-            else:
-                content = f"\n\nAfter you press the 'Delete Bot' button,\nthe '/algo/{self.selected_bot}/' subdirectory will be erased\nand this bot will no longer exist.\n\nThe 'EMI' fields in the database for this bot\nwill take the 'SYMBOL' fields values."
-                tk.Label(self.pop_up, text=content).pack(anchor="n")
-                self.check_var.set(0)
-                confirm = tk.Checkbutton(
-                    self.pop_up,
-                    text="Confirm operation",
-                    variable=self.check_var,
-                    command=self.check_button,
-                )
-                confirm.pack(anchor="n")
-                self.button = tk.Button(
-                    self.pop_up,
-                    activebackground=disp.bg_active,
-                    text="Delete Bot",
-                    command=lambda: self.delete_bot(bot_name),
-                    state="disabled",
-                )
-                self.button.pack(anchor="n")
-
     def check_button(self):
         if self.check_var.get() == 1:
             self.button.config(state="normal")
@@ -309,57 +113,6 @@ class SettingsApp:
         except (SyntaxError, Exception) as e:
             return False, traceback.format_exc()
 
-    def on_click(self, name):
-        if name == "Home":
-            self.action = "Home"
-            self.show_bot()
-        elif name == "New Bot":
-            self.open_popup(name, "")
-        elif name == "Syntax":
-            self.open_popup(name, self.selected_bot)
-        elif name == "Activate":
-            if Bot[self.selected_bot].state == "Suspended":
-                new_state = "Active"
-            else:
-                new_state = "Suspended"
-            err = service.update_database(
-                query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{self.selected_bot}'"
-            )
-            if err is None:
-                Bot[self.selected_bot].state = new_state
-                self.show_bot()
-        elif name == "Update":
-            tf_value = self.timeframe_trace.get().split(" ")
-            err = service.update_database(
-                query=f"UPDATE robots SET TIMEFR = {tf_value[0]}, UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{self.selected_bot}'"
-            )
-            if err is None:
-                self.write_file(
-                    f"{self.get_bot_path(self.selected_bot)}/{self.strategy_file}",
-                    self.strategy_text.get("1.0", tk.END),
-                )
-                Bot[self.selected_bot].timefr = int(tf_value[0])
-                Bot[self.selected_bot].updated = self.get_time()
-                self.algo_changed = None
-                self.timeframe_changed = None
-                self.tm_box.config(style=f"default.TCombobox")
-                self.strategy_text.config(
-                    highlightbackground=disp.title_color,
-                    highlightcolor=disp.title_color,
-                )
-        elif name == "Merge":
-            self.open_popup(name, self.selected_bot)
-        elif name == "Duplicate":
-            self.open_popup(name, self.selected_bot)
-        elif name == "Delete":
-            self.open_popup(name, self.selected_bot)
-        elif name == "Last Viewed":
-            self.action = name
-            self.show_bot()
-        elif name == "Back":
-            disp.menu_robots.pack_forget()
-            disp.pw_rest1.pack(fill="both", expand="yes")
-
     def timeframe_trace_callback(self, name, index, mode):
         value = self.timeframe_trace.get().split(" ")
         if (
@@ -373,44 +126,6 @@ class SettingsApp:
             if self.timeframe_changed is not None:
                 self.timeframe_changed = None
                 self.tm_box.config(style=f"default.TCombobox")
-
-    def show_bot(self):
-        """Shows the bot's info when bot is selected. Otherwise hides"""
-        if self.selected_bot != "" and self.action != "Home":
-            # d self.menu_usage.pack_forget()
-            # d self.bots_button.pack_forget()
-            # d self.bots_label.pack_forget()
-            self.brief_frame.pack_forget()
-            # d self.main_frame.pack(fill="both", expand="yes")
-            bot_path = self.get_bot_path(self.selected_bot)
-            bot = Bot[self.selected_bot]
-            for item in self.rows_list:
-                if item == "Name":
-                    self.info_value[item].config(text=self.selected_bot)
-                    self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
-                    self.insert_code(
-                        self.strategy_text, self.bot_algo, self.selected_bot
-                    )
-                elif item == "Created":
-                    self.info_value[item].config(text=bot.created)
-                elif item == "Updated":
-                    self.info_value[item].config(text=bot.updated)
-                elif item == "Timeframe":
-                    self.tm_box.current(
-                        self.tm_box["values"].index(f"{bot.timefr} min")
-                    )
-                elif item == "State":
-                    self.info_value[item].config(text=bot.state)
-        else:
-            # d self.main_frame.pack_forget()
-            self.brief_frame.pack(fill="both", expand="yes", anchor="n")
-            """if len(Bot.keys()) != 0:
-                self.bots_label.pack(anchor="n")
-                #d self.bots_button.pack(anchor="n")
-                self.menu_usage.pack(anchor="n", pady=50)
-            else:
-                self.menu_usage.pack(anchor="n", pady=50)"""
-        self.algo_changed = None
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -477,61 +192,6 @@ class SettingsApp:
 
             return True
 
-    def merge_bot(self, bot_name, bot_to_delete):
-        err = service.update_database(
-            query=f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
-        )
-        if err is None:
-            err = service.update_database(
-                query=f"DELETE FROM robots WHERE EMI = '{bot_to_delete}'"
-            )
-            if err is None:
-                bot_path = self.get_bot_path(bot_to_delete)
-                shutil.rmtree(str(bot_path))
-                Bot.remove(bot_to_delete)
-                self.after_popup(bot_name)
-
-    def delete_bot(self, bot_name):
-        err = service.update_database(
-            query=f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
-        )
-        if err is None:
-            err = service.update_database(
-                query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
-            )
-            if err is None:
-                bot_path = self.get_bot_path(bot_name)
-                shutil.rmtree(str(bot_path))
-                Bot.remove(bot_name)
-                self.after_popup("")
-
-    def duplicate_bot(self, bot_name, copy_bot):
-        err = service.insert_database(
-            values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
-        )
-        if err is None:
-            shutil.copytree(self.get_bot_path(bot_name), self.get_bot_path(copy_bot))
-            time_now = self.get_time()
-            Bot[copy_bot].state = "Suspended"
-            Bot[copy_bot].timefr = Bot[bot_name].timefr
-            Bot[copy_bot].created = time_now
-            Bot[copy_bot].updated = time_now
-            # self.after_popup(copy_bot)
-
-    def after_popup(self, bot_name):
-        if bot_name != "":
-            self.selected_bot = bot_name
-            self.action = "Last Viewed"
-        else:
-            self.selected_bot = ""
-            self.action = ""
-        self.menu_usage.pack_forget()
-        self.bots_button.pack_forget()
-        self.bots_label.pack_forget()
-        self.create_bots_menu()
-        self.show_bot()
-        self.pop_up.destroy()
-
     def insert_code(self, text_widget, code, bot_name):
         """Function to insert Python code into a Tkinter Text widget with syntax highlighting"""
         self.strategy_text.config(state="normal")
@@ -549,11 +209,6 @@ class SettingsApp:
                     text_widget.tag_configure(tag_name, foreground="#" + color)
         if Bot[bot_name] == "Active":
             self.strategy_text.config(state="disabled")
-
-    def on_menu_select(self, value):
-        self.selected_bot = value
-        self.action = "Last Viewed"
-        self.show_bot()
 
     def insert_bot_menu(self, name: str, new=False) -> None:
         tree = TreeTable.bot_menu
@@ -574,6 +229,7 @@ class SettingsApp:
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")
         self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
+        self.brief_frame.pack(fill="both", expand="yes", anchor="n")
         self.brief_frame.bind("<Configure>", self.wrap)
 
     def on_modify_strategy(self, event):

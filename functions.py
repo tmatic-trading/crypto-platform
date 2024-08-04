@@ -1197,7 +1197,6 @@ class Function(WS, Variables):
                 if disp.bot_name:
                     bot = Bot[disp.bot_name]
                     for symbol, value in bot.position.items():
-                        print("___", symbol, value)
                         market = value["market"]
                         currency = value["currency"]
                         if market in var.market_list:

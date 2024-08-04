@@ -31,7 +31,7 @@ from pygments.token import Token
 import services as service
 from common.data import Bot
 
-from .variables import AutoScrollbar, CustomButton
+from .variables import AutoScrollbar
 from .variables import Variables as disp
 
 

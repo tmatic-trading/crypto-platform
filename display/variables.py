@@ -27,100 +27,6 @@ class AutoScrollbar(tk.Scrollbar):
         tk.Scrollbar.set(self, low, high)
 
 
-class CustomButton(tk.Frame):
-    def __init__(
-        self, root, master, text, bg, fg, command=None, menu_items=None, **kwargs
-    ):
-        super().__init__(master, **kwargs)
-        self.label = tk.Label(self, text=text, bg=bg, fg=fg)
-        self.label.pack(fill="both")
-        self.root = root
-        # self.config(bg=bg)
-        self.name = text
-        self.bg = bg
-        self.fg = fg
-        self.command = command
-        self.menu_items = menu_items
-        self.state = None
-
-        # Initialize the menu
-        self.menu = tk.Menu(self, tearoff=0)
-        if menu_items:
-            for item in menu_items:
-                if item == "<F3> Reload All":
-                    self.menu.add_separator()
-                self.menu.add_command(
-                    label=item, command=lambda value=item: self.on_command(value)
-                )
-
-        # Tracks if the menu is posted or not as there is no direct built-in method to check if the tk.Menu widget is currently posted (visible) or not.
-        self.menu_posted = False
-
-        self.label.bind("<ButtonPress-1>", self.on_press)
-        root.bind("<Button>", self.check_click_outside)
-        root.bind("<Escape>", self.on_escape_button)
-        self.label.bind("<Enter>", self.on_enter)
-        self.label.bind("<Leave>", self.on_leave)
-
-    def hide_menu(self):
-        self.menu.unpost()
-        self.menu_posted = False
-
-    def on_escape_button(self, event):
-        """This function triggers the unpost() method
-        since not every OS or Python version makes it by
-        default after ESC press"""
-        if self.menu_posted:
-            self.hide_menu()
-
-    def check_click_outside(self, event):
-        """This function triggers the unpost() method
-        since not every OS or Python version makes it by
-        default after a mouse-click outside the button"""
-        mouse_x = self.winfo_pointerx()
-        mouse_y = self.winfo_pointery()
-        # Get the button bounds
-        menu_x1, menu_y1, menu_x2, menu_y2 = (
-            self.label.winfo_rootx(),
-            self.label.winfo_rooty(),
-            self.label.winfo_rootx() + self.label.winfo_width(),
-            self.label.winfo_rooty() + self.label.winfo_height(),
-        )
-        # Check if the click is outside the button
-        if not (menu_x1 <= mouse_x <= menu_x2 and menu_y1 <= mouse_y <= menu_y2):
-            if self.menu_posted:
-                self.hide_menu()
-        else:
-            if Variables.ostype == "Mac":
-                self.menu_posted = False
-
-    def on_command(self, value):
-        self.menu_posted = False
-        self.command(value)
-
-    def on_enter(self, event):
-        if self.state != "Disabled":
-            self.label.config(bg=Variables.bg_active)
-
-    def on_leave(self, event):
-        self.label.config(bg=self.bg, fg=self.fg)
-
-    def on_press(self, event):
-        if self.menu_items:
-            if self.menu_posted:
-                self.hide_menu()
-            else:
-                # Get the coordinates of the button relative to the root window
-                x = self.winfo_rootx()
-                y = self.winfo_rooty() + self.winfo_height()
-                # Show the menu at the bottom-left corner of the button
-                self.menu.post(x, y)
-                self.menu_posted = True
-        else:
-            if self.state != "Disabled":
-                self.command(self.name)
-
-
 class Variables:
     root = tk.Tk()
     root.bind("<F7>", lambda event: Variables.on_bot_menu(event))
@@ -314,21 +220,6 @@ class Variables:
             on_trade_state("none")
         elif value == "<F3> Reload All":
             on_f3_reload()
-
-    menu_button = CustomButton(
-        root,
-        frame_state,
-        " MENU ",
-        title_color,
-        fg_color,
-        command=on_menu_select,
-        menu_items=[
-            "<F9> Trading State",
-            "<F7> Bot Menu",
-            "<F3> Reload All",
-        ],  # , "Settings", "About"],
-    )
-    menu_button.pack(side="left", padx=4)
 
     menu_delimiter = tk.Label(frame_state, text="|", bg=title_color)
     menu_delimiter.pack(side="left", padx=0)

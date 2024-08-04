@@ -47,7 +47,6 @@ def setup(reload=False):
     bots.load_bots()
     functions.init_tables()
     buttons_menu.create_bots_menu()
-    buttons_menu.show_bot()
     var.robots_thread_is_active = True
     thread = threading.Thread(target=robots_thread)
     thread.start()
