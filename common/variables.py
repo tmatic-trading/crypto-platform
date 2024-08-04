@@ -220,6 +220,12 @@ class Variables:
         "QTY",
         "BOT NAME",
     ]
+    name_bot_results = [
+        "MARKET",
+        "CURRENCY",
+        "PNL SUM",
+        "COMMISSION SUM",
+    ]
     logger: logging = setup_logger()
     connect_sqlite = None
     cursor_sqlite = None

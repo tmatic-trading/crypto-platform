@@ -861,6 +861,7 @@ class SettingsApp:
                     TreeTable.bot_info.update(row=0, values=values)
                     res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
                     self.wrap("None")
+
         self.switch(option="option")
         tk.Label(
             self.brief_frame,
@@ -955,7 +956,7 @@ class SettingsApp:
             bot_trades_sub[disp.bot_name].pack_forget()
         disp.bot_name = bot_name
         disp.refresh_bot_info = True
-        init_bot_trades(bot_name=bot_name)        
+        init_bot_trades(bot_name=bot_name)
         bot_trades_sub[bot_name].pack(fill="both", expand="yes")
         refresh_bot_orders()
         self.switch(option="table")
@@ -980,19 +981,20 @@ class SettingsApp:
 
     def delete_all_bot_info(self, bot_name) -> Union[bool, None]:
         err = service.update_database(
-        query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+            query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
         )
         if err is None:
             bot_path = self.get_bot_path(bot_name)
             shutil.rmtree(str(bot_path))
             Bot.remove(bot_name)
-            TreeTable.bot_menu.delete(iid=bot_name)                    
+            TreeTable.bot_menu.delete(iid=bot_name)
             bot_trades_sub[disp.bot_name].destroy()
             del trade_treeTable[bot_name]
 
             return True
 
-def init_bot_trades(bot_name: str) -> None:    
+
+def init_bot_trades(bot_name: str) -> None:
     if bot_name not in trade_treeTable:
         bot_trades_sub[bot_name] = tk.Frame(bot_trades)
         trade_treeTable[bot_name] = TreeviewTable(
@@ -1026,15 +1028,18 @@ def init_bot_trades(bot_name: str) -> None:
                     market=row[indx_market],
                     configure=row[indx_side],
                 )
+
+
 def refresh_bot_orders():
     tree = TreeTable.orders
-    bot_tree = TreeTable.bot_orders    
+    bot_tree = TreeTable.bot_orders
     indx_side = bot_tree.title.index("SIDE")
     bot_tree.clear_all()
     for child in tree.children:
         if child.split(".")[1] == disp.bot_name:
             row = tree.tree.item(child)["values"]
             bot_tree.insert(values=row, iid=child, configure=row[indx_side])
+
 
 def handler_bot_menu(event) -> None:
     tree = event.widget

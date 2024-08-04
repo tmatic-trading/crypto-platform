@@ -867,6 +867,7 @@ class TreeTable:
     bot_info: TreeviewTable
     bot_position: TreeviewTable
     bot_orders: TreeviewTable
+    bot_results: TreeviewTable
 
 
 def text_ignore(event):

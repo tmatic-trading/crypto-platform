@@ -383,15 +383,14 @@ def load_bots() -> None:
     data = service.select_database(qwr)
     for value in data:
         # if value["MARKET"] in var.market_list:
-        if 0 == 0:
-            bot = Bot[value["EMI"]]
-            # bot.name = value["EMI"]
-            # bot.market = value["MARKET"]
-            bot.timefr = value["TIMEFR"]
-            bot.created = value["DAT"]
-            bot.updated = value["UPDATED"]
-            bot.state = value["STATE"]
-            bot.position = dict()
+        bot = Bot[value["EMI"]]
+        # bot.name = value["EMI"]
+        # bot.market = value["MARKET"]
+        bot.timefr = value["TIMEFR"]
+        bot.created = value["DAT"]
+        bot.updated = value["UPDATED"]
+        bot.state = value["STATE"]
+        bot.position = dict()
 
     # Searching for unclosed positions by bots that are not in the 'robots'
     # table. If found, EMI becomes the default SYMBOL name. If such a SYMBOL
@@ -491,6 +490,7 @@ def load_bots() -> None:
                     "ltime": service.time_converter(time=value["LTIME"], usec=True),
                     "pnl": 0,
                     "lotSize": instrument.minOrderQty,
+                    "currency": instrument.settlCurrency,
                 }
                 if instrument.category == "spot":
                     bot.position[symbol]["pnl"] = "None"

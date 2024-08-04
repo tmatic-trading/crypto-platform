@@ -589,7 +589,7 @@ class Function(WS, Variables):
                 str(info_p),
                 info_q,
             )
-        
+
         if clOrdID in self.orders:
             var.queue_order.put({"action": "put", "order": self.orders[clOrdID]})
         disp.bot_orders_processing = True
@@ -955,13 +955,6 @@ class Function(WS, Variables):
 
         elif current_notebook_tab == "Results":
             tree = TreeTable.results
-
-            def form_result_line(compare):
-                compare[1] = format_number(compare[1])
-                compare[2] = format_number(compare[2])
-                compare[3] = format_number(compare[3])
-                return compare
-
             for market in var.market_list:
                 ws = Markets[market]
                 results = dict()
@@ -969,23 +962,14 @@ class Function(WS, Variables):
                     instrument = ws.Instrument[symbol]
                     if "spot" not in instrument.category:
                         if instrument.currentQty != 0:
-                            price = Function.close_price(
+                            value = Function.close_value(
                                 ws, symbol=symbol, pos=instrument.currentQty
                             )
-                            if price:
-                                calc = Function.calculate(
-                                    ws,
-                                    symbol=symbol,
-                                    price=price,
-                                    qty=-instrument.currentQty,
-                                    rate=0,
-                                    fund=1,
-                                )
-                                currency = instrument.settlCurrency
-                                if currency in results:
-                                    results[currency] += calc["sumreal"]
-                                else:
-                                    results[currency] = calc["sumreal"]
+                            currency = instrument.settlCurrency
+                            if currency in results:
+                                results[currency] += value
+                            else:
+                                results[currency] = value
                 for currency in ws.Result.keys():
                     result = ws.Result[currency]
                     result.result = 0
@@ -998,18 +982,13 @@ class Function(WS, Variables):
                         -result.funding,
                     ]
                     iid = market + currency[0]
-                    if iid in tree.children_hierarchical[market]:
-                        if iid not in tree.cache:
-                            tree.cache[iid] = []
-                        if compare != tree.cache[iid]:
-                            tree.cache[iid] = compare.copy()
-                            tree.update_hierarchical(
-                                parent=market, iid=iid, values=form_result_line(compare)
-                            )
-                    else:
-                        tree.insert_hierarchical(
-                            parent=market, iid=iid, values=form_result_line(compare)
-                        )
+                    Function.update_result_line(
+                        self,
+                        iid=iid,
+                        compare=compare,
+                        market=market,
+                        tree=tree,
+                    )
             # d print("___result", datetime.now() - tm)
 
         # Refresh position table
@@ -1144,61 +1123,133 @@ class Function(WS, Variables):
             current_bot_note_tab = bot_menu.bot_note.tab(
                 bot_menu.bot_note.select(), "text"
             )
+
+            # Bot positions table
+
             if current_bot_note_tab == "Positions":
                 tree = TreeTable.bot_position
-                tm = datetime.now()
                 pos_by_market = {market: False for market in var.market_list}
-                bot = Bot[disp.bot_name]
-                for symbol, position in bot.position.items():
-                    market = symbol[1]
-                    if market not in tree.children:
-                        tree.insert_parent(parent=market, configure="Gray")
-                    iid = position["emi"] + "!" + position["symbol"]
-                    if position["position"] == 0:
-                        if iid in tree.children_hierarchical[market]:
-                            tree.delete_hierarchical(parent=market, iid=iid)
-                    else:
-                        pos_by_market[market] = True
-                        compare = [
-                            position["symbol"],
-                            position["category"],
-                            position["position"],
-                            position["pnl"],
-                        ]
-                        Function.update_position_line(
-                            self,
-                            iid=iid,
-                            compare=compare,
-                            column=2,
-                            symbol=symbol,
-                            market=market,
-                            tree=tree,
-                        )
-                    for iid in list(tree.children_hierarchical[market]).copy():
-                        lst = iid.split("!")
-                        if len(lst) == 2:
-                            if lst[0] != disp.bot_name:
+                if disp.bot_name:
+                    bot = Bot[disp.bot_name]
+                    for symbol, position in bot.position.items():
+                        market = symbol[1]
+                        if market not in tree.children:
+                            tree.insert_parent(parent=market, configure="Gray")
+                        iid = position["emi"] + "!" + position["symbol"]
+                        if position["position"] == 0:
+                            if iid in tree.children_hierarchical[market]:
                                 tree.delete_hierarchical(parent=market, iid=iid)
-                            if not tree.children_hierarchical[market]:
-                                notificate = True
-                for market in list(tree.children).copy():
-                    if market != "notification":
-                        if not pos_by_market[market]:
-                            tree.delete(iid=market)
+                        else:
+                            pos_by_market[market] = True
+                            compare = [
+                                position["symbol"],
+                                position["category"],
+                                position["position"],
+                                position["pnl"],
+                            ]
+                            Function.update_position_line(
+                                self,
+                                iid=iid,
+                                compare=compare,
+                                column=2,
+                                symbol=symbol,
+                                market=market,
+                                tree=tree,
+                            )
+                        for iid in list(tree.children_hierarchical[market]).copy():
+                            lst = iid.split("!")
+                            if len(lst) == 2:
+                                if lst[0] != disp.bot_name:
+                                    tree.delete_hierarchical(parent=market, iid=iid)
+                    for market in list(tree.children).copy():
+                        if market != "notification":
+                            if not pos_by_market[market]:
+                                tree.delete(iid=market)
 
                 if not tree.children:
                     tree.insert_parent(parent="notification", text="No positions")
                 else:
                     if len(tree.children) > 1 and "notification" in tree.children:
                         tree.delete(iid="notification")
-                # d print(datetime.now() - tm)
 
-            # Refresh bot orders table
+            # Bot orders table
 
             elif current_bot_note_tab == "Orders":
                 if disp.bot_orders_processing:
                     bot_menu.refresh_bot_orders()
                     disp.bot_orders_processing = False
+
+            # Bot results table
+
+            elif current_bot_note_tab == "Results":
+                tree = TreeTable.bot_results
+                result_market = {market: False for market in var.market_list}
+                if disp.bot_name:
+                    bot = Bot[disp.bot_name]
+                    for symbol, value in bot.position.items():
+                        market = value["market"]
+                        currency = value["currency"]
+                        if market in var.market_list:
+                            if not result_market[market]:
+                                result_market[market] = dict()
+                            pos_value = Function.close_value(
+                                ws, symbol=symbol, pos=value["position"]
+                            )
+                            if currency in result_market[market]:
+                                result_market[market][currency[0]]["pnl"] += pos_value
+                                result_market[market]["commission"] += value["commiss"]
+                            else:
+                                result_market[market][currency[0]] = dict()
+                                result_market[market][currency[0]]["pnl"] = pos_value
+                                result_market[market][currency[0]][
+                                    "commission"
+                                ] = value["commiss"]
+                lines = set()
+                for market, result in result_market.items():
+                    if not result:
+                        if market in tree.children:
+                            tree.delete(iid=market)
+                    else:
+                        if market not in tree.children:
+                            tree.insert_parent(parent=market, configure="Gray")
+                        for currency, res in result.items():
+                            compare = [
+                                currency,
+                                res["pnl"],
+                                -res["commission"],
+                            ]
+                            iid = disp.bot_name + "!" + market + "!" + currency
+                            lines.add(iid)
+                            Function.update_result_line(
+                                self,
+                                iid=iid,
+                                compare=compare,
+                                market=market,
+                                tree=tree,
+                            )
+                        for iid in list(tree.children_hierarchical[market]).copy():
+                            if iid not in lines:
+                                tree.delete_hierarchical(parent=market, iid=iid)
+
+    def update_result_line(
+        self, iid: str, compare: list, market: str, tree: TreeviewTable
+    ) -> None:
+        def form_result_line(compare):
+            for num in range(len(compare)):
+                compare[num] = format_number(compare[num])
+
+            return compare
+
+        if iid in tree.children_hierarchical[market]:
+            if compare != tree.cache[iid]:
+                tree.cache[iid] = compare.copy()
+                tree.update_hierarchical(
+                    parent=market, iid=iid, values=form_result_line(compare)
+                )
+        else:
+            tree.insert_hierarchical(
+                parent=market, iid=iid, values=form_result_line(compare)
+            )
 
     def update_position_line(
         self,
@@ -1208,7 +1259,7 @@ class Function(WS, Variables):
         symbol: tuple,
         market: str,
         tree: TreeviewTable,
-    ):
+    ) -> None:
         def form_line(compare):
             compare[column] = Function.volume(
                 self,
@@ -1226,16 +1277,27 @@ class Function(WS, Variables):
         else:
             tree.insert_hierarchical(parent=market, iid=iid, values=form_line(compare))
 
-    def close_price(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
+    def close_value(self: Markets, symbol: tuple, pos: float) -> Union[float, None]:
+        """
+        Returns the value of the position if it is closed
+        """
         instrument = self.Instrument[symbol]
         if pos > 0 and instrument.bids:
             close = instrument.bids[0][0]
         elif pos <= 0 and instrument.asks:
             close = instrument.asks[0][0]
         else:
-            close = None
+            return
+        calc = Function.calculate(
+            self,
+            symbol=symbol,
+            price=close,
+            qty=-pos,
+            rate=0,
+            fund=1,
+        )
 
-        return close
+        return calc["sumreal"]
 
     def round_price(self: Markets, symbol: tuple, price: float, rside: int) -> float:
         """
@@ -1853,32 +1915,11 @@ def change_color(color: str, container=None) -> None:
         elif type(child) is tk.Button:
             child.config(bg=color)
 
+
 def init_bot_treetable_trades():
     for bot_name in Bot.keys():
         bot_menu.init_bot_trades(bot_name)
 
-'''def init_bot_treetable_orders():
-    bot_order_list = dict()
-    for order in  TreeTable.orders.children:
-        emi = order.split(".")[1]
-        if emi not in bot_order_list:
-            bot_order_list[emi] = list()
-        bot_order_list[emi].append(order)
-    for bot_name in Bot.keys():
-
-            
-    
-    rows = TreeTable.orders.children
-        lst = []
-        for child in tree.children:
-            if child.split(".")[1] == disp.bot_name:
-                lst.append(child)
-        tree = TreeTable.bot_orders
-        tree.clear_all()
-        for row in lst:
-            print(row)
-
-    for bot_name in Bot.keys():'''
 
 def init_tables() -> None:
     ws = Markets[var.current_market]
@@ -1962,7 +2003,14 @@ def init_tables() -> None:
         autoscroll=True,
         hierarchy=True,
         lines=var.market_list,
-    )    
+    )
+    TreeTable.bot_results = TreeviewTable(
+        frame=bot_menu.bot_results,
+        name="bot_results",
+        title=var.name_bot_results,
+        autoscroll=True,
+        hierarchy=True,
+    )
     TreeTable.instrument.set_selection()
     indx = var.market_list.index(var.current_market)
     TreeTable.market.set_selection(index=indx)
@@ -1995,7 +2043,7 @@ TreeTable.funding = TreeviewTable(
 )
 TreeTable.bot_orders = TreeviewTable(
     frame=bot_menu.bot_orders,
-    name="bot orders",
+    name="bot_orders",
     size=0,
     title=var.name_bot_order,
     bind=handler_order,
