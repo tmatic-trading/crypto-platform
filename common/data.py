@@ -95,6 +95,8 @@ class Instrument:
         The step to increase/reduce order price.
     unrealisedPnl: float
         Unrealised PnL.
+    volume: float
+        The total trading volume on a given account.
     volume24h: float
         Volume for 24h
     valueOfOneContract: float
@@ -124,6 +126,7 @@ class Instrument:
     ticker: str
     tickSize: float
     unrealisedPnl: float = 0
+    volume: float
     volume24h: float = 0
     valueOfOneContract: float
 

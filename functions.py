@@ -1021,6 +1021,7 @@ class Function(WS, Variables):
                             position["symbol"],
                             position["category"],
                             position["position"],
+                            position["volume"],
                             position["pnl"],
                         ]
                         Function.update_position_line(
@@ -1145,6 +1146,7 @@ class Function(WS, Variables):
                                 position["symbol"],
                                 position["category"],
                                 position["position"],
+                                position["volume"],
                                 position["pnl"],
                             ]
                             Function.update_position_line(
@@ -1187,6 +1189,7 @@ class Function(WS, Variables):
                 if disp.bot_name:
                     bot = Bot[disp.bot_name]
                     for symbol, value in bot.position.items():
+                        print("___", symbol, value)
                         market = value["market"]
                         currency = value["currency"]
                         if market in var.market_list:
@@ -1200,10 +1203,14 @@ class Function(WS, Variables):
                                 result_market[market]["commission"] += value["commiss"]
                             else:
                                 result_market[market][currency[0]] = dict()
-                                result_market[market][currency[0]]["pnl"] = pos_value
+                                result_market[market][currency[0]]["pnl"] = (
+                                    value["sumreal"] + pos_value
+                                )
                                 result_market[market][currency[0]][
                                     "commission"
                                 ] = value["commiss"]
+                    else:
+                        print("   ")
                 lines = set()
                 for market, result in result_market.items():
                     if not result:

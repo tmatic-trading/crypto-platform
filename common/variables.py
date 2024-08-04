@@ -176,7 +176,8 @@ class Variables:
         "BOT NAME",
         "SYMBOL",
         "CATEGORY",
-        "POS",
+        "POSITION",
+        "VOLUME",
         "PNL",
     ]
     name_bots = [
@@ -198,6 +199,7 @@ class Variables:
         "SYMBOL",
         "CATEGORY",
         "POSITION",
+        "VOLUME",
         "PNL",
     ]
     name_bot_trade = [

@@ -367,10 +367,40 @@ class Init(WS, Variables):
 
 def add_subscription(subscriptions: list) -> None:
     for symbol in subscriptions:
-        ws = Markets[symbol[1]]
-        ws.positions[symbol] = {"POS": 0}
-        ws.symbol_list.append(symbol)
-        ws.subscribe_symbol(symbol=symbol)
+        if symbol[1] in var.market_list:
+            ws = Markets[symbol[1]]
+            ws.positions[symbol] = {"POS": 0}
+            ws.symbol_list.append(symbol)
+            ws.subscribe_symbol(symbol=symbol)
+            qwr = (
+                "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY from coins where "
+                + "SYMBOL = '"
+                + symbol[0]
+                + "' and SIDE <> 'Fund' and market = '"
+                + symbol[1]
+                + "' and ACCOUNT = "
+                + str(ws.user_id)
+                + ";"
+            )
+            data = service.select_database(qwr)
+            ws.Instrument[symbol].volume = data[0]["SUM_QTY"]
+        else:
+            message = (
+                "You are trying to subscribe "
+                + str(symbol)
+                + " but "
+                + symbol[1]
+                + " is not active. Check the .env file."
+            )
+            var.logger.warning(message)
+            var.queue_info.put(
+                {
+                    "market": symbol[1],
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                }
+            )
 
 
 def load_bots() -> None:
@@ -391,6 +421,44 @@ def load_bots() -> None:
         bot.updated = value["UPDATED"]
         bot.state = value["STATE"]
         bot.position = dict()
+
+    # Loading volumes for subscribed instruments
+
+    if var.market_list:
+        union = ""
+        sql = ""
+        for market in var.market_list:
+            ws = Markets[market]
+            sql += union
+            qwr = (
+                "select MARKET, SYMBOL, sum(QTY) as SUM_QTY from (select abs(QTY) "
+                + "as QTY, MARKET, SYMBOL, SIDE, ACCOUNT from coins where "
+            )
+            _or = ""
+            lst = ws.symbol_list.copy()
+            if not lst:
+                lst = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
+            for symbol in lst:
+                qwr += _or
+                qwr += "SYMBOL = '" + symbol[0] + "'"
+                _or = " or "
+            qwr += (
+                ") T where SIDE <> 'Fund' and MARKET = '"
+                + ws.name
+                + "' and ACCOUNT = "
+                + str(ws.user_id)
+                + " group by SYMBOL, MARKET"
+            )
+            sql += qwr
+            union = " union "
+        sql += ";"
+        data = service.select_database(sql)
+        for value in data:
+            ws = Markets[value["MARKET"]]
+            symbol = (value["SYMBOL"], value["MARKET"])
+            instrument = ws.Instrument[symbol]
+            precision = instrument.precision
+            instrument.volume = round(float(value["SUM_QTY"]), precision)
 
     # Searching for unclosed positions by bots that are not in the 'robots'
     # table. If found, EMI becomes the default SYMBOL name. If such a SYMBOL
@@ -467,7 +535,7 @@ def load_bots() -> None:
             + ", 0) COMMISS, ifnull(max(TTIME), '1900-01-01 01:01:01.000000') "
             + "LTIME from coins where EMI = '"
             + name
-            + "' group by SYMBOL) T where POS <> 0;"
+            + "' group by SYMBOL) T;"
         )
         data = service.select_database(qwr)
         for value in data:
@@ -517,9 +585,3 @@ def load_bots() -> None:
                         "warning": True,
                     }
                 )
-
-    """for name in Bot.keys():
-        bot = Bot[name]
-        print("--------", name, bot.market)
-        for item in bot:
-            print(item.name, item.value)"""
