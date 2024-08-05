@@ -14,7 +14,7 @@
 - Delete: no active orders allowed
 - Merge: no active orders allowed for the bot is being deleted
 """
-
+import time
 import os
 import re
 import shutil
@@ -74,6 +74,8 @@ class SettingsApp:
         self.pady = 5
         with open("display/new_bot_text.txt", "r") as f:
             self.new_bot_text = f.read()
+        with open("display/example_strategy.txt", "r") as f:
+            self.example_strategy = f.read()
 
         self.info_value = {}
 
@@ -180,7 +182,7 @@ class SettingsApp:
             # Write the initial content into the new 'strategy.py' file
             self.write_file(
                 f"{str(bot_path)}/{self.strategy_file}",
-                "import services as service\nfrom api.api import Markets\nfrom common.data import Instrument\nfrom functions import Function\n",
+                self.example_strategy,
             )
             # Create new '.gitignore' file in the new directory
             self.create_file(f"{str(bot_path)}/.gitignore")
@@ -246,7 +248,8 @@ class SettingsApp:
 
     def create_strategy_widget(self):
         def update_strategy():
-            print("update")
+            value = self.strategy_text.get("1.0", tk.END)
+            print(value)
 
         frame_title = tk.Frame(frame_strategy)
         frame_title.grid(row=0, column=0, sticky="NSEW", columnspan=2)
@@ -619,6 +622,8 @@ class SettingsApp:
         self.wrap("None")
 
     def new(self):
+        if disp.bot_name:
+            TreeTable.bot_menu.tree.item(disp.bot_name, open=False)
         def add(bot_name: str, timeframe: str) -> None:
             res = self.create_bot(bot_name=bot_name, timeframe=timeframe)
             if res:
@@ -674,27 +679,29 @@ class SettingsApp:
         self.wrap("None")
 
     def show(self, bot_name):
-        TreeTable.bot_menu.on_rollup(bot_name)
-        if disp.bot_name and bot_name != disp.bot_name:
-            bot_trades_sub[disp.bot_name].pack_forget()
-        disp.bot_name = bot_name
-        disp.refresh_bot_info = True
-        init_bot_trades(bot_name=bot_name)
-        bot_trades_sub[bot_name].pack(fill="both", expand="yes")
-        refresh_bot_orders()
-        self.switch(option="table")
-        bot = Bot[bot_name]
-        values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
-        TreeTable.bot_info.update(row=0, values=values)
-        if Bot[bot_name].state == "Active":
-            self.strategy_text.config(state="disabled")
-        else:
-            self.strategy_text.config(state="normal")
-        bot_path = self.get_bot_path(bot_name=bot_name)
-        self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
-        self.insert_code(
-            text_widget=self.strategy_text, code=self.bot_algo, bot_name=bot_name
-        )
+        if bot_name != disp.bot_event_prev:
+            TreeTable.bot_menu.on_rollup(iid=bot_name)
+            if disp.bot_name and bot_name != disp.bot_name:
+                bot_trades_sub[disp.bot_name].pack_forget()
+            disp.bot_name = bot_name
+            disp.refresh_bot_info = True
+            init_bot_trades(bot_name=bot_name)
+            bot_trades_sub[bot_name].pack(fill="both", expand="yes")
+            refresh_bot_orders()
+            self.switch(option="table")
+            bot = Bot[bot_name]
+            values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+            TreeTable.bot_info.update(row=0, values=values)
+            if Bot[bot_name].state == "Active":
+                self.strategy_text.config(state="disabled")
+            else:
+                self.strategy_text.config(state="normal")
+            bot_path = self.get_bot_path(bot_name=bot_name)
+            self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
+            self.insert_code(
+                text_widget=self.strategy_text, code=self.bot_algo, bot_name=bot_name
+            )
+            disp.bot_event_prev = bot_name
 
     def wrap(self, event):
         for child in buttons_menu.brief_frame.winfo_children():
@@ -774,29 +781,35 @@ def refresh_bot_orders():
 
 
 def handler_bot_menu(event) -> None:
+    def winfo_destroy() -> None:
+        for child in buttons_menu.brief_frame.winfo_children():
+            child.destroy()
+
     tree = event.widget
     iid = tree.selection()[0]
-    TreeTable.bot_menu.on_rollup(iid)
     option = iid.split("!")
-    parent = option[0]
+    parent = option[0]    
     if len(option) == 1:
         option = ""
     else:
         option = option[1]
-    for child in buttons_menu.brief_frame.winfo_children():
-        child.destroy()
     if parent == "Back":
         disp.menu_robots.pack_forget()
         disp.pw_rest1.pack(fill="both", expand="yes")
         disp.refresh_bot_info = False
+        TreeTable.bot_menu.tree.selection_set(disp.bot_event_prev)
     elif parent == "New_bot":
+        winfo_destroy()
         disp.refresh_bot_info = False
         buttons_menu.new()
     elif not option:
         buttons_menu.show(parent)
     else:
+        winfo_destroy()
         disp.refresh_bot_info = False
         buttons_menu.bot_options[option](bot_name=parent)
+    if parent != "Back":
+        disp.bot_event_prev = iid
 
 
 pw_menu_robots = tk.PanedWindow(
@@ -849,7 +862,7 @@ bot_note.add(bot_results, text="Results")
 
 pw_bot_info.add(bot_note)
 pw_bot_info.add(frame_strategy)
-disp.pw_ratios[pw_bot_info] = 2.5
+disp.pw_ratios[pw_bot_info] = 3
 pw_bot_info.bind(
     "<Configure>",
     lambda event: disp.resize_height(event, pw_bot_info, disp.pw_ratios[pw_bot_info]),

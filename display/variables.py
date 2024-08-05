@@ -512,6 +512,7 @@ class Variables:
     bot_name = ""
     bot_trades = dict()
     bot_orders_processing = False
+    bot_event_prev = ""
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
@@ -531,6 +532,8 @@ class Variables:
     def on_bot_menu(event) -> None:
         Variables.pw_rest1.pack_forget()
         Variables.menu_robots.pack(fill="both", expand="yes")
+        #TreeTable.bot_menu
+        #Variables.bot_event_prev
 
 
 def on_trade_state(event) -> None:
@@ -722,7 +725,6 @@ class TreeviewTable(Variables):
         self.tree.item(iid, values=values)
 
     def paint(self, row: int, configure: str) -> None:
-        pass
         self.tree.item(self.children[row], tags=configure)
         if self.tree.selection():
             selected = len(self.children) - int(self.tree.selection()[0])
@@ -854,6 +856,7 @@ class TreeviewTable(Variables):
                 self.tree.item(child, open=False)
         if parent in self.children:
             self.tree.item(parent, open=True)
+        self.tree.selection_set(iid)
 
 
 class TreeTable:
