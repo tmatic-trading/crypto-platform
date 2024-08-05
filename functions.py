@@ -1059,7 +1059,7 @@ class Function(WS, Variables):
                                 instrument.symbol,
                                 instrument.category,
                                 position,
-                                volume, 
+                                volume,
                                 "-",
                             ]
                             Function.update_position_line(
@@ -1846,20 +1846,29 @@ def format_number(number: Union[float, str]) -> str:
     return number
 
 
-def warning_window(message: str, widget=None, item=None) -> None:
+def warning_window(
+    message: str, widget=None, item=None, width=400, height=150, title="Warning"
+) -> None:
     def on_closing() -> None:
         warn_window.destroy()
         if widget:
             widget.selection_remove(item)
 
-    warn_window = tk.Toplevel(pady=5)
-    warn_window.geometry("400x150+{}+{}".format(450 + randint(0, 7) * 15, 300))
-    warn_window.title("Warning")
+    warn_window = tk.Toplevel()
+    warn_window.geometry(
+        "{}x{}+{}+{}".format(
+            width,
+            height,
+            disp.screen_width // 2 - width // 2 - randint(0, 7) * 15,
+            disp.screen_height // 2 - height // 2,
+        )
+    )
+    warn_window.title(title)
     warn_window.protocol("WM_DELETE_WINDOW", on_closing)
     warn_window.attributes("-topmost", 1)
-    tex = tk.Text(warn_window, wrap="word")
-    tex.insert("insert", message)
-    tex.pack(expand=1)
+    text = tk.Text(warn_window, wrap="word")
+    text.insert("insert", message)
+    text.pack(fill="both", expand="yes")
 
 
 def handler_instrument(event) -> None:

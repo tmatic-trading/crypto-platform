@@ -532,8 +532,8 @@ class Variables:
     def on_bot_menu(event) -> None:
         Variables.pw_rest1.pack_forget()
         Variables.menu_robots.pack(fill="both", expand="yes")
-        #TreeTable.bot_menu
-        #Variables.bot_event_prev
+        # TreeTable.bot_menu
+        # Variables.bot_event_prev
 
 
 def on_trade_state(event) -> None:

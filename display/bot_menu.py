@@ -14,10 +14,10 @@
 - Delete: no active orders allowed
 - Merge: no active orders allowed for the bot is being deleted
 """
-import time
 import os
 import re
 import shutil
+import time
 import tkinter as tk
 import traceback
 from collections import OrderedDict
@@ -36,8 +36,9 @@ from api.api import Markets
 from common.data import Bot
 from common.variables import Variables as var
 
-from .variables import TreeTable, TreeviewTable, AutoScrollbar
+from .variables import AutoScrollbar, TreeTable, TreeviewTable
 from .variables import Variables as disp
+
 
 class BoldLabel(tk.Label):
     def __init__(self, master=None, **kwargs):
@@ -45,6 +46,7 @@ class BoldLabel(tk.Label):
         bold_font = font.Font(self, self.cget("font"))
         bold_font.configure(weight="bold")
         self.configure(font=bold_font)
+
 
 class SettingsApp:
     def __init__(self, root):
@@ -152,7 +154,6 @@ class SettingsApp:
         file.close()
 
     def get_bot_path(self, bot_name: str) -> str:
-
         return os.path.join(self.algo_dir, bot_name)
 
     def get_time(self) -> str:
@@ -202,7 +203,7 @@ class SettingsApp:
 
     def insert_code(self, text_widget: tk.Text, code: str, bot_name: str) -> None:
         """
-        Function to insert Python code into a Tkinter Text widget with syntax 
+        Function to insert Python code into a Tkinter Text widget with syntax
         highlighting.
         """
         text_widget.config(state="normal")
@@ -246,28 +247,39 @@ class SettingsApp:
         self.brief_frame.bind("<Configure>", self.wrap)
         self.create_strategy_widget()
 
-    def create_strategy_widget(self):
-        def update_strategy():
-            value = self.strategy_text.get("1.0", tk.END)
-            print(value)
+    def create_strategy_widget(self) -> None:
+        def update_strategy() -> None:
+            text = self.strategy_text.get("1.0", tk.END)
+            bot_path = self.get_bot_path(disp.bot_name)
+            self.write_file(f"{str(bot_path)}/{self.strategy_file}", text)
+            self.button.config(state="disabled")
+
+        def check_syntax() -> None:
+            content = self.strategy_text.get("1.0", tk.END)
+            is_syntax_correct, error_message = self.check_syntax(content)
+            if is_syntax_correct:
+                functions.warning_window(
+                    "The bot's code syntax is correct", title="Syntax check"
+                )
+            else:
+                functions.warning_window(error_message, width=1000, height=300)
 
         frame_title = tk.Frame(frame_strategy)
         frame_title.grid(row=0, column=0, sticky="NSEW", columnspan=2)
-        title = BoldLabel(frame_title, text = "STRATEGY")
+        title = BoldLabel(frame_title, text="STRATEGY")
         title.grid(row=0, column=0, sticky="NSEW")
         button_syntax = tk.Button(
             frame_title,
             activebackground=disp.bg_active,
             text="Check syntax",
-            #command=lambda: update_strategy(),
-            #state="disabled",
+            command=lambda: check_syntax(),
         )
         button_syntax.grid(row=0, column=2)
         button_backtest = tk.Button(
             frame_title,
             activebackground=disp.bg_active,
             text="Backtest",
-            #command=lambda: update_strategy(),
+            # command=lambda: update_strategy(),
             state="disabled",
         )
         button_backtest.grid(row=0, column=3)
@@ -278,7 +290,7 @@ class SettingsApp:
             command=lambda: update_strategy(),
             state="disabled",
         )
-        #self.button.pack(side=tk.RIGHT)
+        # self.button.pack(side=tk.RIGHT)
         self.button.grid(row=0, column=1)
         frame_title.grid_columnconfigure(0, weight=1)
         self.strategy_scroll = AutoScrollbar(frame_strategy, orient="vertical")
@@ -287,7 +299,7 @@ class SettingsApp:
             highlightthickness=0,
             highlightbackground=disp.title_color,
             highlightcolor=disp.title_color,
-            bg=disp.bg_color, 
+            bg=disp.bg_color,
             yscrollcommand=self.strategy_scroll.set,
         )
         self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
@@ -305,7 +317,7 @@ class SettingsApp:
                 self.algo_changed = "changed"
                 self.strategy_text.config(
                     highlightbackground=disp.bg_changed,
-                    highlightcolor=disp.bg_changed, 
+                    highlightcolor=disp.bg_changed,
                 )
                 self.button.config(state="normal")
         else:
@@ -624,6 +636,7 @@ class SettingsApp:
     def new(self):
         if disp.bot_name:
             TreeTable.bot_menu.tree.item(disp.bot_name, open=False)
+
         def add(bot_name: str, timeframe: str) -> None:
             res = self.create_bot(bot_name=bot_name, timeframe=timeframe)
             if res:
@@ -788,7 +801,7 @@ def handler_bot_menu(event) -> None:
     tree = event.widget
     iid = tree.selection()[0]
     option = iid.split("!")
-    parent = option[0]    
+    parent = option[0]
     if len(option) == 1:
         option = ""
     else:
