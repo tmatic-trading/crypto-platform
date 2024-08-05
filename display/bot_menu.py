@@ -84,9 +84,6 @@ class SettingsApp:
         # Keeps the selected bot's algorithm derived from strategy.py file
         self.bot_algo = ""
 
-        # If bot's algorithm is changed by user, than the value in not None
-        self.algo_changed = None
-
         # If bot's timeframe is changed by user, than the value in not None
         self.timeframe_changed = None
 
@@ -253,6 +250,7 @@ class SettingsApp:
             bot_path = self.get_bot_path(disp.bot_name)
             self.write_file(f"{str(bot_path)}/{self.strategy_file}", text)
             self.button.config(state="disabled")
+            self.bot_algo = text
 
         def check_syntax() -> None:
             content = self.strategy_text.get("1.0", tk.END)
@@ -313,24 +311,17 @@ class SettingsApp:
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
-            if self.algo_changed is None:
-                self.algo_changed = "changed"
-                self.strategy_text.config(
-                    highlightbackground=disp.bg_changed,
-                    highlightcolor=disp.bg_changed,
-                )
-                self.button.config(state="normal")
+            self.strategy_text.config(
+                highlightbackground=disp.bg_changed,
+                highlightcolor=disp.bg_changed,
+            )
+            self.button.config(state="normal")
         else:
-            if self.algo_changed is not None:
-                self.algo_changed = None
-                self.strategy_text.config(
-                    highlightbackground=disp.title_color,
-                    highlightcolor=disp.title_color,
-                )
-                self.button.config(state="disabled")
-
-    def ignore_text_input(self, event):
-        return "break"
+            self.strategy_text.config(
+                highlightbackground=disp.title_color,
+                highlightcolor=disp.title_color,
+            )
+            self.button.config(state="disabled")
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
@@ -382,7 +373,6 @@ class SettingsApp:
             if err is None:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
-                self.algo_changed = None
                 self.timeframe_changed = None
                 values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
                 TreeTable.bot_info.update(row=0, values=values)
