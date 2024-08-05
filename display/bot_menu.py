@@ -198,11 +198,12 @@ class SettingsApp:
 
             return True
 
-    def insert_code(self, text_widget, code, bot_name):
+    def insert_code(self, text_widget: tk.Text, code: str, bot_name: str) -> None:
         """
-        Function to insert Python code into a Tkinter Text widget with syntax highlighting
+        Function to insert Python code into a Tkinter Text widget with syntax 
+        highlighting.
         """
-        self.strategy_text.config(state="normal")
+        text_widget.config(state="normal")
         text_widget.delete(1.0, tk.END)
         lexer = PythonLexer()
         # You can change the style if desired. More info at https://pygments.org/styles/
@@ -216,7 +217,7 @@ class SettingsApp:
                 if color:
                     text_widget.tag_configure(tag_name, foreground="#" + color)
         if Bot[bot_name] == "Active":
-            self.strategy_text.config(state="disabled")
+            text_widget.config(state="disabled")
 
     def insert_bot_menu(self, name: str, new=False) -> None:
         tree = TreeTable.bot_menu
@@ -244,9 +245,40 @@ class SettingsApp:
         self.create_strategy_widget()
 
     def create_strategy_widget(self):
+        def update_strategy():
+            print("update")
+
+        frame_title = tk.Frame(frame_strategy)
+        frame_title.grid(row=0, column=0, sticky="NSEW", columnspan=2)
+        title = BoldLabel(frame_title, text = "STRATEGY")
+        title.grid(row=0, column=0, sticky="NSEW")
+        button_syntax = tk.Button(
+            frame_title,
+            activebackground=disp.bg_active,
+            text="Check syntax",
+            #command=lambda: update_strategy(),
+            #state="disabled",
+        )
+        button_syntax.grid(row=0, column=2)
+        button_backtest = tk.Button(
+            frame_title,
+            activebackground=disp.bg_active,
+            text="Backtest",
+            #command=lambda: update_strategy(),
+            state="disabled",
+        )
+        button_backtest.grid(row=0, column=3)
+        self.button = tk.Button(
+            frame_title,
+            activebackground=disp.bg_active,
+            text="Update strategy",
+            command=lambda: update_strategy(),
+            state="disabled",
+        )
+        #self.button.pack(side=tk.RIGHT)
+        self.button.grid(row=0, column=1)
+        frame_title.grid_columnconfigure(0, weight=1)
         self.strategy_scroll = AutoScrollbar(frame_strategy, orient="vertical")
-        l = BoldLabel(frame_strategy, text = "STRATEGY")
-        l.grid(row=0, column=0, columnspan=2, sticky="NSEW")
         self.strategy_text = tk.Text(
             frame_strategy,
             highlightthickness=0,
@@ -269,8 +301,10 @@ class SettingsApp:
             if self.algo_changed is None:
                 self.algo_changed = "changed"
                 self.strategy_text.config(
-                    highlightbackground=disp.bg_changed, highlightcolor=disp.bg_changed
+                    highlightbackground=disp.bg_changed,
+                    highlightcolor=disp.bg_changed, 
                 )
+                self.button.config(state="normal")
         else:
             if self.algo_changed is not None:
                 self.algo_changed = None
@@ -278,6 +312,7 @@ class SettingsApp:
                     highlightbackground=disp.title_color,
                     highlightcolor=disp.title_color,
                 )
+                self.button.config(state="disabled")
 
     def ignore_text_input(self, event):
         return "break"
