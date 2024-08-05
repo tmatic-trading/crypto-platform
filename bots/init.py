@@ -408,7 +408,7 @@ def load_bots() -> None:
     Loading bots into the new Bot class is under development.
     """
 
-    qwr = "select * from robots order by SORT;"
+    qwr = "select * from robots order by DAT;"
 
     data = service.select_database(qwr)
     for value in data:

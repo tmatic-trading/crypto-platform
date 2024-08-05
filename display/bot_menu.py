@@ -36,9 +36,15 @@ from api.api import Markets
 from common.data import Bot
 from common.variables import Variables as var
 
-from .variables import TreeTable, TreeviewTable
+from .variables import TreeTable, TreeviewTable, AutoScrollbar
 from .variables import Variables as disp
 
+class BoldLabel(tk.Label):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        bold_font = font.Font(self, self.cget("font"))
+        bold_font.configure(weight="bold")
+        self.configure(font=bold_font)
 
 class SettingsApp:
     def __init__(self, root):
@@ -121,11 +127,9 @@ class SettingsApp:
         ):
             if self.timeframe_changed is None:
                 self.timeframe_changed = "changed"
-                self.tm_box.config(style=f"changed.TCombobox")
         else:
             if self.timeframe_changed is not None:
                 self.timeframe_changed = None
-                self.tm_box.config(style=f"default.TCombobox")
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -145,11 +149,13 @@ class SettingsApp:
         file.write(content)
         file.close()
 
-    def get_bot_path(self, bot_name):
+    def get_bot_path(self, bot_name: str) -> str:
+
         return os.path.join(self.algo_dir, bot_name)
 
-    def get_time(self):
+    def get_time(self) -> str:
         my_time = str(datetime.now(tz=timezone.utc)).split(".")
+
         return my_time[0]
 
     def create_bot(self, bot_name, timeframe) -> bool:
@@ -193,7 +199,9 @@ class SettingsApp:
             return True
 
     def insert_code(self, text_widget, code, bot_name):
-        """Function to insert Python code into a Tkinter Text widget with syntax highlighting"""
+        """
+        Function to insert Python code into a Tkinter Text widget with syntax highlighting
+        """
         self.strategy_text.config(state="normal")
         text_widget.delete(1.0, tk.END)
         lexer = PythonLexer()
@@ -222,15 +230,38 @@ class SettingsApp:
             )
 
     def create_bots_menu(self):
-        # Menu to choose one of the created bots
+        """
+        Menu to choose one of the created bots
+        """
         tree = TreeTable.bot_menu
-        for name in Bot.keys():
+        for name in reversed(Bot.keys()):
             self.insert_bot_menu(name)
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")
         self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
         self.brief_frame.pack(fill="both", expand="yes", anchor="n")
         self.brief_frame.bind("<Configure>", self.wrap)
+        self.create_strategy_widget()
+
+    def create_strategy_widget(self):
+        self.strategy_scroll = AutoScrollbar(frame_strategy, orient="vertical")
+        l = BoldLabel(frame_strategy, text = "STRATEGY")
+        l.grid(row=0, column=0, columnspan=2, sticky="NSEW")
+        self.strategy_text = tk.Text(
+            frame_strategy,
+            highlightthickness=0,
+            highlightbackground=disp.title_color,
+            highlightcolor=disp.title_color,
+            bg=disp.bg_color, 
+            yscrollcommand=self.strategy_scroll.set,
+        )
+        self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
+        self.strategy_scroll.config(command=self.strategy_text.yview)
+        self.strategy_text.grid(row=1, column=0, sticky="NSEW")
+        self.strategy_scroll.grid(row=1, column=1, sticky="NS")
+        frame_strategy.grid_columnconfigure(0, weight=1)
+        frame_strategy.grid_columnconfigure(1, weight=0)
+        frame_strategy.grid_rowconfigure(1, weight=1)
 
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
@@ -608,6 +639,7 @@ class SettingsApp:
         self.wrap("None")
 
     def show(self, bot_name):
+        TreeTable.bot_menu.on_rollup(bot_name)
         if disp.bot_name and bot_name != disp.bot_name:
             bot_trades_sub[disp.bot_name].pack_forget()
         disp.bot_name = bot_name
@@ -619,6 +651,15 @@ class SettingsApp:
         bot = Bot[bot_name]
         values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
         TreeTable.bot_info.update(row=0, values=values)
+        if Bot[bot_name].state == "Active":
+            self.strategy_text.config(state="disabled")
+        else:
+            self.strategy_text.config(state="normal")
+        bot_path = self.get_bot_path(bot_name=bot_name)
+        self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
+        self.insert_code(
+            text_widget=self.strategy_text, code=self.bot_algo, bot_name=bot_name
+        )
 
     def wrap(self, event):
         for child in buttons_menu.brief_frame.winfo_children():
@@ -755,8 +796,8 @@ pw_bot_info = tk.PanedWindow(
 trade_treeTable = dict()
 bot_trades_sub = dict()
 
-frame_bot_strategy = tk.Frame(pw_bot_info)
-tk.Label(frame_bot_strategy, text="Under development").pack()
+frame_strategy = tk.Frame(pw_bot_info)
+frame_strategy.pack(fill="both", expand="yes")
 
 if disp.ostype == "Mac":
     bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
@@ -772,7 +813,7 @@ bot_note.add(bot_trades, text="Trades")
 bot_note.add(bot_results, text="Results")
 
 pw_bot_info.add(bot_note)
-pw_bot_info.add(frame_bot_strategy)
+pw_bot_info.add(frame_strategy)
 disp.pw_ratios[pw_bot_info] = 2.5
 pw_bot_info.bind(
     "<Configure>",

@@ -852,8 +852,8 @@ class TreeviewTable(Variables):
         for child in self.children:
             if child != parent:
                 self.tree.item(child, open=False)
-        """if parent in self.children:
-            self.tree.item(parent, open=True)"""
+        if parent in self.children:
+            self.tree.item(parent, open=True)
 
 
 class TreeTable:
