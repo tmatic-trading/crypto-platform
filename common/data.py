@@ -133,6 +133,15 @@ class Instrument:
     def __iter__(self):
         return Ret.iter(self)
 
+    def sell(self, **kwargs):
+        pass
+
+    def buy(self, **kwargs):
+        pass
+
+    def EMA(self, **kwargs):
+        pass
+
 
 class Account:
     account: Union[str, float]
