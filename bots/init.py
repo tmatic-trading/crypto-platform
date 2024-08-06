@@ -1,3 +1,4 @@
+import importlib
 import os
 import threading
 from datetime import datetime, timedelta, timezone
@@ -9,8 +10,10 @@ from api.init import Variables
 from bots.variables import Variables as bot
 from common.data import Bot
 from common.variables import Variables as var
+from display.bot_menu import bot_manager
 from display.functions import info_display
 from display.variables import TreeTable
+from display.variables import Variables as disp
 from functions import Function
 
 
@@ -585,3 +588,15 @@ def load_bots() -> None:
                         "warning": True,
                     }
                 )
+
+    # Init klines
+
+    for bot_name in Bot.keys():
+        module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
+        importlib.import_module(module)
+
+    """for market in var.market_list:
+        ws = Markets[market]
+        print(ws.kline_list)
+
+    os.abort()"""

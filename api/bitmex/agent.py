@@ -102,6 +102,7 @@ class Agent(Bitmex):
             symb = instrument["symbol"]
         symbol = (symb, self.name)
         self.ticker[instrument["symbol"]] = symb
+        self.Instrument[symbol].market = self.name
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = symb
         self.Instrument[symbol].ticker = instrument["symbol"]

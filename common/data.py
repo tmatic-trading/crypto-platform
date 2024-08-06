@@ -111,6 +111,7 @@ class Instrument:
     currentQty: float = 0
     expire: datetime
     fundingRate: float = 0
+    market: str
     marginCallPrice: float = 0
     maxOrderQty: float
     minOrderQty: float
@@ -132,15 +133,6 @@ class Instrument:
 
     def __iter__(self):
         return Ret.iter(self)
-
-    def sell(self, **kwargs):
-        pass
-
-    def buy(self, **kwargs):
-        pass
-
-    def EMA(self, **kwargs):
-        pass
 
 
 class Account:

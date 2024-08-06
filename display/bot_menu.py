@@ -415,7 +415,7 @@ class SettingsApp:
                 if item != bot_name and Bot[item].state == "Suspended":
                     bots.append(item)
             if not bots:
-                for child in buttons_menu.brief_frame.winfo_children():
+                for child in bot_manager.brief_frame.winfo_children():
                     child.destroy()
                 tk.Label(
                     self.brief_frame,
@@ -575,7 +575,7 @@ class SettingsApp:
             )
             if err is None:
                 if self.delete_all_bot_info(bot_name):
-                    for child in buttons_menu.brief_frame.winfo_children():
+                    for child in bot_manager.brief_frame.winfo_children():
                         child.destroy()
                     res_label = tk.Label(
                         self.brief_frame,
@@ -707,7 +707,7 @@ class SettingsApp:
             disp.bot_event_prev = bot_name
 
     def wrap(self, event):
-        for child in buttons_menu.brief_frame.winfo_children():
+        for child in bot_manager.brief_frame.winfo_children():
             if type(child) is tk.Label:
                 child.config(wraplength=self.brief_frame.winfo_width() - self.padx * 2)
 
@@ -785,7 +785,7 @@ def refresh_bot_orders():
 
 def handler_bot_menu(event) -> None:
     def winfo_destroy() -> None:
-        for child in buttons_menu.brief_frame.winfo_children():
+        for child in bot_manager.brief_frame.winfo_children():
             child.destroy()
 
     tree = event.widget
@@ -804,13 +804,13 @@ def handler_bot_menu(event) -> None:
     elif parent == "New_bot":
         winfo_destroy()
         disp.refresh_bot_info = False
-        buttons_menu.new()
+        bot_manager.new()
     elif not option:
-        buttons_menu.show(parent)
+        bot_manager.show(parent)
     else:
         winfo_destroy()
         disp.refresh_bot_info = False
-        buttons_menu.bot_options[option](bot_name=parent)
+        bot_manager.bot_options[option](bot_name=parent)
     if parent != "Back":
         disp.bot_event_prev = iid
 
@@ -881,4 +881,4 @@ pw_menu_robots.bind(
     lambda event: disp.resize_width(event, pw_menu_robots, disp.window_width // 7, 6),
 )
 
-buttons_menu = SettingsApp(menu_frame)
+bot_manager = SettingsApp(menu_frame)

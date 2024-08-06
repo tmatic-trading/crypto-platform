@@ -1919,7 +1919,7 @@ def handler_bot(event) -> None:
     tree = event.widget
     iid = tree.selection()[0]
     disp.on_bot_menu("None")
-    bot_menu.buttons_menu.show(iid)
+    bot_menu.bot_manager.show(iid)
 
 
 def change_color(color: str, container=None) -> None:

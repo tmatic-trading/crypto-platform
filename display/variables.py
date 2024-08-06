@@ -158,10 +158,13 @@ class Variables:
 
     if platform.system() == "Windows":
         ostype = "Windows"
+        slash = "\\"
     elif platform.system() == "Darwin":
         ostype = "Mac"
+        slash = "/"
     else:
         ostype = "Linux"
+        slash = "/"
 
     num_robots = 1
     num_book = 20  # Must be even

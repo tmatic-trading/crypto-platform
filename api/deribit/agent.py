@@ -86,6 +86,7 @@ class Agent(Deribit):
         symbol = (symb, self.name)
         self.ticker[values["instrument_name"]] = symb
         instrument = self.Instrument[symbol]
+        instrument.market = self.name
         instrument.symbol = symb
         instrument.ticker = values["instrument_name"]
         instrument.category = category

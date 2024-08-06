@@ -54,6 +54,7 @@ class Bybit(Variables):
         self.orders = dict()
         WebSocket._on_message = Bybit._on_message
         self.ticker = dict()
+        self.kline_list = list()
 
     def start(self):
         for symbol in self.symbol_list:

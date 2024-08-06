@@ -458,6 +458,7 @@ class Agent(Bybit):
             symb = instrument["symbol"]
         symbol = (symb, self.name)
         self.ticker[(instrument["symbol"], category)] = symb
+        self.Instrument[symbol].market = self.name
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = symb
         self.Instrument[symbol].ticker = instrument["symbol"]

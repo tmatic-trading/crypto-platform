@@ -65,6 +65,7 @@ class Bitmex(Variables):
         self.orders = dict()
         self.pinging = "pong"
         self.ticker = dict()
+        self.kline_list = list()
 
     def start(self):
         if not self.logNumFatal:
