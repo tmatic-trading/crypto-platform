@@ -1216,8 +1216,6 @@ class Function(WS, Variables):
                                 result_market[market][currency[0]][
                                     "commission"
                                 ] = value["commiss"]
-                    else:
-                        print("   ")
                 lines = set()
                 for market, result in result_market.items():
                     if not result:

@@ -44,6 +44,7 @@ def setup(reload=False):
     for name in var.market_list:
         finish_setup(Markets[name])
     merge_orders()
+    bots.load_bots()
     functions.init_tables()
     bot_manager.create_bots_menu()
     var.robots_thread_is_active = True
@@ -108,7 +109,6 @@ def setup_market(ws: Markets, reload=False):
             sleep(2)
         else:
             common.Init.clear_params(ws)
-            bots.load_bots()
             ws.logNumFatal = bots.Init.load_robots(ws)
             if not ws.logNumFatal:
                 algo.init_algo(ws)

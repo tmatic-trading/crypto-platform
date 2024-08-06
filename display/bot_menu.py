@@ -246,6 +246,7 @@ class SettingsApp:
 
     def create_strategy_widget(self) -> None:
         def update_strategy() -> None:
+            print("_____________update")
             text = self.strategy_text.get("1.0", tk.END)
             bot_path = self.get_bot_path(disp.bot_name)
             self.write_file(f"{str(bot_path)}/{self.strategy_file}", text)
@@ -309,6 +310,7 @@ class SettingsApp:
         frame_strategy.grid_rowconfigure(1, weight=1)
 
     def on_modify_strategy(self, event):
+        print("________modify")
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
             self.strategy_text.config(
@@ -434,7 +436,7 @@ class SettingsApp:
                 query=f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
             )
             if err is None:
-                if self.delete_all_bot_info(bot_name):
+                if self.delete_all_bot_info(bot_to_delete):
                     res_label["text"] = (
                         f"``{bot_name}`` and ``{bot_to_delete}`` have been merged. "
                         + f"``{bot_to_delete}`` is no longer available."
@@ -705,6 +707,7 @@ class SettingsApp:
                 text_widget=self.strategy_text, code=self.bot_algo, bot_name=bot_name
             )
             disp.bot_event_prev = bot_name
+            self.button.config(state="disabled")
 
     def wrap(self, event):
         for child in bot_manager.brief_frame.winfo_children():
@@ -730,7 +733,7 @@ class SettingsApp:
             shutil.rmtree(str(bot_path))
             Bot.remove(bot_name)
             TreeTable.bot_menu.delete(iid=bot_name)
-            bot_trades_sub[disp.bot_name].destroy()
+            bot_trades_sub[bot_name].destroy()
             del trade_treeTable[bot_name]
 
             return True
