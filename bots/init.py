@@ -12,6 +12,7 @@ from common.data import Bot
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
 from display.functions import info_display
+from display.messages import ErrorMessage
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
@@ -593,7 +594,20 @@ def load_bots() -> None:
 
     for bot_name in Bot.keys():
         module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
-        importlib.import_module(module)
+        try:
+            importlib.import_module(module)
+        except ModuleNotFoundError:
+            message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(BOT_NAME=bot_name)
+            var.logger.warning(message)
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                }
+            )
+            Bot[bot_name].error_message = message
 
     """for market in var.market_list:
         ws = Markets[market]

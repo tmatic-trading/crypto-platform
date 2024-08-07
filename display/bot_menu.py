@@ -246,7 +246,6 @@ class SettingsApp:
 
     def create_strategy_widget(self) -> None:
         def update_strategy() -> None:
-            print("_____________update")
             text = self.strategy_text.get("1.0", tk.END)
             bot_path = self.get_bot_path(disp.bot_name)
             self.write_file(f"{str(bot_path)}/{self.strategy_file}", text)
@@ -310,7 +309,6 @@ class SettingsApp:
         frame_strategy.grid_rowconfigure(1, weight=1)
 
     def on_modify_strategy(self, event):
-        print("________modify")
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
             self.strategy_text.config(
@@ -348,22 +346,25 @@ class SettingsApp:
                 text_label["text"] = return_text()
 
         self.switch(option="option")
-        new_state = ""
-        bot = Bot[bot_name]
-        text_label = tk.Label(
-            self.brief_frame,
-            text=return_text(),
-            bg=disp.bg_color,
-            justify=tk.LEFT,
-        )
-        text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-        self.button = tk.Button(
-            self.brief_frame,
-            activebackground=disp.bg_active,
-            text="Update",
-            command=lambda: change_state(),
-        )
-        self.button.pack(anchor="nw", padx=50, pady=10)
+        if not Bot[bot_name].error_message:
+            new_state = ""
+            bot = Bot[bot_name]
+            text_label = tk.Label(
+                self.brief_frame,
+                text=return_text(),
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+            )
+            text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+            self.button = tk.Button(
+                self.brief_frame,
+                activebackground=disp.bg_active,
+                text="Update",
+                command=lambda: change_state(),
+            )
+            self.button.pack(anchor="nw", padx=50, pady=10)
+        else:
+            self.display_error_message(bot_name=bot_name)
 
     def parameters(self, bot_name: str) -> None:
         def on_button(num: int) -> None:
@@ -383,32 +384,35 @@ class SettingsApp:
                 ] = f"{bot_name} timeframe changed to {tuple(self.timeframes.keys())[num]}."
 
         self.switch(option="option")
-        bot = Bot[bot_name]
-        tk.Label(
-            self.brief_frame,
-            text="Select timeframe:",
-            bg=disp.bg_color,
-            justify=tk.LEFT,
-        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
-        timeframe["values"] = tuple(self.timeframes.keys())
-        timeframe.current(1)
-        timeframe.pack(anchor="nw", padx=50, pady=0)
-        self.button = tk.Button(
-            self.brief_frame,
-            activebackground=disp.bg_active,
-            text="Update",
-            command=lambda: on_button(timeframe.current()),
-        )
-        self.button.pack(anchor="nw", padx=50, pady=10)
-        res_label = tk.Label(
-            self.brief_frame,
-            text="",
-            bg=disp.bg_color,
-            fg=disp.gray_color,
-            justify=tk.LEFT,
-        )
-        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+        if not Bot[bot_name].error_message:
+            bot = Bot[bot_name]
+            tk.Label(
+                self.brief_frame,
+                text="Select timeframe:",
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+            timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
+            timeframe["values"] = tuple(self.timeframes.keys())
+            timeframe.current(1)
+            timeframe.pack(anchor="nw", padx=50, pady=0)
+            self.button = tk.Button(
+                self.brief_frame,
+                activebackground=disp.bg_active,
+                text="Update",
+                command=lambda: on_button(timeframe.current()),
+            )
+            self.button.pack(anchor="nw", padx=50, pady=10)
+            res_label = tk.Label(
+                self.brief_frame,
+                text="",
+                bg=disp.bg_color,
+                fg=disp.gray_color,
+                justify=tk.LEFT,
+            )
+            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+        else:
+            self.display_error_message(bot_name=bot_name)
 
     def merge(self, bot_name: str) -> None:
         def bot_list() -> list:
@@ -448,62 +452,65 @@ class SettingsApp:
                         cbox.update_idletasks()
 
         self.switch(option="option")
-        bots = bot_list()
-        if bots:
-            content = (
-                f"To merge bot named ``{bot_name}`` "
-                + f"please select one of the bots below available to be "
-                + f"merged with:"
-            )
-            tk.Label(
+        if not Bot[bot_name]:
+            bots = bot_list()
+            if bots:
+                content = (
+                    f"To merge bot named ``{bot_name}`` "
+                    + f"please select one of the bots below available to be "
+                    + f"merged with:"
+                )
+                tk.Label(
+                    self.brief_frame,
+                    text=content,
+                    bg=disp.bg_color,
+                    justify=tk.LEFT,
+                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+                cbox = ttk.Combobox(
+                    self.brief_frame, width=15, textvariable="", state="readonly"
+                )
+                cbox["values"] = tuple(bots)
+                cbox.current(0)
+                cbox.pack(anchor="nw", padx=50, pady=0)
+                tk.Label(
+                    self.brief_frame,
+                    text=(
+                        f"As a result of merge operation the selected bot will be "
+                        + f"deleted. All its records in the database will move on "
+                        + f"to bot ``{bot_name}``."
+                    ),
+                    bg=disp.bg_color,
+                    justify=tk.LEFT,
+                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+                self.check_var.set(0)
+                confirm = tk.Checkbutton(
+                    self.brief_frame,
+                    text="Confirm operation",
+                    variable=self.check_var,
+                    bg=disp.bg_color,
+                    justify=tk.LEFT,
+                    highlightthickness=0,
+                    command=self.check_button,
+                )
+                confirm.pack(anchor="nw")
+                self.button = tk.Button(
+                    self.brief_frame,
+                    activebackground=disp.bg_active,
+                    text="Merge Bot",
+                    command=lambda: merge_bot(bot_name, cbox["values"][cbox.current()]),
+                    state="disabled",
+                )
+                self.button.pack(anchor="nw", padx=50, pady=10)
+            res_label = tk.Label(
                 self.brief_frame,
-                text=content,
+                text="",
                 bg=disp.bg_color,
+                fg=disp.gray_color,
                 justify=tk.LEFT,
-            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-            cbox = ttk.Combobox(
-                self.brief_frame, width=15, textvariable="", state="readonly"
             )
-            cbox["values"] = tuple(bots)
-            cbox.current(0)
-            cbox.pack(anchor="nw", padx=50, pady=0)
-            tk.Label(
-                self.brief_frame,
-                text=(
-                    f"As a result of merge operation the selected bot will be "
-                    + f"deleted. All its records in the database will move on "
-                    + f"to bot ``{bot_name}``."
-                ),
-                bg=disp.bg_color,
-                justify=tk.LEFT,
-            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-            self.check_var.set(0)
-            confirm = tk.Checkbutton(
-                self.brief_frame,
-                text="Confirm operation",
-                variable=self.check_var,
-                bg=disp.bg_color,
-                justify=tk.LEFT,
-                highlightthickness=0,
-                command=self.check_button,
-            )
-            confirm.pack(anchor="nw")
-            self.button = tk.Button(
-                self.brief_frame,
-                activebackground=disp.bg_active,
-                text="Merge Bot",
-                command=lambda: merge_bot(bot_name, cbox["values"][cbox.current()]),
-                state="disabled",
-            )
-            self.button.pack(anchor="nw", padx=50, pady=10)
-        res_label = tk.Label(
-            self.brief_frame,
-            text="",
-            bg=disp.bg_color,
-            fg=disp.gray_color,
-            justify=tk.LEFT,
-        )
-        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+        else:
+            self.display_error_message(bot_name=bot_name)
 
     def dublicate(self, bot_name: str):
         def add_copy_bot(bot_name: str) -> None:
@@ -526,49 +533,52 @@ class SettingsApp:
                 self.wrap("None")
 
         self.switch(option="option")
-        tk.Label(
-            self.brief_frame,
-            text=(
-                f"You are about to duplicate ``{bot_name}``. The newly "
-                + f"created bot will get the same set of parameters as "
-                + f"``{bot_name}`` currently has."
-            ),
-            bg=disp.bg_color,
-            justify=tk.LEFT,
-        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        tk.Label(
-            self.brief_frame,
-            text="Enter a unique name",
-            bg=disp.bg_color,
-            justify=tk.LEFT,
-        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        self.bot_entry["Name"] = ttk.Entry(
-            self.brief_frame,
-            width=20,
-            style="free.TEntry",
-            textvariable=self.name_trace,
-        )
-        self.bot_entry["Name"].pack(anchor="nw", padx=50, pady=0)
-        self.name_trace.trace_add("write", self.name_trace_callback)
-        self.button = tk.Button(
-            self.brief_frame,
-            activebackground=disp.bg_active,
-            text="Duplicate Bot",
-            command=lambda: add_copy_bot(bot_name),
-            state="disabled",
-        )
-        self.bot_entry["Name"].delete(0, tk.END)
-        self.bot_entry["Name"].insert(0, bot_name)
-        self.button.pack(anchor="nw", padx=50, pady=20)
-        res_label = tk.Label(
-            self.brief_frame,
-            text="",
-            bg=disp.bg_color,
-            fg=disp.gray_color,
-            justify=tk.LEFT,
-        )
-        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-        self.wrap("None")
+        if not Bot[bot_name].error_message:
+            tk.Label(
+                self.brief_frame,
+                text=(
+                    f"You are about to duplicate ``{bot_name}``. The newly "
+                    + f"created bot will get the same set of parameters as "
+                    + f"``{bot_name}`` currently has."
+                ),
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+            tk.Label(
+                self.brief_frame,
+                text="Enter a unique name",
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+            self.bot_entry["Name"] = ttk.Entry(
+                self.brief_frame,
+                width=20,
+                style="free.TEntry",
+                textvariable=self.name_trace,
+            )
+            self.bot_entry["Name"].pack(anchor="nw", padx=50, pady=0)
+            self.name_trace.trace_add("write", self.name_trace_callback)
+            self.button = tk.Button(
+                self.brief_frame,
+                activebackground=disp.bg_active,
+                text="Duplicate Bot",
+                command=lambda: add_copy_bot(bot_name),
+                state="disabled",
+            )
+            self.bot_entry["Name"].delete(0, tk.END)
+            self.bot_entry["Name"].insert(0, bot_name)
+            self.button.pack(anchor="nw", padx=50, pady=20)
+            res_label = tk.Label(
+                self.brief_frame,
+                text="",
+                bg=disp.bg_color,
+                fg=disp.gray_color,
+                justify=tk.LEFT,
+            )
+            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+            self.wrap("None")
+        else:
+            self.display_error_message(bot_name=bot_name)
 
     def delete(self, bot_name: str):
         def delete_bot(bot_name: str) -> None:
@@ -686,28 +696,38 @@ class SettingsApp:
     def show(self, bot_name):
         if bot_name != disp.bot_event_prev:
             TreeTable.bot_menu.on_rollup(iid=bot_name)
-            if disp.bot_name and bot_name != disp.bot_name:
-                bot_trades_sub[disp.bot_name].pack_forget()
-            disp.bot_name = bot_name
-            disp.refresh_bot_info = True
-            init_bot_trades(bot_name=bot_name)
-            bot_trades_sub[bot_name].pack(fill="both", expand="yes")
-            refresh_bot_orders()
-            self.switch(option="table")
-            bot = Bot[bot_name]
-            values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
-            TreeTable.bot_info.update(row=0, values=values)
-            if Bot[bot_name].state == "Active":
-                self.strategy_text.config(state="disabled")
-            else:
-                self.strategy_text.config(state="normal")
-            bot_path = self.get_bot_path(bot_name=bot_name)
-            self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
-            self.insert_code(
-                text_widget=self.strategy_text, code=self.bot_algo, bot_name=bot_name
-            )
-            disp.bot_event_prev = bot_name
-            self.button.config(state="disabled")
+        if not Bot[bot_name].error_message:
+            if bot_name != disp.bot_event_prev:
+                TreeTable.bot_menu.on_rollup(iid=bot_name)
+                if disp.bot_name and bot_name != disp.bot_name:
+                    bot_trades_sub[disp.bot_name].pack_forget()
+                disp.bot_name = bot_name
+                disp.refresh_bot_info = True
+                init_bot_trades(bot_name=bot_name)
+                bot_trades_sub[bot_name].pack(fill="both", expand="yes")
+                refresh_bot_orders()
+                self.switch(option="table")
+                bot = Bot[bot_name]
+                values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+                TreeTable.bot_info.update(row=0, values=values)
+                if Bot[bot_name].state == "Active":
+                    self.strategy_text.config(state="disabled")
+                else:
+                    self.strategy_text.config(state="normal")
+                bot_path = self.get_bot_path(bot_name=bot_name)
+                self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
+                self.insert_code(
+                    text_widget=self.strategy_text,
+                    code=self.bot_algo,
+                    bot_name=bot_name,
+                )
+                disp.bot_event_prev = bot_name
+                try:
+                    self.button.config(state="disabled")
+                except Exception:
+                    pass
+        else:
+            self.display_error_message(bot_name=bot_name)
 
     def wrap(self, event):
         for child in bot_manager.brief_frame.winfo_children():
@@ -737,6 +757,17 @@ class SettingsApp:
             del trade_treeTable[bot_name]
 
             return True
+
+    def display_error_message(self, bot_name: str) -> None:
+        winfo_destroy()
+        tk.Label(
+            self.brief_frame,
+            text=Bot[bot_name].error_message,
+            bg=disp.bg_color,
+            fg=disp.gray_color,
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        self.wrap("None")
 
 
 def init_bot_trades(bot_name: str) -> None:
@@ -786,11 +817,12 @@ def refresh_bot_orders():
             bot_tree.insert(values=row, iid=child, configure=row[indx_side])
 
 
-def handler_bot_menu(event) -> None:
-    def winfo_destroy() -> None:
-        for child in bot_manager.brief_frame.winfo_children():
-            child.destroy()
+def winfo_destroy() -> None:
+    for child in bot_manager.brief_frame.winfo_children():
+        child.destroy()
 
+
+def handler_bot_menu(event) -> None:
     tree = event.widget
     iid = tree.selection()[0]
     option = iid.split("!")

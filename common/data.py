@@ -169,6 +169,7 @@ class BotData:
     state: str
     created: str
     updated: str
+    error_message: str = ""
 
     def __iter__(self):
         return Ret.iter(self)
