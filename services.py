@@ -157,6 +157,8 @@ def insert_database(values: list, table: str) -> None:
                     "insert into robots (EMI,STATE,TIMEFR) VALUES (?,?,?)",
                     values,
                 )
+            else:
+                return "Unknown database table."
             var.connect_sqlite.commit()
             var.sql_lock.release()
             return None

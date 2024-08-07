@@ -38,6 +38,7 @@ from common.variables import Variables as var
 
 from .variables import AutoScrollbar, TreeTable, TreeviewTable
 from .variables import Variables as disp
+#from display.messages import ErrorMessage
 
 
 class BoldLabel(tk.Label):
@@ -50,18 +51,18 @@ class BoldLabel(tk.Label):
 
 class SettingsApp:
     def __init__(self, root):
-        # self.root_frame = root
-        # self.button_height = 25
+        #self.root_frame = root
+        #self.button_height = 25
         self.button_strategy = None
 
-        # self.pop_up = None
-        # self.selected_bot = ""
+        #self.pop_up = None
+        #self.selected_bot = ""
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
-        # self.action = ""
+        #self.action = ""
         self.timeframes = OrderedDict([("1 min", 1), ("5 min", 5), ("60 min", 60)])
-        # self.timeframe_trace = StringVar(name=f"timeframe{self}")
-        # self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
+        #self.timeframe_trace = StringVar(name=f"timeframe{self}")
+        #self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
         self.bot_entry = {}
         self.name_trace = StringVar(name="Name" + str(self))
         self.name_trace.trace_add("write", self.name_trace_callback)
@@ -87,7 +88,7 @@ class SettingsApp:
         self.bot_algo = ""
 
         # If bot's timeframe is changed by user, than the value in not None
-        # self.timeframe_changed = None
+        #self.timeframe_changed = None
 
         # Create initial frames
         # self.bot_info_frame()
@@ -122,7 +123,7 @@ class SettingsApp:
         except (SyntaxError, Exception) as e:
             return False, traceback.format_exc()
 
-    """def timeframe_trace_callback(self, name, index, mode):
+    '''def timeframe_trace_callback(self, name, index, mode):
         value = self.timeframe_trace.get().split(" ")
         if (
             self.selected_bot in Bot.keys()
@@ -132,7 +133,7 @@ class SettingsApp:
                 self.timeframe_changed = "changed"
         else:
             if self.timeframe_changed is not None:
-                self.timeframe_changed = None"""
+                self.timeframe_changed = None'''
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -314,8 +315,8 @@ class SettingsApp:
         self.strategy_text = tk.Text(
             frame_strategy,
             highlightthickness=0,
-            # highlightbackground=disp.title_color,
-            # highlightcolor=disp.title_color,
+            #highlightbackground=disp.title_color,
+            #highlightcolor=disp.title_color,
             bg=disp.bg_color,
             yscrollcommand=self.strategy_scroll.set,
         )
@@ -331,17 +332,28 @@ class SettingsApp:
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
-            """self.strategy_text.config(
+            '''self.strategy_text.config(
                 highlightbackground=disp.bg_changed,
                 highlightcolor=disp.bg_changed,
-            )"""
+            )'''
             self.button_strategy.config(state="normal")
         else:
-            """self.strategy_text.config(
+            '''self.strategy_text.config(
                 highlightbackground=disp.title_color,
                 highlightcolor=disp.title_color,
-            )"""
+            )'''
             self.button_strategy.config(state="disabled")
+
+    def finish_operation(self, message):
+        winfo_destroy()
+        tk.Label(
+            self.brief_frame,
+            text=message,
+            bg=disp.bg_color,
+            fg=disp.gray_color,
+            justify=tk.LEFT,
+        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        self.wrap("None")
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
@@ -350,9 +362,8 @@ class SettingsApp:
                 new_state = "Suspended"
             else:
                 new_state = "Active"
-            TEXT = "The bot ``{NAME}`` has state ``{STATE}``. You are about to change the state to ``{CHANGE}``."
-
-            return TEXT.format(NAME=bot_name, STATE=bot.state, CHANGE=new_state)
+            TEXT = "You are about to change state from ``{STATE}`` to ``{CHANGE}`` for bot ``{NAME}``:"
+            return TEXT.format(STATE=bot.state, CHANGE=new_state, NAME=bot_name)
 
         def change_state(bot_name) -> None:
             nonlocal new_state
@@ -364,6 +375,10 @@ class SettingsApp:
                 values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
                 TreeTable.bot_info.update(row=0, values=values)
                 text_label["text"] = return_text()
+                res_label[
+                    "text"
+                    ] = f"State changed to ``{bot.state}``."
+                self.button.config(text=button_text[Bot[bot_name].state])
 
         self.switch(option="option")
         if not Bot[bot_name].error_message:
@@ -376,19 +391,28 @@ class SettingsApp:
                 justify=tk.LEFT,
             )
             text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+            button_text = {"Active": "Suspend", "Suspended": "Activate"}
             self.button = tk.Button(
                 self.brief_frame,
                 activebackground=disp.bg_active,
-                text="Update",
+                text=button_text[Bot[bot_name].state],
                 command=lambda: change_state(bot_name),
             )
             self.button.pack(anchor="nw", padx=50, pady=10)
+            res_label = tk.Label(
+                self.brief_frame,
+                text="",
+                bg=disp.bg_color,
+                fg=disp.gray_color,
+                justify=tk.LEFT,
+            )
+            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
         else:
             self.display_error_message(bot_name=bot_name)
 
     def parameters(self, bot_name: str) -> None:
-        def on_button(num: int) -> None:
-            timefr = tuple(self.timeframes.values())[num]
+        def on_button(value: int) -> None:
+            timefr = tuple(self.timeframes.values())[value]
             err = service.update_database(
                 query=f"UPDATE robots SET TIMEFR = {timefr}"
                 + f", UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{bot_name}'"
@@ -396,25 +420,25 @@ class SettingsApp:
             if err is None:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
-                # self.timeframe_changed = None
+                #self.timeframe_changed = None
                 values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
                 TreeTable.bot_info.update(row=0, values=values)
                 res_label[
                     "text"
-                ] = f"{bot_name} timeframe changed to {tuple(self.timeframes.keys())[num]}."
+                ] = f"Timeframe value changed to {tuple(self.timeframes.keys())[value]}."
 
         self.switch(option="option")
         if not Bot[bot_name].error_message:
             bot = Bot[bot_name]
             tk.Label(
                 self.brief_frame,
-                text="Select timeframe:",
+                text=f"Select new timeframe for bot ``{bot_name}``:",
                 bg=disp.bg_color,
                 justify=tk.LEFT,
             ).pack(anchor="nw", padx=self.padx, pady=self.pady)
             timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
             timeframe["values"] = tuple(self.timeframes.keys())
-            timeframe.current(1)
+            timeframe.set(Bot[bot_name].timefr)
             timeframe.pack(anchor="nw", padx=50, pady=0)
             self.button = tk.Button(
                 self.brief_frame,
@@ -441,38 +465,25 @@ class SettingsApp:
                 if item != bot_name and Bot[item].state == "Suspended":
                     bots.append(item)
             if not bots:
-                for child in bot_manager.brief_frame.winfo_children():
-                    child.destroy()
-                tk.Label(
-                    self.brief_frame,
-                    text=(
-                        f"No available bots to be merged with. "
-                        + f"Only bots with state <Suspended> allowed."
-                    ),
-                    bg=disp.bg_color,
-                    justify=tk.LEFT,
-                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-
+                text = (
+                    f"No available bots to be merged with. "
+                    + f"Only bots with state ``Suspended`` allowed."
+                )
+                self.finish_operation(text)
             return bots
 
         def merge_bot(bot_name: str, bot_to_delete: str) -> None:
-            err = service.update_database(
-                query=f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
-            )
-            if err is None:
-                if self.delete_all_bot_info(bot_to_delete):
-                    res_label["text"] = (
-                        f"``{bot_name}`` and ``{bot_to_delete}`` have been merged. "
-                        + f"``{bot_to_delete}`` is no longer available."
-                    )
-                    bots = bot_list()
-                    if bots:
-                        cbox["values"] = tuple(bots)
-                        cbox.current(0)
-                        cbox.update_idletasks()
+            query = f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
+            message = self.delete_all_bot_info(bot_to_delete, query)
+            if message[0] is None:
+                message[1] += "\n\nThe merge operation completed successfully."
+            else:
+                message[1] += "\n\nThe merge operation completed with errors."
+            self.finish_operation(message[1])
 
         self.switch(option="option")
-        if not Bot[bot_name]:
+
+        if not Bot[bot_name].error_message:
             bots = bot_list()
             if bots:
                 content = (
@@ -480,19 +491,20 @@ class SettingsApp:
                     + f"please select one of the bots below available to be "
                     + f"merged with:"
                 )
-                tk.Label(
+                label_first = tk.Label(
                     self.brief_frame,
                     text=content,
                     bg=disp.bg_color,
                     justify=tk.LEFT,
-                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+                )
+                label_first.pack(anchor="nw", padx=self.padx, pady=self.pady)
                 cbox = ttk.Combobox(
                     self.brief_frame, width=15, textvariable="", state="readonly"
                 )
                 cbox["values"] = tuple(bots)
                 cbox.current(0)
                 cbox.pack(anchor="nw", padx=50, pady=0)
-                tk.Label(
+                label_second = tk.Label(
                     self.brief_frame,
                     text=(
                         f"As a result of merge operation the selected bot will be "
@@ -501,7 +513,8 @@ class SettingsApp:
                     ),
                     bg=disp.bg_color,
                     justify=tk.LEFT,
-                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+                )
+                label_second.pack(anchor="nw", padx=self.padx, pady=self.pady)
                 self.check_var.set(0)
                 confirm = tk.Checkbutton(
                     self.brief_frame,
@@ -521,14 +534,6 @@ class SettingsApp:
                     state="disabled",
                 )
                 self.button.pack(anchor="nw", padx=50, pady=10)
-            res_label = tk.Label(
-                self.brief_frame,
-                text="",
-                bg=disp.bg_color,
-                fg=disp.gray_color,
-                justify=tk.LEFT,
-            )
-            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
         else:
             self.display_error_message(bot_name=bot_name)
 
@@ -539,18 +544,26 @@ class SettingsApp:
                 values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
             )
             if err is None:
-                shutil.copytree(
-                    self.get_bot_path(bot_name), self.get_bot_path(copy_bot)
-                )
-                time_now = self.get_time()
-                bot = Bot[copy_bot]
-                bot.state = "Suspended"
-                bot.timefr = Bot[bot_name].timefr
-                bot.created = time_now
-                bot.updated = time_now
-                self.insert_bot_menu(name=copy_bot, new=True)
-                res_label["text"] = f"New bot ``{copy_bot}`` added to the database.\n\n"
-                self.wrap("None")
+                message = f"New bot ``{copy_bot}`` inserted into database."
+                try:
+                    shutil.copytree(
+                        self.get_bot_path(bot_name), self.get_bot_path(copy_bot)
+                    )
+                    message += f"\nThe ``/{copy_bot}/`` subdirectory created."
+                    time_now = self.get_time()
+                    bot = Bot[copy_bot]
+                    bot.state = "Suspended"
+                    bot.timefr = Bot[bot_name].timefr
+                    bot.created = time_now
+                    bot.updated = time_now
+                    self.insert_bot_menu(name=copy_bot, new=True)
+                    message += "\n\nThe duplicate operation completed successfully."
+                except Exception as e:
+                    err = str(e)
+                    message += f"\n{err}\n\nThe duplicate operation completed with errors."
+            else:
+                message = f"{err}\n\nThe duplicate operation failed."
+            self.finish_operation(message)
 
         self.switch(option="option")
         if not Bot[bot_name].error_message:
@@ -587,38 +600,21 @@ class SettingsApp:
             self.bot_entry["Name"].delete(0, tk.END)
             self.bot_entry["Name"].insert(0, bot_name)
             self.button.pack(anchor="nw", padx=50, pady=20)
-            res_label = tk.Label(
-                self.brief_frame,
-                text="",
-                bg=disp.bg_color,
-                fg=disp.gray_color,
-                justify=tk.LEFT,
-            )
-            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
             self.wrap("None")
         else:
             self.display_error_message(bot_name=bot_name)
 
     def delete(self, bot_name: str):
         def delete_bot(bot_name: str) -> None:
-            err = service.update_database(
-                query=f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
-            )
-            if err is None:
-                if self.delete_all_bot_info(bot_name):
-                    for child in bot_manager.brief_frame.winfo_children():
-                        child.destroy()
-                    res_label = tk.Label(
-                        self.brief_frame,
-                        text=f"``{bot_name}`` has been deleted.",
-                        bg=disp.bg_color,
-                        fg=disp.gray_color,
-                        justify=tk.LEFT,
-                    )
-                    values = ["" for _ in var.name_bot]
-                    TreeTable.bot_info.update(row=0, values=values)
-                    res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-                    self.wrap("None")
+            query = f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
+            message = self.delete_all_bot_info(bot_name, query)
+            if message[0] is None:
+                message[1] += "\n\nThe delete operation completed successfully."
+                values = ["" for _ in var.name_bot]
+                TreeTable.bot_info.update(row=0, values=values)
+            else:
+                message[1] += "\n\nThe delete operation completed with errors."
+            self.finish_operation(message[1])
 
         self.switch(option="option")
         tk.Label(
@@ -628,7 +624,7 @@ class SettingsApp:
                 + f"``/{bot_name}/`` subdirectory will be "
                 + f"erased and this bot will no longer exist. Each database "
                 + f"record belonging to the ``{bot_name}`` will change its ``EMI`` "
-                + f"field value to the default one taken from the ``SYMBOL`` field."
+                + f"field value to the default one taken from the field ``SYMBOL``."
             ),
             bg=disp.bg_color,
             justify=tk.LEFT,
@@ -747,7 +743,7 @@ class SettingsApp:
             self.display_error_message(bot_name=bot_name)
 
     def wrap(self, event):
-        for child in bot_manager.brief_frame.winfo_children():
+        for child in self.brief_frame.winfo_children():
             if type(child) is tk.Label:
                 child.config(wraplength=self.brief_frame.winfo_width() - self.padx * 2)
 
@@ -761,32 +757,38 @@ class SettingsApp:
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
 
-    def delete_all_bot_info(self, bot_name) -> Union[bool, None]:
-        err = service.update_database(
-            query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
-        )
+    def delete_all_bot_info(self, bot_name, first_query) -> Union[bool, None]:
+        err = service.update_database(query=first_query)
         if err is None:
-            bot_path = self.get_bot_path(bot_name)
-            shutil.rmtree(str(bot_path))
-            Bot.remove(bot_name)
-            TreeTable.bot_menu.delete(iid=bot_name)
-            bot_trades_sub[bot_name].destroy()
-            del trade_treeTable[bot_name]
-            disp.bot_name = None
+            message = "Database table ``coins`` updated."
+            err = service.update_database(
+                query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+            )
+            if err is None:
+                message += f"\nBot ``{bot_name}`` deleted from the database."
+                try:
+                    Bot.remove(bot_name)
+                    TreeTable.bot_menu.delete(iid=bot_name)
+                    bot_trades_sub[bot_name].destroy()
+                    del trade_treeTable[bot_name]
+                    disp.bot_name = None
+                    message += f"\nBot ``{bot_name}`` removed from Tmatic's memory."
+                    bot_path = self.get_bot_path(bot_name)
+                    shutil.rmtree(str(bot_path))
+                    message += f"\nThe ``/{bot_name}/`` subdirectory erased."
+                except Exception as e:
+                    err = str(e)
+                    message += f"\n{err}"
+            else:
+                message += f"\n{err}"
+        else:
+            message = err
+        return [err, message]
 
-            return True
 
     def display_error_message(self, bot_name: str) -> None:
         self.switch(option="option")
-        winfo_destroy()
-        tk.Label(
-            self.brief_frame,
-            text=Bot[bot_name].error_message,
-            bg=disp.bg_color,
-            fg=disp.gray_color,
-            justify=tk.LEFT,
-        ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        self.wrap("None")
+        self.finish_operation(Bot[bot_name].error_message)
 
 
 def init_bot_trades(bot_name: str) -> None:
