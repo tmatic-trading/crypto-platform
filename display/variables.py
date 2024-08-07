@@ -512,7 +512,7 @@ class Variables:
     table_limit = 200
     refresh_handler_orderbook = False
     refresh_bot_info = False
-    bot_name = ""
+    bot_name = None
     bot_trades = dict()
     bot_orders_processing = False
     bot_event_prev = ""
