@@ -50,18 +50,18 @@ class BoldLabel(tk.Label):
 
 class SettingsApp:
     def __init__(self, root):
-        #self.root_frame = root
-        #self.button_height = 25
+        # self.root_frame = root
+        # self.button_height = 25
         self.button_strategy = None
 
-        #self.pop_up = None
-        #self.selected_bot = ""
+        # self.pop_up = None
+        # self.selected_bot = ""
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
-        #self.action = ""
+        # self.action = ""
         self.timeframes = OrderedDict([("1 min", 1), ("5 min", 5), ("60 min", 60)])
-        #self.timeframe_trace = StringVar(name=f"timeframe{self}")
-        #self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
+        # self.timeframe_trace = StringVar(name=f"timeframe{self}")
+        # self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
         self.bot_entry = {}
         self.name_trace = StringVar(name="Name" + str(self))
         self.name_trace.trace_add("write", self.name_trace_callback)
@@ -87,7 +87,7 @@ class SettingsApp:
         self.bot_algo = ""
 
         # If bot's timeframe is changed by user, than the value in not None
-        #self.timeframe_changed = None
+        # self.timeframe_changed = None
 
         # Create initial frames
         # self.bot_info_frame()
@@ -122,7 +122,7 @@ class SettingsApp:
         except (SyntaxError, Exception) as e:
             return False, traceback.format_exc()
 
-    '''def timeframe_trace_callback(self, name, index, mode):
+    """def timeframe_trace_callback(self, name, index, mode):
         value = self.timeframe_trace.get().split(" ")
         if (
             self.selected_bot in Bot.keys()
@@ -132,7 +132,7 @@ class SettingsApp:
                 self.timeframe_changed = "changed"
         else:
             if self.timeframe_changed is not None:
-                self.timeframe_changed = None'''
+                self.timeframe_changed = None"""
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -314,8 +314,8 @@ class SettingsApp:
         self.strategy_text = tk.Text(
             frame_strategy,
             highlightthickness=0,
-            #highlightbackground=disp.title_color,
-            #highlightcolor=disp.title_color,
+            # highlightbackground=disp.title_color,
+            # highlightcolor=disp.title_color,
             bg=disp.bg_color,
             yscrollcommand=self.strategy_scroll.set,
         )
@@ -331,16 +331,16 @@ class SettingsApp:
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
-            '''self.strategy_text.config(
+            """self.strategy_text.config(
                 highlightbackground=disp.bg_changed,
                 highlightcolor=disp.bg_changed,
-            )'''
+            )"""
             self.button_strategy.config(state="normal")
         else:
-            '''self.strategy_text.config(
+            """self.strategy_text.config(
                 highlightbackground=disp.title_color,
                 highlightcolor=disp.title_color,
-            )'''
+            )"""
             self.button_strategy.config(state="disabled")
 
     def activate(self, bot_name: str) -> str:
@@ -396,7 +396,7 @@ class SettingsApp:
             if err is None:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
-                #self.timeframe_changed = None
+                # self.timeframe_changed = None
                 values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
                 TreeTable.bot_info.update(row=0, values=values)
                 res_label[

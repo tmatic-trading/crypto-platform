@@ -590,7 +590,7 @@ def load_bots() -> None:
                     }
                 )
 
-    # Init klines
+    # Importing the strategy.py bot files
 
     for bot_name in Bot.keys():
         module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
@@ -609,8 +609,9 @@ def load_bots() -> None:
             )
             Bot[bot_name].error_message = message
         except AttributeError as exception:
-            message = ErrorMessage.BOT_ATTRIBUTE_ERROR.format(
-                EXCEPTION="AttributeError: " + str(exception), BOT_NAME=bot_name
+            message = ErrorMessage.BOT_MARKET_ERROR.format(
+                EXCEPTION="AttributeError: " + str(exception),
+                BOT_NAME=bot_name,
             )
             var.logger.warning(message)
             var.queue_info.put(
@@ -623,8 +624,10 @@ def load_bots() -> None:
             )
             Bot[bot_name].error_message = message
         except ValueError as exception:
-            message = ErrorMessage.BOT_ATTRIBUTE_ERROR.format(
-                EXCEPTION="ValueError: " + str(exception), BOT_NAME=bot_name
+            message = ErrorMessage.BOT_MARKET_ERROR.format(
+                MODULE=module,
+                EXCEPTION="ValueError: " + str(exception),
+                BOT_NAME=bot_name,
             )
             var.logger.warning(message)
             var.queue_info.put(
@@ -636,6 +639,20 @@ def load_bots() -> None:
                 }
             )
             Bot[bot_name].error_message = message
+        except Exception as exception:
+            formated = service.display_exception(exception=exception)
+            message = ErrorMessage.BOT_LOADING_ERROR.format(
+                MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
+            )
+            var.logger.warning(message)
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                }
+            )
 
     """for market in var.market_list:
         ws = Markets[market]
