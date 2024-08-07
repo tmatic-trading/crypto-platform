@@ -50,19 +50,21 @@ class BoldLabel(tk.Label):
 
 class SettingsApp:
     def __init__(self, root):
-        self.root_frame = root
-        self.button_height = 25
+        #self.root_frame = root
+        #self.button_height = 25
+        self.button_strategy = None
 
-        self.pop_up = None
-        self.selected_bot = ""
+        #self.pop_up = None
+        #self.selected_bot = ""
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
-        self.action = ""
+        #self.action = ""
         self.timeframes = OrderedDict([("1 min", 1), ("5 min", 5), ("60 min", 60)])
-        self.timeframe_trace = StringVar(name=f"timeframe{self}")
-        self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
+        #self.timeframe_trace = StringVar(name=f"timeframe{self}")
+        #self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
         self.bot_entry = {}
         self.name_trace = StringVar(name="Name" + str(self))
+        self.name_trace.trace_add("write", self.name_trace_callback)
         self.check_var = tk.IntVar()
         self.button = None
         self.bot_options = {
@@ -85,7 +87,7 @@ class SettingsApp:
         self.bot_algo = ""
 
         # If bot's timeframe is changed by user, than the value in not None
-        self.timeframe_changed = None
+        #self.timeframe_changed = None
 
         # Create initial frames
         # self.bot_info_frame()
@@ -120,7 +122,7 @@ class SettingsApp:
         except (SyntaxError, Exception) as e:
             return False, traceback.format_exc()
 
-    def timeframe_trace_callback(self, name, index, mode):
+    '''def timeframe_trace_callback(self, name, index, mode):
         value = self.timeframe_trace.get().split(" ")
         if (
             self.selected_bot in Bot.keys()
@@ -130,7 +132,7 @@ class SettingsApp:
                 self.timeframe_changed = "changed"
         else:
             if self.timeframe_changed is not None:
-                self.timeframe_changed = None
+                self.timeframe_changed = None'''
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -246,11 +248,16 @@ class SettingsApp:
 
     def create_strategy_widget(self) -> None:
         def update_strategy() -> None:
-            text = self.strategy_text.get("1.0", tk.END)
+            content = self.strategy_text.get("1.0", tk.END)
             bot_path = self.get_bot_path(disp.bot_name)
-            self.write_file(f"{str(bot_path)}/{self.strategy_file}", text)
-            self.button.config(state="disabled")
-            self.bot_algo = text
+            self.write_file(f"{str(bot_path)}/{self.strategy_file}", content)
+            self.button_strategy.config(state="disabled")
+            self.bot_algo = content
+            self.insert_code(
+                text_widget=self.strategy_text,
+                code=content,
+                bot_name=disp.bot_name,
+            )
 
         def check_syntax() -> None:
             content = self.strategy_text.get("1.0", tk.END)
@@ -259,6 +266,11 @@ class SettingsApp:
                 functions.warning_window(
                     "The bot's code syntax is correct", title="Syntax check"
                 )
+                self.insert_code(
+                    text_widget=self.strategy_text,
+                    code=content,
+                    bot_name=disp.bot_name,
+                )
             else:
                 functions.warning_window(error_message, width=1000, height=300)
 
@@ -266,37 +278,44 @@ class SettingsApp:
         frame_title.grid(row=0, column=0, sticky="NSEW", columnspan=2)
         title = BoldLabel(frame_title, text="STRATEGY")
         title.grid(row=0, column=0, sticky="NSEW")
+
+        self.button_strategy = tk.Button(
+            frame_title,
+            activebackground=disp.bg_active,
+            text="Update strategy",
+            command=lambda: update_strategy(),
+            state="disabled",
+            pady=0,
+        )
+        self.button_strategy.grid(row=0, column=1)
+
         button_syntax = tk.Button(
             frame_title,
             activebackground=disp.bg_active,
             text="Check syntax",
             command=lambda: check_syntax(),
+            pady=0,
         )
         button_syntax.grid(row=0, column=2)
+
         button_backtest = tk.Button(
             frame_title,
             activebackground=disp.bg_active,
             text="Backtest",
             # command=lambda: update_strategy(),
             state="disabled",
+            pady=0,
         )
         button_backtest.grid(row=0, column=3)
-        self.button = tk.Button(
-            frame_title,
-            activebackground=disp.bg_active,
-            text="Update strategy",
-            command=lambda: update_strategy(),
-            state="disabled",
-        )
-        # self.button.pack(side=tk.RIGHT)
-        self.button.grid(row=0, column=1)
+
         frame_title.grid_columnconfigure(0, weight=1)
+
         self.strategy_scroll = AutoScrollbar(frame_strategy, orient="vertical")
         self.strategy_text = tk.Text(
             frame_strategy,
             highlightthickness=0,
-            highlightbackground=disp.title_color,
-            highlightcolor=disp.title_color,
+            #highlightbackground=disp.title_color,
+            #highlightcolor=disp.title_color,
             bg=disp.bg_color,
             yscrollcommand=self.strategy_scroll.set,
         )
@@ -304,6 +323,7 @@ class SettingsApp:
         self.strategy_scroll.config(command=self.strategy_text.yview)
         self.strategy_text.grid(row=1, column=0, sticky="NSEW")
         self.strategy_scroll.grid(row=1, column=1, sticky="NS")
+
         frame_strategy.grid_columnconfigure(0, weight=1)
         frame_strategy.grid_columnconfigure(1, weight=0)
         frame_strategy.grid_rowconfigure(1, weight=1)
@@ -311,17 +331,17 @@ class SettingsApp:
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
-            self.strategy_text.config(
+            '''self.strategy_text.config(
                 highlightbackground=disp.bg_changed,
                 highlightcolor=disp.bg_changed,
-            )
-            self.button.config(state="normal")
+            )'''
+            self.button_strategy.config(state="normal")
         else:
-            self.strategy_text.config(
+            '''self.strategy_text.config(
                 highlightbackground=disp.title_color,
                 highlightcolor=disp.title_color,
-            )
-            self.button.config(state="disabled")
+            )'''
+            self.button_strategy.config(state="disabled")
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
@@ -334,10 +354,10 @@ class SettingsApp:
 
             return TEXT.format(NAME=bot_name, STATE=bot.state, CHANGE=new_state)
 
-        def change_state() -> None:
+        def change_state(bot_name) -> None:
             nonlocal new_state
             err = service.update_database(
-                query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{self.selected_bot}'"
+                query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{bot_name}'"
             )
             if err is None:
                 bot.state = new_state
@@ -360,7 +380,7 @@ class SettingsApp:
                 self.brief_frame,
                 activebackground=disp.bg_active,
                 text="Update",
-                command=lambda: change_state(),
+                command=lambda: change_state(bot_name),
             )
             self.button.pack(anchor="nw", padx=50, pady=10)
         else:
@@ -376,8 +396,8 @@ class SettingsApp:
             if err is None:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
-                self.timeframe_changed = None
-                values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+                #self.timeframe_changed = None
+                values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
                 TreeTable.bot_info.update(row=0, values=values)
                 res_label[
                     "text"
@@ -557,7 +577,6 @@ class SettingsApp:
                 textvariable=self.name_trace,
             )
             self.bot_entry["Name"].pack(anchor="nw", padx=50, pady=0)
-            self.name_trace.trace_add("write", self.name_trace_callback)
             self.button = tk.Button(
                 self.brief_frame,
                 activebackground=disp.bg_active,
@@ -661,7 +680,6 @@ class SettingsApp:
             textvariable=self.name_trace,
         )
         self.bot_entry["Name"].pack(anchor="nw", padx=50, pady=0)
-        self.name_trace.trace_add("write", self.name_trace_callback)
         tk.Label(
             self.brief_frame,
             text="Select timeframe:",
@@ -699,7 +717,7 @@ class SettingsApp:
         disp.bot_name = bot_name
         disp.refresh_bot_info = True
         bot = Bot[bot_name]
-        values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+        values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
         TreeTable.bot_info.update(row=0, values=values)
         if not bot.error_message:
             if bot_name != disp.bot_event_prev:
@@ -754,6 +772,7 @@ class SettingsApp:
             TreeTable.bot_menu.delete(iid=bot_name)
             bot_trades_sub[bot_name].destroy()
             del trade_treeTable[bot_name]
+            disp.bot_name = None
 
             return True
 
