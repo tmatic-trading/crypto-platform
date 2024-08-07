@@ -608,6 +608,20 @@ def load_bots() -> None:
                 }
             )
             Bot[bot_name].error_message = message
+        except AttributeError as exception:
+            message = ErrorMessage.BOT_ATTRIBUTE_ERROR.format(
+                EXCEPTION=exception, BOT_NAME=bot_name
+            )
+            var.logger.warning(message)
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                }
+            )
+            Bot[bot_name].error_message = message
 
     """for market in var.market_list:
         ws = Markets[market]

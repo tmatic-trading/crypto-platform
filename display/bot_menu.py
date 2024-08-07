@@ -606,7 +606,7 @@ class SettingsApp:
             self.brief_frame,
             text=(
                 f"After you press the ``Delete bot`` button, the "
-                + f"``/algo/{bot_name}/`` subdirectory will be "
+                + f"``/{bot_name}/`` subdirectory will be "
                 + f"erased and this bot will no longer exist. Each database "
                 + f"record belonging to the ``{bot_name}`` will change its ``EMI`` "
                 + f"field value to the default one taken from the ``SYMBOL`` field."
@@ -696,21 +696,20 @@ class SettingsApp:
     def show(self, bot_name):
         if bot_name != disp.bot_event_prev:
             TreeTable.bot_menu.on_rollup(iid=bot_name)
-        if not Bot[bot_name].error_message:
+        disp.bot_name = bot_name
+        disp.refresh_bot_info = True
+        bot = Bot[bot_name]
+        values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+        TreeTable.bot_info.update(row=0, values=values)
+        if not bot.error_message:
             if bot_name != disp.bot_event_prev:
-                TreeTable.bot_menu.on_rollup(iid=bot_name)
                 if disp.bot_name and bot_name != disp.bot_name:
                     bot_trades_sub[disp.bot_name].pack_forget()
-                disp.bot_name = bot_name
-                disp.refresh_bot_info = True
                 init_bot_trades(bot_name=bot_name)
                 bot_trades_sub[bot_name].pack(fill="both", expand="yes")
                 refresh_bot_orders()
                 self.switch(option="table")
-                bot = Bot[bot_name]
-                values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
-                TreeTable.bot_info.update(row=0, values=values)
-                if Bot[bot_name].state == "Active":
+                if bot.state == "Active":
                     self.strategy_text.config(state="disabled")
                 else:
                     self.strategy_text.config(state="normal")
@@ -759,6 +758,7 @@ class SettingsApp:
             return True
 
     def display_error_message(self, bot_name: str) -> None:
+        self.switch(option="option")
         winfo_destroy()
         tk.Label(
             self.brief_frame,

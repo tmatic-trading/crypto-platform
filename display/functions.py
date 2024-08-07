@@ -16,8 +16,7 @@ def info_display(name: str, message: str, tm=None, warning=False) -> None:
         name += ": "
     if not tm:
         tm = datetime.now(tz=timezone.utc)
-    disp.text_info.insert(
-        "1.0",
+    text = (
         noll(str(tm.hour), 2)
         + ":"
         + noll(str(tm.minute), 2)
@@ -25,14 +24,17 @@ def info_display(name: str, message: str, tm=None, warning=False) -> None:
         + noll(str(tm.second), 2)
         + "."
         + noll(str(int(tm.microsecond / 1000)), 3)
-        + " "
-        + " "
+        + "  "
         + name
         + message
-        + "\n",
+        + "\n"
     )
+    if isinstance(text, tuple):
+        text = text[0]
+    num = text.count("\n")
+    disp.text_info.insert("1.0", text)
     if warning:
-        disp.text_info.tag_add(name, "1.0", "1.1000")
+        disp.text_info.tag_add(name, "1.0", f"{num}.1000")
         disp.text_info.tag_config(name, foreground=disp.red_color)
     disp.info_display_counter += 1
     if disp.info_display_counter > 300:
