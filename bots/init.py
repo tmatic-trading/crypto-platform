@@ -12,7 +12,7 @@ from common.data import Bot
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
 from display.functions import info_display
-from display.messages import ErrorMessage
+from display.messages import ErrorMessage, Message
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
@@ -509,13 +509,11 @@ def load_bots() -> None:
                 if symb not in ws.symbol_list:
                     if ws.Instrument[symb].state == "Open":
                         subscriptions.append(symb)
+                        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symb)
+                        var.logger.info(message)
                     else:
-                        message = (
-                            "The "
-                            + str(symb)
-                            + " instrument has a "
-                            + ws.Instrument[symb].state
-                            + " status, but is normally Open. The instrument has probably expired, but in the database there are still positions that should not exist. Check your trading history."
+                        message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
+                            SYMBOL=symb, STATE=ws.Instrument[symb].state
                         )
                         var.logger.warning(message)
                         var.queue_info.put(

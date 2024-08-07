@@ -186,7 +186,6 @@ class Agent(Bitmex):
             SYMBOL=self.Instrument[symbol].ticker,
             TIME=str(start_time)[:19],
         )
-        print("______________", path)
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
             filtered = []

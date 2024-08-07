@@ -5,26 +5,40 @@ from api.api import Markets
 from common.data import Instrument, MetaInstrument
 
 
+def insert_bot_name(func):
+    def inner(self):
+        self.bot_name = get_bot_name(inspect.stack())
+        func(self)
+
+    return inner
+
+
 class Tool(Instrument):
-    def __init__(self, instrument) -> None:
+    def __init__(self, instrument: Instrument) -> None:
         self.__dict__ = instrument.__dict__.copy()
         self.instrument = instrument
+        self.market = self.instrument.market
+        self.bot_name = ""
 
+    @insert_bot_name
     def close_all(self):
-        bot_name = get_bot_name(inspect.stack())
-
-    def sell(self):
-        bot_name = get_bot_name(inspect.stack())
-
-    def buy(self):
-        bot_name = get_bot_name(inspect.stack())
-
-    def EMA(self, period):
         pass
 
+    @insert_bot_name
+    def sell(self):
+        pass
+
+    @insert_bot_name
+    def buy(self):
+        pass
+
+    def EMA(self, period: int):
+        pass
+    
+    @insert_bot_name
     def add_kline(self):
         ws = Markets[self.market]
-        ws.kline_list.append(self.symbol)
+        ws.kline_list.append(self.instrument.symbol)
 
 
 class MetaTool(type):

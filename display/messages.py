@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class Message(str, Enum):
-    pass
+    SUBSCRIPTION_ADDED = "Added subscription to {SYMBOL}."
 
     def __str__(self) -> str:
         return self.value
@@ -24,6 +24,11 @@ class ErrorMessage(str, Enum):
         "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"
         + "You should either correct the strategy file or delete ``{BOT_NAME}`` "
         + "using the ``Bot Menu``.\n"
+    )
+    IMPOSSIBLE_SUBSCRIPTION = (
+        "The {SYMBOL} instrument has a {STATE} status, but is normally Open. "
+        + "The instrument has probably expired, but in the database there are "
+        + " still positions that should not exist. Check your trading history."
     )
 
     def __str__(self) -> str:
