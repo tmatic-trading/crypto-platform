@@ -100,8 +100,13 @@ def close(markets):
         ws.exit()
 
 
-def display_exception(exception):
-    traceback.print_exception(type(exception), exception, exception.__traceback__)
+def display_exception(exception) -> str:
+    formated = "".join(
+        traceback.format_exception(type(exception), exception, exception.__traceback__)
+    )
+    print(formated)
+
+    return formated
 
 
 def select_database(query: str) -> list:

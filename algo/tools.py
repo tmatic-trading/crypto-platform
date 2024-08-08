@@ -5,12 +5,13 @@ from api.api import Markets
 from common.data import Instrument, MetaInstrument
 
 
-def insert_bot_name(func):
-    def inner(self):
-        self.bot_name = get_bot_name(inspect.stack())
-        func(self)
+def name(stack) -> str:
+    if ostype == "Windows":
+        bot_name = stack[1].filename.split("\\")[-2]
+    else:
+        bot_name = stack[1].filename.split("/")[-2]
 
-    return inner
+    return bot_name
 
 
 class Tool(Instrument):
@@ -20,22 +21,19 @@ class Tool(Instrument):
         self.market = self.instrument.market
         self.bot_name = ""
 
-    @insert_bot_name
     def close_all(self):
+        bot_name = name(inspect.stack())
         pass
 
-    @insert_bot_name
     def sell(self):
-        pass
+        bot_name = name(inspect.stack())
 
-    @insert_bot_name
     def buy(self):
-        pass
+        bot_name = name(inspect.stack())
 
     def EMA(self, period: int):
         pass
     
-    @insert_bot_name
     def add_kline(self):
         ws = Markets[self.market]
         ws.kline_list.append(self.instrument.symbol)
@@ -53,15 +51,6 @@ class MetaTool(type):
             self.objects[instrument] = Tool(MetaInstrument.all[instrument])
 
         return self.objects[instrument]
-
-
-def get_bot_name(stack) -> str:
-    if ostype == "Windows":
-        bot_name = stack[1].filename.split("\\")[-2]
-    else:
-        bot_name = stack[1].filename.split("/")[-2]
-
-    return bot_name
 
 
 if platform.system() == "Windows":

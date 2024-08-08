@@ -1634,12 +1634,12 @@ def handler_orderbook(event) -> None:
                 )
                 option_robots["menu"].delete(0, "end")
                 options = list()
-                for emi in ws.robots:
-                    if (
-                        ws.robots[emi]["SYMBOL"] in ws.symbol_list
-                        and ws.robots[emi]["SYMBOL"] == var.symbol
-                    ):
-                        options.append(ws.robots[emi]["EMI"])
+                for name in Bot.keys():
+                    bot = Bot[name]
+                    for symbol, pos in bot.position.items():
+                        if symbol == var.symbol and pos["position"] != 0:
+                            options.append(name)
+                options.append(var.symbol[0])
                 for option in options:
                     option_robots["menu"].add_command(
                         label=option,
@@ -1797,12 +1797,12 @@ def handler_orderbook(event) -> None:
         label_robots = tk.Label(frame_robots, text="EMI:")
         emi_number = tk.StringVar()
         options = list()
-        for emi in ws.robots:
-            if (
-                ws.robots[emi]["SYMBOL"] in ws.symbol_list
-                and ws.robots[emi]["SYMBOL"] == var.symbol
-            ):
-                options.append(ws.robots[emi]["EMI"])
+        for name in Bot.keys():
+            bot = Bot[name]
+            for symbol, pos in bot.position.items():
+                if symbol == var.symbol and pos["position"] != 0:
+                    options.append(name)
+        options.append(var.symbol[0])
         option_robots = tk.OptionMenu(frame_robots, emi_number, *options)
         frame_robots.grid(row=1, column=0, sticky="NSWE", columnspan=2, padx=10, pady=0)
         label_robots.pack(side="left")
