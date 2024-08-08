@@ -10,8 +10,8 @@ import display.bot_menu as bot_menu
 import services as service
 from api.api import WS, Markets
 from api.variables import Variables
-from bots.variables import Variables as bot
-from common.data import Bot
+from botinit.variables import Variables as bot
+from common.data import Bots
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import TreeTable, TreeviewTable
@@ -163,7 +163,7 @@ class Function(WS, Variables):
             }
             if not info:
                 Function.trades_display(self, table=TreeTable.trades, val=message)
-                if emi in Bot.keys():
+                if emi in Bots.keys():
                     Function.trades_display(
                         self, table=bot_menu.trade_treeTable[emi], val=message
                     )
@@ -997,8 +997,8 @@ class Function(WS, Variables):
             tree = TreeTable.position
             tm = datetime.now()
             pos_by_market = {market: [] for market in var.market_list}
-            for name in Bot.keys():
-                bot = Bot[name]
+            for name in Bots.keys():
+                bot = Bots[name]
                 for symbol in bot.position.keys():
                     pos_by_market[symbol[1]].append(bot.position[symbol])
             for market in pos_by_market.keys():
@@ -1087,8 +1087,8 @@ class Function(WS, Variables):
         tree = TreeTable.bots
 
         tm = datetime.now()
-        for name in Bot.keys():
-            bot = Bot[name]
+        for name in Bots.keys():
+            bot = Bots[name]
             compare = [
                 name,
                 bot.timefr,
@@ -1139,7 +1139,7 @@ class Function(WS, Variables):
                 tree = TreeTable.bot_position
                 pos_by_market = {market: False for market in var.market_list}
                 if disp.bot_name:
-                    bot = Bot[disp.bot_name]
+                    bot = Bots[disp.bot_name]
                     for symbol, position in bot.position.items():
                         market = symbol[1]
                         if market not in tree.children:
@@ -1195,7 +1195,7 @@ class Function(WS, Variables):
                 tree = TreeTable.bot_results
                 result_market = {market: False for market in var.market_list}
                 if disp.bot_name:
-                    bot = Bot[disp.bot_name]
+                    bot = Bots[disp.bot_name]
                     for symbol, value in bot.position.items():
                         market = value["market"]
                         currency = value["currency"]
@@ -1634,8 +1634,9 @@ def handler_orderbook(event) -> None:
                 )
                 option_robots["menu"].delete(0, "end")
                 options = list()
-                for name in Bot.keys():
-                    bot = Bot[name]
+                for name in Bots.keys():
+                    bot = Bots[name]
+
                     for symbol, pos in bot.position.items():
                         if symbol == var.symbol and pos["position"] != 0:
                             options.append(name)
@@ -1797,8 +1798,8 @@ def handler_orderbook(event) -> None:
         label_robots = tk.Label(frame_robots, text="EMI:")
         emi_number = tk.StringVar()
         options = list()
-        for name in Bot.keys():
-            bot = Bot[name]
+        for name in Bots.keys():
+            bot = Bots[name]
             for symbol, pos in bot.position.items():
                 if symbol == var.symbol and pos["position"] != 0:
                     options.append(name)
@@ -1939,7 +1940,7 @@ def change_color(color: str, container=None) -> None:
 
 
 def init_bot_treetable_trades():
-    for bot_name in Bot.keys():
+    for bot_name in Bots.keys():
         bot_menu.init_bot_trades(bot_name)
 
 

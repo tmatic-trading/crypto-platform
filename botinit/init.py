@@ -7,8 +7,8 @@ from typing import Tuple, Union
 import services as service
 from api.api import WS, Markets
 from api.init import Variables
-from bots.variables import Variables as bot
-from common.data import Bot
+from botinit.variables import Variables as bot
+from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
 from display.functions import info_display
@@ -417,7 +417,7 @@ def load_bots() -> None:
     data = service.select_database(qwr)
     for value in data:
         # if value["MARKET"] in var.market_list:
-        bot = Bot[value["EMI"]]
+        bot = Bots[value["EMI"]]
         # bot.name = value["EMI"]
         # bot.market = value["MARKET"]
         bot.timefr = value["TIMEFR"]
@@ -479,7 +479,7 @@ def load_bots() -> None:
     for value in data:
         if value["MARKET"] in var.market_list:
             name = value["EMI"]
-            if name not in Bot.keys():
+            if name not in Bots.keys():
                 ws = Markets[value["MARKET"]]
                 Function.add_symbol(
                     ws,
@@ -528,7 +528,7 @@ def load_bots() -> None:
 
     # Loading trades and summing up the results for each bot.
 
-    for name in Bot.keys():
+    for name in Bots.keys():
         qwr = (
             "select * from (select SYMBOL, CATEGORY, MARKET, TICKER, "
             + "ifnull(sum(SUMREAL), 0) SUMREAL, ifnull(sum(case when SIDE = "
@@ -545,7 +545,7 @@ def load_bots() -> None:
             if value["MARKET"] in var.market_list:
                 ws = Markets[value["MARKET"]]
                 instrument = ws.Instrument[symbol]
-                bot = Bot[name]
+                bot = Bots[name]
                 precision = instrument.precision
                 bot.position[symbol] = {
                     "emi": name,
@@ -590,7 +590,7 @@ def load_bots() -> None:
 
     # Importing the strategy.py bot files
 
-    for bot_name in Bot.keys():
+    for bot_name in Bots.keys():
         module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
         try:
             importlib.import_module(module)
@@ -605,7 +605,7 @@ def load_bots() -> None:
                     "warning": True,
                 }
             )
-            Bot[bot_name].error_message = message
+            Bots[bot_name].error_message = message
         except AttributeError as exception:
             message = ErrorMessage.BOT_MARKET_ERROR.format(
                 EXCEPTION="AttributeError: " + str(exception),
@@ -620,7 +620,7 @@ def load_bots() -> None:
                     "warning": True,
                 }
             )
-            Bot[bot_name].error_message = message
+            Bots[bot_name].error_message = message
         except ValueError as exception:
             message = ErrorMessage.BOT_MARKET_ERROR.format(
                 MODULE=module,
@@ -636,7 +636,7 @@ def load_bots() -> None:
                     "warning": True,
                 }
             )
-            Bot[bot_name].error_message = message
+            Bots[bot_name].error_message = message
         except Exception as exception:
             formated = service.display_exception(exception=exception)
             message = ErrorMessage.BOT_LOADING_ERROR.format(

@@ -271,5 +271,5 @@ class MetaBot(type):
         del self.all[item]
 
 
-class Bot(metaclass=MetaBot):
+class Bots(metaclass=MetaBot):
     pass

@@ -3,7 +3,7 @@
 
 import algo.strategy
 from api.api import Markets
-from bots.variables import Variables as bot
+from botinit.variables import Variables as bot
 
 
 def init_algo(self: Markets):

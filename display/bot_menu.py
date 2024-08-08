@@ -33,7 +33,7 @@ from pygments.token import Token
 import functions
 import services as service
 from api.api import Markets
-from common.data import Bot
+from common.data import Bots
 from common.variables import Variables as var
 
 from .variables import AutoScrollbar, TreeTable, TreeviewTable
@@ -97,7 +97,7 @@ class SettingsApp:
         name = var.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
         if (
-            bot_name in Bot.keys()
+            bot_name in Bots.keys()
             or bot_name != self.name_trace.get()
             or bot_name == ""
         ):
@@ -126,8 +126,8 @@ class SettingsApp:
     '''def timeframe_trace_callback(self, name, index, mode):
         value = self.timeframe_trace.get().split(" ")
         if (
-            self.selected_bot in Bot.keys()
-            and int(value[0]) != Bot[self.selected_bot].timefr
+            self.selected_bot in Bots.keys()
+            and int(value[0]) != Bots[self.selected_bot].timefr
         ):
             if self.timeframe_changed is None:
                 self.timeframe_changed = "changed"
@@ -193,10 +193,10 @@ class SettingsApp:
                 f"*\n!__init__.py\n!.gitignore\n!init.py\n!{self.strategy_file}\n",
             )
             time_now = self.get_time()
-            Bot[bot_name].state = "Suspended"
-            Bot[bot_name].timefr = int(tf[0])
-            Bot[bot_name].created = time_now
-            Bot[bot_name].updated = time_now
+            Bots[bot_name].state = "Suspended"
+            Bots[bot_name].timefr = int(tf[0])
+            Bots[bot_name].created = time_now
+            Bots[bot_name].updated = time_now
             self.insert_bot_menu(name=bot_name, new=True)
 
             return True
@@ -219,7 +219,7 @@ class SettingsApp:
                 color = style.style_for_token(token).get("color")
                 if color:
                     text_widget.tag_configure(tag_name, foreground="#" + color)
-        if Bot[bot_name] == "Active":
+        if Bots[bot_name] == "Active":
             text_widget.config(state="disabled")
 
     def insert_bot_menu(self, name: str, new=False) -> None:
@@ -238,7 +238,7 @@ class SettingsApp:
         Menu to choose one of the created bots
         """
         tree = TreeTable.bot_menu
-        for name in reversed(Bot.keys()):
+        for name in reversed(Bots.keys()):
             self.insert_bot_menu(name)
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")
@@ -378,13 +378,13 @@ class SettingsApp:
                 res_label[
                     "text"
                     ] = f"State changed to ``{bot.state}``."
-                self.button.config(text=button_text[Bot[bot_name].state])
+                self.button.config(text=button_text[Bots[bot_name].state])
 
         self.switch(option="option")
-        if not Bot[bot_name].error_message:
+        if not Bots[bot_name].error_message:
             print("activate")
             new_state = ""
-            bot = Bot[bot_name]
+            bot = Bots[bot_name]
             text_label = tk.Label(
                 self.brief_frame,
                 text=return_text(),
@@ -396,7 +396,7 @@ class SettingsApp:
             self.button = tk.Button(
                 self.brief_frame,
                 activebackground=disp.bg_active,
-                text=button_text[Bot[bot_name].state],
+                text=button_text[Bots[bot_name].state],
                 command=lambda: change_state(bot_name),
             )
             self.button.pack(anchor="nw", padx=50, pady=10)
@@ -429,8 +429,8 @@ class SettingsApp:
                 ] = f"Timeframe value changed to {tuple(self.timeframes.keys())[value]}."
 
         self.switch(option="option")
-        if not Bot[bot_name].error_message:
-            bot = Bot[bot_name]
+        if not Bots[bot_name].error_message:
+            bot = Bots[bot_name]
             tk.Label(
                 self.brief_frame,
                 text=f"Select new timeframe for bot ``{bot_name}``:",
@@ -439,7 +439,7 @@ class SettingsApp:
             ).pack(anchor="nw", padx=self.padx, pady=self.pady)
             timeframe = ttk.Combobox(self.brief_frame, width=7, state="readonly")
             timeframe["values"] = tuple(self.timeframes.keys())
-            timeframe.set(Bot[bot_name].timefr)
+            timeframe.set(Bots[bot_name].timefr)
             timeframe.pack(anchor="nw", padx=50, pady=0)
             self.button = tk.Button(
                 self.brief_frame,
@@ -462,8 +462,8 @@ class SettingsApp:
     def merge(self, bot_name: str) -> None:
         def bot_list() -> list:
             bots = []
-            for item in Bot.keys():
-                if item != bot_name and Bot[item].state == "Suspended":
+            for item in Bots.keys():
+                if item != bot_name and Bots[item].state == "Suspended":
                     bots.append(item)
             if not bots:
                 text = (
@@ -487,7 +487,7 @@ class SettingsApp:
 
         self.switch(option="option")
 
-        if not Bot[bot_name].error_message:
+        if not Bots[bot_name].error_message:
             bots = bot_list()
             if bots:
                 content = (
@@ -551,15 +551,15 @@ class SettingsApp:
                 )
                 message = f"The ``/{copy_bot}/`` subdirectory created."
                 time_now = self.get_time()
-                bot = Bot[copy_bot]
+                bot = Bots[copy_bot]
                 bot.state = "Suspended"
-                bot.timefr = Bot[bot_name].timefr
+                bot.timefr = Bots[bot_name].timefr
                 bot.created = time_now
                 bot.updated = time_now
                 self.insert_bot_menu(name=copy_bot, new=True)
                 message += f"\nNew bot ``{copy_bot}`` added to the bots' list."
                 err = service.insert_database(
-                    values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
+                    values=[copy_bot, "Suspended", Bots[bot_name].timefr], table="robots"
                 )
                 if err is None:
                     message += f"\nBot named ``{copy_bot}`` inserted into database."
@@ -567,7 +567,7 @@ class SettingsApp:
                     message += (
                         f"\n{err}\n\nThe duplicate operation completed with errors."
                     )
-                    Bot[copy_bot].error_message = err
+                    Bots[copy_bot].error_message = err
             except Exception as e:
                 err = str(e)
                 if message == "":
@@ -579,7 +579,7 @@ class SettingsApp:
             self.finish_operation(message)
 
         self.switch(option="option")
-        if not Bot[bot_name].error_message:
+        if not Bots[bot_name].error_message:
             tk.Label(
                 self.brief_frame,
                 text=(
@@ -731,7 +731,7 @@ class SettingsApp:
             TreeTable.bot_menu.on_rollup(iid=bot_name)
         disp.bot_name = bot_name
         disp.refresh_bot_info = True
-        bot = Bot[bot_name]
+        bot = Bots[bot_name]
         values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
         TreeTable.bot_info.update(row=0, values=values)
         if not bot.error_message:
@@ -756,8 +756,8 @@ class SettingsApp:
                         self.strategy_text.config(state="normal")
                     disp.bot_event_prev = bot_name
                 except Exception as e:
-                    Bot[bot_name].error_message = str(e)
-        if Bot[bot_name].error_message:
+                    Bots[bot_name].error_message = str(e)
+        if Bots[bot_name].error_message:
             self.display_error_message(bot_name=bot_name)
         else:
             try:

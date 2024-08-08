@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from time import sleep
 
 import algo.init as algo
-import bots.init as bots
+import botinit.init as botinit
 import common.init as common
 import functions
 import services as service
@@ -12,7 +12,7 @@ from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
-from bots.variables import Variables as bot
+from botinit.variables import Variables as bot
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
 from display.functions import info_display
@@ -44,7 +44,7 @@ def setup(reload=False):
     for name in var.market_list:
         finish_setup(Markets[name])
     merge_orders()
-    bots.load_bots()
+    botinit.load_bots()
     functions.init_tables()
     bot_manager.create_bots_menu()
     var.robots_thread_is_active = True
@@ -89,7 +89,7 @@ def setup_market(ws: Markets, reload=False):
     """
 
     def get_timeframes(ws, success, num):
-        if bots.Init.init_timeframes(ws):
+        if botinit.Init.init_timeframes(ws):
             success[num] = "success"
 
     def get_history(ws, success, num):
@@ -109,7 +109,7 @@ def setup_market(ws: Markets, reload=False):
             sleep(2)
         else:
             common.Init.clear_params(ws)
-            ws.logNumFatal = bots.Init.load_robots(ws)
+            ws.logNumFatal = botinit.Init.load_robots(ws)
             if not ws.logNumFatal:
                 algo.init_algo(ws)
                 threads, success = [], []
@@ -168,7 +168,7 @@ def finish_setup(ws: Markets):
     common.Init.load_database(ws)
     common.Init.account_balances(ws)
     common.Init.load_orders(ws, ws.setup_orders)
-    bots.Init.delete_unused_robot(ws)
+    botinit.Init.delete_unused_robot(ws)
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
