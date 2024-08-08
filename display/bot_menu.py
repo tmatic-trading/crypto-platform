@@ -382,6 +382,7 @@ class SettingsApp:
 
         self.switch(option="option")
         if not Bot[bot_name].error_message:
+            print("activate")
             new_state = ""
             bot = Bot[bot_name]
             text_label = tk.Label(
@@ -474,11 +475,14 @@ class SettingsApp:
 
         def merge_bot(bot_name: str, bot_to_delete: str) -> None:
             query = f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
-            message = self.delete_all_bot_info(bot_to_delete, query)
+            message = self.delete_all_bot_info(bot_to_delete, query, "Merge")
             if message[0] is None:
-                message[1] += "\n\nThe merge operation completed successfully."
+                message[1] = "The merge operation completed successfully."
             else:
-                message[1] += "\n\nThe merge operation completed with errors."
+                if message[1] == "":
+                    message[1] = f"{message[0]}\n\nThe merge operation failed."
+                else:
+                    message[1] += f"\n{message[0]}\n\nThe merge operation completed with errors."
             self.finish_operation(message[1])
 
         self.switch(option="option")
@@ -540,29 +544,38 @@ class SettingsApp:
     def dublicate(self, bot_name: str):
         def add_copy_bot(bot_name: str) -> None:
             copy_bot = self.name_trace.get()
-            err = service.insert_database(
-                values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
-            )
-            if err is None:
-                message = f"New bot ``{copy_bot}`` inserted into database."
-                try:
-                    shutil.copytree(
-                        self.get_bot_path(bot_name), self.get_bot_path(copy_bot)
+            message = ""
+            try:
+                shutil.copytree(
+                    self.get_bot_path(bot_name), self.get_bot_path(copy_bot)
+                )
+                message = f"The ``/{copy_bot}/`` subdirectory created."
+                time_now = self.get_time()
+                bot = Bot[copy_bot]
+                bot.state = "Suspended"
+                bot.timefr = Bot[bot_name].timefr
+                bot.created = time_now
+                bot.updated = time_now
+                self.insert_bot_menu(name=copy_bot, new=True)
+                message += f"\nNew bot ``{copy_bot}`` added to the bots' list."
+                err = service.insert_database(
+                    values=[copy_bot, "Suspended", Bot[bot_name].timefr], table="robots"
+                )
+                if err is None:
+                    message += f"\nBot named ``{copy_bot}`` inserted into database."
+                else:
+                    message += (
+                        f"\n{err}\n\nThe duplicate operation completed with errors."
                     )
-                    message += f"\nThe ``/{copy_bot}/`` subdirectory created."
-                    time_now = self.get_time()
-                    bot = Bot[copy_bot]
-                    bot.state = "Suspended"
-                    bot.timefr = Bot[bot_name].timefr
-                    bot.created = time_now
-                    bot.updated = time_now
-                    self.insert_bot_menu(name=copy_bot, new=True)
-                    message += "\n\nThe duplicate operation completed successfully."
-                except Exception as e:
-                    err = str(e)
+                    Bot[copy_bot].error_message = err
+            except Exception as e:
+                err = str(e)
+                if message == "":
+                    message = f"{err}\n\nThe duplicate operation failed."
+                else:
                     message += f"\n{err}\n\nThe duplicate operation completed with errors."
-            else:
-                message = f"{err}\n\nThe duplicate operation failed."
+            if err is None:
+                message = "The duplicate operation completed successfully"
             self.finish_operation(message)
 
         self.switch(option="option")
@@ -607,16 +620,22 @@ class SettingsApp:
     def delete(self, bot_name: str):
         def delete_bot(bot_name: str) -> None:
             query = f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
-            message = self.delete_all_bot_info(bot_name, query)
+            message = self.delete_all_bot_info(bot_name, query, "Delete")
             if message[0] is None:
-                message[1] += "\n\nThe delete operation completed successfully."
+                message[1] = "The delete operation completed successfully."
                 values = ["" for _ in var.name_bot]
                 TreeTable.bot_info.update(row=0, values=values)
             else:
-                message[1] += "\n\nThe delete operation completed with errors."
+                if message[1] == "":
+                    message[1] = f"{message[0]}\n\nThe delete operation failed."
+                else:
+                    message[1] += f"\n{message[0]}\n\nThe delete operation completed with errors."
+                    values = ["" for _ in var.name_bot]
+                    TreeTable.bot_info.update(row=0, values=values)
             self.finish_operation(message[1])
 
         self.switch(option="option")
+
         tk.Label(
             self.brief_frame,
             text=(
@@ -717,30 +736,34 @@ class SettingsApp:
         TreeTable.bot_info.update(row=0, values=values)
         if not bot.error_message:
             if bot_name != disp.bot_event_prev:
-                if disp.bot_name and bot_name != disp.bot_name:
-                    bot_trades_sub[disp.bot_name].pack_forget()
-                init_bot_trades(bot_name=bot_name)
-                bot_trades_sub[bot_name].pack(fill="both", expand="yes")
-                refresh_bot_orders()
-                self.switch(option="table")
-                if bot.state == "Active":
-                    self.strategy_text.config(state="disabled")
-                else:
-                    self.strategy_text.config(state="normal")
-                bot_path = self.get_bot_path(bot_name=bot_name)
-                self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
-                self.insert_code(
-                    text_widget=self.strategy_text,
-                    code=self.bot_algo,
-                    bot_name=bot_name,
-                )
-                disp.bot_event_prev = bot_name
                 try:
-                    self.button.config(state="disabled")
-                except Exception:
-                    pass
-        else:
+                    bot_path = self.get_bot_path(bot_name=bot_name)
+                    self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
+                    self.insert_code(
+                        text_widget=self.strategy_text,
+                        code=self.bot_algo,
+                        bot_name=bot_name,
+                    )
+                    if disp.bot_name and bot_name != disp.bot_name:
+                        bot_trades_sub[disp.bot_name].pack_forget()
+                    init_bot_trades(bot_name=bot_name)
+                    bot_trades_sub[bot_name].pack(fill="both", expand="yes")
+                    refresh_bot_orders()
+                    self.switch(option="table")
+                    if bot.state == "Active":
+                        self.strategy_text.config(state="disabled")
+                    else:
+                        self.strategy_text.config(state="normal")
+                    disp.bot_event_prev = bot_name
+                except Exception as e:
+                    Bot[bot_name].error_message = str(e)
+        if Bot[bot_name].error_message:
             self.display_error_message(bot_name=bot_name)
+        else:
+            try:
+                self.button.config(state="disabled")
+            except Exception:
+                pass
 
     def wrap(self, event):
         for child in self.brief_frame.winfo_children():
@@ -757,34 +780,34 @@ class SettingsApp:
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
 
-    def delete_all_bot_info(self, bot_name, first_query) -> Union[bool, None]:
-        err = service.update_database(query=first_query)
-        if err is None:
-            message = "Database table ``coins`` updated."
-            err = service.update_database(
-                query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
-            )
+    def delete_all_bot_info(self, bot_name, query_0, type) -> Union[bool, None]:
+        message = ""
+        err = None
+        try:
+            Bot.remove(bot_name)
+            TreeTable.bot_menu.delete(iid=bot_name)
+            bot_trades_sub[bot_name].destroy()
+            del trade_treeTable[bot_name]
+            if type == "Delete":
+                disp.bot_name = None
+            message = f"Bot ``{bot_name}`` removed from Tmatic's memory."
+            err = service.update_database(query=query_0)
             if err is None:
-                message += f"\nBot ``{bot_name}`` deleted from the database."
-                try:
-                    Bot.remove(bot_name)
-                    TreeTable.bot_menu.delete(iid=bot_name)
-                    bot_trades_sub[bot_name].destroy()
-                    del trade_treeTable[bot_name]
-                    disp.bot_name = None
-                    message += f"\nBot ``{bot_name}`` removed from Tmatic's memory."
-                    bot_path = self.get_bot_path(bot_name)
-                    shutil.rmtree(str(bot_path))
-                    message += f"\nThe ``/{bot_name}/`` subdirectory erased."
-                except Exception as e:
-                    err = str(e)
-                    message += f"\n{err}"
+                message += "\nDatabase table ``coins`` updated."
+                err = service.update_database(
+                    query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+                )
+                if err is None:
+                    message += f"\nBot ``{bot_name}`` deleted from the database."
+            bot_path = self.get_bot_path(bot_name)
+            shutil.rmtree(str(bot_path))
+            message += f"\nThe ``/{bot_name}/`` subdirectory erased."
+        except Exception as e:
+            if err is None:
+                err = str(e)
             else:
-                message += f"\n{err}"
-        else:
-            message = err
+                err += f"\n{str(e)}"
         return [err, message]
-
 
     def display_error_message(self, bot_name: str) -> None:
         self.switch(option="option")
