@@ -100,15 +100,8 @@ def close(markets):
         ws.exit()
 
 
-def display_exception(exception) -> str:
-    formated = "".join(
-        traceback.format_exception(type(exception), exception, exception.__traceback__)
-    )
-    print("-----")
-    print(traceback.format_exc())
-    print(formated)
-
-    return formated
+def display_exception(exception):
+    traceback.print_exception(type(exception), exception, exception.__traceback__)
 
 
 def select_database(query: str) -> list:
@@ -158,7 +151,7 @@ def insert_database(values: list, table: str) -> None:
                     values,
                 )
             else:
-                return "Unknown database table."
+                return "Sqlite Error: Unknown database table."
             var.connect_sqlite.commit()
             var.sql_lock.release()
             return None
