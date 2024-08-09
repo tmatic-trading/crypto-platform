@@ -33,7 +33,7 @@ class Tool(Instrument):
 
     def EMA(self, period: int):
         pass
-    
+
     def add_kline(self):
         ws = Markets[self.market]
         ws.kline_list.append(self.instrument.symbol)

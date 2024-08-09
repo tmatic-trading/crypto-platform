@@ -38,7 +38,8 @@ from common.variables import Variables as var
 
 from .variables import AutoScrollbar, TreeTable, TreeviewTable
 from .variables import Variables as disp
-#from display.messages import ErrorMessage
+
+# from display.messages import ErrorMessage
 
 
 class BoldLabel(tk.Label):
@@ -51,18 +52,18 @@ class BoldLabel(tk.Label):
 
 class SettingsApp:
     def __init__(self, root):
-        #self.root_frame = root
-        #self.button_height = 25
+        # self.root_frame = root
+        # self.button_height = 25
         self.button_strategy = None
 
-        #self.pop_up = None
-        #self.selected_bot = ""
+        # self.pop_up = None
+        # self.selected_bot = ""
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
-        #self.action = ""
+        # self.action = ""
         self.timeframes = OrderedDict([("1 min", 1), ("5 min", 5), ("60 min", 60)])
-        #self.timeframe_trace = StringVar(name=f"timeframe{self}")
-        #self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
+        # self.timeframe_trace = StringVar(name=f"timeframe{self}")
+        # self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
         self.bot_entry = {}
         self.name_trace = StringVar(name="Name" + str(self))
         self.name_trace.trace_add("write", self.name_trace_callback)
@@ -88,7 +89,7 @@ class SettingsApp:
         self.bot_algo = ""
 
         # If bot's timeframe is changed by user, than the value in not None
-        #self.timeframe_changed = None
+        # self.timeframe_changed = None
 
         # Create initial frames
         # self.bot_info_frame()
@@ -123,7 +124,7 @@ class SettingsApp:
         except (SyntaxError, Exception) as e:
             return False, traceback.format_exc()
 
-    '''def timeframe_trace_callback(self, name, index, mode):
+    """def timeframe_trace_callback(self, name, index, mode):
         value = self.timeframe_trace.get().split(" ")
         if (
             self.selected_bot in Bots.keys()
@@ -133,7 +134,7 @@ class SettingsApp:
                 self.timeframe_changed = "changed"
         else:
             if self.timeframe_changed is not None:
-                self.timeframe_changed = None'''
+                self.timeframe_changed = None"""
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -315,8 +316,8 @@ class SettingsApp:
         self.strategy_text = tk.Text(
             frame_strategy,
             highlightthickness=0,
-            #highlightbackground=disp.title_color,
-            #highlightcolor=disp.title_color,
+            # highlightbackground=disp.title_color,
+            # highlightcolor=disp.title_color,
             bg=disp.bg_color,
             yscrollcommand=self.strategy_scroll.set,
         )
@@ -332,16 +333,16 @@ class SettingsApp:
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
         if value != self.bot_algo:
-            '''self.strategy_text.config(
+            """self.strategy_text.config(
                 highlightbackground=disp.bg_changed,
                 highlightcolor=disp.bg_changed,
-            )'''
+            )"""
             self.button_strategy.config(state="normal")
         else:
-            '''self.strategy_text.config(
+            """self.strategy_text.config(
                 highlightbackground=disp.title_color,
                 highlightcolor=disp.title_color,
-            )'''
+            )"""
             self.button_strategy.config(state="disabled")
 
     def finish_operation(self, message):
@@ -375,9 +376,7 @@ class SettingsApp:
                 values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
                 TreeTable.bot_info.update(row=0, values=values)
                 text_label["text"] = return_text()
-                res_label[
-                    "text"
-                    ] = f"State changed to ``{bot.state}``."
+                res_label["text"] = f"State changed to ``{bot.state}``."
                 self.button.config(text=button_text[Bots[bot_name].state])
 
         self.switch(option="option")
@@ -421,7 +420,7 @@ class SettingsApp:
             if err is None:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
-                #self.timeframe_changed = None
+                # self.timeframe_changed = None
                 values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
                 TreeTable.bot_info.update(row=0, values=values)
                 res_label[
@@ -482,7 +481,9 @@ class SettingsApp:
                 if message[1] == "":
                     message[1] = f"{message[0]}\n\nThe merge operation failed."
                 else:
-                    message[1] += f"\n{message[0]}\n\nThe merge operation completed with errors."
+                    message[
+                        1
+                    ] += f"\n{message[0]}\n\nThe merge operation completed with errors."
             self.finish_operation(message[1])
 
         self.switch(option="option")
@@ -559,7 +560,8 @@ class SettingsApp:
                 self.insert_bot_menu(name=copy_bot, new=True)
                 message += f"\nNew bot ``{copy_bot}`` added to the bots' list."
                 err = service.insert_database(
-                    values=[copy_bot, "Suspended", Bots[bot_name].timefr], table="robots"
+                    values=[copy_bot, "Suspended", Bots[bot_name].timefr],
+                    table="robots",
                 )
                 if err is None:
                     message += f"\nBot named ``{copy_bot}`` inserted into database."
@@ -573,7 +575,9 @@ class SettingsApp:
                 if message == "":
                     message = f"{err}\n\nThe duplicate operation failed."
                 else:
-                    message += f"\n{err}\n\nThe duplicate operation completed with errors."
+                    message += (
+                        f"\n{err}\n\nThe duplicate operation completed with errors."
+                    )
             if err is None:
                 message = "The duplicate operation completed successfully"
             self.finish_operation(message)
@@ -629,7 +633,11 @@ class SettingsApp:
                 if message[1] == "":
                     message[1] = f"{message[0]}\n\nThe delete operation failed."
                 else:
-                    message[1] += f"\n{message[0]}\n\nThe delete operation completed with errors."
+                    message[
+                        1
+                    ] += (
+                        f"\n{message[0]}\n\nThe delete operation completed with errors."
+                    )
                     values = ["" for _ in var.name_bot]
                     TreeTable.bot_info.update(row=0, values=values)
             self.finish_operation(message[1])
@@ -784,7 +792,7 @@ class SettingsApp:
         message = ""
         err = None
         try:
-            Bot.remove(bot_name)
+            Bots.remove(bot_name)
             TreeTable.bot_menu.delete(iid=bot_name)
             bot_trades_sub[bot_name].destroy()
             del trade_treeTable[bot_name]
@@ -866,32 +874,34 @@ def winfo_destroy() -> None:
         child.destroy()
 
 
-def handler_bot_menu(event) -> None:
+def handler_bot_menu(event) -> None:    
     tree = event.widget
-    iid = tree.selection()[0]
-    option = iid.split("!")
-    parent = option[0]
-    if len(option) == 1:
-        option = ""
-    else:
-        option = option[1]
-    if parent == "Back":
-        disp.menu_robots.pack_forget()
-        disp.pw_rest1.pack(fill="both", expand="yes")
-        disp.refresh_bot_info = False
-        TreeTable.bot_menu.tree.selection_set(disp.bot_event_prev)
-    elif parent == "New_bot":
-        winfo_destroy()
-        disp.refresh_bot_info = False
-        bot_manager.new()
-    elif not option:
-        bot_manager.show(parent)
-    else:
-        winfo_destroy()
-        disp.refresh_bot_info = False
-        bot_manager.bot_options[option](bot_name=parent)
-    if parent != "Back":
-        disp.bot_event_prev = iid
+    selection = tree.selection()
+    if selection:
+        iid = tree.selection()[0]
+        option = iid.split("!")
+        parent = option[0]
+        if len(option) == 1:
+            option = ""
+        else:
+            option = option[1]
+        if parent == "Back":
+            disp.menu_robots.pack_forget()
+            disp.pw_rest1.pack(fill="both", expand="yes")
+            disp.refresh_bot_info = False
+            TreeTable.bot_menu.tree.selection_set(disp.bot_event_prev)
+        elif parent == "New_bot":
+            winfo_destroy()
+            disp.refresh_bot_info = False
+            bot_manager.new()
+        elif not option:
+            bot_manager.show(parent)
+        else:
+            winfo_destroy()
+            disp.refresh_bot_info = False
+            bot_manager.bot_options[option](bot_name=parent)
+        if parent != "Back":
+            disp.bot_event_prev = iid
 
 
 pw_menu_robots = tk.PanedWindow(
