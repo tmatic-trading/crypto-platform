@@ -79,3 +79,17 @@ class Bybit(metaclass=MetaTool):
 
 class Deribit(metaclass=MetaTool):
     pass
+
+
+class Bot:
+    def __init__(self) -> None:
+        bot_name = name(inspect.stack())
+        bot = Bots[bot_name]
+        self.name = bot.name
+        self.position = bot.position
+        self.timefr = bot.timefr
+        self.pnl = bot.pnl
+        self.state = bot.state
+        self.created = bot.created
+        self.updated = bot.updated
+        self.error_message = bot.error_message

@@ -19,6 +19,7 @@ from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
+from common.data import Bots
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction
@@ -167,9 +168,8 @@ def finish_setup(ws: Markets):
     common.Init.load_database(ws)
     common.Init.account_balances(ws)
     common.Init.load_orders(ws, ws.setup_orders)
-    for emi, value in ws.robot_status.items():
-        if emi in ws.robots:
-            ws.robots[emi]["STATUS"] = value
+    for bot_name in Bots.keys():
+        ws.robot_status[bot_name] = Bots[bot_name].state
     ws.message_time = datetime.now(tz=timezone.utc)
     ws.api_is_active = True
 

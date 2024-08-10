@@ -242,7 +242,7 @@ def load_bots() -> None:
     for value in data:
         # if value["MARKET"] in var.market_list:
         bot = Bots[value["EMI"]]
-        # bot.name = value["EMI"]
+        bot.name = value["EMI"]
         # bot.market = value["MARKET"]
         bot.timefr = value["TIMEFR"]
         bot.created = value["DAT"]

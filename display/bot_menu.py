@@ -80,7 +80,7 @@ class SettingsApp:
         self.pady = 5
         with open("display/new_bot_text.txt", "r") as f:
             self.new_bot_text = f.read()
-        with open("display/example_strategy.txt", "r") as f:
+        with open("display/example_strategy.py", "r") as f:
             self.example_strategy = f.read()
 
         self.info_value = {}
@@ -176,7 +176,7 @@ class SettingsApp:
             # d Load the content of 'init.py' file
             # d content = self.read_file(f"{self.algo_dir}init.py")
             # Create new 'init.py' file in the new directory
-            self.create_file(f"{str(bot_path)}/init.py")
+            # d self.create_file(f"{str(bot_path)}/init.py")
             # Write the initial content into the new 'init.py' file
             # d self.write_file(f"{str(bot_path)}/init.py", content)
             # Create new 'strategy.py' file in the new directory
@@ -191,7 +191,7 @@ class SettingsApp:
             # Write the initial content into the new '.gitignore' file
             self.write_file(
                 f"{str(bot_path)}/.gitignore",
-                f"*\n!__init__.py\n!.gitignore\n!init.py\n!{self.strategy_file}\n",
+                f"*\n!__init__.py\n!.gitignore\n!{self.strategy_file}\n",
             )
             time_now = self.get_time()
             Bots[bot_name].state = "Suspended"
