@@ -291,6 +291,7 @@ class Function(WS, Variables):
                     execFee=row["execFee"],
                 )
                 emi = row["symbol"][0]
+                message["CATEGORY"] = row["category"]
                 message["MARKET"] = self.name
                 message["EMI"] = emi
                 message["QTY"] = row["lastQty"]

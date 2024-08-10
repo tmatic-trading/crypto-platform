@@ -812,6 +812,12 @@ class SettingsApp:
             message += f"\nThe ``/{bot_name}/`` subdirectory erased."
             TreeTable.bots.delete(iid=bot_name)
             disp.bot_event_prev = ""
+            for market in var.market_list:
+                ws = Markets[market]
+                for kline in reversed(ws.kline_list.copy()):
+                    if kline["bot_name"] == bot_name:
+                        indx = ws.kline_list.index(kline)
+                        ws.kline_list.pop(indx)
         except Exception as e:
             if err is None:
                 err = str(e)
