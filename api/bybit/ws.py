@@ -46,7 +46,6 @@ class Bybit(Variables):
             self.orderbook_depth = 1
         else:
             self.orderbook_depth = 50
-        self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
         self.setup_orders = list()

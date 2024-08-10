@@ -2,7 +2,7 @@ import inspect
 import platform
 
 from api.api import Markets
-from common.data import Instrument, MetaInstrument
+from common.data import Bots, Instrument, MetaInstrument
 
 
 def name(stack) -> str:
@@ -35,8 +35,16 @@ class Tool(Instrument):
         pass
 
     def add_kline(self):
+        bot_name = name(inspect.stack())
+        Bots[bot_name].timefr
         ws = Markets[self.market]
-        ws.kline_list.append(self.instrument.symbol)
+        ws.kline_list.append(
+            {
+                "symbol": self.instrument.symbol,
+                "bot_name": bot_name,
+                "timefr": Bots[bot_name].timefr,
+            }
+        )
 
 
 class MetaTool(type):

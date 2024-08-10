@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
-import algo.init as algo
+# d import algo.init as algo
 import botinit.init as botinit
 import common.init as common
 import functions
@@ -109,9 +109,8 @@ def setup_market(ws: Markets, reload=False):
             sleep(2)
         else:
             common.Init.clear_params(ws)
-            ws.logNumFatal = botinit.Init.load_robots(ws)
             if not ws.logNumFatal:
-                algo.init_algo(ws)
+                # d algo.init_algo(ws)
                 threads, success = [], []
                 success.append(None)
                 t = threading.Thread(
@@ -168,7 +167,6 @@ def finish_setup(ws: Markets):
     common.Init.load_database(ws)
     common.Init.account_balances(ws)
     common.Init.load_orders(ws, ws.setup_orders)
-    botinit.Init.delete_unused_robot(ws)
     for emi, value in ws.robot_status.items():
         if emi in ws.robots:
             ws.robots[emi]["STATUS"] = value
@@ -290,7 +288,8 @@ def robots_thread() -> None:
             ws = Markets[market]
             if ws.api_is_active:
                 if ws.frames:
-                    bot_list = Function.robots_entry(ws, bot_list, utc=utcnow)
+                    pass
+                    # d bot_list = Function.robots_entry(ws, bot_list, utc=utcnow)
         threads = []
         for robot in bot_list:
             t = threading.Thread(target=bot_in_thread)

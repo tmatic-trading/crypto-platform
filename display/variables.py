@@ -517,6 +517,40 @@ class Variables:
     bot_orders_processing = False
     bot_event_prev = ""
 
+    # Bot menu widgets
+
+    pw_menu_robots = tk.PanedWindow(
+        menu_robots,
+        orient=tk.HORIZONTAL,
+        bd=0,
+        sashwidth=0,
+        height=1,
+    )
+    pw_menu_robots.pack(fill="both", expand="yes")
+    info_frame = tk.Frame(pw_menu_robots, bg=bg_color)
+    frame_bot_parameters = tk.Frame(info_frame)
+    frame_bot_parameters.pack(fill="both", anchor="n")
+    frame_bot_info = tk.Frame(info_frame)
+    frame_bot_info.pack(fill="both", expand=True, anchor="n")
+    pw_bot_info = tk.PanedWindow(
+        frame_bot_info,
+        orient=tk.VERTICAL,
+        sashrelief="raised",
+        bd=0,
+    )
+    if ostype == "Mac":
+        bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
+    else:
+        bot_note = ttk.Notebook(pw_bot_info, padding=0)
+    bot_positions = tk.Frame(bot_note, bg=bg_color)
+    bot_orders = tk.Frame(bot_note, bg=bg_color)
+    bot_trades = tk.Frame(bot_note, bg=bg_color)
+    bot_results = tk.Frame(bot_note, bg=bg_color)
+    bot_note.add(bot_positions, text="Positions")
+    bot_note.add(bot_orders, text="Orders")
+    bot_note.add(bot_trades, text="Trades")
+    bot_note.add(bot_results, text="Results")    
+
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
         if ratio < min_ratio:

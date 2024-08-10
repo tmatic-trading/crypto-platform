@@ -14,6 +14,7 @@ from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
+from common.data import Bots
 
 db_sqlite = var.env["SQLITE_DATABASE"]
 var.working_directory = os.path.abspath(os.getcwd())
@@ -24,9 +25,8 @@ class Init(WS, Variables):
 
     def clear_params(self: Markets) -> None:
         self.connect_count += 1
-        for emi, values in self.robots.items():
-            self.robot_status[emi] = values["STATUS"]
-        self.robots = OrderedDict()
+        for bot_name in Bots.keys():
+            self.robot_status[bot_name] = Bots[bot_name].state
         self.frames = dict()
         self.account_disp = "Acc." + str(self.user_id)
 
@@ -271,29 +271,6 @@ class Init(WS, Variables):
                     clOrdID = val["clOrdID"]
                     s = clOrdID.split(".")
                     emi = s[1]
-                    if emi not in self.robots:
-                        self.robots[emi] = {
-                            "STATUS": "NOT DEFINED",
-                            "TIMEFR": None,
-                            "EMI": emi,
-                            "SYMBOL": val["symbol"],
-                            "CATEGORY": val["symbol"][1],
-                            "MARKET": self.name,
-                            "POS": 0,
-                            "VOL": 0,
-                            "COMMISS": 0,
-                            "SUMREAL": 0,
-                            "LTIME": val["transactTime"],
-                            "PNL": 0,
-                            "CAPITAL": None,
-                        }
-                        message = (
-                            "Robot EMI="
-                            + emi
-                            + ". Adding to 'robots' with STATUS='NOT DEFINED'"
-                        )
-                        info_display(self.name, message)
-                        var.logger.info(message)
                 category = self.Instrument[val["symbol"]].category
                 self.orders[clOrdID] = {}
                 self.orders[clOrdID]["EMI"] = emi

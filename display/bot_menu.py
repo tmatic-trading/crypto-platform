@@ -173,12 +173,12 @@ class SettingsApp:
             os.mkdir(bot_path)
             # Create the '__init__.py' file in the new directory. This file is empty
             self.create_file(f"{str(bot_path)}/__init__.py")
-            # Load the content of 'init.py' file
-            content = self.read_file(f"{self.algo_dir}init.py")
+            # d Load the content of 'init.py' file
+            # d content = self.read_file(f"{self.algo_dir}init.py")
             # Create new 'init.py' file in the new directory
             self.create_file(f"{str(bot_path)}/init.py")
             # Write the initial content into the new 'init.py' file
-            self.write_file(f"{str(bot_path)}/init.py", content)
+            # d self.write_file(f"{str(bot_path)}/init.py", content)
             # Create new 'strategy.py' file in the new directory
             self.create_file(f"{str(bot_path)}/{self.strategy_file}")
             # Write the initial content into the new 'strategy.py' file
@@ -782,9 +782,9 @@ class SettingsApp:
         if option == "table":
             info_left.pack_forget()
             info_right.pack_forget()
-            pw_bot_info.pack(fill="both", expand="yes")
+            disp.pw_bot_info.pack(fill="both", expand="yes")
         else:
-            pw_bot_info.pack_forget()
+            disp.pw_bot_info.pack_forget()
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
 
@@ -810,6 +810,8 @@ class SettingsApp:
             bot_path = self.get_bot_path(bot_name)
             shutil.rmtree(str(bot_path))
             message += f"\nThe ``/{bot_name}/`` subdirectory erased."
+            TreeTable.bots.delete(iid=bot_name)
+            disp.bot_event_prev = ""
         except Exception as e:
             if err is None:
                 err = str(e)
@@ -819,12 +821,12 @@ class SettingsApp:
 
     def display_error_message(self, bot_name: str) -> None:
         self.switch(option="option")
-        self.finish_operation(Bot[bot_name].error_message)
+        self.finish_operation(Bots[bot_name].error_message)
 
 
 def init_bot_trades(bot_name: str) -> None:
     if bot_name not in trade_treeTable:
-        bot_trades_sub[bot_name] = tk.Frame(bot_trades)
+        bot_trades_sub[bot_name] = tk.Frame(disp.bot_trades)
         trade_treeTable[bot_name] = TreeviewTable(
             frame=bot_trades_sub[bot_name],
             name="bot trades",
@@ -903,71 +905,29 @@ def handler_bot_menu(event) -> None:
         if parent != "Back":
             disp.bot_event_prev = iid
 
-
-pw_menu_robots = tk.PanedWindow(
-    disp.menu_robots,
-    orient=tk.HORIZONTAL,
-    bd=0,
-    sashwidth=0,
-    height=1,
-)
-pw_menu_robots.pack(fill="both", expand="yes")
-menu_frame = tk.Frame(pw_menu_robots)
-info_frame = tk.Frame(pw_menu_robots, bg=disp.bg_color)  # , bg=disp.bg_color)
-frame_bot_parameters = tk.Frame(info_frame)  # , bg=disp.bg_color)
-frame_bot_parameters.pack(fill="both", anchor="n")
-
-frame_bot_info = tk.Frame(info_frame)
-frame_bot_info.pack(fill="both", expand=True, anchor="n")
-
-
-info_left = tk.Frame(frame_bot_info, bg="#999999")
-info_right = tk.Frame(frame_bot_info, bg="#999999")
-info_left.pack(fill="both", side="left")
-info_right.pack(fill="both", expand=True, side="left")
-
-pw_bot_info = tk.PanedWindow(
-    frame_bot_info,
-    orient=tk.VERTICAL,
-    sashrelief="raised",
-    bd=0,
-)
-
 trade_treeTable = dict()
 bot_trades_sub = dict()
-
-frame_strategy = tk.Frame(pw_bot_info)
+frame_strategy = tk.Frame(disp.pw_bot_info)
 frame_strategy.pack(fill="both", expand="yes")
-
-if disp.ostype == "Mac":
-    bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
-else:
-    bot_note = ttk.Notebook(pw_bot_info, padding=0)
-bot_positions = tk.Frame(bot_note, bg=disp.bg_color)
-bot_orders = tk.Frame(bot_note, bg=disp.bg_color)
-bot_trades = tk.Frame(bot_note, bg=disp.bg_color)
-bot_results = tk.Frame(bot_note, bg=disp.bg_color)
-bot_note.add(bot_positions, text="Positions")
-bot_note.add(bot_orders, text="Orders")
-bot_note.add(bot_trades, text="Trades")
-bot_note.add(bot_results, text="Results")
-
-pw_bot_info.add(bot_note)
-pw_bot_info.add(frame_strategy)
-disp.pw_ratios[pw_bot_info] = 3
-pw_bot_info.bind(
+menu_frame = tk.Frame(disp.pw_menu_robots)
+info_left = tk.Frame(disp.frame_bot_info, bg="#999999")
+info_right = tk.Frame(disp.frame_bot_info, bg="#999999")
+info_left.pack(fill="both", side="left")
+info_right.pack(fill="both", expand=True, side="left")
+disp.pw_bot_info.add(disp.bot_note)
+disp.pw_bot_info.add(frame_strategy)
+disp.pw_ratios[disp.pw_bot_info] = 3
+disp.pw_bot_info.bind(
     "<Configure>",
-    lambda event: disp.resize_height(event, pw_bot_info, disp.pw_ratios[pw_bot_info]),
+    lambda event: disp.resize_height(event, disp.pw_bot_info, disp.pw_ratios[disp.pw_bot_info]),
 )
-pw_bot_info.bind(
-    "<ButtonRelease-1>", lambda event: disp.on_sash_move(event, pw_bot_info)
+disp.pw_bot_info.bind(
+    "<ButtonRelease-1>", lambda event: disp.on_sash_move(event, disp.pw_bot_info)
 )
-
-pw_menu_robots.add(menu_frame)
-pw_menu_robots.add(info_frame)
-pw_menu_robots.bind(
+disp.pw_menu_robots.add(menu_frame)
+disp.pw_menu_robots.add(disp.info_frame)
+disp.pw_menu_robots.bind(
     "<Configure>",
-    lambda event: disp.resize_width(event, pw_menu_robots, disp.window_width // 7, 6),
+    lambda event: disp.resize_width(event, disp.pw_menu_robots, disp.window_width // 7, 6),
 )
-
 bot_manager = SettingsApp(menu_frame)

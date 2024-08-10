@@ -19,165 +19,6 @@ from functions import Function
 
 
 class Init(WS, Variables):
-    def load_robots(self: Markets) -> dict:
-        """
-        This function loads robot settings from the SQL database from the 'robots'
-        table. Since all transactions for the current account are saved in the
-        database, the function also checks all robots that have open positions,
-        but are not in the 'robots' table. Such robots are also loaded. Their
-        status is indicated as 'NOT DEFINED'. The program must see orders and
-        trades made from the standard exchange web interface, so reserved robot
-        names are provided for each instrument that match the symbol of the
-        instrument. Using this names, transactions are taken into account and
-        financial results are calculated in the database for each instrument
-        separately from the financial results of individual robots. The status of
-        such robots is 'RESERVED'.
-        """
-        union = ""
-        qwr = "select * from ("
-        for symbol in self.symbol_list:
-            qwr += (
-                union
-                + "select * from robots where SYMBOL = '"
-                + symbol[0]
-                + "' and CATEGORY = '"
-                + self.Instrument[symbol].category
-                + "' "
-            )
-            union = "union "
-        qwr += ") T where MARKET = '" + self.name + "' order by SORT"
-        data = service.select_database(qwr)
-        for robot in data:
-            emi = robot["EMI"]
-            self.robots[emi] = robot
-            self.robots[emi]["STATUS"] = "WORK"
-            self.robots[emi]["SYMBOL"] = (
-                self.robots[emi]["SYMBOL"],
-                self.name,
-            )
-
-        # Searching for unclosed positions by robots that are not in the 'robots' table
-
-        qwr = (
-            "select SYMBOL, TICKER, CATEGORY, EMI, POS from (select EMI, SYMBOL, TICKER, CATEGORY, "
-            + "sum(QTY) POS from coins where MARKET = '"
-            + self.name
-            + "' and account = "
-            + str(self.user_id)
-            + " and SIDE <> 'Fund' group by EMI, SYMBOL, CATEGORY) res where POS <> 0"
-        )
-        defuncts = service.select_database(qwr)
-        for defunct in defuncts:
-            symbol = (defunct["SYMBOL"], self.name)
-            for emi in self.robots:
-                if defunct["EMI"] == emi:
-                    break
-            else:
-                emi = defunct["EMI"]
-                if defunct["CATEGORY"] == "spot":
-                    status = "RESERVED"
-                    emi = symbol[0]
-                elif symbol in self.symbol_list:
-                    status = "NOT DEFINED"
-                else:
-                    status = "NOT IN LIST"
-                self.robots[emi] = {
-                    "SYMBOL": symbol,
-                    "TICKER": defunct["TICKER"],
-                    "CATEGORY": defunct["CATEGORY"],
-                    "MARKET": self.name,
-                    "POS": defunct["POS"],
-                    "EMI": defunct["EMI"],
-                    "STATUS": status,
-                    "TIMEFR": "None",
-                    "CAPITAL": "None",
-                }
-
-        # Adding RESERVED robots
-
-        union = ""
-        qwr = "select * from ("
-        for symbol in self.symbol_list:
-            qwr += (
-                union
-                + "select * from (select EMI, SYMBOL, TICKER, CATEGORY, ACCOUNT, MARKET, "
-                + "sum(QTY) POS from coins where SIDE <> 'Fund' group by EMI, "
-                + "SYMBOL, CATEGORY, ACCOUNT, MARKET) res where EMI = '"
-                + symbol[0]
-                + "' and CATEGORY = '"
-                + self.Instrument[symbol].category
-                + "' "
-            )
-            union = "union "
-        qwr += (
-            ") T where MARKET = '" + self.name + "' and ACCOUNT = " + str(self.user_id)
-        )
-        reserved = service.select_database(qwr)
-        for symbol in self.symbol_list:
-            for res in reserved:
-                if symbol == (res["SYMBOL"], self.name):
-                    pos = reserved[0]["POS"]
-                    break
-            else:
-                pos = 0
-            # if pos != 0:
-            emi = symbol[0]
-            self.robots[emi] = {
-                "EMI": emi,
-                "SYMBOL": symbol,
-                "TICKER": self.Instrument[symbol].ticker,
-                "CATEGORY": self.Instrument[symbol].category,
-                "MARKET": self.name,
-                "POS": pos,
-                "STATUS": "RESERVED",
-                "TIMEFR": "None",
-                "CAPITAL": "None",
-            }
-
-        # Loading all transactions and calculating financial results for each robot
-
-        for emi, robot in self.robots.items():
-            Function.add_symbol(
-                self,
-                symbol=robot["SYMBOL"][0],
-                ticker=robot["TICKER"],
-                category=robot["CATEGORY"],
-            )
-            if isinstance(emi, tuple):
-                _emi = emi[0]
-            else:
-                _emi = emi
-            sql = (
-                "SELECT IFNULL(sum(SUMREAL), 0) SUMREAL, IFNULL(sum(CASE WHEN "
-                + "SIDE = 'Fund' THEN 0 ELSE QTY END), 0) "
-                + "POS, IFNULL(sum(CASE WHEN SIDE = 'Fund' THEN 0 ELSE abs(QTY) "
-                + "END), 0) VOL, IFNULL(sum(COMMISS), 0) "
-                + "COMMISS, IFNULL(max(TTIME), '1900-01-01 01:01:01.000000') LTIME "
-                + "FROM (SELECT SUMREAL, SIDE, QTY, COMMISS, TTIME FROM coins WHERE MARKET "
-                + "= '%s' AND EMI = '%s' AND ACCOUNT = %s AND CATEGORY = '%s') aa"
-                % (self.name, _emi, self.user_id, robot["CATEGORY"])
-            )
-            data = service.select_database(sql)
-            for row in data:
-                for col in row:
-                    robot[col] = row[col]
-                    if col == "POS" or col == "VOL":
-                        robot[col] = round(
-                            robot[col], self.Instrument[robot["SYMBOL"]].precision
-                        )
-                    if col == "COMMISS" or col == "SUMREAL":
-                        robot[col] = float(robot[col])
-                    if col == "LTIME":
-                        robot[col] = service.time_converter(time=robot[col], usec=True)
-            if robot["CATEGORY"] == "spot":
-                robot["PNL"] = "None"
-                robot["POS"] = "None"
-            else:
-                robot["PNL"] = 0
-            robot["lotSize"] = self.Instrument[robot["SYMBOL"]].minOrderQty
-
-        return 0
-
     def download_data(
         self, start_time: datetime, target: datetime, symbol: tuple, timeframe: int
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
@@ -317,21 +158,21 @@ class Init(WS, Variables):
                 return
             success[number] = "success"
 
-        for emi in self.robots:
-            # Initialize candlestick timeframe data using 'TIMEFR' fields
+        for kline in self.kline_list:
+            # Initialize candlestick timeframe data using 'timefr' fields
             # expressed in minutes.
-            if self.robots[emi]["TIMEFR"] != "None":
-                time = datetime.now(tz=timezone.utc)
-                symbol = self.robots[emi]["SYMBOL"]
-                timefr = self.robots[emi]["TIMEFR"]
+            time = datetime.now(tz=timezone.utc)
+            symbol = kline["symbol"]
+            timefr = kline["timefr"]
+            bot_name = kline["bot_name"]
+            try:
+                self.frames[symbol][timefr]["robots"].append(bot_name)
+            except KeyError:
                 try:
-                    self.frames[symbol][timefr]["robots"].append(emi)
+                    self.frames = append_new(self.frames, symbol, timefr, time)
                 except KeyError:
-                    try:
-                        self.frames = append_new(self.frames, symbol, timefr, time)
-                    except KeyError:
-                        self.frames[symbol] = dict()
-                        self.frames = append_new(self.frames, symbol, timefr, time)
+                    self.frames[symbol] = dict()
+                    self.frames = append_new(self.frames, symbol, timefr, time)
         threads = []
         for symbol, timeframes in self.frames.items():
             for timefr in timeframes.keys():
@@ -350,23 +191,6 @@ class Init(WS, Variables):
                 return
 
         return "success"
-
-    def delete_unused_robot(self: Markets) -> None:
-        """
-        Deleting unused robots (if any)
-        """
-        emi_in_orders = set()
-        for val in self.orders.values():
-            emi_in_orders.add(val["EMI"])
-        for emi in self.robots.copy():
-            symbol = tuple(emi.split(".")) + (self.name,)
-            if self.robots[emi]["STATUS"] in ("WORK", "OFF"):
-                pass
-            elif symbol in self.symbol_list:
-                self.robots[emi]["STATUS"] = "RESERVED"
-            elif self.robots[emi]["POS"] == 0 and emi not in emi_in_orders:
-                info_display(self.name, "Robot EMI=" + emi + ". Deleting from 'robots'")
-                del self.robots[emi]
 
 
 def add_subscription(subscriptions: list) -> None:

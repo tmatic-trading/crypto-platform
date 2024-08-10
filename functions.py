@@ -268,7 +268,7 @@ class Function(WS, Variables):
                     else:
                         emi = row["symbol"][0]
                         row["lastQty"] = abs(diff)
-                        handle_trade_or_delivery(row, emi, "Delivery", 0)              
+                        handle_trade_or_delivery(row, emi, "Delivery", 0)
 
             # Funding
 
@@ -640,7 +640,7 @@ class Function(WS, Variables):
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
                     for emi in values["robots"]:
-                        if (
+                        """if (
                             self.robots[emi]["STATUS"] == "WORK"
                             and disp.f9 == "ON"
                             and bot.robo
@@ -652,7 +652,7 @@ class Function(WS, Variables):
                                     "frame": values["data"],
                                     "instrument": instrument,
                                 }
-                            )
+                            )"""
                         Function.save_timeframes_data(
                             self,
                             frame=values["data"][-1],
@@ -1047,8 +1047,8 @@ class Function(WS, Variables):
         # Refresh bot menu tables
 
         if disp.refresh_bot_info:
-            current_bot_note_tab = bot_menu.bot_note.tab(
-                bot_menu.bot_note.select(), "text"
+            current_bot_note_tab = disp.bot_note.tab(
+                disp.bot_note.select(), "text"
             )
 
             # Bot positions table
@@ -1930,14 +1930,14 @@ def init_tables() -> None:
         rollup=True,
     )
     TreeTable.bot_info = TreeviewTable(
-        frame=bot_menu.frame_bot_parameters,
+        frame=disp.frame_bot_parameters,
         name="bot_info",
         title=var.name_bot,
         size=1,
         autoscroll=True,
     )
     TreeTable.bot_position = TreeviewTable(
-        frame=bot_menu.bot_positions,
+        frame=disp.bot_positions,
         name="bot_position",
         title=var.name_bot_position,
         autoscroll=True,
@@ -1945,7 +1945,7 @@ def init_tables() -> None:
         lines=var.market_list,
     )
     TreeTable.bot_results = TreeviewTable(
-        frame=bot_menu.bot_results,
+        frame=disp.bot_results,
         name="bot_results",
         title=var.name_bot_results,
         autoscroll=True,
@@ -1982,7 +1982,7 @@ TreeTable.funding = TreeviewTable(
     hide=["8", "3", "5"],
 )
 TreeTable.bot_orders = TreeviewTable(
-    frame=bot_menu.bot_orders,
+    frame=disp.bot_orders,
     name="bot_orders",
     size=0,
     title=var.name_bot_order,

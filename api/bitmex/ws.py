@@ -57,7 +57,6 @@ class Bitmex(Variables):
         }  # MATIc is probably incorrect
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.logger = var.logger
-        self.robots = OrderedDict()
         self.frames = dict()
         self.robot_status = dict()
         self.setup_orders = list()
