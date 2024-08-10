@@ -911,6 +911,7 @@ def handler_bot_menu(event) -> None:
         if parent != "Back":
             disp.bot_event_prev = iid
 
+
 trade_treeTable = dict()
 bot_trades_sub = dict()
 frame_strategy = tk.Frame(disp.pw_bot_info)
@@ -925,7 +926,9 @@ disp.pw_bot_info.add(frame_strategy)
 disp.pw_ratios[disp.pw_bot_info] = 3
 disp.pw_bot_info.bind(
     "<Configure>",
-    lambda event: disp.resize_height(event, disp.pw_bot_info, disp.pw_ratios[disp.pw_bot_info]),
+    lambda event: disp.resize_height(
+        event, disp.pw_bot_info, disp.pw_ratios[disp.pw_bot_info]
+    ),
 )
 disp.pw_bot_info.bind(
     "<ButtonRelease-1>", lambda event: disp.on_sash_move(event, disp.pw_bot_info)
@@ -934,6 +937,8 @@ disp.pw_menu_robots.add(menu_frame)
 disp.pw_menu_robots.add(disp.info_frame)
 disp.pw_menu_robots.bind(
     "<Configure>",
-    lambda event: disp.resize_width(event, disp.pw_menu_robots, disp.window_width // 7, 6),
+    lambda event: disp.resize_width(
+        event, disp.pw_menu_robots, disp.window_width // 7, 6
+    ),
 )
 bot_manager = SettingsApp(menu_frame)

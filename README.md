@@ -246,7 +246,7 @@ Add the currency "USDt" to CURRENCIES in the ```.env.Bitmex``` file because "USD
 CURRENCIES = "XBt, USDt"
 ```
 
-The program will download candlestick data from the exchange for the number specified in the ```CANDLESTICK_NUMBER``` constant. The data is stored in the ```frames``` dictionary and is updated as the program runs. At the same time, the ```framing``` dictionary stores timeframe parameters and a list of EMI bots that belong to this timeframe.
+The program will download candlestick data from the exchange for the number specified in the ```CANDLESTICK_NUMBER``` constant. The data is stored in the ```klines``` dictionary and is updated as the program runs. At the same time, the ```framing``` dictionary stores timeframe parameters and a list of EMI bots that belong to this timeframe.
 
 Let's say you want to program a simple algorithm, the essence of which is as follows: if the current price is higher than 10-periods ago, then you should buy, otherwise if the current price is lower than the price 10-periods ago, then sell. Let the bot place limit orders with an indent from the bid or offer price equal to 1/3 of the difference between the high and low of the previous period. This is just a simple example and does not claim to be a profitable strategy.
 

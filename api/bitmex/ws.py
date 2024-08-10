@@ -57,7 +57,7 @@ class Bitmex(Variables):
         }  # MATIc is probably incorrect
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.logger = var.logger
-        self.frames = dict()
+        self.klines = dict()
         self.robot_status = dict()
         self.setup_orders = list()
         self.account_disp = ""
@@ -360,9 +360,9 @@ class Bitmex(Variables):
         self.data = {}
         self.keys = {}
 
-    def frames_hi_lo_values(self, symbol: tuple) -> None:
-        if symbol in self.frames:
-            for timeframe in self.frames[symbol].values():
+    def kline_hi_lo_values(self, symbol: tuple) -> None:
+        if symbol in self.klines:
+            for timeframe in self.klines[symbol].values():
                 if timeframe["data"]:
                     instrument = self.Instrument[symbol]
                     ask = instrument.asks[0][0]
@@ -403,7 +403,7 @@ class Bitmex(Variables):
                 for bid in values["bids"]:
                     bid[1] *= instrument.valueOfOneContract
                 instrument.bids = values["bids"]
-        self.frames_hi_lo_values(symbol=symbol)
+        self.kline_hi_lo_values(symbol=symbol)
 
     def __update_position(self, key, values: dict) -> None:
         """

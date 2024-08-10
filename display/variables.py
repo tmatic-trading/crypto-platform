@@ -549,7 +549,7 @@ class Variables:
     bot_note.add(bot_positions, text="Positions")
     bot_note.add(bot_orders, text="Orders")
     bot_note.add(bot_trades, text="Trades")
-    bot_note.add(bot_results, text="Results")    
+    bot_note.add(bot_results, text="Results")
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width

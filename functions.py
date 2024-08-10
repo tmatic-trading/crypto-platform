@@ -65,10 +65,10 @@ class Function(WS, Variables):
         if (symbol, self.name) not in self.Instrument.get_keys():
             WS.get_instrument(self, ticker=ticker, category=category)
 
-    def timeframes_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
+    def kline_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
         return "data/" + symbol[0] + "_" + symbol[1] + "_" + str(timefr) + ".txt"
 
-    def save_timeframes_data(self: Markets, frame: dict) -> None:
+    def save_kline_data(self: Markets, frame: dict) -> None:
         zero = (6 - len(str(frame["time"]))) * "0"
         data = (
             str(frame["date"])
@@ -636,7 +636,7 @@ class Function(WS, Variables):
         """
         Processing timeframes and entry point into robot algorithms
         """
-        for symbol, timeframes in self.frames.items():
+        for symbol, timeframes in self.klines.items():
             instrument = self.Instrument[symbol]
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
@@ -654,7 +654,7 @@ class Function(WS, Variables):
                                     "instrument": instrument,
                                 }
                             )"""
-                        Function.save_timeframes_data(
+                        Function.save_kline_data(
                             self,
                             frame=values["data"][-1],
                         )
@@ -1048,9 +1048,7 @@ class Function(WS, Variables):
         # Refresh bot menu tables
 
         if disp.refresh_bot_info:
-            current_bot_note_tab = disp.bot_note.tab(
-                disp.bot_note.select(), "text"
-            )
+            current_bot_note_tab = disp.bot_note.tab(disp.bot_note.select(), "text")
 
             # Bot positions table
 

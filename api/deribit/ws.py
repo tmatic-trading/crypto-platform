@@ -47,7 +47,7 @@ class Deribit(Variables):
             self.orderbook_depth = 1
         else:
             self.orderbook_depth = 10
-        self.frames = dict()
+        self.klines = dict()
         self.robot_status = dict()
         self.setup_orders = list()
         self.account_disp = ""

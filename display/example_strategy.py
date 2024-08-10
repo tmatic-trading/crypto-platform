@@ -6,11 +6,11 @@
 ############################### Add a market ##############################
 #
 # from algo.tools import Bitmex
-# 
+#
 ########################### Add multiple markets ##########################
 #
 # from algo.tools Bitmex, Bybit, Deribit
-# 
+#
 ############################ Get bot parameters ###########################
 #
 # from algo.tools import Bot
@@ -31,7 +31,7 @@
 # btcusd = Bybit["BTCUSD"]
 #
 ######################### Instrument parameters ###########################
-# 
+#
 # btcusd = Bybit["BTCUSD"]
 # btcusd.asks           Orderbook asks (list)
 # btcusd.bids           Orderbook bids (list)
@@ -43,11 +43,11 @@
 # btcusd.settlCurrency  Settlement currency of the instrument (tuple)
 # btcusd.qtyStep        The step to increase/reduce order quantity. Also called LotSize (float)
 # btcusd.tickSize       The step to increase/reduce order price (float)
-# 
+#
 # The full list of instrument parameters is in the common/data.py Instrument class
-# 
+#
 ########## Add kline (candlestick) data to a specific instrument ##########
-# 
+#
 # Bybit["BTCUSD"].add_kline()
 #
 #
@@ -58,7 +58,7 @@
 # You can try your own strategy. Connect your preferred market in the .env file, for example Bitmex. The minimum possible code to run the strategy might look like this:
 #
 # from algo.tools import Bitmex
-# 
+#
 # def strategy():
 #   pass
 #

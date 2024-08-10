@@ -16,6 +16,7 @@ from display.messages import ErrorMessage, Message
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
+import time
 
 
 class Init(WS, Variables):
@@ -54,20 +55,18 @@ class Init(WS, Variables):
         self.logNumFatal = ""
         return res
 
-    def load_frames(
+    def load_klines(
         self: Markets,
         symbol: tuple,
         timefr: int,
-        frames: dict,
+        klines: dict,
     ) -> Union[dict, None]:
         """
         Loading kline data from the exchange server. Data is recorded
         in files for each timeframe. Every time you reboot the files are
         overwritten.
         """
-        self.filename = Function.timeframes_data_filename(
-            self, symbol=symbol, timefr=timefr
-        )
+        self.filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
         with open(self.filename, "w"):
             pass
         target = datetime.now(tz=timezone.utc)
@@ -97,13 +96,13 @@ class Init(WS, Variables):
             for r in res:
                 r["timestamp"] -= delta
 
-        # The 'frames' array is filled with timeframe data.
+        # The 'klines' array is filled with timeframe data.
 
         if res[0]["timestamp"] > res[-1]["timestamp"]:
             res.reverse()
         for num, row in enumerate(res):
             tm = row["timestamp"] - timedelta(minutes=timefr)
-            frames[symbol][timefr]["data"].append(
+            klines[symbol][timefr]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
                     "time": tm.hour * 10000 + tm.minute * 100,
@@ -115,40 +114,40 @@ class Init(WS, Variables):
                 }
             )
             if num < len(res[:-1]) - 1:
-                Function.save_timeframes_data(
+                Function.save_kline_data(
                     self,
-                    frame=frames[symbol][timefr]["data"][-1],
+                    frame=klines[symbol][timefr]["data"][-1],
                 )
-        frames[symbol][timefr]["time"] = tm
+        klines[symbol][timefr]["time"] = tm
 
         message = (
             "Downloaded missing data, symbol=" + str(symbol) + " TIMEFR=" + str(timefr)
         )
         var.logger.info(message)
 
-        return frames
+        return klines
 
-    def init_timeframes(self: Markets) -> Union[dict, None]:
-        def append_new(frames, symbol, timefr, time):
-            frames[symbol][timefr] = {
+    def init_klines(self: Markets) -> Union[dict, None]:
+        def append_new(klines, symbol, timefr, time, bot_name):
+            klines[symbol][timefr] = {
                 "time": time,
                 "robots": [],
                 "open": 0,
                 "data": [],
             }
-            frames[symbol][timefr]["robots"].append(emi)
+            klines[symbol][timefr]["robots"].append(bot_name)
 
-            return frames
+            return klines
 
         success = []
 
-        def get_in_thread(symbol, timefr, frames, number):
+        def get_in_thread(symbol, timefr, klines, number):
             nonlocal success
-            res = Init.load_frames(
+            res = Init.load_klines(
                 self,
                 symbol=symbol,
                 timefr=timefr,
-                frames=frames,
+                klines=klines,
             )
             if not res:
                 message = (
@@ -162,24 +161,28 @@ class Init(WS, Variables):
             # Initialize candlestick timeframe data using 'timefr' fields
             # expressed in minutes.
             time = datetime.now(tz=timezone.utc)
-            symbol = kline["symbol"]
+            symbol = (kline["symbol"], self.name)
             timefr = kline["timefr"]
             bot_name = kline["bot_name"]
             try:
-                self.frames[symbol][timefr]["robots"].append(bot_name)
+                self.klines[symbol][timefr]["robots"].append(bot_name)
             except KeyError:
                 try:
-                    self.frames = append_new(self.frames, symbol, timefr, time)
+                    self.klines = append_new(
+                        self.klines, symbol, timefr, time, bot_name
+                    )
                 except KeyError:
-                    self.frames[symbol] = dict()
-                    self.frames = append_new(self.frames, symbol, timefr, time)
+                    self.klines[symbol] = dict()
+                    self.klines = append_new(
+                        self.klines, symbol, timefr, time, bot_name
+                    )
         threads = []
-        for symbol, timeframes in self.frames.items():
+        for symbol, timeframes in self.klines.items():
             for timefr in timeframes.keys():
                 success.append(None)
                 t = threading.Thread(
                     target=get_in_thread,
-                    args=(symbol, timefr, self.frames, len(success) - 1),
+                    args=(symbol, timefr, self.klines, len(success) - 1),
                 )
 
                 threads.append(t)
@@ -462,7 +465,7 @@ def load_bots() -> None:
             )
             Bots[bot_name].error_message = message
         except Exception as exception:
-            formated = service.display_exception(exception=exception)
+            service.display_exception(exception=exception)
             message = ErrorMessage.BOT_LOADING_ERROR.format(
                 MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
             )
@@ -476,8 +479,34 @@ def load_bots() -> None:
                 }
             )
 
-    """for market in var.market_list:
-        ws = Markets[market]
-        print(ws.kline_list)
+# Initialization of kline data
+            
+def setup_klines():            
+    def get_klines(ws: Markets, success):
+        if Init.init_klines(ws):
+            success[ws.name] = "success"
+            
+    market_list = var.market_list.copy()
+    while market_list:
+        threads = []
+        success = {market: None for market in market_list}
+        for market in market_list:
+            ws = Markets[market]             
+            success[market] = None
+            t = threading.Thread(
+                target=get_klines,
+                args=(ws, success),
+            )
+            threads.append(t)
+            t.start()
+        [thread.join() for thread in threads]
+        for market, value in success.items():
+            if not value:
+                var.logger.error(
+                    market + ": Klines are not loaded."
+                )
+                time.sleep(2)
+            else:
+                indx = market_list.index(market)
+                market_list.pop(indx)
 
-    os.abort()"""

@@ -13,13 +13,13 @@ from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
 from botinit.variables import Variables as bot
+from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
 from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
-from common.data import Bots
 
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction
@@ -46,6 +46,7 @@ def setup(reload=False):
         finish_setup(Markets[name])
     merge_orders()
     botinit.load_bots()
+    botinit.setup_klines()
     functions.init_tables()
     bot_manager.create_bots_menu()
     var.robots_thread_is_active = True
@@ -89,13 +90,13 @@ def setup_market(ws: Markets, reload=False):
         2. Trading history.
     """
 
-    def get_timeframes(ws, success, num):
-        if botinit.Init.init_timeframes(ws):
-            success[num] = "success"
+    def get_klines(ws, success, num):
+        if botinit.Init.init_klines(ws):
+            success["kline"] = "success"
 
     def get_history(ws, success, num):
         if common.Init.load_trading_history(ws):
-            success[num] = "success"
+            success["history"] = "success"
 
     ws.logNumFatal = "SETUP"
     ws.api_is_active = False
@@ -111,16 +112,14 @@ def setup_market(ws: Markets, reload=False):
         else:
             common.Init.clear_params(ws)
             if not ws.logNumFatal:
-                # d algo.init_algo(ws)
-                threads, success = [], []
-                success.append(None)
+                threads = []
+                success = {"kline": None, "history": None}
                 t = threading.Thread(
-                    target=get_timeframes,
+                    target=get_klines,
                     args=(ws, success, len(success) - 1),
                 )
                 threads.append(t)
                 t.start()
-                success.append(None)
                 t = threading.Thread(
                     target=get_history,
                     args=(ws, success, len(success) - 1),
@@ -128,12 +127,16 @@ def setup_market(ws: Markets, reload=False):
                 threads.append(t)
                 t.start()
                 [thread.join() for thread in threads]
-                for s in success:
-                    if not s:
-                        var.logger.error(
-                            ws.name + ": The kline data or trade history is not loaded."
-                        )
-                        ws.logNumFatal = "SETUP"
+                if not success["history"]:
+                    var.logger.error(
+                        ws.name + ": The trade history is not loaded."
+                    )
+                    ws.logNumFatal = "SETUP"
+                if not success["kline"]:
+                    var.logger.error(
+                        ws.name + ": Klines are not loaded."
+                    )
+                    ws.logNumFatal = "SETUP"
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)
@@ -287,7 +290,7 @@ def robots_thread() -> None:
         for market in var.market_list:
             ws = Markets[market]
             if ws.api_is_active:
-                if ws.frames:
+                if ws.klines:
                     pass
                     # d bot_list = Function.robots_entry(ws, bot_list, utc=utcnow)
         threads = []

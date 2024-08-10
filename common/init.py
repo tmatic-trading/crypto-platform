@@ -9,12 +9,12 @@ from sqlite3 import Error
 import services as service
 from api.api import WS, Markets
 from api.init import Variables
+from common.data import Bots
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
-from common.data import Bots
 
 db_sqlite = var.env["SQLITE_DATABASE"]
 var.working_directory = os.path.abspath(os.getcwd())
@@ -27,7 +27,7 @@ class Init(WS, Variables):
         self.connect_count += 1
         for bot_name in Bots.keys():
             self.robot_status[bot_name] = Bots[bot_name].state
-        self.frames = dict()
+        self.klines = dict()
         self.account_disp = "Acc." + str(self.user_id)
 
     def save_history_file(self: Markets, time: datetime):
