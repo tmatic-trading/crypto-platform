@@ -14,6 +14,7 @@ from botinit.variables import Variables as bot
 from common.data import Bots
 from common.variables import Variables as var
 from display.functions import info_display
+from display.messages import ErrorMessage
 from display.variables import TreeTable, TreeviewTable
 from display.variables import Variables as disp
 
@@ -238,25 +239,36 @@ class Function(WS, Variables):
                         bot_list.append(emi)
                 diff = lastQty - pos
                 if diff != 0:
-                    message = (
-                        str(row["symbol"])
-                        + " was expired and the delivery amount of "
-                        + str(lastQty)
-                        + " has been distributed among the bots: "
-                        + str(bot_list)
-                        + ", however there is a remainder of "
-                        + str(diff)
-                        + " which is not possible."
+                    qwr = (
+                        "select sum(QTY) as sum from coins where emi = '"
+                        + row["symbol"][0]
+                        + "' and MARKET = '"
+                        + self.name
+                        + "' and ACCOUNT = "
+                        + str(self.user_id)
+                        + ";"
                     )
-                    self.logger.error(message)
-                    var.queue_info.put(
-                        {
-                            "market": self.name,
-                            "message": message,
-                            "time": datetime.now(tz=timezone.utc),
-                            "warning": True,
-                        }
-                    )
+                    data = service.select_database(query=qwr)[0]
+                    if data["sum"] != diff:
+                        message = ErrorMessage.IMPOSSIBLE_DATABASE_POSITION.format(
+                            SYMBOL=row["symbol"][0],
+                            DELIVERY=diff,
+                            MARKET=self.name,
+                            POSITION=data["sum"],
+                        )
+                        self.logger.error(message)
+                        var.queue_info.put(
+                            {
+                                "market": self.name,
+                                "message": message,
+                                "time": datetime.now(tz=timezone.utc),
+                                "warning": True,
+                            }
+                        )
+                    else:
+                        emi = row["symbol"][0]
+                        row["lastQty"] = abs(diff)
+                        handle_trade_or_delivery(row, emi, "Delivery", 0)              
 
             # Funding
 

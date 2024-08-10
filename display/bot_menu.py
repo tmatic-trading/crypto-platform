@@ -874,7 +874,7 @@ def winfo_destroy() -> None:
         child.destroy()
 
 
-def handler_bot_menu(event) -> None:    
+def handler_bot_menu(event) -> None:
     tree = event.widget
     selection = tree.selection()
     if selection:

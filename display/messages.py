@@ -30,6 +30,14 @@ class ErrorMessage(str, Enum):
         + "The instrument has probably expired, but in the database there are "
         + " still positions that should not exist. Check your trading history."
     )
+    IMPOSSIBLE_DATABASE_POSITION = (
+        "{SYMBOL} expired and a delivery in the amount of {DELIVERY} is "
+        + "received from {MARKET} but there is a position of {POSITION} "
+        + "{SYMBOL} in the database, which cannot be possible. The delivery "
+        + "amount and the position in the database must be equal. This "
+        + "delivery is not recorded in the database. Please check the "
+        + "database and your trading history."
+    )
 
     def __str__(self) -> str:
         return self.value
