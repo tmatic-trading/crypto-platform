@@ -93,6 +93,9 @@ class SettingsApp:
 
         # Create initial frames
         # self.bot_info_frame()
+        self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
+        self.brief_frame.pack(fill="both", expand="yes", anchor="n")
+        self.brief_frame.bind("<Configure>", self.wrap)
 
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
@@ -243,9 +246,6 @@ class SettingsApp:
             self.insert_bot_menu(name)
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")
-        self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
-        self.brief_frame.pack(fill="both", expand="yes", anchor="n")
-        self.brief_frame.bind("<Configure>", self.wrap)
         self.create_strategy_widget()
 
     def create_strategy_widget(self) -> None:
@@ -276,7 +276,7 @@ class SettingsApp:
             else:
                 functions.warning_window(error_message, width=1000, height=300)
 
-        frame_title = tk.Frame(frame_strategy)
+        frame_title = tk.Frame(disp.frame_strategy)
         frame_title.grid(row=0, column=0, sticky="NSEW", columnspan=2)
         title = BoldLabel(frame_title, text="STRATEGY")
         title.grid(row=0, column=0, sticky="NSEW")
@@ -312,9 +312,9 @@ class SettingsApp:
 
         frame_title.grid_columnconfigure(0, weight=1)
 
-        self.strategy_scroll = AutoScrollbar(frame_strategy, orient="vertical")
+        self.strategy_scroll = AutoScrollbar(disp.frame_strategy, orient="vertical")
         self.strategy_text = tk.Text(
-            frame_strategy,
+            disp.frame_strategy,
             highlightthickness=0,
             # highlightbackground=disp.title_color,
             # highlightcolor=disp.title_color,
@@ -326,9 +326,9 @@ class SettingsApp:
         self.strategy_text.grid(row=1, column=0, sticky="NSEW")
         self.strategy_scroll.grid(row=1, column=1, sticky="NS")
 
-        frame_strategy.grid_columnconfigure(0, weight=1)
-        frame_strategy.grid_columnconfigure(1, weight=0)
-        frame_strategy.grid_rowconfigure(1, weight=1)
+        disp.frame_strategy.grid_columnconfigure(0, weight=1)
+        disp.frame_strategy.grid_columnconfigure(1, weight=0)
+        disp.frame_strategy.grid_rowconfigure(1, weight=1)
 
     def on_modify_strategy(self, event):
         value = self.strategy_text.get("1.0", tk.END)
@@ -381,7 +381,6 @@ class SettingsApp:
 
         self.switch(option="option")
         if not Bots[bot_name].error_message:
-            print("activate")
             new_state = ""
             bot = Bots[bot_name]
             text_label = tk.Label(
@@ -914,15 +913,13 @@ def handler_bot_menu(event) -> None:
 
 trade_treeTable = dict()
 bot_trades_sub = dict()
-frame_strategy = tk.Frame(disp.pw_bot_info)
-frame_strategy.pack(fill="both", expand="yes")
 menu_frame = tk.Frame(disp.pw_menu_robots)
 info_left = tk.Frame(disp.frame_bot_info, bg="#999999")
 info_right = tk.Frame(disp.frame_bot_info, bg="#999999")
 info_left.pack(fill="both", side="left")
 info_right.pack(fill="both", expand=True, side="left")
 disp.pw_bot_info.add(disp.bot_note)
-disp.pw_bot_info.add(frame_strategy)
+disp.pw_bot_info.add(disp.frame_strategy)
 disp.pw_ratios[disp.pw_bot_info] = 3
 disp.pw_bot_info.bind(
     "<Configure>",

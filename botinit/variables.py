@@ -1,4 +1,4 @@
 class Variables:
     emi_list = list()
-    robo = dict()
+    run = dict()
     CANDLESTICK_NUMBER = 1000

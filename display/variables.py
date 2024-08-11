@@ -538,6 +538,8 @@ class Variables:
         sashrelief="raised",
         bd=0,
     )
+    frame_strategy = tk.Frame(pw_bot_info)
+    frame_strategy.pack(fill="both", expand="yes")
     if ostype == "Mac":
         bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
     else:

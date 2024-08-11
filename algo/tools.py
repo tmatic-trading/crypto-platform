@@ -21,20 +21,20 @@ class Tool(Instrument):
         self.market = self.instrument.market
         self.bot_name = ""
 
-    def close_all(self):
+    def close_all(self) -> None:
         bot_name = name(inspect.stack())
         pass
 
-    def sell(self):
+    def sell(self) -> None:
         bot_name = name(inspect.stack())
 
-    def buy(self):
+    def buy(self) -> None:
         bot_name = name(inspect.stack())
 
-    def EMA(self, period: int):
+    def EMA(self, period: int) -> float:
         pass
 
-    def add_kline(self):
+    def add_kline(self) -> None:
         bot_name = name(inspect.stack())
         Bots[bot_name].timefr
         ws = Markets[self.market]
@@ -45,6 +45,11 @@ class Tool(Instrument):
                 "timefr": Bots[bot_name].timefr,
             }
         )
+
+    def kline(self, period: int = -1) -> dict:
+        ws = Markets[self.market]
+        print("___________________", ws.name)
+        print(ws.klines)
 
 
 class MetaTool(type):

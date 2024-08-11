@@ -632,28 +632,26 @@ class Function(WS, Variables):
 
         return number
 
-    def robots_entry(self: Markets, bot_list: list, utc: datetime) -> None:
+    def bot_entry(self: Markets, bot_list: list, utc: datetime) -> None:
         """
-        Processing timeframes and entry point into robot algorithms
+        Processing timeframes and entry point into bot algorithms
         """
         for symbol, timeframes in self.klines.items():
             instrument = self.Instrument[symbol]
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
-                    for emi in values["robots"]:
-                        """if (
-                            self.robots[emi]["STATUS"] == "WORK"
+                    for bot_name in values["robots"]:
+                        if (
+                            Bots[bot_name].state == "Active"
                             and disp.f9 == "ON"
-                            and bot.robo
                         ):
                             bot_list.append(
                                 {
-                                    "emi": emi,
-                                    "robot": self.robots[emi],
-                                    "frame": values["data"],
-                                    "instrument": instrument,
+                                    "emi": bot_name,
+                                    "bot": Bots[bot_name],
+                                    "kline": values["data"],
                                 }
-                            )"""
+                            )
                         Function.save_kline_data(
                             self,
                             frame=values["data"][-1],

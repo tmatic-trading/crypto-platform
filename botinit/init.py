@@ -1,5 +1,6 @@
 import importlib
 import os
+import time
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
@@ -7,16 +8,14 @@ from typing import Tuple, Union
 import services as service
 from api.api import WS, Markets
 from api.init import Variables
-from botinit.variables import Variables as bot
+from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
 from display.functions import info_display
 from display.messages import ErrorMessage, Message
-from display.variables import TreeTable
-from display.variables import Variables as disp
 from functions import Function
-import time
+
 
 
 class Init(WS, Variables):
@@ -72,7 +71,7 @@ class Init(WS, Variables):
         target = datetime.now(tz=timezone.utc)
         target = target.replace(second=0, microsecond=0)
         start_time = target - timedelta(
-            minutes=bot.CANDLESTICK_NUMBER * timefr - timefr
+            minutes=robo.CANDLESTICK_NUMBER * timefr - timefr
         )
         delta = timedelta(minutes=target.minute % timefr + (target.hour * 60) % timefr)
         target -= delta
@@ -420,7 +419,7 @@ def load_bots() -> None:
     for bot_name in Bots.keys():
         module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
         try:
-            importlib.import_module(module)
+            mod = importlib.import_module(module)
         except ModuleNotFoundError:
             message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(BOT_NAME=bot_name)
             var.logger.warning(message)
@@ -478,6 +477,10 @@ def load_bots() -> None:
                     "warning": True,
                 }
             )
+    try:
+        robo.run[bot_name] = mod.strategy
+    except Exception:
+        robo.run[bot_name] = "No strategy"
 
 # Initialization of kline data
             
@@ -485,7 +488,7 @@ def setup_klines():
     def get_klines(ws: Markets, success):
         if Init.init_klines(ws):
             success[ws.name] = "success"
-            
+
     market_list = var.market_list.copy()
     while market_list:
         threads = []

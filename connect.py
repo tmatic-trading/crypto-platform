@@ -12,7 +12,7 @@ from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
-from botinit.variables import Variables as bot
+from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
@@ -50,7 +50,7 @@ def setup(reload=False):
     functions.init_tables()
     bot_manager.create_bots_menu()
     var.robots_thread_is_active = True
-    thread = threading.Thread(target=robots_thread)
+    thread = threading.Thread(target=bots_thread)
     thread.start()
 
 
@@ -275,14 +275,11 @@ def clear_params():
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
 
 
-def robots_thread() -> None:
+def bots_thread() -> None:
     def bot_in_thread():
-        # Bots entry point
-        bot.robo[robot["emi"]](
-            robot=robot["robot"],
-            frame=robot["frame"],
-            instrument=robot["instrument"],
-        )
+        # Bot entry point
+        if callable(robo.run_bot[bot["emi"]]):
+            robo.run[bot["emi"]]()
 
     while var.robots_thread_is_active:
         utcnow = datetime.now(tz=timezone.utc)
@@ -290,11 +287,9 @@ def robots_thread() -> None:
         for market in var.market_list:
             ws = Markets[market]
             if ws.api_is_active:
-                if ws.klines:
-                    pass
-                    # d bot_list = Function.robots_entry(ws, bot_list, utc=utcnow)
+                bot_list = Function.bot_entry(ws, bot_list, utc=utcnow)
         threads = []
-        for robot in bot_list:
+        for bot in bot_list:
             t = threading.Thread(target=bot_in_thread)
             threads.append(t)
             t.start()
