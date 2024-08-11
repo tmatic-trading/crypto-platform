@@ -19,7 +19,7 @@ class Instrument:
     """
     Stores data for each instrument.
 
-    Description
+    Parameters
     -----------
     asks: list
         Asks. The elements are sorted by price in ascending order. There can

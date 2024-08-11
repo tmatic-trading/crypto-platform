@@ -5,15 +5,15 @@
 #
 ############################### Add a market ##############################
 #
-# from algo.tools import Bitmex
+# from tools import Bitmex
 #
 ########################### Add multiple markets ##########################
 #
-# from algo.tools Bitmex, Bybit, Deribit
+# from tools Bitmex, Bybit, Deribit
 #
 ############################ Get bot parameters ###########################
 #
-# from algo.tools import Bot
+# from tools import Bot
 #
 # bot = Bot()
 # bot.name              Bot name (str)
@@ -57,7 +57,7 @@
 #
 # You can try your own strategy. Connect your preferred market in the .env file, for example Bitmex. The minimum possible code to run the strategy might look like this:
 #
-# from algo.tools import Bitmex
+# from tools import Bitmex
 #
 # def strategy():
 #   pass

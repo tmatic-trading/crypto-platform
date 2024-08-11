@@ -201,6 +201,7 @@ class SettingsApp:
             Bots[bot_name].timefr = int(tf[0])
             Bots[bot_name].created = time_now
             Bots[bot_name].updated = time_now
+            Bots[bot_name].position = dict()
             self.insert_bot_menu(name=bot_name, new=True)
 
             return True

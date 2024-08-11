@@ -38,6 +38,9 @@ class ErrorMessage(str, Enum):
         + "delivery is not recorded in the database. Please check the "
         + "database and your trading history."
     )
+    EMPTY_ORDERBOOK = (
+        "Failed to place order {ORDER} because {SYMBOL} order book is empty."
+    )
 
     def __str__(self) -> str:
         return self.value

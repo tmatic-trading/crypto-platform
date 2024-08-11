@@ -201,3 +201,10 @@ def update_database(query: list) -> None:
                 )
                 var.connect_sqlite.rollback()
                 var.sql_lock.release()
+
+
+def set_clOrdID(emi: str) -> str:
+    var.last_order += 1
+    clOrdID = str(var.last_order) + "." + emi
+
+    return clOrdID

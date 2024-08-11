@@ -641,10 +641,7 @@ class Function(WS, Variables):
             for timefr, values in timeframes.items():
                 if utc > values["time"] + timedelta(minutes=timefr):
                     for bot_name in values["robots"]:
-                        if (
-                            Bots[bot_name].state == "Active"
-                            and disp.f9 == "ON"
-                        ):
+                        if Bots[bot_name].state == "Active" and disp.f9 == "ON":
                             bot_list.append(
                                 {
                                     "emi": bot_name,
@@ -1256,8 +1253,7 @@ class Function(WS, Variables):
         clOrdID = ""
         if side == "Sell":
             qty = -qty
-        var.last_order += 1
-        clOrdID = str(var.last_order) + "." + emi
+        clOrdID = service.set_clOrdID(emi=emi)
         var.logger.info(
             "Posting symbol="
             + str(symbol)

@@ -1,7 +1,7 @@
 import importlib
 import os
-import time
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
 
@@ -15,7 +15,6 @@ from display.bot_menu import bot_manager
 from display.functions import info_display
 from display.messages import ErrorMessage, Message
 from functions import Function
-
 
 
 class Init(WS, Variables):
@@ -386,7 +385,8 @@ def load_bots() -> None:
                     "ltime": service.time_converter(time=value["LTIME"], usec=True),
                     "pnl": 0,
                     "lotSize": instrument.minOrderQty,
-                    "currency": instrument.settlCurrency,
+                    "currency": instrument.settlCurrency[0],
+                    "limits": instrument.minOrderQty,
                 }
                 if instrument.category == "spot":
                     bot.position[symbol]["pnl"] = "None"
@@ -482,9 +482,11 @@ def load_bots() -> None:
     except Exception:
         robo.run[bot_name] = "No strategy"
 
+
 # Initialization of kline data
-            
-def setup_klines():            
+
+
+def setup_klines():
     def get_klines(ws: Markets, success):
         if Init.init_klines(ws):
             success[ws.name] = "success"
@@ -494,7 +496,7 @@ def setup_klines():
         threads = []
         success = {market: None for market in market_list}
         for market in market_list:
-            ws = Markets[market]             
+            ws = Markets[market]
             success[market] = None
             t = threading.Thread(
                 target=get_klines,
@@ -505,11 +507,8 @@ def setup_klines():
         [thread.join() for thread in threads]
         for market, value in success.items():
             if not value:
-                var.logger.error(
-                    market + ": Klines are not loaded."
-                )
+                var.logger.error(market + ": Klines are not loaded.")
                 time.sleep(2)
             else:
                 indx = market_list.index(market)
                 market_list.pop(indx)
-
