@@ -1995,4 +1995,15 @@ def clear_tables():
     var.lock_market_switch.release()
 
 
+def kline_update():
+    while var.kline_update_active:
+        for market in var.market_list:
+            ws = Markets[market]
+            if ws.api_is_active:
+                pass
+                # bot_list = Function.bot_entry(ws, bot_list, utc=utcnow)
+        rest = 1 - time.time() % 1
+        time.sleep(rest)
+
+
 # change_color(color=disp.title_color, container=disp.root)

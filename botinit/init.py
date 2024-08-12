@@ -477,10 +477,10 @@ def load_bots() -> None:
                     "warning": True,
                 }
             )
-    try:
-        robo.run[bot_name] = mod.strategy
-    except Exception:
-        robo.run[bot_name] = "No strategy"
+        try:
+            robo.run[bot_name] = mod.strategy
+        except Exception:
+            robo.run[bot_name] = "No strategy"
 
 
 # Initialization of kline data

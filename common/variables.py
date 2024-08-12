@@ -215,7 +215,7 @@ class Variables:
     last_database_time = datetime(1900, 1, 1, 1, 1)
     refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
     refresh_hour = datetime.now(tz=timezone.utc).hour
-    robots_thread_is_active = False
+    bot_thread_active = dict()
     queue_info = queue.Queue()
     queue_order = queue.Queue()
     queue_reload = queue.Queue()
@@ -223,3 +223,4 @@ class Variables:
     lock_market_switch = threading.Lock()
     sql_lock = threading.Lock()
     working_directory: str
+    kline_update_active = True

@@ -25,6 +25,8 @@ disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction
 Bybit.transaction = Function.transaction
 Deribit.transaction = Function.transaction
+thread = threading.Thread(target=functions.kline_update)
+thread.start()
 
 
 def setup(reload=False):
@@ -35,7 +37,6 @@ def setup(reload=False):
     """
     clear_params()
     common.setup_database_connecion()
-    var.robots_thread_is_active = False
     threads = []
     for name in var.market_list:
         t = threading.Thread(target=setup_market, args=(Markets[name], reload))
@@ -49,9 +50,7 @@ def setup(reload=False):
     botinit.setup_klines()
     functions.init_tables()
     bot_manager.create_bots_menu()
-    var.robots_thread_is_active = True
-    thread = threading.Thread(target=bots_thread)
-    thread.start()
+    bot_threads()
 
 
 def setup_market(ws: Markets, reload=False):
@@ -271,33 +270,42 @@ def clear_params():
     var.symbol = var.env[var.current_market]["SYMBOLS"][0]
 
 
-def bots_thread() -> None:
-    def bot_in_thread():
-        # Bot entry point
-        if callable(robo.run[bot["emi"]]):
-            robo.run[bot["emi"]]()
+def bot_threads() -> None:
 
-    while var.robots_thread_is_active:
-        utcnow = datetime.now(tz=timezone.utc)
-        bot_list = list()
-        for market in var.market_list:
-            ws = Markets[market]
-            if ws.api_is_active:
-                bot_list = Function.bot_entry(ws, bot_list, utc=utcnow)
-        threads = []
-        for bot in bot_list:
-            t = threading.Thread(target=bot_in_thread)
-            threads.append(t)
-            t.start()
-        [thread.join() for thread in threads]
-        rest = 1 - time.time() % 1
-        time.sleep(rest)
+    def target_time(timeframe_sec):
+        now = datetime.now(tz=timezone.utc).timestamp()
+        target_tm = now + (timeframe_sec - now % timeframe_sec)
+
+        return target_tm
+    
+    def bot_in_thread(bot_name: str, timeframe_sec: int, target_tm: float, bot: Bots):
+        """
+        Bot entry point
+        """
+        while var.bot_thread_active[bot_name]:
+            tm = time.time()
+            if tm > target_tm:
+                target_tm = target_time(timeframe_sec)
+                if disp.f9 == "ON":
+                    if bot.state == "Active":
+                        if callable(robo.run[bot_name]):
+                            # Calls strategy function in the strategy.py file
+                            robo.run[bot_name]()
+            time.sleep(1 - time.time() % 1)            
+
+    for bot_name in Bots.keys():
+        var.bot_thread_active[bot_name] = True
+        timeframe_sec = Bots[bot_name].timefr * 60
+        target_tm = target_time(timeframe_sec)
+        t = threading.Thread(
+            target=bot_in_thread, args=(bot_name, timeframe_sec, target_tm, Bots[bot_name], )
+        )
+        t.start()
 
 
 def terminal_reload(event) -> None:
     disp.menu_robots.pack_forget()
     disp.pw_rest1.pack(fill="both", expand="yes")
-    var.robots_thread_is_active = ""
     functions.info_display("Tmatic", "Restarting...")
     service.close(Markets)
     disp.root.update()
@@ -310,4 +318,4 @@ def on_closing(root, refresh_var):
     root.after_cancel(refresh_var)
     root.destroy()
     service.close(Markets)
-    # os.abort()
+    var.kline_update_active = False

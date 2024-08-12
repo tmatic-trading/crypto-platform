@@ -1,13 +1,13 @@
-import os
 import inspect
+import os
 import platform
 from datetime import datetime, timezone
 
 import services as service
 from api.api import WS, Markets
 from common.data import Bots, Instrument, MetaInstrument
-from display.messages import ErrorMessage
 from common.variables import Variables as var
+from display.messages import ErrorMessage
 
 
 def name(stack) -> str:
@@ -35,15 +35,15 @@ class Tool(Instrument):
 
     def sell(self, qty: float = None, price: float = None) -> None:
         """
-        Sets a limit sell order.
+        Sets a sell order.
 
         Parameters
         ----------
         qty: float
-            Order quantity. If qty is omitted, then: qty is taken as 
+            Order quantity. If qty is omitted, then: qty is taken as
             minOrderQty.
         price: float
-            Order price. If price is omitted, then price is taken as the 
+            Order price. If price is omitted, then price is taken as the
             current first offer in the order book.
         """
         bot_name = name(inspect.stack())
@@ -54,7 +54,7 @@ class Tool(Instrument):
         if not price:
             price = self.instrument.asks[0][0]
         if price:
-            qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name, ws=ws)
+            qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
                 WS.place_limit(
                     ws,
@@ -78,15 +78,15 @@ class Tool(Instrument):
 
     def buy(self, qty: float = None, price: float = None) -> None:
         """
-        Sets a limit buy order.
+        Sets a buy order.
 
         Parameters
         ----------
         qty: float
-            Order quantity. If qty is omitted, then: qty is taken as 
+            Order quantity. If qty is omitted, then: qty is taken as
             minOrderQty.
         price: float
-            Order price. If price is omitted, then price is taken as the 
+            Order price. If price is omitted, then price is taken as the
             current first bid in the order book.
         """
         bot_name = name(inspect.stack())
@@ -97,7 +97,7 @@ class Tool(Instrument):
         if not price:
             price = self.instrument.bids[0][0]
         if price:
-            qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name, ws=ws)
+            qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
                 WS.place_limit(
                     ws,
@@ -150,7 +150,24 @@ class Tool(Instrument):
         ws = Markets[self.market]
         print(ws.klines)
 
-    def control_limits(self, side: str, qty: float, bot_name: str, ws: Markets) -> bool:
+    def control_limits(self, side: str, qty: float, bot_name: str) -> float:
+        """
+        When an order is submitted, does not allow the bot to exceed the set
+        limit for the instrument. Decreases quantity if the limit is exceeded
+        or returns 0 if the limit is completely exhausted. If the bot does not
+        have a position for this instrument, then such a position will be
+        added to the bot, and the limit is set as minOrderQty of the
+        instrument.
+
+        Parameters
+        ----------
+        side: str
+            The Sell or Buy side of the order.
+        qty: float
+            The quantity of the order.
+        bot_name: str
+            The bot's name.
+        """
         bot = Bots[bot_name]
         if not self.symbol in bot.position:
             bot.position[self.symbol] = {
@@ -160,16 +177,16 @@ class Tool(Instrument):
                 "market": self.market,
                 "ticker": self.instrument.ticker,
                 "position": 0,
-                "volume": 0, 
-                "sumreal": 0, 
-                "commiss": 0, 
+                "volume": 0,
+                "sumreal": 0,
+                "commiss": 0,
                 "ltime": None,
                 "pnl": 0,
                 "lotSize": self.instrument.minOrderQty,
                 "currency": self.instrument.settlCurrency[0],
-                "limits": self.instrument.minOrderQty, 
+                "limits": self.instrument.minOrderQty,
             }
-            # Checks if this bot has any records in the database.
+            # Checks if this bot has any records in the database on this instrument.
             qwr = (
                 "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
                 + "sum(SUMREAL) as SUM_SUMREAL, sum(COMMISS) as "
@@ -180,7 +197,7 @@ class Tool(Instrument):
                 + "' and MARKET = '"
                 + self.market
                 + "' and ACCOUNT = "
-                + str(ws.user_id)
+                + str(Markets[self.market].user_id)
                 + " and SIDE <> 'Fund' order by ID desc) T;"
             )
             data = service.select_database(qwr)

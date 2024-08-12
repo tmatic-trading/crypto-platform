@@ -4,8 +4,6 @@ from common.variables import Variables as var
 from connect import on_closing
 from display.variables import Variables as disp
 
-# var.logger = common_init.setup_logger()
-
 connect.setup()
 
 

@@ -14,6 +14,7 @@
 - Delete: no active orders allowed
 - Merge: no active orders allowed for the bot is being deleted
 """
+import importlib
 import os
 import re
 import shutil
@@ -33,6 +34,7 @@ from pygments.token import Token
 import functions
 import services as service
 from api.api import Markets
+from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
 
@@ -202,6 +204,12 @@ class SettingsApp:
             Bots[bot_name].created = time_now
             Bots[bot_name].updated = time_now
             Bots[bot_name].position = dict()
+            module = "algo." + bot_name + "." + self.strategy_file.split(".")[0]
+            mod = importlib.import_module(module)
+            try:
+                robo.run[bot_name] = mod.strategy
+            except Exception:
+                robo.run[bot_name] = "No strategy"
             self.insert_bot_menu(name=bot_name, new=True)
 
             return True
@@ -818,6 +826,8 @@ class SettingsApp:
                     if kline["bot_name"] == bot_name:
                         indx = ws.kline_list.index(kline)
                         ws.kline_list.pop(indx)
+            del robo.run[bot_name]
+            del var.bot_thread_active[bot_name]
         except Exception as e:
             if err is None:
                 err = str(e)

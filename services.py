@@ -94,7 +94,8 @@ def add_space(line: list) -> str:
 
 
 def close(markets):
-    var.robots_thread_is_active = False
+    for bot_name in var.bot_thread_active:
+        var.bot_thread_active[bot_name] = False
     for name in var.market_list:
         ws = markets[name]
         ws.exit()
