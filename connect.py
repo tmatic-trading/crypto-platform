@@ -271,13 +271,12 @@ def clear_params():
 
 
 def bot_threads() -> None:
-
     def target_time(timeframe_sec):
         now = datetime.now(tz=timezone.utc).timestamp()
         target_tm = now + (timeframe_sec - now % timeframe_sec)
 
         return target_tm
-    
+
     def bot_in_thread(bot_name: str, timeframe_sec: int, target_tm: float, bot: Bots):
         """
         Bot entry point
@@ -291,14 +290,20 @@ def bot_threads() -> None:
                         if callable(robo.run[bot_name]):
                             # Calls strategy function in the strategy.py file
                             robo.run[bot_name]()
-            time.sleep(1 - time.time() % 1)            
+            time.sleep(1 - time.time() % 1)
 
     for bot_name in Bots.keys():
         var.bot_thread_active[bot_name] = True
         timeframe_sec = Bots[bot_name].timefr * 60
         target_tm = target_time(timeframe_sec)
         t = threading.Thread(
-            target=bot_in_thread, args=(bot_name, timeframe_sec, target_tm, Bots[bot_name], )
+            target=bot_in_thread,
+            args=(
+                bot_name,
+                timeframe_sec,
+                target_tm,
+                Bots[bot_name],
+            ),
         )
         t.start()
 

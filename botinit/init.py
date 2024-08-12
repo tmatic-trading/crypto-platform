@@ -11,8 +11,7 @@ from api.init import Variables
 from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
-from display.bot_menu import bot_manager
-from display.functions import info_display
+from display.bot_menu import import_bot_module
 from display.messages import ErrorMessage, Message
 from functions import Function
 
@@ -155,13 +154,13 @@ class Init(WS, Variables):
                 return
             success[number] = "success"
 
-        for kline in self.kline_list:
+        for kline in self.kline_set:
             # Initialize candlestick timeframe data using 'timefr' fields
             # expressed in minutes.
             time = datetime.now(tz=timezone.utc)
-            symbol = (kline["symbol"], self.name)
-            timefr = kline["timefr"]
-            bot_name = kline["bot_name"]
+            symbol = (kline[0], self.name)
+            bot_name = kline[1]
+            timefr = kline[2]
             try:
                 self.klines[symbol][timefr]["robots"].append(bot_name)
             except KeyError:
@@ -417,70 +416,7 @@ def load_bots() -> None:
     # Importing the strategy.py bot files
 
     for bot_name in Bots.keys():
-        module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
-        try:
-            mod = importlib.import_module(module)
-        except ModuleNotFoundError:
-            message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(BOT_NAME=bot_name)
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
-                }
-            )
-            Bots[bot_name].error_message = message
-        except AttributeError as exception:
-            message = ErrorMessage.BOT_MARKET_ERROR.format(
-                EXCEPTION="AttributeError: " + str(exception),
-                BOT_NAME=bot_name,
-            )
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
-                }
-            )
-            Bots[bot_name].error_message = message
-        except ValueError as exception:
-            message = ErrorMessage.BOT_MARKET_ERROR.format(
-                MODULE=module,
-                EXCEPTION="ValueError: " + str(exception),
-                BOT_NAME=bot_name,
-            )
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
-                }
-            )
-            Bots[bot_name].error_message = message
-        except Exception as exception:
-            service.display_exception(exception=exception)
-            message = ErrorMessage.BOT_LOADING_ERROR.format(
-                MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
-            )
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
-                }
-            )
-        try:
-            robo.run[bot_name] = mod.strategy
-        except Exception:
-            robo.run[bot_name] = "No strategy"
+        import_bot_module(bot_name=bot_name)
 
 
 # Initialization of kline data

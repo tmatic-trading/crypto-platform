@@ -56,13 +56,14 @@ class Tool(Instrument):
         if price:
             qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
-                WS.place_limit(
+                print("___________sell")
+                """WS.place_limit(
                     ws,
                     quantity=-abs(qty),
                     price=price,
                     clOrdID=clOrdID,
                     symbol=self.symbol,
-                )
+                )"""
         else:
             order = f"Sell qty={qty}, price={price}"
             message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol)
@@ -128,23 +129,17 @@ class Tool(Instrument):
 
         This function is called from each bot's strategy.py file. The time
         frame is taken from the bot's parameters. After the bots are
-        initialized, the klines list is stored in the kline_list variable
+        initialized, the klines list is stored in the kline_set variable
         for each market respectively. While Tmatic is starting or restarting
         a specific market, the kline data is taken from the market's endpoint
-        according to the kline_list variable. The initial amount of data
+        according to the kline_set variable. The initial amount of data
         loaded from the endpoint is equal to CANDLESTICK_NUMBER in
         botinit/variables.py. Then, as the program runs, the data accumulates.
         """
         bot_name = name(inspect.stack())
         Bots[bot_name].timefr
         ws = Markets[self.market]
-        ws.kline_list.append(
-            {
-                "symbol": self.instrument.symbol,
-                "bot_name": bot_name,
-                "timefr": Bots[bot_name].timefr,
-            }
-        )
+        ws.kline_set.add((self.instrument.symbol, bot_name, Bots[bot_name].timefr))
 
     def kline(self, period: int = 1) -> dict:
         ws = Markets[self.market]
@@ -166,7 +161,7 @@ class Tool(Instrument):
         qty: float
             The quantity of the order.
         bot_name: str
-            The bot's name.
+            Bot name.
         """
         bot = Bots[bot_name]
         if not self.symbol in bot.position:

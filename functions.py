@@ -632,35 +632,27 @@ class Function(WS, Variables):
 
         return number
 
-    def bot_entry(self: Markets, bot_list: list, utc: datetime) -> None:
+    def kline_update_market(self: Markets, utcnow: datetime) -> None:
         """
-        Processing timeframes and entry point into bot algorithms
+        Processing timeframes
         """
-        for symbol, timeframes in self.klines.items():
+        for symbol, kline in self.klines.items():
             instrument = self.Instrument[symbol]
-            for timefr, values in timeframes.items():
-                if utc > values["time"] + timedelta(minutes=timefr):
-                    for bot_name in values["robots"]:
-                        if Bots[bot_name].state == "Active" and disp.f9 == "ON":
-                            bot_list.append(
-                                {
-                                    "emi": bot_name,
-                                    "bot": Bots[bot_name],
-                                    "kline": values["data"],
-                                }
-                            )
-                        Function.save_kline_data(
-                            self,
-                            frame=values["data"][-1],
-                        )
-                    next_minute = int(utc.minute / timefr) * timefr
-                    dt_now = utc.replace(minute=next_minute, second=0, microsecond=0)
+            for timefr, values in kline.items():
+                # d print("______", timefr, values.keys())
+                if utcnow > values["time"] + timedelta(minutes=timefr):
+                    Function.save_kline_data(
+                        self,
+                        frame=values["data"][-1],
+                    )
+                    next_minute = int(utcnow.minute / timefr) * timefr
+                    dt_now = utcnow.replace(minute=next_minute, second=0, microsecond=0)
                     values["data"].append(
                         {
-                            "date": (utc.year - 2000) * 10000
-                            + utc.month * 100
-                            + utc.day,
-                            "time": utc.hour * 10000 + utc.minute * 100,
+                            "date": (utcnow.year - 2000) * 10000
+                            + utcnow.month * 100
+                            + utcnow.day,
+                            "time": utcnow.hour * 10000 + utcnow.minute * 100,
                             "bid": instrument.bids[0][0],
                             "ask": instrument.asks[0][0],
                             "hi": instrument.asks[0][0],
@@ -670,8 +662,6 @@ class Function(WS, Variables):
                         }
                     )
                     values["time"] = dt_now
-
-        return bot_list
 
     def refresh_on_screen(self: Markets, utc: datetime) -> None:
         """
@@ -1854,6 +1844,28 @@ def init_bot_treetable_trades():
         bot_menu.init_bot_trades(bot_name)
 
 
+def clear_tables():
+    var.lock_market_switch.acquire(True)
+    ws = Markets[var.current_market]
+    TreeTable.instrument.init(size=len(ws.symbol_list))
+    TreeTable.account.init(size=len(ws.Account.get_keys()))
+    TreeTable.orderbook.init(size=disp.num_book)
+    TreeTable.results.init(size=len(ws.Result.get_keys()))
+    TreeTable.instrument.set_selection()
+    var.lock_market_switch.release()
+
+
+def kline_update():
+    while var.kline_update_active:
+        utcnow = datetime.now(tz=timezone.utc)
+        for market in var.market_list:
+            ws = Markets[market]
+            if ws.api_is_active:
+                Function.kline_update_market(ws, utcnow=utcnow)
+        rest = 1 - time.time() % 1
+        time.sleep(rest)
+
+
 def init_tables() -> None:
     ws = Markets[var.current_market]
     TreeTable.orderbook = TreeviewTable(
@@ -1982,28 +1994,5 @@ TreeTable.bot_orders = TreeviewTable(
     bind=handler_order,
     hide=["8", "3", "5"],
 )
-
-
-def clear_tables():
-    var.lock_market_switch.acquire(True)
-    ws = Markets[var.current_market]
-    TreeTable.instrument.init(size=len(ws.symbol_list))
-    TreeTable.account.init(size=len(ws.Account.get_keys()))
-    TreeTable.orderbook.init(size=disp.num_book)
-    TreeTable.results.init(size=len(ws.Result.get_keys()))
-    TreeTable.instrument.set_selection()
-    var.lock_market_switch.release()
-
-
-def kline_update():
-    while var.kline_update_active:
-        for market in var.market_list:
-            ws = Markets[market]
-            if ws.api_is_active:
-                pass
-                # bot_list = Function.bot_entry(ws, bot_list, utc=utcnow)
-        rest = 1 - time.time() % 1
-        time.sleep(rest)
-
 
 # change_color(color=disp.title_color, container=disp.root)

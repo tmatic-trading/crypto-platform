@@ -37,6 +37,7 @@ from api.api import Markets
 from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
+from display.messages import ErrorMessage
 
 from .variables import AutoScrollbar, TreeTable, TreeviewTable
 from .variables import Variables as disp
@@ -98,6 +99,7 @@ class SettingsApp:
         self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
         self.brief_frame.pack(fill="both", expand="yes", anchor="n")
         self.brief_frame.bind("<Configure>", self.wrap)
+        self.modules = dict()
 
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
@@ -269,6 +271,7 @@ class SettingsApp:
                 code=content,
                 bot_name=disp.bot_name,
             )
+            import_bot_module(disp.bot_name, update=True)
 
         def check_syntax() -> None:
             content = self.strategy_text.get("1.0", tk.END)
@@ -823,11 +826,11 @@ class SettingsApp:
             for market in var.market_list:
                 ws = Markets[market]
                 for kline in reversed(ws.kline_list.copy()):
-                    if kline["bot_name"] == bot_name:
-                        indx = ws.kline_list.index(kline)
-                        ws.kline_list.pop(indx)
+                    if kline[1] == bot_name:
+                        ws.kline_set.remove(kline)
             del robo.run[bot_name]
             del var.bot_thread_active[bot_name]
+            del self.modules[bot_name]
         except Exception as e:
             if err is None:
                 err = str(e)
@@ -920,6 +923,89 @@ def handler_bot_menu(event) -> None:
             bot_manager.bot_options[option](bot_name=parent)
         if parent != "Back":
             disp.bot_event_prev = iid
+
+
+def import_bot_module(bot_name: str, update=False) -> None:
+    """
+    This function is called when bots are initially loaded, or reloaded due
+    to <F3>, or reloaded for some other reason, or when strategy.py is
+    updated.
+
+    Parameters
+    ----------
+    bot_name: str
+        Bot name.
+    update: bool
+        Evaluates to True when strategy.py is updated.
+    """
+    module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
+    try:
+        if update:
+            importlib.reload(bot_manager.modules[bot_name])
+        else:
+            mod = importlib.import_module(module)
+            bot_manager.modules[bot_name] = mod
+    except ModuleNotFoundError:
+        message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(BOT_NAME=bot_name)
+        var.logger.warning(message)
+        var.queue_info.put(
+            {
+                "market": "",
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": True,
+            }
+        )
+        Bots[bot_name].error_message = message
+    except AttributeError as exception:
+        message = ErrorMessage.BOT_MARKET_ERROR.format(
+            EXCEPTION="AttributeError: " + str(exception),
+            BOT_NAME=bot_name,
+        )
+        var.logger.warning(message)
+        var.queue_info.put(
+            {
+                "market": "",
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": True,
+            }
+        )
+        Bots[bot_name].error_message = message
+    except ValueError as exception:
+        message = ErrorMessage.BOT_MARKET_ERROR.format(
+            MODULE=module,
+            EXCEPTION="ValueError: " + str(exception),
+            BOT_NAME=bot_name,
+        )
+        var.logger.warning(message)
+        var.queue_info.put(
+            {
+                "market": "",
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": True,
+            }
+        )
+        Bots[bot_name].error_message = message
+    except Exception as exception:
+        service.display_exception(exception=exception)
+        message = ErrorMessage.BOT_LOADING_ERROR.format(
+            MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
+        )
+        var.logger.warning(message)
+        var.queue_info.put(
+            {
+                "market": "",
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": True,
+            }
+        )
+    try:
+        robo.run[bot_name] = mod.strategy
+    except Exception:
+        robo.run[bot_name] = "No strategy"
 
 
 trade_treeTable = dict()

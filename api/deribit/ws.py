@@ -77,7 +77,7 @@ class Deribit(Variables):
             },
         }
         self.ticker = dict()
-        self.kline_list = list()
+        self.kline_set = set()
 
     def start(self):
         for symbol in self.symbol_list:
