@@ -56,14 +56,13 @@ class Tool(Instrument):
         if price:
             qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
-                print("___________sell")
-                """WS.place_limit(
+                WS.place_limit(
                     ws,
                     quantity=-abs(qty),
                     price=price,
                     clOrdID=clOrdID,
                     symbol=self.symbol,
-                )"""
+                )
         else:
             order = f"Sell qty={qty}, price={price}"
             message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol)

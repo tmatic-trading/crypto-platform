@@ -66,26 +66,27 @@ class Function(WS, Variables):
             WS.get_instrument(self, ticker=ticker, category=category)
 
     def kline_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
-        return "data/" + symbol[0] + "_" + symbol[1] + "_" + str(timefr) + ".txt"
+        return "data/" + symbol[0] + "_" + self.name + "_" + str(timefr) + ".txt"
 
-    def save_kline_data(self: Markets, frame: dict) -> None:
-        zero = (6 - len(str(frame["time"]))) * "0"
+    def save_kline_data(self: Markets, row: dict, symbol: tuple, timefr: int) -> None:
+        filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
+        zero = (6 - len(str(row["time"]))) * "0"
         data = (
-            str(frame["date"])
+            str(row["date"])
             + ";"
             + str(zero)
-            + str(frame["time"])
+            + str(row["time"])
             + ";"
-            + str(frame["bid"])
+            + str(row["bid"])
             + ";"
-            + str(frame["ask"])
+            + str(row["ask"])
             + ";"
-            + str(frame["hi"])
+            + str(row["hi"])
             + ";"
-            + str(frame["lo"])
+            + str(row["lo"])
             + ";"
         )
-        with open(self.filename, "a") as f:
+        with open(filename, "a") as f:
             f.write(data + "\n")
 
     def noll(self: Markets, val: str, length: int) -> str:
@@ -639,11 +640,13 @@ class Function(WS, Variables):
         for symbol, kline in self.klines.items():
             instrument = self.Instrument[symbol]
             for timefr, values in kline.items():
-                # d print("______", timefr, values.keys())
                 if utcnow > values["time"] + timedelta(minutes=timefr):
+                    print("___________", self.kline_set, self.klines.keys())
                     Function.save_kline_data(
                         self,
-                        frame=values["data"][-1],
+                        row=values["data"][-1],
+                        symbol=symbol, 
+                        timefr=timefr, 
                     )
                     next_minute = int(utcnow.minute / timefr) * timefr
                     dt_now = utcnow.replace(minute=next_minute, second=0, microsecond=0)

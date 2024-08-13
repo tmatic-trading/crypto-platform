@@ -63,9 +63,9 @@ class Init(WS, Variables):
         in files for each timeframe. Every time you reboot the files are
         overwritten.
         """
-        self.filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
-        with open(self.filename, "w"):
-            pass
+        filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
+        with open(filename, "w") as f:
+            f.write("date;time;open bid;open ask;hi;lo;" + "\n")
         target = datetime.now(tz=timezone.utc)
         target = target.replace(second=0, microsecond=0)
         start_time = target - timedelta(
@@ -83,6 +83,7 @@ class Init(WS, Variables):
             symbol=symbol,
             timeframe=timefr,
         )
+
         if not res:
             return None
 
@@ -110,10 +111,12 @@ class Init(WS, Variables):
                     "datetime": tm,
                 }
             )
-            if num < len(res[:-1]) - 1:
+            if num < len(res) - 1:
                 Function.save_kline_data(
                     self,
-                    frame=klines[symbol][timefr]["data"][-1],
+                    row=klines[symbol][timefr]["data"][-1],
+                    symbol=symbol, 
+                    timefr=timefr, 
                 )
         klines[symbol][timefr]["time"] = tm
 
