@@ -1368,7 +1368,7 @@ def handler_order(event) -> None:
                 var.logger.info(message)
                 return
             if not ws.logNumFatal:
-                Function.del_order(ws, emi=emi, order=order, clOrdID=clOrdID)
+                Function.del_order(ws, order=order, clOrdID=clOrdID)
             else:
                 info_display(ws.name, "The operation failed. Websocket closed!")
             on_closing()
@@ -1694,10 +1694,7 @@ def handler_orderbook(event) -> None:
         emi_number = tk.StringVar()
         options = list()
         for name in Bots.keys():
-            bot = Bots[name]
-            for symbol, pos in bot.position.items():
-                if symbol == var.symbol and pos["position"] != 0:
-                    options.append(name)
+            options.append(name)
         options.append(var.symbol[0])
         option_robots = tk.OptionMenu(frame_robots, emi_number, *options)
         frame_robots.grid(row=1, column=0, sticky="NSWE", columnspan=2, padx=10, pady=0)
