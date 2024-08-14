@@ -293,39 +293,42 @@ class SettingsApp:
 
         frame_title = tk.Frame(disp.frame_strategy)
         frame_title.grid(row=0, column=0, sticky="NSEW", columnspan=2)
+        blank = tk.Label(frame_title, text=" ")
+        blank.grid(row=0, column=0, sticky="NSEW")
         title = BoldLabel(frame_title, text="STRATEGY")
-        title.grid(row=0, column=0, sticky="NSEW")
-
+        title.grid(row=0, column=1, sticky="NSEW")
+        frame_title_sub = tk.Frame(frame_title)
+        frame_title_sub.grid(row=0, column=2)
         self.button_strategy = tk.Button(
-            frame_title,
+            frame_title_sub,
             activebackground=disp.bg_active,
             text="Update strategy",
             command=lambda: update_strategy(),
             state="disabled",
-            pady=0,
+            pady=1,
         )
-        self.button_strategy.grid(row=0, column=1)
-
+        self.button_strategy.pack(fill="both", side="left")
         button_syntax = tk.Button(
-            frame_title,
+            frame_title_sub,
             activebackground=disp.bg_active,
             text="Check syntax",
             command=lambda: check_syntax(),
-            pady=0,
+            pady=1,
         )
-        button_syntax.grid(row=0, column=2)
+        button_syntax.pack(fill="both", side="left")
 
         button_backtest = tk.Button(
-            frame_title,
+            frame_title_sub,
             activebackground=disp.bg_active,
             text="Backtest",
             # command=lambda: update_strategy(),
             state="disabled",
-            pady=0,
+            pady=1,
         )
-        button_backtest.grid(row=0, column=3)
-
+        button_backtest.pack(fill="both", side="left")
         frame_title.grid_columnconfigure(0, weight=1)
+        frame_title.grid_columnconfigure(1, weight=2)
+        frame_title.grid_columnconfigure(2, weight=2)
 
         self.strategy_scroll = AutoScrollbar(disp.frame_strategy, orient="vertical")
         self.strategy_text = tk.Text(
