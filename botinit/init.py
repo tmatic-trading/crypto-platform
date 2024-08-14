@@ -115,8 +115,8 @@ class Init(WS, Variables):
                 Function.save_kline_data(
                     self,
                     row=klines[symbol][timefr]["data"][-1],
-                    symbol=symbol, 
-                    timefr=timefr, 
+                    symbol=symbol,
+                    timefr=timefr,
                 )
         klines[symbol][timefr]["time"] = tm
 
@@ -252,6 +252,7 @@ def load_bots() -> None:
         bot.updated = value["UPDATED"]
         bot.state = value["STATE"]
         bot.position = dict()
+        bot.order = dict()
 
     # Loading volumes for subscribed instruments
 

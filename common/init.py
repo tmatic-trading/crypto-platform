@@ -242,22 +242,18 @@ class Init(WS, Variables):
     def load_orders(self: Markets, myOrders: list) -> None:
         """
         All open orders received from the exchange endpoint as a result of an
-        HTTP request are taken into account in the orders array. If the
-        process of filling the array reveals an order whose emi identifier
-        does not belong to any of the bots, such a bot will be created with
-        the NOT DEFINED status.
+        HTTP request are taken into account in the orders array.
         """
-        self.orders = dict()
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
-                emi = val["symbol"][0]
+                # d emi = val["symbol"][0]
+                emi = ".".join(val["symbol"])
                 if "clOrdID" in val:
                     if "." not in val["clOrdID"]:
                         del val["clOrdID"]
                 if "clOrdID" not in val:
                     # The order was placed from the exchange web interface
-                    var.last_order += 1
-                    clOrdID = str(var.last_order) + "." + emi
+                    clOrdID = service.set_clOrdID(emi=emi, market=self.name)
                     info_display(
                         self.name,
                         "Outside placement: price="
@@ -272,17 +268,9 @@ class Init(WS, Variables):
                     s = clOrdID.split(".")
                     emi = s[1]
                 category = self.Instrument[val["symbol"]].category
-                self.orders[clOrdID] = {}
-                self.orders[clOrdID]["EMI"] = emi
-                self.orders[clOrdID]["leavesQty"] = val["leavesQty"]
-                self.orders[clOrdID]["transactTime"] = val["transactTime"]
-                self.orders[clOrdID]["price"] = val["price"]
-                self.orders[clOrdID]["SYMBOL"] = val["symbol"]
-                self.orders[clOrdID]["CATEGORY"] = category
-                self.orders[clOrdID]["MARKET"] = self.name
-                self.orders[clOrdID]["SIDE"] = val["side"]
-                self.orders[clOrdID]["orderID"] = val["orderID"]
-                self.orders[clOrdID]["clOrdID"] = clOrdID
+                service.fill_order(
+                    emi=emi, clOrdID=clOrdID, category=category, value=val
+                )
 
     def load_database(self: Markets) -> None:
         """

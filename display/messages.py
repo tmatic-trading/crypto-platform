@@ -11,8 +11,9 @@ class Message(str, Enum):
 class ErrorMessage(str, Enum):
     BOT_FOLDER_NOT_FOUND = (
         "``{BOT_NAME}`` bot is in the database but there is no subdirectory named "
-        + "``{BOT_NAME}``. You should either restore the subdirectory in the ``algo`` "
-        + "folder, then restart <f3> Tmatic, or delete this bot using ``Bot menu``.\n"
+        + "``{BOT_NAME}`` or the strategy.py file in this subdirectory. You "
+        + "should either restore the subdirectory in the ``algo`` folder, "
+        + "then restart <f3> Tmatic, or delete this bot using ``Bot menu``.\n"
     )
     BOT_MARKET_ERROR = (
         "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"

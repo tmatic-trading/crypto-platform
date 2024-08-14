@@ -213,6 +213,7 @@ class SettingsApp:
             except Exception:
                 robo.run[bot_name] = "No strategy"
             self.insert_bot_menu(name=bot_name, new=True)
+            var.orders[bot_name] = dict()
 
             return True
 
@@ -748,7 +749,7 @@ class SettingsApp:
     def show(self, bot_name):
         if bot_name != disp.bot_event_prev:
             TreeTable.bot_menu.on_rollup(iid=bot_name)
-        disp.bot_name = bot_name
+        
         disp.refresh_bot_info = True
         bot = Bots[bot_name]
         values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
@@ -765,6 +766,7 @@ class SettingsApp:
                     )
                     if disp.bot_name and bot_name != disp.bot_name:
                         bot_trades_sub[disp.bot_name].pack_forget()
+                    disp.bot_name = bot_name
                     init_bot_trades(bot_name=bot_name)
                     bot_trades_sub[bot_name].pack(fill="both", expand="yes")
                     refresh_bot_orders()
@@ -831,6 +833,7 @@ class SettingsApp:
             del robo.run[bot_name]
             del var.bot_thread_active[bot_name]
             del self.modules[bot_name]
+            del var.orders[bot_name]
         except Exception as e:
             if err is None:
                 err = str(e)

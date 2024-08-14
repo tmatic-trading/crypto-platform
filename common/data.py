@@ -163,6 +163,7 @@ class Result:
 class BotData:
     name: str
     position: dict
+    order: dict
     timefr: int
     pnl: dict
     state: str

@@ -330,26 +330,23 @@ class Function(WS, Variables):
                 if (
                     "clOrdID" not in row
                 ):  # The order was placed from the exchange web interface
-                    var.last_order += 1
-                    clOrdID = str(var.last_order) + "." + row["symbol"][0]
-                    self.orders[clOrdID] = {
-                        "leavesQty": row["leavesQty"],
-                        "price": row["price"],
-                        "SYMBOL": row["symbol"],
-                        "CATEGORY": row["category"],
-                        "MARKET": self.name,
-                        "transactTime": row["transactTime"],
-                        "SIDE": row["side"],
-                        "EMI": row["symbol"],
-                        "orderID": row["orderID"],
-                        "clOrdID": clOrdID,
-                    }
+                    emi = ".".join(row["symbol"])
+                    clOrdID = service.set_clOrdID(emi=emi, market=self.name)
+                    service.fill_order(
+                        emi=emi, clOrdID=clOrdID, category=row["category"], value=row
+                    )
                     info = "Outside placement: "
                 else:
                     info = ""
                 Function.orders_processing(self, row=row, info=info)
+
+            # Canceled order
+
             elif row["execType"] == "Canceled":
                 Function.orders_processing(self, row=row)
+
+            # Replaced order
+
             elif row["execType"] == "Replaced":
                 Function.orders_processing(self, row=row)
         finally:
@@ -362,19 +359,28 @@ class Function(WS, Variables):
         if "clOrdID" in row:
             if row["clOrdID"]:
                 clOrdID = row["clOrdID"]
+                dot = row["clOrdID"].find(".")
+                if dot == -1:
+                    emi = ".".join(row["symbol"])
+                else:
+                    emi = row["clOrdID"][dot + 1 :]
             else:
-                clOrdID = "Retrieved from Trading history"
+                """Possibly retrieved from Trading history"""
+                clOrdID = "Empty"
         else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
             # through the exchange web interface.
-            for clOrdID in self.orders:
-                if "orderID" in row:
-                    if self.orders[clOrdID]["orderID"] == row["orderID"]:
+            for emi, values in var.orders.items():
+                for clOrdID, value in values.items():
+                    if value["orderID"] == row["orderID"]:
+                        # emi and clOrdID were defined in var.orders
                         break
             else:
-                clOrdID = "Empty clOrdID. The order was not sent via Tmatic."
-                print(clOrdID)
-        if "orderID" not in row:  # for Bitmex: orderID is missing when text='Closed to
-            # conform to lot size', last time 2021-05-31
+                """There is no order with this orderID in the var.orders. The
+                order was not sent via Tmatic."""
+                clOrdID = "Empty"
+        if "orderID" not in row:
+            """Bitmex: orderID is missing when text='Closed to conform to lot
+            size'. The last time this happened was on 31.05.2021."""
             row["orderID"] = row["text"]
         price = row["price"]
         info_q = ""
@@ -382,11 +388,11 @@ class Function(WS, Variables):
         if row["execType"] == "Canceled":
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
-            if clOrdID in self.orders:
+            if emi in var.orders and clOrdID in var.orders[emi]:
                 var.queue_order.put(
                     {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                 )
-                del self.orders[clOrdID]
+                del var.orders[emi][clOrdID]
             else:
                 var.logger.warning(
                     self.name
@@ -398,41 +404,23 @@ class Function(WS, Variables):
                 )
         else:
             if row["execType"] == "New":
-                if "clOrdID" in row:
-                    dot = row["clOrdID"].find(".")
-                    if dot == -1:
-                        emi = row["symbol"]
-                    else:
-                        emi = row["clOrdID"][dot + 1 :]
-                    if isinstance(emi, tuple):
-                        _emi = emi[0]
-                    else:
-                        _emi = emi
-                    self.orders[clOrdID] = {
-                        "leavesQty": row["leavesQty"],
-                        "price": row["price"],
-                        "SYMBOL": row["symbol"],
-                        "CATEGORY": row["category"],
-                        "MARKET": self.name,
-                        "transactTime": row["transactTime"],
-                        "SIDE": row["side"],
-                        "EMI": _emi,
-                        "orderID": row["orderID"],
-                        "clOrdID": clOrdID,
-                    }
+                if "clOrdID" in row and row["clOrdID"]:
+                    service.fill_order(
+                        emi=emi, clOrdID=clOrdID, category=row["category"], value=row
+                    )
                 info_p = price
                 info_q = row["orderQty"]
             elif row["execType"] == "Trade":
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
-                if clOrdID in self.orders:
+                if emi in var.orders and clOrdID in var.orders[emi]:
                     precision = self.Instrument[row["symbol"]].precision
-                    self.orders[clOrdID]["leavesQty"] -= row["lastQty"]
-                    self.orders[clOrdID]["leavesQty"] = round(
-                        self.orders[clOrdID]["leavesQty"], precision
+                    var.orders[emi][clOrdID]["leavesQty"] -= row["lastQty"]
+                    var.orders[emi][clOrdID]["leavesQty"] = round(
+                        var.orders[emi][clOrdID]["leavesQty"], precision
                     )
-                    if self.orders[clOrdID]["leavesQty"] == 0:
-                        del self.orders[clOrdID]
+                    if var.orders[emi][clOrdID]["leavesQty"] == 0:
+                        del var.orders[emi][clOrdID]
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -447,11 +435,11 @@ class Function(WS, Variables):
                             + " not found."
                         )
             elif row["execType"] == "Replaced":
-                if clOrdID in self.orders:
-                    self.orders[clOrdID]["orderID"] = row["orderID"]
+                if emi in var.orders and clOrdID in var.orders[emi]:
+                    var.orders[emi][clOrdID]["orderID"] = row["orderID"]
                     info_p = price
                     info_q = row["leavesQty"]
-                    self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
+                    var.orders[emi][clOrdID]["leavesQty"] = row["leavesQty"]
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -464,10 +452,9 @@ class Function(WS, Variables):
                         + clOrdID
                         + " not found."
                     )
-            if clOrdID in self.orders:
-                # self.orders[clOrdID]["leavesQty"] = row["leavesQty"]
-                self.orders[clOrdID]["price"] = price
-                self.orders[clOrdID]["transactTime"] = row["transactTime"]
+            if emi in var.orders and clOrdID in var.orders[emi]:
+                var.orders[emi][clOrdID]["price"] = price
+                var.orders[emi][clOrdID]["transactTime"] = row["transactTime"]
         try:
             t = clOrdID.split(".")
             int(t[0])
@@ -510,9 +497,10 @@ class Function(WS, Variables):
                 info_q,
             )
 
-        if clOrdID in self.orders:
-            var.queue_order.put({"action": "put", "order": self.orders[clOrdID]})
+        if emi in var.orders and clOrdID in var.orders[emi]:
+            var.queue_order.put({"action": "put", "order": var.orders[emi][clOrdID]})
         disp.bot_orders_processing = True
+
 
     def trades_display(
         self: Markets, val: dict, table: TreeviewTable, init=False
@@ -583,29 +571,29 @@ class Function(WS, Variables):
         """
         Update Orders widget
         """
-        emi = val["EMI"]
+        emi = val["emi"]
         tm = str(val["transactTime"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
         row = [
             tm,
-            val["SYMBOL"][0],
-            val["CATEGORY"],
-            val["MARKET"],
-            val["SIDE"],
+            val["symbol"][0],
+            val["category"],
+            val["market"],
+            val["side"],
             Function.format_price(
                 self,
                 number=val["price"],
-                symbol=val["SYMBOL"],
+                symbol=val["symbol"],
             ),
-            Function.volume(self, qty=val["leavesQty"], symbol=val["SYMBOL"]),
+            Function.volume(self, qty=val["leavesQty"], symbol=val["symbol"]),
             emi,
         ]
         clOrdID = val["clOrdID"]
         if clOrdID in TreeTable.orders.children:
             TreeTable.orders.delete(iid=clOrdID)
         TreeTable.orders.insert(
-            values=row, market=self.name, iid=val["clOrdID"], configure=val["SIDE"]
+            values=row, market=self.name, iid=val["clOrdID"], configure=val["side"]
         )
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
@@ -641,12 +629,11 @@ class Function(WS, Variables):
             instrument = self.Instrument[symbol]
             for timefr, values in kline.items():
                 if utcnow > values["time"] + timedelta(minutes=timefr):
-                    print("___________", self.kline_set, self.klines.keys())
                     Function.save_kline_data(
                         self,
                         row=values["data"][-1],
-                        symbol=symbol, 
-                        timefr=timefr, 
+                        symbol=symbol,
+                        timefr=timefr,
                     )
                     next_minute = int(utcnow.minute / timefr) * timefr
                     dt_now = utcnow.replace(minute=next_minute, second=0, microsecond=0)
@@ -1267,6 +1254,7 @@ class Function(WS, Variables):
 
     def put_order(
         self: Markets,
+        emi: str, 
         clOrdID: str,
         price: float,
         qty: int,
@@ -1275,11 +1263,11 @@ class Function(WS, Variables):
         Replace orders
         """
         price_str = Function.format_price(
-            self, number=price, symbol=self.orders[clOrdID]["SYMBOL"]
+            self, number=price, symbol=var.orders[emi][clOrdID]["symbol"]
         )
         var.logger.info(
             "Putting orderID="
-            + self.orders[clOrdID]["orderID"]
+            + var.orders[emi][clOrdID]["orderID"]
             + " clOrdID="
             + clOrdID
             + " price="
@@ -1287,13 +1275,13 @@ class Function(WS, Variables):
             + " qty="
             + str(qty)
         )
-        if price != self.orders[clOrdID]["price"]:  # the price alters
+        if price != var.orders[emi][clOrdID]["price"]:  # the price alters
             WS.replace_limit(
                 self,
                 quantity=qty,
                 price=price_str,
-                orderID=self.orders[clOrdID]["orderID"],
-                symbol=self.orders[clOrdID]["SYMBOL"],
+                orderID=var.orders[emi][clOrdID]["orderID"],
+                symbol=var.orders[emi][clOrdID]["symbol"],
             )
 
         return clOrdID
@@ -1342,12 +1330,13 @@ class Function(WS, Variables):
 
     def find_order(self: Markets, price: float, symbol: str) -> Union[float, str]:
         qty = 0
-        for clOrdID in self.orders:
-            if (
-                self.orders[clOrdID]["price"] == price
-                and self.orders[clOrdID]["SYMBOL"] == symbol
-            ):
-                qty += self.orders[clOrdID]["leavesQty"]
+        for values in var.orders.values():
+            for value in values.values():
+                if (
+                    value["price"] == price
+                    and value["symbol"] == symbol
+                ):
+                    qty += value["leavesQty"]
         if not qty:
             qty = ""
 
@@ -1362,6 +1351,8 @@ def handler_order(event) -> None:
         clOrdID = items[0]
         indx = TreeTable.orders.title.index("MARKET")
         ws = Markets[TreeTable.orders.tree.item(clOrdID)["values"][indx]]
+        indx = TreeTable.orders.title.index("EMI")
+        emi = TreeTable.orders.tree.item(clOrdID)["values"][indx]
 
         def on_closing() -> None:
             disp.order_window_trigger = "off"
@@ -1370,21 +1361,21 @@ def handler_order(event) -> None:
 
         def delete(order: dict, clOrdID: str) -> None:
             try:
-                ws.orders[clOrdID]
+                var.orders[emi][clOrdID]
             except KeyError:
                 message = "Order " + clOrdID + " does not exist!"
                 info_display(ws.name, message)
                 var.logger.info(message)
                 return
             if not ws.logNumFatal:
-                Function.del_order(ws, order=order, clOrdID=clOrdID)
+                Function.del_order(ws, emi=emi, order=order, clOrdID=clOrdID)
             else:
                 info_display(ws.name, "The operation failed. Websocket closed!")
             on_closing()
 
         def replace(clOrdID) -> None:
             try:
-                ws.orders[clOrdID]
+                var.orders[emi][clOrdID]
             except KeyError:
                 message = "Order " + clOrdID + " does not exist!"
                 info_display(ws.name, message)
@@ -1396,30 +1387,31 @@ def handler_order(event) -> None:
                 info_display(ws.name, "Price must be numeric!")
                 return
             if not ws.logNumFatal:
-                roundSide = ws.orders[clOrdID]["leavesQty"]
-                if ws.orders[clOrdID]["SIDE"] == "Sell":
+                roundSide = var.orders[emi][clOrdID]["leavesQty"]
+                if var.orders[emi][clOrdID]["side"] == "Sell":
                     roundSide = -roundSide
                 price = Function.round_price(
                     ws,
-                    symbol=ws.orders[clOrdID]["SYMBOL"],
+                    symbol=var.orders[emi][clOrdID]["symbol"],
                     price=float(price_replace.get()),
                     rside=roundSide,
                 )
-                if price == ws.orders[clOrdID]["price"]:
+                if price == var.orders[emi][clOrdID]["price"]:
                     info_display(ws.name, "Price is the same but must be different!")
                     return
                 clOrdID = Function.put_order(
                     ws,
+                    emi=emi, 
                     clOrdID=clOrdID,
                     price=price,
-                    qty=ws.orders[clOrdID]["leavesQty"],
+                    qty=var.orders[emi][clOrdID]["leavesQty"],
                 )
             else:
                 info_display(ws.name, "The operation failed. Websocket closed!")
             on_closing()
 
         if disp.order_window_trigger == "off":
-            order = ws.orders[clOrdID]
+            order = var.orders[emi][clOrdID]
             disp.order_window_trigger = "on"
             order_window = tk.Toplevel(disp.root, pady=10, padx=10)
             cx = disp.root.winfo_pointerx()
@@ -1433,16 +1425,16 @@ def handler_order(event) -> None:
             label1 = tk.Label(frame_up, justify="left")
             order_price = Function.format_price(
                 ws,
-                number=ws.orders[clOrdID]["price"],
-                symbol=ws.orders[clOrdID]["SYMBOL"],
+                number=var.orders[emi][clOrdID]["price"],
+                symbol=var.orders[emi][clOrdID]["symbol"],
             )
             label1["text"] = (
                 "market\t"
-                + ws.orders[clOrdID]["SYMBOL"][1]
+                + var.orders[emi][clOrdID]["symbol"][1]
                 + "\nsymbol\t"
-                + ws.orders[clOrdID]["SYMBOL"][0]
+                + var.orders[emi][clOrdID]["symbol"][0]
                 + "\nside\t"
-                + ws.orders[clOrdID]["SIDE"]
+                + var.orders[emi][clOrdID]["side"]
                 + "\nclOrdID\t"
                 + clOrdID
                 + "\nprice\t"
@@ -1450,8 +1442,8 @@ def handler_order(event) -> None:
                 + "\nquantity\t"
                 + Function.volume(
                     ws,
-                    qty=ws.orders[clOrdID]["leavesQty"],
-                    symbol=ws.orders[clOrdID]["SYMBOL"],
+                    qty=var.orders[emi][clOrdID]["leavesQty"],
+                    symbol=var.orders[emi][clOrdID]["symbol"],
                 )
             )
             label_price = tk.Label(frame_dn)

@@ -50,7 +50,6 @@ class Bybit(Variables):
         self.robot_status = dict()
         self.setup_orders = list()
         self.account_disp = ""
-        self.orders = dict()
         WebSocket._on_message = Bybit._on_message
         self.ticker = dict()
         self.kline_set = set()
@@ -185,10 +184,11 @@ class Bybit(Variables):
             if value["orderStatus"] == "Cancelled":
                 orderStatus = "Canceled"
             elif value["orderStatus"] == "New":
-                for order in self.orders.values():
-                    if value["orderId"] == order["orderID"]:
-                        orderStatus = "Replaced"
-                        break
+                for values in var.orders.values():
+                    for order in values.values():
+                        if value["orderId"] == order["orderID"]:
+                            orderStatus = "Replaced"
+                            break
                 else:
                     orderStatus = "New"
             elif value["orderStatus"] == "Rejected":

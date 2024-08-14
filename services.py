@@ -206,6 +206,22 @@ def update_database(query: list) -> None:
 
 def set_clOrdID(emi: str) -> str:
     var.last_order += 1
-    clOrdID = str(var.last_order) + "." + emi
+    clOrdID = f"{var.last_order}.{emi}"
 
     return clOrdID
+
+
+def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
+    if emi not in var.orders:
+        var.orders[emi] = dict()
+    var.orders[emi][clOrdID] = dict()
+    var.orders[emi][clOrdID]["emi"] = emi
+    var.orders[emi][clOrdID]["leavesQty"] = value["leavesQty"]
+    var.orders[emi][clOrdID]["transactTime"] = value["transactTime"]
+    var.orders[emi][clOrdID]["price"] = value["price"]
+    var.orders[emi][clOrdID]["symbol"] = value["symbol"]
+    var.orders[emi][clOrdID]["category"] = category
+    var.orders[emi][clOrdID]["market"] = value["symbol"][1]
+    var.orders[emi][clOrdID]["side"] = value["side"]
+    var.orders[emi][clOrdID]["orderID"] = value["orderID"]
+    var.orders[emi][clOrdID]["clOrdID"] = clOrdID

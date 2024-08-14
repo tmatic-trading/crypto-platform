@@ -224,3 +224,4 @@ class Variables:
     sql_lock = threading.Lock()
     working_directory: str
     kline_update_active = True
+    orders = dict()

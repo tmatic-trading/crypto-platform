@@ -147,8 +147,9 @@ def setup_market(ws: Markets, reload=False):
 
 def merge_orders():
     orders_list = list()
-    for name in var.market_list:
-        orders_list += Markets[name].orders.values()
+    for emi, values in var.orders.items():
+        for clOrdID, value in values.items():
+            orders_list.append(value)
     orders_list.sort(key=lambda x: x["transactTime"])
     for order in orders_list:
         var.queue_order.put({"action": "put", "order": order})
@@ -227,8 +228,8 @@ def refresh() -> None:
         elif job["action"] == "put":
             order = job["order"]
             clOrdID = order["clOrdID"]
-            ws = Markets[order["MARKET"]]
-            if clOrdID in ws.orders:
+            ws = Markets[order["market"]]
+            if clOrdID in var.orders[order["emi"]]:
                 Function.orders_display(ws, val=order)
         elif job["action"] == "clear":
             TreeTable.orders.clear_all(market=job["market"])
