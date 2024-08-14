@@ -201,11 +201,13 @@ class SettingsApp:
                 f"*\n!__init__.py\n!.gitignore\n!{self.strategy_file}\n",
             )
             time_now = self.get_time()
+            var.orders[bot_name] = dict()
             Bots[bot_name].state = "Suspended"
             Bots[bot_name].timefr = int(tf[0])
             Bots[bot_name].created = time_now
             Bots[bot_name].updated = time_now
             Bots[bot_name].position = dict()
+            Bots[bot_name].order = var.orders[bot_name]
             module = "algo." + bot_name + "." + self.strategy_file.split(".")[0]
             mod = importlib.import_module(module)
             try:

@@ -147,8 +147,8 @@ def setup_market(ws: Markets, reload=False):
 
 def merge_orders():
     orders_list = list()
-    for emi, values in var.orders.items():
-        for clOrdID, value in values.items():
+    for values in var.orders.values():
+        for value in values.values():
             orders_list.append(value)
     orders_list.sort(key=lambda x: x["transactTime"])
     for order in orders_list:
