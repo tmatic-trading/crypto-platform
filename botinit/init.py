@@ -15,6 +15,8 @@ from display.bot_menu import import_bot_module
 from display.messages import ErrorMessage, Message
 from functions import Function
 
+a = 1
+
 
 class Init(WS, Variables):
     def download_data(
@@ -127,18 +129,30 @@ class Init(WS, Variables):
 
         return klines
 
-    def init_klines(self: Markets) -> Union[dict, None]:
-        def append_new(klines, symbol, timefr, time, bot_name):
-            klines[symbol][timefr] = {
+    def append_new_kline(
+        self: Markets, symbol: tuple, bot_name: str, timefr: int
+    ) -> None:
+        time = datetime.now(tz=timezone.utc)
+
+        def append_new():
+            self.klines[symbol][timefr] = {
                 "time": time,
                 "robots": [],
                 "open": 0,
                 "data": [],
             }
-            klines[symbol][timefr]["robots"].append(bot_name)
+            self.klines[symbol][timefr]["robots"].append(bot_name)
 
-            return klines
+        try:
+            self.klines[symbol][timefr]["robots"].append(bot_name)
+        except KeyError:
+            try:
+                append_new()
+            except KeyError:
+                self.klines[symbol] = dict()
+                append_new()
 
+    def init_klines(self: Markets) -> Union[dict, None]:
         success = []
 
         def get_in_thread(symbol, timefr, klines, number):
@@ -160,22 +174,10 @@ class Init(WS, Variables):
         for kline in self.kline_set:
             # Initialize candlestick timeframe data using 'timefr' fields
             # expressed in minutes.
-            time = datetime.now(tz=timezone.utc)
             symbol = (kline[0], self.name)
             bot_name = kline[1]
             timefr = kline[2]
-            try:
-                self.klines[symbol][timefr]["robots"].append(bot_name)
-            except KeyError:
-                try:
-                    self.klines = append_new(
-                        self.klines, symbol, timefr, time, bot_name
-                    )
-                except KeyError:
-                    self.klines[symbol] = dict()
-                    self.klines = append_new(
-                        self.klines, symbol, timefr, time, bot_name
-                    )
+            Init.append_new_kline(self, symbol=symbol, bot_name=bot_name, timefr=timefr)
         threads = []
         for symbol, timeframes in self.klines.items():
             for timefr in timeframes.keys():

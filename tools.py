@@ -3,6 +3,7 @@ import os
 import platform
 from datetime import datetime, timezone
 
+import botinit.init as botinit
 import services as service
 from api.api import WS, Markets
 from common.data import Bots, Instrument, MetaInstrument
@@ -122,7 +123,7 @@ class Tool(Instrument):
     def EMA(self, period: int) -> float:
         pass
 
-    def add_kline(self) -> None:
+    def add_kline(self) -> list:
         """
         Adds kline (candlestick) data to the instrument.
 
@@ -136,9 +137,24 @@ class Tool(Instrument):
         botinit/variables.py. Then, as the program runs, the data accumulates.
         """
         bot_name = name(inspect.stack())
-        Bots[bot_name].timefr
+        timefr = Bots[bot_name].timefr
         ws = Markets[self.market]
         ws.kline_set.add((self.instrument.symbol, bot_name, Bots[bot_name].timefr))
+        botinit.Init.append_new_kline(
+            ws, symbol=self.symbol, bot_name=bot_name, timefr=timefr
+        )
+        """try:
+            ws.klines[self.symbol][timefr]["robots"].append(bot_name)
+        except Exception:
+            ws.klines[self.symbol][timefr] = {
+                "time": datetime.now(tz=timezone.utc),
+                "robots": [],
+                "open": 0,
+                "data": [],
+            }
+            ws.klines[self.symbol][timefr]["robots"].append(bot_name)"""
+
+        return ws.klines[self.symbol][timefr]["data"]
 
     def kline(self, period: int = 1) -> dict:
         ws = Markets[self.market]

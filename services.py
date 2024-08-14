@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Union
 
 from api.bybit.errors import exception
+from common.data import Bots
 from common.variables import Variables as var
 
 
@@ -225,3 +226,13 @@ def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
     var.orders[emi][clOrdID]["side"] = value["side"]
     var.orders[emi][clOrdID]["orderID"] = value["orderID"]
     var.orders[emi][clOrdID]["clOrdID"] = clOrdID
+
+
+def count_orders():
+    """Temporarily created function for debugging"""
+    count = 0
+    for values in var.orders.values():
+        for _ in values.keys():
+            count += 1
+
+    # print("___________________orders", count)

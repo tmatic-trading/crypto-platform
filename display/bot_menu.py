@@ -754,7 +754,7 @@ class SettingsApp:
     def show(self, bot_name):
         if bot_name != disp.bot_event_prev:
             TreeTable.bot_menu.on_rollup(iid=bot_name)
-        
+
         disp.refresh_bot_info = True
         bot = Bots[bot_name]
         values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]

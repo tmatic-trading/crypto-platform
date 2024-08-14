@@ -501,7 +501,6 @@ class Function(WS, Variables):
             var.queue_order.put({"action": "put", "order": var.orders[emi][clOrdID]})
         disp.bot_orders_processing = True
 
-
     def trades_display(
         self: Markets, val: dict, table: TreeviewTable, init=False
     ) -> Union[None, list]:
@@ -669,6 +668,8 @@ class Function(WS, Variables):
         current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
 
         # Refresh instrument table
+
+        service.count_orders()
 
         tree = TreeTable.instrument
 
@@ -1254,7 +1255,7 @@ class Function(WS, Variables):
 
     def put_order(
         self: Markets,
-        emi: str, 
+        emi: str,
         clOrdID: str,
         price: float,
         qty: int,
@@ -1332,10 +1333,7 @@ class Function(WS, Variables):
         qty = 0
         for values in var.orders.values():
             for value in values.values():
-                if (
-                    value["price"] == price
-                    and value["symbol"] == symbol
-                ):
+                if value["price"] == price and value["symbol"] == symbol:
                     qty += value["leavesQty"]
         if not qty:
             qty = ""
@@ -1401,7 +1399,7 @@ def handler_order(event) -> None:
                     return
                 clOrdID = Function.put_order(
                     ws,
-                    emi=emi, 
+                    emi=emi,
                     clOrdID=clOrdID,
                     price=price,
                     qty=var.orders[emi][clOrdID]["leavesQty"],
