@@ -62,6 +62,8 @@ class Instrument:
         Funding rate.
     marginCallPrice: float
         Position margin call or liquidation price.
+    market: str
+        Exchange name.
     maxOrderQty: float
         Not used
     minOrderQty: float
@@ -102,7 +104,6 @@ class Instrument:
     valueOfOneContract: float
         :::For Bitmex only::: Used when calculating trade value.
     """
-
     asks: list
     avgEntryPrice: float = 0
     baseCoin: str

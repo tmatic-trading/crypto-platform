@@ -24,10 +24,8 @@ def name(stack) -> str:
 
 class Tool(Instrument):
     def __init__(self, instrument: Instrument) -> None:
-        self.__dict__ = instrument.__dict__.copy()
-        self.instrument = instrument
-        self.market = self.instrument.market
-        self.symbol = (self.instrument.symbol, self.market)
+        self.__dict__ = instrument.__dict__
+        self.symbol_tuple = (self.symbol, self.market)
 
     def close_all(
         self,
@@ -71,9 +69,9 @@ class Tool(Instrument):
         ws = Markets[self.market]
         res = None
         if not qty:
-            qty = self.instrument.minOrderQty
+            qty = self.minOrderQty
         if not price:
-            price = self.instrument.asks[0][0]
+            price = self.asks[0][0]
         if price:
             qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
@@ -87,7 +85,7 @@ class Tool(Instrument):
                         quantity=-abs(qty),
                         price=price,
                         clOrdID=new_clOrdID,
-                        symbol=self.symbol,
+                        symbol=self.symbol_tuple,
                     )
                 else:
                     order = bot.bot_orders[clOrdID]
@@ -142,9 +140,9 @@ class Tool(Instrument):
         ws = Markets[self.market]
         res = None
         if not qty:
-            qty = self.instrument.minOrderQty
+            qty = self.minOrderQty
         if not price:
-            price = self.instrument.bids[0][0]
+            price = self.bids[0][0]
         if price:
             qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
@@ -158,7 +156,7 @@ class Tool(Instrument):
                         quantity=qty,
                         price=price,
                         clOrdID=new_clOrdID,
-                        symbol=self.symbol,
+                        symbol=self.symbol_tuple,
                     )
                 else:
                     order = bot.bot_orders[clOrdID]
@@ -220,12 +218,12 @@ class Tool(Instrument):
         bot_name = name(inspect.stack())
         timefr = Bots[bot_name].timefr
         ws = Markets[self.market]
-        ws.kline_set.add((self.instrument.symbol, bot_name, Bots[bot_name].timefr))
+        ws.kline_set.add((self.symbol, bot_name, Bots[bot_name].timefr))
         botinit.Init.append_new_kline(
-            ws, symbol=self.symbol, bot_name=bot_name, timefr=timefr
+            ws, symbol=self.symbol_tuple, bot_name=bot_name, timefr=timefr
         )
 
-        return ws.klines[self.symbol][timefr]["data"]
+        return ws.klines[self.symbol_tuple][timefr]["data"]
 
     def kline(self, period: int = 1) -> dict:
         ws = Markets[self.market]
@@ -250,22 +248,22 @@ class Tool(Instrument):
             Bot name.
         """
         bot = Bots[bot_name]
-        if not self.symbol in bot.position:
-            bot.position[self.symbol] = {
+        if not self.symbol_tuple in bot.position:
+            bot.position[self.symbol_tuple] = {
                 "emi": bot_name,
-                "symbol": self.symbol[0],
-                "category": self.symbol[1],
+                "symbol": self.symbol,
+                "category": self.market,
                 "market": self.market,
-                "ticker": self.instrument.ticker,
+                "ticker": self.ticker,
                 "position": 0,
                 "volume": 0,
                 "sumreal": 0,
                 "commiss": 0,
                 "ltime": None,
                 "pnl": 0,
-                "lotSize": self.instrument.minOrderQty,
-                "currency": self.instrument.settlCurrency[0],
-                "limits": self.instrument.minOrderQty,
+                "lotSize": self.minOrderQty,
+                "currency": self.settlCurrency[0],
+                "limits": self.minOrderQty,
             }
             # Checks if this bot has any records in the database on this instrument.
             qwr = (
@@ -274,7 +272,7 @@ class Tool(Instrument):
                 + "SUM_COMMISS, TTIME from (select * from coins where EMI = '"
                 + bot_name
                 + "' and SYMBOL = '"
-                + self.symbol[0]
+                + self.symbol
                 + "' and MARKET = '"
                 + self.market
                 + "' and ACCOUNT = "
@@ -283,23 +281,23 @@ class Tool(Instrument):
             )
             data = service.select_database(qwr)
             if data and data[0]["SUM_QTY"]:
-                bot.position[self.symbol]["volume"] = float(data["SUM_QTY"])
-                bot.position[self.symbol]["sumreal"] = float(data["SUM_SUMREAL"])
-                bot.position[self.symbol]["commiss"] = float(data["SUM_COMMISS"])
-        position = bot.position[self.symbol]
+                bot.position[self.symbol_tuple]["volume"] = float(data["SUM_QTY"])
+                bot.position[self.symbol_tuple]["sumreal"] = float(data["SUM_SUMREAL"])
+                bot.position[self.symbol_tuple]["commiss"] = float(data["SUM_COMMISS"])
+        position = bot.position[self.symbol_tuple]
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
             qty = min(max(0, position["limits"] - position["position"]), abs(qty))
 
-        return round(qty, self.instrument.precision)
+        return round(qty, self.precision)
 
     def _empty_orderbook(self, qty: float, price: float) -> None:
         """
         Sends a warning message if the order book is empty.
         """
         order = f"Buy qty={qty}, price={price}"
-        message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol)
+        message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol_tuple)
         var.logger.warning(message)
         var.queue_info.put(
             {
@@ -312,7 +310,7 @@ class Tool(Instrument):
 
     def _filter_by_side(self, orders: OrderedDict, side: str) -> dict:
         """
-        Finds all bot orders on the sell or buy side.
+        Finds all bot orders on the sell or buy side for a specific instrument.
 
         Parameters
         ----------
@@ -328,7 +326,7 @@ class Tool(Instrument):
         """
         filtered = OrderedDict()
         for clOrdID, value in orders.items():
-            if value["side"] == side and value["market"] == self.market:
+            if value["side"] == side and value["symbol"] == self.symbol_tuple:
                 filtered[clOrdID] = value
 
         return filtered

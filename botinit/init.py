@@ -425,9 +425,7 @@ def load_bots() -> None:
     for bot_name in Bots.keys():
         import_bot_module(bot_name=bot_name)
 
-
 # Initialization of kline data
-
 
 def setup_klines():
     def get_klines(ws: Markets, success):

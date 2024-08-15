@@ -19,7 +19,6 @@ class Variables:
     category_list = list()
     currencies = list()
     positions = OrderedDict()
-    # full_symbol_list = list()
     logger = logging
     logNumFatal = ""
     depth = var.order_book_depth

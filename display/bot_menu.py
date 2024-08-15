@@ -966,6 +966,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
         Bots[bot_name].error_message = message
     except AttributeError as exception:
         message = ErrorMessage.BOT_MARKET_ERROR.format(
+            MODULE=module, 
             EXCEPTION="AttributeError: " + str(exception),
             BOT_NAME=bot_name,
         )
@@ -1010,10 +1011,9 @@ def import_bot_module(bot_name: str, update=False) -> None:
             }
         )
     try:
-        robo.run[bot_name] = mod.strategy
+        robo.run[bot_name] = bot_manager.modules[bot_name].strategy
     except Exception:
         robo.run[bot_name] = "No strategy"
-
 
 trade_treeTable = dict()
 bot_trades_sub = dict()
