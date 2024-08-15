@@ -1,6 +1,7 @@
 import inspect
 import os
 import platform
+from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
@@ -54,8 +55,8 @@ class Tool(Instrument):
             Order price. If price is omitted, then price is taken as the
             current first offer in the order book.
         move: bool
-            Checks for open buy orders for this bot and if there are any, 
-            takes the last order and moves it to the new price. If not, 
+            Checks for open buy orders for this bot and if there are any,
+            takes the last order and moves it to the new price. If not,
             places a new order.
         cancel: bool
             If True, cancels all buy orders for this bot.
@@ -68,7 +69,7 @@ class Tool(Instrument):
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
         ws = Markets[self.market]
-        clOrdID = service.set_clOrdID(emi=bot_name)
+        res = None
         if not qty:
             qty = self.instrument.minOrderQty
         if not price:
@@ -76,21 +77,35 @@ class Tool(Instrument):
         if price:
             qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
-                res = WS.place_limit(
-                    ws,
-                    quantity=-abs(qty),
-                    price=price,
-                    clOrdID=clOrdID,
-                    symbol=self.symbol,
-                )
+                clOrdID = None
+                if move is True:
+                    clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Sell")
+                if clOrdID is None:
+                    new_clOrdID = service.set_clOrdID(emi=bot_name)
+                    res = WS.place_limit(
+                        ws,
+                        quantity=-abs(qty),
+                        price=price,
+                        clOrdID=new_clOrdID,
+                        symbol=self.symbol,
+                    )
+                else:
+                    order = bot.bot_orders[clOrdID]
+                    if order["price"] != price:
+                        res = WS.replace_limit(
+                            ws,
+                            quantity=order["leavesQty"],
+                            price=price,
+                            orderID=order["orderID"],
+                            symbol=order["symbol"],
+                        )
         else:
             self._empty_orderbook(qty=qty, price=price)
         if cancel is not None:
-            self._remove_orders(orders=bot.order, side="Buy")
+            self._remove_orders(orders=bot.bot_orders, side="Buy")
 
         if res is not None:
             return clOrdID
-
 
     def buy(
         self,
@@ -111,8 +126,8 @@ class Tool(Instrument):
             Order price. If price is omitted, then price is taken as the
             current first bid in the order book.
         move: bool
-            Checks for open buy orders for this bot and if there are any, 
-            takes the last order and moves it to the new price. If not, 
+            Checks for open buy orders for this bot and if there are any,
+            takes the last order and moves it to the new price. If not,
             places a new order.
         cancel: bool
             If True, cancels all buy orders for this bot.
@@ -125,7 +140,6 @@ class Tool(Instrument):
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
         ws = Markets[self.market]
-        clOrdID = service.set_clOrdID(emi=bot_name)
         res = None
         if not qty:
             qty = self.instrument.minOrderQty
@@ -134,17 +148,32 @@ class Tool(Instrument):
         if price:
             qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
-                res = WS.place_limit(
-                    ws,
-                    quantity=qty,
-                    price=price,
-                    clOrdID=clOrdID,
-                    symbol=self.symbol,
-                )
+                clOrdID = None
+                if move is True:
+                    clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Buy")
+                if clOrdID is None:
+                    new_clOrdID = service.set_clOrdID(emi=bot_name)
+                    res = WS.place_limit(
+                        ws,
+                        quantity=qty,
+                        price=price,
+                        clOrdID=new_clOrdID,
+                        symbol=self.symbol,
+                    )
+                else:
+                    order = bot.bot_orders[clOrdID]
+                    if order["price"] != price:
+                        res = WS.replace_limit(
+                            ws,
+                            quantity=order["leavesQty"],
+                            price=price,
+                            orderID=order["orderID"],
+                            symbol=order["symbol"],
+                        )
         else:
             self._empty_orderbook(qty=qty, price=price)
         if cancel is not None:
-            self._remove_orders(orders=bot.order, side="Sell")
+            self._remove_orders(orders=bot.bot_orders, side="Sell")
 
         if res is not None:
             return clOrdID
@@ -264,7 +293,7 @@ class Tool(Instrument):
             qty = min(max(0, position["limits"] - position["position"]), abs(qty))
 
         return round(qty, self.instrument.precision)
-    
+
     def _empty_orderbook(self, qty: float, price: float) -> None:
         """
         Sends a warning message if the order book is empty.
@@ -281,13 +310,13 @@ class Tool(Instrument):
             }
         )
 
-    def _filter_by_side(self, orders: dict, side: str) -> dict:
+    def _filter_by_side(self, orders: OrderedDict, side: str) -> dict:
         """
         Finds all bot orders on the sell or buy side.
 
         Parameters
         ----------
-        orders: dict
+        orders: OrderedDict
             Bot order dictionary, where the key is clOrdID
         side: str
             Buy or Sell
@@ -297,28 +326,50 @@ class Tool(Instrument):
         dict
             Bot orders are filtered by sell or buy side.
         """
-        filtered = dict()
+        filtered = OrderedDict()
         for clOrdID, value in orders.items():
-            if value["side"] == side:
+            if value["side"] == side and value["market"] == self.market:
                 filtered[clOrdID] = value
 
         return filtered
-    
-    def _remove_orders(self, orders: dict, side: str) -> None:
+
+    def _remove_orders(self, orders: OrderedDict, side: str) -> None:
         """
         Removes group of given orders by side.
 
         Parameters
         ----------
-        orders: dict
+        orders: OrderedDict
             Dictionary where key is clOrdID.
         side: str
             Buy or Sell
         """
         orders = self._filter_by_side(orders=orders, side=side)
         for order in orders.values():
-            ws = Markets[order["market"]]
+            ws = Markets[self.market]
             WS.remove_order(ws, order=order)
+
+    def _get_latest_order(self, orders: OrderedDict, side: str) -> Union[str, None]:
+        """
+        Finds the last order given side.
+
+        Parameters
+        ----------
+        orders: OrderedDict
+            Dictionary where key is clOrdID.
+        side: str
+            Buy or Sell
+
+        Returns
+        -------
+        str | None
+            If an order is found, returns clOrdID of that order, otherwise None.
+        """
+        orders = self._filter_by_side(orders=orders, side=side)
+        if orders:
+            clOrdID = list(orders)[-1]
+
+            return clOrdID
 
 
 class MetaTool(type):

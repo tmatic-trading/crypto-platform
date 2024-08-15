@@ -1,4 +1,5 @@
 import traceback
+from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
@@ -214,7 +215,7 @@ def set_clOrdID(emi: str) -> str:
 
 def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
     if emi not in var.orders:
-        var.orders[emi] = dict()
+        var.orders[emi] = OrderedDict()
     var.orders[emi][clOrdID] = dict()
     var.orders[emi][clOrdID]["emi"] = emi
     var.orders[emi][clOrdID]["leavesQty"] = value["leavesQty"]

@@ -2,6 +2,7 @@ import importlib
 import os
 import threading
 import time
+from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
 
@@ -246,15 +247,15 @@ def load_bots() -> None:
     data = service.select_database(qwr)
     for value in data:
         if value["EMI"] not in var.orders:
-            var.orders[value["EMI"]] = dict()
+            var.orders[value["EMI"]] = OrderedDict()
         bot = Bots[value["EMI"]]
         bot.name = value["EMI"]
         bot.timefr = value["TIMEFR"]
         bot.created = value["DAT"]
         bot.updated = value["UPDATED"]
         bot.state = value["STATE"]
-        bot.position = dict()
-        bot.order = var.orders[value["EMI"]]
+        bot.bot_positions = dict()
+        bot.bot_orders = var.orders[value["EMI"]]
 
     # Loading volumes for subscribed instruments
 

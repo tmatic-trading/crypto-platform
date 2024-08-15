@@ -94,12 +94,13 @@ class Send(Variables):
                         error_message = res["error"]["message"]
                     else:
                         status = "IGNORE"
-                        error_message = "Unexpected HTTPError"
+                        error_message = (
+                            "Unexpected HTTPError" + " " + res["error"]["message"]
+                        )
                 else:
                     status = "FATAL"
                     error_message = "Unexpected error " + exception
-                logger_message = "%s: On request %s %s - error - %s" % (
-                    self.name,
+                logger_message = "On request %s %s - error - %s" % (
                     verb,
                     path,
                     error_message,

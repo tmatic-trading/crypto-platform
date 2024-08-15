@@ -201,13 +201,13 @@ class SettingsApp:
                 f"*\n!__init__.py\n!.gitignore\n!{self.strategy_file}\n",
             )
             time_now = self.get_time()
-            var.orders[bot_name] = dict()
+            var.orders[bot_name] = OrderedDict()
             Bots[bot_name].state = "Suspended"
             Bots[bot_name].timefr = int(tf[0])
             Bots[bot_name].created = time_now
             Bots[bot_name].updated = time_now
-            Bots[bot_name].position = dict()
-            Bots[bot_name].order = var.orders[bot_name]
+            Bots[bot_name].bot_positions = dict()
+            Bots[bot_name].bot_orders = var.orders[bot_name]
             module = "algo." + bot_name + "." + self.strategy_file.split(".")[0]
             mod = importlib.import_module(module)
             try:
@@ -215,7 +215,6 @@ class SettingsApp:
             except Exception:
                 robo.run[bot_name] = "No strategy"
             self.insert_bot_menu(name=bot_name, new=True)
-            var.orders[bot_name] = dict()
 
             return True
 

@@ -18,8 +18,8 @@
 # bot = Bot()                                                                 #
 # bot.name           Bot name (str)                                           #
 # bot.timefr         Timeframe expressed in minutes (int)                     #
-# bot.position       All positions opened by this bot (dict)                  #
-# bot.order          All active orderss of this bot (dict)                    #
+# bot.bot_positions  All positions opened by this bot (dict)                  #
+# bot.bot_orders     All active orderss of this bot (dict)                    #
 # bot.timefr         Kline timeframe used by bot expressed in minutes (int)   #
 # bot.pnl            Bot's pnl divided by currencies (dict)                   #
 # bot.state          Possible values: "Suspended" or "Active" (str)           #

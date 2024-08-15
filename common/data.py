@@ -162,8 +162,8 @@ class Result:
 
 class BotData:
     name: str
-    position: dict
-    order: dict
+    bot_positions: dict
+    bot_orders: OrderedDict
     timefr: int
     pnl: dict
     state: str

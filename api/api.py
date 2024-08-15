@@ -200,7 +200,7 @@ class WS(Variables):
         )
 
     def replace_limit(
-        self: Markets, quantity: int, price: float, orderID: str, symbol: tuple
+        self: Markets, quantity: float, price: float, orderID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
         Moves a limit order
