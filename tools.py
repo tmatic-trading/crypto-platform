@@ -40,7 +40,7 @@ class Tool(Instrument):
         qty: float = None,
         price: float = None,
         move: bool = False,
-        cancel_buys: bool = False,
+        cancel: bool = False,
     ) -> Union[str, None]:
         """
         Sets a sell order.
@@ -57,7 +57,7 @@ class Tool(Instrument):
             Checks for open buy orders for this bot and if there are any, 
             takes the last order and moves it to the new price. If not, 
             places a new order.
-        cancel_buys: bool
+        cancel: bool
             If True, cancels all buy orders for this bot.
 
         Returns
@@ -66,6 +66,7 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise None.
         """
         bot_name = name(inspect.stack())
+        bot = Bots[bot_name]
         ws = Markets[self.market]
         clOrdID = service.set_clOrdID(emi=bot_name)
         if not qty:
@@ -73,7 +74,7 @@ class Tool(Instrument):
         if not price:
             price = self.instrument.asks[0][0]
         if price:
-            qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name)
+            qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
                 res = WS.place_limit(
                     ws,
@@ -82,27 +83,21 @@ class Tool(Instrument):
                     clOrdID=clOrdID,
                     symbol=self.symbol,
                 )
-                if res:
-                    return clOrdID
         else:
-            order = f"Sell qty={qty}, price={price}"
-            message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol)
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
-                }
-            )
+            self._empty_orderbook(qty=qty, price=price)
+        if cancel is not None:
+            self._remove_orders(orders=bot.order, side="Buy")
+
+        if res is not None:
+            return clOrdID
+
 
     def buy(
         self,
         qty: float = None,
         price: float = None,
         move: bool = False,
-        cancel_sells: bool = False,
+        cancel: bool = False,
     ) -> Union[str, None]:
         """
         Sets a buy order.
@@ -119,7 +114,7 @@ class Tool(Instrument):
             Checks for open buy orders for this bot and if there are any, 
             takes the last order and moves it to the new price. If not, 
             places a new order.
-        cancel_buys: bool
+        cancel: bool
             If True, cancels all buy orders for this bot.
 
         Returns
@@ -128,14 +123,16 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise None.
         """
         bot_name = name(inspect.stack())
+        bot = Bots[bot_name]
         ws = Markets[self.market]
         clOrdID = service.set_clOrdID(emi=bot_name)
+        res = None
         if not qty:
             qty = self.instrument.minOrderQty
         if not price:
             price = self.instrument.bids[0][0]
         if price:
-            qty = self.control_limits(side="Buy", qty=qty, bot_name=bot_name)
+            qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
             if qty:
                 res = WS.place_limit(
                     ws,
@@ -144,20 +141,13 @@ class Tool(Instrument):
                     clOrdID=clOrdID,
                     symbol=self.symbol,
                 )
-                if res:
-                    return clOrdID
         else:
-            order = f"Buy qty={qty}, price={price}"
-            message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol)
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
-                }
-            )
+            self._empty_orderbook(qty=qty, price=price)
+        if cancel is not None:
+            self._remove_orders(orders=bot.order, side="Sell")
+
+        if res is not None:
+            return clOrdID
 
     def EMA(self, period: int) -> float:
         pass
@@ -212,7 +202,7 @@ class Tool(Instrument):
         ws = Markets[self.market]
         print(ws.klines)
 
-    def control_limits(self, side: str, qty: float, bot_name: str) -> float:
+    def _control_limits(self, side: str, qty: float, bot_name: str) -> float:
         """
         When an order is submitted, does not allow the bot to exceed the set
         limit for the instrument. Decreases quantity if the limit is exceeded
@@ -274,6 +264,61 @@ class Tool(Instrument):
             qty = min(max(0, position["limits"] - position["position"]), abs(qty))
 
         return round(qty, self.instrument.precision)
+    
+    def _empty_orderbook(self, qty: float, price: float) -> None:
+        """
+        Sends a warning message if the order book is empty.
+        """
+        order = f"Buy qty={qty}, price={price}"
+        message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol)
+        var.logger.warning(message)
+        var.queue_info.put(
+            {
+                "market": "",
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": True,
+            }
+        )
+
+    def _filter_by_side(self, orders: dict, side: str) -> dict:
+        """
+        Finds all bot orders on the sell or buy side.
+
+        Parameters
+        ----------
+        orders: dict
+            Bot order dictionary, where the key is clOrdID
+        side: str
+            Buy or Sell
+
+        Returns
+        -------
+        dict
+            Bot orders are filtered by sell or buy side.
+        """
+        filtered = dict()
+        for clOrdID, value in orders.items():
+            if value["side"] == side:
+                filtered[clOrdID] = value
+
+        return filtered
+    
+    def _remove_orders(self, orders: dict, side: str) -> None:
+        """
+        Removes group of given orders by side.
+
+        Parameters
+        ----------
+        orders: dict
+            Dictionary where key is clOrdID.
+        side: str
+            Buy or Sell
+        """
+        orders = self._filter_by_side(orders=orders, side=side)
+        for order in orders.values():
+            ws = Markets[order["market"]]
+            WS.remove_order(ws, order=order)
 
 
 class MetaTool(type):
