@@ -195,7 +195,7 @@ class Tool(Instrument):
                     lowest price of the period
                 "funding": float
                     funding rate for perpetual instruments
-                "datetime: datetime
+                "datetime": datetime
                     date and time in datetime format
         """
         bot_name = name(inspect.stack())

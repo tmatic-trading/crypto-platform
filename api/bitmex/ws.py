@@ -61,7 +61,6 @@ class Bitmex(Variables):
         self.robot_status = dict()
         self.setup_orders = list()
         self.account_disp = ""
-        self.orders = dict()
         self.pinging = "pong"
         self.ticker = dict()
         self.kline_set = set()

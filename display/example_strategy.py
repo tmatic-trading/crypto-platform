@@ -54,18 +54,73 @@
 # 6. Add kline (candlestick) data to a specific instrument                    #
 # --------------------------------------------------------                    #
 #                                                                             #
-# Bybit["BTCUSD"].add_kline()                                                 #
+# data = Bybit["BTCUSD"].add_kline()                                          #
 #                                                                             #
+# 7. Get kline data                                                           #
+# -----------------                                                           #
 #                                                                             #
-# 7. Strategy example                                                         #
+# data = Bybit["BTCUSD"].add_kline()                                          #
+# data[-1]             data set for the latest period (dict)                  #
+# data[-1]["date"]     date of the last period in yymmdd format (int)         #
+# data[-1]["time"]     time of the last period in hhmmss format (int)         #
+# data[-1]["bid"]      first bid price at the beginning of the period (float) #
+# data[-1]["ask"]      first ask price at the beginning of the period (float) #
+# data[-1]["hi"]       highest price of the period (float)                    #
+# data[-1]["lo"]       lowest price of the period (float)                     #
+# data[-1]["funding"]  funding rate for perpetual instruments (float)         #
+# data[-1]["datetime"] date and time in datetime format (datetime)            #
+#                                                                             #
+# 8. Functions related to instruments                                         #
+# -----------------------------------                                         #
+#                                                                             #
+# <instrument>.buy()       places a limit buy order                           #
+# <instrument>.sell()      places a limit sell order                          #
+#                                                                             #
+# 8.1. buy()                                                                  #
+#   Parameters                                                                #
+#   ----------                                                                #
+#   qty: float (optional)                                                     #
+#      optional) Order quantity. If qty is omitted, then: qty is taken as     #
+#      minOrderQty.                                                           #
+#   price: float (optional)                                                   #
+#      Order price. If price is omitted, then price is taken as the           #
+#      current first bid in the order book.                                   #
+#   move: bool (optional)                                                     #
+#      Checks for open buy orders for this bot and if there are any,          #
+#      takes the last order and moves it to the new price. If not,            #
+#      places a new order.                                                    #
+#  cancel: bool (optional)                                                    #
+#      If True, cancels all buy orders for this bot.                          #
+#  Returns                                                                    #
+#  -------                                                                    #
+#  str | None                                                                 #
+#      If successful, the clOrdID of this order is returned, otherwise None.  #
+#                                                                             #
+# 8.2. sell()                                                                 #
+#   The description of the buy() function also applies to the sell()          #
+#   function.                                                                 #
+#                                                                             #
+# 9. Strategy example                                                         #
 # -------------------                                                         #
 #                                                                             #
-# The minimum possible code to run the strategy might look like this:         #
+# The minimum possible code to run a strategy might look like this. Let's say #
+# the strategy buys when the current price is higher than the price 10        #
+# periods ago, and sells when the current price is lower than or equal to the #
+# price 10 periods ago. When buying, the strategy places a limit order to buy #
+# at the first bid price in the order book, and does the same when selling by #
+# placing a limit order at the first ask price. Instrument BTCUSDT, exchange  #
+# Bybit, limit - the minimum possible quantity for the given instrument.      #
 #                                                                             #
-# from tools import Bitmex                                                    #
+# from tools import Bybit                                                     #
+#                                                                             #
+# instrument = Bybit["BTCUSDT"]                                               #
+# kline = instrument.add_kline()                                              #
 #                                                                             #
 # def strategy():                                                             #
-#   pass                                                                      #
+#   if kline[-1]["bid"] > kline[-10]["bid"]                                   #
+#       instrument.buy(move=True, cancel=True)                                #
+#   else:                                                                     #
+#       insrument.sell(move=True, cancel=True)                                #
 #                                                                             #
 #                                                                             #
 #                                                                             #
