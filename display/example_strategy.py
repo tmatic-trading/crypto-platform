@@ -19,12 +19,13 @@
 # bot.name           Bot name (str)                                           #
 # bot.timefr         Timeframe expressed in minutes (int)                     #
 # bot.bot_positions  All positions opened by this bot (dict)                  #
-# bot.bot_orders     All active orderss of this bot (dict)                    #
+# bot.bot_orders     All active orders of this bot (dict)                     #
 # bot.timefr         Kline timeframe used by bot expressed in minutes (int)   #
-# bot.pnl            Bot's pnl divided by currencies (dict)                   #
+# bot.pnl            Bot's pnl separated by currencies (dict)                 #
 # bot.state          Possible values: "Suspended" or "Active" (str)           #
 # bot.created        Bot creation time (datetime)                             #
-# bot.updated        Bot strategy file update time (datetime)                 #
+# bot.updated        Bot parameters or strategy.py file update time           # 
+#                    (datetime)                                               #
 # bot.error_message  Normally "" or an error message if one occured (str)     #
 #                                                                             #
 # 4. Get instrument                                                           #
@@ -33,9 +34,8 @@
 # from tools import Bybit                                                     #
 # btcusd = Bybit["BTCUSD"]                                                    #
 #                                                                             #
-# 5. Instrument parameters                                                    #
+# Instrument parameters:                                                      #
 #                                                                             #
-# btcusd = Bybit["BTCUSD"]                                                    #
 # btcusd.asks           Orderbook asks (list)                                 #
 # btcusd.bids           Orderbook bids (list)                                 #
 # btcusd.asks[0]        First ask price and volume (list)                     #
@@ -51,12 +51,12 @@
 # The full list of instrument parameters is in the common/data.py Instrument  #
 # class                                                                       #
 #                                                                             #
-# 6. Add kline (candlestick) data to a specific instrument                    #
+# 5. Add kline (candlestick) data to a specific instrument                    #
 # --------------------------------------------------------                    #
 #                                                                             #
 # data = Bybit["BTCUSD"].add_kline()                                          #
 #                                                                             #
-# 7. Get kline data                                                           #
+# 6. Get kline data                                                           #
 # -----------------                                                           #
 #                                                                             #
 # data = Bybit["BTCUSD"].add_kline()                                          #
@@ -70,24 +70,24 @@
 # data[-1]["funding"]  funding rate for perpetual instruments (float)         #
 # data[-1]["datetime"] date and time in datetime format (datetime)            #
 #                                                                             #
-# 8. Functions related to instruments                                         #
+# 7. Functions related to instruments                                         #
 # -----------------------------------                                         #
 #                                                                             #
 # <instrument>.buy()       places a limit buy order                           #
 # <instrument>.sell()      places a limit sell order                          #
 #                                                                             #
-# 8.1. buy()                                                                  #
+# 7.1. buy()                                                                  #
 #   Parameters                                                                #
 #   ----------                                                                #
 #   qty: float (optional)                                                     #
-#      optional) Order quantity. If qty is omitted, then: qty is taken as     #
+#      Order quantity. If qty is omitted, then: qty is taken as               #
 #      minOrderQty.                                                           #
 #   price: float (optional)                                                   #
 #      Order price. If price is omitted, then price is taken as the           #
 #      current first bid in the order book.                                   #
 #   move: bool (optional)                                                     #
 #      Checks for open buy orders for this bot and if there are any,          #
-#      takes the last order and moves it to the new price. If not,            #
+#      takes the last buy order and moves it to the new price. If not,        #
 #      places a new order.                                                    #
 #  cancel: bool (optional)                                                    #
 #      If True, cancels all buy orders for this bot.                          #
@@ -96,11 +96,11 @@
 #  str | None                                                                 #
 #      If successful, the clOrdID of this order is returned, otherwise None.  #
 #                                                                             #
-# 8.2. sell()                                                                 #
+# 7.2. sell()                                                                 #
 #   The description of the buy() function also applies to the sell()          #
 #   function.                                                                 #
 #                                                                             #
-# 9. Strategy example                                                         #
+# 8. Strategy example                                                         #
 # -------------------                                                         #
 #                                                                             #
 # The minimum possible code to run a strategy might look like this. Let's say #
@@ -110,6 +110,9 @@
 # at the first bid price in the order book, and does the same when selling by #
 # placing a limit order at the first ask price. Instrument BTCUSDT, exchange  #
 # Bybit, limit - the minimum possible quantity for the given instrument.      #
+#                                                                             #
+# This code is just a simple example and does not claim to be a profitable    #
+# strategy.                                                                   #
 #                                                                             #
 # from tools import Bybit                                                     #
 #                                                                             #
