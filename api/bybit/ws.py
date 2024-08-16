@@ -184,11 +184,17 @@ class Bybit(Variables):
             if value["orderStatus"] == "Cancelled":
                 orderStatus = "Canceled"
             elif value["orderStatus"] == "New":
-                for values in var.orders.values():
-                    for order in values.values():
-                        if value["orderId"] == order["orderID"]:
-                            orderStatus = "Replaced"
-                            break
+                if value["orderLinkId"]:
+                    for orders in var.orders.values():
+                        for clOrdID in orders:
+                            if clOrdID == value["orderLinkId"]:
+                                orderStatus = "Replaced"
+                                break
+                        else:
+                            continue
+                        break
+                    else:
+                        orderStatus = "New"
                 else:
                     orderStatus = "New"
             elif value["orderStatus"] == "Rejected":

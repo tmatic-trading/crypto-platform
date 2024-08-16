@@ -378,7 +378,7 @@ def load_bots() -> None:
                 instrument = ws.Instrument[symbol]
                 bot = Bots[name]
                 precision = instrument.precision
-                bot.position[symbol] = {
+                bot.bot_positions[symbol] = {
                     "emi": name,
                     "symbol": value["SYMBOL"],
                     "category": value["CATEGORY"],
@@ -395,8 +395,8 @@ def load_bots() -> None:
                     "limits": instrument.minOrderQty,
                 }
                 if instrument.category == "spot":
-                    bot.position[symbol]["pnl"] = "None"
-                    bot.position[symbol]["position"] = "None"
+                    bot.bot_positions[symbol]["pnl"] = "None"
+                    bot.bot_positions[symbol]["position"] = "None"
             else:
                 message = (
                     name

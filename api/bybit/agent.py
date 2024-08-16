@@ -350,8 +350,8 @@ class Agent(Bybit):
 
     def remove_order(self, order: dict):
         return self.session.cancel_order(
-            category=self.Instrument[order["SYMBOL"]].category,
-            symbol=order["SYMBOL"][0],
+            category=self.Instrument[order["symbol"]].category,
+            symbol=order["symbol"][0],
             orderId=order["orderID"],
         )
 

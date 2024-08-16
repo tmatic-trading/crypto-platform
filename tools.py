@@ -248,8 +248,8 @@ class Tool(Instrument):
             Bot name.
         """
         bot = Bots[bot_name]
-        if not self.symbol_tuple in bot.position:
-            bot.position[self.symbol_tuple] = {
+        if not self.symbol_tuple in bot.bot_positions:
+            bot.bot_positions[self.symbol_tuple] = {
                 "emi": bot_name,
                 "symbol": self.symbol,
                 "category": self.market,
@@ -279,12 +279,13 @@ class Tool(Instrument):
                 + str(Markets[self.market].user_id)
                 + " and SIDE <> 'Fund' order by ID desc) T;"
             )
-            data = service.select_database(qwr)
-            if data and data[0]["SUM_QTY"]:
-                bot.position[self.symbol_tuple]["volume"] = float(data["SUM_QTY"])
-                bot.position[self.symbol_tuple]["sumreal"] = float(data["SUM_SUMREAL"])
-                bot.position[self.symbol_tuple]["commiss"] = float(data["SUM_COMMISS"])
-        position = bot.position[self.symbol_tuple]
+            data = service.select_database(qwr)[0]
+            if data and data["SUM_QTY"]:
+                bot.bot_positions[self.symbol_tuple]["volume"] = float(data["SUM_QTY"])
+                bot.bot_positions[self.symbol_tuple]["sumreal"] = float(data["SUM_SUMREAL"])
+                bot.bot_positions[self.symbol_tuple]["commiss"] = float(data["SUM_COMMISS"])
+        position = bot.bot_positions[self.symbol_tuple]
+        print("__________", position)
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
@@ -343,6 +344,7 @@ class Tool(Instrument):
             Buy or Sell
         """
         orders = self._filter_by_side(orders=orders, side=side)
+        print("____________remove", orders)
         for order in orders.values():
             ws = Markets[self.market]
             WS.remove_order(ws, order=order)
@@ -409,7 +411,7 @@ class Bot:
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
         self.name = bot.name
-        self.position = bot.position
+        self.bot_positions = bot.bot_positions
         self.timefr = bot.timefr
         self.pnl = bot.pnl
         self.state = bot.state

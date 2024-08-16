@@ -163,10 +163,10 @@ class Result:
 
 class BotData:
     name: str
-    bot_positions: dict
+    bot_positions: dict = dict()
     bot_orders: OrderedDict
     timefr: int
-    pnl: dict
+    pnl: dict = dict()
     state: str
     created: str
     updated: str
@@ -257,8 +257,6 @@ class MetaBot(type):
     def __getitem__(self, item) -> BotData:
         if item not in self.all:
             self.all[item] = BotData()
-            self.all[item].position = dict()
-            self.all[item].pnl = dict()
         return self.all[item]
 
     def items(self) -> Iterable[tuple[str, BotData]]:

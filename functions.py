@@ -119,7 +119,7 @@ class Function(WS, Variables):
             )
             instrument = self.Instrument[row["symbol"]]
             if emi in Bots.keys():
-                position = Bots[emi].position[row["symbol"]]
+                position = Bots[emi].bot_positions[row["symbol"]]
                 if row["category"] != "spot":
                     position["position"] += lastQty
                     position["position"] = round(
@@ -229,7 +229,7 @@ class Function(WS, Variables):
                 bot_list = []
                 lastQty = row["lastQty"]
                 for name in Bots.keys():
-                    position = Bots[name].position
+                    position = Bots[name].bot_positions
                     if (
                         row["symbol"] in position
                         and position[row["symbol"]]["position"] != 0
@@ -608,18 +608,15 @@ class Function(WS, Variables):
 
     def format_price(self: Markets, number: Union[float, str], symbol: tuple) -> str:
         if not isinstance(number, str):
-            try:
-                precision = self.Instrument[symbol].price_precision
-                number = "{:.{precision}f}".format(number, precision=precision)
-                if precision:
-                    dot = number.find(".")
-                    if dot == -1:
-                        number = number + "."
-                    n = len(number) - 1 - number.find(".")
-                    for _ in range(precision - n):
-                        number = number + "0"
-            except:
-                print("____format", number, type(number), symbol, precision)
+            precision = self.Instrument[symbol].price_precision
+            number = "{:.{precision}f}".format(number, precision=precision)
+            if precision:
+                dot = number.find(".")
+                if dot == -1:
+                    number = number + "."
+                n = len(number) - 1 - number.find(".")
+                for _ in range(precision - n):
+                    number = number + "0"
 
         return number
 
@@ -897,8 +894,8 @@ class Function(WS, Variables):
             pos_by_market = {market: [] for market in var.market_list}
             for name in Bots.keys():
                 bot = Bots[name]
-                for symbol in bot.position.keys():
-                    pos_by_market[symbol[1]].append(bot.position[symbol])
+                for symbol in bot.bot_positions.keys():
+                    pos_by_market[symbol[1]].append(bot.bot_positions[symbol])
             for market in pos_by_market.keys():
                 rest = dict()
                 rest_volume = dict()
@@ -1036,7 +1033,7 @@ class Function(WS, Variables):
                 pos_by_market = {market: False for market in var.market_list}
                 if disp.bot_name:
                     bot = Bots[disp.bot_name]
-                    for symbol, position in bot.position.items():
+                    for symbol, position in bot.bot_positions.items():
                         market = symbol[1]
                         if market not in tree.children:
                             tree.insert_parent(parent=market, configure="Gray")
@@ -1092,7 +1089,7 @@ class Function(WS, Variables):
                 result_market = {market: False for market in var.market_list}
                 if disp.bot_name:
                     bot = Bots[disp.bot_name]
-                    for symbol, value in bot.position.items():
+                    for symbol, value in bot.bot_positions.items():
                         market = value["market"]
                         currency = value["currency"]
                         if market in var.market_list:
@@ -1533,7 +1530,7 @@ def handler_orderbook(event) -> None:
                 options = list()
                 for name in Bots.keys():
                     bot = Bots[name]
-                    for symbol, pos in bot.position.items():
+                    for symbol, pos in bot.bot_positions.items():
                         if symbol == var.symbol and pos["position"] != 0:
                             options.append(name)
                 options.append(var.symbol[0])
