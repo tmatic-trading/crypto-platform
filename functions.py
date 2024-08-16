@@ -331,7 +331,7 @@ class Function(WS, Variables):
                     "clOrdID" not in row
                 ):  # The order was placed from the exchange web interface
                     emi = ".".join(row["symbol"])
-                    clOrdID = service.set_clOrdID(emi=emi, market=self.name)
+                    clOrdID = service.set_clOrdID(emi=emi)
                     service.fill_order(
                         emi=emi, clOrdID=clOrdID, category=row["category"], value=row
                     )
@@ -374,6 +374,9 @@ class Function(WS, Variables):
                     if value["orderID"] == row["orderID"]:
                         # emi and clOrdID were defined in var.orders
                         break
+                else:
+                    continue
+                break
             else:
                 """There is no order with this orderID in the var.orders. The
                 order was not sent via Tmatic."""
@@ -388,7 +391,7 @@ class Function(WS, Variables):
         if row["execType"] == "Canceled":
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
-            if emi in var.orders and clOrdID in var.orders[emi]:
+            if emi in var.orders and clOrdID in var.orders[emi]:                
                 var.queue_order.put(
                     {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                 )
@@ -1234,6 +1237,8 @@ class Function(WS, Variables):
         clOrdID = ""
         if side == "Sell":
             qty = -qty
+        if emi not in Bots.keys():
+            emi = ".".join(symbol)
         clOrdID = service.set_clOrdID(emi=emi)
         var.logger.info(
             "Posting symbol="

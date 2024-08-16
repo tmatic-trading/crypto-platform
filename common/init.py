@@ -253,7 +253,7 @@ class Init(WS, Variables):
                         del val["clOrdID"]
                 if "clOrdID" not in val:
                     # The order was placed from the exchange web interface
-                    clOrdID = service.set_clOrdID(emi=emi, market=self.name)
+                    clOrdID = service.set_clOrdID(emi=emi)
                     info_display(
                         self.name,
                         "Outside placement: price="

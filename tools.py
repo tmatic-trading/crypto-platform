@@ -290,6 +290,7 @@ class Tool(Instrument):
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
             qty = min(max(0, position["limits"] - position["position"]), abs(qty))
+        print("__________qty", position, qty)
 
         return round(qty, self.precision)
 
@@ -344,7 +345,6 @@ class Tool(Instrument):
             Buy or Sell
         """
         orders = self._filter_by_side(orders=orders, side=side)
-        print("____________remove", orders)
         for order in orders.values():
             ws = Markets[self.market]
             WS.remove_order(ws, order=order)
