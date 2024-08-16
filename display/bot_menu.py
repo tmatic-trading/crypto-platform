@@ -96,7 +96,9 @@ class SettingsApp:
 
         # Create initial frames
 
-        canvas = tk.Canvas(info_right, borderwidth=0, bg=disp.bg_color, highlightthickness=0)
+        canvas = tk.Canvas(
+            info_right, borderwidth=0, bg=disp.bg_color, highlightthickness=0
+        )
         canvas.grid(row=0, column=0, sticky="NSEW")
         info_right.grid_columnconfigure(0, weight=1)
         info_right.grid_rowconfigure(0, weight=1)
@@ -456,10 +458,11 @@ class SettingsApp:
     def parameters(self, bot_name: str) -> None:
         def on_button(value: int) -> None:
             timefr = tuple(self.timeframes.keys())[value]
-            err = service.update_database(
-                query=f"UPDATE robots SET TIMEFR = {timefr}"
+            qwr = (
+                f"UPDATE robots SET TIMEFR = '{timefr}'"
                 + f", UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{bot_name}'"
             )
+            err = service.update_database(query=qwr)
             if err is None:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
