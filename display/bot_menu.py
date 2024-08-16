@@ -95,11 +95,39 @@ class SettingsApp:
         # self.timeframe_changed = None
 
         # Create initial frames
-        # self.bot_info_frame()
-        self.brief_frame = tk.Frame(info_right, bg=disp.bg_color)
-        self.brief_frame.pack(fill="both", expand="yes", anchor="n")
-        self.brief_frame.bind("<Configure>", self.wrap)
+
+        canvas = tk.Canvas(info_right, borderwidth=0, bg=disp.bg_color)
+        canvas.grid(row=0, column=0, sticky="NSEW")
+        info_right.grid_columnconfigure(0, weight=1)
+        info_right.grid_rowconfigure(0, weight=1)
+        scroll = AutoScrollbar(info_right, orient="vertical")
+        scroll.config(command=canvas.yview)
+        scroll.grid(row=0, column=1, sticky="NS")
+        canvas.config(yscrollcommand=scroll.set)
+        self.brief_frame = tk.Frame(canvas, bg=disp.bg_color)
+        id = canvas.create_window((0, 0), window=self.brief_frame, anchor="nw")
+        canvas.bind(
+            "<Configure>",
+            lambda event, id=id, can=canvas: self.event_width(event, id, can),
+        )
+        self.brief_frame.bind(
+            "<Configure>", lambda event: self.event_config(event, canvas)
+        )
+        self.brief_frame.grid_columnconfigure(0, weight=1)
+        self.brief_frame.grid_rowconfigure(0, weight=1)
         self.modules = dict()
+
+    def event_config(self, event, canvas_event):
+        canvas_event.configure(scrollregion=canvas_event.bbox("all"))
+        self.wrap()
+
+    def event_width(self, event, canvas_id, canvas_event):
+        canvas_event.itemconfig(canvas_id, width=event.width)
+
+    def onFrameConfigure(self, event):
+        """Reset the scroll region to encompass the inner frame"""
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self.wrap()
 
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
@@ -370,7 +398,7 @@ class SettingsApp:
             fg=disp.gray_color,
             justify=tk.LEFT,
         ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        self.wrap("None")
+        self.wrap()
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
@@ -632,7 +660,7 @@ class SettingsApp:
             self.bot_entry["Name"].delete(0, tk.END)
             self.bot_entry["Name"].insert(0, bot_name)
             self.button.pack(anchor="nw", padx=50, pady=20)
-            self.wrap("None")
+            self.wrap()
         else:
             self.display_error_message(bot_name=bot_name)
 
@@ -690,7 +718,7 @@ class SettingsApp:
             state="disabled",
         )
         self.button.pack(anchor="nw", padx=50, pady=10)
-        self.wrap("None")
+        self.wrap()
 
     def new(self):
         if disp.bot_name:
@@ -746,8 +774,10 @@ class SettingsApp:
             fg=disp.gray_color,
             justify=tk.LEFT,
         )
-        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-        self.wrap("None")
+        res_label.pack(
+            anchor="nw", padx=self.padx, pady=self.pady, fill="both", expand=True
+        )
+        self.wrap()
 
     def show(self, bot_name):
         if bot_name != disp.bot_event_prev:
@@ -789,7 +819,7 @@ class SettingsApp:
             except Exception:
                 pass
 
-    def wrap(self, event):
+    def wrap(self):
         for child in self.brief_frame.winfo_children():
             if type(child) is tk.Label:
                 child.config(wraplength=self.brief_frame.winfo_width() - self.padx * 2)

@@ -379,7 +379,10 @@ class Variables:
     frame_info.grid_columnconfigure(1, weight=0)
     frame_info.grid_rowconfigure(0, weight=1)
     # text_info.configure(state="disabled")
-    bg_color = text_info["background"]
+    if ostype == "Mac":
+        bg_color = title_color
+    else:
+        bg_color = text_info["background"]
 
     # Intended to display the main area of the terminal or the minor pages (bots info, settings)
     menu_robots = tk.Frame(menu_frame)
