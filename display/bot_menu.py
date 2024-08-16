@@ -96,7 +96,7 @@ class SettingsApp:
 
         # Create initial frames
 
-        canvas = tk.Canvas(info_right, borderwidth=0, bg=disp.bg_color)
+        canvas = tk.Canvas(info_right, borderwidth=0, bg=disp.bg_color, highlightthickness=0)
         canvas.grid(row=0, column=0, sticky="NSEW")
         info_right.grid_columnconfigure(0, weight=1)
         info_right.grid_rowconfigure(0, weight=1)
@@ -104,7 +104,7 @@ class SettingsApp:
         scroll.config(command=canvas.yview)
         scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
-        self.brief_frame = tk.Frame(canvas, bg=disp.bg_color)
+        self.brief_frame = tk.Frame(canvas, bg=disp.bg_color, borderwidth=0)
         id = canvas.create_window((0, 0), window=self.brief_frame, anchor="nw")
         canvas.bind(
             "<Configure>",

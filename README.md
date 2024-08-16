@@ -52,6 +52,7 @@ pip3 install pycryptodome
 pip3 install python-dotenv
 pip3 install websocket-client
 pip3 install requests
+pip3 install pygments
 ```
 
 *or use the command:*
@@ -96,15 +97,11 @@ The "coins" table receives data from the websocket execution stream or trade his
 
 Explanations for the columns of the SQLite "robots" table:
 * EMI - bot identity name.
-* TICKER - instrument symbol is the same as presented in the exchange API.
-* SYMBOL - unique instrument symbol. Corresponds to TICKER except in the spot category, where SYMBOL matches as "instrument baseCoin / instrument quoteCoin", for example "BTC/USDT".
-* CATEGORY - instrument category. Possible values ​​depend on the specific exchange. Example: "linear", "inverse", "quanto", "spot", "option", etc.
-* MARKET - name of the exchange.
 * SORT - allows you to do your own sorting when reading from the database.
 * DAT - time the current row was written to the database.
 * TIMEFR - timeframe that the bot uses, expressed in minutes.
-* CAPITAL - financial limit for the bot expressed in the number of minimum lots. For example, the minimum lot for XBTUSD is 100USD. 10 will mean that the bot makes trades with a volume of 1000USD.
-* MARGIN - margin trading leverage (not currently in use).
+* STATE - Possible values: "Suspended" or "Active".
+* UPDATED - Bot parameters or strategy.py file update time.
 
 ## Launch the program
 

@@ -1,4 +1,5 @@
 pycryptodome
+pygments
 python-dotenv
 requests
 websocket-client
