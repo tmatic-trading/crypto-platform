@@ -391,7 +391,7 @@ class Function(WS, Variables):
         if row["execType"] == "Canceled":
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
-            if emi in var.orders and clOrdID in var.orders[emi]:                
+            if emi in var.orders and clOrdID in var.orders[emi]:
                 var.queue_order.put(
                     {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                 )
@@ -630,14 +630,15 @@ class Function(WS, Variables):
         for symbol, kline in self.klines.items():
             instrument = self.Instrument[symbol]
             for timefr, values in kline.items():
-                if utcnow > values["time"] + timedelta(minutes=timefr):
+                timefr_minutes = var.timeframe_human_format[timefr]
+                if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
                     Function.save_kline_data(
                         self,
                         row=values["data"][-1],
                         symbol=symbol,
                         timefr=timefr,
                     )
-                    next_minute = int(utcnow.minute / timefr) * timefr
+                    next_minute = int(utcnow.minute / timefr_minutes) * timefr_minutes
                     dt_now = utcnow.replace(minute=next_minute, second=0, microsecond=0)
                     values["data"].append(
                         {

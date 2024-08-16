@@ -58,7 +58,7 @@ class Init(WS, Variables):
     def load_klines(
         self: Markets,
         symbol: tuple,
-        timefr: int,
+        timefr: str,
         klines: dict,
     ) -> Union[dict, None]:
         """
@@ -71,10 +71,13 @@ class Init(WS, Variables):
             f.write("date;time;open bid;open ask;hi;lo;" + "\n")
         target = datetime.now(tz=timezone.utc)
         target = target.replace(second=0, microsecond=0)
+        timefr_minutes = var.timeframe_human_format[timefr]
         start_time = target - timedelta(
-            minutes=robo.CANDLESTICK_NUMBER * timefr - timefr
+            minutes=robo.CANDLESTICK_NUMBER * timefr_minutes - timefr_minutes
         )
-        delta = timedelta(minutes=target.minute % timefr + (target.hour * 60) % timefr)
+        delta = timedelta(
+            minutes=target.minute % timefr_minutes + (target.hour * 60) % timefr_minutes
+        )
         target -= delta
 
         # Loading timeframe data
@@ -84,7 +87,7 @@ class Init(WS, Variables):
             start_time=start_time,
             target=target,
             symbol=symbol,
-            timeframe=timefr,
+            timeframe=timefr_minutes,
         )
 
         if not res:
@@ -93,7 +96,7 @@ class Init(WS, Variables):
         # Bitmex bug fix. Bitmex can send data with the next period's
         # timestamp typically for 5m and 60m.
         if target < res[-1]["timestamp"]:
-            delta = timedelta(minutes=timefr)
+            delta = timedelta(minutes=timefr_minutes)
             for r in res:
                 r["timestamp"] -= delta
 
@@ -102,7 +105,7 @@ class Init(WS, Variables):
         if res[0]["timestamp"] > res[-1]["timestamp"]:
             res.reverse()
         for num, row in enumerate(res):
-            tm = row["timestamp"] - timedelta(minutes=timefr)
+            tm = row["timestamp"] - timedelta(minutes=timefr_minutes)
             klines[symbol][timefr]["data"].append(
                 {
                     "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
@@ -123,9 +126,7 @@ class Init(WS, Variables):
                 )
         klines[symbol][timefr]["time"] = tm
 
-        message = (
-            "Downloaded missing data, symbol=" + str(symbol) + " TIMEFR=" + str(timefr)
-        )
+        message = "Downloaded missing data, symbol=" + str(symbol) + " TIMEFR=" + timefr
         var.logger.info(message)
 
         return klines
@@ -166,7 +167,7 @@ class Init(WS, Variables):
             )
             if not res:
                 message = (
-                    str(symbol) + " " + str(timefr) + " min kline data was not loaded!"
+                    str(symbol) + " " + str(timefr) + " kline data was not loaded!"
                 )
                 var.logger.error(message)
                 return
@@ -425,7 +426,9 @@ def load_bots() -> None:
     for bot_name in Bots.keys():
         import_bot_module(bot_name=bot_name)
 
+
 # Initialization of kline data
+
 
 def setup_klines():
     def get_klines(ws: Markets, success):

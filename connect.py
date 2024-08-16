@@ -294,7 +294,8 @@ def bot_threads() -> None:
 
     for bot_name in Bots.keys():
         var.bot_thread_active[bot_name] = True
-        timeframe_sec = Bots[bot_name].timefr * 60
+        timefr_minutes = var.timeframe_human_format[Bots[bot_name].timefr]
+        timeframe_sec = timefr_minutes * 60
         target_tm = target_time(timeframe_sec)
         t = threading.Thread(
             target=bot_in_thread,

@@ -24,7 +24,7 @@
 # bot.pnl            Bot's pnl separated by currencies (dict)                 #
 # bot.state          Possible values: "Suspended" or "Active" (str)           #
 # bot.created        Bot creation time (datetime)                             #
-# bot.updated        Bot parameters or strategy.py file update time           # 
+# bot.updated        Bot parameters or strategy.py file update time           #
 #                    (datetime)                                               #
 # bot.error_message  Normally "" or an error message if one occured (str)     #
 #                                                                             #

@@ -51,7 +51,6 @@ class Deribit(Variables):
         self.robot_status = dict()
         self.setup_orders = list()
         self.account_disp = ""
-        self.orders = dict()
         self.access_token = ""
         self.pinging = datetime.now(tz=timezone.utc)
         self.heartbeat_interval = 10

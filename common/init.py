@@ -347,6 +347,15 @@ def setup_database_connecion() -> None:
         sql_create_robots = """
         CREATE TABLE IF NOT EXISTS robots (
         EMI varchar(20) DEFAULT NULL UNIQUE,
+        SORT tinyint DEFAULT 0,
+        DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        TIMEFR varchar(5) DEFAULT '5min',
+        STATE varchar(10) DEFAULT 'Suspended',
+        UPDATED timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
+
+        '''sql_create_robots = """
+        CREATE TABLE IF NOT EXISTS robots (
+        EMI varchar(20) DEFAULT NULL UNIQUE,
         SYMBOL varchar(20) DEFAULT 'nemo',
         TICKER varchar(20) DEFAULT 'nemo',
         CATEGORY varchar(10) DEFAULT 'nemo',
@@ -357,7 +366,7 @@ def setup_database_connecion() -> None:
         CAPITAL int DEFAULT 0,
         MARGIN int DEFAULT 0,
         STATE varchar(10) DEFAULT 'Suspended',
-        UPDATED timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
+        UPDATED timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""'''
 
         sql_create_coins = """
         CREATE TABLE IF NOT EXISTS coins (

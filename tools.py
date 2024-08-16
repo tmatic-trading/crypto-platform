@@ -282,15 +282,17 @@ class Tool(Instrument):
             data = service.select_database(qwr)[0]
             if data and data["SUM_QTY"]:
                 bot.bot_positions[self.symbol_tuple]["volume"] = float(data["SUM_QTY"])
-                bot.bot_positions[self.symbol_tuple]["sumreal"] = float(data["SUM_SUMREAL"])
-                bot.bot_positions[self.symbol_tuple]["commiss"] = float(data["SUM_COMMISS"])
+                bot.bot_positions[self.symbol_tuple]["sumreal"] = float(
+                    data["SUM_SUMREAL"]
+                )
+                bot.bot_positions[self.symbol_tuple]["commiss"] = float(
+                    data["SUM_COMMISS"]
+                )
         position = bot.bot_positions[self.symbol_tuple]
-        print("__________", position)
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
             qty = min(max(0, position["limits"] - position["position"]), abs(qty))
-        print("__________qty", position, qty)
 
         return round(qty, self.precision)
 

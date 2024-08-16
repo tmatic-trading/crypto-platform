@@ -64,7 +64,7 @@ class SettingsApp:
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
         # self.action = ""
-        self.timeframes = OrderedDict([("1 min", 1), ("5 min", 5), ("60 min", 60)])
+        self.timeframes = var.timeframe_human_format
         # self.timeframe_trace = StringVar(name=f"timeframe{self}")
         # self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
         self.bot_entry = {}
@@ -170,9 +170,8 @@ class SettingsApp:
         return my_time[0]
 
     def create_bot(self, bot_name, timeframe) -> bool:
-        tf = timeframe.split(" ")
         err = service.insert_database(
-            values=[bot_name, "Suspended", tf[0]], table="robots"
+            values=[bot_name, "Suspended", timeframe], table="robots"
         )
         if err is None:
             bot_path = self.get_bot_path(bot_name)
@@ -203,7 +202,7 @@ class SettingsApp:
             time_now = self.get_time()
             var.orders[bot_name] = OrderedDict()
             Bots[bot_name].state = "Suspended"
-            Bots[bot_name].timefr = int(tf[0])
+            Bots[bot_name].timefr = timeframe
             Bots[bot_name].created = time_now
             Bots[bot_name].updated = time_now
             Bots[bot_name].bot_positions = dict()
@@ -428,7 +427,7 @@ class SettingsApp:
 
     def parameters(self, bot_name: str) -> None:
         def on_button(value: int) -> None:
-            timefr = tuple(self.timeframes.values())[value]
+            timefr = tuple(self.timeframes.keys())[value]
             err = service.update_database(
                 query=f"UPDATE robots SET TIMEFR = {timefr}"
                 + f", UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{bot_name}'"
@@ -966,7 +965,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
         Bots[bot_name].error_message = message
     except AttributeError as exception:
         message = ErrorMessage.BOT_MARKET_ERROR.format(
-            MODULE=module, 
+            MODULE=module,
             EXCEPTION="AttributeError: " + str(exception),
             BOT_NAME=bot_name,
         )
@@ -1014,6 +1013,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.run[bot_name] = bot_manager.modules[bot_name].strategy
     except Exception:
         robo.run[bot_name] = "No strategy"
+
 
 trade_treeTable = dict()
 bot_trades_sub = dict()

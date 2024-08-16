@@ -104,6 +104,7 @@ class Instrument:
     valueOfOneContract: float
         :::For Bitmex only::: Used when calculating trade value.
     """
+
     asks: list
     avgEntryPrice: float = 0
     baseCoin: str
@@ -165,7 +166,7 @@ class BotData:
     name: str
     bot_positions: dict = dict()
     bot_orders: OrderedDict
-    timefr: int
+    timefr: str
     pnl: dict = dict()
     state: str
     created: str
