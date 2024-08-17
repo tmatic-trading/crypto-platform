@@ -296,6 +296,16 @@ class SettingsApp:
                 bot_name=disp.bot_name,
             )
             import_bot_module(disp.bot_name, update=True)
+            qwr = (
+                f"UPDATE robots SET"
+                + f" UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{disp.bot_name}'"
+            )
+            err = service.update_database(query=qwr)
+            if err is None:
+                bot = Bots[disp.bot_name]
+                bot.updated = self.get_time()
+                values = [disp.bot_name, bot.timefr, bot.state, bot.updated, bot.created]
+                TreeTable.bot_info.update(row=0, values=values)
 
         def check_syntax() -> None:
             content = self.strategy_text.get("1.0", tk.END)
