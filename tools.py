@@ -7,7 +7,6 @@ from typing import Union
 
 import functions
 
-# import botinit.init as botinit
 import services as service
 from api.api import WS, Markets
 from common.data import Bots, Instrument, MetaInstrument
