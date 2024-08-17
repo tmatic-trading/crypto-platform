@@ -6,6 +6,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from typing import Tuple, Union
 
+import functions
 import services as service
 from api.api import WS, Markets
 from api.init import Variables
@@ -14,13 +15,10 @@ from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import import_bot_module
 from display.messages import ErrorMessage, Message
-from functions import Function
-
-a = 1
 
 
 class Init(WS, Variables):
-    def download_data(
+    '''def download_data(
         self, start_time: datetime, target: datetime, symbol: tuple, timeframe: int
     ) -> Tuple[Union[list, None], Union[datetime, None]]:
         res = list()
@@ -91,6 +89,10 @@ class Init(WS, Variables):
         )
 
         if not res:
+            message = (
+                str(symbol) + " " + str(timefr) + " kline data was not loaded!"
+            )
+            var.logger.error(message)
             return None
 
         # Bitmex bug fix. Bitmex can send data with the next period's
@@ -157,7 +159,7 @@ class Init(WS, Variables):
     def init_klines(self: Markets) -> Union[dict, None]:
         success = []
 
-        def get_in_thread(symbol, timefr, klines, number):
+        def get_in_thread(symbol: tuple, timefr: str, klines: dict, number: int):
             nonlocal success
             res = Init.load_klines(
                 self,
@@ -166,11 +168,8 @@ class Init(WS, Variables):
                 klines=klines,
             )
             if not res:
-                message = (
-                    str(symbol) + " " + str(timefr) + " kline data was not loaded!"
-                )
-                var.logger.error(message)
                 return
+
             success[number] = "success"
 
         for kline in self.kline_set:
@@ -197,7 +196,7 @@ class Init(WS, Variables):
             if not s:
                 return
 
-        return "success"
+        return "success"'''
 
 
 def add_subscription(subscriptions: list) -> None:
@@ -313,7 +312,7 @@ def load_bots() -> None:
             name = value["EMI"]
             if name not in Bots.keys():
                 ws = Markets[value["MARKET"]]
-                Function.add_symbol(
+                functions.Function.add_symbol(
                     ws,
                     symbol=value["SYMBOL"],
                     ticker=value["TICKER"],
@@ -425,34 +424,3 @@ def load_bots() -> None:
 
     for bot_name in Bots.keys():
         import_bot_module(bot_name=bot_name)
-
-
-# Initialization of kline data
-
-
-def setup_klines():
-    def get_klines(ws: Markets, success):
-        if Init.init_klines(ws):
-            success[ws.name] = "success"
-
-    market_list = var.market_list.copy()
-    while market_list:
-        threads = []
-        success = {market: None for market in market_list}
-        for market in market_list:
-            ws = Markets[market]
-            success[market] = None
-            t = threading.Thread(
-                target=get_klines,
-                args=(ws, success),
-            )
-            threads.append(t)
-            t.start()
-        [thread.join() for thread in threads]
-        for market, value in success.items():
-            if not value:
-                var.logger.error(market + ": Klines are not loaded.")
-                time.sleep(2)
-            else:
-                indx = market_list.index(market)
-                market_list.pop(indx)

@@ -5,7 +5,9 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
-import botinit.init as botinit
+import functions
+
+# import botinit.init as botinit
 import services as service
 from api.api import WS, Markets
 from common.data import Bots, Instrument, MetaInstrument
@@ -219,7 +221,7 @@ class Tool(Instrument):
         timefr = Bots[bot_name].timefr
         ws = Markets[self.market]
         ws.kline_set.add((self.symbol, bot_name, Bots[bot_name].timefr))
-        botinit.Init.append_new_kline(
+        functions.append_new_kline(
             ws, symbol=self.symbol_tuple, bot_name=bot_name, timefr=timefr
         )
 

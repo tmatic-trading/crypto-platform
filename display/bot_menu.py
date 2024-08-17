@@ -854,15 +854,11 @@ class SettingsApp:
             message += f"\nThe ``/{bot_name}/`` subdirectory erased."
             TreeTable.bots.delete(iid=bot_name)
             disp.bot_event_prev = ""
-            for market in var.market_list:
-                ws = Markets[market]
-                for kline in ws.kline_set.copy():
-                    if kline[1] == bot_name:
-                        ws.kline_set.remove(kline)
             var.bot_thread_active[bot_name] = False
             del robo.run[bot_name]
             del self.modules[bot_name]
             del var.orders[bot_name]
+            functions.remove_bot_klines(bot_name)
         except Exception as e:
             if err is None:
                 err = str(e)
@@ -977,8 +973,8 @@ def import_bot_module(bot_name: str, update=False) -> None:
         else:
             mod = importlib.import_module(module)
             bot_manager.modules[bot_name] = mod
-    except ModuleNotFoundError:
-        message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(BOT_NAME=bot_name)
+    except ModuleNotFoundError as exception:
+        message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name)
         var.logger.warning(message)
         var.queue_info.put(
             {
@@ -1039,6 +1035,8 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.run[bot_name] = bot_manager.modules[bot_name].strategy
     except Exception:
         robo.run[bot_name] = "No strategy"
+    if update:
+        functions.init_bot_klines(bot_name)
 
 
 trade_treeTable = dict()

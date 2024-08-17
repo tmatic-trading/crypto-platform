@@ -4,7 +4,7 @@ import tkinter as tk
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from random import randint
-from typing import Union
+from typing import Tuple, Union
 
 import display.bot_menu as bot_menu
 import services as service
@@ -1854,10 +1854,12 @@ def clear_tables():
 def kline_update():
     while var.kline_update_active:
         utcnow = datetime.now(tz=timezone.utc)
+        var.lock_kline_update.acquire(True)
         for market in var.market_list:
             ws = Markets[market]
             if ws.api_is_active:
                 Function.kline_update_market(ws, utcnow=utcnow)
+        var.lock_kline_update.release()
         rest = 1 - time.time() % 1
         time.sleep(rest)
 
@@ -1900,6 +1902,309 @@ def activate_bot_thread(bot_name: str) -> None:
         ),
     )
     t.start()
+
+
+def download_data(
+    self: Markets, start_time: datetime, target: datetime, symbol: tuple, timeframe: int
+) -> Tuple[Union[list, None], Union[datetime, None]]:
+    res = list()
+    while target > start_time:
+        data = WS.trade_bucketed(
+            self, symbol=symbol, time=start_time, timeframe=timeframe
+        )
+        if data:
+            last = start_time
+            res += data
+            message = (
+                self.name
+                + " - loading klines, symbol="
+                + str(symbol)
+                + ", startTime="
+                + str(start_time)
+                + ", received: "
+                + str(len(res))
+                + " records."
+            )
+            start_time = data[-1]["timestamp"] + timedelta(minutes=timeframe)
+            var.logger.info(message)
+            if last == start_time or target <= data[-1]["timestamp"]:
+                return res
+
+        else:
+            message = (
+                "When downloading trade/bucketed data NoneType was recieved. Reboot"
+            )
+            var.logger.error(message)
+            return None
+    self.logNumFatal = ""
+    return res
+
+
+def load_klines(
+    self: Markets,
+    symbol: tuple,
+    timefr: str,
+    klines: dict,
+) -> Union[dict, None]:
+    """
+    Loading kline data from the exchange server. Data is recorded
+    in files for each timeframe. Every time you reboot the files are
+    overwritten.
+    """
+    filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
+    with open(filename, "w") as f:
+        f.write("date;time;open bid;open ask;hi;lo;" + "\n")
+    target = datetime.now(tz=timezone.utc)
+    target = target.replace(second=0, microsecond=0)
+    timefr_minutes = var.timeframe_human_format[timefr]
+    start_time = target - timedelta(
+        minutes=robo.CANDLESTICK_NUMBER * timefr_minutes - timefr_minutes
+    )
+    delta = timedelta(
+        minutes=target.minute % timefr_minutes + (target.hour * 60) % timefr_minutes
+    )
+    target -= delta
+
+    # Loading timeframe data
+
+    res = download_data(
+        self,
+        start_time=start_time,
+        target=target,
+        symbol=symbol,
+        timeframe=timefr_minutes,
+    )
+
+    if not res:
+        message = str(symbol) + " " + str(timefr) + " kline data was not loaded!"
+        var.logger.error(message)
+        return None
+
+    # Bitmex bug fix. Bitmex can send data with the next period's
+    # timestamp typically for 5m and 60m.
+    if target < res[-1]["timestamp"]:
+        delta = timedelta(minutes=timefr_minutes)
+        for r in res:
+            r["timestamp"] -= delta
+
+    # The 'klines' array is filled with timeframe data.
+
+    if res[0]["timestamp"] > res[-1]["timestamp"]:
+        res.reverse()
+    klines[symbol][timefr]["data"] = []
+    for num, row in enumerate(res):
+        tm = row["timestamp"] - timedelta(minutes=timefr_minutes)
+        klines[symbol][timefr]["data"].append(
+            {
+                "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
+                "time": tm.hour * 10000 + tm.minute * 100,
+                "bid": float(row["open"]),
+                "ask": float(row["open"]),
+                "hi": float(row["high"]),
+                "lo": float(row["low"]),
+                "datetime": tm,
+            }
+        )
+        if num < len(res) - 1:
+            Function.save_kline_data(
+                self,
+                row=klines[symbol][timefr]["data"][-1],
+                symbol=symbol,
+                timefr=timefr,
+            )
+    klines[symbol][timefr]["time"] = tm
+
+    message = "Downloaded missing data, symbol=" + str(symbol) + " TIMEFR=" + timefr
+    var.logger.info(message)
+
+    return klines
+
+
+def append_new_kline(self: Markets, symbol: tuple, bot_name: str, timefr: int) -> None:
+    time = datetime.now(tz=timezone.utc)
+
+    def append_new():
+        self.klines[symbol][timefr] = {
+            "time": time,
+            "robots": set(),
+            "open": 0,
+            "data": [],
+        }
+        self.klines[symbol][timefr]["robots"].add(bot_name)
+
+    try:        
+        self.klines[symbol][timefr]["robots"].add(bot_name)
+    except KeyError:
+        try:
+            append_new()
+        except KeyError:
+            self.klines[symbol] = dict()
+            append_new()
+
+
+def init_market_klines(
+    self: Markets,
+) -> Union[dict, None]:
+    """
+    Downloads kline data from the endpoint of the specific exchange.
+    """
+    success = []
+
+    def get_in_thread(symbol: tuple, timefr: str, klines: dict, number: int):
+        nonlocal success
+        res = load_klines(
+            self,
+            symbol=symbol,
+            timefr=timefr,
+            klines=klines,
+        )
+        if not res:
+            return
+
+        success[number] = "success"
+
+    for kline in self.kline_set:
+        # Initialize candlestick timeframe data using 'timefr'
+        symbol = (kline[0], self.name)
+        bot_name = kline[1]
+        timefr = kline[2]
+        append_new_kline(self, symbol=symbol, bot_name=bot_name, timefr=timefr)
+    threads = []
+    for symbol, timeframes in self.klines.items():
+        for timefr in timeframes.keys():
+            success.append(None)
+            t = threading.Thread(
+                target=get_in_thread,
+                args=(symbol, timefr, self.klines, len(success) - 1),
+            )
+
+            threads.append(t)
+            t.start()
+
+    [thread.join() for thread in threads]
+    for s in success:
+        if not s:
+            return
+
+    return "success"
+
+
+def init_bot_klines(bot_name: str) -> None:
+    """
+    Downloads kline data from exchange endpoints for a given. This happens 
+    when a specific bot's strategy.py file is updated.
+    """
+    success = []
+
+    def get_in_thread(
+        ws: Markets, symbol: tuple, timefr: str, klines: dict, number: int
+    ):
+        nonlocal success
+        res = load_klines(
+            ws,
+            symbol=symbol,
+            timefr=timefr,
+            klines=klines,
+        )
+        if not res:
+            return
+        success[number] = "success"
+
+    kline_to_download = list()
+    for market in var.market_list:
+        ws = Markets[market]
+        for item in ws.kline_set:
+            if item[1] == bot_name:
+                symbol = (item[0], market)
+                if not ws.klines[symbol][item[2]]["data"]:
+                    itm = {
+                        "symbol": item[0],
+                        "bot_name": item[1],
+                        "timefr": item[2],
+                        "market": market,
+                    }
+                    kline_to_download.append(itm)
+    while kline_to_download:
+        success = []
+        threads = []
+        for num, kline in enumerate(kline_to_download):
+            success.append(None)
+            ws = Markets[kline["market"]]
+            symbol = (kline["symbol"], kline["market"])
+            t = threading.Thread(
+                target=get_in_thread,
+                args=(ws, symbol, kline["timefr"], ws.klines, num),
+            )
+            threads.append(t)
+            t.start()
+        [thread.join() for thread in threads]
+        for num in range(len(success) - 1, -1, -1):
+            if success[num]:
+                kline_to_download.pop(num)
+            else:
+                message = (
+                    kline_to_download[num]["market"]
+                    + " "
+                    + kline_to_download["symbol"]
+                    + " "
+                    + kline_to_download["timefr"]
+                    + " kline is not loaded."
+                )
+                var.logger.error(message)
+                time.sleep(2)
+
+
+def remove_bot_klines(bot_name: str) -> None:
+    """
+    Removes the bot's subscription to kline data when deleting the bot in the 
+    Bot menu.
+    """
+    for market in var.market_list:
+        ws = Markets[market]
+        for item in ws.kline_set.copy():
+            if item[1] == bot_name:
+                ws.kline_set.remove(item)
+                symbol = (item[0], ws.name)
+                timefr = item[2]
+                ws.klines[symbol][timefr]["robots"].remove(bot_name)      
+                if not ws.klines[symbol][timefr]["robots"]:
+                    var.lock_kline_update.acquire(True)
+                    del ws.klines[symbol][timefr]
+                    if not ws.klines:
+                        del ws.klines[symbol]
+                    var.lock_kline_update.release()
+
+
+def setup_klines():
+    """
+    Initializing kline data on boot or reboot <f3>
+    """
+
+    def get_klines(ws: Markets, success):
+        if init_market_klines(ws):
+            success[ws.name] = "success"
+
+    market_list = var.market_list.copy()
+    while market_list:
+        threads = []
+        success = {market: None for market in market_list}
+        for market in market_list:
+            ws = Markets[market]
+            success[market] = None
+            t = threading.Thread(
+                target=get_klines,
+                args=(ws, success),
+            )
+            threads.append(t)
+            t.start()
+        [thread.join() for thread in threads]
+        for market, value in success.items():
+            if not value:
+                var.logger.error(market + ": Klines are not loaded.")
+                time.sleep(2)
+            else:
+                indx = market_list.index(market)
+                market_list.pop(indx)
 
 
 def init_tables() -> None:

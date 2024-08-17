@@ -44,7 +44,7 @@ def setup(reload=False):
         finish_setup(Markets[name])
     merge_orders()
     botinit.load_bots()
-    botinit.setup_klines()
+    functions.setup_klines()
     functions.init_tables()
     bot_manager.create_bots_menu()
     bot_threads()
@@ -87,7 +87,7 @@ def setup_market(ws: Markets, reload=False):
     """
 
     def get_klines(ws, success, num):
-        if botinit.Init.init_klines(ws):
+        if functions.init_market_klines(ws):
             success["kline"] = "success"
 
     def get_history(ws, success, num):
