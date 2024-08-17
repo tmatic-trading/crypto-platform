@@ -18,7 +18,6 @@ import importlib
 import os
 import re
 import shutil
-import time
 import tkinter as tk
 import traceback
 from collections import OrderedDict
@@ -41,8 +40,6 @@ from display.messages import ErrorMessage
 
 from .variables import AutoScrollbar, TreeTable, TreeviewTable
 from .variables import Variables as disp
-
-# from display.messages import ErrorMessage
 
 
 class BoldLabel(tk.Label):
@@ -237,12 +234,8 @@ class SettingsApp:
             Bots[bot_name].updated = time_now
             Bots[bot_name].bot_positions = dict()
             Bots[bot_name].bot_orders = var.orders[bot_name]
-            module = "algo." + bot_name + "." + self.strategy_file.split(".")[0]
-            mod = importlib.import_module(module)
-            try:
-                robo.run[bot_name] = mod.strategy
-            except Exception:
-                robo.run[bot_name] = "No strategy"
+            import_bot_module(bot_name)
+            functions.activate_bot_thread(bot_name=bot_name)
             self.insert_bot_menu(name=bot_name, new=True)
 
             return True
@@ -863,11 +856,11 @@ class SettingsApp:
             disp.bot_event_prev = ""
             for market in var.market_list:
                 ws = Markets[market]
-                for kline in reversed(ws.kline_list.copy()):
+                for kline in ws.kline_set.copy():
                     if kline[1] == bot_name:
                         ws.kline_set.remove(kline)
+            var.bot_thread_active[bot_name] = False
             del robo.run[bot_name]
-            del var.bot_thread_active[bot_name]
             del self.modules[bot_name]
             del var.orders[bot_name]
         except Exception as e:

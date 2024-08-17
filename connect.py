@@ -1,5 +1,4 @@
 import threading
-import time
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
@@ -11,7 +10,6 @@ from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
-from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager
@@ -271,42 +269,8 @@ def clear_params():
 
 
 def bot_threads() -> None:
-    def target_time(timeframe_sec):
-        now = datetime.now(tz=timezone.utc).timestamp()
-        target_tm = now + (timeframe_sec - now % timeframe_sec)
-
-        return target_tm
-
-    def bot_in_thread(bot_name: str, timeframe_sec: int, target_tm: float, bot: Bots):
-        """
-        Bot entry point
-        """
-        while var.bot_thread_active[bot_name]:
-            tm = time.time()
-            if tm > target_tm:
-                target_tm = target_time(timeframe_sec)
-                if disp.f9 == "ON":
-                    if bot.state == "Active":
-                        if callable(robo.run[bot_name]):
-                            # Calls strategy function in the strategy.py file
-                            robo.run[bot_name]()
-            time.sleep(1 - time.time() % 1)
-
     for bot_name in Bots.keys():
-        var.bot_thread_active[bot_name] = True
-        timefr_minutes = var.timeframe_human_format[Bots[bot_name].timefr]
-        timeframe_sec = timefr_minutes * 60
-        target_tm = target_time(timeframe_sec)
-        t = threading.Thread(
-            target=bot_in_thread,
-            args=(
-                bot_name,
-                timeframe_sec,
-                target_tm,
-                Bots[bot_name],
-            ),
-        )
-        t.start()
+        functions.activate_bot_thread(bot_name=bot_name)
 
 
 def terminal_reload(event) -> None:
