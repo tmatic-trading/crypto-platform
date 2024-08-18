@@ -29,7 +29,7 @@ The software allows you to monitor trading balances and make transactions manual
 
 - Bot management feature that allows you to create, delete, merge bots and track their activity.
 
-## Who is this software for?
+## Who is this software for
 
 If you are a trader who is thinking about automating your strategies, this software can save you months of effort in creating an application that can interact with exchanges.
 
@@ -191,7 +191,7 @@ To activate automatic trading mode, use the ```F9``` key. To reboot the program,
 
 Click the area in the upper right corner of the window to select the SYMBOL.
 
-Click on the order book area to place a new order (automatic trading mode must be disabled, use ```F9```).
+Click on the order book area to place a new order.
 
 Click in the orders area to move an order to a different price or cancel an order.
 

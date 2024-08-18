@@ -133,7 +133,7 @@ class SettingsApp:
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
         if (
             bot_name in Bots.keys()
-            #or bot_name != self.name_trace.get()
+            # or bot_name != self.name_trace.get()
             or bot_name == ""
         ):
             self.bot_entry[name].config(style="used.TEntry")
@@ -199,7 +199,7 @@ class SettingsApp:
         my_time = str(datetime.now(tz=timezone.utc)).split(".")
 
         return my_time[0]
-    
+
     def init_bot(self, bot_name: str, timeframe: str) -> None:
         """
         Initializes bot variables.
@@ -314,7 +314,13 @@ class SettingsApp:
             if err is None:
                 bot = Bots[disp.bot_name]
                 bot.updated = self.get_time()
-                values = [disp.bot_name, bot.timefr, bot.state, bot.updated, bot.created]
+                values = [
+                    disp.bot_name,
+                    bot.timefr,
+                    bot.state,
+                    bot.updated,
+                    bot.created,
+                ]
                 TreeTable.bot_info.update(row=0, values=values)
 
         def check_syntax() -> None:
@@ -623,7 +629,7 @@ class SettingsApp:
                         f"\n{err}\n\nThe duplicate operation completed with errors."
                     )
                     Bots[copy_bot].error_message = err
-                
+
             except Exception as e:
                 err = str(e)
                 if message == "":
@@ -989,7 +995,9 @@ def import_bot_module(bot_name: str, update=False) -> None:
             mod = importlib.import_module(module)
             bot_manager.modules[bot_name] = mod
     except ModuleNotFoundError as exception:
-        message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name)
+        message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(
+            MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
+        )
         var.logger.warning(message)
         var.queue_info.put(
             {

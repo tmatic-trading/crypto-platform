@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Union
 
 from api.bybit.errors import exception
-from common.data import Bots
+from common.data import Bots, Instrument
 from common.variables import Variables as var
 
 
@@ -227,6 +227,47 @@ def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
     var.orders[emi][clOrdID]["side"] = value["side"]
     var.orders[emi][clOrdID]["orderID"] = value["orderID"]
     var.orders[emi][clOrdID]["clOrdID"] = clOrdID
+
+
+def fill_bot_position(
+    bot_name: str, symbol: tuple, instrument: Instrument, user_id: int
+) -> None:
+    bot = Bots[bot_name]
+    bot.bot_positions[symbol] = {
+        "emi": bot_name,
+        "symbol": instrument.symbol,
+        "category": instrument.market,
+        "market": instrument.market,
+        "ticker": instrument.ticker,
+        "position": 0,
+        "volume": 0,
+        "sumreal": 0,
+        "commiss": 0,
+        "ltime": None,
+        "pnl": 0,
+        "lotSize": instrument.minOrderQty,
+        "currency": instrument.settlCurrency[0],
+        "limits": instrument.minOrderQty,
+    }
+    # Checks if this bot has any records in the database on this instrument.
+    qwr = (
+        "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
+        + "sum(SUMREAL) as SUM_SUMREAL, sum(COMMISS) as "
+        + "SUM_COMMISS, TTIME from (select * from coins where EMI = '"
+        + bot_name
+        + "' and SYMBOL = '"
+        + instrument.symbol
+        + "' and MARKET = '"
+        + instrument.market
+        + "' and ACCOUNT = "
+        + str(user_id)
+        + " and SIDE <> 'Fund' order by ID desc) T;"
+    )
+    data = select_database(qwr)[0]
+    if data and data["SUM_QTY"]:
+        bot.bot_positions[symbol]["volume"] = float(data["SUM_QTY"])
+        bot.bot_positions[symbol]["sumreal"] = float(data["SUM_SUMREAL"])
+        bot.bot_positions[symbol]["commiss"] = float(data["SUM_COMMISS"])
 
 
 def count_orders():

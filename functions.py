@@ -119,6 +119,13 @@ class Function(WS, Variables):
             )
             instrument = self.Instrument[row["symbol"]]
             if emi in Bots.keys():
+                if row["symbol"] not in Bots[emi].bot_positions:
+                    service.fill_bot_position(
+                        bot_name=emi,
+                        symbol=row["symbol"],
+                        instrument=instrument,
+                        user_id=Markets[instrument.market].user_id,
+                    )
                 position = Bots[emi].bot_positions[row["symbol"]]
                 if row["category"] != "spot":
                     position["position"] += lastQty
@@ -1641,7 +1648,7 @@ def handler_orderbook(event) -> None:
         else:
             warning_window("Some of the fields are empty!")
 
-    if disp.book_window_trigger == "off" and disp.f9 == "OFF":
+    if disp.book_window_trigger == "off":
         disp.book_window_trigger = "on"
         book_window = tk.Toplevel(disp.root, padx=10, pady=20)
         cx = disp.root.winfo_pointerx()
@@ -2032,7 +2039,7 @@ def append_new_kline(self: Markets, symbol: tuple, bot_name: str, timefr: int) -
         }
         self.klines[symbol][timefr]["robots"].add(bot_name)
 
-    try:        
+    try:
         self.klines[symbol][timefr]["robots"].add(bot_name)
     except KeyError:
         try:
@@ -2091,7 +2098,7 @@ def init_market_klines(
 
 def init_bot_klines(bot_name: str) -> None:
     """
-    Downloads kline data from exchange endpoints for a given. This happens 
+    Downloads kline data from exchange endpoints for a given. This happens
     when a specific bot's strategy.py file is updated.
     """
     success = []
@@ -2145,9 +2152,9 @@ def init_bot_klines(bot_name: str) -> None:
                 message = (
                     kline_to_download[num]["market"]
                     + " "
-                    + kline_to_download["symbol"]
+                    + kline_to_download[num]["symbol"]
                     + " "
-                    + kline_to_download["timefr"]
+                    + kline_to_download[num]["timefr"]
                     + " kline is not loaded."
                 )
                 var.logger.error(message)
@@ -2156,7 +2163,7 @@ def init_bot_klines(bot_name: str) -> None:
 
 def remove_bot_klines(bot_name: str) -> None:
     """
-    Removes the bot's subscription to kline data when deleting the bot in the 
+    Removes the bot's subscription to kline data when deleting the bot in the
     Bot menu.
     """
     for market in var.market_list:
@@ -2166,7 +2173,7 @@ def remove_bot_klines(bot_name: str) -> None:
                 ws.kline_set.remove(item)
                 symbol = (item[0], ws.name)
                 timefr = item[2]
-                ws.klines[symbol][timefr]["robots"].remove(bot_name)      
+                ws.klines[symbol][timefr]["robots"].remove(bot_name)
                 if not ws.klines[symbol][timefr]["robots"]:
                     var.lock_kline_update.acquire(True)
                     del ws.klines[symbol][timefr]

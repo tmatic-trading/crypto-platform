@@ -3,10 +3,9 @@ import os
 import platform
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Union, Callable
+from typing import Callable, Union
 
 import functions
-
 import services as service
 from api.api import WS, Markets
 from common.data import Bots, Instrument, MetaInstrument
@@ -27,7 +26,7 @@ class Tool(Instrument):
     def __init__(self, instrument: Instrument) -> None:
         self.__dict__ = instrument.__dict__
         self.symbol_tuple = (self.symbol, self.market)
-        #self.klines = Markets[self.market].klines[("XBTUSDT", "Bitmex")]
+        self.instrument = instrument
 
     def close_all(
         self,
@@ -75,7 +74,7 @@ class Tool(Instrument):
         if not price:
             price = self.asks[0][0]
         if price:
-            qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
+            qty = self._control_limits(side="Sell", qty=qty, bot_name=bot_name)
             if qty:
                 clOrdID = None
                 if move is True:
@@ -183,7 +182,7 @@ class Tool(Instrument):
 
     def add_kline(self) -> Callable:
         """
-        Adds kline (candlestick) data to the instrument for the time interval 
+        Adds kline (candlestick) data to the instrument for the time interval
         specified in the bot parameters.
 
         This function is called from each bot's strategy.py file. The time
@@ -202,10 +201,10 @@ class Tool(Instrument):
         Returns
         -------
         Callable
-            A callable object that returns the kline data of the specified 
-            instrument. If argumens to this object are omitted, all klines are 
-            returned. The line with the latest date is designated as -1, the 
-            line before the latest is designated -2, and so on. Each line is 
+            A callable object that returns the kline data of the specified
+            instrument. If argumens to this object are omitted, all klines are
+            returned. The line with the latest date is designated as -1, the
+            line before the latest is designated -2, and so on. Each line is
             a dictionary where:
                 "date": int
                     date yymmdd, example 240814
@@ -223,20 +222,20 @@ class Tool(Instrument):
                     funding rate for perpetual instruments
                 "datetime": datetime
                     date and time in datetime format
-            
+
         Examples
         --------
         kl = Bybit["BTCUSD"].add_kline()
-        
+
         1. Get all klines for BTCUSD (list)
             kl()
         2. Get latest line (dict)
             kl(-1)
-        3. Get the opening price of the first bid price of the latest line 
+        3. Get the opening price of the first bid price of the latest line
             (float).
             kl("bid", -1)
 
-        For these examples, the time frame (timefr) is specified in the bot 
+        For these examples, the time frame (timefr) is specified in the bot
         parameters.
         """
         bot_name = name(inspect.stack())
@@ -256,12 +255,12 @@ class Tool(Instrument):
         Parameters
         ----------
         First parameter: str
-            Can take values: "date", "time", "bid", "ask", "hi", "lo", 
+            Can take values: "date", "time", "bid", "ask", "hi", "lo",
             "funding", "datetime"
         Second parameter: int
-            The line with the latest date is designated as -1, the 
+            The line with the latest date is designated as -1, the
             line before the latest is designated -2, and so on.
-        
+
         Returns
         -------
         dict | list | float
@@ -295,45 +294,12 @@ class Tool(Instrument):
         """
         bot = Bots[bot_name]
         if not self.symbol_tuple in bot.bot_positions:
-            bot.bot_positions[self.symbol_tuple] = {
-                "emi": bot_name,
-                "symbol": self.symbol,
-                "category": self.market,
-                "market": self.market,
-                "ticker": self.ticker,
-                "position": 0,
-                "volume": 0,
-                "sumreal": 0,
-                "commiss": 0,
-                "ltime": None,
-                "pnl": 0,
-                "lotSize": self.minOrderQty,
-                "currency": self.settlCurrency[0],
-                "limits": self.minOrderQty,
-            }
-            # Checks if this bot has any records in the database on this instrument.
-            qwr = (
-                "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
-                + "sum(SUMREAL) as SUM_SUMREAL, sum(COMMISS) as "
-                + "SUM_COMMISS, TTIME from (select * from coins where EMI = '"
-                + bot_name
-                + "' and SYMBOL = '"
-                + self.symbol
-                + "' and MARKET = '"
-                + self.market
-                + "' and ACCOUNT = "
-                + str(Markets[self.market].user_id)
-                + " and SIDE <> 'Fund' order by ID desc) T;"
+            service.fill_bot_position(
+                bot_name=bot_name,
+                symbol=self.symbol_tuple,
+                instrument=self.instrument,
+                user_id=Markets[self.market].user_id,
             )
-            data = service.select_database(qwr)[0]
-            if data and data["SUM_QTY"]:
-                bot.bot_positions[self.symbol_tuple]["volume"] = float(data["SUM_QTY"])
-                bot.bot_positions[self.symbol_tuple]["sumreal"] = float(
-                    data["SUM_SUMREAL"]
-                )
-                bot.bot_positions[self.symbol_tuple]["commiss"] = float(
-                    data["SUM_COMMISS"]
-                )
         position = bot.bot_positions[self.symbol_tuple]
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
