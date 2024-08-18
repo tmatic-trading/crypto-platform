@@ -130,10 +130,10 @@ class SettingsApp:
 
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
-        bot_name = re.sub("[\W]+", "", self.name_trace.get())
+        bot_name = self.name_trace.get().lstrip().strip()
         if (
             bot_name in Bots.keys()
-            or bot_name != self.name_trace.get()
+            #or bot_name != self.name_trace.get()
             or bot_name == ""
         ):
             self.bot_entry[name].config(style="used.TEntry")
@@ -141,6 +141,10 @@ class SettingsApp:
         else:
             self.bot_entry[name].config(style="free.TEntry")
             self.button.config(state="normal")
+        cursor = self.bot_entry[name].index(tk.INSERT)
+        self.bot_entry[name].delete(0, tk.END)
+        self.bot_entry[name].insert(0, bot_name)
+        self.bot_entry[name].icursor(cursor)
 
     def check_button(self):
         if self.check_var.get() == 1:
