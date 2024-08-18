@@ -181,38 +181,9 @@ Launch the program:
 
 Once the program is running, you can submit buy and sell orders by clicking on the order book, then cancel or move orders. However, the point of the program is the possibility of automatic trading around the clock in accordance with the established algorithms. You can use different algorithms for the same financial instrument, distributing balances and financial results separately for each algorithm or, to put it another way, for each bot. This feature is implemented in the program through the key parameter EMI, which is the bot’s identity name. When you submit an order through the program, you pass the "clOrdID" field to the exchange, which contains the bot's EMI. Thus, after the order is executed, when you receive the transaction parameters, there will also be a "clOrdID" field from which the program finds out the order number of your internal accounting and the bot’s EMI. Consequently, the program will calculate the financial result of a particular bot, its balance and make an entry into the database. Having the entire register of transactions in the database, each time after switching on, the program can correctly recalculate the balances for each bot.
 
-EMI can be equal to the instrument symbol as the default name, for example, if you made a trade from the exchange web interface. In this case, the EMI may look, for example,  like ```"XBTUSD.inverse"```. When the program processes data from the ```execution``` stream or ```trade history``` endpoint and does not find a correspondence between the EMI from the "clOrdID" field and the field in the SQLite "robots" table, in this case the EMI may also be equal to the instrument symbol. Sometimes ignoring the "clOrdID" field can be useful when restoring trades to the SQLite "coins" table. This will be discussed below.
+EMI can be equal to the instrument symbol as the default name, for example, if you made a trade from the exchange web interface. In this case, the EMI may look, for example,  like ```"XBTUSD"```. When the program processes data from the ```execution``` stream or ```trade history``` endpoint and does not find a correspondence between the EMI from the "clOrdID" field and the field in the SQLite "robots" table, in this case the EMI may also be equal to the instrument symbol.
 
-Be careful when assigning EMI to bots. Keep in mind that the "clOrdID" field will permanently store the bot's EMI in the exchange registries. You can't change it. Different instruments such as XBTUSD and XBTUSDT may have different settlement currencies such as XBt and USDt. Therefore, you should not assign the same EMI to a bot that first traded XBTUSD and then started trading XBTUSDT. The program will not be able to correctly recalculate the financial result. If you once assigned EMI="myBot" to XBTUSD, then in the future for a bot with EMI="myBot" the instrument must always have the same currency, because... It is impossible to sum XBt and USDt.
-
-Even if you use the same EMI for different instruments but with the same currency, when switching from one instrument to another, you must ensure that the balance is zero. Let's say you traded XBTUSD and you have 100 purchased contracts left. If you change SYMBOL from XBTUSD to ETHUSD, the program will show 100 purchased contracts, but ETHUSD, which will be a mistake.
-
-The best practice when using the program is to assign the only SYMBOL instrument to a specific EMI and never change it again for this EMI.
-
-If there is still confusion with the purpose of EMI, you can do the following:
-
-- Delete all entries or only unwanted rows from the SQLite "coins" table, delete all or only unwanted bots from the SQLite "robots" table.
-- Change the date in the ```history.ini``` file to the date from which you want to restore transactions and funding in the database.
-- Restart the program. As a result, the "coins" table will be filled with default (RESERVED) EMI for each instrument, ignoring custom values in the "clOrdID" field, which will be saved in the "REFER" column for reference.
-- You can then use the program again by assigning EMI names in the "robots" table.
-
-If you have open positions in RESERVED EMI and custom EMI at the same time and you receive funding, the program will first distribute the funding according to the custom bot positions and then write the balance to the RESERVED EMI account.
-
-It may happen that according to your internal accounting, for example, for the XBTUSD instrument one bot has a position of -100, and the other +100. In this case, funding will not come, because the exchange has a position of 0 on its balance sheet. You have to come to terms with this fact.
-
-What happens if you place an order from the standard exchange trading web interface? Yes, you will see this order in the program with EMI equal the instrument symbol, but only if you are subscibed to a specific instrument in ```.env.<exchange>``` file. You will be able to cancel or move this order.
-
-It may happen that you have unclosed positions or active orders on one or another EMI, and you have already removed this EMI from the SQLite "robots" table. When you reboot, the program will find EMIs with unclosed positions or orders and add them to the list of bots with the status "NOT DEFINED". Automatic trading with these bots is not possible, but positions can be closed or orders canceled manually.
-
-Possible bot STATUS:
-
-* WORK - the bot is capable of performing transactions automatically. EMI is read from the SQLite "robots" table. You also can make transactions manually if trading status ```F9``` is "OFF".
-* OFF - the bot is temporarily disabled from automatic mode. You can make transactions manually.
-* RESERVED - all SYMBOLS from the ```.env``` files receive an additional bot instance with EMI equal to symbol and category, for example, ```"XBTUSD.inverse"```. This status allows you to make transactions manually.
-* NOT DEFINED - when loading the program, a bot with a position not equal to zero or active orders was found and this bot is not in the SQLite "robots" table. Positions can be closed manually.
-* NOT IN LIST - when loading the program, a bot with a position not equal to zero was found and its symbol was not found in SYMBOLS of the ```.env``` file. You cannot make trades because you're not subscribed to the symbol in the ```.env``` file. Add symbol to SYMBOLS and restart the program.
-
-Red STATUS color is for OFF, NOT DEFINED, NOT IN LIST and for RESERVED with unclosed positions.
+What happens if you place an order from the standard exchange trading web interface? You will see this order in the program with EMI equal the instrument symbol, but only if you are subscibed to a specific instrument in ```.env.<exchange>``` file. You will be able to cancel or move this order.
 
 ## Program controls
 
@@ -226,139 +197,11 @@ Click in the orders area to move an order to a different price or cancel an orde
 
 Click in the exchange area to select an exchange.
 
-You can disable a bot ("OFF" status) and enable it ("WORK" status) by clicking on the area with the list of bots.
+You can enter the Bot menu by clicking on the area with the list of bots.
 
 ## Add trading algorithm
 
-Make a new database entry in the "robots" table, for example:
-
-```SQL
-INSERT INTO robots (
-  EMI, SYMBOL, TICKER, CATEGORY, MARKET, SORT, TIMEFR, CAPITAL, MARGIN
-  )
-  values (
-    "myBot", "XBTUSDT", "XBTUSDT", "linear", "Bitmex", 1, 1, 1, 1
-    );
-```
-
-*A bot will only appear if its symbol, in this case "XBTUSDT", is included in the LINEAR_SYMBOLS variable in the ```.env.Bitmex``` file.*
-
-Add the currency "USDt" to CURRENCIES in the ```.env.Bitmex``` file because "USDt" is the settlement currency for "XBTUSDT".
-
-```Python
-CURRENCIES = "XBt, USDt"
-```
-
-The program will download candlestick data from the exchange for the number specified in the ```CANDLESTICK_NUMBER``` constant. The data is stored in the ```klines``` dictionary and is updated as the program runs. At the same time, the ```framing``` dictionary stores timeframe parameters and a list of EMI bots that belong to this timeframe.
-
-Let's say you want to program a simple algorithm, the essence of which is as follows: if the current price is higher than 10-periods ago, then you should buy, otherwise if the current price is lower than the price 10-periods ago, then sell. Let the bot place limit orders with an indent from the bid or offer price equal to 1/3 of the difference between the high and low of the previous period. This is just a simple example and does not claim to be a profitable strategy.
-
-Create a file ```strategy.py``` in the ```algo``` folder:
-```python
-import services as service
-from api.api import Markets
-from common.data import Instrument
-from functions import Function
-
-
-def algo(robot: dict, frame: dict, instrument: Instrument) -> None:
-    ws = Markets[robot["MARKET"]]
-    period = robot["PERIOD"]
-    quantaty = robot["lotSize"] * robot["CAPITAL"]
-    emi = robot["EMI"]
-    symbol = robot["SYMBOL"]
-    indent = (frame[-1]["hi"] - frame[-1]["lo"]) / 3
-    sell_price = service.ticksize_rounding(
-        price=(instrument.asks[0][0] + indent), ticksize=instrument.tickSize
-    )
-    buy_price = service.ticksize_rounding(
-        price=(instrument.bids[0][0] - indent), ticksize=instrument.tickSize
-    )
-    if frame[-1]["ask"] > frame[-1 - period]["ask"]:
-        buy_quantaty = quantaty - robot["POS"]
-        clOrdID = order_search(ws, emi=emi, side="Buy")
-        # Move an existing order
-        if clOrdID:
-            if (
-                buy_price != ws.orders[clOrdID]["price"]
-                or buy_quantaty != ws.orders[clOrdID]["leavesQty"]
-            ):
-                if robot["POS"] < quantaty:
-                    clOrdID = Function.put_order(
-                        ws,
-                        clOrdID=clOrdID,
-                        price=buy_price,
-                        qty=buy_quantaty,
-                    )
-        # Place a new order
-        else:
-            if robot["POS"] < quantaty:
-                clOrdID = Function.post_order(
-                    ws,
-                    name=robot["MARKET"],
-                    symbol=symbol,
-                    emi=emi,
-                    side="Buy",
-                    price=buy_price,
-                    qty=buy_quantaty,
-                )
-                delete_orders(ws, emi=emi, side="Sell")
-    elif frame[-1]["bid"] <= frame[-1 - period]["bid"]:
-        sell_quantaty = quantaty + robot["POS"]
-        clOrdID = order_search(ws, emi=emi, side="Sell")
-        # Move an existing order
-        if clOrdID:
-            if (
-                sell_price != ws.orders[clOrdID]["price"]
-                or sell_quantaty != ws.orders[clOrdID]["leavesQty"]
-            ):
-                if robot["POS"] > -quantaty:
-                    clOrdID = Function.put_order(
-                        ws,
-                        clOrdID=clOrdID,
-                        price=sell_price,
-                        qty=sell_quantaty,
-                    )
-        # Place a new order
-        else:
-            if robot["POS"] > -quantaty:
-                clOrdID = Function.post_order(
-                    ws,
-                    name=robot["MARKET"],
-                    symbol=symbol,
-                    emi=emi,
-                    side="Sell",
-                    price=sell_price,
-                    qty=sell_quantaty,
-                )
-                delete_orders(ws, emi=emi, side="Buy")
-
-
-def init_variables(robot: dict):
-    robot["PERIOD"] = 10
-
-
-def order_search(ws: Markets, emi: int, side: str) -> str:
-    res = ""
-    for clOrdID, order in ws.orders.items():
-        if order["EMI"] == emi and order["SIDE"] == side:
-            res = clOrdID
-            break
-
-    return res
-
-
-def delete_orders(ws, emi: int, side: str) -> None:
-    for clOrdID, order in ws.orders.copy().items():
-        if order["EMI"] == emi and order["SIDE"] == side:
-            Function.del_order(ws, order=order, clOrdID=clOrdID)
-
-```
-Launch the program:
-- in Linux or macOS terminal ```python3 main.py```
-- in Windows command prompt (cmd.exe) ```python main.py```
-
-Press ```F9```
+...
 
 ## Development
 
