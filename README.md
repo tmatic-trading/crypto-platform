@@ -27,6 +27,12 @@ The software allows you to monitor trading balances and make transactions manual
 
 - Simultaneous use of any number of trading strategies for different trading instruments with separation of financial results in the database.
 
+- Bot management feature that allows you to create, delete, merge bots and track their activity.
+
+## Who is this software for?
+
+If you are a trader who is thinking about automating your strategies, this software can save you months of effort in creating an application that can interact with exchanges.
+
 ## Before launch
 
 Although the software can be used for manual trading, it is mainly intended to be used for automated one, opposite to the standard exchange trading web-interface.

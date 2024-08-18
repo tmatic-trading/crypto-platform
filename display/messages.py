@@ -19,12 +19,13 @@ class ErrorMessage(str, Enum):
         "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"
         + "You are probably trying to use an exchange that is not connected. "
         + "You should either add the exchange in the .env file or correct "
-        + "the strategy file or delete ``{BOT_NAME}`` using the ``Bot Menu``.\n"
+        + "the strategy file or delete ``{BOT_NAME}`` using the ``Bot Menu`` "
+        + "if ``{BOT_NAME}`` is no longer needed.\n"
     )
     BOT_LOADING_ERROR = (
         "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"
         + "You should either correct the strategy file or delete ``{BOT_NAME}`` "
-        + "using the ``Bot Menu``.\n"
+        + "using the ``Bot Menu`` if ``{BOT_NAME}`` is no longer needed.\n"
     )
     IMPOSSIBLE_SUBSCRIPTION = (
         "The {SYMBOL} instrument has a {STATE} status, but is normally Open. "

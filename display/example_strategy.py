@@ -120,7 +120,7 @@
 # kline = instrument.add_kline()                                              #
 #                                                                             #
 # def strategy():                                                             #
-#   if kline[-1]["bid"] > kline[-10]["bid"]                                   #
+#   if kline("bid", -1) > kline("bid", -10)                                   #
 #       instrument.buy(move=True, cancel=True)                                #
 #   else:                                                                     #
 #       insrument.sell(move=True, cancel=True)                                #

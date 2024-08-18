@@ -3,7 +3,7 @@ import os
 import platform
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Union
+from typing import Union, Callable
 
 import functions
 
@@ -27,6 +27,7 @@ class Tool(Instrument):
     def __init__(self, instrument: Instrument) -> None:
         self.__dict__ = instrument.__dict__
         self.symbol_tuple = (self.symbol, self.market)
+        #self.klines = Markets[self.market].klines[("XBTUSDT", "Bitmex")]
 
     def close_all(
         self,
@@ -180,9 +181,10 @@ class Tool(Instrument):
     def EMA(self, period: int) -> float:
         pass
 
-    def add_kline(self) -> list:
+    def add_kline(self) -> Callable:
         """
-        Adds kline (candlestick) data to the instrument.
+        Adds kline (candlestick) data to the instrument for the time interval 
+        specified in the bot parameters.
 
         This function is called from each bot's strategy.py file. The time
         frame is taken from the bot's parameters. After the bots are
@@ -193,12 +195,18 @@ class Tool(Instrument):
         loaded from the endpoint is equal to CANDLESTICK_NUMBER in
         botinit/variables.py. Then, as the program runs, the data accumulates.
 
+        Parameters
+        ----------
+        No parameters.
+
         Returns
         -------
-        list
-            A list of kline data, where the line with the latest date is
-            designated as [-1], the line before the latest is designated
-            as [-2], and so on. Each line is a dictionary where:
+        Callable
+            A callable object that returns the kline data of the specified 
+            instrument. If argumens to this object are omitted, all klines are 
+            returned. The line with the latest date is designated as -1, the 
+            line before the latest is designated -2, and so on. Each line is 
+            a dictionary where:
                 "date": int
                     date yymmdd, example 240814
                 "time": int
@@ -215,6 +223,21 @@ class Tool(Instrument):
                     funding rate for perpetual instruments
                 "datetime": datetime
                     date and time in datetime format
+            
+        Examples
+        --------
+        kl = Bybit["BTCUSD"].add_kline()
+        
+        1. Get all klines for BTCUSD (list)
+            kl()
+        2. Get latest line (dict)
+            kl(-1)
+        3. Get the opening price of the first bid price of the latest line 
+            (float).
+            kl("bid", -1)
+
+        For these examples, the time frame (timefr) is specified in the bot 
+        parameters.
         """
         bot_name = name(inspect.stack())
         timefr = Bots[bot_name].timefr
@@ -224,11 +247,33 @@ class Tool(Instrument):
             ws, symbol=self.symbol_tuple, bot_name=bot_name, timefr=timefr
         )
 
-        return ws.klines[self.symbol_tuple][timefr]["data"]
+        return lambda *args: self._kline(timefr, *args)
 
-    def kline(self, period: int = 1) -> dict:
+    def _kline(self, timefr, *args) -> Union[dict, list, float]:
+        """
+        Returns kline (candlestick) data.
+
+        Parameters
+        ----------
+        First parameter: str
+            Can take values: "date", "time", "bid", "ask", "hi", "lo", 
+            "funding", "datetime"
+        Second parameter: int
+            The line with the latest date is designated as -1, the 
+            line before the latest is designated -2, and so on.
+        
+        Returns
+        -------
+        dict | list | float
+            Kline data. For more information, see add_kline().
+        """
         ws = Markets[self.market]
-        print(ws.klines)
+        if not args:
+            return ws.klines[self.symbol_tuple][timefr]["data"]
+        elif isinstance(args[0], int):
+            return ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
+        else:
+            return ws.klines[self.symbol_tuple][timefr]["data"][args[1]][args[0]]
 
     def _control_limits(self, side: str, qty: float, bot_name: str) -> float:
         """
