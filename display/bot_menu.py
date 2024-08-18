@@ -199,6 +199,22 @@ class SettingsApp:
         my_time = str(datetime.now(tz=timezone.utc)).split(".")
 
         return my_time[0]
+    
+    def init_bot(self, bot_name: str, timeframe: str) -> None:
+        """
+        Initializes bot variables.
+        """
+        time_now = self.get_time()
+        var.orders[bot_name] = OrderedDict()
+        Bots[bot_name].state = "Suspended"
+        Bots[bot_name].timefr = timeframe
+        Bots[bot_name].created = time_now
+        Bots[bot_name].updated = time_now
+        Bots[bot_name].bot_positions = dict()
+        Bots[bot_name].bot_orders = var.orders[bot_name]
+        import_bot_module(bot_name)
+        functions.activate_bot_thread(bot_name=bot_name)
+        self.insert_bot_menu(name=bot_name, new=True)
 
     def create_bot(self, bot_name, timeframe) -> bool:
         err = service.insert_database(
@@ -230,17 +246,7 @@ class SettingsApp:
                 f"{str(bot_path)}/.gitignore",
                 f"*\n!__init__.py\n!.gitignore\n!{self.strategy_file}\n",
             )
-            time_now = self.get_time()
-            var.orders[bot_name] = OrderedDict()
-            Bots[bot_name].state = "Suspended"
-            Bots[bot_name].timefr = timeframe
-            Bots[bot_name].created = time_now
-            Bots[bot_name].updated = time_now
-            Bots[bot_name].bot_positions = dict()
-            Bots[bot_name].bot_orders = var.orders[bot_name]
-            import_bot_module(bot_name)
-            functions.activate_bot_thread(bot_name=bot_name)
-            self.insert_bot_menu(name=bot_name, new=True)
+            self.init_bot(bot_name=bot_name, timeframe=timeframe)
 
             return True
 
@@ -604,13 +610,7 @@ class SettingsApp:
                     self.get_bot_path(bot_name), self.get_bot_path(copy_bot)
                 )
                 message = f"The ``/{copy_bot}/`` subdirectory created."
-                time_now = self.get_time()
-                bot = Bots[copy_bot]
-                bot.state = "Suspended"
-                bot.timefr = Bots[bot_name].timefr
-                bot.created = time_now
-                bot.updated = time_now
-                self.insert_bot_menu(name=copy_bot, new=True)
+                self.init_bot(bot_name=copy_bot, timeframe=Bots[bot_name].timefr)
                 message += f"\nNew bot ``{copy_bot}`` added to the bots' list."
                 err = service.insert_database(
                     values=[copy_bot, "Suspended", Bots[bot_name].timefr],
@@ -623,6 +623,7 @@ class SettingsApp:
                         f"\n{err}\n\nThe duplicate operation completed with errors."
                     )
                     Bots[copy_bot].error_message = err
+                
             except Exception as e:
                 err = str(e)
                 if message == "":
