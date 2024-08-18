@@ -130,7 +130,7 @@ class SettingsApp:
 
     def name_trace_callback(self, var, index, mode):
         name = var.replace(str(self), "")
-        bot_name = self.name_trace.get().lstrip().strip()
+        bot_name = re.sub("[\W]+", "", self.name_trace.get())
         if (
             bot_name in Bots.keys()
             #or bot_name != self.name_trace.get()
