@@ -335,21 +335,21 @@ class Bitmex(Variables):
             self.logger.error(
                 traceback.format_exc()
             )  # Error in api.py. Take a look in logfile.log. Restarting...
-            self.logNumFatal = "SETUP"
+            self.logNumFatal = "FATAL"
 
     def __on_error(self, ws, error) -> None:
         """
         We are here if websocket has fatal errors.
         """
         self.logger.error("Error: %s" % error)
-        self.logNumFatal = "SETUP"
+        self.logNumFatal = "FATAL"
 
     def __on_open(self, ws) -> None:
         self.logger.debug("Websocket opened")
 
     def __on_close(self, *args) -> None:
         self.logger.info(self.name + " - Websocket closed")
-        self.logNumFatal = "SETUP"
+        self.logNumFatal = "FATAL"
 
     def __reset(self) -> None:
         """

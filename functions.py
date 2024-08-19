@@ -931,7 +931,7 @@ class Function(WS, Variables):
                             position["category"],
                             position["position"],
                             position["volume"],
-                            position["pnl"],
+                            "-", #position["pnl"],
                         ]
                         Function.update_position_line(
                             self,
@@ -1059,7 +1059,7 @@ class Function(WS, Variables):
                                 position["category"],
                                 position["position"],
                                 position["volume"],
-                                position["pnl"],
+                                "-", #position["pnl"],
                             ]
                             Function.update_position_line(
                                 self,

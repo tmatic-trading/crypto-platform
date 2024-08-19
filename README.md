@@ -2,7 +2,7 @@
 
 # Cryptocurrency platform designed for automated trading on the Bitmex and Bybit crypto exchanges
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/tmaticDark.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/tmatic.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.9+
 
@@ -74,7 +74,7 @@ pip3 install -r requirements.txt
 The "coins" table receives data from the websocket execution stream or trade history endpoint. Explanations for the columns of the "coins" table:
 * ID - row number in the database.
 * EXECID - unique code that exchange assigns to any transaction.
-* EMI is the identification name of the bot taken from the "clOrdID" field, usually the same as the EMI field of the SQLite "robots" table. If the "clOrdID" field is empty, then the EMI field contains the value "symbol". If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then "symbol" value is also assigned.
+* EMI is the identification name of the bot taken from the "clOrdID" field. EMI usually corresponds to the EMI field of the SQLite "robots" table. If the "clOrdID" field is empty, then the EMI field contains the value taken from the "symbol" field. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then "symbol" field value is also assigned.
 
 | execution|myBot is in the "robots" table|EMI|
 | ------------- |:------------------:|:-----:|
@@ -85,10 +85,10 @@ The "coins" table receives data from the websocket execution stream or trade his
 * REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```
 * MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
-* TICKER - instrument symbol is the same as presented in the exchange API.
-* SYMBOL - unique instrument symbol within the exchange corresponding to the ticker, with the exception of the spot category, where the symbol matches as "instrument baseCoin / instrument quoteCoin", examble "BTC/USDT".
+* TICKER - instrument symbol as presented in the exchange API.
+* SYMBOL - almost the same as TICKER, with exception of the spot category, where SYMBOL looks like "instrument baseCoin / instrument quoteCoin", example "BTC/USDT".
 * CATEGORY - instrument category. Possible values ​​depend on the specific exchange. Example: "linear", "inverse", "quanto", "spot", "option", etc.
-* SIDE - side of a transaction: "Buy", "Sell", "Fund" (funding), "Delivery" - appears when the exchange closes an open position after the instrument expires.
+* SIDE - side of a transaction: "Buy", "Sell", "Fund" (funding), "Delivery" (appears when the exchange closes an open position after the instrument expires).
 * QTY - transaction volume.
 * QTY_REST - rest of transaction volume after partial execution.
 * PRICE - order price.
@@ -98,7 +98,7 @@ The "coins" table receives data from the websocket execution stream or trade his
 * COMMISS - commission for completing a transaction or funding, expressed in the currency of the instrument, and is calculated in accordance with the documentation of the exchange for each instrument. A negative commission value means a rebate.
 * TTIME - transaction time received from the exchange.
 * DAT - time the current row was written into the database.
-* CLORDID - unique order identifier assigned by user corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, clOrdID = "1109594183.myBot" where 1109594183 is a unique order number, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite "coins" table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding, or it was delivery, or the order was made from outside this platform where "clOrdID" was not used.
+* CLORDID - unique order identifier assigned by user corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, clOrdID = "1109594183.myBot" where 1109594183 is a unique order number assigned by user, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite "coins" table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding, or it was delivery, or the order was made from outside this platform where "clOrdID" was not used.
 * ACCOUNT - account number.
 
 Explanations for the columns of the SQLite "robots" table:
@@ -187,17 +187,52 @@ What happens if you place an order from the standard exchange trading web interf
 
 ## Program controls
 
-To activate automatic trading mode, use the ```F9``` key. To reboot the program, use the ```F3``` key.
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/control.png)
 
-Click the area in the upper right corner of the window to select the SYMBOL.
+1. Use the Menu to activate the auto trading mode, or go to the Bot menu, or restart the program.
 
-Click on the order book area to place a new order.
+2. The information widget displays all trading operations and various useful information during the program operation, including errors if they occur.
 
-Click in the orders area to move an order to a different price or cancel an order.
+3. The Market menu switches between exchanges, displays the connection status, account number and the number of exchange reloads due to poor connection or other reasons.
 
-Click in the exchange area to select an exchange.
+4. You can click on the order book area to place a new order. You can place an order for all available bots. Moreover, an order can be placed for a specific instrument that does not belong to any bot.
 
-You can enter the Bot menu by clicking on the area with the list of bots.
+5. Click on the instrument area to switch the order book to another instrument.
+
+6. You can choose between information blocks related to your trading activity, accounts and trading results.
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/notebook.png)
+
+- To cancel or move an order, click on the desired order in the Orders table.
+
+7. The bots available to you are displayed in section 7. Click on a specific bot to go to the bots menu.
+
+## Bot menu
+
+The Bot Menu simplifies the management of bots using the GUI. The functions available in the Bot Menu:
+
+* Add a new bot.
+* Update bot's state: "Active" or "Suspended".
+* Edit bot parameters.
+* Merge two bots.
+* Duplicate bot.
+* Delete bot.
+* View and edit bot's strategy.
+* Check the strategy syntax.
+* View bot activity, including:
+    * Open orders
+    * Positions
+    * Trades
+    * Profit/Loss for each position
+    * Total results, split by currency
+
+### Add a new bot
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/src/newbot.png)
+
+...
+
+
 
 ## Add trading algorithm
 
