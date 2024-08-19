@@ -228,7 +228,7 @@ The Bot Menu simplifies the management of bots using the GUI. The functions avai
 
 ### Add a new bot
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/src/newbot.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/newbot.png)
 
 ...
 
