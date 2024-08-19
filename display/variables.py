@@ -317,7 +317,7 @@ class Variables:
     def on_menu_select(value):
         if value == "<F7> Bot Menu":
             Variables.on_bot_menu("None")
-        elif value == "<F9> Trading State":
+        elif value[:4] == "<F9>":
             on_trade_state("none")
         elif value == "<F3> Reload All":
             on_f3_reload()
@@ -330,7 +330,7 @@ class Variables:
         fg_color,
         command=on_menu_select,
         menu_items=[
-            "<F9> Trading State",
+            "<F9> Trading ON",
             "<F7> Bot Menu",
             "<F3> Reload All",
         ],  # , "Settings", "About"],
@@ -580,9 +580,15 @@ class Variables:
 
 def on_trade_state(event) -> None:
     if Variables.f9 == "ON":
+        Variables.menu_button.menu.entryconfigure(
+            0, label="<F9> Trading " + Variables.f9
+        )
         Variables.f9 = "OFF"
         Variables.label_f9.config(bg=Variables.red_color)
     elif Variables.f9 == "OFF":
+        Variables.menu_button.menu.entryconfigure(
+            0, label="<F9> Trading " + Variables.f9
+        )
         Variables.f9 = "ON"
         Variables.label_f9.config(bg=Variables.green_color)
         for market in var.market_list:
