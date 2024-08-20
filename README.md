@@ -352,7 +352,7 @@ print(Bybit["BTCUSDT"].asks)
 print(Bitmex["XBTUSDT"].asks)
 ```
 
-*Note: To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.*
+> *Note: To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.*
 
 ### Adding kline (candlestick) data to the instrument
 
@@ -471,9 +471,54 @@ Returns open first bid price of the latest period.
 63259.5
 ```
 
-*Note: All data refers to the timeframe (timefr) specified in the bot parameters.*
+> *Note: All data refers to the timeframe (timefr) specified in the bot parameters.*
 
-### Buying and Selling Instructions
+### Buying and Selling instructions
+
+Timatic has only one order type - limit. If a buy order is placed above the best ask price, the trade will be executed for this ask price. The same applies to sell order.
+
+Buy and sell orders are methods that can be called for any instrument from such classes as Bitmex or Bybit of the tools module. For more details, see ```Selecting an instrument``` above.
+
+The syntax is as follows:
+
+```Python
+from tools import Bitmex
+
+Bitmex["XBTUSDT"].sell()
+```
+
+or 
+
+```Python
+Bitmex["XBTUSDT"].buy()
+```
+
+```Python
+"""
+Parameters
+----------
+qty: float
+    Order quantity. If qty is omitted, then: qty is taken as minOrderQty.
+price: float
+    Order price. If price is omitted, then price is taken as the current 
+    first offer in the order book.
+move: bool
+    Checks for open sell orders for the current instrument for this bot and 
+    if there are any, takes the last order and moves it to the new price. If 
+    not, places a new order.
+cancel: bool
+    If True, cancels all buy orders for the current instrument for this bot.
+
+Returns
+-------
+str | None
+    If successful, the clOrdID of this order is returned, otherwise None.
+"""
+```
+
+The parameters of the sell order are described above. All parameters are optional and can be omitted.
+
+> *Note: The parameters of the buy order are the same, except that the price defaults to the first bid in the order book, the method moves the last buy order and cancels all sell orders accordingly.*
 
 ...
 

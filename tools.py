@@ -54,16 +54,18 @@ class Tool(Instrument):
             Order price. If price is omitted, then price is taken as the
             current first offer in the order book.
         move: bool
-            Checks for open buy orders for this bot and if there are any,
-            takes the last order and moves it to the new price. If not,
-            places a new order.
+            Checks for open sell orders for the current instrument for this 
+            bot and if there are any, takes the last order and moves it to 
+            the new price. If not, places a new order.
         cancel: bool
-            If True, cancels all buy orders for this bot.
+            If True, cancels all buy orders for the current instrument for 
+            this bot.
 
         Returns
         -------
         str | None
-            If successful, the clOrdID of this order is returned, otherwise None.
+            If successful, the clOrdID of this order is returned, otherwise 
+            None.
         """
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
@@ -125,16 +127,18 @@ class Tool(Instrument):
             Order price. If price is omitted, then price is taken as the
             current first bid in the order book.
         move: bool
-            Checks for open buy orders for this bot and if there are any,
-            takes the last order and moves it to the new price. If not,
-            places a new order.
+            Checks for open buy orders for the current instrument for this 
+            bot and if there are any, takes the last order and moves it to 
+            the new price. If not, places a new order.
         cancel: bool
-            If True, cancels all buy orders for this bot.
+            If True, cancels all buy orders for the current instrument for 
+            this bot.
 
         Returns
         -------
         str | None
-            If successful, the clOrdID of this order is returned, otherwise None.
+            If successful, the clOrdID of this order is returned, otherwise 
+            None.
         """
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
