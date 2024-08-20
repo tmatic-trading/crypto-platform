@@ -395,6 +395,86 @@ Each line of kline data is a dictionary:
     date and time in datetime format
 ```
 
+The ```Bitmex["XBTUSDT"].add_kline()``` expression returns a callable object that can take one or two arguments, or be called without arguments.
+
+```Python
+kline = Bitmex["XBTUSDT"].add_kline()
+```
+
+1. Without arguments
+```Python
+kline()
+```
+
+Returns a list of data in ascending order. The last element is the data for the most recent period.
+
+```Python
+[
+    {
+        "date": 240820,
+        "time": 120500,
+        "bid": 57996.0,
+        "ask": 57996.0,
+        "hi": 57996.0,
+        "lo": 57996.0,
+        "datetime": datetime.datetime(
+            2024, 8, 20, 12, 5, tzinfo=datetime.timezone.utc
+        ),
+    },
+    ...,
+    ...,
+    {
+        "date": 240820,
+        "time": 134500,
+        "bid": 63259.5,
+        "ask": 63260.0,
+        "hi": 63260.0,
+        "lo": 63259.5,
+        "funding": -0.11806,
+        "datetime": datetime.datetime(
+            2024, 8, 20, 13, 45, tzinfo=datetime.timezone.utc
+        ),
+    },
+]
+```
+
+2. One argument
+```Python
+kline(-1)
+```
+
+Returns the data for the most recent period.
+
+```Python
+{
+    "date": 240820,
+    "time": 134500,
+    "bid": 63259.5,
+    "ask": 63260.0,
+    "hi": 63260.0,
+    "lo": 63259.5,
+    "funding": -0.11806,
+    "datetime": datetime.datetime(
+        2024, 8, 20, 13, 45, tzinfo=datetime.timezone.utc
+    ),
+}
+```
+
+3. Two arguments. Possible values of the first argument: "date", "time", "bid", "ask", "hi", "lo", "funding", "datetime".
+```Python
+kline("bid", -1)
+```
+
+Returns open first bid price of the latest period.
+
+```Python
+63259.5
+```
+
+*Note: All data refers to the timeframe (timefr) specified in the bot parameters.*
+
+### Buying and Selling Instructions
+
 ...
 
 

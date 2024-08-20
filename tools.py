@@ -237,7 +237,9 @@ class Tool(Instrument):
 
         3. kl("bid", -1)
         Return type: float
-            Returns open first bid price of the latest line.
+            Returns open first bid price of the latest period. Possible 
+            values of the first argument: "date", "time", "bid", "ask", "hi", 
+            "lo", "funding", "datetime".
 
         The time frame (timefr) is specified in the bot parameters.
         """

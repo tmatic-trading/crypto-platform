@@ -60,15 +60,18 @@
 # -----------------                                                           #
 #                                                                             #
 # data = Bybit["BTCUSD"].add_kline()                                          #
-# data[-1]             data set for the latest period (dict)                  #
-# data[-1]["date"]     date of the last period in yymmdd format (int)         #
-# data[-1]["time"]     time of the last period in hhmmss format (int)         #
-# data[-1]["bid"]      first bid price at the beginning of the period (float) #
-# data[-1]["ask"]      first ask price at the beginning of the period (float) #
-# data[-1]["hi"]       highest price of the period (float)                    #
-# data[-1]["lo"]       lowest price of the period (float)                     #
-# data[-1]["funding"]  funding rate for perpetual instruments (float)         #
-# data[-1]["datetime"] date and time in datetime format (datetime)            #
+# data(-1)             data set for the latest period (dict)                  #
+# data("date", -1)     date of the last period in yymmdd format (int)         #
+# data["time", -1)     time of the last period in hhmmss format (int)         #
+# data("bid", -1)      first bid price at the beginning of the period (float) #
+# data("ask", -1)      first ask price at the beginning of the period (float) #
+# data("hi", -1)       highest price of the period (float)                    #
+# data("lo", -1)       lowest price of the period (float)                     #
+# data("funding", -1)  funding rate for perpetual instruments (float)         #
+# data("datetime", -1) date and time in datetime format (datetime)            #
+#                                                                             #
+# Index -1 refers to the most recent period, -2 to the period before the most #
+# recent, and so on.                                                          #
 #                                                                             #
 # 7. Functions related to instruments                                         #
 # -----------------------------------                                         #
