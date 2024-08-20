@@ -234,7 +234,7 @@ Currently bots can only trade on timeframes, so timeframe is the only parameter 
 
 Once the bot is created, a page with current parameters will open as shown below.
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/src/bot.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/bot.png)
 
 ## Add trading algorithm
 
