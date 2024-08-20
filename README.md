@@ -356,6 +356,45 @@ print(Bitmex["XBTUSDT"].asks)
 
 ### Adding kline (candlestick) data to the instrument
 
+#### Initialization
+
+Exchanges support thousands of instruments. Downloading kline data and then updating it for all instruments will take a lot of resources, so Tmatic will only download the data that the trader specifies in his strategy.py files.
+
+To get kline data for an instrument, use the add_kline() method. For example, add to your strategy.py file:
+
+```Python
+import Bitmex
+
+kline = Bitmex["XBTUSDT"].add_kline()
+```
+
+Click ```Update strategy``` if you are in the Bot menu. Tmatic will make a request to the exchange and load the data into memory in the number of lines according to ```CANDLESTICK_NUMBER``` in the ```botinit/variables.py``` file. Then the data will be accumulated from the websocket, so in this case, a subscription to ```XBTUSDT``` in ```.env.Bitmex``` is required.
+
+While ```Bitmex["XBTUSDT"].add_kline()``` is present in the ```strategy.py``` file, when Tmatic is launched or a specific exchange is restarted while Tmatic is running, the kline data will also be reloaded.
+
+#### Get access to data
+
+Each line of kline data is a dictionary:
+
+```
+"date": int
+    date yymmdd, example 240814
+"time": int
+    time hhmmss, example 143200
+"bid": float
+    first bid price at the beginning of the period
+"ask": float
+    first ask price at the beginning of the period
+"hi": float
+    highest price of the period
+"lo": float
+    lowest price of the period
+"funding": float
+    funding rate for perpetual instruments
+"datetime": datetime
+    date and time in datetime format
+```
+
 ...
 
 

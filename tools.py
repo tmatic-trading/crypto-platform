@@ -201,8 +201,8 @@ class Tool(Instrument):
         Returns
         -------
         Callable
-            A callable object that returns the kline data of the specified
-            instrument. If argumens to this object are omitted, all klines are
+            A callable method that returns the kline data of the specified
+            instrument. If argumens to this method are omitted, all klines are
             returned. The line with the latest date is designated as -1, the
             line before the latest is designated -2, and so on. Each line is
             a dictionary where:
@@ -227,16 +227,19 @@ class Tool(Instrument):
         --------
         kl = Bybit["BTCUSD"].add_kline()
 
-        1. Get all klines for BTCUSD (list)
-            kl()
-        2. Get latest line (dict)
-            kl(-1)
-        3. Get the opening price of the first bid price of the latest line
-            (float).
-            kl("bid", -1)
+        1. kl()
+        Return type: list
+            Returns all klines.
 
-        For these examples, the time frame (timefr) is specified in the bot
-        parameters.
+        2. kl(-1)
+        Return type: dict
+            Returns latest kline data.
+
+        3. kl("bid", -1)
+        Return type: float
+            Returns open first bid price of the latest line.
+
+        The time frame (timefr) is specified in the bot parameters.
         """
         bot_name = name(inspect.stack())
         timefr = Bots[bot_name].timefr
