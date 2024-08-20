@@ -248,7 +248,7 @@ The functionality for the bot is in the tools.py module, so first you need to im
 from tools import Bybit
 ```
 
-Now you can access any Bybit instrument, such as the ```BTCUSDT`` perpetual contract:
+Now you can access any Bybit instrument, such as the ```BTCUSDT``` perpetual contract:
 
 ```python
 instrument = Bybit["BTCUSDT"]
@@ -331,7 +331,7 @@ class Instrument:
     """
 ```
 
-So, for example, to print a list of all lines in the order book for the given instrument ```BTCUSD```, enter:
+So, for example, to print a list of all asks in the order book for the given instrument ```BTCUSD```, enter:
 
 ```Python
 print(instrument.asks)
