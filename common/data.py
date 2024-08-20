@@ -47,13 +47,13 @@ class Instrument:
             ``option``,
             ``spot``,
         Deribt:
-            ``future L``,   future linear
-            ``future R``,   future reversed
-            ``future CR`,   future_combo reversed
-            ``spot L``,     spot linear
-            ``option L``,   option linear
-            ``option R``,   option reversed
-            ``option CR``,  option_combo reversed
+            ``future linear``,
+            ``future reversed`,
+            ``future_combo reversed`,
+            ``spot linear``,
+            ``option linear``,
+            ``option reversed``,
+            ``option_combo reversed``,
     currentQty: float
         Position size
     expire: datetime
@@ -71,9 +71,10 @@ class Instrument:
     multiplier: int
         :::For Bitmex only::: How much is one contract worth? You can see this
         information under the Bitmex Contract Specifications for each
-        instrument.
+        instrument. For other exchanges it is equal to 1.
     myMultiplier: int
-        :::For Bitmex only::: Converts quantity when displayed on screen.
+        :::For Bitmex only::: Converts quantity when displayed on screen. 
+        For other exchanges it is equal to 1.
     precision: int
         Based on the ``lotSize`` of the instrument. Used to round volumes
         ​​when displayed on the screen.
@@ -87,7 +88,7 @@ class Instrument:
     settlCurrency: tuple
         Settlement currency of the instrument.
     state: str
-        Instrument status.
+        Instrument status. Normally "Open".
     symbol: str
         A unique value corresponding to the ticker, except in the spot
         category, where the symbol matches "baseCoin/quoteCoin".
@@ -102,7 +103,8 @@ class Instrument:
     volume24h: float
         Volume for 24h
     valueOfOneContract: float
-        :::For Bitmex only::: Used when calculating trade value.
+        :::For Bitmex only::: Used when calculating trade value. For other 
+        exchanges it is equal to 1.
     """
 
     asks: list

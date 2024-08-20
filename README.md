@@ -230,13 +230,134 @@ The Bot Menu simplifies the management of bots using the GUI. The functions avai
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/scr/newbot.png)
 
-...
+Currently bots can only trade on timeframes, so timeframe is the only parameter that needs to be selected. Each new bot will have its own folder in the algo folder, where the strategy.py file with the bot code is placed. To manage the bot parameters, as well as to delete the bot, use the menu on the left.
 
+Once the bot is created, a page with current parameters will open as shown below.
 
+![Image](https://github.com/evgrmn/tmatic/blob/main/src/bot.png)
 
 ## Add trading algorithm
 
+### Selecting an instrument
+
+Once you've added a new bot, you can edit strategy.py using the Tmatic interface or, more conveniently, using an IDE like PyCharm or Visual Studio code, whichever you prefer.
+
+The functionality for the bot is in the tools.py module, so first you need to import market from that module, for example:
+
+```python
+from tools import Bybit
+```
+
+Now you can access any Bybit instrument, such as the ```BTCUSDT`` perpetual contract:
+
+```python
+instrument = Bybit["BTCUSDT"]
+```
+
+```Bybit["BTCUSDT"]``` is a class whose full list of attributes are described below:
+
+```python
+class Instrument:
+    """
+    Stores data for each instrument.
+
+    Parameters
+    -----------
+    asks: list
+        Asks. The elements are sorted by price in ascending order. There can 
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        defined as ``quote``.
+    avgEntryPrice: float
+        Average entry price
+    baseCoin: str
+        Base coin
+    bids: list
+        Bids. The element is sorted by price in descending order. There can 
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        defined as ``quote``.
+    category: str
+        Possible instrument categories depend on the specific exchange.
+    currentQty: float
+        Position size
+    expire: datetime
+        Expiration time.
+    fundingRate: float
+        Funding rate.
+    marginCallPrice: float
+        Position margin call or liquidation price.
+    market: str
+        Exchange name.
+    maxOrderQty: float
+        Not used
+    minOrderQty: float
+        Minimum order quantity or lotsize
+    multiplier: int
+        :::For Bitmex only::: How much is one contract worth? You can see 
+        this information under the Bitmex Contract Specifications for each 
+        instrument. For other exchanges it is equal to 1.
+    myMultiplier: int
+        :::For Bitmex only::: Converts quantity when displayed on screen. For 
+        other exchanges it is equal to 1.
+    precision: int
+        Based on the ``lotSize`` of the instrument. Used to round volumes 
+        when displayed on the screen. For other exchanges it is equal to 1.
+    price_precision: int
+        Based on the ``tickSize`` of the instrument. Used to round prices 
+        ​​when displayed on the screen.
+    qtyStep: float
+        The step to increase/reduce order quantity. Also called LotSize.
+    quoteCoin: str
+        Quote coin.
+    settlCurrency: tuple
+        Settlement currency of the instrument.
+    state: str
+        Instrument status. Normally "Open".
+    symbol: str
+        A unique value corresponding to the ticker, except in the spot 
+        category, where the symbol matches ``baseCoin``/``quoteCoin``.
+    ticker: str
+        Symbol of the instrument in the exchange classification.
+    tickSize: float
+        The step to increase/reduce order price.
+    unrealisedPnl: float
+        Unrealised PnL.
+    volume: float
+        The total trading volume on a given account.
+    volume24h: float
+        Volume for 24h
+    valueOfOneContract: float
+        :::For Bitmex only::: Used when calculating trade value. For other 
+        exchanges it is equal to 1.
+    """
+```
+
+So, for example, to print a list of all lines in the order book for the given instrument ```BTCUSD```, enter:
+
+```Python
+print(instrument.asks)
+```
+
+Or you can enter it in such a way that the result will be the same:
+
+```Python
+print(Bybit["BTCUSDT"].asks)
+```
+
+One bot can use multiple markets and instruments connected to Tmatic. For example, if you want ```BTCUSDT``` from Bybit and a similar instrument ```XBTUSDT``` from Bitmex, just import both markets in the strategy.py file.
+
+```Python
+from tools import Bybit, Bitmex
+
+print(Bybit["BTCUSDT"].asks)
+print(Bitmex["XBTUSDT"].asks)
+```
+
+*Note: To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.*
+
+### Adding kline (candlestick) data to the instrument
+
 ...
+
 
 ## Development
 
