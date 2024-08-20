@@ -361,7 +361,12 @@ class Agent(Bybit):
                 "Sending get_wallet_balance() - accountType - " + account_type
             )
             data = self.session.get_wallet_balance(accountType=account_type)
-            for values in data["result"]["list"]:
+            # Bybit bug patch 20/08/2024 on request accountType = "CONTRACT"
+            if "list" in data["result"]:
+                data = data["result"]["list"]
+            else:
+                data = data["result"]["result"]["list"]
+            for values in data:
                 for coin in values["coin"]:
                     currency = (coin["coin"] + "." + values["accountType"], self.name)
                     account = self.Account[currency]
