@@ -352,7 +352,8 @@ print(Bybit["BTCUSDT"].asks)
 print(Bitmex["XBTUSDT"].asks)
 ```
 
-> *Note: To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.*
+> [!IMPORTANT] 
+> *To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.*
 
 ### Adding kline (candlestick) data to the instrument
 
@@ -406,7 +407,7 @@ kline = Bitmex["XBTUSDT"].add_kline()
 kline()
 ```
 
-Returns a list of data in ascending order. The last element is the data for the most recent period.
+Returns a list of data in ascending order by datetime. The last element is the data for the most recent period.
 
 ```Python
 [
@@ -471,7 +472,8 @@ Returns open first bid price of the latest period.
 63259.5
 ```
 
-> *Note: All data refers to the timeframe (timefr) specified in the bot parameters.*
+> [!NOTE]
+> *All data refers to the timeframe (timefr) specified in the bot parameters.*
 
 ### Buying and Selling instructions
 
@@ -518,9 +520,63 @@ str | None
 
 The parameters of the sell order are described above. All parameters are optional and can be omitted.
 
-> *Note: The parameters of the buy order are the same, except that the price defaults to the first bid in the order book, the method moves the last buy order and cancels all sell orders accordingly.*
+> [!NOTE] 
+> *The parameters of the buy order are the same, except that the price defaults to the first bid in the order book, the method moves the last buy order and cancels all sell orders accordingly.*
+
+Examples:
+
+```Python
+Bitmex["XBTUSD"].sell()
+```
+Sends a sell order, qty of XBTUSD ```minOrderQty``` is 100, price is equal the first ask in the order book.
+
+```Python
+Bitmex["XBTUSD"].sell(qty=200)
+```
+Sends a sell order, qty is 200, price is equal the first ask in the order book.
+
+```Python
+Bitmex["XBTUSD"].buy(qty=200, move=True)
+```
+
+Sends a buy order, qty is 200, price is equal the first bid in the order book. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order.
+
+```Python
+Bitmex["XBTUSD"].buy(qty=200, price=50000, move=True)
+```
+
+Sends a buy order, qty is 200, price is 50000. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order.
+
+```Python
+Bitmex["XBTUSD"].buy(qty=200, price=50000, move=True, cancel=True)
+```
+
+Sends a buy order, qty is 200, price is 50000. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order. Cancels all sell orders for the ```XBTUSD``` for this bot.
+
+#### Limits control
+
+When an order is submitted, Tmatic does not allow the bot to exceed the set limit for the instrument. It decreases quantity if the limit is exceeded. If the limit is completely exhausted, the order will not be send to the exchange. If the bot does not have a position for this instrument, then such a position will be added to the bot, and the limit is set as default equal ```minOrderQty``` of the instrument.
+
+Examples:
+
+Let's say the bot is trading ```BTCUSDT``` on Bybit. ```minOrderQty``` for ```BTCUSDT``` is 0.001. The table below shows possible scenarios:
+
+|Current position|Limit|Side|Qty|Result|
+| ------------- |:-----:|:-----:|:-----:|:-----------------------------------:|
+|None|None|Buy|0.001|The limit is set to 0.001. Buy order sent, qty = **0.001**|
+|None|None|Buy|0.002|The limit is set to 0.001. Buy order sent, qty = **0.001**|
+|0.001|0.001|Buy|0.001|Nothing happens. Buy order ignored|
+|-0.001|0.001|Buy|0.002|Buy order sent, qty = **0.002**|
+|-0.001|0.002|Buy|0.005|Buy order sent, qty = **0.003**|
+|0.002|0.002|Sell|0.005|Sell order sent, qty = **0.004**|
+|-0.001|0.002|Sell|0.005|Sell order sent, qty = **0.001**|
 
 ...
+
+### Strategy example
+
+...
+
 
 
 ## Development
