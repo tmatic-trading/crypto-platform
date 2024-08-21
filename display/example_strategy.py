@@ -82,6 +82,8 @@
 # 7.1. buy()                                                                  #
 #   Parameters                                                                #
 #   ----------                                                                #
+#   bot: Bot                                                                  #
+#      An instance of a bot in the Bot class.                                 #
 #   qty: float (optional)                                                     #
 #      Order quantity. If qty is omitted, then: qty is taken as               #
 #      minOrderQty.                                                           #
@@ -117,16 +119,17 @@
 # This code is just a simple example and does not claim to be a profitable    #
 # strategy.                                                                   #
 #                                                                             #
-# from tools import Bybit                                                     #
+# from tools import Bybit, Bot                                                #
 #                                                                             #
+# bot = Bot()                                                                 #
 # instrument = Bybit["BTCUSDT"]                                               #
 # kline = instrument.add_kline()                                              #
 #                                                                             #
 # def strategy():                                                             #
 #   if kline("bid", -1) > kline("bid", -10)                                   #
-#       instrument.buy(move=True, cancel=True)                                #
+#       instrument.buy(bot=bot, move=True, cancel=True)                       #
 #   else:                                                                     #
-#       insrument.sell(move=True, cancel=True)                                #
+#       insrument.sell(bot=bot, move=True, cancel=True)                       #
 #                                                                             #
 #                                                                             #
 #                                                                             #

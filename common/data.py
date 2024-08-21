@@ -73,7 +73,7 @@ class Instrument:
         information under the Bitmex Contract Specifications for each
         instrument. For other exchanges it is equal to 1.
     myMultiplier: int
-        :::For Bitmex only::: Converts quantity when displayed on screen. 
+        :::For Bitmex only::: Converts quantity when displayed on screen.
         For other exchanges it is equal to 1.
     precision: int
         Based on the ``lotSize`` of the instrument. Used to round volumes
@@ -103,7 +103,7 @@ class Instrument:
     volume24h: float
         Volume for 24h
     valueOfOneContract: float
-        :::For Bitmex only::: Used when calculating trade value. For other 
+        :::For Bitmex only::: Used when calculating trade value. For other
         exchanges it is equal to 1.
     """
 

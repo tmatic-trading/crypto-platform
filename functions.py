@@ -931,7 +931,7 @@ class Function(WS, Variables):
                             position["category"],
                             position["position"],
                             position["volume"],
-                            "-", #position["pnl"],
+                            "-",  # position["pnl"],
                         ]
                         Function.update_position_line(
                             self,
@@ -1059,7 +1059,7 @@ class Function(WS, Variables):
                                 position["category"],
                                 position["position"],
                                 position["volume"],
-                                "-", #position["pnl"],
+                                "-",  # position["pnl"],
                             ]
                             Function.update_position_line(
                                 self,
@@ -1587,9 +1587,7 @@ def handler_orderbook(event) -> None:
     def callback_sell_limit() -> None:
         if quantity.get() and price_ask.get() and emi_number.get():
             try:
-                qnt = abs(
-                    float(quantity.get())
-                )
+                qnt = abs(float(quantity.get()))
                 price = float(price_ask.get())
                 res = "yes"
             except Exception:
@@ -1619,9 +1617,7 @@ def handler_orderbook(event) -> None:
     def callback_buy_limit() -> None:
         if quantity.get() and price_bid.get() and emi_number.get():
             try:
-                qnt = abs(
-                    float(quantity.get())
-                )
+                qnt = abs(float(quantity.get()))
                 price = float(price_bid.get())
                 res = "yes"
             except Exception:

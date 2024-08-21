@@ -2,7 +2,7 @@
 
 # Cryptocurrency platform designed for automated trading on the Bitmex and Bybit crypto exchanges
 
-![Image](https://github.com/evgrmn/trade/blob/new/scr/tmatic.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/tmatic.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.9+
 
@@ -187,7 +187,7 @@ What happens if you place an order from the standard exchange trading web interf
 
 ## Program controls
 
-![Image](https://github.com/evgrmn/trade/blob/new/scr/control.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/control.png)
 
 1. Use the Menu to activate the auto trading mode, or go to the Bot menu, or restart the program.
 
@@ -201,7 +201,7 @@ What happens if you place an order from the standard exchange trading web interf
 
 6. You can choose between information blocks related to your trading activity, accounts and trading results.
 
-![Image](https://github.com/evgrmn/trade/blob/new/scr/notebook.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/notebook.png)
 
 - To cancel or move an order, click on the desired order in the Orders table.
 
@@ -228,13 +228,13 @@ The Bot Menu simplifies the management of bots using the GUI. The functions avai
 
 ### Add a new bot
 
-![Image](https://github.com/evgrmn/trade/blob/new/newbot.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/newbot.png)
 
 Currently bots can only trade on timeframes, so timeframe is the only parameter that needs to be selected. Each new bot will have its own folder in the algo folder, where the strategy.py file with the bot code is placed. To manage the bot parameters, as well as to delete the bot, use the menu on the left.
 
 Once the bot is created, a page with current parameters will open as shown below.
 
-![Image](https://github.com/evgrmn/trade/blob/new/bot.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/bot.png)
 
 ## Add trading algorithm
 
@@ -352,7 +352,7 @@ print(Bybit["BTCUSDT"].asks)
 print(Bitmex["XBTUSDT"].asks)
 ```
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
 > *To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.*
 
 ### Adding kline (candlestick) data to the instrument
@@ -490,7 +490,7 @@ bot = Bot()
 Bitmex["XBTUSDT"].sell(bot=bot)
 ```
 
-or 
+or
 
 ```Python
 Bitmex["XBTUSDT"].buy(bot=bot)
@@ -505,11 +505,11 @@ bot: Bot
 qty: float
     Order quantity. If qty is omitted, then: qty is taken as minOrderQty.
 price: float
-    Order price. If price is omitted, then price is taken as the current 
+    Order price. If price is omitted, then price is taken as the current
     first offer in the order book.
 move: bool
-    Checks for open sell orders for the current instrument for this bot and 
-    if there are any, takes the last order and moves it to the new price. If 
+    Checks for open sell orders for the current instrument for this bot and
+    if there are any, takes the last order and moves it to the new price. If
     not, places a new order.
 cancel: bool
     If True, cancels all buy orders for the current instrument for this bot.
@@ -523,7 +523,7 @@ str | None
 
 The parameters of the sell order are described above. All parameters except ```bot``` are optional and can be omitted.
 
-> [!NOTE] 
+> [!NOTE]
 > *The parameters of the buy order are the same, except that the price defaults to the first bid in the order book, the method moves the last buy order and cancels all sell orders accordingly.*
 
 Examples:
@@ -590,8 +590,8 @@ Parameters
 bot: Bot
     An instance of a bot in the Bot class.
 limit: float
-    The limit of positions the bot is allowed to trade on this instrument. 
-    If this parameter is less than the instrument's minOrderQty, it 
+    The limit of positions the bot is allowed to trade on this instrument.
+    If this parameter is less than the instrument's minOrderQty, it
     becomes minOrderQty.
 """
 ```

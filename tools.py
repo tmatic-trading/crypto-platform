@@ -45,14 +45,14 @@ class Tool(Instrument):
 
     def close_all(
         self,
-        bot: Bot, 
+        bot: Bot,
         qty: float,
     ) -> None:
         pass
 
     def sell(
         self,
-        bot: Bot, 
+        bot: Bot,
         qty: float = None,
         price: float = None,
         move: bool = False,
@@ -72,17 +72,17 @@ class Tool(Instrument):
             Order price. If price is omitted, then price is taken as the
             current first offer in the order book.
         move: bool
-            Checks for open sell orders for the current instrument for this 
-            bot and if there are any, takes the last order and moves it to 
+            Checks for open sell orders for the current instrument for this
+            bot and if there are any, takes the last order and moves it to
             the new price. If not, places a new order.
         cancel: bool
-            If True, cancels all buy orders for the current instrument for 
+            If True, cancels all buy orders for the current instrument for
             this bot.
 
         Returns
         -------
         str | None
-            If successful, the clOrdID of this order is returned, otherwise 
+            If successful, the clOrdID of this order is returned, otherwise
             None.
         """
         ws = Markets[self.market]
@@ -126,7 +126,7 @@ class Tool(Instrument):
 
     def buy(
         self,
-        bot: Bot, 
+        bot: Bot,
         qty: float = None,
         price: float = None,
         move: bool = False,
@@ -146,17 +146,17 @@ class Tool(Instrument):
             Order price. If price is omitted, then price is taken as the
             current first bid in the order book.
         move: bool
-            Checks for open buy orders for the current instrument for this 
-            bot and if there are any, takes the last order and moves it to 
+            Checks for open buy orders for the current instrument for this
+            bot and if there are any, takes the last order and moves it to
             the new price. If not, places a new order.
         cancel: bool
-            If True, cancels all buy orders for the current instrument for 
+            If True, cancels all buy orders for the current instrument for
             this bot.
 
         Returns
         -------
         str | None
-            If successful, the clOrdID of this order is returned, otherwise 
+            If successful, the clOrdID of this order is returned, otherwise
             None.
         """
         ws = Markets[self.market]
@@ -258,8 +258,8 @@ class Tool(Instrument):
 
         3. kl("bid", -1)
         Return type: float
-            Returns open first bid price of the latest period. Possible 
-            values of the first argument: "date", "time", "bid", "ask", "hi", 
+            Returns open first bid price of the latest period. Possible
+            values of the first argument: "date", "time", "bid", "ask", "hi",
             "lo", "funding", "datetime".
 
         The time frame (timefr) is specified in the bot parameters.
@@ -273,7 +273,7 @@ class Tool(Instrument):
         )
 
         return lambda *args: self._kline(timefr, *args)
-    
+
     def set_limit(self, bot: Bot, limit: float) -> None:
         """
         Limits bot position for the specified instrument.
@@ -283,8 +283,8 @@ class Tool(Instrument):
         bot: Bot
             An instance of a bot in the Bot class.
         limit: float
-            The limit of positions the bot is allowed to trade on this 
-            instrument. If this parameter is less than the instrument's 
+            The limit of positions the bot is allowed to trade on this
+            instrument. If this parameter is less than the instrument's
             minOrderQty, it becomes minOrderQty.
         """
         if limit < self.instrument.minOrderQty:
@@ -300,7 +300,7 @@ class Tool(Instrument):
         ----------
         bot: Bot
             An instance of a bot in the Bot class.
-            
+
         Returns
         -------
         float
@@ -309,7 +309,6 @@ class Tool(Instrument):
         position = self._get_position(bot_name=bot.name)
 
         return position["limits"]
-
 
     def _kline(self, timefr, *args) -> Union[dict, list, float]:
         """
@@ -439,7 +438,7 @@ class Tool(Instrument):
             clOrdID = list(orders)[-1]
 
             return clOrdID
-        
+
     def _get_position(self, bot_name: str) -> dict:
         """
         Returns the bot's position values.
@@ -452,8 +451,8 @@ class Tool(Instrument):
         Returns
         -------
         dict
-            All bot's position values: "emi", "symbol", "category", "limits", 
-            "ticker", "position", "volume", "sumreal", "commiss", "ltime", 
+            All bot's position values: "emi", "symbol", "category", "limits",
+            "ticker", "position", "volume", "sumreal", "commiss", "ltime",
             "pnl", "lotSize", "currency", "limits".
         """
         bot = Bots[bot_name]
@@ -500,4 +499,3 @@ class Bybit(metaclass=MetaTool):
 
 class Deribit(metaclass=MetaTool):
     pass
-
