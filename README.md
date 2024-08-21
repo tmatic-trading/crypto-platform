@@ -584,7 +584,9 @@ Use ```set_limit()``` method to specify the position limits that the bot is allo
 Parameters
 ----------
 limit: float
-    The limit of positions the bot is allowed to trade on this instrument.
+    The limit of positions the bot is allowed to trade on this instrument. 
+    If this parameter is less than the instrument's minOrderQty, it 
+    becomes minOrderQty.
 """
 ```
 
@@ -596,6 +598,34 @@ import Bitmex
 Bitmex["XBTUSDT"].set_limit(0.003)
 ```
 
+### Get limit
+
+Use ```limit()``` method to get bot limit on the instrument.
+
+```Python
+"""
+Parameters
+----------
+No parameters.
+
+Returns
+-------
+float
+    Bot position limit for the instrument.
+"""
+```
+
+Example:
+
+```Python
+import Bitmex
+
+print(Bitmex["XBTUSDT"].limit())
+```
+
+```Python
+0.001
+```
 ...
 
 ### Strategy example

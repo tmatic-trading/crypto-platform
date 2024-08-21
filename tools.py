@@ -265,20 +265,33 @@ class Tool(Instrument):
         ----------
         limit: float
             The limit of positions the bot is allowed to trade on this 
-            instrument.
+            instrument. If this parameter is less than the instrument's 
+            minOrderQty, it becomes minOrderQty.
         """
         bot_name = name(inspect.stack())
         if limit < self.instrument.minOrderQty:
             limit = self.instrument.minOrderQty
-        bot = Bots[bot_name]
-        if not self.symbol_tuple in bot.bot_positions:
-            service.fill_bot_position(
-                bot_name=bot_name,
-                symbol=self.symbol_tuple,
-                instrument=self.instrument,
-                user_id=Markets[self.market].user_id,
-            )
-        bot.bot_positions[self.symbol_tuple]["limits"] = limit        
+        position = self._get_position(bot_name=bot_name)
+        position["limits"] = limit
+
+    def limit(self) -> float:
+        """
+        Get bot position limit for the instrument.
+
+        Parameters
+        ----------
+        No parameters.
+
+        Returns
+        -------
+        float
+            Bot position limit for the instrument.
+        """
+        bot_name = name(inspect.stack())
+        position = self._get_position(bot_name=bot_name)
+
+        return position["limits"]
+
 
     def _kline(self, timefr, *args) -> Union[dict, list, float]:
         """
@@ -324,15 +337,7 @@ class Tool(Instrument):
         bot_name: str
             Bot name.
         """
-        bot = Bots[bot_name]
-        if not self.symbol_tuple in bot.bot_positions:
-            service.fill_bot_position(
-                bot_name=bot_name,
-                symbol=self.symbol_tuple,
-                instrument=self.instrument,
-                user_id=Markets[self.market].user_id,
-            )
-        position = bot.bot_positions[self.symbol_tuple]
+        position = self._get_position(bot_name=bot_name)
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
@@ -416,6 +421,33 @@ class Tool(Instrument):
             clOrdID = list(orders)[-1]
 
             return clOrdID
+        
+    def _get_position(self, bot_name: str) -> dict:
+        """
+        Returns the bot's position values.
+
+        Parameters
+        ----------
+        bot_name: str
+            Bot name.
+
+        Returns
+        -------
+        dict
+            All bot's position values: "emi", "symbol", "category", "limits", 
+            "ticker", "position", "volume", "sumreal", "commiss", "ltime", 
+            "pnl", "lotSize", "currency", "limits".
+        """
+        bot = Bots[bot_name]
+        if not self.symbol_tuple in bot.bot_positions:
+            service.fill_bot_position(
+                bot_name=bot_name,
+                symbol=self.symbol_tuple,
+                instrument=self.instrument,
+                user_id=Markets[self.market].user_id,
+            )
+
+        return bot.bot_positions[self.symbol_tuple]
 
 
 class MetaTool(type):
