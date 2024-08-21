@@ -632,6 +632,8 @@ bot = Bot()
 print(Bitmex["XBTUSDT"].limit(bot=bot))
 ```
 
+Result:
+
 ```Python
 0.001
 ```
@@ -662,6 +664,8 @@ bot = Bot()
 
 print(Bitmex["XBTUSDT"].position(bot=bot))
 ```
+
+Result:
 
 ```Python
 0.001
@@ -744,6 +748,7 @@ OrderedDict(
         ),
     ]
 )
+```
 
 ...
 
