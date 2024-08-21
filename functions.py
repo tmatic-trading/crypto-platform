@@ -509,6 +509,7 @@ class Function(WS, Variables):
 
         if emi in var.orders and clOrdID in var.orders[emi]:
             var.queue_order.put({"action": "put", "order": var.orders[emi][clOrdID]})
+            var.orders[emi].move_to_end(clOrdID)
         disp.bot_orders_processing = True
 
     def trades_display(

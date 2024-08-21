@@ -309,7 +309,7 @@ class Tool(Instrument):
         position = self._get_position(bot_name=bot.name)
 
         return position["limits"]
-    
+
     def position(self, bot: Bot) -> float:
         """
         Get the bot position for the instrument.
@@ -327,6 +327,34 @@ class Tool(Instrument):
         position = self._get_position(bot_name=bot.name)
 
         return position["position"]
+
+    def orders(self, bot: Bot, side: str = None, descend: bool = False) -> OrderedDict:
+        """
+        Get the bot orders for the given instrument filtered by instrument
+        and side.
+
+        Parameters
+        ----------
+        bot: Bot
+            An instance of a bot in the Bot class.
+        side: str
+            The Sell or Buy side of the order. If the parameter is omitted,
+            both sides are returned.
+        descend: bool
+            If omitted, the data is sorted in ascending order by the value of
+            ``transactTime``. If True, descending order is returned.
+
+        Returns
+        -------
+        OrderedDict
+            Orders are sorted by ``transactTime`` in the order specified in
+            the descend parameter. The OrderedDict key is the clOrdID value.
+        """
+        filtered = self._filter_by_side(
+            orders=bot.bot_orders, side=side, descend=descend
+        )
+
+        return filtered
 
     def _kline(self, timefr, *args) -> Union[dict, list, float]:
         """
@@ -396,7 +424,9 @@ class Tool(Instrument):
             }
         )
 
-    def _filter_by_side(self, orders: OrderedDict, side: str) -> dict:
+    def _filter_by_side(
+        self, orders: OrderedDict, side: str = None, descend: bool = False
+    ) -> OrderedDict:
         """
         Finds all bot orders on the sell or buy side for a specific instrument.
 
@@ -406,16 +436,27 @@ class Tool(Instrument):
             Bot order dictionary, where the key is clOrdID
         side: str
             Buy or Sell
+        descend: bool
+            If omitted, the data is sorted in ascending order by the value of
+            ``transactTime``. If True, descending order is returned.
 
         Returns
         -------
-        dict
-            Bot orders are filtered by sell or buy side.
+        OrderedDict
+            Orders are sorted by ``transactTime`` in the order specified in
+            the descend parameter. The OrderedDict key is the clOrdID value.
         """
         filtered = OrderedDict()
-        for clOrdID, value in orders.items():
-            if value["side"] == side and value["symbol"] == self.symbol_tuple:
-                filtered[clOrdID] = value
+        ord = orders.values()
+        if descend:
+            ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
+        for value in ord:
+            if value["symbol"] == self.symbol_tuple:
+                if side:
+                    if value["side"] == side:
+                        filtered[value["clOrdID"]] = value
+                else:
+                    filtered[value["clOrdID"]] = value
 
         return filtered
 
@@ -437,7 +478,7 @@ class Tool(Instrument):
 
     def _get_latest_order(self, orders: OrderedDict, side: str) -> Union[str, None]:
         """
-        Finds the last order given side.
+        Finds the last order on a given side.
 
         Parameters
         ----------

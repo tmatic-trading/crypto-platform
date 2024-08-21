@@ -244,6 +244,7 @@ class Init(WS, Variables):
         All open orders received from the exchange endpoint as a result of an
         HTTP request are taken into account in the orders array.
         """
+        myOrders.sort(key=lambda x: x["transactTime"], reverse=True)
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
                 # d emi = val["symbol"][0]

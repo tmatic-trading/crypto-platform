@@ -666,6 +666,85 @@ print(Bitmex["XBTUSDT"].position(bot=bot))
 ```Python
 0.001
 ```
+
+### Get orders
+
+Use the ```position()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in ascending or descending order.
+
+```Python
+"""
+Parameters
+----------
+bot: Bot
+    An instance of a bot in the Bot class.
+side: str
+    The Sell or Buy side of the order. If the parameter is omitted, both 
+    sides are returned.
+descend: bool
+    If omitted, the data is sorted in ascending order by the value of 
+    ``transactTime``. If True, descending order is returned.  
+
+Returns
+-------
+OrderedDict
+    Orders are sorted by ``transactTime`` in the order specified in the 
+    ``descend`` parameter. The OrderedDict key is the clOrdID value.
+"""
+```
+
+Example:
+
+```Python
+import Bitmex, Bot
+bot = Bot()
+
+print(Bitmex["XBTUSDT"].orders(bot=bot, side="Buy"))
+```
+
+Result:
+
+```Python
+OrderedDict(
+    [
+        (
+            "1332492130.Mybot",
+            {
+                "emi": "Mybot",
+                "leavesQty": 0.001,
+                "transactTime": datetime.datetime(
+                    2024, 8, 21, 14, 7, 49, 485000, 
+                                tzinfo=datetime.timezone.utc
+                ),
+                "price": 40000,
+                "symbol": ("XBTUSDT", "Bitmex"),
+                "category": "linear",
+                "market": "Bitmex",
+                "side": "Buy",
+                "orderID": "2f27fd1f-5d45-4169-a1de-c7e2c628ce7e",
+                "clOrdID": "1332492130.Mybot",
+            },
+        ),
+        (
+            "1332516744.Mybot",
+            {
+                "emi": "Mybot",
+                "leavesQty": 0.001,
+                "transactTime": datetime.datetime(
+                    2024, 8, 21, 14, 49, 38, 132000, 
+                                tzinfo=datetime.timezone.utc
+                ),
+                "price": 43000,
+                "symbol": ("XBTUSDT", "Bitmex"),
+                "category": "linear",
+                "market": "Bitmex",
+                "side": "Buy",
+                "orderID": "05108401-dba7-443c-8216-d034ac25226d",
+                "clOrdID": "1332516744.Mybot",
+            },
+        ),
+    ]
+)
+
 ...
 
 ### Strategy example
