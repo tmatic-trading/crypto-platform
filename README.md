@@ -635,6 +635,37 @@ print(Bitmex["XBTUSDT"].limit(bot=bot))
 ```Python
 0.001
 ```
+
+### Get position
+
+Use ```position()``` method to get the bot position for the given instrument.
+
+```Python
+"""
+Parameters
+----------
+bot: Bot
+    An instance of a bot in the Bot class.
+
+Returns
+-------
+float
+    The bot position value for the instrument.
+"""
+```
+
+Example:
+
+```Python
+import Bitmex, Bot
+bot = Bot()
+
+print(Bitmex["XBTUSDT"].position(bot=bot))
+```
+
+```Python
+0.001
+```
 ...
 
 ### Strategy example

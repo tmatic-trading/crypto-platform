@@ -309,6 +309,24 @@ class Tool(Instrument):
         position = self._get_position(bot_name=bot.name)
 
         return position["limits"]
+    
+    def position(self, bot: Bot) -> float:
+        """
+        Get the bot position for the instrument.
+
+        Parameters
+        ----------
+        bot: Bot
+            An instance of a bot in the Bot class.
+
+        Returns
+        -------
+        float
+            The bot position value for the instrument.
+        """
+        position = self._get_position(bot_name=bot.name)
+
+        return position["position"]
 
     def _kline(self, timefr, *args) -> Union[dict, list, float]:
         """
