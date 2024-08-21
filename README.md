@@ -2,7 +2,7 @@
 
 # Cryptocurrency platform designed for automated trading on the Bitmex and Bybit crypto exchanges
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/scr/tmatic.png)
+![Image](https://github.com/evgrmn/trade/blob/new/scr/tmatic.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.9+
 
@@ -187,7 +187,7 @@ What happens if you place an order from the standard exchange trading web interf
 
 ## Program controls
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/scr/control.png)
+![Image](https://github.com/evgrmn/trade/blob/new/scr/control.png)
 
 1. Use the Menu to activate the auto trading mode, or go to the Bot menu, or restart the program.
 
@@ -201,7 +201,7 @@ What happens if you place an order from the standard exchange trading web interf
 
 6. You can choose between information blocks related to your trading activity, accounts and trading results.
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/scr/notebook.png)
+![Image](https://github.com/evgrmn/trade/blob/new/scr/notebook.png)
 
 - To cancel or move an order, click on the desired order in the Orders table.
 
@@ -228,13 +228,13 @@ The Bot Menu simplifies the management of bots using the GUI. The functions avai
 
 ### Add a new bot
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/scr/newbot.png)
+![Image](https://github.com/evgrmn/trade/blob/new/newbot.png)
 
 Currently bots can only trade on timeframes, so timeframe is the only parameter that needs to be selected. Each new bot will have its own folder in the algo folder, where the strategy.py file with the bot code is placed. To manage the bot parameters, as well as to delete the bot, use the menu on the left.
 
 Once the bot is created, a page with current parameters will open as shown below.
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/scr/bot.png)
+![Image](https://github.com/evgrmn/trade/blob/new/bot.png)
 
 ## Add trading algorithm
 
@@ -264,16 +264,16 @@ class Instrument:
     Parameters
     -----------
     asks: list
-        Asks. The elements are sorted by price in ascending order. There can 
-        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        Asks. The elements are sorted by price in ascending order. There can
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is
         defined as ``quote``.
     avgEntryPrice: float
         Average entry price
     baseCoin: str
         Base coin
     bids: list
-        Bids. The element is sorted by price in descending order. There can 
-        only be one element if the ORDER_BOOK_DEPTH in the .env file is 
+        Bids. The element is sorted by price in descending order. There can
+        only be one element if the ORDER_BOOK_DEPTH in the .env file is
         defined as ``quote``.
     category: str
         Possible instrument categories depend on the specific exchange.
@@ -292,17 +292,17 @@ class Instrument:
     minOrderQty: float
         Minimum order quantity or lotsize
     multiplier: int
-        :::For Bitmex only::: How much is one contract worth? You can see 
-        this information under the Bitmex Contract Specifications for each 
+        :::For Bitmex only::: How much is one contract worth? You can see
+        this information under the Bitmex Contract Specifications for each
         instrument. For other exchanges it is equal to 1.
     myMultiplier: int
-        :::For Bitmex only::: Converts quantity when displayed on screen. For 
+        :::For Bitmex only::: Converts quantity when displayed on screen. For
         other exchanges it is equal to 1.
     precision: int
-        Based on the ``lotSize`` of the instrument. Used to round volumes 
+        Based on the ``lotSize`` of the instrument. Used to round volumes
         when displayed on the screen. For other exchanges it is equal to 1.
     price_precision: int
-        Based on the ``tickSize`` of the instrument. Used to round prices 
+        Based on the ``tickSize`` of the instrument. Used to round prices
         ​​when displayed on the screen.
     qtyStep: float
         The step to increase/reduce order quantity. Also called LotSize.
@@ -313,7 +313,7 @@ class Instrument:
     state: str
         Instrument status. Normally "Open".
     symbol: str
-        A unique value corresponding to the ticker, except in the spot 
+        A unique value corresponding to the ticker, except in the spot
         category, where the symbol matches ``baseCoin``/``quoteCoin``.
     ticker: str
         Symbol of the instrument in the exchange classification.
@@ -326,7 +326,7 @@ class Instrument:
     volume24h: float
         Volume for 24h
     valueOfOneContract: float
-        :::For Bitmex only::: Used when calculating trade value. For other 
+        :::For Bitmex only::: Used when calculating trade value. For other
         exchanges it is equal to 1.
     """
 ```
@@ -484,21 +484,24 @@ Buy and sell orders are methods that can be called for any instrument from such 
 The syntax is as follows:
 
 ```Python
-from tools import Bitmex
+from tools import Bitmex, Bot
+bot = Bot()
 
-Bitmex["XBTUSDT"].sell()
+Bitmex["XBTUSDT"].sell(bot=bot)
 ```
 
 or 
 
 ```Python
-Bitmex["XBTUSDT"].buy()
+Bitmex["XBTUSDT"].buy(bot=bot)
 ```
 
 ```Python
 """
 Parameters
 ----------
+bot: Bot
+    An instance of a bot in the Bot class.
 qty: float
     Order quantity. If qty is omitted, then: qty is taken as minOrderQty.
 price: float
@@ -518,7 +521,7 @@ str | None
 """
 ```
 
-The parameters of the sell order are described above. All parameters are optional and can be omitted.
+The parameters of the sell order are described above. All parameters except ```bot``` are optional and can be omitted.
 
 > [!NOTE] 
 > *The parameters of the buy order are the same, except that the price defaults to the first bid in the order book, the method moves the last buy order and cancels all sell orders accordingly.*
@@ -526,33 +529,34 @@ The parameters of the sell order are described above. All parameters are optiona
 Examples:
 
 ```Python
-import Bitmex
+import Bitmex, Bot
+bot = Bot()
 ```
 
 ```Python
-Bitmex["XBTUSD"].sell()
+Bitmex["XBTUSD"].sell(bot=bot)
 ```
 Sends a sell order, qty of XBTUSD ```minOrderQty``` is 100, price is equal the first ask in the order book.
 
 ```Python
-Bitmex["XBTUSD"].sell(qty=200)
+Bitmex["XBTUSD"].sell(bot=bot, qty=200)
 ```
 Sends a sell order, qty is 200, price is equal the first ask in the order book.
 
 ```Python
-Bitmex["XBTUSD"].buy(qty=200, move=True)
+Bitmex["XBTUSD"].buy(bot=bot, qty=200, move=True)
 ```
 
 Sends a buy order, qty is 200, price is equal the first bid in the order book. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order.
 
 ```Python
-Bitmex["XBTUSD"].buy(qty=200, price=50000, move=True)
+Bitmex["XBTUSD"].buy(bot=bot, qty=200, price=50000, move=True)
 ```
 
 Sends a buy order, qty is 200, price is 50000. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order.
 
 ```Python
-Bitmex["XBTUSD"].buy(qty=200, price=50000, move=True, cancel=True)
+Bitmex["XBTUSD"].buy(bot=bot, qty=200, price=50000, move=True, cancel=True)
 ```
 
 Sends a buy order, qty is 200, price is 50000. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order. Cancels all sell orders for the ```XBTUSD``` for this bot.
@@ -583,6 +587,8 @@ Use ```set_limit()``` method to specify the position limits that the bot is allo
 """
 Parameters
 ----------
+bot: Bot
+    An instance of a bot in the Bot class.
 limit: float
     The limit of positions the bot is allowed to trade on this instrument. 
     If this parameter is less than the instrument's minOrderQty, it 
@@ -593,9 +599,10 @@ limit: float
 Example:
 
 ```Python
-import Bitmex
+import Bitmex, Bot
+bot = Bot()
 
-Bitmex["XBTUSDT"].set_limit(0.003)
+Bitmex["XBTUSDT"].set_limit(bot=bot, limit=0.003)
 ```
 
 ### Get limit
@@ -606,7 +613,8 @@ Use ```limit()``` method to get bot limit on the instrument.
 """
 Parameters
 ----------
-No parameters.
+bot: Bot
+    An instance of a bot in the Bot class.
 
 Returns
 -------
@@ -618,9 +626,10 @@ float
 Example:
 
 ```Python
-import Bitmex
+import Bitmex, Bot
+bot = Bot()
 
-print(Bitmex["XBTUSDT"].limit())
+print(Bitmex["XBTUSDT"].limit(bot=bot))
 ```
 
 ```Python

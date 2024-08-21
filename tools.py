@@ -22,6 +22,21 @@ def name(stack) -> str:
     return bot_name
 
 
+class Bot:
+    def __init__(self) -> None:
+        bot_name = name(inspect.stack())
+        bot = Bots[bot_name]
+        self.name = bot.name
+        self.bot_positions = bot.bot_positions
+        self.bot_orders = bot.bot_orders
+        self.timefr = bot.timefr
+        self.pnl = bot.pnl
+        self.state = bot.state
+        self.created = bot.created
+        self.updated = bot.updated
+        self.error_message = bot.error_message
+
+
 class Tool(Instrument):
     def __init__(self, instrument: Instrument) -> None:
         self.__dict__ = instrument.__dict__
@@ -30,13 +45,14 @@ class Tool(Instrument):
 
     def close_all(
         self,
+        bot: Bot, 
         qty: float,
     ) -> None:
-        bot_name = name(inspect.stack())
         pass
 
     def sell(
         self,
+        bot: Bot, 
         qty: float = None,
         price: float = None,
         move: bool = False,
@@ -47,6 +63,8 @@ class Tool(Instrument):
 
         Parameters
         ----------
+        bot: Bot
+            An instance of a bot in the Bot class.
         qty: float
             Order quantity. If qty is omitted, then: qty is taken as
             minOrderQty.
@@ -67,8 +85,6 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise 
             None.
         """
-        bot_name = name(inspect.stack())
-        bot = Bots[bot_name]
         ws = Markets[self.market]
         res = None
         if not qty:
@@ -76,13 +92,13 @@ class Tool(Instrument):
         if not price:
             price = self.asks[0][0]
         if price:
-            qty = self._control_limits(side="Sell", qty=qty, bot_name=bot_name)
+            qty = self._control_limits(side="Sell", qty=qty, bot_name=bot.name)
             if qty:
                 clOrdID = None
                 if move is True:
                     clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Sell")
                 if clOrdID is None:
-                    new_clOrdID = service.set_clOrdID(emi=bot_name)
+                    new_clOrdID = service.set_clOrdID(emi=bot.name)
                     res = WS.place_limit(
                         ws,
                         quantity=-abs(qty),
@@ -110,6 +126,7 @@ class Tool(Instrument):
 
     def buy(
         self,
+        bot: Bot, 
         qty: float = None,
         price: float = None,
         move: bool = False,
@@ -120,6 +137,8 @@ class Tool(Instrument):
 
         Parameters
         ----------
+        bot: Bot
+            An instance of a bot in the Bot class.
         qty: float
             Order quantity. If qty is omitted, then: qty is taken as
             minOrderQty.
@@ -140,8 +159,6 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise 
             None.
         """
-        bot_name = name(inspect.stack())
-        bot = Bots[bot_name]
         ws = Markets[self.market]
         res = None
         if not qty:
@@ -149,13 +166,13 @@ class Tool(Instrument):
         if not price:
             price = self.bids[0][0]
         if price:
-            qty = self._control_limits(side="Buy", qty=qty, bot_name=bot_name)
+            qty = self._control_limits(side="Buy", qty=qty, bot_name=bot.name)
             if qty:
                 clOrdID = None
                 if move is True:
                     clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Buy")
                 if clOrdID is None:
-                    new_clOrdID = service.set_clOrdID(emi=bot_name)
+                    new_clOrdID = service.set_clOrdID(emi=bot.name)
                     res = WS.place_limit(
                         ws,
                         quantity=qty,
@@ -257,38 +274,39 @@ class Tool(Instrument):
 
         return lambda *args: self._kline(timefr, *args)
     
-    def set_limit(self, limit: float) -> None:
+    def set_limit(self, bot: Bot, limit: float) -> None:
         """
         Limits bot position for the specified instrument.
 
         Parameters
         ----------
+        bot: Bot
+            An instance of a bot in the Bot class.
         limit: float
             The limit of positions the bot is allowed to trade on this 
             instrument. If this parameter is less than the instrument's 
             minOrderQty, it becomes minOrderQty.
         """
-        bot_name = name(inspect.stack())
         if limit < self.instrument.minOrderQty:
             limit = self.instrument.minOrderQty
-        position = self._get_position(bot_name=bot_name)
+        position = self._get_position(bot_name=bot.name)
         position["limits"] = limit
 
-    def limit(self) -> float:
+    def limit(self, bot: Bot) -> float:
         """
         Get bot position limit for the instrument.
 
         Parameters
         ----------
-        No parameters.
-
+        bot: Bot
+            An instance of a bot in the Bot class.
+            
         Returns
         -------
         float
             Bot position limit for the instrument.
         """
-        bot_name = name(inspect.stack())
-        position = self._get_position(bot_name=bot_name)
+        position = self._get_position(bot_name=bot.name)
 
         return position["limits"]
 
@@ -483,16 +501,3 @@ class Bybit(metaclass=MetaTool):
 class Deribit(metaclass=MetaTool):
     pass
 
-
-class Bot:
-    def __init__(self) -> None:
-        bot_name = name(inspect.stack())
-        bot = Bots[bot_name]
-        self.name = bot.name
-        self.bot_positions = bot.bot_positions
-        self.timefr = bot.timefr
-        self.pnl = bot.pnl
-        self.state = bot.state
-        self.created = bot.created
-        self.updated = bot.updated
-        self.error_message = bot.error_message
