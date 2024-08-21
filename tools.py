@@ -256,6 +256,29 @@ class Tool(Instrument):
         )
 
         return lambda *args: self._kline(timefr, *args)
+    
+    def set_limit(self, limit: float) -> None:
+        """
+        Limits bot position for the specified instrument.
+
+        Parameters
+        ----------
+        limit: float
+            The limit of positions the bot is allowed to trade on this 
+            instrument.
+        """
+        bot_name = name(inspect.stack())
+        if limit < self.instrument.minOrderQty:
+            limit = self.instrument.minOrderQty
+        bot = Bots[bot_name]
+        if not self.symbol_tuple in bot.bot_positions:
+            service.fill_bot_position(
+                bot_name=bot_name,
+                symbol=self.symbol_tuple,
+                instrument=self.instrument,
+                user_id=Markets[self.market].user_id,
+            )
+        bot.bot_positions[self.symbol_tuple]["limits"] = limit        
 
     def _kline(self, timefr, *args) -> Union[dict, list, float]:
         """

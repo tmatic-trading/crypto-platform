@@ -526,6 +526,10 @@ The parameters of the sell order are described above. All parameters are optiona
 Examples:
 
 ```Python
+import Bitmex
+```
+
+```Python
 Bitmex["XBTUSD"].sell()
 ```
 Sends a sell order, qty of XBTUSD ```minOrderQty``` is 100, price is equal the first ask in the order book.
@@ -570,6 +574,27 @@ Let's say the bot is trading ```BTCUSDT``` on Bybit. ```minOrderQty``` for ```BT
 |-0.001|0.002|Buy|0.005|Buy order sent, qty = **0.003**|
 |0.002|0.002|Sell|0.005|Sell order sent, qty = **0.004**|
 |-0.001|0.002|Sell|0.005|Sell order sent, qty = **0.001**|
+
+### Setting limits
+
+Use ```set_limit()``` method to specify the position limits that the bot is allowed to trade on the instrument.
+
+```Python
+"""
+Parameters
+----------
+limit: float
+    The limit of positions the bot is allowed to trade on this instrument.
+"""
+```
+
+Example:
+
+```Python
+import Bitmex
+
+Bitmex["XBTUSDT"].set_limit(0.003)
+```
 
 ...
 
