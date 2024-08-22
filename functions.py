@@ -1111,14 +1111,14 @@ class Function(WS, Variables):
                                 ws, symbol=symbol, pos=value["position"]
                             )
                             if currency in result_market[market]:
-                                result_market[market][currency[0]]["pnl"] += pos_value
+                                result_market[market][currency]["pnl"] += pos_value
                                 result_market[market]["commission"] += value["commiss"]
                             else:
-                                result_market[market][currency[0]] = dict()
-                                result_market[market][currency[0]]["pnl"] = (
+                                result_market[market][currency] = dict()
+                                result_market[market][currency]["pnl"] = (
                                     value["sumreal"] + pos_value
                                 )
-                                result_market[market][currency[0]][
+                                result_market[market][currency][
                                     "commission"
                                 ] = value["commiss"]
                 lines = set()
