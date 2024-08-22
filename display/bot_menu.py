@@ -209,6 +209,8 @@ class SettingsApp:
         Bots[bot_name].name = bot_name
         Bots[bot_name].state = "Suspended"
         Bots[bot_name].timefr = timeframe
+        Bots[bot_name].timefr_sec = service.timeframe_seconds(timeframe)
+        Bots[bot_name].timefr_current = timeframe
         Bots[bot_name].created = time_now
         Bots[bot_name].updated = time_now
         Bots[bot_name].bot_positions = dict()
@@ -486,12 +488,17 @@ class SettingsApp:
             if err is None:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
+                bot.timefr_sec = service.timeframe_seconds(timefr)
                 # self.timeframe_changed = None
                 values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
                 TreeTable.bot_info.update(row=0, values=values)
-                res_label[
-                    "text"
-                ] = f"Timeframe value changed to {tuple(self.timeframes.keys())[value]}."
+                res_label["text"] = (
+                    "Timeframe value changed to "
+                    + timefr
+                    + ". The changes will take effect when the current "
+                    + bot.timefr_current
+                    + " period ends."
+                )
 
         self.switch(option="option")
         if not Bots[bot_name].error_message:

@@ -561,7 +561,7 @@ Bitmex["XBTUSD"].buy(bot=bot, qty=200, price=50000, move=True, cancel=True)
 
 Sends a buy order, qty is 200, price is 50000. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order. Cancels all sell orders for the ```XBTUSD``` for this bot.
 
-#### Limits control
+### Limits control
 
 When an order is submitted, Tmatic does not allow the bot to exceed the set limit for the instrument. It decreases quantity if the limit is exceeded. If the limit is completely exhausted, the order will not be send to the exchange. If the bot does not have a position for this instrument, then such a position will be added to the bot, and the limit is set as default equal ```minOrderQty``` of the instrument.
 

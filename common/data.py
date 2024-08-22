@@ -169,6 +169,8 @@ class BotData:
     bot_positions: dict = dict()
     bot_orders: OrderedDict
     timefr: str
+    timefr_sec: int
+    timefr_current: str
     pnl: dict = dict()
     state: str
     created: str

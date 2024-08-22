@@ -64,6 +64,8 @@ def load_bots() -> None:
         bot = Bots[value["EMI"]]
         bot.name = value["EMI"]
         bot.timefr = value["TIMEFR"]
+        bot.timefr_sec = service.timeframe_seconds(value["TIMEFR"])
+        bot.timefr_current = value["TIMEFR"]
         bot.created = value["DAT"]
         bot.updated = value["UPDATED"]
         bot.state = value["STATE"]

@@ -8,7 +8,7 @@ from typing import Callable, Union
 import functions
 import services as service
 from api.api import WS, Markets
-from common.data import Bots, Instrument, MetaInstrument
+from common.data import BotData, Bots, Instrument, MetaInstrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 
@@ -22,19 +22,11 @@ def name(stack) -> str:
     return bot_name
 
 
-class Bot:
+class Bot(BotData):
     def __init__(self) -> None:
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
-        self.name = bot.name
-        self.bot_positions = bot.bot_positions
-        self.bot_orders = bot.bot_orders
-        self.timefr = bot.timefr
-        self.pnl = bot.pnl
-        self.state = bot.state
-        self.created = bot.created
-        self.updated = bot.updated
-        self.error_message = bot.error_message
+        self.__dict__ = bot.__dict__
 
 
 class Tool(Instrument):

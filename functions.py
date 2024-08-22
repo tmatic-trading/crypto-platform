@@ -11,7 +11,7 @@ import services as service
 from api.api import WS, Markets
 from api.variables import Variables
 from botinit.variables import Variables as robo
-from common.data import Bots
+from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.functions import info_display
 from display.messages import ErrorMessage
@@ -1118,9 +1118,9 @@ class Function(WS, Variables):
                                 result_market[market][currency]["pnl"] = (
                                     value["sumreal"] + pos_value
                                 )
-                                result_market[market][currency][
-                                    "commission"
-                                ] = value["commiss"]
+                                result_market[market][currency]["commission"] = value[
+                                    "commiss"
+                                ]
                 lines = set()
                 for market, result in result_market.items():
                     if not result:
@@ -1875,14 +1875,15 @@ def target_time(timeframe_sec):
     return target_tm
 
 
-def bot_in_thread(bot_name: str, timeframe_sec: int, target_tm: float, bot: Bots):
+def bot_in_thread(bot_name: str, target_tm: float, bot: BotData):
     """
     Bot entry point
     """
     while var.bot_thread_active[bot_name]:
         tm = time.time()
         if tm > target_tm:
-            target_tm = target_time(timeframe_sec)
+            target_tm = target_time(bot.timefr_sec)
+            bot.timefr_current = bot.timefr
             if disp.f9 == "ON":
                 if bot.state == "Active":
                     if callable(robo.run[bot_name]):
@@ -1893,16 +1894,14 @@ def bot_in_thread(bot_name: str, timeframe_sec: int, target_tm: float, bot: Bots
 
 def activate_bot_thread(bot_name: str) -> None:
     var.bot_thread_active[bot_name] = True
-    timefr_minutes = var.timeframe_human_format[Bots[bot_name].timefr]
-    timeframe_sec = timefr_minutes * 60
-    target_tm = target_time(timeframe_sec)
+    bot = Bots[bot_name]
+    target_tm = target_time(bot.timefr_sec)
     t = threading.Thread(
         target=bot_in_thread,
         args=(
             bot_name,
-            timeframe_sec,
             target_tm,
-            Bots[bot_name],
+            bot,
         ),
     )
     t.start()

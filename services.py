@@ -270,6 +270,15 @@ def fill_bot_position(
         bot.bot_positions[symbol]["commiss"] = float(data["SUM_COMMISS"])
 
 
+def timeframe_seconds(timefr: str) -> int:
+    """
+    Converts a time interval in a string to seconds.
+    """
+    timefr_minutes = var.timeframe_human_format[timefr]
+
+    return timefr_minutes * 60
+
+
 def count_orders():
     """Temporarily created function for debugging"""
     count = 0
