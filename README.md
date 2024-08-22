@@ -673,7 +673,7 @@ Result:
 
 ### Get orders
 
-Use the ```position()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in ascending or descending order.
+Use the ```position()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in descending order.
 
 ```Python
 """
@@ -682,16 +682,16 @@ Parameters
 bot: Bot
     An instance of a bot in the Bot class.
 side: str
-    The Sell or Buy side of the order. If the parameter is omitted, both 
+    The Sell or Buy side of the order. If the parameter is omitted, both
     sides are returned.
 descend: bool
-    If omitted, the data is sorted in ascending order by the value of 
-    ``transactTime``. If True, descending order is returned.  
+    If omitted, the data is sorted in ascending order by the value of
+    ``transactTime``. If True, descending order is returned.
 
 Returns
 -------
 OrderedDict
-    Orders are sorted by ``transactTime`` in the order specified in the 
+    Orders are sorted by ``transactTime`` in the order specified in the
     ``descend`` parameter. The OrderedDict key is the clOrdID value.
 """
 ```
@@ -716,7 +716,7 @@ OrderedDict(
                 "emi": "Mybot",
                 "leavesQty": 0.001,
                 "transactTime": datetime.datetime(
-                    2024, 8, 21, 14, 7, 49, 485000, 
+                    2024, 8, 21, 14, 7, 49, 485000,
                                 tzinfo=datetime.timezone.utc
                 ),
                 "price": 40000,
@@ -734,7 +734,7 @@ OrderedDict(
                 "emi": "Mybot",
                 "leavesQty": 0.001,
                 "transactTime": datetime.datetime(
-                    2024, 8, 21, 14, 49, 38, 132000, 
+                    2024, 8, 21, 14, 49, 38, 132000,
                                 tzinfo=datetime.timezone.utc
                 ),
                 "price": 43000,

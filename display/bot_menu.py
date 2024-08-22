@@ -206,6 +206,7 @@ class SettingsApp:
         """
         time_now = self.get_time()
         var.orders[bot_name] = OrderedDict()
+        Bots[bot_name].name = bot_name
         Bots[bot_name].state = "Suspended"
         Bots[bot_name].timefr = timeframe
         Bots[bot_name].created = time_now

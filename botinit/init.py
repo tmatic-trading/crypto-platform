@@ -1,3 +1,5 @@
+import os
+import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 
@@ -123,31 +125,26 @@ def load_bots() -> None:
             name = value["EMI"]
             if name not in Bots.keys():
                 ws = Markets[value["MARKET"]]
+
                 functions.Function.add_symbol(
                     ws,
                     symbol=value["SYMBOL"],
                     ticker=value["TICKER"],
                     category=value["CATEGORY"],
                 )
-                if isinstance(list(ws.ticker.keys())[0], str):
-                    symbol = ws.ticker[value["TICKER"]]
-                else:
-                    symbol = ws.ticker[(value["TICKER"], value["CATEGORY"])]
-
-                # Change EMI to default SYMBOL name.
-
-                if symbol != value["EMI"]:
-                    qwr = "select ID, EMI, SYMBOL from coins where EMI = '%s'" % (
-                        value["EMI"]
+                if value["SYMBOL"] != value["EMI"]:
+                    qwr = (
+                        "select ID, EMI, SYMBOL from coins where side <> 'Fund' and EMI = '%s'"
+                        % (value["EMI"])
                     )
                     data = service.select_database(qwr)
                     for row in data:
                         qwr = "update coins set EMI = '%s' where ID = %s;" % (
-                            symbol,
+                            row["SYMBOL"],
                             row["ID"],
                         )
                         service.update_database(query=qwr)
-                symb = (symbol, ws.name)
+                symb = (value["SYMBOL"], ws.name)
                 if symb not in ws.symbol_list:
                     if ws.Instrument[symb].state == "Open":
                         subscriptions.append(symb)
