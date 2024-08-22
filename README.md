@@ -750,14 +750,52 @@ OrderedDict(
 )
 ```
 
-...
-
 ### Strategy example
 
-...
+The minimum possible code to run a strategy might look like this. Let's say the strategy buys when the current price is higher than the price 10 periods ago, and sells when the current price is lower than or equal to the price 10 periods ago. When buying, the strategy places a limit order to buy at the first bid price in the order book, and does the same when selling by placing a limit order at the first ask price. Instrument BTCUSDT, exchange Bybit, limit is the minimum possible quantity for the given instrument.
 
+This code is just a simple example and does not claim to be a profitable.
 
+```Python
+from tools import Bybit, Bot
+
+bot = Bot()
+instrument = Bybit["BTCUSDT"]
+kline = instrument.add_kline()
+
+def strategy():
+    if kline("bid", -1) > kline("bid", -10):
+        instrument.buy(bot=bot, move=True, cancel=True)
+    else:
+        instrument.sell(bot=bot, move=True, cancel=True)
+```
+
+1. Enter the Bot menu.
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/enter_bot_menu.png)
+
+2. Add a new bot.
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/add_new_bot.png)
+
+3. Put the code above in the strategy section and press ```Update strategy``` button.
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/strategy.png)
+
+4. Activate the strategy.
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/activate.png)
+
+5. Turn on trading.
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/menu_top.png)
 
 ## Development
 
-This project is under development. New functions and connections to other crypto exchanges may appear in the near future. Over time, the program interface should become more user-friendly by customizing settings through the GUI. Attention will be paid to speeding up the program, since loading two or more exchanges, as well as working with REST, requires multi-threading.
+This project is under development. New functions and connections to other crypto exchanges may appear in the near future.
+
+The immediate plans include:
+
+1. Connecting the Deribit exchange.
+2. Creating a convenient menu for selecting instruments and a settings menu instead of manually editing files like .env and .env.Bitmex.
+3. Stable release.
