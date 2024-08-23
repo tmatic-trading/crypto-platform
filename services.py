@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Union
 
 from api.bybit.errors import exception
-from common.data import Bots, Instrument, BotData
+from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 
 

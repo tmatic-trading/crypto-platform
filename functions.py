@@ -993,14 +993,14 @@ class Function(WS, Variables):
 
         tree = TreeTable.bots
 
-        tm = datetime.now()
+        # d tm = datetime.now()
         for name in Bots.keys():
             bot = Bots[name]
             compare = [
                 name,
                 bot.timefr,
                 bot.state,
-                service.bot_error(bot=bot), 
+                service.bot_error(bot=bot),
                 bot.updated,
             ]
             iid = name
@@ -1893,9 +1893,10 @@ def bot_in_thread(bot_name: str, target_tm: float, bot: BotData):
             bot.timefr_current = bot.timefr
             if disp.f9 == "ON":
                 if bot.state == "Active":
-                    if callable(robo.run[bot_name]):
-                        # Calls strategy function in the strategy.py file
-                        robo.run[bot_name]()
+                    if not bot.error_message:
+                        if callable(robo.run[bot_name]):
+                            # Calls strategy function in the strategy.py file
+                            robo.run[bot_name]()
         time.sleep(1 - time.time() % 1)
 
 

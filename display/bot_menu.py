@@ -220,6 +220,9 @@ class SettingsApp:
         self.insert_bot_menu(name=bot_name, new=True)
 
     def create_bot(self, bot_name, timeframe) -> bool:
+        """
+        Creates and initializes a new bot.
+        """
         err = service.insert_database(
             values=[bot_name, "Suspended", timeframe], table="robots"
         )
@@ -253,10 +256,17 @@ class SettingsApp:
 
             return True
 
-    def insert_code(self, text_widget: tk.Text, code: str, bot_name: str) -> None:
+    def insert_code(self, text_widget: tk.Text, code: str) -> None:
         """
         Function to insert Python code into a Tkinter Text widget with syntax
         highlighting.
+
+        Parameters
+        ----------
+        text_widget: tk.Text
+            Widget that contains the bot strategy code.
+        code: str
+            Code to insert into widget.
         """
         text_widget.config(state="normal")
         text_widget.delete(1.0, tk.END)
@@ -271,8 +281,6 @@ class SettingsApp:
                 color = style.style_for_token(token).get("color")
                 if color:
                     text_widget.tag_configure(tag_name, foreground="#" + color)
-        if Bots[bot_name] == "Active":
-            text_widget.config(state="disabled")
 
     def insert_bot_menu(self, name: str, new=False) -> None:
         tree = TreeTable.bot_menu
@@ -306,7 +314,6 @@ class SettingsApp:
             self.insert_code(
                 text_widget=self.strategy_text,
                 code=content,
-                bot_name=disp.bot_name,
             )
             import_bot_module(disp.bot_name, update=True)
             qwr = (
@@ -337,7 +344,6 @@ class SettingsApp:
                 self.insert_code(
                     text_widget=self.strategy_text,
                     code=content,
-                    bot_name=disp.bot_name,
                 )
             else:
                 functions.warning_window(error_message, width=1000, height=300)
@@ -454,12 +460,20 @@ class SettingsApp:
                 text_label["text"] = return_text()
                 res_label["text"] = f"State changed to ``{bot.state}``."
                 self.button.config(text=button_text[Bots[bot_name].state])
-
+        
+        bot = Bots[bot_name]
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
-        if not Bots[bot_name].error_message:
+        if not bot.error_message or (bot.error_message and bot.state == "Active"):
+            if bot.error_message:
+                tk.Label(
+                    self.brief_frame,
+                    text=bot.error_message["message"],
+                    bg=disp.bg_color,
+                    fg=disp.gray_color,
+                    justify=tk.LEFT,
+                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
             new_state = ""
-            bot = Bots[bot_name]
             text_label = tk.Label(
                 self.brief_frame,
                 text=return_text(),
@@ -471,7 +485,7 @@ class SettingsApp:
             self.button = tk.Button(
                 self.brief_frame,
                 activebackground=disp.bg_active,
-                text=button_text[Bots[bot_name].state],
+                text=button_text[bot.state],
                 command=lambda: change_state(bot_name),
             )
             self.button.pack(anchor="nw", padx=50, pady=10)
@@ -483,6 +497,7 @@ class SettingsApp:
                 justify=tk.LEFT,
             )
             res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+            self.wrap()
         else:
             self.display_error_message(bot_name=bot_name)
 
@@ -669,7 +684,7 @@ class SettingsApp:
             if err is None:
                 message = "The duplicate operation completed successfully"
             self.finish_operation(message)
-        
+
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         if not Bots[bot_name].error_message:
@@ -851,12 +866,9 @@ class SettingsApp:
         if condition is True:
             if bot_name != disp.bot_event_prev:
                 try:
-                    #bot_path = self.get_bot_path(bot_name=bot_name)
-                    #self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
                     self.insert_code(
                         text_widget=self.strategy_text,
                         code=self.bot_algo,
-                        bot_name=bot_name,
                     )
                     if disp.bot_name and bot_name != disp.bot_name:
                         bot_trades_sub[disp.bot_name].pack_forget()
@@ -865,10 +877,6 @@ class SettingsApp:
                     bot_trades_sub[bot_name].pack(fill="both", expand="yes")
                     refresh_bot_orders()
                     self.switch(option="table")
-                    if bot.state == "Active":
-                        self.strategy_text.config(state="disabled")
-                    else:
-                        self.strategy_text.config(state="normal")
                     disp.bot_event_prev = bot_name
                 except Exception as ex:
                     Bots[bot_name].error_message = {
@@ -946,18 +954,23 @@ class SettingsApp:
         bot_name: str
             Bot name.
         """
+        bot = Bots[bot_name]
         try:
             bot_path = self.get_bot_path(bot_name=bot_name)
-            self.bot_algo = self.read_file(
-                f"{bot_path}/{self.strategy_file}"
-            )
-        except Exception as ex:
-            Bots[bot_name].error_message = {
+            self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
+        except FileNotFoundError as ex:
+            bot.error_message = {
                 "error_type": ex.__class__.__name__,
                 "message": {str(ex)},
             }
         else:
-            Bots[bot_name].error_message = {}
+            if bot.error_message:
+                if bot.error_message["error_type"] in [
+                    "ModuleNotFoundError",
+                    "FileNotFoundError",
+                ]:
+                    bot.error_message = {}
+
 
 def init_bot_trades(bot_name: str) -> None:
     if bot_name not in trade_treeTable:
