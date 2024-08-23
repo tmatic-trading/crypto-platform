@@ -15,7 +15,7 @@ from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.functions import info_display
 from display.messages import ErrorMessage
-from display.variables import TreeTable, TreeviewTable, AutoScrollbar
+from display.variables import AutoScrollbar, TreeTable, TreeviewTable
 from display.variables import Variables as disp
 
 

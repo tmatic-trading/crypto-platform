@@ -455,6 +455,7 @@ class SettingsApp:
                 res_label["text"] = f"State changed to ``{bot.state}``."
                 self.button.config(text=button_text[Bots[bot_name].state])
 
+        self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         if not Bots[bot_name].error_message:
             new_state = ""
@@ -515,6 +516,7 @@ class SettingsApp:
                     + " period ends."
                 )
 
+        self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         if not Bots[bot_name].error_message:
             bot = Bots[bot_name]
@@ -574,8 +576,8 @@ class SettingsApp:
                     ] += f"\n{message[0]}\n\nThe merge operation completed with errors."
             self.finish_operation(message[1])
 
+        self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
-
         if not Bots[bot_name].error_message:
             bots = bot_list()
             if bots:
@@ -667,7 +669,8 @@ class SettingsApp:
             if err is None:
                 message = "The duplicate operation completed successfully"
             self.finish_operation(message)
-
+        
+        self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         if not Bots[bot_name].error_message:
             tk.Label(
@@ -839,7 +842,10 @@ class SettingsApp:
         TreeTable.bot_info.update(row=0, values=values)
         condition = True
         if bot.error_message:
-            if bot.error_message["error_type"] == "ModuleNotFoundError":
+            if bot.error_message["error_type"] in [
+                "ModuleNotFoundError",
+                "FileNotFoundError",
+            ]:
                 condition = False
         if condition is True:
             if bot_name != disp.bot_event_prev:
@@ -930,6 +936,25 @@ class SettingsApp:
         self.switch(option="option")
         self.finish_operation(Bots[bot_name].error_message["message"])
 
+    def check_bot_file(self, bot_name: str) -> None:
+        """
+        Checks for the existence of the strategy.py file or the bot folder.
+
+        Parameters
+        ----------
+        bot_name: str
+            Bot name.
+        """
+        try:
+            bot_path = self.get_bot_path(bot_name=bot_name)
+            self.bot_algo = self.read_file(
+                f"{bot_path}/{self.strategy_file}"
+            )
+        except Exception as ex:
+            Bots[bot_name].error_message = {
+                "error_type": ex.__class__.__name__,
+                "message": {str(ex)},
+            }
 
 def init_bot_trades(bot_name: str) -> None:
     if bot_name not in trade_treeTable:
