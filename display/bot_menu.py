@@ -448,6 +448,7 @@ class SettingsApp:
         bot = Bots[bot_name]
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
+        disp.bot_menu_option = "activate"
         if not bot.error_message or (bot.error_message and bot.state == "Active"):
             if bot.error_message:
                 tk.Label(
@@ -962,34 +963,36 @@ def handler_bot_info(event) -> None:
     tree = event.widget
     selection = tree.selection()
     if selection:
-        bot_name = tree.item(selection[0])["values"][0]
-        bot = Bots[bot_name]
-        if bot.error_message:
-            functions.warning_window(
-                bot.error_message["message"],
-                width=1000,
-                height=300,
-                title=f"{bot_name} error",
-            )
-        else:
-            if disp.robots_window_trigger == "off":
-                disp.robots_window_trigger = "on"
-                width = max(200, int(len(bot_name)*disp.symbol_width*1.5)+100)
-                robot_window = tk.Toplevel(
-                    disp.root, padx=10, pady=10, bg=disp.title_color
+        if not disp.bot_menu_option:
+            bot_name = tree.item(selection[0])["values"][0]
+            bot = Bots[bot_name]
+            if bot.error_message:
+                functions.warning_window(
+                    bot.error_message["message"],
+                    width=1000,
+                    height=300,
+                    title=f"{bot_name} error",
                 )
-                cx = disp.root.winfo_pointerx()
-                cy = disp.root.winfo_pointery()
-                robot_window.geometry("{}x{}+{}+{}".format(width, 60, cx - 100, cy + 20))
-                robot_window.title(bot_name)
-                robot_window.protocol("WM_DELETE_WINDOW", on_closing)
-                robot_window.attributes("-topmost", 1)
-                robot_window.bind("<FocusOut>", leave)
-                text = "Suspend"
-                if bot.state == "Suspended":
-                    text = "Activate"
-                status = tk.Button(robot_window, text=text, command=callback)                
-                status.pack()
+            else:
+                if disp.robots_window_trigger == "off":
+                    disp.robots_window_trigger = "on"
+                    width = max(250, int(len(bot_name)*disp.symbol_width*1.5)+150)
+                    robot_window = tk.Toplevel(
+                        disp.root, padx=10, pady=10, bg=disp.title_color
+                    )
+                    cx = disp.root.winfo_pointerx()
+                    cy = disp.root.winfo_pointery()
+                    robot_window.geometry("{}x{}+{}+{}".format(width, 70, cx - 100, cy + 20))
+                    robot_window.title(bot_name)
+                    robot_window.protocol("WM_DELETE_WINDOW", on_closing)
+                    # d robot_window.attributes("-topmost", 1)
+                    robot_window.bind("<FocusOut>", leave)
+                    robot_window.focus()
+                    text = "Suspend"
+                    if bot.state == "Suspended":
+                        text = "Activate"
+                    status = tk.Button(robot_window, text=text, command=callback)                
+                    status.pack()
 
 
 def update_bot_info(bot_name: str) -> None:
@@ -1064,6 +1067,7 @@ def handler_bot_menu(event) -> None:
     tree = event.widget
     selection = tree.selection()
     if selection:
+        disp.bot_menu_option = ""
         iid = tree.selection()[0]
         option = iid.split("!")
         parent = option[0]

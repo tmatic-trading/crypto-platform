@@ -519,6 +519,7 @@ class Variables:
     bot_trades = dict()
     bot_orders_processing = False
     bot_event_prev = ""
+    bot_menu_option = ""
 
     # Bot menu widgets
 
