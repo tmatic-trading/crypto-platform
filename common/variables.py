@@ -162,7 +162,8 @@ class Variables:
     name_bots = [
         "BOT NAME",
         "TIMEFR",
-        "STATUS",
+        "STATE",
+        "ERRORS",
         "UPDATED",
     ]
     name_bot_menu = ["AVAILABLE BOTS"]

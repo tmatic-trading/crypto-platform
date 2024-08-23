@@ -321,7 +321,7 @@ class SettingsApp:
                     disp.bot_name,
                     bot.timefr,
                     bot.state,
-                    bot_error(bot=bot),
+                    service.bot_error(bot=bot),
                     bot.updated,
                     bot.created,
                 ]
@@ -446,7 +446,7 @@ class SettingsApp:
                     bot_name,
                     bot.timefr,
                     bot.state,
-                    bot_error(bot=bot),
+                    service.bot_error(bot=bot),
                     bot.created,
                     bot.updated,
                 ]
@@ -503,7 +503,7 @@ class SettingsApp:
                     bot_name,
                     bot.timefr,
                     bot.state,
-                    bot_error(bot=bot),
+                    service.bot_error(bot=bot),
                     bot.updated,
                     bot.created,
                 ]
@@ -831,11 +831,12 @@ class SettingsApp:
 
         disp.refresh_bot_info = True
         bot = Bots[bot_name]
+        self.check_bot_file(bot_name=bot_name)
         values = [
             bot_name,
             bot.timefr,
             bot.state,
-            bot_error(bot=bot),
+            service.bot_error(bot=bot),
             bot.updated,
             bot.created,
         ]
@@ -850,8 +851,8 @@ class SettingsApp:
         if condition is True:
             if bot_name != disp.bot_event_prev:
                 try:
-                    bot_path = self.get_bot_path(bot_name=bot_name)
-                    self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
+                    #bot_path = self.get_bot_path(bot_name=bot_name)
+                    #self.bot_algo = self.read_file(f"{bot_path}/{self.strategy_file}")
                     self.insert_code(
                         text_widget=self.strategy_text,
                         code=self.bot_algo,
@@ -955,6 +956,8 @@ class SettingsApp:
                 "error_type": ex.__class__.__name__,
                 "message": {str(ex)},
             }
+        else:
+            Bots[bot_name].error_message = {}
 
 def init_bot_trades(bot_name: str) -> None:
     if bot_name not in trade_treeTable:
@@ -1152,15 +1155,6 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.run[bot_name] = "No strategy"
     if update:
         functions.init_bot_klines(bot_name)
-
-
-def bot_error(bot: BotData) -> str:
-    if not bot.error_message:
-        error = "Not found"
-    else:
-        error = bot.error_message["error_type"]
-
-    return error
 
 
 trade_treeTable = dict()

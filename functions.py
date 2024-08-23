@@ -723,7 +723,7 @@ class Function(WS, Variables):
 
         tree = TreeTable.orderbook
 
-        tm = datetime.now()
+        # d tm = datetime.now()
 
         def display_order_book_values(
             val: list,
@@ -902,7 +902,7 @@ class Function(WS, Variables):
 
         elif current_notebook_tab == "Positions":
             tree = TreeTable.position
-            tm = datetime.now()
+            # d tm = datetime.now()
             pos_by_market = {market: [] for market in var.market_list}
             for name in Bots.keys():
                 bot = Bots[name]
@@ -1000,6 +1000,7 @@ class Function(WS, Variables):
                 name,
                 bot.timefr,
                 bot.state,
+                service.bot_error(bot=bot), 
                 bot.updated,
             ]
             iid = name
@@ -1017,7 +1018,7 @@ class Function(WS, Variables):
 
         tree = TreeTable.market
 
-        tm = datetime.now()
+        # tm = datetime.now()
         for num, name in enumerate(var.market_list):
             ws = Markets[name]
             status = str(ws.connect_count) + " " + "ONLINE"

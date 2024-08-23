@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Union
 
 from api.bybit.errors import exception
-from common.data import Bots, Instrument
+from common.data import Bots, Instrument, BotData
 from common.variables import Variables as var
 
 
@@ -277,6 +277,15 @@ def timeframe_seconds(timefr: str) -> int:
     timefr_minutes = var.timeframe_human_format[timefr]
 
     return timefr_minutes * 60
+
+
+def bot_error(bot: BotData) -> str:
+    if not bot.error_message:
+        error = "Not found"
+    else:
+        error = bot.error_message["error_type"]
+
+    return error
 
 
 def count_orders():
