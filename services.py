@@ -281,7 +281,7 @@ def timeframe_seconds(timefr: str) -> int:
 
 def bot_error(bot: BotData) -> str:
     if not bot.error_message:
-        error = "Not found"
+        error = "None"
     else:
         error = bot.error_message["error_type"]
 

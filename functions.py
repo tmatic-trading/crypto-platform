@@ -2290,6 +2290,7 @@ def init_tables() -> None:
         frame=disp.frame_bot_parameters,
         name="bot_info",
         title=var.name_bot,
+        bind=bot_menu.handler_bot_info,
         size=1,
         autoscroll=True,
     )

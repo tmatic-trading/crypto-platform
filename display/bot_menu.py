@@ -324,15 +324,7 @@ class SettingsApp:
             if err is None:
                 bot = Bots[disp.bot_name]
                 bot.updated = self.get_time()
-                values = [
-                    disp.bot_name,
-                    bot.timefr,
-                    bot.state,
-                    service.bot_error(bot=bot),
-                    bot.updated,
-                    bot.created,
-                ]
-                TreeTable.bot_info.update(row=0, values=values)
+                update_bot_info(bot_name=disp.bot_name)
 
         def check_syntax() -> None:
             content = self.strategy_text.get("1.0", tk.END)
@@ -448,19 +440,11 @@ class SettingsApp:
             )
             if err is None:
                 bot.state = new_state
-                values = [
-                    bot_name,
-                    bot.timefr,
-                    bot.state,
-                    service.bot_error(bot=bot),
-                    bot.created,
-                    bot.updated,
-                ]
-                TreeTable.bot_info.update(row=0, values=values)
+                update_bot_info(bot_name=bot_name)
                 text_label["text"] = return_text()
                 res_label["text"] = f"State changed to ``{bot.state}``."
                 self.button.config(text=button_text[Bots[bot_name].state])
-        
+
         bot = Bots[bot_name]
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
@@ -514,15 +498,7 @@ class SettingsApp:
                 bot.updated = self.get_time()
                 bot.timefr_sec = service.timeframe_seconds(timefr)
                 # self.timeframe_changed = None
-                values = [
-                    bot_name,
-                    bot.timefr,
-                    bot.state,
-                    service.bot_error(bot=bot),
-                    bot.updated,
-                    bot.created,
-                ]
-                TreeTable.bot_info.update(row=0, values=values)
+                update_bot_info(bot_name=bot_name)
                 res_label["text"] = (
                     "Timeframe value changed to "
                     + timefr
@@ -847,15 +823,7 @@ class SettingsApp:
         disp.refresh_bot_info = True
         bot = Bots[bot_name]
         self.check_bot_file(bot_name=bot_name)
-        values = [
-            bot_name,
-            bot.timefr,
-            bot.state,
-            service.bot_error(bot=bot),
-            bot.updated,
-            bot.created,
-        ]
-        TreeTable.bot_info.update(row=0, values=values)
+        update_bot_info(bot_name=bot_name)
         condition = True
         if bot.error_message:
             if bot.error_message["error_type"] in [
@@ -970,6 +938,74 @@ class SettingsApp:
                     "FileNotFoundError",
                 ]:
                     bot.error_message = {}
+
+
+def handler_bot_info(event) -> None:
+    """
+    Called when the bot table TreeTable.bot_info is clicked.
+    """
+    def callback():
+        if bot.state == "Active":
+            bot.state = "Suspended"
+        else:
+            bot.state = "Active"
+        update_bot_info(bot_name=bot_name)
+        on_closing()
+
+    def on_closing():
+        disp.robots_window_trigger = "off"
+        robot_window.destroy()
+
+    def leave(event):
+        on_closing()
+
+    tree = event.widget
+    selection = tree.selection()
+    if selection:
+        bot_name = tree.item(selection[0])["values"][0]
+        bot = Bots[bot_name]
+        if bot.error_message:
+            functions.warning_window(
+                bot.error_message["message"],
+                width=1000,
+                height=300,
+                title=f"{bot_name} error",
+            )
+        else:
+            if disp.robots_window_trigger == "off":
+                disp.robots_window_trigger = "on"
+                width = max(200, int(len(bot_name)*disp.symbol_width*1.5)+100)
+                robot_window = tk.Toplevel(
+                    disp.root, padx=10, pady=10, bg=disp.title_color
+                )
+                cx = disp.root.winfo_pointerx()
+                cy = disp.root.winfo_pointery()
+                robot_window.geometry("{}x{}+{}+{}".format(width, 60, cx - 100, cy + 20))
+                robot_window.title(bot_name)
+                robot_window.protocol("WM_DELETE_WINDOW", on_closing)
+                robot_window.attributes("-topmost", 1)
+                robot_window.bind("<FocusOut>", leave)
+                text = "Suspend"
+                if bot.state == "Suspended":
+                    text = "Activate"
+                status = tk.Button(robot_window, text=text, command=callback)                
+                status.pack()
+
+
+def update_bot_info(bot_name: str) -> None:
+    """
+    Updates TreeTable.bot_info.
+    """
+    bot = Bots[bot_name]
+    values = [
+        bot_name,
+        bot.timefr,
+        bot.state,
+        service.bot_error(bot=bot),
+        bot.updated,
+        bot.created,
+    ]
+    TreeTable.bot_info.update(row=0, values=values)
 
 
 def init_bot_trades(bot_name: str) -> None:
