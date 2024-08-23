@@ -1135,6 +1135,8 @@ def bot_error(bot: BotData) -> str:
     else:
         error = bot.error_message["error_type"]
 
+    return error
+
 
 trade_treeTable = dict()
 bot_trades_sub = dict()
