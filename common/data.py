@@ -131,7 +131,7 @@ class Instrument:
     ticker: str
     tickSize: float
     unrealisedPnl: float = 0
-    volume: float
+    volume: float = 0
     volume24h: float = 0
     valueOfOneContract: float
 
