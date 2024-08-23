@@ -163,9 +163,9 @@ def insert_database(values: list, table: str) -> None:
             var.connect_sqlite.commit()
             var.sql_lock.release()
             return None
-        except Exception as e:  # var.error_sqlite
-            if "database is locked" not in str(e):
-                err_str = f"Sqlite Error: {str(e)} for: {values[0]}"
+        except Exception as ex:  # var.error_sqlite
+            if "database is locked" not in str(ex):
+                err_str = f"Sqlite Error: {str(ex)} for: {values[0]}"
                 var.logger.error(err_str)
                 var.sql_lock.release()
                 return err_str

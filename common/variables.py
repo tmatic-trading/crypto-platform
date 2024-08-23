@@ -170,6 +170,7 @@ class Variables:
         "BOT NAME",
         "TIMEFR",
         "STATE",
+        "ERRORS",
         "UPDATED",
         "CREATED",
     ]

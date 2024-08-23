@@ -34,7 +34,7 @@ import functions
 import services as service
 from api.api import Markets
 from botinit.variables import Variables as robo
-from common.data import Bots
+from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 
@@ -321,6 +321,7 @@ class SettingsApp:
                     disp.bot_name,
                     bot.timefr,
                     bot.state,
+                    bot_error(bot=bot),
                     bot.updated,
                     bot.created,
                 ]
@@ -441,7 +442,14 @@ class SettingsApp:
             )
             if err is None:
                 bot.state = new_state
-                values = [bot_name, bot.timefr, bot.state, bot.created, bot.updated]
+                values = [
+                    bot_name,
+                    bot.timefr,
+                    bot.state,
+                    bot_error(bot=bot),
+                    bot.created,
+                    bot.updated,
+                ]
                 TreeTable.bot_info.update(row=0, values=values)
                 text_label["text"] = return_text()
                 res_label["text"] = f"State changed to ``{bot.state}``."
@@ -490,7 +498,14 @@ class SettingsApp:
                 bot.updated = self.get_time()
                 bot.timefr_sec = service.timeframe_seconds(timefr)
                 # self.timeframe_changed = None
-                values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
+                values = [
+                    bot_name,
+                    bot.timefr,
+                    bot.state,
+                    bot_error(bot=bot),
+                    bot.updated,
+                    bot.created,
+                ]
                 TreeTable.bot_info.update(row=0, values=values)
                 res_label["text"] = (
                     "Timeframe value changed to "
@@ -636,7 +651,10 @@ class SettingsApp:
                     message += (
                         f"\n{err}\n\nThe duplicate operation completed with errors."
                     )
-                    Bots[copy_bot].error_message = err
+                    Bots[copy_bot].error_message = {
+                        "error_type": "sqliteError",
+                        "message": err,
+                    }
 
             except Exception as e:
                 err = str(e)
@@ -810,9 +828,20 @@ class SettingsApp:
 
         disp.refresh_bot_info = True
         bot = Bots[bot_name]
-        values = [bot_name, bot.timefr, bot.state, bot.updated, bot.created]
+        values = [
+            bot_name,
+            bot.timefr,
+            bot.state,
+            bot_error(bot=bot),
+            bot.updated,
+            bot.created,
+        ]
         TreeTable.bot_info.update(row=0, values=values)
-        if not bot.error_message:
+        condition = True
+        if bot.error_message:
+            if bot.error_message["error_type"] == "ModuleNotFoundError":
+                condition = False
+        if condition is True:
             if bot_name != disp.bot_event_prev:
                 try:
                     bot_path = self.get_bot_path(bot_name=bot_name)
@@ -834,15 +863,17 @@ class SettingsApp:
                     else:
                         self.strategy_text.config(state="normal")
                     disp.bot_event_prev = bot_name
-                except Exception as e:
-                    Bots[bot_name].error_message = str(e)
-        if Bots[bot_name].error_message:
-            self.display_error_message(bot_name=bot_name)
-        else:
+                except Exception as ex:
+                    Bots[bot_name].error_message = {
+                        "error_type": ex.__class__.__name__,
+                        "message": {str(ex)},
+                    }
             try:
                 self.button.config(state="disabled")
             except Exception:
                 pass
+        else:
+            self.display_error_message(bot_name=bot_name)
 
     def wrap(self):
         for child in self.brief_frame.winfo_children():
@@ -897,7 +928,7 @@ class SettingsApp:
 
     def display_error_message(self, bot_name: str) -> None:
         self.switch(option="option")
-        self.finish_operation(Bots[bot_name].error_message)
+        self.finish_operation(Bots[bot_name].error_message["message"])
 
 
 def init_bot_trades(bot_name: str) -> None:
@@ -996,9 +1027,14 @@ def import_bot_module(bot_name: str, update=False) -> None:
         Evaluates to True when strategy.py is updated.
     """
     module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
+    Bots[bot_name].error_message = {}
     try:
         if update:
-            importlib.reload(bot_manager.modules[bot_name])
+            if bot_name not in bot_manager.modules:
+                mod = importlib.import_module(module)
+                bot_manager.modules[bot_name] = mod
+            else:
+                importlib.reload(bot_manager.modules[bot_name])
         else:
             mod = importlib.import_module(module)
             bot_manager.modules[bot_name] = mod
@@ -1015,7 +1051,10 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "warning": True,
             }
         )
-        Bots[bot_name].error_message = message
+        Bots[bot_name].error_message = {
+            "error_type": exception.__class__.__name__,
+            "message": message,
+        }
     except AttributeError as exception:
         message = ErrorMessage.BOT_MARKET_ERROR.format(
             MODULE=module,
@@ -1031,7 +1070,10 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "warning": True,
             }
         )
-        Bots[bot_name].error_message = message
+        Bots[bot_name].error_message = {
+            "error_type": exception.__class__.__name__,
+            "message": message,
+        }
     except ValueError as exception:
         message = ErrorMessage.BOT_MARKET_ERROR.format(
             MODULE=module,
@@ -1047,7 +1089,10 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "warning": True,
             }
         )
-        Bots[bot_name].error_message = message
+        Bots[bot_name].error_message = {
+            "error_type": exception.__class__.__name__,
+            "message": message,
+        }
     except Exception as exception:
         service.display_exception(exception=exception)
         message = ErrorMessage.BOT_LOADING_ERROR.format(
@@ -1062,12 +1107,33 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "warning": True,
             }
         )
+        Bots[bot_name].error_message = {
+            "error_type": exception.__class__.__name__,
+            "message": message,
+        }
+    else:
+        if update:
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": bot_name + " has been updated successfully.",
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": False,
+                }
+            )
     try:
         robo.run[bot_name] = bot_manager.modules[bot_name].strategy
     except Exception:
         robo.run[bot_name] = "No strategy"
     if update:
         functions.init_bot_klines(bot_name)
+
+
+def bot_error(bot: BotData) -> str:
+    if not bot.error_message:
+        error = "Not found"
+    else:
+        error = bot.error_message["error_type"]
 
 
 trade_treeTable = dict()
