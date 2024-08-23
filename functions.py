@@ -15,7 +15,7 @@ from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.functions import info_display
 from display.messages import ErrorMessage
-from display.variables import TreeTable, TreeviewTable
+from display.variables import TreeTable, TreeviewTable, AutoScrollbar
 from display.variables import Variables as disp
 
 
@@ -1766,8 +1766,14 @@ def warning_window(
     warn_window.protocol("WM_DELETE_WINDOW", on_closing)
     warn_window.attributes("-topmost", 1)
     text = tk.Text(warn_window, wrap="word")
+    scroll = AutoScrollbar(warn_window, orient="vertical")
+    scroll.config(command=text.yview)
+    text.config(yscrollcommand=scroll.set)
     text.insert("insert", message)
-    text.pack(fill="both", expand="yes")
+    text.grid(row=0, column=0, sticky="NSEW")
+    scroll.grid(row=0, column=1, sticky="NS")
+    warn_window.grid_columnconfigure(0, weight=1)
+    warn_window.grid_rowconfigure(0, weight=1)
 
 
 def handler_instrument(event) -> None:
