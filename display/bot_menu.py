@@ -16,6 +16,7 @@
 """
 import importlib
 import os
+import sys
 import re
 import shutil
 import tkinter as tk
@@ -1113,15 +1114,10 @@ def import_bot_module(bot_name: str, update=False) -> None:
     module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
     Bots[bot_name].error_message = {}
     try:
-        if update:
-            if bot_name not in bot_manager.modules:
-                mod = importlib.import_module(module)
-                bot_manager.modules[bot_name] = mod
-            else:
-                importlib.reload(bot_manager.modules[bot_name])
-        else:
-            mod = importlib.import_module(module)
-            bot_manager.modules[bot_name] = mod
+        if module in sys.modules:
+            del sys.modules[module]
+        mod = importlib.import_module(module)
+        bot_manager.modules[bot_name] = mod
     except ModuleNotFoundError as exception:
         message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(
             MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name

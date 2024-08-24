@@ -24,8 +24,8 @@ class ErrorMessage(str, Enum):
     )
     BOT_LOADING_ERROR = (
         "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"
-        + "You should either correct the strategy file or delete ``{BOT_NAME}`` "
-        + "using the ``Bot Menu``.\n"
+        + "Correct the strategy file or delete ``{BOT_NAME}`` using the "
+        +"``Bot Menu``.\n"
     )
     IMPOSSIBLE_SUBSCRIPTION = (
         "The {SYMBOL} instrument has a {STATE} status, but is normally Open. "
