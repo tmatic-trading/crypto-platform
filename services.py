@@ -180,7 +180,7 @@ def insert_database(values: list, table: str) -> None:
                 var.sql_lock.release()
 
 
-def update_database(query: list) -> None:
+def update_database(query: list) -> Union[str, None]:
     err_locked = 0
     while True:
         try:

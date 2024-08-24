@@ -79,17 +79,21 @@ class Tool(Instrument):
         """
         ws = Markets[self.market]
         res = None
+        print("______1", bot.name)
         if not qty:
             qty = self.minOrderQty
         if not price:
             price = self.asks[0][0]
         if price:
+            print("______2", bot.name)
             qty = self._control_limits(side="Sell", qty=qty, bot_name=bot.name)
             if qty:
+                print("______3", bot.name)
                 clOrdID = None
                 if move is True:
                     clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Sell")
                 if clOrdID is None:
+                    print("______new", bot.name)
                     new_clOrdID = service.set_clOrdID(emi=bot.name)
                     res = WS.place_limit(
                         ws,
@@ -99,6 +103,7 @@ class Tool(Instrument):
                         symbol=self.symbol_tuple,
                     )
                 else:
+                    print("______replace", bot.name)
                     order = bot.bot_orders[clOrdID]
                     if order["price"] != price:
                         res = WS.replace_limit(
@@ -393,6 +398,7 @@ class Tool(Instrument):
             Bot name.
         """
         position = self._get_position(bot_name=bot_name)
+        print("____limit control", bot_name, position, self.precision)
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:

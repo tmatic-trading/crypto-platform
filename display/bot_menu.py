@@ -436,12 +436,8 @@ class SettingsApp:
 
         def change_state(bot_name) -> None:
             nonlocal new_state
-            err = service.update_database(
-                query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{bot_name}'"
-            )
+            err = update_bot_state(new_state=new_state, bot=bot)
             if err is None:
-                bot.state = new_state
-                update_bot_info(bot_name=bot_name)
                 text_label["text"] = return_text()
                 res_label["text"] = f"State changed to ``{bot.state}``."
                 self.button.config(text=button_text[Bots[bot_name].state])
@@ -942,17 +938,45 @@ class SettingsApp:
                     bot.error_message = {}
 
 
+def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
+    """
+    Updates the database entry when the bot's state changes.
+
+    Parameters
+    ----------
+    new_state: str
+        New state to save to the database.
+    bot: str
+        Bot instance.
+
+    Returns
+    -------
+    str | None
+        Description of the error, or None if successful.     
+    """
+    err = service.update_database(
+        query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{bot.name}'"
+    )
+    if err is None:
+        bot.state = new_state
+        update_bot_info(bot_name=bot.name)
+        return
+
+    return err
+
+
 def handler_bot_info(event) -> None:
     """
     Called when the bot table TreeTable.bot_info is clicked.
     """
-
     def callback():
         if bot.state == "Active":
-            bot.state = "Suspended"
+            new_state = "Suspended"
         else:
-            bot.state = "Active"
-        update_bot_info(bot_name=bot_name)
+            new_state = "Active"
+        err = update_bot_state(new_state=new_state, bot=bot)
+        if err:
+            functions.warning_window(message=err, width=1000, height=300)
         on_closing()
 
     def on_closing():
