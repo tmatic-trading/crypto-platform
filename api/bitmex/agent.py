@@ -165,7 +165,8 @@ class Agent(Bitmex):
         if isinstance(data, list):
             if data:
                 instrument.currentQty = (
-                    data[0]["currentQty"] * instrument.valueOfOneContract
+                    #data[0]["currentQty"] * instrument.valueOfOneContract
+                    data[0]["currentQty"] / instrument.myMultiplier
                 )
             self.logger.info(
                 str(symbol)
@@ -269,9 +270,11 @@ class Agent(Bitmex):
                     else:
                         row["settlCurrency"] = instrument.settlCurrency
                     if "lastQty" in row:
-                        row["lastQty"] *= instrument.valueOfOneContract
+                        #row["lastQty"] *= instrument.valueOfOneContract
+                        row["lastQty"] /= instrument.myMultiplier
                     if "leavesQty" in row:
-                        row["leavesQty"] *= instrument.valueOfOneContract
+                        #row["leavesQty"] *= instrument.valueOfOneContract
+                        row["leavesQty"] /= instrument.myMultiplier
                     if row["execType"] == "Funding":
                         if row["foreignNotional"] > 0:
                             row["lastQty"] = -row["lastQty"]
@@ -305,9 +308,12 @@ class Agent(Bitmex):
                     self.name,
                 )
                 instrument = self.Instrument[order["symbol"]]
-                order["orderQty"] *= instrument.valueOfOneContract
-                order["leavesQty"] *= instrument.valueOfOneContract
-                order["cumQty"] *= instrument.valueOfOneContract
+                #order["orderQty"] *= instrument.valueOfOneContract
+                #order["leavesQty"] *= instrument.valueOfOneContract
+                #order["cumQty"] *= instrument.valueOfOneContract
+                order["orderQty"] /= instrument.myMultiplier
+                order["leavesQty"] /= instrument.myMultiplier
+                order["cumQty"] /= instrument.myMultiplier
                 order["transactTime"] = service.time_converter(
                     time=order["transactTime"], usec=True
                 )
@@ -347,7 +353,7 @@ class Agent(Bitmex):
         instrument = self.Instrument[symbol]
         postData = {
             "symbol": instrument.ticker,
-            "orderQty": round(quantity / instrument.valueOfOneContract),
+            "orderQty": round(quantity * instrument.myMultiplier),
             "price": price,
             "clOrdID": clOrdID,
             "ordType": "Limit",
@@ -361,13 +367,14 @@ class Agent(Bitmex):
         """
         Moves a limit order
         """
+        
         path = Listing.ORDER_ACTIONS
         instrument = self.Instrument[symbol]
         postData = {
             "symbol": instrument.ticker,
             "price": price,
             "orderID": orderID,
-            "leavesQty": round(abs(quantity / instrument.valueOfOneContract)),
+            "leavesQty": round(abs(quantity * instrument.myMultiplier)),
             "ordType": "Limit",
         }
 
@@ -404,7 +411,7 @@ class Agent(Bitmex):
                     instrument = self.Instrument[symbol]
                     if "currentQty" in values:
                         instrument.currentQty = (
-                            values["currentQty"] * instrument.valueOfOneContract
+                            values["currentQty"] / instrument.myMultiplier
                         )
                     if instrument.currentQty != 0:
                         if "avgEntryPrice" in values:

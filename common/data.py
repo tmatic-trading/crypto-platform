@@ -128,7 +128,7 @@ class Instrument:
     qtyStep: float
     quoteCoin: str
     settlCurrency: tuple
-    sumreal: float
+    sumreal: float = 0
     state: str
     symbol: str
     ticker: str
