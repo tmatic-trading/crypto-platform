@@ -157,7 +157,7 @@ class Variables:
         "CATEGORY",
         "POSITION",
         "VOLUME",
-        "PNL",
+        "TOTAL PNL",
     ]
     name_bots = [
         "BOT NAME",
@@ -181,7 +181,7 @@ class Variables:
         "CATEGORY",
         "POSITION",
         "VOLUME",
-        "PNL",
+        "TOTAL PNL",
     ]
     name_bot_trade = [
         "TIME",

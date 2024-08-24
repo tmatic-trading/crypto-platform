@@ -29,10 +29,37 @@ class Function(WS, Variables):
         qty: float,
         rate: float,
         fund: int,
-        execFee=None,
+        execFee: float = None,
     ) -> dict:
         """
-        Calculates trade value and commission
+        Calculates trade or funding value and commission.
+
+        Parameters
+        ----------
+        self: Markets
+            Market instance.
+        symbol: tuple
+            Instrument symbol in (symbol, market name) format, e.g.
+            ("BTCUSD", "Bybit").
+        price: float
+            Price of the instrument.
+        qty: float
+            Quantity of the instrument, negative if sell.
+        rate: float
+            Comission or funding rate.
+        fund: int
+            1 - trade, 0 - funding is being calculated.
+        execFee: float (optional)
+            Some exchanges send the commission and funding already calculated
+            in the "execFee" field, so this value will be returned as
+            "commission" or "funding" value.
+
+        Returns
+        -------
+        dict
+            "sumreal" - trade value.
+            "commiss" - payed commission for trade, negative if maker rebate.
+            "funding: - funding value, negative if in favor of the trader.
         """
         instrument = self.Instrument[symbol]
         if instrument.category in ["inverse", "future reversed"]:
@@ -118,6 +145,8 @@ class Function(WS, Variables):
                 execFee=row["execFee"],
             )
             instrument = self.Instrument[row["symbol"]]
+            instrument.volume += abs(lastQty)
+            instrument.sumreal += calc["sumreal"]
             if emi in Bots.keys():
                 if row["symbol"] not in Bots[emi].bot_positions:
                     service.fill_bot_position(
@@ -829,7 +858,7 @@ class Function(WS, Variables):
                     compare[num] = format_number(compare[num])
                 return compare
 
-            tm = datetime.now()
+            # d tm = datetime.now()
             for market in var.market_list:
                 ws = Markets[market]
                 for settlCurrency in ws.Account.keys():
@@ -911,28 +940,38 @@ class Function(WS, Variables):
             for market in pos_by_market.keys():
                 rest = dict()
                 rest_volume = dict()
+                rest_sumreal = dict()
                 pos = pos_by_market[market]
                 notificate = True
+                ws = Markets[market]
                 for position in pos:
                     symbol = (position["symbol"], market)
                     if symbol not in rest:
                         rest[symbol] = 0
                         rest_volume[symbol] = 0
+                        rest_sumreal[symbol] = 0
                     iid = position["emi"] + "!" + position["symbol"]
                     if position["position"] == 0:
                         if iid in tree.children_hierarchical[market]:
                             tree.delete_hierarchical(parent=market, iid=iid)
                     else:
                         notificate = False
+                        pnl = Function.calculate_pnl(
+                            ws,
+                            symbol=symbol,
+                            qty=position["position"],
+                            sumreal=position["sumreal"],
+                        )
                         rest[symbol] += position["position"]
                         rest_volume[symbol] += position["volume"]
+                        rest_sumreal[symbol] += pnl
                         compare = [
                             position["emi"],
                             position["symbol"],
                             position["category"],
                             position["position"],
                             position["volume"],
-                            "-",  # position["pnl"],
+                            pnl,
                         ]
                         Function.update_position_line(
                             self,
@@ -943,17 +982,21 @@ class Function(WS, Variables):
                             market=market,
                             tree=tree,
                         )
-                ws = Markets[market]
                 for symbol in ws.symbol_list:
                     instrument = ws.Instrument[symbol]
                     if "spot" not in instrument.category:
+                        pnl = Function.calculate_pnl(
+                            ws,
+                            symbol=symbol,
+                            qty=instrument.currentQty,
+                            sumreal=instrument.sumreal,
+                        )
                         if symbol in rest:
                             position = instrument.currentQty - rest[symbol]
+                            volume = instrument.volume - rest_volume[symbol]
+                            pnl = pnl - rest_sumreal[symbol]
                         else:
                             position = instrument.currentQty
-                        if symbol in rest_volume:
-                            volume = instrument.volume - rest_volume[symbol]
-                        else:
                             volume = instrument.volume
                         iid = market + instrument.symbol
                         if position == 0:
@@ -967,7 +1010,7 @@ class Function(WS, Variables):
                                 instrument.category,
                                 position,
                                 volume,
-                                "-",
+                                pnl,
                             ]
                             Function.update_position_line(
                                 self,
@@ -1018,7 +1061,7 @@ class Function(WS, Variables):
 
         tree = TreeTable.market
 
-        # tm = datetime.now()
+        # d tm = datetime.now()
         for num, name in enumerate(var.market_list):
             ws = Markets[name]
             status = str(ws.connect_count) + " " + "ONLINE"
@@ -1042,6 +1085,7 @@ class Function(WS, Variables):
             # Bot positions table
 
             if current_bot_note_tab == "Positions":
+                tm = datetime.now()
                 tree = TreeTable.bot_position
                 pos_by_market = {market: False for market in var.market_list}
                 if disp.bot_name:
@@ -1056,12 +1100,18 @@ class Function(WS, Variables):
                                 tree.delete_hierarchical(parent=market, iid=iid)
                         else:
                             pos_by_market[market] = True
+                            pnl = Function.calculate_pnl(
+                                Markets[position["market"]],
+                                symbol=symbol,
+                                qty=position["position"],
+                                sumreal=position["sumreal"],
+                            )
                             compare = [
                                 position["symbol"],
                                 position["category"],
                                 position["position"],
                                 position["volume"],
-                                "-",  # position["pnl"],
+                                pnl,
                             ]
                             Function.update_position_line(
                                 self,
@@ -1087,6 +1137,7 @@ class Function(WS, Variables):
                 else:
                     if len(tree.children) > 1 and "notification" in tree.children:
                         tree.delete(iid="notification")
+                # d print("___bot position", datetime.now() - tm)
 
             # Bot orders table
 
@@ -1185,6 +1236,8 @@ class Function(WS, Variables):
                     qty=compare[column],
                     symbol=symbol,
                 )
+            num = columns[1] + 1
+            compare[num] = format_number(number=compare[num])
             return compare
 
         if iid in tree.children_hierarchical[market]:
@@ -1354,6 +1407,51 @@ class Function(WS, Variables):
             qty = ""
 
         return qty
+
+    def calculate_pnl(
+        self: Markets, symbol: tuple, qty: float, sumreal: float
+    ) -> Union[float, str]:
+        """
+        Calculates current position pnl.
+
+        Parameters
+        ----------
+        symbol: tuple
+            Instrument symbol in (symbol, market name) format, e.g.
+            ("BTCUSD", "Bybit").
+        qty: float
+            The quantity of the instrument in this position, negative if sell.
+        sumreal:
+            Position value.
+
+        Returns
+        -------
+        float
+            PNL value.
+        """
+        if qty == 0:
+            return sumreal
+        
+        if symbol in self.symbol_list:
+            if qty > 0:
+                price = self.Instrument[symbol].bids[0][0]
+            else:
+                price = self.Instrument[symbol].asks[0][0]
+            res = Function.calculate(
+                self,
+                symbol=symbol,
+                price=price,
+                qty=-qty,
+                rate=0,
+                fund=1,
+            )
+            pnl = sumreal + res["sumreal"]
+        else:
+            # symbol is not signed, so there is no order book and therefore
+            # no position closing price. PNL cannot be calculated.
+            pnl = "-"
+
+        return pnl
 
 
 def handler_order(event) -> None:
@@ -1735,7 +1833,7 @@ def handler_orderbook(event) -> None:
 
 def format_number(number: Union[float, str]) -> str:
     """
-    Rounding a value from 2 to 8 decimal places
+    Rounding a value from 2 to 8 decimal places.
     """
     if not isinstance(number, str):
         after_dot = max(2, 9 - max(1, len(str(int(number)))))
@@ -1862,19 +1960,6 @@ def clear_tables():
     var.lock_market_switch.release()
 
 
-def kline_update():
-    while var.kline_update_active:
-        utcnow = datetime.now(tz=timezone.utc)
-        var.lock_kline_update.acquire(True)
-        for market in var.market_list:
-            ws = Markets[market]
-            if ws.api_is_active:
-                Function.kline_update_market(ws, utcnow=utcnow)
-        var.lock_kline_update.release()
-        rest = 1 - time.time() % 1
-        time.sleep(rest)
-
-
 def target_time(timeframe_sec):
     now = datetime.now(tz=timezone.utc).timestamp()
     target_tm = now + (timeframe_sec - now % timeframe_sec)
@@ -1949,6 +2034,19 @@ def download_data(
             return None
     self.logNumFatal = ""
     return res
+
+
+def kline_update():
+    while var.kline_update_active:
+        utcnow = datetime.now(tz=timezone.utc)
+        var.lock_kline_update.acquire(True)
+        for market in var.market_list:
+            ws = Markets[market]
+            if ws.api_is_active:
+                Function.kline_update_market(ws, utcnow=utcnow)
+        var.lock_kline_update.release()
+        rest = 1 - time.time() % 1
+        time.sleep(rest)
 
 
 def load_klines(

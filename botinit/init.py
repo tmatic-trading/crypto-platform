@@ -52,7 +52,7 @@ def add_subscription(subscriptions: list) -> None:
 
 def load_bots() -> None:
     """
-    Loading bots into the new Bot class is under development.
+    Loading bots into the Bots class.
     """
 
     qwr = "select * from robots order by DAT;"
@@ -81,8 +81,9 @@ def load_bots() -> None:
             ws = Markets[market]
             sql += union
             qwr = (
-                "select MARKET, SYMBOL, sum(QTY) as SUM_QTY from (select abs(QTY) "
-                + "as QTY, MARKET, SYMBOL, SIDE, ACCOUNT from coins where "
+                "select MARKET, SYMBOL, sum(QTY) as SUM_QTY, sum(SUMREAL) as "
+                + "SUM_SUMREAL from (select abs(QTY) as QTY, SUMREAL, "
+                + "MARKET, SYMBOL, SIDE, ACCOUNT from coins where "
             )
             _or = ""
             lst = ws.symbol_list.copy()
@@ -109,6 +110,7 @@ def load_bots() -> None:
             instrument = ws.Instrument[symbol]
             precision = instrument.precision
             instrument.volume = round(float(value["SUM_QTY"]), precision)
+            instrument.sumreal = float(value["SUM_SUMREAL"])
 
     # Searching for unclosed positions by bots that are not in the 'robots'
     # table. If found, EMI becomes the default SYMBOL name. If such a SYMBOL

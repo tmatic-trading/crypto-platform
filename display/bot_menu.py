@@ -945,6 +945,7 @@ def handler_bot_info(event) -> None:
     """
     Called when the bot table TreeTable.bot_info is clicked.
     """
+
     def callback():
         if bot.state == "Active":
             bot.state = "Suspended"
@@ -976,13 +977,15 @@ def handler_bot_info(event) -> None:
             else:
                 if disp.robots_window_trigger == "off":
                     disp.robots_window_trigger = "on"
-                    width = max(250, int(len(bot_name)*disp.symbol_width*1.5)+150)
+                    width = max(250, int(len(bot_name) * disp.symbol_width * 1.5) + 150)
                     robot_window = tk.Toplevel(
                         disp.root, padx=10, pady=10, bg=disp.title_color
                     )
                     cx = disp.root.winfo_pointerx()
                     cy = disp.root.winfo_pointery()
-                    robot_window.geometry("{}x{}+{}+{}".format(width, 70, cx - 100, cy + 20))
+                    robot_window.geometry(
+                        "{}x{}+{}+{}".format(width, 70, cx - 100, cy + 20)
+                    )
                     robot_window.title(bot_name)
                     robot_window.protocol("WM_DELETE_WINDOW", on_closing)
                     # d robot_window.attributes("-topmost", 1)
@@ -991,7 +994,7 @@ def handler_bot_info(event) -> None:
                     text = "Suspend"
                     if bot.state == "Suspended":
                         text = "Activate"
-                    status = tk.Button(robot_window, text=text, command=callback)                
+                    status = tk.Button(robot_window, text=text, command=callback)
                     status.pack()
 
 

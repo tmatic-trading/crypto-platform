@@ -312,6 +312,8 @@ class Instrument:
         Settlement currency of the instrument.
     state: str
         Instrument status. Normally "Open".
+    sumreal: float
+        Accumulated trading value. 
     symbol: str
         A unique value corresponding to the ticker, except in the spot
         category, where the symbol matches ``baseCoin``/``quoteCoin``.
