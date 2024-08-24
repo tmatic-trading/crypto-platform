@@ -128,8 +128,8 @@ class Agent(Bitmex):
         self.Instrument[symbol].price_precision = service.precision(
             number=instrument["tickSize"]
         )
-        self.Instrument[symbol].minOrderQty = instrument["lotSize"] * valueOfOneContract
-        self.Instrument[symbol].qtyStep = instrument["lotSize"] * valueOfOneContract
+        self.Instrument[symbol].minOrderQty = minimumTradeAmount
+        self.Instrument[symbol].qtyStep = minimumTradeAmount
         self.Instrument[symbol].precision = service.precision(
             number=instrument["lotSize"] / myMultiplier
         )

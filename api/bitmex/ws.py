@@ -382,24 +382,24 @@ class Bitmex(Variables):
                 instrument.asks = [
                     [
                         values["askPrice"],
-                        values["askSize"] * instrument.valueOfOneContract,
+                        values["askSize"] / instrument.myMultiplier,
                     ]
                 ]
             if "bidPrice" in values:
                 instrument.bids = [
                     [
                         values["bidPrice"],
-                        values["bidSize"] * instrument.valueOfOneContract,
+                        values["bidSize"] / instrument.myMultiplier,
                     ]
                 ]
         else:
             if "asks" in values:
                 for ask in values["asks"]:
-                    ask[1] *= instrument.valueOfOneContract
+                    ask[1] /= instrument.myMultiplier
                 instrument.asks = values["asks"]
             if "bids" in values:
                 for bid in values["bids"]:
-                    bid[1] *= instrument.valueOfOneContract
+                    bid[1] /= instrument.myMultiplier
                 instrument.bids = values["bids"]
         self.kline_hi_lo_values(symbol=symbol)
 
