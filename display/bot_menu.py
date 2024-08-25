@@ -124,8 +124,8 @@ class SettingsApp:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         self.wrap()
 
-    def name_trace_callback(self, var, index, mode):
-        name = var.replace(str(self), "")
+    def name_trace_callback(self, item, index, mode):
+        name = item.replace(str(self), "")
         bot_name = re.sub("[\W]+", "", self.name_trace.get())
         if (
             bot_name in Bots.keys()
@@ -1090,7 +1090,7 @@ def handler_bot_menu(event) -> None:
         disp.refresh_bot_info = False
         if parent == "Back":
             disp.menu_robots.pack_forget()
-            disp.pw_rest1.pack(fill="both", expand="yes")            
+            disp.pw_rest1.pack(fill="both", expand="yes")
             TreeTable.bot_menu.tree.selection_set(disp.bot_event_prev)
         elif parent == "New_bot":
             winfo_destroy()

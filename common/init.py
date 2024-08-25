@@ -265,8 +265,12 @@ class Init(WS, Variables):
                     )
                 else:
                     clOrdID = val["clOrdID"]
-                    s = clOrdID.split(".")
-                    emi = s[1]
+                    res = clOrdID.split(".")
+                    if len(res) > 1:
+                        emi = ".".join(res[1:])
+                    else:
+                        emi = res[1]
+
                 category = self.Instrument[val["symbol"]].category
                 service.fill_order(
                     emi=emi, clOrdID=clOrdID, category=category, value=val

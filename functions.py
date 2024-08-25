@@ -392,6 +392,7 @@ class Function(WS, Variables):
         """
         Orders processing <-- transaction()<--( trading_history() or get_exec() )
         """
+
         def order_not_found(clOrdID: str) -> None:
             message = (
                 self.name
