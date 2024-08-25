@@ -1431,7 +1431,7 @@ class Function(WS, Variables):
         """
         if qty == 0:
             return sumreal
-        
+
         if symbol in self.symbol_list:
             if qty > 0:
                 price = self.Instrument[symbol].bids[0][0]
@@ -2000,7 +2000,7 @@ def activate_bot_thread(bot_name: str) -> None:
     t.start()
 
 
-def download_data(
+def download_kline_data(
     self: Markets, start_time: datetime, target: datetime, symbol: tuple, timeframe: int
 ) -> Tuple[Union[list, None], Union[datetime, None]]:
     res = list()
@@ -2076,7 +2076,7 @@ def load_klines(
 
     # Loading timeframe data
 
-    res = download_data(
+    res = download_kline_data(
         self,
         start_time=start_time,
         target=target,
@@ -2129,7 +2129,15 @@ def load_klines(
     return klines
 
 
-def append_new_kline(self: Markets, symbol: tuple, bot_name: str, timefr: int) -> None:
+def add_new_kline(self: Markets, symbol: tuple, bot_name: str, timefr: int) -> None:
+    """
+    Adds a new kline to the dictionary klines for the given exchange. If the
+    given timefr already exists in the dictionary klines[symbol], then only
+    adds bot_name to the set "robots", otherwise first creates a new timefr
+    element. If the given symbol does not exist in the dictionary klines,
+    then first adds the symbol to klines, then adds timefr to klines[symbol],
+    and finally adds bot_name to the set "robots" in klines[symbol][timefr].
+    """
     time = datetime.now(tz=timezone.utc)
 
     def append_new():
@@ -2172,12 +2180,6 @@ def init_market_klines(
 
         success[number] = "success"
 
-    for kline in self.kline_set:
-        # Initialize candlestick timeframe data using 'timefr'
-        symbol = (kline[0], self.name)
-        bot_name = kline[1]
-        timefr = kline[2]
-        append_new_kline(self, symbol=symbol, bot_name=bot_name, timefr=timefr)
     threads = []
     for symbol, timeframes in self.klines.items():
         for timefr in timeframes.keys():
@@ -2200,8 +2202,8 @@ def init_market_klines(
 
 def init_bot_klines(bot_name: str) -> None:
     """
-    Downloads kline data from exchange endpoints for a given. This happens
-    when a specific bot's strategy.py file is updated.
+    Downloads kline data from exchange endpoints for a given bot. This
+    happens when a specific bot's strategy.py file is updated.
     """
     success = []
 
@@ -2222,7 +2224,18 @@ def init_bot_klines(bot_name: str) -> None:
     kline_to_download = list()
     for market in var.market_list:
         ws = Markets[market]
-        for item in ws.kline_set:
+        for symbol, timeframes in ws.klines.items():
+            for timefr, value in timeframes.items():
+                if bot_name in value["robots"]:
+                    if not value["data"]:
+                        itm = {
+                            "symbol": symbol,
+                            "bot_name": bot_name,
+                            "timefr": timefr,
+                            "market": market,
+                        }
+                        kline_to_download.append(itm)
+        """for item in ws.klin_set:
             if item[1] == bot_name:
                 symbol = (item[0], market)
                 if not ws.klines[symbol][item[2]]["data"]:
@@ -2232,17 +2245,16 @@ def init_bot_klines(bot_name: str) -> None:
                         "timefr": item[2],
                         "market": market,
                     }
-                    kline_to_download.append(itm)
+                    kline_to_download.append(itm)"""
     while kline_to_download:
         success = []
         threads = []
         for num, kline in enumerate(kline_to_download):
             success.append(None)
             ws = Markets[kline["market"]]
-            symbol = (kline["symbol"], kline["market"])
             t = threading.Thread(
                 target=get_in_thread,
-                args=(ws, symbol, kline["timefr"], ws.klines, num),
+                args=(ws, kline["symbol"], kline["timefr"], ws.klines, num),
             )
             threads.append(t)
             t.start()
@@ -2270,18 +2282,18 @@ def remove_bot_klines(bot_name: str) -> None:
     """
     for market in var.market_list:
         ws = Markets[market]
-        for item in ws.kline_set.copy():
-            if item[1] == bot_name:
-                ws.kline_set.remove(item)
-                symbol = (item[0], ws.name)
-                timefr = item[2]
-                ws.klines[symbol][timefr]["robots"].remove(bot_name)
-                if not ws.klines[symbol][timefr]["robots"]:
-                    var.lock_kline_update.acquire(True)
-                    del ws.klines[symbol][timefr]
-                    if not ws.klines:
-                        del ws.klines[symbol]
-                    var.lock_kline_update.release()
+        ws.klines
+        for symbol, timeframes in ws.klines.items():
+            copy = timeframes.copy()
+            for timefr, value in copy.items():
+                if bot_name in value["robots"]:
+                    ws.klines[symbol][timefr]["robots"].remove(bot_name)
+                    if not ws.klines[symbol][timefr]["robots"]:
+                        var.lock_kline_update.acquire(True)
+                        del ws.klines[symbol][timefr]
+                        if not ws.klines:
+                            del ws.klines[symbol]
+                        var.lock_kline_update.release()
 
 
 def setup_klines():
@@ -2314,6 +2326,14 @@ def setup_klines():
             else:
                 indx = market_list.index(market)
                 market_list.pop(indx)
+
+
+def clear_klines():
+    """
+    Erase all kline data.
+    """
+    for market in var.market_list:
+        Markets[market].klines = dict()
 
 
 def init_tables() -> None:

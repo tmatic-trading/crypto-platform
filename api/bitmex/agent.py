@@ -165,8 +165,9 @@ class Agent(Bitmex):
         if isinstance(data, list):
             if data:
                 instrument.currentQty = (
-                    #data[0]["currentQty"] * instrument.valueOfOneContract
-                    data[0]["currentQty"] / instrument.myMultiplier
+                    # data[0]["currentQty"] * instrument.valueOfOneContract
+                    data[0]["currentQty"]
+                    / instrument.myMultiplier
                 )
             self.logger.info(
                 str(symbol)
@@ -270,10 +271,10 @@ class Agent(Bitmex):
                     else:
                         row["settlCurrency"] = instrument.settlCurrency
                     if "lastQty" in row:
-                        #row["lastQty"] *= instrument.valueOfOneContract
+                        # row["lastQty"] *= instrument.valueOfOneContract
                         row["lastQty"] /= instrument.myMultiplier
                     if "leavesQty" in row:
-                        #row["leavesQty"] *= instrument.valueOfOneContract
+                        # row["leavesQty"] *= instrument.valueOfOneContract
                         row["leavesQty"] /= instrument.myMultiplier
                     if row["execType"] == "Funding":
                         if row["foreignNotional"] > 0:
@@ -308,9 +309,9 @@ class Agent(Bitmex):
                     self.name,
                 )
                 instrument = self.Instrument[order["symbol"]]
-                #order["orderQty"] *= instrument.valueOfOneContract
-                #order["leavesQty"] *= instrument.valueOfOneContract
-                #order["cumQty"] *= instrument.valueOfOneContract
+                # order["orderQty"] *= instrument.valueOfOneContract
+                # order["leavesQty"] *= instrument.valueOfOneContract
+                # order["cumQty"] *= instrument.valueOfOneContract
                 order["orderQty"] /= instrument.myMultiplier
                 order["leavesQty"] /= instrument.myMultiplier
                 order["cumQty"] /= instrument.myMultiplier
@@ -367,7 +368,7 @@ class Agent(Bitmex):
         """
         Moves a limit order
         """
-        
+
         path = Listing.ORDER_ACTIONS
         instrument = self.Instrument[symbol]
         postData = {

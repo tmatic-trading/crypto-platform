@@ -52,7 +52,6 @@ class Bybit(Variables):
         self.account_disp = ""
         WebSocket._on_message = Bybit._on_message
         self.ticker = dict()
-        self.kline_set = set()
 
     def start(self):
         for symbol in self.symbol_list:

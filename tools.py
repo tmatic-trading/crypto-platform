@@ -205,10 +205,10 @@ class Tool(Instrument):
 
         This function is called from each bot's strategy.py file. The time
         frame is taken from the bot's parameters. After the bots are
-        initialized, the klines list is stored in the kline_set variable
-        for each market respectively. While Tmatic is starting or restarting
+        initialized, the kline data is stored in the klines dictionary for
+        each market respectively. While Tmatic is starting or restarting
         a specific market, the kline data is taken from the market's endpoint
-        according to the kline_set variable. The initial amount of data
+        according to the klines dictionary. The initial amount of data
         loaded from the endpoint is equal to CANDLESTICK_NUMBER in
         botinit/variables.py. Then, as the program runs, the data accumulates.
 
@@ -264,8 +264,7 @@ class Tool(Instrument):
         bot_name = name(inspect.stack())
         timefr = Bots[bot_name].timefr
         ws = Markets[self.market]
-        ws.kline_set.add((self.symbol, bot_name, Bots[bot_name].timefr))
-        functions.append_new_kline(
+        functions.add_new_kline(
             ws, symbol=self.symbol_tuple, bot_name=bot_name, timefr=timefr
         )
 

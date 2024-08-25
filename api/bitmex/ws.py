@@ -63,7 +63,6 @@ class Bitmex(Variables):
         self.account_disp = ""
         self.pinging = "pong"
         self.ticker = dict()
-        self.kline_set = set()
 
     def start(self):
         if not self.logNumFatal:
@@ -288,10 +287,10 @@ class Bitmex(Variables):
                                 time=val["transactTime"], usec=True
                             )
                             if "lastQty" in val:
-                                #val["lastQty"] *= instrument.valueOfOneContract
+                                # val["lastQty"] *= instrument.valueOfOneContract
                                 val["lastQty"] /= instrument.myMultiplier
                             if "leavesQty" in val:
-                                #val["leavesQty"] *= instrument.valueOfOneContract
+                                # val["leavesQty"] *= instrument.valueOfOneContract
                                 val["leavesQty"] /= instrument.myMultiplier
                             if "orderQty" in val:
                                 val["orderQty"] /= instrument.myMultiplier
@@ -417,8 +416,9 @@ class Bitmex(Variables):
         if "currentQty" in values:
             if values["currentQty"]:
                 instrument.currentQty = (
-                    #values["currentQty"] * instrument.valueOfOneContract
-                    values["currentQty"] / instrument.myMultiplier
+                    # values["currentQty"] * instrument.valueOfOneContract
+                    values["currentQty"]
+                    / instrument.myMultiplier
                 )
         if instrument.currentQty == 0:
             instrument.avgEntryPrice = 0

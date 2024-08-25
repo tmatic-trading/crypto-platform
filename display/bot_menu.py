@@ -16,9 +16,9 @@
 """
 import importlib
 import os
-import sys
 import re
 import shutil
+import sys
 import tkinter as tk
 import traceback
 from collections import OrderedDict
@@ -63,8 +63,6 @@ class SettingsApp:
         self.strategy_file = "strategy.py"
         # self.action = ""
         self.timeframes = var.timeframe_human_format
-        # self.timeframe_trace = StringVar(name=f"timeframe{self}")
-        # self.timeframe_trace.trace_add("write", self.timeframe_trace_callback)
         self.bot_entry = {}
         self.name_trace = StringVar(name="Name" + str(self))
         self.name_trace.trace_add("write", self.name_trace_callback)
@@ -88,9 +86,6 @@ class SettingsApp:
 
         # Keeps the selected bot's algorithm derived from strategy.py file
         self.bot_algo = ""
-
-        # If bot's timeframe is changed by user, than the value in not None
-        # self.timeframe_changed = None
 
         # Create initial frames
 
@@ -162,18 +157,6 @@ class SettingsApp:
             return True, None
         except (SyntaxError, Exception) as e:
             return False, traceback.format_exc()
-
-    """def timeframe_trace_callback(self, name, index, mode):
-        value = self.timeframe_trace.get().split(" ")
-        if (
-            self.selected_bot in Bots.keys()
-            and int(value[0]) != Bots[self.selected_bot].timefr
-        ):
-            if self.timeframe_changed is None:
-                self.timeframe_changed = "changed"
-        else:
-            if self.timeframe_changed is not None:
-                self.timeframe_changed = None"""
 
     def create_file(self, file_name):
         # os.mknod(file_name)
@@ -495,7 +478,6 @@ class SettingsApp:
                 bot.timefr = timefr
                 bot.updated = self.get_time()
                 bot.timefr_sec = service.timeframe_seconds(timefr)
-                # self.timeframe_changed = None
                 update_bot_info(bot_name=bot_name)
                 res_label["text"] = (
                     "Timeframe value changed to "
@@ -504,6 +486,7 @@ class SettingsApp:
                     + bot.timefr_current
                     + " period ends."
                 )
+                import_bot_module(bot_name=bot_name, update=True)
 
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
@@ -952,7 +935,7 @@ def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
     Returns
     -------
     str | None
-        Description of the error, or None if successful.     
+        Description of the error, or None if successful.
     """
     err = service.update_database(
         query=f"UPDATE robots SET STATE = '{new_state}' WHERE EMI = '{bot.name}'"
@@ -969,6 +952,7 @@ def handler_bot_info(event) -> None:
     """
     Called when the bot table TreeTable.bot_info is clicked.
     """
+
     def callback():
         if bot.state == "Active":
             new_state = "Suspended"

@@ -43,6 +43,7 @@ def setup(reload=False):
     for name in var.market_list:
         finish_setup(Markets[name])
     merge_orders()
+    functions.clear_klines()
     botinit.load_bots()
     functions.setup_klines()
     functions.init_tables()
