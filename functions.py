@@ -1955,9 +1955,7 @@ def clear_tables():
     var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
     TreeTable.instrument.init(size=len(ws.symbol_list))
-    TreeTable.account.init(size=len(ws.Account.get_keys()))
     TreeTable.orderbook.init(size=disp.num_book)
-    TreeTable.results.init(size=len(ws.Result.get_keys()))
     TreeTable.instrument.set_selection()
     var.lock_market_switch.release()
 
