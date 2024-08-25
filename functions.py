@@ -1164,7 +1164,9 @@ class Function(WS, Variables):
                             )
                             if currency in result_market[market]:
                                 result_market[market][currency]["pnl"] += pos_value
-                                result_market[market]["commission"] += value["commiss"]
+                                result_market[market][currency]["commission"] += value[
+                                    "commiss"
+                                ]
                             else:
                                 result_market[market][currency] = dict()
                                 result_market[market][currency]["pnl"] = (
