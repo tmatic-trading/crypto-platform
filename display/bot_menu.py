@@ -1087,20 +1087,18 @@ def handler_bot_menu(event) -> None:
             option = ""
         else:
             option = option[1]
+        disp.refresh_bot_info = False
         if parent == "Back":
             disp.menu_robots.pack_forget()
-            disp.pw_rest1.pack(fill="both", expand="yes")
-            disp.refresh_bot_info = False
+            disp.pw_rest1.pack(fill="both", expand="yes")            
             TreeTable.bot_menu.tree.selection_set(disp.bot_event_prev)
         elif parent == "New_bot":
             winfo_destroy()
-            disp.refresh_bot_info = False
             bot_manager.new()
         elif not option:
             bot_manager.show(parent)
         else:
             winfo_destroy()
-            disp.refresh_bot_info = False
             bot_manager.bot_options[option](bot_name=parent)
         if parent != "Back":
             disp.bot_event_prev = iid

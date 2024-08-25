@@ -392,6 +392,25 @@ class Function(WS, Variables):
         """
         Orders processing <-- transaction()<--( trading_history() or get_exec() )
         """
+        def order_not_found(clOrdID: str) -> None:
+            message = (
+                self.name
+                + ": execType "
+                + row["execType"]
+                + " - order with clOrdID "
+                + clOrdID
+                + " not found."
+            )
+            var.logger.warning(message)
+            var.queue_info.put(
+                {
+                    "market": self.name,
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                }
+            )
+
         if "clOrdID" in row:
             if row["clOrdID"]:
                 clOrdID = row["clOrdID"]
@@ -433,14 +452,7 @@ class Function(WS, Variables):
                 )
                 del var.orders[emi][clOrdID]
             else:
-                var.logger.warning(
-                    self.name
-                    + ": execType "
-                    + row["execType"]
-                    + " - order with clOrdID "
-                    + clOrdID
-                    + " not found."
-                )
+                order_not_found(clOrdID=clOrdID)
         else:
             if row["execType"] == "New":
                 if "clOrdID" in row and row["clOrdID"]:
@@ -465,14 +477,7 @@ class Function(WS, Variables):
                     )
                 else:
                     if not info:
-                        var.logger.warning(
-                            self.name
-                            + ": execType "
-                            + row["execType"]
-                            + " - order with clOrdID "
-                            + clOrdID
-                            + " not found."
-                        )
+                        order_not_found(clOrdID=clOrdID)
             elif row["execType"] == "Replaced":
                 if emi in var.orders and clOrdID in var.orders[emi]:
                     var.orders[emi][clOrdID]["orderID"] = row["orderID"]
@@ -483,14 +488,7 @@ class Function(WS, Variables):
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
                 else:
-                    var.logger.warning(
-                        self.name
-                        + ": execType "
-                        + row["execType"]
-                        + " - order with clOrdID "
-                        + clOrdID
-                        + " not found."
-                    )
+                    order_not_found(clOrdID=clOrdID)
             if emi in var.orders and clOrdID in var.orders[emi]:
                 var.orders[emi][clOrdID]["price"] = price
                 var.orders[emi][clOrdID]["transactTime"] = row["transactTime"]
@@ -510,9 +508,9 @@ class Function(WS, Variables):
                     + row["side"]
                     + ": "
                     + emi
-                    + " p="
+                    + " price="
                     + str(info_p)
-                    + " q="
+                    + " qty="
                     + info_q
                 )
                 var.queue_info.put(
@@ -535,7 +533,6 @@ class Function(WS, Variables):
                 str(info_p),
                 info_q,
             )
-
         if emi in var.orders and clOrdID in var.orders[emi]:
             var.queue_order.put({"action": "put", "order": var.orders[emi][clOrdID]})
             var.orders[emi].move_to_end(clOrdID)

@@ -71,6 +71,11 @@ def load_bots() -> None:
         bot.state = value["STATE"]
         bot.bot_positions = dict()
         bot.bot_orders = var.orders[value["EMI"]]
+        if value["EMI"] == "Mybot":
+            print("------------")
+            print(var.orders[value["EMI"]])
+            print("---------------")
+            print(var.orders)
 
     # Loading volumes for subscribed instruments
 
