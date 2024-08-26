@@ -362,18 +362,6 @@ class Bitmex(Variables):
         self.data = {}
         self.keys = {}
 
-    def kline_hi_lo_values(self, symbol: tuple) -> None:
-        if symbol in self.klines:
-            for timeframe in self.klines[symbol].values():
-                if timeframe["data"]:
-                    instrument = self.Instrument[symbol]
-                    ask = instrument.asks[0][0]
-                    bid = instrument.bids[0][0]
-                    if ask > timeframe["data"][-1]["hi"]:
-                        timeframe["data"][-1]["hi"] = ask
-                    if bid < timeframe["data"][-1]["lo"]:
-                        timeframe["data"][-1]["lo"] = bid
-
     def __update_orderbook(self, symbol: tuple, values: dict, quote=False) -> None:
         """
         There is only one Instrument array for the "instrument", "position",
@@ -405,7 +393,8 @@ class Bitmex(Variables):
                 for bid in values["bids"]:
                     bid[1] /= instrument.myMultiplier
                 instrument.bids = values["bids"]
-        self.kline_hi_lo_values(symbol=symbol)
+        if symbol in self.klines:
+            service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
 
     def __update_position(self, key, values: dict) -> None:
         """

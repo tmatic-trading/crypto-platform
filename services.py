@@ -288,6 +288,33 @@ def bot_error(bot: BotData) -> str:
     return error
 
 
+def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
+    """
+    Updates the high and low values of kline data when websocket updates the 
+    order book.
+
+    Parameters
+    ----------
+    ws: Markets
+        Bitmex, Bybit, Deribit
+    symbol: tuple
+        Instrument symbol in (symbol, market name) format, e.g.
+        ("BTCUSD", "Bybit").
+    instrument: Instrument
+        The Instrument instance for this symbol.
+    """
+    if symbol in ws.klines:
+        for timeframe in ws.klines[symbol].values():
+            if timeframe["data"]:
+                ask = instrument.asks[0][0]
+                bid = instrument.bids[0][0]
+                print(ask, bid)
+                if ask > timeframe["data"][-1]["hi"]:
+                    timeframe["data"][-1]["hi"] = ask
+                if bid < timeframe["data"][-1]["lo"]:
+                    timeframe["data"][-1]["lo"] = bid
+
+
 def count_orders():
     """Temporarily created function for debugging"""
     count = 0

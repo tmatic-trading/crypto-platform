@@ -111,8 +111,8 @@ class Bybit(Variables):
         self.ws_private.execution_stream(callback=self.__handle_execution)
 
     def __update_orderbook(self, values: dict, category: str) -> None:
-        symbol = self.ticker[(values["s"], category)]
-        instrument = self.Instrument[(symbol, self.name)]
+        symbol = (self.ticker[(values["s"], category)], self.name)
+        instrument = self.Instrument[symbol]
         asks = values["a"]
         bids = values["b"]
         asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
@@ -121,6 +121,8 @@ class Bybit(Variables):
         bids.sort(key=lambda x: x[0], reverse=True)
         instrument.asks = asks
         instrument.bids = bids
+        if symbol in self.klines:
+            service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
 
     def __update_ticker(self, values: dict, category: str) -> None:
         symbol = self.ticker[(values["symbol"], category)]

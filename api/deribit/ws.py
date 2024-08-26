@@ -345,6 +345,8 @@ class Deribit(Variables):
         instrument = self.Instrument[symbol]
         instrument.asks = values["asks"]
         instrument.bids = values["bids"]
+        if symbol in self.klines:
+            service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
 
     def __update_ticker(self, values: dict) -> None:
         symbol = (self.ticker[values["instrument_name"]], self.name)
