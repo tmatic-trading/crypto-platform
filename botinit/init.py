@@ -180,7 +180,7 @@ def load_bots() -> None:
             + ", 0) COMMISS, ifnull(max(TTIME), '1900-01-01 01:01:01.000000') "
             + "LTIME from coins where EMI = '"
             + name
-            + "' group by SYMBOL) T where pos <> 0;"
+            + "' group by SYMBOL) T;"
         )
         data = service.select_database(qwr)
         for value in data:
@@ -209,7 +209,7 @@ def load_bots() -> None:
                 if instrument.category == "spot":
                     bot.bot_positions[symbol]["pnl"] = "None"
                     bot.bot_positions[symbol]["position"] = "None"
-            else:
+            elif value["POS"] != 0:
                 message = (
                     name
                     + " bot has open position on "
