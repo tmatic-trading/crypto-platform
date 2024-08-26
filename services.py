@@ -308,7 +308,6 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
             if timeframe["data"]:
                 ask = instrument.asks[0][0]
                 bid = instrument.bids[0][0]
-                print(ask, bid)
                 if ask > timeframe["data"][-1]["hi"]:
                     timeframe["data"][-1]["hi"] = ask
                 if bid < timeframe["data"][-1]["lo"]:
