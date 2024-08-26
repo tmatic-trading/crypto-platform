@@ -15,13 +15,6 @@ class ErrorMessage(str, Enum):
         + "or ``{BOT_NAME}`` is missing a strategy.py file, or strategy.py has "
         + "an incorrect import."
     )
-    BOT_MARKET_ERROR = (
-        "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"
-        + "You are probably trying to use an exchange that is not connected. "
-        + "You should either add the exchange in the .env file or correct "
-        + "the strategy file or delete ``{BOT_NAME}`` using the ``Bot Menu``. "
-        + "\n"
-    )
     BOT_LOADING_ERROR = (
         "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"
         + "Correct the strategy file or delete ``{BOT_NAME}`` using the "

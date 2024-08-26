@@ -1141,44 +1141,6 @@ def import_bot_module(bot_name: str, update=False) -> None:
             "error_type": exception.__class__.__name__,
             "message": message,
         }
-    except AttributeError as exception:
-        message = ErrorMessage.BOT_MARKET_ERROR.format(
-            MODULE=module,
-            EXCEPTION="AttributeError: " + str(exception),
-            BOT_NAME=bot_name,
-        )
-        var.logger.warning(message)
-        var.queue_info.put(
-            {
-                "market": "",
-                "message": message,
-                "time": datetime.now(tz=timezone.utc),
-                "warning": True,
-            }
-        )
-        Bots[bot_name].error_message = {
-            "error_type": exception.__class__.__name__,
-            "message": message,
-        }
-    except ValueError as exception:
-        message = ErrorMessage.BOT_MARKET_ERROR.format(
-            MODULE=module,
-            EXCEPTION="ValueError: " + str(exception),
-            BOT_NAME=bot_name,
-        )
-        var.logger.warning(message)
-        var.queue_info.put(
-            {
-                "market": "",
-                "message": message,
-                "time": datetime.now(tz=timezone.utc),
-                "warning": True,
-            }
-        )
-        Bots[bot_name].error_message = {
-            "error_type": exception.__class__.__name__,
-            "message": message,
-        }
     except Exception as exception:
         service.display_exception(exception=exception)
         message = ErrorMessage.BOT_LOADING_ERROR.format(
