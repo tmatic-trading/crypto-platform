@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Union
 
 import services as service
-from common.variables import Variables as var
 from services import exceptions_manager
 
 from .ws import Bybit

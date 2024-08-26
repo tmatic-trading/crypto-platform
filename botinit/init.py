@@ -71,11 +71,6 @@ def load_bots() -> None:
         bot.state = value["STATE"]
         bot.bot_positions = dict()
         bot.bot_orders = var.orders[value["EMI"]]
-        if value["EMI"] == "Mybot":
-            print("------------")
-            print(var.orders[value["EMI"]])
-            print("---------------")
-            print(var.orders)
 
     # Loading volumes for subscribed instruments
 
@@ -185,7 +180,7 @@ def load_bots() -> None:
             + ", 0) COMMISS, ifnull(max(TTIME), '1900-01-01 01:01:01.000000') "
             + "LTIME from coins where EMI = '"
             + name
-            + "' group by SYMBOL) T;"
+            + "' group by SYMBOL) T where pos <> 0;"
         )
         data = service.select_database(qwr)
         for value in data:
