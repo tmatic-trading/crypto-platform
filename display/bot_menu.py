@@ -79,7 +79,7 @@ class SettingsApp:
         self.pady = 5
         with open("display/new_bot_text.txt", "r") as f:
             self.new_bot_text = f.read()
-        with open("display/example_strategy.py", "r") as f:
+        with open("display/instructions.py", "r") as f:
             self.example_strategy = f.read()
 
         self.info_value = {}
