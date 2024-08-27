@@ -5,6 +5,7 @@ from typing import Union
 import services as service
 from api.http import Send
 from common.variables import Variables as var
+from display.messages import ErrorMessage
 
 from .path import Listing
 from .ws import Bitmex
@@ -26,11 +27,10 @@ class Agent(Bitmex):
         if self.Instrument.get_keys():
             for symbol in self.symbol_list:
                 if symbol not in self.Instrument.get_keys():
-                    self.logger.error(
-                        "Unknown symbol: "
-                        + str(symbol)
-                        + ". Check the SYMBOLS in the .env.Bitmex file. Perhaps the name of the symbol does not correspond to the category or such symbol does not exist. Reboot."
+                    message = ErrorMessage.UNKNOWN_SYMBOL.format(
+                        SYMBOL=symbol[0], MARKET=self.name
                     )
+                    self.logger.error(message)
                     return -1
         else:
             self.logger.error("There are no entries in the Instrument class.")
@@ -60,7 +60,7 @@ class Agent(Bitmex):
         else:
             self.logger.info(ticker + " not found in get_instrument()")
 
-    def fill_instrument(self, instrument: dict) -> str:
+    def fill_instrument(self, instrument: dict) -> Union[str, None]:
         """
         Filling the instruments data.
 
@@ -68,6 +68,23 @@ class Agent(Bitmex):
         The data fields of different exchanges are unified through the
         Instrument class. See detailed description of the fields there.
         """
+        if "settlCurrency" in instrument:
+            try:
+                self.currency_divisor[instrument["settlCurrency"]]
+            except KeyError:
+                message = ErrorMessage.NO_CURRENCY.format(
+                    TICKER=instrument["symbol"], CURRENCY=instrument["settlCurrency"]
+                )
+                var.logger.warning(message)
+                var.queue_info.put(
+                    {
+                        "market": "Bitmex",
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
+                )
+                return
         # myMultiplier
         if instrument["isInverse"]:  # Inverse
             valueOfOneContract = (

@@ -8,6 +8,7 @@ from typing import Union
 import services as service
 from api.http import Send
 from common.variables import Variables as var
+from display.messages import ErrorMessage
 
 from .error import ErrorStatus
 from .path import Listing, Matching_engine
@@ -34,17 +35,16 @@ class Agent(Deribit):
                     if self.Instrument.get_keys():
                         for symbol in self.symbol_list:
                             if symbol not in self.Instrument.get_keys():
-                                self.logger.error(
-                                    "Unknown symbol: "
-                                    + str(symbol)
-                                    + ". Check the SYMBOLS in the .env.Deribit file. Perhaps the name of the symbol does not correspond to the category or such symbol does not exist. Reboot."
+                                message = ErrorMessage.UNKNOWN_SYMBOL.format(
+                                    SYMBOL=symbol[0], MARKET=self.name
                                 )
-                                return 1001
+                                self.logger.error(message)
+                                return -1
                     else:
                         self.logger.error(
                             "There are no entries in the Instrument class."
                         )
-                        return 1001
+                        return -1
                     return 0
                 else:
                     error = "A list was expected when loading instruments, but was not received. Reboot"
@@ -54,7 +54,7 @@ class Agent(Deribit):
             error = "Invalid data was received when loading tools. " + str(data)
         self.logger.error(error)
 
-        return 1001
+        return -1
 
     def get_instrument(self, ticker: str, category=None) -> None:
         path = Listing.GET_INSTRUMENT_DATA
@@ -172,7 +172,7 @@ class Agent(Deribit):
             error = "Invalid data was received when loading instruments. " + str(data)
         self.logger.error(error)
 
-        return 1001
+        return -1
 
     def get_user(self) -> None:
         """

@@ -36,6 +36,16 @@ class ErrorMessage(str, Enum):
     EMPTY_ORDERBOOK = (
         "Failed to place order {ORDER} because {SYMBOL} order book is empty."
     )
+    NO_CURRENCY = (
+        "Failed to add instrument {TICKER}. This instrument uses currency "
+        + "{CURRENCY}, which is not in dictionary ``currency_divisor``. "
+        + "{TICKER} is ignored."
+    )
+    UNKNOWN_SYMBOL = (
+        "Unknown symbol: {SYMBOL}. Check the SYMBOLS in the .env.{MARKET} "
+        + "file. Perhaps the name of the symbol does not correspond to the "
+        + "category or such symbol does not exist. Reboot."
+    )
 
     def __str__(self) -> str:
         return self.value

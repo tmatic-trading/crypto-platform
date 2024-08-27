@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Union
 
 import services as service
+from display.messages import ErrorMessage
 from services import exceptions_manager
 
 from .ws import Bybit
@@ -51,11 +52,10 @@ class Agent(Bybit):
         if self.Instrument.get_keys():
             for symbol in self.symbol_list:
                 if symbol not in self.Instrument.get_keys():
-                    self.logger.error(
-                        "Unknown symbol: "
-                        + str(symbol)
-                        + ". Check the SYMBOLS in the .env.Bybit file. Perhaps the name of the symbol does not correspond to the category or such symbol does not exist. Reboot."
+                    message = ErrorMessage.UNKNOWN_SYMBOL.format(
+                        SYMBOL=symbol[0], MARKET=self.name
                     )
+                    self.logger.error(message)
                     return -1
         else:
             self.logger.error("There are no entries in the Instrument class.")
