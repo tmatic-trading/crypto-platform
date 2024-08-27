@@ -1920,10 +1920,15 @@ def handler_market(event) -> None:
 
 
 def handler_bot(event) -> None:
+    """
+    Handles the event when the bot table is clicked.
+    """
     tree = event.widget
-    iid = tree.selection()[0]
-    disp.on_bot_menu("None")
-    bot_menu.bot_manager.show(iid)
+    iid = tree.selection()
+    if iid:
+        iid = tree.selection()[0]
+        disp.on_bot_menu("None")
+        bot_menu.bot_manager.show(iid)
 
 
 def change_color(color: str, container=None) -> None:

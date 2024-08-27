@@ -55,7 +55,7 @@ class Bitmex(Variables):
             "BMEx": 1000000,
             "MATIc": 1000000,
             "BBx": 1000000,
-        }  # MATIc, BBx are probably incorrect'''
+        }  # MATIc, BBx are probably incorrect
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.logger = var.logger
         self.klines = dict()
