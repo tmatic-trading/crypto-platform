@@ -934,8 +934,23 @@ def resize_col(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], width=pw.winfo_width() // ratio)
 
 
-def trim_col_width(tview, cols):
-    width = tview.winfo_width() // len(cols)
+def trim_col_width(tview: ttk.Treeview, cols: list, plus: int = 0):
+    """
+    Aligns the width of columns when a column is hidden.
+
+    Parameters
+    ----------
+    tview: ttk.Treeview
+        Treeview object.
+    cols:
+        List of columns to align.
+    plus:
+        If the table is hierarchical, then alignment is performed taking into
+        account the first column #0.
+    """
+    width = tview.winfo_width() // (len(cols) + plus)
+    if plus:
+        tview.column("#0", width=width)
     for col in cols:
         tview.column(col, width=width)
 
@@ -983,7 +998,9 @@ def hide_columns(event):
                     displaycolumns=TreeTable.account.column_hide[3]
                 )
                 TreeTable.account.hide_num = 3
-                trim_col_width(TreeTable.account.tree, TreeTable.account.column_hide[3])
+                trim_col_width(
+                    TreeTable.account.tree, TreeTable.account.column_hide[3], plus=1
+                )
         elif ratio < Variables.adaptive_ratio - 0.1:
             if (
                 TreeTable.instrument.hide_num != 2
@@ -1019,7 +1036,9 @@ def hide_columns(event):
                     displaycolumns=TreeTable.account.column_hide[2]
                 )
                 TreeTable.account.hide_num = 2
-                trim_col_width(TreeTable.account.tree, TreeTable.account.column_hide[2])
+                trim_col_width(
+                    TreeTable.account.tree, TreeTable.account.column_hide[2], plus=1
+                )
         elif ratio < Variables.adaptive_ratio:
             if (
                 TreeTable.instrument.hide_num != 1
@@ -1055,7 +1074,9 @@ def hide_columns(event):
                     displaycolumns=TreeTable.account.column_hide[1]
                 )
                 TreeTable.account.hide_num = 1
-                trim_col_width(TreeTable.account.tree, TreeTable.account.column_hide[1])
+                trim_col_width(
+                    TreeTable.account.tree, TreeTable.account.column_hide[1], plus=1
+                )
         elif ratio > Variables.adaptive_ratio:
             if TreeTable.instrument.hide_num != 0:
                 TreeTable.instrument.tree.config(
@@ -1088,7 +1109,9 @@ def hide_columns(event):
                     displaycolumns=TreeTable.account.column_hide[0]
                 )
                 TreeTable.account.hide_num = 0
-                trim_col_width(TreeTable.account.tree, TreeTable.account.column_hide[0])
+                trim_col_width(
+                    TreeTable.account.tree, TreeTable.account.column_hide[0], plus=1
+                )
         Variables.last_market = var.current_market
 
     now_width = Variables.root.winfo_width()

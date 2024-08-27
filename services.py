@@ -290,7 +290,7 @@ def bot_error(bot: BotData) -> str:
 
 def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
     """
-    Updates the high and low values of kline data when websocket updates the 
+    Updates the high and low values of kline data when websocket updates the
     order book.
 
     Parameters
