@@ -571,6 +571,8 @@ class Function(WS, Variables):
         if init:
             return row
         table.insert(values=row, market=self.name, configure=val["SIDE"])
+        if "No trades" in table.children:
+            table.delete(iid="No trades")
 
     def funding_display(self: Markets, val: dict, init=False) -> Union[None, list]:
         """
@@ -1199,6 +1201,11 @@ class Function(WS, Variables):
                         for iid in list(tree.children_hierarchical[market]).copy():
                             if iid not in lines:
                                 tree.delete_hierarchical(parent=market, iid=iid)
+                if not tree.children:
+                    tree.insert_parent(parent="notification", text="No results")
+                else:
+                    if len(tree.children) > 1 and "notification" in tree.children:
+                        tree.delete(iid="notification")
 
     def update_result_line(
         self, iid: str, compare: list, market: str, tree: TreeviewTable

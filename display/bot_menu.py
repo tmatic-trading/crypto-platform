@@ -1024,6 +1024,18 @@ def update_bot_info(bot_name: str) -> None:
 
 
 def init_bot_trades(bot_name: str) -> None:
+    """
+    Creates a new instance of the TreeviewTable class for the specified bot 
+    in a custom frame. All instances are stored in the trade_treeTable 
+    dictionary, which is placed in the specified frame in the bot_trades_sub 
+    dictionary. When bots are switched, the frames are also switched. 
+    Finally, the specific frame is placed in the bot_note ttk notebook.
+
+    Parameters
+    ----------
+    bot_name: str
+        Name of the bot.
+    """
     if bot_name not in trade_treeTable:
         bot_trades_sub[bot_name] = tk.Frame(disp.bot_trades)
         trade_treeTable[bot_name] = TreeviewTable(
@@ -1042,6 +1054,7 @@ def init_bot_trades(bot_name: str) -> None:
         data = service.select_database(sql)
         indx_side = trade_treeTable[bot_name].title.index("SIDE")
         indx_market = trade_treeTable[bot_name].title.index("MARKET")
+        line = False
         for val in data:
             val["SYMBOL"] = (val["SYMBOL"], val["MARKET"])
             # Displays trades only if you have a subscription to this market in the .env file
@@ -1057,17 +1070,30 @@ def init_bot_trades(bot_name: str) -> None:
                     market=row[indx_market],
                     configure=row[indx_side],
                 )
+                line = True
+        if not line:
+            trade_treeTable[bot_name].insert(values=["No trades"], iid="No trades")
 
 
 def refresh_bot_orders():
+    """
+    The bot's order table is updated when you enter the bot page.
+    """
     tree = TreeTable.orders
     bot_tree = TreeTable.bot_orders
     indx_side = bot_tree.title.index("SIDE")
     bot_tree.clear_all()
+    anyline = False
     for child in tree.children:
         if child.split(".")[1] == disp.bot_name:
             row = tree.tree.item(child)["values"]
             bot_tree.insert(values=row, iid=child, configure=row[indx_side])
+            anyline = True
+    if anyline:
+        if "No orders" in bot_tree.children:
+            bot_tree.delete(iid="No orders")
+    else:
+        bot_tree.insert(values=["No orders"], iid="No orders")    
 
 
 def winfo_destroy() -> None:
