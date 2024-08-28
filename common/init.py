@@ -146,7 +146,7 @@ class Init(WS, Variables):
                         % (row["execID"], self.user_id, self.name),
                     )
                     if not data:
-                        Function.transaction(self, row=row, info=" History ")
+                        Function.transaction(self, row=row, info="History")
                 last_history_time = history[-1]["transactTime"]
                 if not self.logNumFatal:
                     Init.save_history_file(self, time=last_history_time)

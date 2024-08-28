@@ -283,6 +283,7 @@ class Function(WS, Variables):
                         + self.name
                         + "' and ACCOUNT = "
                         + str(self.user_id)
+                        + " and side <> 'Fund'"
                         + ";"
                     )
                     data = service.select_database(query=qwr)[0]
@@ -371,7 +372,7 @@ class Function(WS, Variables):
                     service.fill_order(
                         emi=emi, clOrdID=clOrdID, category=row["category"], value=row
                     )
-                    info = "Outside placement: "
+                    info = "Outside placement:"
                 else:
                     info = ""
                 Function.orders_processing(self, row=row, info=info)
@@ -390,9 +391,56 @@ class Function(WS, Variables):
 
     def orders_processing(self: Markets, row: dict, info: str = "") -> None:
         """
-        Orders processing <-- transaction()<--( trading_history() or get_exec() )
-        """
+        Orders processing<--transaction()<--(trading_history() or get_exec())
 
+        This function is called from transaction(), which in turn is called 
+        in two cases:
+
+        1) A new row from the websocket with the corresponding execType is 
+        received:
+
+        <New>       a new order has been successfully placed.
+        <Trade>     the order has been executed, partially or completely.
+        <Canceled>  the order has been cancelled.
+        <Replaced>  the order has been moved to another price.
+
+        2) A row from trading history (info parameter is "History") is 
+        received, and since trading history only informs about trades, there 
+        is only one possible execType:
+
+        <Trade> the order has been executed, partially or completely.
+
+        All orders in var.orders are assigned clOrdID, therefore the task is 
+        to find the required order and process it according to the execType. 
+        However, the current row does not necessarily contain clOrdID, so the 
+        possible scenarios are as follows:
+
+        1) The order was sent via Tmatic.
+            Websocket         
+        clOrdID is always present if the row was received from the websocket 
+        stream.
+            Trading history
+        clOrdID is always present for Bitmex and Bybit exchanges. Deribit 
+        exchange sends clOrdID only for trades for the last 5 days. In case
+        of restoring the trading history for an earlier period, then the row 
+        without clOrdID.
+        
+        2) Order was not sent via Tmatic.
+        clOrdID is missing. The application searches for order in var.orders 
+        by orderID. Failure does not always mean an error in case of 
+        restoring trading history.
+
+        Parameters
+        ----------
+        self: Markets
+            Market instance.
+        row: dict
+            Information received via web socket stream or downloaded trade 
+            history.
+        info: str
+            Possibly "History" in case of trading history or other additional 
+            information.
+        """
         def order_not_found(clOrdID: str) -> None:
             message = (
                 self.name
@@ -411,7 +459,6 @@ class Function(WS, Variables):
                     "warning": True,
                 }
             )
-
         if "clOrdID" in row:
             if row["clOrdID"]:
                 clOrdID = row["clOrdID"]
@@ -423,6 +470,7 @@ class Function(WS, Variables):
             else:
                 """Possibly retrieved from Trading history"""
                 clOrdID = "Empty"
+                emi = "Not_found!"
         else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
             # through the exchange web interface.
             for emi, values in var.orders.items():
@@ -436,7 +484,8 @@ class Function(WS, Variables):
             else:
                 """There is no order with this orderID in the var.orders. The
                 order was not sent via Tmatic."""
-                clOrdID = "Empty"
+                clOrdID = "Empty!"
+                emi = "Not_found!"
         if "orderID" not in row:
             """Bitmex: orderID is missing when text='Closed to conform to lot
             size'. The last time this happened was on 31.05.2021."""
@@ -477,7 +526,7 @@ class Function(WS, Variables):
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
                 else:
-                    if not info:
+                    if info != "History":
                         order_not_found(clOrdID=clOrdID)
             elif row["execType"] == "Replaced":
                 if emi in var.orders and clOrdID in var.orders[emi]:
@@ -502,7 +551,7 @@ class Function(WS, Variables):
         if info_q:
             info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
             info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
-            if not info:
+            if info != "History":
                 message = (
                     row["execType"]
                     + " "
@@ -526,6 +575,7 @@ class Function(WS, Variables):
                 self.name
                 + " "
                 + info
+                + " "
                 + row["execType"]
                 + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
                 row["side"],
