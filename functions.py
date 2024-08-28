@@ -1885,13 +1885,14 @@ def warning_window(
 def handler_instrument(event) -> None:
     tree = event.widget
     items = tree.selection()
-    TreeTable.orderbook.clear_color_cell()
     if items:
         ws = Markets[var.current_market]
         item = items[0]
         children = tree.get_children()
         row_position = children.index(item)
-        var.symbol = ws.symbol_list[row_position]
+        if var.symbol != ws.symbol_list[row_position]:
+            var.symbol = ws.symbol_list[row_position]
+            TreeTable.orderbook.clear_color_cell()
 
 
 def handler_account(event) -> None:
