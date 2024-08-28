@@ -1025,10 +1025,10 @@ def update_bot_info(bot_name: str) -> None:
 
 def init_bot_trades(bot_name: str) -> None:
     """
-    Creates a new instance of the TreeviewTable class for the specified bot 
-    in a custom frame. All instances are stored in the trade_treeTable 
-    dictionary, which is placed in the specified frame in the bot_trades_sub 
-    dictionary. When bots are switched, the frames are also switched. 
+    Creates a new instance of the TreeviewTable class for the specified bot
+    in a custom frame. All instances are stored in the trade_treeTable
+    dictionary, which is placed in the specified frame in the bot_trades_sub
+    dictionary. When bots are switched, the frames are also switched.
     Finally, the specific frame is placed in the bot_note ttk notebook.
 
     Parameters
@@ -1093,7 +1093,7 @@ def refresh_bot_orders():
         if "No orders" in bot_tree.children:
             bot_tree.delete(iid="No orders")
     else:
-        bot_tree.insert(values=["No orders"], iid="No orders")    
+        bot_tree.insert(values=["No orders"], iid="No orders")
 
 
 def winfo_destroy() -> None:

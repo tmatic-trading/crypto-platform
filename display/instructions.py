@@ -46,7 +46,7 @@
 #                       called LotSize (float)
 # btcusd.tickSize       The step to increase/reduce order price (float)
 #
-# The full list of instrument parameters is in the common/data.py Instrument 
+# The full list of instrument parameters is in the common/data.py Instrument
 # class
 #
 # 5. Add kline (candlestick) data to a specific instrument
@@ -106,10 +106,10 @@
 # Example:
 #
 # Bitmex["XBTUSDT"].sell(bot=bot, move=True, cancel=True)
-# 
+#
 # 7.3 Setting limits
 #
-# Use set_limit() method to specify the position limits that the bot is 
+# Use set_limit() method to specify the position limits that the bot is
 # allowed to trade on the instrument:
 #
 # Bitmex["XBTUSDT"].set_limit(bot=bot, limit=0.003)
@@ -142,4 +142,3 @@
 #
 #
 #
-

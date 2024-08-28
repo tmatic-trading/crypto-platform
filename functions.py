@@ -714,7 +714,7 @@ class Function(WS, Variables):
 
         tree = TreeTable.instrument
 
-        tm = datetime.now()
+        # d tm = datetime.now()
         for num, symbol in enumerate(self.symbol_list):
             instrument = self.Instrument[symbol]
             compare = [
