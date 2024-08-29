@@ -236,18 +236,18 @@ class Deribit(Variables):
             self.pinging = datetime.now(tz=timezone.utc)
         except Exception as exception:
             display_exception(exception)
-            self.logNumFatal = "SETUP"
+            self.logNumFatal = "FATAL"
 
     def __on_error(self, ws, error):
         """
         We are here if websocket has fatal errors.
         """
         self.logger.error(type(error).__name__ + " " + str(error))
-        self.logNumFatal = "SETUP"
+        self.logNumFatal = "FATAL"
 
     def __on_close(self, *args):
-        self.logger.info("Websocke closed.")
-        self.logNumFatal = "SETUP"
+        self.logger.info("Websocket closed.")
+        self.logNumFatal = "FATAL"
 
     def __ws_auth(self) -> None:
         """

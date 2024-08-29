@@ -650,7 +650,7 @@ class Agent(Deribit):
     def remove_order(self, order: dict):
         path = Listing.REMOVE_ORDER
         id = f"{path}_{order['orderID']}"
-        text = " - symbol - " + str(order["SYMBOL"][0])
+        text = " - symbol - " + str(order["symbol"][0])
         params = {"order_id": order["orderID"]}
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
@@ -728,7 +728,19 @@ class Agent(Deribit):
             self.logger.info("Sending " + path + text)
             scheme["time"].append(time.time())
             msg = {"method": path, "params": params, "jsonrpc": "2.0", "id": id}
-            self.ws.send(json.dumps(msg))
+            try:
+                self.ws.send(json.dumps(msg))
+            except Exception as ex:
+                message = "Error sending request via websocket: " + str(ex) + " - Reboot."
+                self.logger.error(message)
+                var.queue_info.put(
+                    {
+                        "market": self.name,
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
+                )
             while time.time() < self.response[id]["request_time"]:
                 res = self.response[id]["result"]
                 if res:
@@ -777,12 +789,21 @@ class Agent(Deribit):
                         return res
                 time.sleep(0.05)
             else:
-                self.logger.error(
+                message = (
                     "No response to websocket "
                     + path
                     + " request within "
                     + str(self.ws_request_delay)
                     + " seconds. Reboot"
+                )
+                self.logger.error(message)
+                var.queue_info.put(
+                    {
+                        "market": self.name,
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": True,
+                    }
                 )
                 self.logNumFatal = "FATAL"
                 return
