@@ -144,6 +144,8 @@ class Function(WS, Variables):
                 fund=1,
                 execFee=row["execFee"],
             )
+            if refer == "Delivery":
+                calc["commiss"] = 0
             instrument = self.Instrument[row["symbol"]]
             instrument.volume += abs(lastQty)
             instrument.sumreal += calc["sumreal"]
@@ -263,18 +265,27 @@ class Function(WS, Variables):
                 results = self.Result[row["settlCurrency"]]
                 pos = 0
                 bot_list = []
-                lastQty = row["lastQty"]
+                if row["side"] == "Sell":
+                    lastQty = -row["lastQty"]
+                else:
+                    lastQty = row["lastQty"]
                 for name in Bots.keys():
                     position = Bots[name].bot_positions
                     if (
                         row["symbol"] in position
                         and position[row["symbol"]]["position"] != 0
                     ):
-                        pos += abs(position[row["symbol"]]["position"])
-                        row["lastQty"] = abs(position[row["symbol"]]["position"])
+                        qty = position[row["symbol"]]["position"]
+                        if qty > 0:
+                            row["side"] = "Sell"
+                            pos += qty
+                        else:
+                            row["side"] = "Buy"
+                            pos += qty                        
+                        row["lastQty"] = abs(qty)
                         handle_trade_or_delivery(row, emi, "Delivery", 0)
                         bot_list.append(emi)
-                diff = lastQty - pos
+                diff = -(lastQty + pos)
                 if diff != 0:
                     qwr = (
                         "select sum(QTY) as sum from coins where emi = '"
@@ -287,6 +298,9 @@ class Function(WS, Variables):
                         + ";"
                     )
                     data = service.select_database(query=qwr)[0]
+                    print("-----------", row["symbol"])
+                    print("diff", diff, "lastQty", lastQty, "pos", pos)
+                    print(data["sum"])
                     if data["sum"] != diff:
                         message = ErrorMessage.IMPOSSIBLE_DATABASE_POSITION.format(
                             SYMBOL=row["symbol"][0],
@@ -305,6 +319,10 @@ class Function(WS, Variables):
                         )
                     else:
                         emi = row["symbol"][0]
+                        if diff > 0:
+                            row["side"] = "Sell"
+                        else:
+                            row["side"] = "Buy"
                         row["lastQty"] = abs(diff)
                         handle_trade_or_delivery(row, emi, "Delivery", 0)
 
