@@ -233,7 +233,7 @@ class Agent(Deribit):
             )
             self.logNumFatal = "SETUP"
 
-    def trading_history(self, histCount: int, start_time=None) -> list:
+    def trading_history(self, histCount: int, start_time: datetime = None, funding: bool = False) -> list:
         """
         Downloading trading and funding history from the endpoints:
             private/get_user_trades_by_currency_and_time
@@ -261,9 +261,14 @@ class Agent(Deribit):
 
         Parameters
         ----------
-            histCount - the function returns data by chunks in the amount of
-        histCount
-            start_time - date when a new chunk of data will be downloaded
+        histCount: int
+            The function returns data by chunks in the amount of histCount.
+        start_time: datetime
+            Date when a new chunk of data will be downloaded.
+        funding: bool
+            Cancels the "private/get_user_trades_by_currency_and_time" 
+            endpoint request if only funding and delivery are requested once 
+            a day at 8:00.
 
         Notes
         -----
@@ -472,7 +477,8 @@ class Agent(Deribit):
                 endTime = 1577826000000
             get_last_trades = False
             if endTime >= service.time_converter(datetime.now(tz=timezone.utc)):
-                get_last_trades = True
+                if not funding:
+                    get_last_trades = True
             threads, success = [], []
             for currency in self.settleCoin_list:
                 success.append(None)
@@ -561,9 +567,13 @@ class Agent(Deribit):
 
         Parameters
         ----------
-            symbol - instrument symbol.
-            start_time - beginning of period
-            timeframe - time frame
+        symbol: tuple
+            Instrument symbol.
+        start_time: datetime
+            Beginning of the period.
+        timeframe: int | str
+            Time frames are expressed in minutes or '1D' in case of daily
+            period.
         """
         path = Listing.TRADE_BUCKETED
         id = f"{path}_{symbol}"
@@ -652,21 +662,26 @@ class Agent(Deribit):
         into account according to
         https://www.deribit.com/kb/deribit-rate-limits
 
+        Parameters
+        ----------
+        path: str
+            Endpoint address.
+        id: str
+            Response key.
+        params: dict
+            Request parameters.
+        text: str
+            Aadditional info saved to the log file.
+        currency: str
+            By default, limits apply globally for all currencies, but can be
+            enabled for specific customers upon request.
+
         Errors
         ------
             WAIT - the request is non-fatal, wait and try again.
             FATAL - reboot.
             IGNORE - the error only appears on the screen and does not cause a
             reboot.
-
-        Parameters
-        ----------
-            path - Endpoint address.
-            id - Response key.
-            params - Request parameters.
-            text - Aadditional info saved to the log file.
-            currency - By default, limits apply globally for all currencies,
-            but can be enabled for specific customers upon request.
         """
         account = self.Account[(currency, self.name)]
         limit = account.limits
@@ -771,3 +786,58 @@ class Agent(Deribit):
                 )
                 self.logNumFatal = "FATAL"
                 return
+
+    def activate_funding_thread(self):
+        """
+        Makes the funding_thread active.
+        """
+        self.funding_thread_active = True
+        t = threading.Thread(target=Agent.funding_thread, args=(self,))
+        t.start()
+
+    def funding_thread(self) -> None:
+        """
+        There is no Deribit websocket stream to provide funding (settlement)
+        and delivery. So this thread requests this information at the
+        designated time after 08:00:00 UTC. It requests three times to avoid
+        an unsuccessful response in case there is a delay from Deribit.
+        """
+        while self.funding_thread_active:
+            tm = datetime.now(tz=timezone.utc)
+            start_time = datetime(
+                year=tm.year,
+                month=tm.month,
+                day=tm.day,
+                hour=8,
+                minute=0,
+                second=0,
+                tzinfo=timezone.utc,
+            )
+            if tm.hour == 8:
+                if tm.minute == 0:
+                    if tm.second == 1 or tm.second == 5 or tm.second == 30:
+                        history = Agent.trading_history(
+                            self, histCount=500, start_time=start_time, funding=True
+                        )
+                        if isinstance(history, list):
+                            for row in history:
+                                data = service.select_database(  # read_database
+                                    "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
+                                    % (row["execID"], self.user_id, self.name),
+                                )
+                                if not data:
+                                    self.transaction(self, row=row, info="History")
+                        else:
+                            message = (
+                                "Failed request for funding and delivery information that arrived at 8:00 AM"
+                                )
+                            self.logger.error(message)
+                            var.queue_info.put(
+                                {
+                                    "market": self.name,
+                                    "message": message,
+                                    "time": datetime.now(tz=timezone.utc),
+                                    "warning": True,
+                                }
+                            )
+            time.sleep(1 - time.time() % 1)

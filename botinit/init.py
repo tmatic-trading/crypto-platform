@@ -103,6 +103,7 @@ def load_bots() -> None:
             sql += qwr
             union = " union "
         sql += ";"
+        var.lock.acquire(True)
         data = service.select_database(sql)
         for value in data:
             ws = Markets[value["MARKET"]]
@@ -111,6 +112,7 @@ def load_bots() -> None:
             precision = instrument.precision
             instrument.volume = round(float(value["SUM_QTY"]), precision)
             instrument.sumreal = float(value["SUM_SUMREAL"])
+        var.lock.release()
 
     # Searching for unclosed positions by bots that are not in the 'robots'
     # table. If found, EMI becomes the default SYMBOL name. If such a SYMBOL
@@ -122,6 +124,7 @@ def load_bots() -> None:
         + "TTIME from coins where SIDE <> 'Fund' group by EMI, SYMBOL, "
         + "MARKET) res where POS <> 0;"
     )
+    var.lock.acquire(True)
     data = service.select_database(qwr)
     subscriptions = list()
     for value in data:
@@ -167,6 +170,8 @@ def load_bots() -> None:
                                 "warning": True,
                             }
                         )
+    var.lock.release()
+
     add_subscription(subscriptions=subscriptions)
 
     # Loading trades and summing up the results for each bot.
@@ -182,6 +187,7 @@ def load_bots() -> None:
             + name
             + "' group by SYMBOL) T;"
         )
+        var.lock.acquire(True)
         data = service.select_database(qwr)
         for value in data:
             symbol = (value["SYMBOL"], value["MARKET"])
@@ -231,6 +237,7 @@ def load_bots() -> None:
                         "warning": True,
                     }
                 )
+        var.lock.release()
 
     # Importing the strategy.py bot files
 

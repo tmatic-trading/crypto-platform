@@ -281,7 +281,7 @@ class Function(WS, Variables):
                             pos += qty
                         else:
                             row["side"] = "Buy"
-                            pos += qty                        
+                            pos += qty
                         row["lastQty"] = abs(qty)
                         handle_trade_or_delivery(row, emi, "Delivery", 0)
                         bot_list.append(emi)
@@ -298,9 +298,6 @@ class Function(WS, Variables):
                         + ";"
                     )
                     data = service.select_database(query=qwr)[0]
-                    print("-----------", row["symbol"])
-                    print("diff", diff, "lastQty", lastQty, "pos", pos)
-                    print(data["sum"])
                     if data["sum"] != diff:
                         message = ErrorMessage.IMPOSSIBLE_DATABASE_POSITION.format(
                             SYMBOL=row["symbol"][0],
@@ -411,10 +408,10 @@ class Function(WS, Variables):
         """
         Orders processing<--transaction()<--(trading_history() or get_exec())
 
-        This function is called from transaction(), which in turn is called 
+        This function is called from transaction(), which in turn is called
         in two cases:
 
-        1) A new row from the websocket with the corresponding execType is 
+        1) A new row from the websocket with the corresponding execType is
         received:
 
         <New>       a new order has been successfully placed.
@@ -422,30 +419,30 @@ class Function(WS, Variables):
         <Canceled>  the order has been cancelled.
         <Replaced>  the order has been moved to another price.
 
-        2) A row from trading history (info parameter is "History") is 
-        received, and since trading history only informs about trades, there 
+        2) A row from trading history (info parameter is "History") is
+        received, and since trading history only informs about trades, there
         is only one possible execType:
 
         <Trade> the order has been executed, partially or completely.
 
-        All orders in var.orders are assigned clOrdID, therefore the task is 
-        to find the required order and process it according to the execType. 
-        However, the current row does not necessarily contain clOrdID, so the 
+        All orders in var.orders are assigned clOrdID, therefore the task is
+        to find the required order and process it according to the execType.
+        However, the current row does not necessarily contain clOrdID, so the
         possible scenarios are as follows:
 
         1) The order was sent via Tmatic.
-            Websocket         
-        clOrdID is always present if the row was received from the websocket 
+            Websocket
+        clOrdID is always present if the row was received from the websocket
         stream.
             Trading history
-        clOrdID is always present for Bitmex and Bybit exchanges. Deribit 
+        clOrdID is always present for Bitmex and Bybit exchanges. Deribit
         exchange sends clOrdID only for trades for the last 5 days. In case
-        of restoring the trading history for an earlier period, then the row 
+        of restoring the trading history for an earlier period, then the row
         without clOrdID.
-        
+
         2) Order was not sent via Tmatic.
-        clOrdID is missing. The application searches for order in var.orders 
-        by orderID. Failure does not always mean an error in case of 
+        clOrdID is missing. The application searches for order in var.orders
+        by orderID. Failure does not always mean an error in case of
         restoring trading history.
 
         Parameters
@@ -453,12 +450,13 @@ class Function(WS, Variables):
         self: Markets
             Market instance.
         row: dict
-            Information received via web socket stream or downloaded trade 
+            Information received via web socket stream or downloaded trade
             history.
         info: str
-            Possibly "History" in case of trading history or other additional 
+            Possibly "History" in case of trading history or other additional
             information.
         """
+
         def order_not_found(clOrdID: str) -> None:
             message = (
                 self.name
@@ -477,6 +475,7 @@ class Function(WS, Variables):
                     "warning": True,
                 }
             )
+
         if "clOrdID" in row:
             if row["clOrdID"]:
                 clOrdID = row["clOrdID"]

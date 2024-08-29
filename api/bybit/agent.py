@@ -528,6 +528,12 @@ class Agent(Bybit):
         self.Instrument[symbol].bids = [[0, 0]]
         self.Instrument[symbol].valueOfOneContract = 1
 
+    def activate_funding_thread(self):
+        """
+        Not used for Bybit.
+        """
+        pass
+
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:
     for k, val in data.items():

@@ -76,6 +76,7 @@ class Deribit(Variables):
             },
         }
         self.ticker = dict()
+        self.funding_thread_active = True
 
     def start(self):
         for symbol in self.symbol_list:
@@ -331,6 +332,7 @@ class Deribit(Variables):
         except Exception:
             pass
         self.logNumFatal = "SETUP"
+        self.funding_thread_active = False
 
     def ping_pong(self):
         if datetime.now(tz=timezone.utc) - self.pinging > timedelta(

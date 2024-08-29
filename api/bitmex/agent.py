@@ -446,3 +446,9 @@ class Agent(Bitmex):
                 "The list was expected when the positions were loaded, but it was not received. Reboot."
             )
             self.logNumFatal = "SETUP"
+
+    def activate_funding_thread(self):
+        """
+        Not used for Bitmex.
+        """
+        pass

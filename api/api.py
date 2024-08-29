@@ -68,6 +68,12 @@ class WS(Variables):
             display_exception(exception)
             self.logger.error(self.name + " Instruments not loaded. Reboot.")
             return -1
+        try:
+            Agents[self.name].value.activate_funding_thread(self)
+        except:
+            display_exception(exception)
+            self.logger.error(self.name + " Error calling activate_funding_thread().")
+            return -1
         self.logNumFatal = ""
         try:
             if Agents[self.name].value.open_orders(self):
