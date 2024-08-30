@@ -777,7 +777,7 @@ OrderedDict(
 
 The minimum possible code to run a strategy might look like this. Let's say the strategy buys when the current price is higher than the price 10 periods ago, and sells when the current price is lower than or equal to the price 10 periods ago. When buying, the strategy places a limit order to buy at the first bid price in the order book, and does the same when selling by placing a limit order at the first ask price. Instrument BTCUSDT, exchange Bybit, limit is the minimum possible quantity for the given instrument.
 
-This code is just a simple example and does not claim to be a profitable.
+This code is just a simple example and does not claim to be profitable.
 
 ```Python
 from tools import Bybit, Bot
