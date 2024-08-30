@@ -84,7 +84,7 @@ The "coins" table receives data from the websocket execution stream or trade his
 | {"clOrdID": "", "symbol": "XBTUSD"}|-|XBTUSD|
 | {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}|no|XBTUSD|
 
-* REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```
+* REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```. In case the exchange closes an open position after the instrument expires, then REFER field takes the value "Delivery".
 * MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
 * TICKER - instrument symbol as presented in the exchange API.
@@ -777,7 +777,7 @@ OrderedDict(
 
 The minimum possible code to run a strategy might look like this. Let's say the strategy buys when the current price is higher than the price 10 periods ago, and sells when the current price is lower than or equal to the price 10 periods ago. When buying, the strategy places a limit order to buy at the first bid price in the order book, and does the same when selling by placing a limit order at the first ask price. Instrument BTCUSDT, exchange Bybit, limit is the minimum possible quantity for the given instrument.
 
-This code is just a simple example and does not claim to be a profitable.
+This code is just a simple example and does not claim to be profitable.
 
 ```Python
 from tools import Bybit, Bot
