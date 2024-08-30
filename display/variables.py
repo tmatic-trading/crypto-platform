@@ -723,11 +723,13 @@ class TreeviewTable(Variables):
             self.children_hierarchical[line] = self.tree.get_children(line)
         self.children = self.tree.get_children()
 
-    def insert(self, values: list, market="", iid="", configure="") -> None:
+    def insert(self, values: list, market="", iid="", configure="", position=0) -> None:
         if not iid:
             self.iid_count += 1
             iid = self.iid_count
-        self.tree.insert("", 0, iid=iid, values=values, tags=configure, text=market)
+        self.tree.insert(
+            "", position, iid=iid, values=values, tags=configure, text=market
+        )
         self.children = self.tree.get_children()
         if len(self.children) > self.max_rows:
             self.delete()
@@ -746,7 +748,7 @@ class TreeviewTable(Variables):
             if "New_bot!" in self.children:
                 indx = self.children.index("New_bot!")
         else:
-            indx = tk.END
+            indx = "end"
         self.tree.insert(
             parent, indx, iid=iid, values=values, tags=configure, text=text
         )

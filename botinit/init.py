@@ -58,6 +58,9 @@ def load_bots() -> None:
     qwr = "select * from robots order by DAT;"
 
     data = service.select_database(qwr)
+    for bd in data:
+        bd["DAT_datetime"] = datetime.strptime(bd["DAT"], "%Y-%m-%d %H:%M:%S")
+    data.sort(key=lambda x: x["DAT_datetime"])
     for value in data:
         if value["EMI"] not in var.orders:
             var.orders[value["EMI"]] = OrderedDict()

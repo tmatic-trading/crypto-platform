@@ -282,7 +282,7 @@ class SettingsApp:
         Menu to choose one of the created bots
         """
         tree = TreeTable.bot_menu
-        for name in reversed(Bots.keys()):
+        for name in Bots.keys():
             self.insert_bot_menu(name)
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")

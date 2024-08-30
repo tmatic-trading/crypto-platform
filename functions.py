@@ -1121,7 +1121,7 @@ class Function(WS, Variables):
                     tree.cache[iid] = compare.copy()
                     tree.update(row=iid, values=compare)
             else:
-                tree.insert(iid=iid, values=compare)
+                tree.insert(iid=iid, values=compare, position="end")
         # d print("___bots", datetime.now() - tm)
 
         # Refresh market table

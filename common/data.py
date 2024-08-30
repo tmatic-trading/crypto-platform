@@ -260,7 +260,7 @@ class MetaResult(type):
 
 
 class MetaBot(type):
-    all = dict()
+    all = OrderedDict()
 
     def __getitem__(self, item) -> BotData:
         if item not in self.all:
