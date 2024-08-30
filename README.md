@@ -819,6 +819,5 @@ This project is under development. New functions and connections to other crypto
 
 The immediate plans include:
 
-1. Connecting the Deribit exchange.
-2. Creating a convenient menu for selecting instruments and a settings menu instead of manually editing files like .env and .env.Bitmex.
-3. Stable release.
+1. Creating a convenient menu for selecting instruments and a settings menu instead of manually editing files like .env and .env.Bitmex.
+2. Stable release.
