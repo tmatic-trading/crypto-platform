@@ -851,7 +851,7 @@ class Agent(Deribit):
                                     % (row["execID"], self.user_id, self.name),
                                 )
                                 if not data:
-                                    self.transaction(self, row=row, info="History")
+                                    self.transaction(row=row, info="History")
                         else:
                             message = "Failed request for funding and delivery information that arrived at 8:00 AM"
                             self.logger.error(message)
