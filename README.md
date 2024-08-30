@@ -76,7 +76,7 @@ pip3 install -r requirements.txt
 The "coins" table receives data from the websocket execution stream or trade history endpoint. Explanations for the columns of the "coins" table:
 * ID - row number in the database.
 * EXECID - unique code that exchange assigns to any transaction.
-* EMI is the identification name of the bot taken from the "clOrdID" field. EMI usually corresponds to the EMI field of the SQLite "robots" table. If the "clOrdID" field is empty, then the EMI field contains the value taken from the "symbol" field. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then "symbol" field value is also assigned.
+* EMI is the identification name of the bot taken from the "clOrdID" field. EMI usually corresponds to the EMI field of the SQLite "robots" table. If the "clOrdID" field is empty, then the EMI field contains the value taken from the "symbol" field. If the "clOrdID" field is not empty and contains an EMI, and such an EMI is not in the SQLite "robots" table, then the "symbol" field value is also assigned.
 
 | execution|myBot is in the "robots" table|EMI|
 | ------------- |:------------------:|:-----:|
