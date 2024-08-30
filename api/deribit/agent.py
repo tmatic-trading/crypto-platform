@@ -233,7 +233,9 @@ class Agent(Deribit):
             )
             self.logNumFatal = "SETUP"
 
-    def trading_history(self, histCount: int, start_time: datetime = None, funding: bool = False) -> list:
+    def trading_history(
+        self, histCount: int, start_time: datetime = None, funding: bool = False
+    ) -> list:
         """
         Downloading trading and funding history from the endpoints:
             private/get_user_trades_by_currency_and_time
@@ -266,8 +268,8 @@ class Agent(Deribit):
         start_time: datetime
             Date when a new chunk of data will be downloaded.
         funding: bool
-            Cancels the "private/get_user_trades_by_currency_and_time" 
-            endpoint request if only funding and delivery are requested once 
+            Cancels the "private/get_user_trades_by_currency_and_time"
+            endpoint request if only funding and delivery are requested once
             a day at 8:00.
 
         Notes
@@ -731,7 +733,9 @@ class Agent(Deribit):
             try:
                 self.ws.send(json.dumps(msg))
             except Exception as ex:
-                message = "Error sending request via websocket: " + str(ex) + " - Reboot."
+                message = (
+                    "Error sending request via websocket: " + str(ex) + " - Reboot."
+                )
                 self.logger.error(message)
                 var.queue_info.put(
                     {
@@ -849,9 +853,7 @@ class Agent(Deribit):
                                 if not data:
                                     self.transaction(self, row=row, info="History")
                         else:
-                            message = (
-                                "Failed request for funding and delivery information that arrived at 8:00 AM"
-                                )
+                            message = "Failed request for funding and delivery information that arrived at 8:00 AM"
                             self.logger.error(message)
                             var.queue_info.put(
                                 {

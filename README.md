@@ -1,12 +1,12 @@
 ![](https://img.shields.io/badge/Python-3.9+-blue) ![](https://img.shields.io/badge/SQLite-latest-004864)
 
-# Cryptocurrency platform designed for automated trading on the Bitmex and Bybit crypto exchanges
+# Cryptocurrency platform designed for automated trading on the Bitmex, Bybit and Deribit crypto exchanges
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/scr/tmatic.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.9+
 
-This software is designed for trading on the [Bitmex.com](https://www.bitmex.com) and [Bybit.com](https://www.bybit.com) marketplaces.
+This software is designed for trading on the [Bitmex.com](https://www.bitmex.com), [Bybit.com](https://www.bybit.com) and [Deribit.com](https://www.deribit.com) marketplaces.
 
 API information:
 
@@ -14,8 +14,9 @@ API information:
 | ------------- | ------------- | ------------- | ------------- |
 |Bitmex|[bitmex.com/app/apiOverview](https://www.bitmex.com/app/apiOverview)|[bitmex.com/api/explorer/](https://testnet.bitmex.com/api/explorer/)|[github.com/BitMEX/api-connectors](https://github.com/BitMEX/api-connectors)|
 |Bybit|[bybit-exchange.github.io/docs/v5/intro](https://bybit-exchange.github.io/docs/v5/intro)|[bybit-exchange.github.io/docs/api-explorer/v5/category](https://bybit-exchange.github.io/docs/api-explorer/v5/category)|[github.com/bybit-exchange/pybit](https://github.com/bybit-exchange/pybit)|
+|Deribit|[docs.deribit.com](https://docs.deribit.com)|[www.deribit.com/api_console](https://www.deribit.com/api_console)|-|
 
-The software allows you to monitor trading balances and make transactions manually and automatically for both Bitmex and Bybit exchanges simultaneously.
+The software allows you to monitor trading balances and make transactions manually and automatically for Bitmex, Bybit and Deribit exchanges simultaneously.
 
 ## Software Features
 
@@ -45,6 +46,7 @@ Before running the program on a real account, it is strongly recommended to debu
 
 - [testnet.bitmex.com](https://testnet.bitmex.com)
 - [testnet.bybit.com](https://testnet.bybit.com)
+- [test.deribit.com/](https://test.deribit.com)
 
 A local computer is sufficient to debug the software.
 
@@ -118,18 +120,19 @@ Get your API key and secret code at:
 | ------------- | ------------------ |
 |Bitmex|[testnet.bitmex.com/app/apiKeys](https://testnet.bitmex.com/app/apiKeys)|
 |Bybit|[testnet.bybit.com/app/user/api-management](https://testnet.bybit.com/app/user/api-management)|
+|Deribit|[test.deribit.com/account/BTC/API](https://test.deribit.com/account/BTC/API)|
 
 Create a new file named ```.env``` in the program's root folder with your settings. The file might look like this:
 
 ```python
-MARKET_LIST = "Bitmex, Bybit"
+MARKET_LIST = "Bitmex, Bybit, Deribit"
 SQLITE_DATABASE = "tmatic.db"
 ORDER_BOOK_DEPTH = "orderBook"
 REFRESH_RATE = "5"
 TESTNET = "True"
 ```
 
-- MARKET_LIST currently supports Bitmex and Bybit exchange.
+- MARKET_LIST currently supports Bitmex, Bybit and Deribit exchange.
 
 - ORDER_BOOK_DEPTH is a choice between "orderBook" which allows you to see the order book ten lines deep, and "quote" which shows only the best buy and sell while significantly reducing network traffic.
 
@@ -163,6 +166,21 @@ API_KEY = "XXXX"
 API_SECRET = "XXXX"
 TESTNET_HTTP_URL = "https://api-testnet.bybit.com/v5"
 TESTNET_WS_URL = "wss://api-testnet.bybit.com/v5"
+TESTNET_API_KEY = "your testnet API key"
+TESTNET_API_SECRET = "your testnet API secret"
+```
+
+Create a new file named ```.env.Deribit``` in the root folder of the program with your settings for the Deribit exchange if it is in the MARKET_LIST. The file might look like this:
+
+```python
+SYMBOLS = "ETH-PERPETUAL, BTC-PERPETUAL, BTC/USDT, ETH/USDC"
+CURRENCIES = "BTC"
+HTTP_URL = "https://www.deribit.com"
+WS_URL = "wss://ws.deribit.com/ws"
+API_KEY = "XXXX"
+API_SECRET = "XXXX"
+TESTNET_HTTP_URL = "https://test.deribit.com"
+TESTNET_WS_URL = "wss://test.deribit.com/ws"
 TESTNET_API_KEY = "your testnet API key"
 TESTNET_API_SECRET = "your testnet API secret"
 ```
