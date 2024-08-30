@@ -432,8 +432,28 @@ class Agent(Deribit):
                             row["commission"] = "Not supported"
                             # row["price"] = "Not supported"
                         if res and data_type == "logs":
-                            # Merging transactions with the same trade_id
+                            # Exclude entries containing "execType" = "Funding"
+                            # from non-perpetual and spot instruments.
+                            res_copy = res.copy()
+                            for num in range(len(res_copy) - 1, -1, -1):
+                                instrument = self.Instrument[res[num]["symbol"]]
+                                if (
+                                    instrument.expire != "Perpetual"
+                                    or "spot" in instrument.category
+                                ):
+                                    res.pop(num)
+                            # Deribit splits trades when the position crosses
+                            # the zero point.
 
+                            # Example: Current position is -1. You buy 2 in
+                            # one trade. You get two entries in the trading
+                            # history: one trade closes the current position,
+                            # then the other opens a new buy.
+
+                            # However, in such cases, Tmatic only stores one
+                            # trade.
+
+                            # Merging transactions with the same trade_id:
                             transaction = OrderedDict()
                             for row in res:
                                 if row["type"] == "trade":
