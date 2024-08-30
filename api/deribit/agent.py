@@ -434,15 +434,14 @@ class Agent(Deribit):
                         if res and data_type == "logs":
                             # Exclude entries containing "execType" = "Funding"
                             # from non-perpetual and spot instruments.
-                            res_copy = res.copy()
-                            for num in range(len(res_copy) - 1, -1, -1):
-                                if res["execType"] == "Funding":
-                                    instrument = self.Instrument[res[num]["symbol"]]
+                            for number in range(len(res) - 1, -1, -1):
+                                if res[number]["execType"] == "Funding":
+                                    instrument = self.Instrument[res[number]["symbol"]]
                                     if (
                                         instrument.expire != "Perpetual"
                                         or "spot" in instrument.category
                                     ):
-                                        res.pop(num)
+                                        res.pop(number)
                             # Deribit splits trades when the position crosses
                             # the zero point.
 
