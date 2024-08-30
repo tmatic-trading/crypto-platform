@@ -90,18 +90,18 @@ The "coins" table receives data from the websocket execution stream or trade his
 * TICKER - instrument symbol as presented in the exchange API.
 * SYMBOL - almost the same as TICKER, with exception of the spot category, where SYMBOL looks like "instrument baseCoin / instrument quoteCoin", example "BTC/USDT".
 * CATEGORY - instrument category. Possible values ​​depend on the specific exchange. Example: "linear", "inverse", "quanto", "spot", "option", etc.
-* SIDE - side of a transaction: "Buy", "Sell", "Fund" (funding), "Delivery" (appears when the exchange closes an open position after the instrument expires).
+* SIDE - side of a transaction: "Buy", "Sell", "Fund" (funding).
 * QTY - transaction volume.
 * QTY_REST - rest of transaction volume after partial execution.
 * PRICE - order price.
 * THEOR_PRICE - target price.
 * TRADE_PRICE - transaction price or estimated funding price. The transaction price may be better or worse than PRICE.
 * SUMREAL - execution value, which is expressed in the currency of the transaction instrument and is calculated in accordance with the documentation of the exchange for each instrument.
-* COMMISS - commission for completing a transaction or funding, expressed in the currency of the instrument, and is calculated in accordance with the documentation of the exchange for each instrument. A negative commission value means a rebate.
+* COMMISS - funding amount or commission for completing a transaction, expressed in the currency of the instrument, and is calculated in accordance with the documentation of the exchange for each instrument. A negative value means a rebate.
 * TTIME - transaction time received from the exchange.
 * DAT - time the current row was written into the database.
-* CLORDID - unique order identifier assigned by user corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, clOrdID = "1109594183.myBot" where 1109594183 is a unique order number assigned by user, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite "coins" table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding, or it was delivery, or the order was made from outside this platform where "clOrdID" was not used.
-* ACCOUNT - account number.
+* CLORDID - unique order identifier assigned by Tmatic corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, clOrdID = "1109594183.myBot" where 1109594183 is a unique order number assigned by Tmatic, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite "coins" table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding, or it was delivery, or the order was made from outside this platform where "clOrdID" was not used.
+* ACCOUNT - user's exchange account number.
 
 Explanations for the columns of the SQLite "robots" table:
 * EMI - bot identity name.
@@ -109,7 +109,7 @@ Explanations for the columns of the SQLite "robots" table:
 * DAT - time the current row was written to the database.
 * TIMEFR - timeframe that the bot uses. Possible values at the moment: "1min", "5min", "1h".
 * STATE - Possible values: "Suspended" or "Active".
-* UPDATED - Bot parameters or strategy.py file update time.
+* UPDATED - update time for bot parameters or strategy.py file.
 
 ## Launch the program
 
