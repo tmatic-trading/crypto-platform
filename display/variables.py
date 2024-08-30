@@ -58,7 +58,8 @@ class CustomButton(tk.Frame):
 
         self.label.bind("<ButtonPress-1>", self.on_press)
         root.bind("<Button>", self.check_click_outside)
-        root.bind("<Escape>", self.on_escape_button)
+        root.bind("<Escape>", self.on_escape)
+        root.bind("<FocusOut>", self.on_escape)
         self.label.bind("<Enter>", self.on_enter)
         self.label.bind("<Leave>", self.on_leave)
 
@@ -66,7 +67,7 @@ class CustomButton(tk.Frame):
         self.menu.unpost()
         self.menu_posted = False
 
-    def on_escape_button(self, event):
+    def on_escape(self, event):
         """
         This function triggers the unpost() method
         since not every OS or Python version makes it by
