@@ -436,12 +436,13 @@ class Agent(Deribit):
                             # from non-perpetual and spot instruments.
                             res_copy = res.copy()
                             for num in range(len(res_copy) - 1, -1, -1):
-                                instrument = self.Instrument[res[num]["symbol"]]
-                                if (
-                                    instrument.expire != "Perpetual"
-                                    or "spot" in instrument.category
-                                ):
-                                    res.pop(num)
+                                if res["execType"] == "Funding":
+                                    instrument = self.Instrument[res[num]["symbol"]]
+                                    if (
+                                        instrument.expire != "Perpetual"
+                                        or "spot" in instrument.category
+                                    ):
+                                        res.pop(num)
                             # Deribit splits trades when the position crosses
                             # the zero point.
 
