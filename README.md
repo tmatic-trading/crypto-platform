@@ -84,7 +84,7 @@ The "coins" table receives data from the websocket execution stream or trade his
 | {"clOrdID": "", "symbol": "XBTUSD"}|-|XBTUSD|
 | {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}|no|XBTUSD|
 
-* REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```
+* REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```. In case the exchange closes an open position after the instrument expires, then REFER field takes the value "Delivery".
 * MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
 * TICKER - instrument symbol as presented in the exchange API.
