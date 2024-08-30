@@ -47,7 +47,10 @@ def setup_logger():
 class Variables:
     env = dotenv_values(".env")
     market_list = env["MARKET_LIST"].replace(",", " ").split()
-    market_list = list(set(market_list))
+    tmp = OrderedDict()
+    for market in market_list:
+        tmp[market] = market
+    market_list = list(tmp.keys())
     CATEGORIES = OrderedDict()
     for market_name in market_list:
         env[market_name] = dotenv_values(".env." + market_name)
