@@ -132,7 +132,7 @@ REFRESH_RATE = "5"
 TESTNET = "True"
 ```
 
-- MARKET_LIST currently supports Bitmex, Bybit and Deribit exchange.
+- MARKET_LIST currently supports Bitmex, Bybit and Deribit exchanges.
 
 - ORDER_BOOK_DEPTH is a choice between "orderBook" which allows you to see the order book ten lines deep, and "quote" which shows only the best buy and sell while significantly reducing network traffic.
 
