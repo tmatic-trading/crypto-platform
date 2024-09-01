@@ -12,7 +12,7 @@ from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
 from common.data import Bots
 from common.variables import Variables as var
-from display.bot_menu import bot_manager
+from display.bot_menu import bot_manager, insert_bot_log
 from display.functions import info_display
 from display.variables import TreeTable
 from display.variables import Variables as disp
@@ -192,12 +192,15 @@ def refresh() -> None:
         functions.clear_tables()
     while not var.queue_info.empty():
         info = var.queue_info.get()
-        info_display(
-            name=info["market"],
-            message=info["message"],
-            tm=info["time"],
-            warning=info["warning"],
+        message = service.format_message(
+            market=info["market"], message=info["message"], tm=info["time"]
         )
+        if not "bot_log" in info:
+            info_display(market=info["market"], message=message, warning=info["warning"])
+        if "emi" in info and info["emi"] in Bots.keys():
+            insert_bot_log(
+                bot_name=info["emi"], message=message, warning=info["warning"]
+            )
     while not var.queue_order.empty():
         """
         The queue thread-safely displays current orders that can be queued:

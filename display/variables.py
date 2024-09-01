@@ -156,6 +156,7 @@ class Variables:
     left_width = window_width
     last_market = ""
     pw_ratios = {}
+    text_line_limit = 300
 
     if platform.system() == "Windows":
         ostype = "Windows"
@@ -553,10 +554,35 @@ class Variables:
     bot_orders = tk.Frame(bot_note, bg=bg_color)
     bot_trades = tk.Frame(bot_note, bg=bg_color)
     bot_results = tk.Frame(bot_note, bg=bg_color)
+    bot_log = tk.Frame(bot_note, bg=bg_color)
     bot_note.add(bot_positions, text="Positions")
     bot_note.add(bot_orders, text="Orders")
     bot_note.add(bot_trades, text="Trades")
     bot_note.add(bot_results, text="Results")
+    bot_note.add(bot_log, text="Log")
+
+    # Bot log widget
+    if ostype == "Mac":
+        text_bot_log = tk.Text(
+            bot_log,
+            highlightthickness=0,
+            wrap=tk.WORD,
+        )
+    else:
+        text_bot_log = tk.Text(
+            bot_log,
+            bg="gray98",
+            highlightthickness=0,
+            wrap=tk.WORD,
+        )
+    text_bot_log.grid(row=0, column=0, sticky="NSEW")
+    scroll_info = AutoScrollbar(bot_log, orient="vertical")
+    scroll_info.config(command=text_bot_log.yview)
+    scroll_info.grid(row=0, column=1, sticky="NS")
+    text_bot_log.config(yscrollcommand=scroll_info.set)
+    bot_log.grid_columnconfigure(0, weight=1)
+    bot_log.grid_columnconfigure(1, weight=0)
+    bot_log.grid_rowconfigure(0, weight=1)
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width

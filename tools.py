@@ -396,8 +396,33 @@ class Tool(Instrument):
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
             qty = min(max(0, position["limits"] - position["position"]), abs(qty))
+        qty = round(qty, self.precision)
+        if qty == 0:
+            message = (
+                "Position has reached the limit for ("
+                + position["symbol"]
+                + ", "
+                + position["market"]
+                + "), limit "
+                + str(position["limits"])
+                + ", current position "
+                + str(position["position"])
+                + ". "
+                + side
+                + " order rejected."
+            )
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                    "emi": bot_name,
+                    "bot_log": True, 
+                }
+            )
 
-        return round(qty, self.precision)
+        return qty
 
     def _empty_orderbook(self, qty: float, price: float) -> None:
         """

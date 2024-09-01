@@ -186,7 +186,7 @@ class SettingsApp:
 
     def init_bot(self, bot_name: str, timeframe: str) -> None:
         """
-        Initializes bot variables.
+        Initializes bot variables when a new bot is created.
         """
         time_now = self.get_time()
         var.orders[bot_name] = OrderedDict()
@@ -202,6 +202,7 @@ class SettingsApp:
         import_bot_module(bot_name)
         functions.activate_bot_thread(bot_name=bot_name)
         self.insert_bot_menu(name=bot_name, new=True)
+        Bots[bot_name].log = list()
 
     def create_bot(self, bot_name, timeframe) -> bool:
         """
@@ -827,6 +828,7 @@ class SettingsApp:
                     refresh_bot_orders()
                     self.switch(option="table")
                     disp.bot_event_prev = bot_name
+                    fill_bot_log(bot_name=bot_name)
                 except Exception as ex:
                     Bots[bot_name].error_message = {
                         "error_type": ex.__class__.__name__,
@@ -1161,6 +1163,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
                 "warning": True,
+                "emi": bot_name,
             }
         )
         Bots[bot_name].error_message = {
@@ -1179,6 +1182,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
                 "warning": True,
+                "emi": bot_name,
             }
         )
         Bots[bot_name].error_message = {
@@ -1193,6 +1197,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                     "message": bot_name + " has been updated successfully.",
                     "time": datetime.now(tz=timezone.utc),
                     "warning": False,
+                    "emi": bot_name,
                 }
             )
     try:
@@ -1201,6 +1206,48 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.run[bot_name] = "No strategy"
     if update:
         functions.init_bot_klines(bot_name)
+
+
+def insert_bot_log(bot_name: str, message: str, warning: bool, fill=False) -> None:
+    """
+    Displays information about a specific bot and saves it to bot.log.
+
+    Parameters
+    ----------
+    bot_name: str
+        Bot name.
+    message: str
+        Information to display and save.
+    tm: datetime
+        Time the message was created.
+    warning: bool
+        Warning or error messages are displayed in red.
+    """
+    if not fill:
+        Bots[bot_name].log.append((warning, message))
+        path = f"{bot_manager.algo_dir}{bot_name}/bot.log"
+        with open(path, "a") as f:
+            f.write(message)
+    if bot_name == disp.bot_name:
+        num = message.count("\n")
+        disp.text_bot_log.insert("1.0", message)
+        if warning:
+            disp.text_bot_log.tag_add(" ", "1.0", f"{num}.1000")
+            disp.text_bot_log.tag_config(" ", foreground=disp.red_color)
+        if len(Bots[bot_name].log) > disp.text_line_limit:
+            limit = f"{disp.text_line_limit + 1}.0"
+            disp.text_bot_log.delete(limit, "end")
+
+
+def fill_bot_log(bot_name: str) -> None:
+    """
+    Refills text_bot_log widget when switching between bots.
+    """
+    disp.text_bot_log.delete("1.0", tk.END)
+    for message in Bots[bot_name].log[-disp.text_line_limit :]:
+        insert_bot_log(
+            bot_name=bot_name, message=message[1], warning=message[0], fill=True
+        )
 
 
 trade_treeTable = dict()

@@ -179,6 +179,7 @@ class BotData:
     created: str
     updated: str
     error_message: str = ""
+    log: list
 
     def __iter__(self):
         return Ret.iter(self)

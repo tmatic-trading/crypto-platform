@@ -320,5 +320,39 @@ def count_orders():
     for values in var.orders.values():
         for _ in values.keys():
             count += 1
-
     # print("___________________orders", count)
+
+
+def noll(val: str, length: int) -> str:
+    r = ""
+    for _ in range(length - len(val)):
+        r = r + "0"
+
+    return r + val
+
+
+def format_message(market: str, message: str, tm=None) -> str:
+    """
+    Formats the message in the required format.
+    """
+    if market:
+        market += ": "
+    if not tm:
+        tm = datetime.now(tz=timezone.utc)
+    text = (
+        noll(str(tm.hour), 2)
+        + ":"
+        + noll(str(tm.minute), 2)
+        + ":"
+        + noll(str(tm.second), 2)
+        + "."
+        + noll(str(int(tm.microsecond / 1000)), 3)
+        + "  "
+        + market
+        + message
+        + "\n"
+    )
+    if isinstance(text, tuple):
+        text = text[0]
+
+    return text
