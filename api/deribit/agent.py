@@ -51,7 +51,7 @@ class Agent(Deribit):
             else:
                 error = "When loading instruments 'result' was not received."
         else:
-            error = "Invalid data was received when loading tools. " + str(data)
+            error = "Invalid data was received when loading instruments. " + str(data)
         self.logger.error(error)
 
         return -1
@@ -340,6 +340,11 @@ class Agent(Deribit):
                     if isinstance(res, list):
                         for row in res:
                             if not row["instrument_name"] in self.ticker:
+                                self.logger.info(
+                                    self.name
+                                    + " - Requesting instrument - ticker="
+                                    + row["instrument_name"]
+                                )
                                 Agent.get_instrument(
                                     self, ticker=row["instrument_name"]
                                 )
@@ -547,15 +552,6 @@ class Agent(Deribit):
                 if el not in tmp:
                     tmp.append(el)
             trade_history = tmp
-            message = (
-                self.name
-                + " - loading trading history, start_time="
-                + str(service.time_converter(startTime / 1000))
-                + ", received: "
-                + str(len(trade_history))
-                + " records."
-            )
-            self.logger.info(message)
             if len(trade_history) > histCount:
                 break
             startTime = endTime
@@ -747,7 +743,6 @@ class Agent(Deribit):
                 "request_time": time.time() + self.ws_request_delay,
                 "result": None,
             }
-            self.logger.info("Sending " + path + text)
             scheme["time"].append(time.time())
             msg = {"method": path, "params": params, "jsonrpc": "2.0", "id": id}
             try:

@@ -265,6 +265,11 @@ class Agent(Bitmex):
                 for row in res:
                     row["ticker"] = row["symbol"]
                     if row["symbol"] not in self.ticker:
+                        self.logger.info(
+                            self.name
+                            + " - Requesting instrument - ticker="
+                            + row["symbol"]
+                        )
                         Agent.get_instrument(
                             self,
                             ticker=row["symbol"],

@@ -16,9 +16,6 @@ class Agent(Bybit):
             cursor = "no"
             while cursor:
                 cursor = ""
-                self.logger.info(
-                    "Sending get_instruments_info() - category - " + category
-                )
                 result = self.session.get_instruments_info(
                     category=category,
                     limit=1000,
@@ -68,7 +65,6 @@ class Agent(Bybit):
         Returns the user ID and other useful information about the user and
         places it in self.user. If unsuccessful, logNumFatal is not ''.
         """
-        self.logger.info("Sending get_uid_wallet_type()")
         data = self.session.get_uid_wallet_type()
         if isinstance(data, dict):
             self.user = data
@@ -83,9 +79,6 @@ class Agent(Bybit):
         self.logger.error(message)
 
     def get_instrument(self, ticker: str, category: str) -> None:
-        self.logger.info(
-            "Sending get_instruments_info() - symbol - " + ticker + " " + category
-        )
         instrument_info = self.session.get_instruments_info(
             symbol=ticker, category=category
         )
@@ -99,12 +92,6 @@ class Agent(Bybit):
     def trade_bucketed(
         self, symbol: tuple, start_time: datetime, timeframe: str
     ) -> Union[list, None]:
-        self.logger.info(
-            "Sending get_kline() - symbol - "
-            + str(symbol)
-            + " - interval - "
-            + str(timeframe)
-        )
         instrument = self.Instrument[symbol]
         kline = self.session.get_kline(
             category=instrument.category,
@@ -146,12 +133,6 @@ class Agent(Bybit):
                 nonlocal trade_history
                 cursor = "no"
                 while cursor:
-                    self.logger.info(
-                        "Sending get_executions() - category - "
-                        + category
-                        + " - startTime - "
-                        + str(service.time_converter(startTime / 1000))
-                    )
                     result = self.session.get_executions(
                         category=category,
                         startTime=startTime,
@@ -163,6 +144,13 @@ class Agent(Bybit):
                     if isinstance(result["result"]["list"], list):
                         for row in res:
                             if (row["symbol"], category) not in self.ticker:
+                                self.logger.info(
+                                    self.name
+                                    + " - Requesting instrument - ticker="
+                                    + row["symbol"]
+                                    + ", category="
+                                    + category
+                                )
                                 Agent.get_instrument(
                                     self,
                                     ticker=row["symbol"],
@@ -222,14 +210,6 @@ class Agent(Bybit):
             for s in success:
                 if not s:
                     return
-            message = (
-                "Bybit - loading trading history, startTime="
-                + str(service.time_converter(startTime / 1000))
-                + ", received: "
-                + str(len(trade_history))
-                + " records."
-            )
-            self.logger.info(message)
             if len(trade_history) > histCount:
                 break
             startTime += 604800000  # +7 days
@@ -250,9 +230,6 @@ class Agent(Bybit):
             parameters.pop("success")
             parameters.pop("num")
             while cursor:
-                self.logger.info(
-                    "Sending open_orders() - parameters - " + str(parameters)
-                )
                 result = self.session.get_open_orders(**parameters)
                 cursor = result["result"]["nextPageCursor"]
                 parameters["cursor"] = result["result"]["nextPageCursor"]
@@ -357,9 +334,6 @@ class Agent(Bybit):
 
     def get_wallet_balance(self) -> None:
         for account_type in self.account_types:
-            self.logger.info(
-                "Sending get_wallet_balance() - accountType - " + account_type
-            )
             data = self.session.get_wallet_balance(accountType=account_type)
             # Bybit bug patch 20/08/2024 on request accountType = "CONTRACT"
             if "list" in data["result"]:
@@ -403,12 +377,6 @@ class Agent(Bybit):
         def get_in_thread(category, settlCurrency, success, num):
             cursor = "no"
             while cursor:
-                self.logger.info(
-                    "Sending get_positions() - category - "
-                    + category
-                    + " - settlCurrency - "
-                    + settlCurrency
-                )
                 result = self.session.get_positions(
                     category=category,
                     settleCoin=settlCurrency,

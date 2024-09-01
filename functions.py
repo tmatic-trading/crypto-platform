@@ -571,13 +571,13 @@ class Function(WS, Variables):
             if info != "History":
                 message = (
                     row["execType"]
-                    + " "
-                    + row["side"]
-                    + ": "
+                    + " emi="
                     + emi
-                    + " price="
+                    + ", side="
+                    + row["side"]
+                    + ", price="
                     + str(info_p)
-                    + " qty="
+                    + ", qty="
                     + info_q
                 )
                 var.queue_info.put(
@@ -586,15 +586,18 @@ class Function(WS, Variables):
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
                         "warning": False,
+                        "emi": emi,
                     }
                 )
+            if info:
+                info += " - "
             var.logger.info(
                 self.name
-                + " "
+                + " - "
                 + info
-                + " "
                 + row["execType"]
-                + " %s: orderID=%s clOrdID=%s price=%s qty=%s",
+                + " - "
+                + "side=%s, orderID=%s, clOrdID=%s, price=%s, qty=%s",
                 row["side"],
                 row["orderID"],
                 clOrdID,
@@ -2089,18 +2092,7 @@ def download_kline_data(
         if data:
             last = start_time
             res += data
-            message = (
-                self.name
-                + " - loading klines, symbol="
-                + str(symbol)
-                + ", startTime="
-                + str(start_time)
-                + ", received: "
-                + str(len(res))
-                + " records."
-            )
             start_time = data[-1]["timestamp"] + timedelta(minutes=timeframe)
-            var.logger.info(message)
             if last == start_time or target <= data[-1]["timestamp"]:
                 return res
 
@@ -2200,9 +2192,6 @@ def load_klines(
                 timefr=timefr,
             )
     klines[symbol][timefr]["time"] = tm
-
-    message = "Downloaded missing data, symbol=" + str(symbol) + " TIMEFR=" + timefr
-    var.logger.info(message)
 
     return klines
 

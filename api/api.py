@@ -62,7 +62,7 @@ class WS(Variables):
                 self.logNumFatal = "SETUP"
 
         try:
-            if Agents[self.name].value.get_active_instruments(self):
+            if WS.get_active_instruments(self):
                 return -1
         except Exception as exception:
             display_exception(exception)
@@ -76,7 +76,7 @@ class WS(Variables):
             return -1
         self.logNumFatal = ""
         try:
-            if Agents[self.name].value.open_orders(self):
+            if WS.open_orders(self):
                 return -1
         except Exception as exception:
             display_exception(exception)
@@ -87,19 +87,13 @@ class WS(Variables):
             t = threading.Thread(target=start_ws_in_thread)
             threads.append(t)
             t.start()
-            t = threading.Thread(
-                target=get_in_thread, args=(Agents[self.name].value.get_user,)
-            )
+            t = threading.Thread(target=get_in_thread, args=(WS.get_user,))
             threads.append(t)
             t.start()
-            t = threading.Thread(
-                target=get_in_thread, args=(Agents[self.name].value.get_wallet_balance,)
-            )
+            t = threading.Thread(target=get_in_thread, args=(WS.get_wallet_balance,))
             threads.append(t)
             t.start()
-            t = threading.Thread(
-                target=get_in_thread, args=(Agents[self.name].value.get_position_info,)
-            )
+            t = threading.Thread(target=get_in_thread, args=(WS.get_position_info,))
             threads.append(t)
             t.start()
             [thread.join() for thread in threads]
@@ -129,10 +123,11 @@ class WS(Variables):
         """
         Markets[self.name].exit()
 
-    def get_active_instruments(self: Markets) -> OrderedDict:
+    def get_active_instruments(self: Markets) -> int:
         """
         Gets all active instruments from the exchange REST API.
         """
+        var.logger.info(self.name + " - Requesting all active instruments.")
 
         return Agents[self.name].value.get_active_instruments(self)
 
@@ -140,6 +135,7 @@ class WS(Variables):
         """
         Gets account info.
         """
+        var.logger.info(self.name + " - Requesting user information.")
 
         return Agents[self.name].value.get_user(self)
 
@@ -147,6 +143,13 @@ class WS(Variables):
         """
         Gets a specific instrument by symbol name and category.
         """
+        var.logger.info(
+            self.name
+            + " - Requesting instrument - ticker="
+            + ticker
+            + ", category="
+            + category
+        )
 
         return Agents[self.name].value.get_instrument(
             self, ticker=ticker, category=category
@@ -165,16 +168,31 @@ class WS(Variables):
         """
         Gets kline data.
         """
-
-        return Agents[self.name].value.trade_bucketed(
+        parameters = (
+            f"symbol={symbol[0]}" + f", start_time={time}" + f", timeframe={timeframe}"
+        )
+        var.logger.info(self.name + " - Requesting kline data - " + parameters)
+        data = Agents[self.name].value.trade_bucketed(
             self, symbol=symbol, start_time=time, timeframe=timeframe
         )
+        if data:
+            var.logger.info(
+                self.name
+                + " - Klines - "
+                + parameters
+                + f", received {len(data)} records."
+            )
+
+        return data
 
     def trading_history(self: Markets, histCount: int, start_time: datetime) -> list:
         """
         Gets all trades and funding from the exchange for the period starting
         from 'time'
         """
+        var.logger.info(
+            self.name + " - Requesting trading history - start_time=" + str(start_time)
+        )
 
         return Agents[self.name].value.trading_history(
             self, histCount=histCount, start_time=start_time
@@ -184,22 +202,28 @@ class WS(Variables):
         """
         Gets open orders.
         """
+        var.logger.info(self.name + " - Requesting open orders.")
 
         return Agents[self.name].value.open_orders(self)
 
-    def get_funds(self: Markets) -> list:
-        """
-        Cash in the account
-        """
-
-        return self.data["margin"]
-
     def place_limit(
-        self: Markets, quantity: int, price: float, clOrdID: str, symbol: tuple
+        self: Markets, quantity: float, price: float, clOrdID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
         Places a limit order
         """
+        var.logger.info(
+            self.name
+            + " - Order - New - "
+            + "symbol="
+            + symbol[0]
+            + ", qty="
+            + str(quantity)
+            + ", price="
+            + str(price)
+            + ", clOrdID="
+            + clOrdID
+        )
 
         return Agents[self.name].value.place_limit(
             self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
@@ -211,6 +235,18 @@ class WS(Variables):
         """
         Moves a limit order
         """
+        var.logger.info(
+            self.name
+            + " - Order - Replace - "
+            + "symbol="
+            + symbol[0]
+            + ", qty="
+            + str(quantity)
+            + ", price="
+            + str(price)
+            + ", orderID="
+            + orderID
+        )
 
         return Agents[self.name].value.replace_limit(
             self, quantity=quantity, price=price, orderID=orderID, symbol=symbol
@@ -220,6 +256,14 @@ class WS(Variables):
         """
         Deletes an order
         """
+        var.logger.info(
+            self.name
+            + " - Order - Cancel - "
+            + "symbol="
+            + order["symbol"][0]
+            + ", orderID="
+            + order["orderID"]
+        )
 
         return Agents[self.name].value.remove_order(self, order=order)
 
@@ -228,13 +272,15 @@ class WS(Variables):
         Obtain wallet balance, query asset information of each currency, and
         account risk rate information.
         """
+        var.logger.info(self.name + " - Requesting account.")
 
         return Agents[self.name].value.get_wallet_balance(self)
 
     def get_position_info(self: Markets) -> dict:
         """
-        Get Position Info
+        Get position information.
         """
+        var.logger.info(self.name + " - Requesting positions.")
 
         return Agents[self.name].value.get_position_info(self)
 

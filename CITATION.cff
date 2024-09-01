@@ -8,7 +8,7 @@ authors:
 repository-code: 'https://github.com/evgrmn/tmatic'
 abstract: >-
   This software is designed for trading on the Bitmex.com, Bybit.com
-  and Deribit marketplaces and allows you to control trade balances 
+  and Deribit marketplaces and allows you to control trade balances
   and make transactions manually and automatically.
 version: 24.8.1 Beta
 date-released: '2024-08-30'

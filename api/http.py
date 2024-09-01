@@ -52,15 +52,6 @@ class Send(Variables):
         while True:
             response = None
             try:
-                message = "%s: Sending %s to %s: %s" % (
-                    self.name,
-                    verb,
-                    path,
-                    json.dumps(postData or ""),
-                )
-                if theorPrice:
-                    message += f", theor: {theorPrice}"
-                self.logger.info(message)
                 req = requests.Request(verb, url, json=postData, params=None)
                 if isinstance(postData, dict):
                     data = json.dumps(postData)
