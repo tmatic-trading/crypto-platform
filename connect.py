@@ -136,9 +136,9 @@ def setup_market(ws: Markets, reload=False):
         if ws.logNumFatal:
             var.logger.info("\n\n")
             var.logger.info(
-                "Something went wrong. "
+                "Something went wrong while loading "
                 + ws.name
-                + " is not loading. See logFile.log. Reboot.\n\n"
+                + ". Reboot.\n\n"
             )
             WS.exit(ws)
             sleep(3)
