@@ -52,7 +52,7 @@ class BoldLabel(tk.Label):
 
 
 class SettingsApp:
-    def __init__(self, root):
+    def __init__(self):
         # self.root_frame = root
         # self.button_height = 25
         self.button_strategy = None
@@ -1259,16 +1259,16 @@ info_left.pack(fill="both", side="left")
 info_right.pack(fill="both", expand=True, side="left")
 disp.pw_bot_info.add(disp.bot_note)
 disp.pw_bot_info.add(disp.frame_strategy)
-disp.pw_ratios[disp.pw_bot_info] = 3
+"""disp.pw_ratios[disp.pw_bot_info] = 10
 disp.pw_bot_info.bind(
     "<Configure>",
     lambda event: disp.resize_height(
         event, disp.pw_bot_info, disp.pw_ratios[disp.pw_bot_info]
     ),
-)
-disp.pw_bot_info.bind(
+)"""
+"""disp.pw_bot_info.bind(
     "<ButtonRelease-1>", lambda event: disp.on_sash_move(event, disp.pw_bot_info)
-)
+)"""
 disp.pw_menu_robots.add(menu_frame)
 disp.pw_menu_robots.add(disp.info_frame)
 disp.pw_menu_robots.bind(
@@ -1277,4 +1277,4 @@ disp.pw_menu_robots.bind(
         event, disp.pw_menu_robots, disp.window_width // 7, 6
     ),
 )
-bot_manager = SettingsApp(menu_frame)
+bot_manager = SettingsApp()

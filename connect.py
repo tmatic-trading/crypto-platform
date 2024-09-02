@@ -14,16 +14,20 @@ from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log
 from display.functions import info_display
+from display.settings import SettingsApp
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
 
+
+settings = SettingsApp(disp.frame_settings)
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction
 Bybit.transaction = Function.transaction
 Deribit.transaction = Function.transaction
 thread = threading.Thread(target=functions.kline_update)
 thread.start()
+settings.load()
 
 
 def setup(reload=False):
@@ -49,6 +53,7 @@ def setup(reload=False):
     functions.init_tables()
     bot_manager.create_bots_menu()
     bot_threads()
+    settings.init()
 
 
 def setup_market(ws: Markets, reload=False):
@@ -136,9 +141,7 @@ def setup_market(ws: Markets, reload=False):
         if ws.logNumFatal:
             var.logger.info("\n\n")
             var.logger.info(
-                "Something went wrong while loading "
-                + ws.name
-                + ". Reboot.\n\n"
+                "Something went wrong while loading " + ws.name + ". Reboot.\n\n"
             )
             WS.exit(ws)
             sleep(3)
@@ -196,7 +199,9 @@ def refresh() -> None:
             market=info["market"], message=info["message"], tm=info["time"]
         )
         if not "bot_log" in info:
-            info_display(market=info["market"], message=message, warning=info["warning"])
+            info_display(
+                market=info["market"], message=message, warning=info["warning"]
+            )
         if "emi" in info and info["emi"] in Bots.keys():
             insert_bot_log(
                 bot_name=info["emi"], message=message, warning=info["warning"]
@@ -279,6 +284,7 @@ def bot_threads() -> None:
 
 def terminal_reload(event) -> None:
     disp.menu_robots.pack_forget()
+    disp.settings.pack_forget()
     disp.pw_rest1.pack(fill="both", expand="yes")
     functions.info_display("Tmatic", "Restarting...")
     service.close(Markets)

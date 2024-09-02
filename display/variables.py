@@ -53,7 +53,9 @@ class CustomButton(tk.Frame):
                     label=item, command=lambda value=item: self.on_command(value)
                 )
 
-        # Tracks if the menu is posted or not as there is no direct built-in method to check if the tk.Menu widget is currently posted (visible) or not.
+        # Tracks if the menu is posted or not as there is no direct built-in
+        # method to check if the tk.Menu widget is currently posted (visible)
+        # or not.
         self.menu_posted = False
 
         self.label.bind("<ButtonPress-1>", self.on_press)
@@ -203,8 +205,10 @@ class Variables:
     white_color = "#FFFFFF"
     black_color = "#000000"
     gray_color = "#777777"
+    light_gray_color = "gray92"
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
     symbol_width = tkinter.font.Font().measure("01234567890.") / 12
+    symbol_height = tkinter.font.nametofont("TkDefaultFont").actual()["size"]
     button_height = 20
     style = ttk.Style()
 
@@ -302,8 +306,10 @@ class Variables:
         background=title_color,
     )
     style.configure("Treeview.Heading", foreground=fg_color)
-    style.configure("TNotebook", borderwidth=0, background="gray92", tabposition="n")
-    style.configure("TNotebook.Tab", background="gray92")
+    style.configure(
+        "TNotebook", borderwidth=0, background=light_gray_color, tabposition="n"
+    )
+    style.configure("TNotebook.Tab", background=light_gray_color)
     fg_disabled = tk.Entry()["disabledforeground"]
     bg_disabled = title_color  # tk.Entry()["disabledbackground"]
     fg_normal = tk.Entry()["foreground"]
@@ -323,6 +329,8 @@ class Variables:
             on_trade_state("none")
         elif value == "<F3> Reload All":
             on_f3_reload()
+        elif value == "Settings":
+            Variables.on_settings()
 
     menu_button = CustomButton(
         root,
@@ -335,6 +343,7 @@ class Variables:
             "<F9> Trading ON",
             "<F7> Bot Menu",
             "<F3> Reload All",
+            # "Settings",
         ],  # , "Settings", "About"],
     )
     menu_button.pack(side="left", padx=4)
@@ -386,8 +395,12 @@ class Variables:
     else:
         bg_color = text_info["background"]
 
-    # Intended to display the main area of the terminal or the minor pages (bots info, settings)
+    # Intended to display the main area of the terminal or the minor pages
+    # (bots info, settings)
     menu_robots = tk.Frame(menu_frame)
+
+    # Settings page
+    settings = tk.Frame(menu_frame)
 
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
@@ -584,6 +597,67 @@ class Variables:
     bot_log.grid_columnconfigure(1, weight=0)
     bot_log.grid_rowconfigure(0, weight=1)
 
+    # Settings widgets
+
+    pw_settings = tk.PanedWindow(
+        settings,
+        orient=tk.VERTICAL,
+        bd=0,
+        sashwidth=0,
+        height=1,
+    )
+    pw_settings.pack(fill="both", expand="yes")
+    frame_settings_top = tk.Frame(pw_settings, bg=light_gray_color)
+    frame_settings_top_title = tk.Frame(frame_settings_top, bg=light_gray_color)
+    frame_settings_top_line = tk.Frame(frame_settings_top, bg=title_color)
+    frame_settings_top_title.pack(fill="both", side="top")
+    frame_settings_top_line.pack(fill="both", expand=True, side="top")
+    label_settings_title = tk.Label(
+        frame_settings_top_title,
+        text="SETTINGS",
+        bg=light_gray_color,
+        font=("", symbol_height + 1, "bold"),
+    )
+    label_settings_title.pack()
+    frame_settings_main = tk.Frame(pw_settings, bg=bg_color)
+    pw_settings.add(frame_settings_top)
+    pw_settings.add(frame_settings_main)
+    pw_settings_main = tk.PanedWindow(
+        frame_settings_main,
+        orient=tk.HORIZONTAL,
+        bd=0,
+        sashwidth=0,
+        height=1,
+    )
+    pw_settings_main.pack(fill="both", expand="yes")
+    frame_settings_left = tk.Frame(pw_settings_main, padx=5, pady=5, bg=bg_color)
+    frame_settings_right = tk.Frame(pw_settings_main, bg=bg_color)
+    frame_settings_right_line = tk.Frame(frame_settings_right)
+    frame_settings_right_main = tk.Frame(
+        frame_settings_right, padx=5, pady=5, bg=bg_color
+    )
+    frame_settings_right_line.pack(fill="both", side="left")
+    frame_settings_right_main.pack(fill="both", expand=True, side="left")
+    pw_settings_main.add(frame_settings_left)
+    pw_settings_main.add(frame_settings_right)
+    frame_tips = tk.Frame(frame_settings_left, bg=light_gray_color)
+    frame_tips.pack(fill="both", expand=True)
+    t_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)
+    t_label.pack(anchor="nw")
+    frame_settings = tk.Frame(frame_settings_right_main)
+    frame_settings.pack()
+    """p_label = tk.Label(frame_settings, text="Set up", bg=bg_color)
+    p_label.pack()"""
+    pw_settings_main.bind(
+        "<Configure>",
+        lambda event: Variables.resize_width(
+            event, Variables.pw_settings_main, Variables.window_width // 3, 4
+        ),
+    )
+
+    # frame_set_left = tk.Frame(pw_settings, bg=bg_color)
+    # disp.pw_menu_robots.add(disp.info_frame)
+
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
         if ratio < min_ratio:
@@ -601,9 +675,15 @@ class Variables:
 
     def on_bot_menu(event) -> None:
         Variables.pw_rest1.pack_forget()
+        Variables.settings.pack_forget()
         Variables.menu_robots.pack(fill="both", expand="yes")
         # TreeTable.bot_menu
         # Variables.bot_event_prev
+
+    def on_settings() -> None:
+        Variables.pw_rest1.pack_forget()
+        Variables.menu_robots.pack_forget()
+        Variables.settings.pack(fill="both", expand="yes")
 
 
 def on_trade_state(event) -> None:
@@ -626,6 +706,7 @@ def on_trade_state(event) -> None:
 
 def on_f3_reload() -> None:
     Variables.menu_robots.pack_forget()
+    Variables.settings.pack_forget()
     Variables.pw_rest1.pack(fill="both", expand="yes")
     Variables.f3 = True
 

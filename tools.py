@@ -418,7 +418,7 @@ class Tool(Instrument):
                     "time": datetime.now(tz=timezone.utc),
                     "warning": True,
                     "emi": bot_name,
-                    "bot_log": True, 
+                    "bot_log": True,
                 }
             )
 
