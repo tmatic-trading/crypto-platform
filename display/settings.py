@@ -3,16 +3,20 @@ import tkinter as tk
 from collections import OrderedDict
 from pathlib import Path
 from tkinter import StringVar, ttk
+from display.variables import Variables as disp
 
 from dotenv import dotenv_values, set_key
 
 
 class SettingsApp:
-    def __init__(self, root):
+    def __init__(self, root: tk.Frame):
         self.root_frame = root
-        self.bg_select_color = "#b3d7ff"
-        self.bg_entry = "white"
-        self.bg_active = "#ffcccc"
+        self.root_frame.config(bg=disp.bg_color)
+        self.root_frame.grid_columnconfigure(0, weight=1)
+        self.root_frame.grid_rowconfigure(0, weight=1)
+        self.bg_select_color = disp.bg_select_color
+        self.bg_entry = disp.light_gray_color
+        self.bg_active = disp.bg_select_color
         self.bg_changed = "yellow"
 
         self.title_color = tk.Label(root, text=" TRADING: ")["background"]
@@ -103,7 +107,7 @@ class SettingsApp:
         self.settings_center = []
 
         self.env_file_path = Path(".env.Settings")
-        self.settings_bottom = tk.Frame(self.root_frame)
+        self.settings_bottom = tk.Frame(self.root_frame, bg=disp.bg_color)
         self.setting_button = tk.Button(
             self.settings_bottom,
             bg=self.bg_select_color,
@@ -387,17 +391,19 @@ class SettingsApp:
 
 
     def create_static_frames(self):
+        static_frames_list = []
         widget_row = 0
-        self.settings_top = tk.Frame(self.root_frame, bg=self.bg_select_color)
-        self.settings_top.grid(row=widget_row, column=0, sticky="EW", columnspan=2)
+        self.settings_top = tk.Frame(self.root_frame, bg=disp.bg_color)
+        self.settings_top.grid_columnconfigure(0, weight=1)
+        #self.settings_top.grid_rowconfigure(0, weight=1)
+        self.settings_top.grid(row=widget_row, column=0, sticky="W", columnspan=3)
         self.setting_label = tk.Label(
             self.settings_top,
-            text="Under development",
-            bg=self.bg_select_color,
+            text="The settings are located in the .env.Settings file.\n",
+            bg=disp.bg_color,
         )
+        static_frames_list.append(self.settings_top)
         self.setting_label.pack()
-
-        static_frames_list = []
 
         # Custom style for the Combobox and Entry widgets
         ttk.Style().map(
@@ -427,13 +433,15 @@ class SettingsApp:
             if setting != "MARKET_LIST":
                 widget_row += 1
                 self.common_col_0[setting] = tk.Frame(self.root_frame)
-                self.common_col_0[setting].grid(row=widget_row, column=0, sticky="E")
+                l = tk.Label(self.root_frame, bg=disp.bg_color)
+                l.grid(row=widget_row, column=0, sticky="W")
+                self.common_col_0[setting].grid(row=widget_row, column=1, sticky="W")
                 self.common_col_0_label[setting] = tk.Label(
-                    self.common_col_0[setting], text=setting + self.indent
+                    self.common_col_0[setting], text=setting + self.indent, bg=disp.bg_color
                 )
                 self.common_col_0_label[setting].pack()
                 self.common_col_1[setting] = tk.Frame(self.root_frame)
-                self.common_col_1[setting].grid(row=widget_row, column=1, sticky="W")
+                self.common_col_1[setting].grid(row=widget_row, column=2, sticky="W")
                 self.common_trace_changed[setting].trace_add(
                     "write", self.common_trace_callback
                 )
@@ -499,18 +507,23 @@ class SettingsApp:
             frame.update_idletasks()
             self.static_frames_height += frame.winfo_reqheight()
 
-        self.root_frame.grid_columnconfigure(0, weight=10)
-        self.root_frame.grid_columnconfigure(1, weight=12)
+        self.root_frame.grid_columnconfigure(0, weight=1)
+        self.root_frame.grid_columnconfigure(1, weight=2)
+        self.root_frame.grid_columnconfigure(2, weight=2)
 
         # Draw blank frames. They are of no use
         self.blank_row = []
         self.blank_label = []
         for i in range(len(self.market_list)):
             widget_row += 1
-            self.blank_row.append(tk.Frame(self.root_frame))
-            self.blank_row[i].grid(row=widget_row, column=0, sticky="EW", columnspan=2)
-            self.blank_label.append(tk.Label(self.blank_row[i], text=""))
+            self.blank_row.append(tk.Frame(self.root_frame, bg=disp.bg_color))
+            self.blank_row[i].grid(row=widget_row, column=0, sticky="EW", columnspan=3)
+            self.blank_label.append(tk.Label(self.blank_row[i], text="", bg=disp.bg_color))
             self.blank_label[i].pack()
+
+        widget_row += 1
+        l = tk.Label(self.root_frame, text="\n", bg=disp.bg_color)
+        l.grid(row=widget_row, column=0, sticky="W", columnspan=3)     
 
         # Draw grid representing settings for markets
         self.market_col_0 = {}
@@ -522,13 +535,15 @@ class SettingsApp:
             if setting != "CONNECTED":
                 widget_row += 1
                 self.market_col_0[setting] = tk.Frame(self.root_frame)
-                self.market_col_0[setting].grid(row=widget_row, column=0, sticky="E")
+                l = tk.Label(self.root_frame, bg=disp.bg_color)
+                l.grid(row=widget_row, column=0, sticky="W")
+                self.market_col_0[setting].grid(row=widget_row, column=1, sticky="W")
                 self.market_col_0_label[setting] = tk.Label(
-                    self.market_col_0[setting], text=setting + self.indent
+                    self.market_col_0[setting], text=setting + self.indent, bg=disp.bg_color
                 )
                 self.market_col_0_label[setting].pack(side="left", fill="both")
                 self.market_col_1[setting] = tk.Frame(self.root_frame)
-                self.market_col_1[setting].grid(row=widget_row, column=1, sticky="W")
+                self.market_col_1[setting].grid(row=widget_row, column=2, sticky="W")
                 self.market_trace[setting].trace_add(
                     "write", self.market_trace_callback
                 )
@@ -553,17 +568,17 @@ class SettingsApp:
                     self.entry_market[setting].pack()
 
         widget_row += 1
-        self.settings_indent_row = tk.Frame(self.root_frame)
+        self.settings_indent_row = tk.Frame(self.root_frame, bg=disp.bg_color)
         self.settings_indent_row.grid(
-            row=widget_row, column=0, sticky="EW", columnspan=2
+            row=widget_row, column=0, sticky="EW", columnspan=3
         )
         self.settings_indent_label = tk.Label(
-            self.settings_indent_row, text="", fg="red"
+            self.settings_indent_row, text="", bg=disp.bg_color
         )
         self.settings_indent_label.pack()
 
         widget_row += 1
-        self.settings_bottom.grid(row=widget_row, column=0, sticky="EW", columnspan=2)
+        self.settings_bottom.grid(row=widget_row, column=0, sticky="EW", columnspan=3)
         for i in range(widget_row):
             self.root_frame.grid_rowconfigure(i, weight=0)
 

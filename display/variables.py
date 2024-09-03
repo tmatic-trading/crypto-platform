@@ -645,7 +645,7 @@ class Variables:
     t_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)
     t_label.pack(anchor="nw")
     frame_settings = tk.Frame(frame_settings_right_main)
-    frame_settings.pack()
+    frame_settings.pack(fill="both", expand=True)
     """p_label = tk.Label(frame_settings, text="Set up", bg=bg_color)
     p_label.pack()"""
     pw_settings_main.bind(
