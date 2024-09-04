@@ -4,6 +4,7 @@ import tkinter.font
 from datetime import datetime
 from tkinter import ttk
 
+import services as service
 from api.api import Markets
 from common.variables import Variables as var
 
@@ -599,64 +600,72 @@ class Variables:
 
     # Settings widgets
 
-    pw_settings = tk.PanedWindow(
-        settings,
-        orient=tk.VERTICAL,
-        bd=0,
-        sashwidth=0,
-        height=1,
-    )
-    pw_settings.pack(fill="both", expand="yes")
-    frame_settings_top = tk.Frame(pw_settings, bg=light_gray_color)
-    frame_settings_top_title = tk.Frame(frame_settings_top, bg=light_gray_color)
-    frame_settings_top_line = tk.Frame(frame_settings_top, bg=title_color)
-    frame_settings_top_title.pack(fill="both", side="top")
-    frame_settings_top_line.pack(fill="both", expand=True, side="top")
-    label_settings_title = tk.Label(
-        frame_settings_top_title,
+    s_top = tk.Frame(settings, bg=light_gray_color)
+    s_top.pack(fill="both", side="top")
+    s_title = tk.Frame(settings, bg=light_gray_color)
+    s_title.pack(fill="both", side="top")
+    s_top_line = tk.Frame(s_top, bg=title_color)
+    s_top_line.pack(fill="both", expand=True, side="top")
+    label_title = tk.Label(
+        s_title,
         text="SETTINGS",
         bg=light_gray_color,
         font=("", symbol_height + 1, "bold"),
     )
-    label_settings_title.pack()
-    frame_settings_main = tk.Frame(pw_settings, bg=bg_color)
-    pw_settings.add(frame_settings_top)
-    pw_settings.add(frame_settings_main)
-    pw_settings_main = tk.PanedWindow(
-        frame_settings_main,
+    label_title.pack()
+
+    s_main = tk.Frame(settings, bg=bg_color)
+    s_main.pack(fill="both", expand=True)
+    s_pw_main = tk.PanedWindow(
+        s_main,
         orient=tk.HORIZONTAL,
         bd=0,
         sashwidth=0,
         height=1,
     )
-    pw_settings_main.pack(fill="both", expand="yes")
-    frame_settings_left = tk.Frame(pw_settings_main, padx=5, pady=5, bg=bg_color)
-    frame_settings_right = tk.Frame(pw_settings_main, bg=bg_color)
-    frame_settings_right_line = tk.Frame(frame_settings_right)
-    frame_settings_right_main = tk.Frame(
-        frame_settings_right, padx=5, pady=5, bg=bg_color
+    s_pw_main.pack(fill="both", expand="yes")
+    s_left = tk.Frame(s_pw_main, padx=5, pady=5, bg=bg_color)
+    s_right = tk.Frame(s_pw_main, bg=bg_color)
+    s_pw_main.add(s_left)
+    s_pw_main.add(s_right)
+    v_line = tk.Frame(s_right)
+    v_line.pack(fill="both", side="left")
+    s_set = tk.Frame(s_right, padx=5, pady=5, bg=bg_color)
+    s_set.pack(fill="both", expand=True, side="left")
+
+    canvas = tk.Canvas(s_set, borderwidth=0, bg=bg_color, highlightthickness=0)
+    canvas.grid(row=0, column=0, sticky="NSEW")
+    s_set.grid_columnconfigure(0, weight=1)
+    s_set.grid_rowconfigure(0, weight=1)
+    scroll = AutoScrollbar(s_set, orient="vertical")
+    scroll.config(command=canvas.yview)
+    scroll.grid(row=0, column=1, sticky="NS")
+    canvas.config(yscrollcommand=scroll.set)
+    settings_page = tk.Frame(canvas, bg=bg_color, borderwidth=0)
+    settings_page.config(height=800)
+    id = canvas.create_window((0, 0), window=settings_page, anchor="nw")
+    canvas.bind(
+        "<Configure>",
+        lambda event, id=id, can=canvas: service.event_width(event, id, can),
     )
-    frame_settings_right_line.pack(fill="both", side="left")
-    frame_settings_right_main.pack(fill="both", expand=True, side="left")
-    pw_settings_main.add(frame_settings_left)
-    pw_settings_main.add(frame_settings_right)
-    frame_tips = tk.Frame(frame_settings_left, bg=light_gray_color)
+    settings_page.bind(
+        "<Configure>",
+        lambda event: service.event_config(
+            event, Variables.canvas, Variables.settings_page, 5
+        ),
+    )
+    settings_page.grid_columnconfigure(0, weight=1)
+    settings_page.grid_rowconfigure(0, weight=1)
+    frame_tips = tk.Frame(s_left, bg=light_gray_color)
     frame_tips.pack(fill="both", expand=True)
     t_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)
     t_label.pack(anchor="nw")
-    frame_settings = tk.Frame(frame_settings_right_main)
-    frame_settings.pack(fill="both", expand=True)
-    """p_label = tk.Label(frame_settings, text="Set up", bg=bg_color)
-    p_label.pack()"""
-    pw_settings_main.bind(
+    s_pw_main.bind(
         "<Configure>",
         lambda event: Variables.resize_width(
-            event, Variables.pw_settings_main, Variables.window_width // 3, 4
+            event, Variables.s_pw_main, Variables.window_width // 3, 4
         ),
     )
-
-    # frame_set_left = tk.Frame(pw_settings, bg=bg_color)
-    # disp.pw_menu_robots.add(disp.info_frame)
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width

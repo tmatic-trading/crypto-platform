@@ -19,8 +19,7 @@ from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
 
-
-settings = SettingsApp(disp.frame_settings)
+settings = SettingsApp(disp.settings_page)
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction
 Bybit.transaction = Function.transaction

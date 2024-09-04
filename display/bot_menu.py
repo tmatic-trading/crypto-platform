@@ -103,21 +103,14 @@ class SettingsApp:
         id = canvas.create_window((0, 0), window=self.brief_frame, anchor="nw")
         canvas.bind(
             "<Configure>",
-            lambda event, id=id, can=canvas: self.event_width(event, id, can),
+            lambda event, id=id, can=canvas: service.event_width(event, id, can),
         )
         self.brief_frame.bind(
-            "<Configure>", lambda event: self.event_config(event, canvas)
+            "<Configure>", lambda event: service.event_config(event, canvas, self.brief_frame, self.padx)
         )
         self.brief_frame.grid_columnconfigure(0, weight=1)
         self.brief_frame.grid_rowconfigure(0, weight=1)
         self.modules = dict()
-
-    def event_config(self, event, canvas_event):
-        canvas_event.configure(scrollregion=canvas_event.bbox("all"))
-        self.wrap()
-
-    def event_width(self, event, canvas_id, canvas_event):
-        canvas_event.itemconfig(canvas_id, width=event.width)
 
     def onFrameConfigure(self, event):
         """Reset the scroll region to encompass the inner frame"""
@@ -1259,16 +1252,16 @@ info_left.pack(fill="both", side="left")
 info_right.pack(fill="both", expand=True, side="left")
 disp.pw_bot_info.add(disp.bot_note)
 disp.pw_bot_info.add(disp.frame_strategy)
-"""disp.pw_ratios[disp.pw_bot_info] = 10
+disp.pw_ratios[disp.pw_bot_info] = 3
 disp.pw_bot_info.bind(
     "<Configure>",
     lambda event: disp.resize_height(
         event, disp.pw_bot_info, disp.pw_ratios[disp.pw_bot_info]
     ),
-)"""
-"""disp.pw_bot_info.bind(
+)
+disp.pw_bot_info.bind(
     "<ButtonRelease-1>", lambda event: disp.on_sash_move(event, disp.pw_bot_info)
-)"""
+)
 disp.pw_menu_robots.add(menu_frame)
 disp.pw_menu_robots.add(disp.info_frame)
 disp.pw_menu_robots.bind(

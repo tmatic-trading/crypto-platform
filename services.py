@@ -1,3 +1,4 @@
+import tkinter as tk
 import traceback
 from collections import OrderedDict
 from datetime import datetime, timezone
@@ -356,3 +357,18 @@ def format_message(market: str, message: str, tm=None) -> str:
         text = text[0]
 
     return text
+
+
+def wrap(frame: tk.Frame, padx):
+    for child in frame.winfo_children():
+        if type(child) is tk.Label:
+            child.config(wraplength=frame.winfo_width() - padx * 2)
+
+
+def event_config(event, canvas_event: tk.Canvas, frame: tk.Frame, padx: int):
+    canvas_event.configure(scrollregion=canvas_event.bbox("all"))
+    wrap(frame=frame, padx=padx)
+
+
+def event_width(event, canvas_id, canvas_event: tk.Canvas):
+    canvas_event.itemconfig(canvas_id, width=event.width)
