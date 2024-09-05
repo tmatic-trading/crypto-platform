@@ -93,9 +93,11 @@ class SettingsApp:
         self.modules = dict()
 
     def onFrameConfigure(self, event):
-        """Reset the scroll region to encompass the inner frame"""
+        """
+        Reset the scroll region to encompass the inner frame
+        """
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        self.wrap()
+        service.wrap(self.brief_frame, padx=self.padx)
 
     def name_trace_callback(self, item, index, mode):
         name = item.replace(str(self), "")
@@ -379,7 +381,7 @@ class SettingsApp:
             fg=disp.gray_color,
             justify=tk.LEFT,
         ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        self.wrap()
+        service.wrap(self.brief_frame, padx=self.padx)
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
@@ -436,7 +438,7 @@ class SettingsApp:
                 justify=tk.LEFT,
             )
             res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-            self.wrap()
+            service.wrap(self.brief_frame, padx=self.padx)
         else:
             self.display_error_message(bot_name=bot_name)
 
@@ -652,7 +654,7 @@ class SettingsApp:
             self.bot_entry["Name"].delete(0, tk.END)
             self.bot_entry["Name"].insert(0, bot_name)
             self.button.pack(anchor="nw", padx=50, pady=20)
-            self.wrap()
+            service.wrap(self.brief_frame, padx=self.padx)
         else:
             self.display_error_message(bot_name=bot_name)
 
@@ -710,7 +712,7 @@ class SettingsApp:
             state="disabled",
         )
         self.button.pack(anchor="nw", padx=50, pady=10)
-        self.wrap()
+        service.wrap(self.brief_frame, padx=self.padx)
 
     def new(self):
         if disp.bot_name:
@@ -769,7 +771,7 @@ class SettingsApp:
         res_label.pack(
             anchor="nw", padx=self.padx, pady=self.pady, fill="both", expand=True
         )
-        self.wrap()
+        service.wrap(self.brief_frame, padx=self.padx)
 
     def show(self, bot_name):
         if bot_name != disp.bot_event_prev:
@@ -813,11 +815,6 @@ class SettingsApp:
                 pass
         else:
             self.display_error_message(bot_name=bot_name)
-
-    def wrap(self):
-        for child in self.brief_frame.winfo_children():
-            if type(child) is tk.Label:
-                child.config(wraplength=self.brief_frame.winfo_width() - self.padx * 2)
 
     def switch(self, option: str) -> None:
         if option == "table":

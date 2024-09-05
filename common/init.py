@@ -16,7 +16,6 @@ from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
 
-db_sqlite = var.env["SQLITE_DATABASE"]
 var.working_directory = os.path.abspath(os.getcwd())
 
 
@@ -343,7 +342,7 @@ class Init(WS, Variables):
 
 def setup_database_connecion() -> None:
     try:
-        var.connect_sqlite = sqlite3.connect(db_sqlite, check_same_thread=False)
+        var.connect_sqlite = sqlite3.connect(var.db_sqlite, check_same_thread=False)
         var.connect_sqlite.row_factory = sqlite3.Row
         var.cursor_sqlite = var.connect_sqlite.cursor()
         var.error_sqlite = Error

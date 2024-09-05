@@ -3,6 +3,7 @@ import tkinter as tk
 import tkinter.font
 from datetime import datetime
 from tkinter import ttk
+import webbrowser
 
 import services as service
 from api.api import Markets
@@ -655,10 +656,12 @@ class Variables:
     s_set = tk.Frame(s_right, padx=5, pady=5, bg=bg_color)
     s_set.pack(fill="both", expand=True, side="left")
     settings_page = ScrollFrame(s_set, bg=bg_color)
-    frame_tips = tk.Frame(s_left, bg=light_gray_color)
-    frame_tips.pack(fill="both", expand=True)
-    t_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)
-    t_label.pack(anchor="nw")
+    frame_tips = ScrollFrame(s_left, bg=light_gray_color)
+    s_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)
+    s_label.config(font=("", symbol_height, "bold"))
+    s_label.pack(anchor="nw")
+    tips = tk.Label(frame_tips, text="", bg=light_gray_color, justify=tk.LEFT)
+    tips.pack(anchor="nw")
     s_pw_main.bind(
         "<Configure>",
         lambda event: Variables.resize_width(
@@ -1042,6 +1045,18 @@ class TreeTable:
     bot_position: TreeviewTable
     bot_orders: TreeviewTable
     bot_results: TreeviewTable
+
+
+class ClickLabel(tk.Label):
+    def __init__(self, parent: tk.Frame, link: str, **kwags):
+        super().__init__(parent, **kwags)
+        self.config(cursor="hand2", fg="blue", bg=Variables.light_gray_color)
+        self.bind("<Button-1>", lambda e: on_label_click(link))
+        self.pack(anchor="nw")
+
+
+def on_label_click(url):
+    webbrowser.open_new(url)
 
 
 def text_ignore(event):

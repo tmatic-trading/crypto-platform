@@ -46,6 +46,7 @@ def setup_logger():
 
 class Variables:
     env = dotenv_values(".env")
+    db_sqlite = env["SQLITE_DATABASE"]
     market_list = env["MARKET_LIST"].replace(",", " ").split()
     tmp = OrderedDict()
     for market in market_list:

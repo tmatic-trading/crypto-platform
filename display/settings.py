@@ -7,7 +7,10 @@ from tkinter import StringVar, ttk
 from dotenv import dotenv_values, set_key
 
 import services as service
+from common.variables import Variables as var
+from display.tips import Tips
 from display.variables import Variables as disp
+from display.variables import ClickLabel
 
 
 class SettingsApp:
@@ -34,7 +37,6 @@ class SettingsApp:
         for setting in self.common_settings.keys():
             self.common_trace_changed[setting] = StringVar(name=setting + str(self))
             self.common_trace_changed[setting].set(self.common_settings[setting])
-        self.common_def = {}
         self.common_defaults = {}
         self.common_flag = {}
 
@@ -91,7 +93,7 @@ class SettingsApp:
             elif market == "Deribit":
                 pass
             self.market_defaults[market]["CONNECTED"] = "YES"
-            self.market_defaults[market]["TESTNET"] = "ACTIVE"
+            self.market_defaults[market]["TESTNET"] = "YES"
 
         self.indent = "  "
         self.entry_width = 45
@@ -120,6 +122,7 @@ class SettingsApp:
         self.setting_button.pack()
         self.setting_button.config(state="disabled")
         self.initialized = False
+        self.click_label = tk.Label()
 
     def load(self):
         if not os.path.isfile(self.env_file_path):
@@ -496,6 +499,10 @@ class SettingsApp:
                     values = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
                     self.entry_common[setting]["values"] = values
                     self.entry_common[setting].current(4)
+                self.entry_common[setting].w_name = setting
+                self.entry_common[setting].bind(
+                    "<FocusIn>", lambda event: self.on_tip(event)
+                )
                 self.entry_common[setting].pack()
                 static_frames_list.append(self.common_col_0[setting])
                 # Set the initial value for common setting
@@ -564,7 +571,7 @@ class SettingsApp:
                         state="readonly",
                         style="default.TCombobox",
                     )
-                    self.entry_market[setting]["values"] = ("ACTIVE", "OFF")
+                    self.entry_market[setting]["values"] = ("YES", "NO")
                     self.entry_market[setting].current(0)
                     self.entry_market[setting].pack()
                 else:
@@ -575,6 +582,10 @@ class SettingsApp:
                         style="default.TEntry",
                     )
                     self.entry_market[setting].pack()
+                self.entry_market[setting].w_name = setting
+                self.entry_market[setting].bind(
+                    "<FocusIn>", lambda event: self.on_tip(event)
+                )
 
         widget_row += 1
         self.settings_indent_row = tk.Frame(self.root_frame, bg=disp.bg_color)
@@ -590,6 +601,25 @@ class SettingsApp:
         self.settings_bottom.grid(row=widget_row, column=0, sticky="EW", columnspan=3)
         for i in range(widget_row):
             self.root_frame.grid_rowconfigure(i, weight=0)
+
+    def on_tip(self, event) -> None:
+        """
+        Displays a recommendation when the widget has focus.
+        """
+        setting = event.widget.w_name
+        text = Tips[setting].value
+        if setting == "SQLITE_DATABASE":
+            text = Tips.SQLITE_DATABASE.value.format(DATABASE=var.db_sqlite)
+        disp.tips["text"] = setting + "\n\n" + text
+        disp.tips.update()
+        service.wrap(disp.frame_tips, padx=5)
+        self.click_label.destroy()
+        if "WS" in setting or "HTTP" in setting:
+            link = Tips.docs.value[self.selected_frame.market][setting]
+            self.click_label = ClickLabel(disp.frame_tips, text=link, link=link)
+        elif "API" in setting:
+            link = Tips.api.value[self.selected_frame.market][setting]
+            self.click_label = ClickLabel(disp.frame_tips, text=link, link=link)
 
 
 class DraggableFrame(tk.Checkbutton):
@@ -655,10 +685,3 @@ class DraggableFrame(tk.Checkbutton):
             self.app.click_market = "true"
             self.app.set_market_fields(self.market)
             self.app.click_market = "false"
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.geometry("1000x600")
-    app = SettingsApp(root)
-    root.mainloop()
