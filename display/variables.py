@@ -28,6 +28,30 @@ class AutoScrollbar(tk.Scrollbar):
         tk.Scrollbar.set(self, low, high)
 
 
+class ScrollFrame(tk.Frame):
+    def __init__(self, parent: tk.Frame, bg: str):
+        super().__init__(parent)
+        canvas = tk.Canvas(parent, borderwidth=0, highlightthickness=0, bg=bg)
+        canvas.grid(row=0, column=0, sticky="NSEW")
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(0, weight=1)
+        scroll = AutoScrollbar(parent, orient="vertical")
+        scroll.config(command=canvas.yview)
+        scroll.grid(row=0, column=1, sticky="NS")
+        canvas.config(yscrollcommand=scroll.set)
+        page = tk.Frame(canvas, bg=bg, borderwidth=0)
+        id = canvas.create_window((0, 0), window=page, anchor="nw")
+        canvas.bind(
+            "<Configure>",
+            lambda event, id=id, can=canvas: service.event_width(event, id, can),
+        )
+        page.bind(
+            "<Configure>",
+            lambda event: service.event_config(event, canvas, page, 5),
+        )
+        self.__dict__ = page.__dict__
+
+
 class CustomButton(tk.Frame):
     def __init__(
         self, root, master, text, bg, fg, command=None, menu_items=None, **kwargs
@@ -600,12 +624,10 @@ class Variables:
 
     # Settings widgets
 
-    s_top = tk.Frame(settings, bg=light_gray_color)
-    s_top.pack(fill="both", side="top")
     s_title = tk.Frame(settings, bg=light_gray_color)
     s_title.pack(fill="both", side="top")
-    s_top_line = tk.Frame(s_top, bg=title_color)
-    s_top_line.pack(fill="both", expand=True, side="top")
+    s_top_line = tk.Frame(settings, bg=title_color)
+    s_top_line.pack(fill="both")
     label_title = tk.Label(
         s_title,
         text="SETTINGS",
@@ -628,34 +650,11 @@ class Variables:
     s_right = tk.Frame(s_pw_main, bg=bg_color)
     s_pw_main.add(s_left)
     s_pw_main.add(s_right)
-    v_line = tk.Frame(s_right)
+    v_line = tk.Frame(s_right, bg=title_color)
     v_line.pack(fill="both", side="left")
     s_set = tk.Frame(s_right, padx=5, pady=5, bg=bg_color)
     s_set.pack(fill="both", expand=True, side="left")
-
-    canvas = tk.Canvas(s_set, borderwidth=0, bg=bg_color, highlightthickness=0)
-    canvas.grid(row=0, column=0, sticky="NSEW")
-    s_set.grid_columnconfigure(0, weight=1)
-    s_set.grid_rowconfigure(0, weight=1)
-    scroll = AutoScrollbar(s_set, orient="vertical")
-    scroll.config(command=canvas.yview)
-    scroll.grid(row=0, column=1, sticky="NS")
-    canvas.config(yscrollcommand=scroll.set)
-    settings_page = tk.Frame(canvas, bg=bg_color, borderwidth=0)
-    settings_page.config(height=800)
-    id = canvas.create_window((0, 0), window=settings_page, anchor="nw")
-    canvas.bind(
-        "<Configure>",
-        lambda event, id=id, can=canvas: service.event_width(event, id, can),
-    )
-    settings_page.bind(
-        "<Configure>",
-        lambda event: service.event_config(
-            event, Variables.canvas, Variables.settings_page, 5
-        ),
-    )
-    settings_page.grid_columnconfigure(0, weight=1)
-    settings_page.grid_rowconfigure(0, weight=1)
+    settings_page = ScrollFrame(s_set, bg=bg_color)
     frame_tips = tk.Frame(s_left, bg=light_gray_color)
     frame_tips.pack(fill="both", expand=True)
     t_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)

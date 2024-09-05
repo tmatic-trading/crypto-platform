@@ -39,7 +39,7 @@ from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 
-from .variables import AutoScrollbar, TreeTable, TreeviewTable
+from .variables import AutoScrollbar, ScrollFrame, TreeTable, TreeviewTable
 from .variables import Variables as disp
 
 
@@ -89,27 +89,7 @@ class SettingsApp:
 
         # Create initial frames
 
-        canvas = tk.Canvas(
-            info_right, borderwidth=0, bg=disp.bg_color, highlightthickness=0
-        )
-        canvas.grid(row=0, column=0, sticky="NSEW")
-        info_right.grid_columnconfigure(0, weight=1)
-        info_right.grid_rowconfigure(0, weight=1)
-        scroll = AutoScrollbar(info_right, orient="vertical")
-        scroll.config(command=canvas.yview)
-        scroll.grid(row=0, column=1, sticky="NS")
-        canvas.config(yscrollcommand=scroll.set)
-        self.brief_frame = tk.Frame(canvas, bg=disp.bg_color, borderwidth=0)
-        id = canvas.create_window((0, 0), window=self.brief_frame, anchor="nw")
-        canvas.bind(
-            "<Configure>",
-            lambda event, id=id, can=canvas: service.event_width(event, id, can),
-        )
-        self.brief_frame.bind(
-            "<Configure>", lambda event: service.event_config(event, canvas, self.brief_frame, self.padx)
-        )
-        self.brief_frame.grid_columnconfigure(0, weight=1)
-        self.brief_frame.grid_rowconfigure(0, weight=1)
+        self.brief_frame = ScrollFrame(info_right, bg=disp.bg_color)
         self.modules = dict()
 
     def onFrameConfigure(self, event):
