@@ -1,9 +1,10 @@
 import platform
 import tkinter as tk
 import tkinter.font
+import webbrowser
 from datetime import datetime
 from tkinter import ttk
-import webbrowser
+from typing import Callable
 
 import services as service
 from api.api import Markets
@@ -250,7 +251,7 @@ class Variables:
     pw_rest1 = tk.PanedWindow(
         menu_frame, orient=tk.HORIZONTAL, sashrelief="raised", bd=0, sashwidth=0
     )
-    pw_rest1.pack(fill="both", expand="yes")
+    # pw_rest1.pack(fill="both", expand="yes")
 
     # This technical PanedWindow contains orderbook, instruments, positions,
     # orders, trades, fundings, results, account, bots
@@ -369,7 +370,7 @@ class Variables:
             "<F9> Trading ON",
             "<F7> Bot Menu",
             "<F3> Reload All",
-            # "Settings",
+            "Settings",
         ],  # , "Settings", "About"],
     )
     menu_button.pack(side="left", padx=4)
@@ -660,7 +661,17 @@ class Variables:
     s_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)
     s_label.config(font=("", symbol_height, "bold"))
     s_label.pack(anchor="nw")
-    tips = tk.Label(frame_tips, text="", bg=light_gray_color, justify=tk.LEFT)
+    tips = tk.Label(
+        frame_tips,
+        text=(
+            "Make changes to the application settings. Here you can connect "
+            + "or disconnect the exchange and configure the connection. After "
+            + "making changes, click the `Save` button. The changes will take "
+            + "effect after rebooting <F3> or restarting the application."
+        ),
+        bg=light_gray_color,
+        justify=tk.LEFT,
+    )
     tips.pack(anchor="nw")
     s_pw_main.bind(
         "<Configure>",
@@ -688,13 +699,16 @@ class Variables:
         Variables.pw_rest1.pack_forget()
         Variables.settings.pack_forget()
         Variables.menu_robots.pack(fill="both", expand="yes")
-        # TreeTable.bot_menu
-        # Variables.bot_event_prev
 
     def on_settings() -> None:
         Variables.pw_rest1.pack_forget()
         Variables.menu_robots.pack_forget()
         Variables.settings.pack(fill="both", expand="yes")
+
+    def on_main(event="") -> None:
+        Variables.settings.pack_forget()
+        Variables.menu_robots.pack_forget()
+        Variables.pw_rest1.pack(fill="both", expand="yes")
 
 
 def on_trade_state(event) -> None:
@@ -711,7 +725,7 @@ def on_trade_state(event) -> None:
         Variables.f9 = "ON"
         Variables.label_f9.config(bg=Variables.green_color)
         for market in var.market_list:
-            Markets[market].logNumFatal = 0
+            Markets[market].logNumFatal = ""
     Variables.label_f9["text"] = Variables.f9
 
 
@@ -1048,10 +1062,20 @@ class TreeTable:
 
 
 class ClickLabel(tk.Label):
-    def __init__(self, parent: tk.Frame, link: str, **kwags):
+    """
+    Creates a custom tkinter clickable label that either calls a method or
+    opens a web page using the link parameter.
+    """
+
+    def __init__(
+        self, parent: tk.Frame, link: str = None, method: Callable = None, **kwags
+    ):
         super().__init__(parent, **kwags)
         self.config(cursor="hand2", fg="blue", bg=Variables.light_gray_color)
-        self.bind("<Button-1>", lambda e: on_label_click(link))
+        if link:
+            self.bind("<Button-1>", lambda e: on_label_click(link))
+        else:
+            self.bind("<Button-1>", method)
         self.pack(anchor="nw")
 
 

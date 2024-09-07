@@ -10,6 +10,7 @@ from api.bitmex.api_auth import API_auth as Bitmex_API_auth
 from api.bitmex.error import ErrorStatus as BitmexErrorStatus
 from api.deribit.api_auth import API_auth as Deribit_API_auth
 from api.deribit.error import ErrorStatus as DeribitErrorStatus
+from api.errors import Error
 from api.variables import Variables
 from common.variables import Variables as var
 
@@ -71,58 +72,14 @@ class Send(Variables):
                 # Make non-200s throw
                 response.raise_for_status()
             except Exception as exception:
-                exception = exception.__class__.__name__
-                if exception in ["ConnectionError", "ReadTimeout"]:
-                    status = "RETRY"
-                    error_message = exception + ". Unable to contact API"
-                elif exception == "Timeout":
-                    status = "FATAL"
-                    error_message = exception
-                elif exception == "HTTPError":
-                    res = json.loads(response.text)
-                    status = GetErrorStatus.get_status(self.name, res)
-                    if status:
-                        error_message = res["error"]["message"]
-                    else:
-                        status = "IGNORE"
-                        error_message = (
-                            "Unexpected HTTPError" + " " + res["error"]["message"]
-                        )
-                else:
-                    status = "FATAL"
-                    error_message = "Unexpected error " + exception
-                logger_message = "On request %s %s - error - %s" % (
-                    verb,
-                    path,
-                    error_message,
+                if response:
+                    response = json.loads(response.text)
+                status = Error.handler(
+                    self, exception=exception, response=response, verb=verb, path=path
                 )
-                queue_message = {
-                    "market": self.name,
-                    "message": logger_message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
-                }
-                wait = 2
                 if status == "RETRY":
                     cur_retries += 1
-                    logger_message += f" - wait {wait} sec"
-                    self.logger.warning(logger_message)
-                elif status == "FATAL":
-                    logger_message += " - fatal. Reboot"
-                    queue_message["message"] = logger_message
-                    self.logger.error(logger_message)
-                    var.queue_info.put(queue_message)
-                    self.logNumFatal = status
-                    return status
-                elif status == "IGNORE":
-                    self.logger.warning(logger_message)
-                    var.queue_info.put(queue_message)
-                    return status
-                elif status == "BLOCK":
-                    logger_message += ". Trading stopped."
-                    self.logger.warning(logger_message)
-                    var.queue_info.put(queue_message)
-                    self.logNumFatal = status
+                else:
                     return status
             else:
                 if response:
@@ -141,4 +98,4 @@ class Send(Variables):
                     }
                 )
                 break
-            time.sleep(wait)
+            time.sleep(2)

@@ -32,7 +32,7 @@ class Bitmex(Variables):
         self.name = "Bitmex"
         self.data = dict()
         self.Api_auth = API_auth
-        Setup.variables(self, self.name)
+        Setup.variables(self)
         self.session = requests.Session()
         depth = "quote"
         if self.depth != "quote":
@@ -473,7 +473,7 @@ class Bitmex(Variables):
             self.ws.close()
         except Exception:
             pass
-        self.logNumFatal = "SETUP"
+        # self.logNumFatal = "SETUP"
 
     def transaction(self, **kwargs):
         """

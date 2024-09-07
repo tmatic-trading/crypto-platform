@@ -98,9 +98,18 @@ class ErrorStatus(Enum):
         "Invalid amount for isolated margin transfer",
         "Position has insufficient isolated margin",
     }
+    CANCEL = {
+        400: "Bad Request",
+        401: "Unauthorized",
+        404: "Not Found",
+    }
 
     def error_status(res):
         error = res["error"]["message"]
+        for status in ErrorStatus:
+            if error in status.value:
+                return status.name
+        error = res["error"]["code"]
         for status in ErrorStatus:
             if error in status.value:
                 return status.name

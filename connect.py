@@ -6,10 +6,11 @@ import botinit.init as botinit
 import common.init as common
 import functions
 import services as service
-from api.api import WS, Markets
+from api.api import WS, Markets, MetaMarket
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
+from api.init import Setup
 from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log
@@ -36,9 +37,12 @@ def setup(reload=False):
     parallel in threads to speed up the loading process.
     """
     clear_params()
+    settings.load()
     common.setup_database_connecion()
     threads = []
     for name in var.market_list:
+        if name in MetaMarket.dictionary:
+            Setup.variables(Markets[name])
         t = threading.Thread(target=setup_market, args=(Markets[name], reload))
         threads.append(t)
         t.start()
@@ -49,10 +53,19 @@ def setup(reload=False):
     functions.clear_klines()
     botinit.load_bots()
     functions.setup_klines()
+    if not var.market_list:
+        var.market_list = ["Fake"]
+        var.current_market = "Fake"
+        var.symbol = "BTCUSDT"
     functions.init_tables()
     bot_manager.create_bots_menu()
     bot_threads()
     settings.init()
+    if "Fake" in var.market_list:
+        disp.on_settings()
+        settings.return_main_page()
+    else:
+        disp.on_main()
 
 
 def setup_market(ws: Markets, reload=False):
@@ -104,7 +117,7 @@ def setup_market(ws: Markets, reload=False):
     if reload:
         WS.exit(ws)
         sleep(3)
-    while ws.logNumFatal:
+    while ws.logNumFatal not in ["", "CANCEL"]:
         var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)
         if ws.logNumFatal:
@@ -137,7 +150,12 @@ def setup_market(ws: Markets, reload=False):
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)
-        if ws.logNumFatal:
+        if ws.logNumFatal == "CANCEL":
+            var.market_list.remove(ws.name)
+            if var.market_list:
+                var.current_market = var.market_list[0]
+                var.symbol = var.env[var.current_market]["SYMBOLS"][0]
+        if ws.logNumFatal not in ["", "CANCEL"]:
             var.logger.info("\n\n")
             var.logger.info(
                 "Something went wrong while loading " + ws.name + ". Reboot.\n\n"
@@ -273,7 +291,7 @@ def refresh() -> None:
 
 
 def clear_params():
-    var.symbol = var.env[var.current_market]["SYMBOLS"][0]
+    var.market_list = []
 
 
 def bot_threads() -> None:
@@ -298,3 +316,7 @@ def on_closing(root, refresh_var):
     root.destroy()
     service.close(Markets)
     var.kline_update_active = False
+
+
+def init_fake():
+    Markets["Fake"]

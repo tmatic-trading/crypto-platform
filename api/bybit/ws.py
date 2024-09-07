@@ -1,19 +1,17 @@
 import json
 import threading
-from collections import OrderedDict
 from uuid import uuid4
 
 import services as service
+from api.bybit.erruni import Unify
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
-from services import exceptions_manager
 
 from .pybit.unified_trading import HTTP, WebSocket
 
 
-@exceptions_manager
 class Bybit(Variables):
     class Account(metaclass=MetaAccount):
         pass
@@ -26,7 +24,7 @@ class Bybit(Variables):
 
     def __init__(self):
         self.name = "Bybit"
-        Setup.variables(self, self.name)
+        Setup.variables(self)
         self.session: HTTP = HTTP(
             api_key=self.api_key,
             api_secret=self.api_secret,
@@ -85,15 +83,25 @@ class Bybit(Variables):
                 if self.Instrument[symbol].category == category:
                     lst.append(symbol)
             for symbol in lst:
-                self.subscribe_symbol(symbol=symbol)
+                error = self.subscribe_symbol(symbol=symbol)
+                if error:
+                    break
 
         def private_in_thread():
-            self.ws_private = WebSocket(
-                testnet=self.testnet,
-                channel_type="private",
-                api_key=self.api_key,
-                api_secret=self.api_secret,
-            )
+            try:
+                self.ws_private = WebSocket(
+                    testnet=self.testnet,
+                    channel_type="private",
+                    api_key=self.api_key,
+                    api_secret=self.api_secret,
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path="Private",
+                )
             self.ws_private.pinging = "pong"
 
         threads = []
@@ -105,10 +113,42 @@ class Bybit(Variables):
         threads.append(t)
         t.start()
         [thread.join() for thread in threads]
-        self.ws_private.wallet_stream(callback=self.__update_account)
-        self.ws_private.position_stream(callback=self.__update_position)
-        self.ws_private.order_stream(callback=self.__handle_order)
-        self.ws_private.execution_stream(callback=self.__handle_execution)
+        try:
+            self.ws_private.wallet_stream(callback=self.__update_account)
+        except Exception as exception:
+            Unify.error_handler(
+                self,
+                exception=exception,
+                verb="WS",
+                path="Private wallet_stream",
+            )
+        try:
+            self.ws_private.position_stream(callback=self.__update_position)
+        except Exception as exception:
+            Unify.error_handler(
+                self,
+                exception=exception,
+                verb="WS",
+                path="Private position_stream",
+            )
+        try:
+            self.ws_private.order_stream(callback=self.__handle_order)
+        except Exception as exception:
+            Unify.error_handler(
+                self,
+                exception=exception,
+                verb="WS",
+                path="Private order_stream",
+            )
+        try:
+            self.ws_private.execution_stream(callback=self.__handle_execution)
+        except Exception as exception:
+            Unify.error_handler(
+                self,
+                exception=exception,
+                verb="WS",
+                path="Private execution_stream",
+            )
 
     def __update_orderbook(self, values: dict, category: str) -> None:
         symbol = (self.ticker[(values["s"], category)], self.name)
@@ -289,7 +329,7 @@ class Bybit(Variables):
             self.ws_private.exit()
         except Exception:
             pass
-        self.logNumFatal = "SETUP"
+        # self.logNumFatal = "SETUP"
         self.logger.info(self.name + " - Websocket closed")
 
     def transaction(self, **kwargs):
@@ -332,8 +372,21 @@ class Bybit(Variables):
         ticker = instrument.ticker
         category = instrument.category
         if not self.ws[category].__class__.__name__ == "WebSocket":
-            self.ws[category] = WebSocket(testnet=self.testnet, channel_type=category)
+            try:
+                self.ws[category] = WebSocket(
+                    testnet=self.testnet, channel_type=category
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=category,
+                )
             self.ws[category].pinging = "pong"
+
+        # Linear
+
         if category == "linear":
             self.logger.info(
                 "ws subscription - orderbook_stream - category - "
@@ -341,25 +394,44 @@ class Bybit(Variables):
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].orderbook_stream(
-                depth=self.orderbook_depth,
-                symbol=ticker,
-                callback=lambda x: self.__update_orderbook(
-                    values=x["data"], category="linear"
-                ),
-            )
+            try:
+                self.ws[category].orderbook_stream(
+                    depth=self.orderbook_depth,
+                    symbol=ticker,
+                    callback=lambda x: self.__update_orderbook(
+                        values=x["data"], category="linear"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"orderbook_stream {symbol}",
+                )
             self.logger.info(
                 "ws subscription - ticker_stream - category - "
                 + category
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].ticker_stream(
-                symbol=ticker,
-                callback=lambda x: self.__update_ticker(
-                    values=x["data"], category="linear"
-                ),
-            )
+            try:
+                self.ws[category].ticker_stream(
+                    symbol=ticker,
+                    callback=lambda x: self.__update_ticker(
+                        values=x["data"], category="linear"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"ticker_stream {symbol}",
+                )
+
+        # Inverse
+
         elif category == "inverse":
             self.logger.info(
                 "ws subscription - orderbook_stream - category - "
@@ -367,25 +439,44 @@ class Bybit(Variables):
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].orderbook_stream(
-                depth=self.orderbook_depth,
-                symbol=ticker,
-                callback=lambda x: self.__update_orderbook(
-                    values=x["data"], category="inverse"
-                ),
-            )
+            try:
+                self.ws[category].orderbook_stream(
+                    depth=self.orderbook_depth,
+                    symbol=ticker,
+                    callback=lambda x: self.__update_orderbook(
+                        values=x["data"], category="inverse"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"orderbook_stream {symbol}",
+                )
             self.logger.info(
                 "ws subscription - ticker_stream - category - "
                 + category
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].ticker_stream(
-                symbol=ticker,
-                callback=lambda x: self.__update_ticker(
-                    values=x["data"], category="inverse"
-                ),
-            )
+            try:
+                self.ws[category].ticker_stream(
+                    symbol=ticker,
+                    callback=lambda x: self.__update_ticker(
+                        values=x["data"], category="inverse"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"ticker_stream {symbol}",
+                )
+
+        # Spot
+
         elif category == "spot":
             self.logger.info(
                 "ws subscription - orderbook_stream - category - "
@@ -393,25 +484,44 @@ class Bybit(Variables):
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].orderbook_stream(
-                depth=self.orderbook_depth,
-                symbol=ticker,
-                callback=lambda x: self.__update_orderbook(
-                    values=x["data"], category="spot"
-                ),
-            )
+            try:
+                self.ws[category].orderbook_stream(
+                    depth=self.orderbook_depth,
+                    symbol=ticker,
+                    callback=lambda x: self.__update_orderbook(
+                        values=x["data"], category="spot"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"orderbook_stream {symbol}",
+                )
             self.logger.info(
                 "ws subscription - ticker_stream - category - "
                 + category
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].ticker_stream(
-                symbol=ticker,
-                callback=lambda x: self.__update_ticker(
-                    values=x["data"], category="spot"
-                ),
-            )
+            try:
+                self.ws[category].ticker_stream(
+                    symbol=ticker,
+                    callback=lambda x: self.__update_ticker(
+                        values=x["data"], category="spot"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"ticker_stream {symbol}",
+                )
+
+        # Option
+
         elif category == "option":
             self.logger.info(
                 "ws subscription - orderbook_stream - category - "
@@ -419,25 +529,43 @@ class Bybit(Variables):
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].orderbook_stream(
-                depth=self.orderbook_depth,
-                symbol=ticker,
-                callback=lambda x: self.__update_orderbook(
-                    values=x["data"], category="option"
-                ),
-            )
+            try:
+                self.ws[category].orderbook_stream(
+                    depth=self.orderbook_depth,
+                    symbol=ticker,
+                    callback=lambda x: self.__update_orderbook(
+                        values=x["data"], category="option"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"orderbook_stream {symbol}",
+                )
             self.logger.info(
                 "ws subscription - ticker_stream - category -"
                 + category
                 + " - symbol - "
                 + str(symbol)
             )
-            self.ws[category].ticker_stream(
-                symbol=ticker,
-                callback=lambda x: self.__update_ticker(
-                    values=x["data"], category="option"
-                ),
-            )
+            try:
+                self.ws[category].ticker_stream(
+                    symbol=ticker,
+                    callback=lambda x: self.__update_ticker(
+                        values=x["data"], category="option"
+                    ),
+                )
+            except Exception as exception:
+                Unify.error_handler(
+                    self,
+                    exception=exception,
+                    verb="WS",
+                    path=f"ticker_stream {symbol}",
+                )
+
+        return self.logNumFatal
 
     def unsubscribe_symbol(self, symbol: tuple):
         instrument = self.Instrument[symbol]

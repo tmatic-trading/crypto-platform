@@ -81,4 +81,3 @@ class Tips(Enum):
         },
     }
     TESTNET = "Select YES if you are using a test account, otherwise select NO."
-

@@ -10,6 +10,7 @@ from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
 from api.deribit.agent import Agent as DeribitAgent
 from api.deribit.ws import Deribit
+from api.fake import Fake
 from common.variables import Variables as var
 from services import display_exception
 
@@ -21,10 +22,14 @@ class MetaMarket(type):
     names = {"Bitmex": Bitmex, "Bybit": Bybit, "Deribit": Deribit}
 
     def __getitem__(self, item) -> Union[Bitmex, Bybit, Deribit]:
-        if item not in self.names:
-            raise ValueError(f"{item} not found")
         if item not in self.dictionary:
-            self.dictionary[item] = self.names[item]()
+            if item != "Fake":
+                try:
+                    self.dictionary[item] = self.names[item]()
+                except ValueError:
+                    raise ValueError(f"{item} not found")
+            elif item == "Fake":
+                self.dictionary[item] = Fake()
             return self.dictionary[item]
         else:
             return self.dictionary[item]
@@ -52,36 +57,36 @@ class WS(Variables):
                 Markets[self.name].start()
             except Exception as exception:
                 display_exception(exception)
-                self.logNumFatal = "SETUP"
+                # self.logNumFatal = "SETUP"
 
         def get_in_thread(method):
             try:
                 method(self)
             except Exception as exception:
                 display_exception(exception)
-                self.logNumFatal = "SETUP"
+                # self.logNumFatal = "SETUP"
 
         try:
             if WS.get_active_instruments(self):
-                return -1
+                return self.logNumFatal
         except Exception as exception:
             display_exception(exception)
             self.logger.error(self.name + " Instruments not loaded. Reboot.")
-            return -1
+            return self.logNumFatal
         try:
             Agents[self.name].value.activate_funding_thread(self)
         except:
             display_exception(exception)
             self.logger.error(self.name + " Error calling activate_funding_thread().")
-            return -1
+            return self.logNumFatal
         self.logNumFatal = ""
         try:
             if WS.open_orders(self):
-                return -1
+                return self.logNumFatal
         except Exception as exception:
             display_exception(exception)
             self.logger.error(self.name + " Orders not loaded. Reboot.")
-            return -1
+            return self.logNumFatal
         try:
             threads = []
             t = threading.Thread(target=start_ws_in_thread)
@@ -115,7 +120,7 @@ class WS(Variables):
             }
         )
 
-        return 0
+        return ""
 
     def exit(self: Markets) -> None:
         """

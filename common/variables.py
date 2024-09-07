@@ -45,29 +45,15 @@ def setup_logger():
 
 
 class Variables:
-    env = dotenv_values(".env")
-    db_sqlite = env["SQLITE_DATABASE"]
-    market_list = env["MARKET_LIST"].replace(",", " ").split()
-    tmp = OrderedDict()
-    for market in market_list:
-        tmp[market] = market
-    market_list = list(tmp.keys())
-    CATEGORIES = OrderedDict()
-    for market_name in market_list:
-        env[market_name] = dotenv_values(".env." + market_name)
-        symbols = env[market_name]["SYMBOLS"].replace(",", " ").split()
-        env[market_name]["SYMBOLS"] = list()
-        for symb in symbols:
-            env[market_name]["SYMBOLS"].append((symb, market_name))
-        env[market_name]["CURRENCIES"] = (
-            env[market_name]["CURRENCIES"].replace(",", " ").split()
-        )
-    if env["ORDER_BOOK_DEPTH"] == "orderBook":
-        order_book_depth = "orderBook"
-    else:
-        order_book_depth = "quote"
-    current_market = market_list[0]
-    symbol = env[current_market]["SYMBOLS"][0]
+    env = OrderedDict()
+    market_list = list()
+    current_market = ""
+    symbol = ""
+    refresh_rate = 5
+    order_book_depth = "orderBook"
+    db_sqlite = "tmatic.db"
+    settings = ".env.Settings"
+    subscriptions = ".env.Subscriptions"
     name_book = ["QTY", "PRICE", "QTY"]
     name_robots = [
         "EMI",
@@ -219,7 +205,6 @@ class Variables:
     error_sqlite = None
     last_order = int((time.time() - 1591000000) * 10)
     last_database_time = datetime(1900, 1, 1, 1, 1)
-    refresh_rate = min(max(100, int(1000 / int(env["REFRESH_RATE"]))), 1000)
     refresh_hour = datetime.now(tz=timezone.utc).hour
     bot_thread_active = dict()
     queue_info = queue.Queue()

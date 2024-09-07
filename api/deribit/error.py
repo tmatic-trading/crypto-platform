@@ -10,19 +10,6 @@ class ErrorStatus(Enum):
         10066: "too_many_concurrent_requests",
         13780: "move_positions_over_limit",
     }
-    FATAL = {
-        10000: "authorization_required",
-        10001: "error",
-        10048: "not_on_this_server",
-        10049: "cancel_on_disconnect_failed",
-        11056: "unauthenticated_public_requests_temporarily_disabled",
-        13004: "invalid_credentials",
-        13005: "pwd_match_error",
-        13006: "security_error",
-        13007: "user_not_found",
-        13009: "unauthorized",
-        13021: "forbidden",
-    }
     BLOCK = {
         11098: "account_locked",
         12003: "login_over_limit",
@@ -149,6 +136,22 @@ class ErrorStatus(Enum):
         -32601: "Method not found",
         -32700: "Parse error",
         -32000: "Missing params",
+    }
+    CANCEL = {
+        400: "Bad Request",
+        401: "Unauthorized",
+        404: "Not Found",
+        10000: "authorization_required",
+        10001: "error",
+        10048: "not_on_this_server",
+        10049: "cancel_on_disconnect_failed",
+        11056: "unauthenticated_public_requests_temporarily_disabled",
+        13004: "invalid_credentials",
+        13005: "pwd_match_error",
+        13006: "security_error",
+        13007: "user_not_found",
+        13009: "unauthorized",
+        13021: "forbidden",
     }
 
     def error_status(error):

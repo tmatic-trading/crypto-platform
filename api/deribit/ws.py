@@ -29,7 +29,7 @@ class Deribit(Variables):
     def __init__(self):
         self.name = "Deribit"
         self.api_version = "/api/v2/"
-        Setup.variables(self, self.name)
+        Setup.variables(self)
         self.session = requests.Session()
         self.define_category = {
             "future linear": "future L",
@@ -331,7 +331,7 @@ class Deribit(Variables):
             self.ws.close()
         except Exception:
             pass
-        self.logNumFatal = "SETUP"
+        # self.logNumFatal = "SETUP"
         self.funding_thread_active = False
 
     def ping_pong(self):

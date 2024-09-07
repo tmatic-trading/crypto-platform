@@ -1,26 +1,38 @@
+import sys
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
 import services as service
+from api.bybit.erruni import Unify
+from api.errors import Error
 from display.messages import ErrorMessage
-from services import exceptions_manager
 
 from .ws import Bybit
 
 
-@exceptions_manager
 class Agent(Bybit):
     def get_active_instruments(self):
         def get_in_thread(category, success, num):
             cursor = "no"
             while cursor:
                 cursor = ""
-                result = self.session.get_instruments_info(
-                    category=category,
-                    limit=1000,
-                    cursor=cursor,
-                )
+                try:
+                    result = self.session.get_instruments_info(
+                        category=category,
+                        limit=1000,
+                        cursor=cursor,
+                    )
+                except Exception as exception:
+                    error = Unify.error_handler(
+                        self,
+                        exception=exception,
+                        verb="GET",
+                        path="get_instruments_info",
+                    )
+                    success[num] = error
+                    return
+
                 if "nextPageCursor" in result["result"]:
                     cursor = result["result"]["nextPageCursor"]
                 else:
@@ -30,21 +42,23 @@ class Agent(Bybit):
                         self, instrument=instrument, category=category
                     )
                 if isinstance(result["result"]["list"], list):
-                    success[num] = 0
+                    success[num] = ""  # success
 
         threads, success = [], []
         for num, category in enumerate(self.categories):
-            success.append(-1)
+            success.append("FATAL")
             t = threading.Thread(target=get_in_thread, args=(category, success, num))
             threads.append(t)
             t.start()
         [thread.join() for thread in threads]
-        for number in success:
-            if number != 0:
-                self.logger.error(
-                    "The list was expected when the instruments were loaded, but for some categories it was not received. Reboot."
-                )
-                return -1
+        for error in success:
+            if error:
+                if error == "FATAL":
+                    self.logger.error(
+                        "The list was expected when the instruments were loaded, "
+                        + "but for some categories it was not received. Reboot."
+                    )
+                return error
 
         if self.Instrument.get_keys():
             for symbol in self.symbol_list:
@@ -53,38 +67,65 @@ class Agent(Bybit):
                         SYMBOL=symbol[0], MARKET=self.name
                     )
                     self.logger.error(message)
-                    return -1
+                    return "BLOCK"
         else:
             self.logger.error("There are no entries in the Instrument class.")
-            return -1
+            return "BLOCK"
 
-        return 0
+        return ""
 
     def get_user(self) -> None:
         """
         Returns the user ID and other useful information about the user and
         places it in self.user. If unsuccessful, logNumFatal is not ''.
         """
-        data = self.session.get_uid_wallet_type()
-        if isinstance(data, dict):
-            self.user = data
-            id = find_value_by_key(data=data, key="uid")
-            if id:
-                self.user_id = id
-                return
-        self.logNumFatal = "SETUP"
-        message = (
-            "A user ID was requested from the exchange but was not received. Reboot"
-        )
-        self.logger.error(message)
+        try:
+            data = self.session.get_uid_wallet_type()
+            if isinstance(data, dict):
+                self.user = data
+                id = find_value_by_key(data=data, key="uid")
+                if id:
+                    self.user_id = id
+                    return
+            self.logNumFatal = "FATAL"
+            message = (
+                "A user ID was requested from the exchange but was not received. Reboot"
+            )
+            self.logger.error(message)
+        except Exception as exception:
+            Unify.error_handler(
+                self,
+                exception=exception,
+                verb="GET",
+                path="get_uid_wallet_type",
+            )
+            return
 
     def get_instrument(self, ticker: str, category: str) -> None:
-        instrument_info = self.session.get_instruments_info(
-            symbol=ticker, category=category
-        )
-        Agent.fill_instrument(
-            self, instrument=instrument_info["result"]["list"][0], category=category
-        )
+        try:
+            instrument = self.session.get_instruments_info(
+                symbol=ticker, category=category
+            )
+        except Exception as exception:
+            Unify.error_handler(
+                self,
+                exception=exception,
+                verb="GET",
+                path="get_instruments_info",
+            )
+            return
+
+        if isinstance(instrument["result"]["list"], list):
+            Agent.fill_instrument(
+                self, instrument=instrument["result"]["list"][0], category=category
+            )
+        else:
+            self.logger.error(
+                "The list was expected when the instrument "
+                + ticker
+                + " is loaded, but was not received. Reboot."
+            )
+            self.logNumFatal = "FATAL"
 
     def get_position(self, symbol: tuple = False):
         print("___get_position", symbol)
@@ -93,13 +134,23 @@ class Agent(Bybit):
         self, symbol: tuple, start_time: datetime, timeframe: str
     ) -> Union[list, None]:
         instrument = self.Instrument[symbol]
-        kline = self.session.get_kline(
-            category=instrument.category,
-            symbol=instrument.ticker,
-            interval=str(timeframe),
-            start=service.time_converter(time=start_time),
-            limit=1000,
-        )
+        try:
+            kline = self.session.get_kline(
+                category=instrument.category,
+                symbol=instrument.ticker,
+                interval=str(timeframe),
+                start=service.time_converter(time=start_time),
+                limit=1000,
+            )
+        except Exception as exception:
+            Unify.error_handler(
+                self,
+                exception=exception,
+                verb="GET",
+                path="get_kline",
+            )
+            return
+
         if kline["result"]["list"]:
             res = []
             for row in kline["result"]["list"]:
@@ -122,7 +173,7 @@ class Agent(Bybit):
             utc = datetime.now(timezone.utc)
             if utc - start_time > timedelta(days=729):
                 self.logger.info(
-                    "Bybit only allows you to query trading history for the last 2 years. Check the history.ini file."
+                    "Bybit only allows you to query trading history for the last 2 years."
                 )
                 start_time = utc - timedelta(days=729)
                 self.logger.info("Time changed to " + str(start_time))
@@ -133,15 +184,26 @@ class Agent(Bybit):
                 nonlocal trade_history
                 cursor = "no"
                 while cursor:
-                    result = self.session.get_executions(
-                        category=category,
-                        startTime=startTime,
-                        limit=limit,
-                        cursor=cursor,
-                    )
-                    cursor = result["result"]["nextPageCursor"]
-                    res = result["result"]["list"]
-                    if isinstance(result["result"]["list"], list):
+                    try:
+                        data = self.session.get_executions(
+                            category=category,
+                            startTime=startTime,
+                            limit=limit,
+                            cursor=cursor,
+                        )
+                    except Exception as exception:
+                        error = Unify.error_handler(
+                            self,
+                            exception=exception,
+                            verb="GET",
+                            path="get_executions",
+                        )
+                        success[num] = error
+                        return
+
+                    cursor = data["result"]["nextPageCursor"]
+                    res = data["result"]["list"]
+                    if isinstance(data["result"]["list"], list):
                         for row in res:
                             if (row["symbol"], category) not in self.ticker:
                                 self.logger.info(
@@ -186,7 +248,7 @@ class Agent(Bybit):
                                     row["lastQty"] = -row["lastQty"]
                             row["execFee"] = float(row["execFee"])
                         trade_history += res
-                        success[num] = "success"
+                        success[num] = ""  # success
 
                     else:
                         self.logger.error(
@@ -199,7 +261,7 @@ class Agent(Bybit):
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             threads, success = [], []
             for category in self.categories:
-                success.append(None)
+                success.append("FATAL")
                 t = threading.Thread(
                     target=get_in_thread,
                     args=(category, startTime, limit, success, len(success) - 1),
@@ -207,8 +269,9 @@ class Agent(Bybit):
                 threads.append(t)
                 t.start()
             [thread.join() for thread in threads]
-            for s in success:
-                if not s:
+            for error in success:
+                if error:
+                    self.logNumFatal = error
                     return
             if len(trade_history) > histCount:
                 break
@@ -230,10 +293,18 @@ class Agent(Bybit):
             parameters.pop("success")
             parameters.pop("num")
             while cursor:
-                result = self.session.get_open_orders(**parameters)
-                cursor = result["result"]["nextPageCursor"]
-                parameters["cursor"] = result["result"]["nextPageCursor"]
-                for order in result["result"]["list"]:
+                try:
+                    res = self.session.get_open_orders(**parameters)
+                except Exception as exception:
+                    error = Unify.error_handler(
+                        self, exception=exception, verb="GET", path="get_open_orders"
+                    )
+                    success[num] = error
+                    return
+
+                cursor = res["result"]["nextPageCursor"]
+                parameters["cursor"] = res["result"]["nextPageCursor"]
+                for order in res["result"]["list"]:
                     order["symbol"] = (
                         self.ticker[(order["symbol"], parameters["category"])],
                         self.name,
@@ -257,9 +328,9 @@ class Agent(Bybit):
                     )
                     if order["symbol"] not in self.symbol_list:
                         self.symbol_list.append(order["symbol"])
-                myOrders += result["result"]["list"]
-                if isinstance(result["result"]["list"], list):
-                    success[num] = 0
+                myOrders += res["result"]["list"]
+                if isinstance(res["result"]["list"], list):
+                    success[num] = ""  # success
 
         def get_in_thread(**parameters):
             request_open_orders(parameters)
@@ -267,7 +338,7 @@ class Agent(Bybit):
         threads, success = [], []
         for category in self.categories:
             if category == "spot":
-                success.append(-1)
+                success.append("FATAL")
                 parameters = base.copy()
                 parameters["category"] = category
                 t = threading.Thread(
@@ -280,7 +351,7 @@ class Agent(Bybit):
             else:
                 for settleCoin in self.currencies:
                     if settleCoin in self.settlCurrency_list[category]:
-                        success.append(-1)
+                        success.append("FATAL")
                         parameters = base.copy()
                         parameters["category"] = category
                         parameters["settleCoin"] = settleCoin
@@ -292,49 +363,87 @@ class Agent(Bybit):
                         threads.append(t)
                         t.start()
         [thread.join() for thread in threads]
-        for number in success:
-            if number != 0:
-                self.logger.error(
-                    "The list was expected when the orders were loaded, but for some categories it was not received. Reboot"
-                )
-                return -1
+        for error in success:
+            if error:
+                if error == "FATAL":
+                    self.logger.error(
+                        "The list was expected when the orders were loaded, "
+                        + "but for some categories it was not received. Reboot"
+                    )
+                return error
         self.setup_orders = myOrders
 
-        return 0
+        return ""
 
-    def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
+    def place_limit(
+        self, quantity: float, price: float, clOrdID: str, symbol: tuple
+    ) -> Union[str, None]:
         side = "Buy" if quantity > 0 else "Sell"
         instrument = self.Instrument[symbol]
-        return self.session.place_order(
-            category=instrument.category,
-            symbol=instrument.ticker,
-            side=side,
-            orderType="Limit",
-            qty=str(abs(quantity)),
-            price=str(price),
-            orderLinkId=clOrdID,
-        )
+        try:
+            return self.session.place_order(
+                category=instrument.category,
+                symbol=instrument.ticker,
+                side=side,
+                orderType="Limit",
+                qty=str(abs(quantity)),
+                price=str(price),
+                orderLinkId=clOrdID,
+            )
+        except Exception as exception:
+            error = Unify.error_handler(
+                self, exception=exception, verb="POST", path="place_order"
+            )
 
-    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
+            return error
+
+    def replace_limit(
+        self, quantity: float, price: float, orderID: str, symbol: tuple
+    ) -> Union[str, None]:
         instrument = self.Instrument[symbol]
-        return self.session.amend_order(
-            category=instrument.category,
-            symbol=instrument.ticker,
-            orderId=orderID,
-            qty=str(quantity),
-            price=str(price),
-        )
+        try:
+            return self.session.amend_order(
+                category=instrument.category,
+                symbol=instrument.ticker,
+                orderId=orderID,
+                qty=str(quantity),
+                price=str(price),
+            )
+        except Exception as exception:
+            error = Unify.error_handler(
+                self, exception=exception, verb="PUT", path="amend_order"
+            )
+
+            return error
 
     def remove_order(self, order: dict):
-        return self.session.cancel_order(
-            category=self.Instrument[order["symbol"]].category,
-            symbol=order["symbol"][0],
-            orderId=order["orderID"],
-        )
+        try:
+            return self.session.cancel_order(
+                category=self.Instrument[order["symbol"]].category,
+                symbol=order["symbol"][0],
+                orderId=order["orderID"],
+            )
+        except Exception as exception:
+            error = Unify.error_handler(
+                self, exception=exception, verb="POST", path="cancel_order"
+            )
+
+            return error
 
     def get_wallet_balance(self) -> None:
+        """
+        Requests wallet balance usually for two types of accounts: UNIFIED,
+        CONTRACT.
+        """
         for account_type in self.account_types:
-            data = self.session.get_wallet_balance(accountType=account_type)
+            try:
+                data = self.session.get_wallet_balance(accountType=account_type)
+            except Exception as exception:
+                Unify.error_handler(
+                    self, exception=exception, verb="GET", path="get_wallet_balance"
+                )
+                return
+
             # Bybit bug patch 20/08/2024 on request accountType = "CONTRACT"
             if "list" in data["result"]:
                 data = data["result"]["list"]
@@ -377,14 +486,21 @@ class Agent(Bybit):
         def get_in_thread(category, settlCurrency, success, num):
             cursor = "no"
             while cursor:
-                result = self.session.get_positions(
-                    category=category,
-                    settleCoin=settlCurrency,
-                    limit=200,
-                    cursor=cursor,
-                )
-                cursor = result["result"]["nextPageCursor"]
-                for values in result["result"]["list"]:
+                try:
+                    res = self.session.get_positions(
+                        category=category,
+                        settleCoin=settlCurrency,
+                        limit=200,
+                        cursor=cursor,
+                    )
+                except Exception as exception:
+                    Unify.error_handler(
+                        self, exception=exception, verb="GET", path="get_positions"
+                    )
+                    return
+
+                cursor = res["result"]["nextPageCursor"]
+                for values in res["result"]["list"]:
                     symbol = (self.ticker[(values["symbol"], category)], self.name)
                     instrument = self.Instrument[symbol]
                     instrument.currentQty = float(values["size"])
@@ -395,14 +511,14 @@ class Agent(Bybit):
                     instrument.marginCallPrice = values["liqPrice"]
                     if not instrument.marginCallPrice:
                         instrument.marginCallPrice = "inf"
-                if isinstance(result["result"]["list"], list):
-                    success[num] = 0
+                if isinstance(res["result"]["list"], list):
+                    success[num] = ""  # success
 
         threads, success = [], []
         for category in self.categories:
             for settlCurrency in self.settlCurrency_list[category]:
                 if settlCurrency in self.currencies:
-                    success.append(-1)
+                    success.append("FATAL")
                     t = threading.Thread(
                         target=get_in_thread,
                         args=(category, settlCurrency, success, len(success) - 1),
@@ -410,12 +526,14 @@ class Agent(Bybit):
                     threads.append(t)
                     t.start()
         [thread.join() for thread in threads]
-        for number in success:
-            if number != 0:
-                self.logger.error(
-                    "The list was expected when the positions were loaded, but for some categories and settlCurrency it was not received. Reboot"
-                )
-                self.logNumFatal = "SETUP"
+        for error in success:
+            if error:
+                if error == "FATAL":
+                    self.logger.error(
+                        "The list was expected when the positions were loaded, "
+                        + "but for some categories and settlCurrency it was not "
+                        + "received. Reboot"
+                    )
 
     def fill_instrument(self, instrument: dict, category: str):
         """

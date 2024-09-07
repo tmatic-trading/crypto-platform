@@ -349,7 +349,7 @@ class Agent(Bitmex):
             return -1
         self.setup_orders = res
 
-        return 0
+        return ""
 
     def place_limit(
         self, quantity: float, price: float, clOrdID: str, symbol: tuple

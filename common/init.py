@@ -155,7 +155,7 @@ class Init(WS, Variables):
                     self, histCount=count_val, start_time=last_history_time
                 )
                 if not isinstance(history, list):
-                    self.logNumFatal = "SETUP"
+                    # self.logNumFatal = "FATAL"
                     return
 
     def account_balances(self: Markets) -> None:

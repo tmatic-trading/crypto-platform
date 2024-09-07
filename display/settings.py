@@ -9,8 +9,8 @@ from dotenv import dotenv_values, set_key
 import services as service
 from common.variables import Variables as var
 from display.tips import Tips
-from display.variables import Variables as disp
 from display.variables import ClickLabel
+from display.variables import Variables as disp
 
 
 class SettingsApp:
@@ -34,6 +34,10 @@ class SettingsApp:
         self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook"
         self.common_settings["BOTTOM_FRAME"] = "robots"
         self.common_settings["REFRESH_RATE"] = "5"
+        self.default_subscriptions = OrderedDict()
+        self.default_subscriptions["Bitmex"] = ["XBTUSDT"]
+        self.default_subscriptions["Bybit"] = ["BTCUSDT"]
+        self.default_subscriptions["Deribit"] = ["BTCUSDT"]
         for setting in self.common_settings.keys():
             self.common_trace_changed[setting] = StringVar(name=setting + str(self))
             self.common_trace_changed[setting].set(self.common_settings[setting])
@@ -73,25 +77,32 @@ class SettingsApp:
             if market == "Bitmex":
                 self.market_defaults[market][
                     "HTTP_URL"
-                ] = "https://www.bitmex.com/api/v1/"
-                self.market_defaults[market]["WS_URL"] = "wss://ws.bitmex.com/realtime/"
+                ] = "https://www.bitmex.com/api/v1"
+                self.market_defaults[market]["WS_URL"] = "wss://ws.bitmex.com/realtime"
                 self.market_defaults[market][
                     "TESTNET_HTTP_URL"
-                ] = "https://testnet.bitmex.com/api/v1/"
+                ] = "https://testnet.bitmex.com/api/v1"
                 self.market_defaults[market][
                     "TESTNET_WS_URL"
-                ] = "wss://testnet.bitmex.com/realtime/"
+                ] = "wss://testnet.bitmex.com/realtime"
             elif market == "Bybit":
-                self.market_defaults[market]["HTTP_URL"] = "https://api.bybit.com/v5/"
-                self.market_defaults[market]["WS_URL"] = "wss://api.bybit.com/v5/"
+                self.market_defaults[market]["HTTP_URL"] = "https://api.bybit.com/v5"
+                self.market_defaults[market]["WS_URL"] = "wss://api.bybit.com/v5"
                 self.market_defaults[market][
                     "TESTNET_HTTP_URL"
-                ] = "https://api-testnet.bybit.com/v5/"
+                ] = "https://api-testnet.bybit.com/v5"
                 self.market_defaults[market][
                     "TESTNET_WS_URL"
-                ] = "wss://api-testnet.bybit.com/v5/"
+                ] = "wss://api-testnet.bybit.com/v5"
             elif market == "Deribit":
-                pass
+                self.market_defaults[market]["HTTP_URL"] = "https://www.deribit.com"
+                self.market_defaults[market]["WS_URL"] = "wss://ws.deribit.com/ws"
+                self.market_defaults[market][
+                    "TESTNET_HTTP_URL"
+                ] = "https://test.deribit.com"
+                self.market_defaults[market][
+                    "TESTNET_WS_URL"
+                ] = "wss://test.deribit.com/ws"
             self.market_defaults[market]["CONNECTED"] = "YES"
             self.market_defaults[market]["TESTNET"] = "YES"
 
@@ -110,7 +121,8 @@ class SettingsApp:
         # DraggableFrame array
         self.settings_center = []
 
-        self.env_file_path = Path(".env.Settings")
+        self.env_file_settings = Path(var.settings)
+        self.env_file_subscriptions = Path(var.subscriptions)
         self.settings_bottom = tk.Frame(self.root_frame, bg=disp.bg_color)
         self.setting_button = tk.Button(
             self.settings_bottom,
@@ -123,11 +135,50 @@ class SettingsApp:
         self.setting_button.config(state="disabled")
         self.initialized = False
         self.click_label = tk.Label()
+        self.blank_lb = tk.Label()
+        self.return_lb = tk.Label()
+        self.return_main_page()
+
+    def return_main_page(self):
+        """
+        Display a link to go to the main page. If there is no connected
+        exchange, the link is replaced with a corresponding notification.
+        """
+        self.blank_lb.destroy()
+        self.return_lb.destroy()
+        self.blank_lb = tk.Label(disp.frame_tips, text=" ", bg=disp.light_gray_color)
+        if "Fake" not in var.market_list:
+            self.blank_lb.pack(anchor="nw")
+            self.return_lb = ClickLabel(
+                disp.frame_tips,
+                text="Return to the main page",
+                bg=disp.light_gray_color,
+                cursor="hand2",
+                justify=tk.LEFT,
+                method=disp.on_main,
+            )
+        else:
+            self.blank_lb.pack(anchor="nw")
+            self.return_lb = tk.Label(
+                disp.frame_tips,
+                text="You don't have any exchanges connected at the moment.",
+                bg=disp.light_gray_color,
+                justify=tk.LEFT,
+            )
+            self.return_lb.pack(anchor="nw")
+        service.wrap(disp.frame_tips, padx=5)
 
     def load(self):
-        if not os.path.isfile(self.env_file_path):
-            # The .env file does not exist, so create the file.
-            self.env_file_path.touch(mode=0o600, exist_ok=False)
+        """
+        Retrieves settings data from the files specified by the
+        self.env_file_settings and self.env_file_subscriptions variables. If
+        some variables are not found in the .env file, they are restored
+        from their default values.
+        """
+
+        # Settings
+
+        if not os.path.isfile(self.env_file_settings):
             # Set default settings for each market.
             for market in self.market_list:
                 for setting in self.market_settings:
@@ -136,14 +187,13 @@ class SettingsApp:
                     ]
             self.save_dotenv("new")
         else:
-            dotenv_data = dotenv_values(self.env_file_path)
+            dotenv_data = dotenv_values(self.env_file_settings)
             for setting in self.common_settings.keys():
                 try:
                     self.common_defaults[setting] = dotenv_data[setting]
                 except KeyError:
                     self.common_defaults[setting] = self.common_settings[setting]
                 self.common_trace_changed[setting].set(self.common_defaults[setting])
-            # self.market_list = self.common_defaults["MARKET_LIST"].split(",")
             for market in self.market_list:
                 for setting in self.market_settings:
                     try:
@@ -157,6 +207,62 @@ class SettingsApp:
                     self.market_changed[market][setting] = self.market_saved[market][
                         setting
                     ]
+        for setting in self.common_settings.keys():
+            var.env[setting] = self.common_defaults[setting]
+        for market in self.market_list:
+            var.env[market] = dict()
+            if self.market_saved[market]["CONNECTED"] == "YES":
+                var.market_list.append(market)
+            for setting in self.market_settings:
+                var.env[market][setting] = self.market_saved[market][setting]
+
+        # Symbol subscriptions
+
+        if not os.path.isfile(self.env_file_subscriptions):
+            self.save_dotenv_subscriptions(subscriptions=self.default_subscriptions)
+        values = dotenv_values(self.env_file_subscriptions)
+        for market in self.market_list:
+            var.env[market]["SYMBOLS"] = list()
+            try:
+                sub = f"{market}_SYMBOLS"
+                symbols = values[sub].replace(",", " ").split()
+                for symb in symbols:
+                    var.env[market]["SYMBOLS"].append((symb, market))
+            except KeyError:
+                for symb in self.default_subscriptions[market]:
+                    var.env[market]["SYMBOLS"].append((symb, market))
+                set_key(
+                    dotenv_path=self.env_file_subscriptions,
+                    key_to_set=f"{market}_SYMBOLS",
+                    value_to_set=str(self.default_subscriptions[market])[2:-2],
+                )
+
+        # Set parameters
+
+        if var.market_list:
+            var.current_market = var.market_list[0]
+            var.symbol = var.env[var.current_market]["SYMBOLS"][0]
+        var.order_book_depth = var.env["ORDER_BOOK_DEPTH"]
+        var.db_sqlite = var.env["SQLITE_DATABASE"]
+        var.refresh_rate = min(max(100, int(1000 / int(var.env["REFRESH_RATE"]))), 1000)
+
+    def save_dotenv_subscriptions(self, subscriptions: OrderedDict) -> None:
+        """
+        Saves instrument subscriptions to the file specified by the
+        self.env_file_subscriptions variable.
+
+        Parameters
+        ----------
+        subscriptions: OrderedDict
+            Every dictionary item is a list of instrument symbols.
+        """
+        self.env_file_subscriptions.touch(mode=0o600)
+        for market in self.market_list:
+            set_key(
+                dotenv_path=self.env_file_subscriptions,
+                key_to_set=f"{market}_SYMBOLS",
+                value_to_set=str(subscriptions[market])[2:-2],
+            )
 
     def init(self):
         """
@@ -357,20 +463,21 @@ class SettingsApp:
         """
         Saves common and market settings into .env file.
         """
-        with open(self.env_file_path, "w") as f:
-            pass
+        # with open(self.env_file_path, "w") as f:
+        #    pass
+        self.env_file_settings.touch(mode=0o600)
         for setting in self.common_settings.keys():
             set_key(
-                dotenv_path=self.env_file_path,
+                dotenv_path=self.env_file_settings,
                 key_to_set=setting,
                 value_to_set=self.common_trace_changed[setting].get(),
             )
             self.common_defaults[setting] = self.common_trace_changed[setting].get()
         for market in self.market_list:
-            self.insert_comment(self.env_file_path, f"")
+            self.insert_comment(self.env_file_settings, f"")
             for setting in self.market_settings:
                 set_key(
-                    dotenv_path=self.env_file_path,
+                    dotenv_path=self.env_file_settings,
                     key_to_set=f"{market}_{setting}",
                     value_to_set=self.market_changed[market][setting],
                 )
@@ -611,8 +718,6 @@ class SettingsApp:
         if setting == "SQLITE_DATABASE":
             text = Tips.SQLITE_DATABASE.value.format(DATABASE=var.db_sqlite)
         disp.tips["text"] = setting + "\n\n" + text
-        disp.tips.update()
-        service.wrap(disp.frame_tips, padx=5)
         self.click_label.destroy()
         if "WS" in setting or "HTTP" in setting:
             link = Tips.docs.value[self.selected_frame.market][setting]
@@ -620,6 +725,7 @@ class SettingsApp:
         elif "API" in setting:
             link = Tips.api.value[self.selected_frame.market][setting]
             self.click_label = ClickLabel(disp.frame_tips, text=link, link=link)
+        self.return_main_page()
 
 
 class DraggableFrame(tk.Checkbutton):

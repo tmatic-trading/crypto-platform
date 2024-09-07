@@ -4,7 +4,6 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
-from api.bybit.errors import exception
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 
@@ -53,7 +52,7 @@ def time_converter(
         raise TypeError(type(time))
 
 
-def exceptions_manager(cls):
+"""def exceptions_manager(cls):
     for attr in cls.__dict__:
         if callable(getattr(cls, attr)):
             if attr not in [
@@ -65,7 +64,7 @@ def exceptions_manager(cls):
                 "__init__",
             ]:
                 setattr(cls, attr, exception(getattr(cls, attr)))
-    return cls
+    return cls"""
 
 
 def precision(number: float) -> int:
