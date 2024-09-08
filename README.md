@@ -204,7 +204,7 @@ EMI can be equal to the instrument symbol as the default name, for example, if y
 > [!IMPORTANT]
 > *Deribit only provides the clOrdID (the "label" in the Deribit API) for the last 5 days, so when restoring earlier trades from the trading history, there is no way to identify the bot name. Therefore, these trades will be stored in the database with the default EMI assigned with the instrument symbol.*
 
-What happens if you place an order from the standard exchange trading web interface? You will see this order in the program with EMI equal the instrument symbol, but only if you are subscibed to a specific instrument in ```.env.<exchange>``` file. You will be able to cancel or move this order.
+What happens if you place an order from the standard exchange trading web interface? You will see this order in the program with EMI equal the instrument symbol, but only if you are subscribed to a specific instrument in ```.env.<exchange>``` file. You will be able to cancel or move this order.
 
 ## Program controls
 
