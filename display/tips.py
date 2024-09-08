@@ -2,6 +2,13 @@ from enum import Enum
 
 
 class Tips(Enum):
+    SETTINGS = (
+            "Make changes to the application settings. Here you can connect "
+            + "or disconnect the exchange and configure the connection.\n\n"
+            + "After making changes, click the `Update` button. The changes "
+            + "will take effect after rebooting <F3> or restarting the "
+            + "application."
+        )
     SQLITE_DATABASE = (
         "Your current database is {DATABASE}. You can change this database to "
         + "another one. If a database with the assigned name does not exist, "
@@ -29,6 +36,11 @@ class Tips(Enum):
         + "on the screen: from 1 to 10 times per second. This may increase "
         + "or decrease the load on your computer to some extent depending "
         + "on its performance."
+    )
+    MARKET = (
+        "Select the checkbox associated with the exchange to enable or "
+        + "disable it. You can drag the line with the exchange up and down "
+        + "to change the order in which the exchange appears."
     )
     URLS = "URLs are provided by the specific exchange in their documentation."
     HTTP_URL = URLS

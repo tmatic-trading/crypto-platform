@@ -663,12 +663,7 @@ class Variables:
     s_label.pack(anchor="nw")
     tips = tk.Label(
         frame_tips,
-        text=(
-            "Make changes to the application settings. Here you can connect "
-            + "or disconnect the exchange and configure the connection. After "
-            + "making changes, click the `Update` button. The changes will take "
-            + "effect after rebooting <F3> or restarting the application."
-        ),
+        text="", 
         bg=light_gray_color,
         justify=tk.LEFT,
     )

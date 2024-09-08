@@ -21,7 +21,7 @@ class SettingsApp:
         self.root_frame.grid_rowconfigure(0, weight=1)
         self.bg_select_color = disp.bg_select_color
         self.bg_entry = disp.light_gray_color
-        self.bg_active = disp.bg_select_color
+        self.bg_active = "yellow"
         self.bg_changed = "yellow"
 
         self.title_color = tk.Label(root, text=" TRADING: ")["background"]
@@ -286,7 +286,7 @@ class SettingsApp:
                     frame.var.set(1)
                 if i == 0:
                     self.selected_frame = frame
-                self.settings_center.append(frame)
+                self.settings_center.append(frame)                  
             self.reorder_frames()
             self.set_market_fields(self.market_list[0])
 
@@ -295,6 +295,7 @@ class SettingsApp:
 
             self.initialized = True
             # service.wrap(frame=disp.frame_tips, padx=5)
+            self.on_tip("SETTINGS")
 
     def on_focus_in(self, event):
         pass
@@ -452,9 +453,10 @@ class SettingsApp:
     def set_button_color(self, flag):
         if flag == 0:
             self.setting_button.configure(
-                bg=self.bg_select_color, text="Settings Saved"
+                bg=self.title_color, text="Settings Saved"
             )
             self.setting_button.config(state="disabled")
+            self.on_tip("SETTINGS")
         else:
             self.setting_button.configure(bg=self.bg_changed, text="Update")
             self.setting_button.config(state="active")
@@ -713,7 +715,10 @@ class SettingsApp:
         """
         Displays a recommendation when the widget has focus.
         """
-        setting = event.widget.w_name
+        if event == "SETTINGS":
+            setting = event
+        else:
+            setting = event.widget.w_name
         text = Tips[setting].value
         if setting == "SQLITE_DATABASE":
             text = Tips.SQLITE_DATABASE.value.format(DATABASE=var.db_sqlite)
@@ -735,14 +740,15 @@ class DraggableFrame(tk.Checkbutton):
         self.market = market
         self.var = tk.IntVar()
         self.config(variable=self.var, onvalue=1, offvalue=0)
+        self.w_name = "MARKET"
         self.bind("<ButtonPress-1>", self.on_press)
         self.bind("<B1-Motion>", self.on_drag)
-        self.bind("<ButtonRelease-1>", self.on_release)
-
+        self.bind("<ButtonRelease-1>", self.on_release)        
         self.start_y = None
         self.is_dragging = False
 
     def on_press(self, event):
+        self.app.on_tip(event)
         self.start_y = event.y_root
         self.is_dragging = True
         # Bring the frame to the front

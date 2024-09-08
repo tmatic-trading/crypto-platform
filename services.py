@@ -52,21 +52,6 @@ def time_converter(
         raise TypeError(type(time))
 
 
-"""def exceptions_manager(cls):
-    for attr in cls.__dict__:
-        if callable(getattr(cls, attr)):
-            if attr not in [
-                "exit",
-                "Position",
-                "Instrument",
-                "Account",
-                "Result",
-                "__init__",
-            ]:
-                setattr(cls, attr, exception(getattr(cls, attr)))
-    return cls"""
-
-
 def precision(number: float) -> int:
     r = str(number)
     if "e" in r:
