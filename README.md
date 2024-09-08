@@ -139,7 +139,7 @@ SQLITE_DATABASE='tmatic.db'
 ORDER_BOOK_DEPTH='orderBook'
 BOTTOM_FRAME='robots'
 REFRESH_RATE='5'
-# 
+#
 Bitmex_CONNECTED='YES'
 Bitmex_HTTP_URL='https://www.bitmex.com/api/v1'
 Bitmex_WS_URL='wss://ws.bitmex.com/realtime'
@@ -150,7 +150,7 @@ Bitmex_TESTNET_WS_URL='wss://testnet.bitmex.com/realtime'
 Bitmex_TESTNET_API_KEY=''
 Bitmex_TESTNET_API_SECRET=''
 Bitmex_TESTNET='YES'
-# 
+#
 Bybit_CONNECTED='YES'
 Bybit_HTTP_URL='https://api.bybit.com/v5'
 Bybit_WS_URL='wss://api.bybit.com/v5'
@@ -161,7 +161,7 @@ Bybit_TESTNET_WS_URL='wss://api-testnet.bybit.com/v5'
 Bybit_TESTNET_API_KEY=''
 Bybit_TESTNET_API_SECRET=''
 Bybit_TESTNET='YES'
-# 
+#
 Deribit_CONNECTED='YES'
 Deribit_HTTP_URL='https://www.deribit.com'
 Deribit_WS_URL='wss://ws.deribit.com/ws'
@@ -219,7 +219,7 @@ If the program does not start, check the logfile.log file for errors. For exampl
 
 Tmatic stores all your trading activity, including information on trades, financing and deliveries. Manage the ```history.ini``` file to set the date from which the history should be loaded. After that, the date of the last transaction is saved. You can reset the date in ```history.ini``` at any time you need. Each record in the database is unique, and no trade can be written to the database twice.
 
-Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite "coins" table. 
+Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite "coins" table.
 
 > [!NOTE]
 > Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history. **Bybit only supports the last two years of trading history**. Its API allows trading history to be downloaded in 7-day chunks, so retrieving data for a long period may take time.

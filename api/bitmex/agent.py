@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Union
 
 import services as service
@@ -86,44 +87,48 @@ class Agent(Bitmex):
                 )
                 return
         # myMultiplier
+
         if instrument["isInverse"]:  # Inverse
-            valueOfOneContract = (
-                instrument["multiplier"] / instrument["underlyingToSettleMultiplier"]
+            valueOfOneContract = Decimal(instrument["multiplier"]) / Decimal(
+                instrument["underlyingToSettleMultiplier"]
             )
-            minimumTradeAmount = valueOfOneContract * instrument["lotSize"]
+            minimumTradeAmount = valueOfOneContract * Decimal(instrument["lotSize"])
             category = "inverse"
         elif instrument["isQuanto"]:  # Quanto
-            valueOfOneContract = (
-                instrument["multiplier"]
-                / self.currency_divisor[instrument["settlCurrency"]]
+            valueOfOneContract = Decimal(instrument["multiplier"]) / Decimal(
+                self.currency_divisor[instrument["settlCurrency"]]
             )
             minimumTradeAmount = instrument["lotSize"]
             category = "quanto"
         else:  # Linear / "Spot"
             if "underlyingToPositionMultiplier" in instrument:
-                valueOfOneContract = 1 / instrument["underlyingToPositionMultiplier"]
-            elif instrument["underlyingToSettleMultiplier"]:
-                valueOfOneContract = (
-                    instrument["multiplier"]
-                    / instrument["underlyingToSettleMultiplier"]
+                valueOfOneContract = Decimal(1) / Decimal(
+                    instrument["underlyingToPositionMultiplier"]
                 )
-            minimumTradeAmount = valueOfOneContract * instrument["lotSize"]
+            elif instrument["underlyingToSettleMultiplier"]:
+                valueOfOneContract = Decimal(instrument["multiplier"]) / Decimal(
+                    instrument["underlyingToSettleMultiplier"]
+                )
+            minimumTradeAmount = valueOfOneContract * Decimal(instrument["lotSize"])
             if "settlCurrency" not in instrument:
                 category = "spot"
             else:
                 category = "linear"
-        myMultiplier = instrument["lotSize"] / minimumTradeAmount
+        myMultiplier = Decimal(instrument["lotSize"]) / minimumTradeAmount
         if category == "spot":
             symb = instrument["underlying"] + "/" + instrument["quoteCurrency"]
         else:
             symb = instrument["symbol"]
+        valueOfOneContract = float(valueOfOneContract)
+        minimumTradeAmount = float(minimumTradeAmount)
+        myMultiplier = int(myMultiplier)
         symbol = (symb, self.name)
         self.ticker[instrument["symbol"]] = symb
         self.Instrument[symbol].market = self.name
         self.Instrument[symbol].category = category
         self.Instrument[symbol].symbol = symb
         self.Instrument[symbol].ticker = instrument["symbol"]
-        self.Instrument[symbol].myMultiplier = int(myMultiplier)
+        self.Instrument[symbol].myMultiplier = myMultiplier
         self.Instrument[symbol].multiplier = instrument["multiplier"]
         if category == "spot":
             self.Instrument[symbol].fundingRate = "None"
@@ -147,9 +152,7 @@ class Agent(Bitmex):
         )
         self.Instrument[symbol].minOrderQty = minimumTradeAmount
         self.Instrument[symbol].qtyStep = minimumTradeAmount
-        self.Instrument[symbol].precision = service.precision(
-            number=instrument["lotSize"] / myMultiplier
-        )
+        self.Instrument[symbol].precision = service.precision(minimumTradeAmount)
         self.Instrument[symbol].state = instrument["state"]
         self.Instrument[symbol].volume24h = instrument["volume24h"]
         if "expiry" in instrument:

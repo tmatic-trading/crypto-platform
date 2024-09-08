@@ -286,7 +286,7 @@ class SettingsApp:
                     frame.var.set(1)
                 if i == 0:
                     self.selected_frame = frame
-                self.settings_center.append(frame)                  
+                self.settings_center.append(frame)
             self.reorder_frames()
             self.set_market_fields(self.market_list[0])
 
@@ -452,9 +452,7 @@ class SettingsApp:
 
     def set_button_color(self, flag):
         if flag == 0:
-            self.setting_button.configure(
-                bg=self.title_color, text="Settings Saved"
-            )
+            self.setting_button.configure(bg=self.title_color, text="Settings Saved")
             self.setting_button.config(state="disabled")
             self.on_tip("SETTINGS")
         else:
@@ -743,7 +741,7 @@ class DraggableFrame(tk.Checkbutton):
         self.w_name = "MARKET"
         self.bind("<ButtonPress-1>", self.on_press)
         self.bind("<B1-Motion>", self.on_drag)
-        self.bind("<ButtonRelease-1>", self.on_release)        
+        self.bind("<ButtonRelease-1>", self.on_release)
         self.start_y = None
         self.is_dragging = False
 

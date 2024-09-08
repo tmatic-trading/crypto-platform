@@ -663,7 +663,7 @@ class Variables:
     s_label.pack(anchor="nw")
     tips = tk.Label(
         frame_tips,
-        text="", 
+        text="",
         bg=light_gray_color,
         justify=tk.LEFT,
     )

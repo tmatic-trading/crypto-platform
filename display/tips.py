@@ -3,12 +3,12 @@ from enum import Enum
 
 class Tips(Enum):
     SETTINGS = (
-            "Make changes to the application settings. Here you can connect "
-            + "or disconnect the exchange and configure the connection.\n\n"
-            + "After making changes, click the `Update` button. The changes "
-            + "will take effect after rebooting <F3> or restarting the "
-            + "application."
-        )
+        "Make changes to the application settings. Here you can connect "
+        + "or disconnect the exchange and configure the connection.\n\n"
+        + "After making changes, click the `Update` button. The changes "
+        + "will take effect after rebooting <F3> or restarting the "
+        + "application."
+    )
     SQLITE_DATABASE = (
         "Your current database is {DATABASE}. You can change this database to "
         + "another one. If a database with the assigned name does not exist, "
