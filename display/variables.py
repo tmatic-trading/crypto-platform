@@ -666,7 +666,7 @@ class Variables:
         text=(
             "Make changes to the application settings. Here you can connect "
             + "or disconnect the exchange and configure the connection. After "
-            + "making changes, click the `Save` button. The changes will take "
+            + "making changes, click the `Update` button. The changes will take "
             + "effect after rebooting <F3> or restarting the application."
         ),
         bg=light_gray_color,

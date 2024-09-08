@@ -37,7 +37,7 @@ class SettingsApp:
         self.default_subscriptions = OrderedDict()
         self.default_subscriptions["Bitmex"] = ["XBTUSDT"]
         self.default_subscriptions["Bybit"] = ["BTCUSDT"]
-        self.default_subscriptions["Deribit"] = ["BTCUSDT"]
+        self.default_subscriptions["Deribit"] = ["BTC-PERPETUAL"]
         for setting in self.common_settings.keys():
             self.common_trace_changed[setting] = StringVar(name=setting + str(self))
             self.common_trace_changed[setting].set(self.common_settings[setting])
@@ -126,7 +126,7 @@ class SettingsApp:
         self.settings_bottom = tk.Frame(self.root_frame, bg=disp.bg_color)
         self.setting_button = tk.Button(
             self.settings_bottom,
-            bg=self.bg_select_color,
+            bg=self.title_color,
             activebackground=self.bg_active,
             text="Settings Saved",
             command=lambda: self.save_dotenv("button"),
@@ -456,7 +456,7 @@ class SettingsApp:
             )
             self.setting_button.config(state="disabled")
         else:
-            self.setting_button.configure(bg=self.bg_changed, text="Save Settings")
+            self.setting_button.configure(bg=self.bg_changed, text="Update")
             self.setting_button.config(state="active")
 
     def save_dotenv(self, status):

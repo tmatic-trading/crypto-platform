@@ -84,7 +84,7 @@ The "coins" table receives data from the websocket execution stream or trade his
 | {"clOrdID": "", "symbol": "XBTUSD"}|-|XBTUSD|
 | {"clOrdID": "1109594183.myBot", "symbol": "XBTUSD"}|no|XBTUSD|
 
-* REFER - the EMI part of "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```. In case the exchange closes an open position after the instrument expires, then REFER field takes the value "Delivery".
+* REFER - the EMI part of the "clOrdID" field. E.g. REFER = "myBot" for ```{"clOrdID": "1109594183.myBot"}```. If the exchange closes an open position after the instrument expires, in this case the REFER field takes the value "Delivery".
 * MARKET - name of the exchange.
 * CURRENCY - currency of a transaction or funding.
 * TICKER - instrument symbol as presented in the exchange API.
@@ -113,87 +113,116 @@ Explanations for the columns of the SQLite "robots" table:
 
 ## Launch the program
 
-It is recommended to first debug the program on the test network.
+It is recommended to debug the program on the test network first.
 
-Get your API key and secret code at:
+Once you have downloaded the program and installed the necessary packages listed above, you can simply run Tmatic using the terminal in the folder where you downloaded the program:
+
+Launch the program:
+- in Linux or macOS terminal ```python3 main.py```
+- in Windows command prompt (cmd.exe) ```python main.py```
+
+If you don’t have API credentials set up, you’ll be redirected to the settings page. Follow the Tmatic setup instructions and add your API keys and secret. If you don’t have them, here are a few places you can get them for the testnet environment:
+
 |exchange|url|
 | ------------- | ------------------ |
 |Bitmex|[testnet.bitmex.com/app/apiKeys](https://testnet.bitmex.com/app/apiKeys)|
 |Bybit|[testnet.bybit.com/app/user/api-management](https://testnet.bybit.com/app/user/api-management)|
 |Deribit|[test.deribit.com/account/BTC/API](https://test.deribit.com/account/BTC/API)|
 
-Create a new file named ```.env``` in the program's root folder with your settings. The file might look like this:
+The settings are stored in two files: ```.env.Settings``` and ```.env.Subscriptions```. By default, they look like like this:
 
-```python
-MARKET_LIST = "Bitmex, Bybit, Deribit"
-SQLITE_DATABASE = "tmatic.db"
-ORDER_BOOK_DEPTH = "orderBook"
-REFRESH_RATE = "5"
-TESTNET = "True"
+```.env.Settings```
+
+```Python
+MARKET_LIST='Bitmex,Bybit,Deribit'
+SQLITE_DATABASE='tmatic.db'
+ORDER_BOOK_DEPTH='orderBook'
+BOTTOM_FRAME='robots'
+REFRESH_RATE='5'
+# 
+Bitmex_CONNECTED='YES'
+Bitmex_HTTP_URL='https://www.bitmex.com/api/v1'
+Bitmex_WS_URL='wss://ws.bitmex.com/realtime'
+Bitmex_API_KEY=''
+Bitmex_API_SECRET=''
+Bitmex_TESTNET_HTTP_URL='https://testnet.bitmex.com/api/v1'
+Bitmex_TESTNET_WS_URL='wss://testnet.bitmex.com/realtime'
+Bitmex_TESTNET_API_KEY=''
+Bitmex_TESTNET_API_SECRET=''
+Bitmex_TESTNET='YES'
+# 
+Bybit_CONNECTED='YES'
+Bybit_HTTP_URL='https://api.bybit.com/v5'
+Bybit_WS_URL='wss://api.bybit.com/v5'
+Bybit_API_KEY=''
+Bybit_API_SECRET=''
+Bybit_TESTNET_HTTP_URL='https://api-testnet.bybit.com/v5'
+Bybit_TESTNET_WS_URL='wss://api-testnet.bybit.com/v5'
+Bybit_TESTNET_API_KEY=''
+Bybit_TESTNET_API_SECRET=''
+Bybit_TESTNET='YES'
+# 
+Deribit_CONNECTED='YES'
+Deribit_HTTP_URL='https://www.deribit.com'
+Deribit_WS_URL='wss://ws.deribit.com/ws'
+Deribit_API_KEY=''
+Deribit_API_SECRET=''
+Deribit_TESTNET_HTTP_URL='https://test.deribit.com'
+Deribit_TESTNET_WS_URL='wss://test.deribit.com/ws'
+Deribit_TESTNET_API_KEY=''
+Deribit_TESTNET_API_SECRET=''
+Deribit_TESTNET='YES'
 ```
 
-- MARKET_LIST currently supports Bitmex, Bybit and Deribit exchanges.
+- MARKET_LIST currently supports Bitmex, Bybit, and Deribit, sorted by how they appear in the app.
+
+- SQLITE_DATABASE — the name of the database.
 
 - ORDER_BOOK_DEPTH is a choice between "orderBook" which allows you to see the order book ten lines deep, and "quote" which shows only the best buy and sell while significantly reducing network traffic.
 
-- REFRESH_RATE refers to how often the information on the screen is refreshed, ranging from 1 to 10 times per second.
+- BOTTOM_FRAME — currently unavailable.
 
-- TESTNET - choose between the main (False) and test (True) networks.
+- REFRESH_RATE determines how often the information on the screen is refreshed, from 1 to 10 times per second.
 
-Create a new file named ```.env.Bitmex``` in the root folder of the program with your settings for the Bitmex exchange if it is in the MARKET_LIST. The file might look like this:
+- CONNECTED — "YES" means that the exchange must be connected.
 
-```python
-SYMBOLS = "XBTUSDT, SOLUSDT, XBTUSD, ETHUSD"
-CURRENCIES = "XBt, USDt"
-HTTP_URL = "https://www.bitmex.com/api/v1/"
-WS_URL = "wss://ws.bitmex.com/realtime"
-API_KEY = "XXXX"
-API_SECRET = "XXXX"
-TESTNET_HTTP_URL = "https://testnet.bitmex.com/api/v1/"
-TESTNET_WS_URL = "wss://testnet.bitmex.com/realtime"
-TESTNET_API_KEY = "your testnet API key"
-TESTNET_API_SECRET = "your testnet API secret"
+- HTTP_URL — the exchange's http network.
+
+- WS_URL — the exchange's web socket network.
+
+- API_KEY — the API key received from the exchange.
+
+- API_SECRET — the secret code received from the exchange.
+
+The next four parameters have the same meanings, but are related to the test network.
+
+- TESTNET — "YES" activates the test network.
+
+```.env.Subscriptions```
+
+```Python
+Bitmex_SYMBOLS='XBTUSDT'
+Bybit_SYMBOLS='BTCUSDT'
+Deribit_SYMBOLS='BTC-PERPETUAL'
 ```
 
-Create a new file named ```.env.Bybit``` in the root folder of the program with your settings for the Bybit exchange if it is in the MARKET_LIST. The file might look like this:
+- SYMBOLS — a list of instruments to which the web socket subscription will be made.
 
-```python
-SYMBOLS = "BTCUSDT, ETHUSDT, BTCUSD, BTC/USDT, ETH/USDT"
-CURRENCIES = "BTC, USDT"
-HTTP_URL = "https://api.bybit.com/v5"
-WS_URL = "wss://api.bybit.com/v5"
-API_KEY = "XXXX"
-API_SECRET = "XXXX"
-TESTNET_HTTP_URL = "https://api-testnet.bybit.com/v5"
-TESTNET_WS_URL = "wss://api-testnet.bybit.com/v5"
-TESTNET_API_KEY = "your testnet API key"
-TESTNET_API_SECRET = "your testnet API secret"
-```
+> [!NOTE]
+> Currently, you can update the settings via the app settings menu, but adding new instruments to the subscription list must be done manually in the .env.Subscriptions file. The list should be comma-separated and may look like this: ```Bitmex_SYMBOLS="XBTUSDT, ETHUSD, XBTUSD"```.
 
-Create a new file named ```.env.Deribit``` in the root folder of the program with your settings for the Deribit exchange if it is in the MARKET_LIST. The file might look like this:
+## Troubleshooting
 
-```python
-SYMBOLS = "ETH-PERPETUAL, BTC-PERPETUAL, BTC/USDT, ETH/USDC"
-CURRENCIES = "BTC"
-HTTP_URL = "https://www.deribit.com"
-WS_URL = "wss://ws.deribit.com/ws"
-API_KEY = "XXXX"
-API_SECRET = "XXXX"
-TESTNET_HTTP_URL = "https://test.deribit.com"
-TESTNET_WS_URL = "wss://test.deribit.com/ws"
-TESTNET_API_KEY = "your testnet API key"
-TESTNET_API_SECRET = "your testnet API secret"
-```
+If the program does not start, check the logfile.log file for errors. For example, your computer's system time may be out of sync. If your OS is Windows you should check the “Date and Time” settings: in the “Synchronize clocks” section, you must click the “Sync now” button.
 
-Check the variable SYMBOLS for each exchange where there must be at least one instrument symbol, for example for Bitmex: XBTUSD. Check the CURRENCIES variable where your account currencies should be. If your account supports multiple currencies, specify them if necessary, for example for Bitmex: "XBt, USDt", where XBt is Bitcoin, USDt is Tether stablecoin.
+## Trade History
 
-Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite "coins" table. Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history. **Bybit only supports last two years of trading history**. Its API allows trading history to be downloaded in 7-day chunks, so retrieving data for a long period may take time.
+Tmatic stores all your trading activity, including information on trades, financing and deliveries. Manage the ```history.ini``` file to set the date from which the history should be loaded. After that, the date of the last transaction is saved. You can reset the date in ```history.ini``` at any time you need. Each record in the database is unique, and no trade can be written to the database twice.
 
-Launch the program:
-- in Linux or macOS terminal ```python3 main.py```
-- in Windows command prompt (cmd.exe) ```python main.py```
+Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite "coins" table. 
 
-*If the program does not start, check the logfile.log file for errors. For example, your computer's system time may be out of sync. If your OS is Windows you should check the “Date and Time” settings: in the “Synchronize clocks” section, you must click the “Sync now” button.*
+> [!NOTE]
+> Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history. **Bybit only supports the last two years of trading history**. Its API allows trading history to be downloaded in 7-day chunks, so retrieving data for a long period may take time.
 
 ## How it works
 
@@ -202,9 +231,9 @@ Once the program is running, you can submit buy and sell orders by clicking on t
 EMI can be equal to the instrument symbol as the default name, for example, if you made a trade from the exchange web interface. In this case, the EMI may look, for example,  like ```"XBTUSD"```. When the program processes data from the ```execution``` stream or ```trade history``` endpoint and does not find a correspondence between the EMI from the "clOrdID" field and the field in the SQLite "robots" table, in this case the EMI may also be equal to the instrument symbol.
 
 > [!IMPORTANT]
-> *Deribit only provides the clOrdID (the "label" in the Deribit API) for the last 5 days, so when restoring earlier trades from the trading history, there is no way to identify the bot name. Therefore, these trades will be stored in the database with the default EMI assigned with the instrument symbol.*
+> Deribit only provides the clOrdID (the "label" in the Deribit API) for the last 5 days, so when restoring earlier trades from the trading history, there is no way to identify the bot name. Therefore, these trades will be stored in the database with the default EMI assigned with the instrument symbol.
 
-What happens if you place an order from the standard exchange trading web interface? You will see this order in the program with EMI equal the instrument symbol, but only if you are subscribed to a specific instrument in ```.env.<exchange>``` file. You will be able to cancel or move this order.
+What happens if you place an order from the standard exchange trading web interface? You will see this order in the program with EMI equal to the instrument symbol, but only if you are subscribed to a specific instrument in the ```.env.<exchange>``` file. You will be able to cancel or move this order.
 
 ## Program controls
 
@@ -234,7 +263,7 @@ The Bot Menu simplifies the management of bots using the GUI. The functions avai
 
 * Add a new bot.
 * Update bot's state: "Active" or "Suspended".
-* Edit bot parameters.
+* Edit bot's parameters.
 * Merge two bots.
 * Duplicate bot.
 * Delete bot.
@@ -500,7 +529,7 @@ Returns open first bid price of the latest period.
 
 ### Buying and Selling instructions
 
-Timatic has only one order type - limit. If a buy order is placed above the best ask price, the trade will be executed for this ask price. The same applies to sell order.
+Timatic has only one order type - limit. If a buy order is placed above the best ask price, the trade will be executed for this ask price. The same applies to sell orders.
 
 Buy and sell orders are methods that can be called for any instrument from such classes as Bitmex or Bybit of the tools module. For more details, see ```Selecting an instrument``` above.
 
@@ -559,18 +588,18 @@ bot = Bot()
 ```Python
 Bitmex["XBTUSD"].sell(bot=bot)
 ```
-Sends a sell order, qty of XBTUSD ```minOrderQty``` is 100, price is equal the first ask in the order book.
+Sends a sell order, qty of XBTUSD ```minOrderQty``` is 100, price is equal to the first ask in the order book.
 
 ```Python
 Bitmex["XBTUSD"].sell(bot=bot, qty=200)
 ```
-Sends a sell order, qty is 200, price is equal the first ask in the order book.
+Sends a sell order, qty is 200, price is equal to the first ask in the order book.
 
 ```Python
 Bitmex["XBTUSD"].buy(bot=bot, qty=200, move=True)
 ```
 
-Sends a buy order, qty is 200, price is equal the first bid in the order book. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order.
+Sends a buy order, qty is 200, price is equal to the first bid in the order book. Checks for open buy orders on ```XBTUSD``` for this bot and if there are any, takes the last order and moves it to the new price. If not, places a new order.
 
 ```Python
 Bitmex["XBTUSD"].buy(bot=bot, qty=200, price=50000, move=True)
@@ -586,7 +615,7 @@ Sends a buy order, qty is 200, price is 50000. Checks for open buy orders on ```
 
 ### Limits control
 
-When an order is submitted, Tmatic does not allow the bot to exceed the set limit for the instrument. It decreases quantity if the limit is exceeded. If the limit is completely exhausted, the order will not be send to the exchange. If the bot does not have a position for this instrument, then such a position will be added to the bot, and the limit is set as default equal ```minOrderQty``` of the instrument.
+When an order is submitted, Tmatic does not allow the bot to exceed the set limit for the instrument. It decreases quantity if the limit is exceeded. If the limit is completely exhausted, the order will not be sent to the exchange. If the bot does not have a position for this instrument, then such a position will be added to the bot, and the limit is set as default equal to ```minOrderQty``` of the instrument.
 
 Examples:
 
@@ -801,7 +830,7 @@ def strategy():
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/scr/add_new_bot.png)
 
-3. Put the code above in the strategy section and press ```Update strategy``` button.
+3. Put the code above in the strategy section and press the ```Update strategy``` button.
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/scr/strategy.png)
 
@@ -819,5 +848,5 @@ This project is under development. New functions and connections to other crypto
 
 The immediate plans include:
 
-1. Creating a convenient menu for selecting instruments and a settings menu instead of manually editing files like .env and .env.Bitmex.
+1. Create a convenient menu for selecting instruments instead of manually editing the .env.Subscriptions file.
 2. Stable release.
