@@ -212,16 +212,20 @@ def refresh() -> None:
         functions.clear_tables()
     while not var.queue_info.empty():
         info = var.queue_info.get()
-        message = service.format_message(
-            market=info["market"], message=info["message"], tm=info["time"]
-        )
         if not "bot_log" in info:
             info_display(
-                market=info["market"], message=message, warning=info["warning"]
+                market=info["market"],
+                message=info["message"],
+                warning=info["warning"],
+                tm=info["time"],
             )
         if "emi" in info and info["emi"] in Bots.keys():
             insert_bot_log(
-                bot_name=info["emi"], message=message, warning=info["warning"]
+                market=info["market"],
+                bot_name=info["emi"],
+                message=info["message"],
+                warning=info["warning"],
+                tm=info["time"],
             )
     while not var.queue_order.empty():
         """

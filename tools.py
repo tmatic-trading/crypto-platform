@@ -531,7 +531,7 @@ class Tool(Instrument):
             "pnl", "lotSize", "currency", "limits".
         """
         bot = Bots[bot_name]
-        if not self.symbol_tuple in bot.bot_positions:
+        if self.symbol_tuple not in bot.bot_positions:
             service.fill_bot_position(
                 bot_name=bot_name,
                 symbol=self.symbol_tuple,

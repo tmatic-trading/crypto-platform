@@ -1178,7 +1178,14 @@ def import_bot_module(bot_name: str, update=False) -> None:
         functions.init_bot_klines(bot_name)
 
 
-def insert_bot_log(bot_name: str, message: str, warning: bool, fill=False) -> None:
+def insert_bot_log(
+    bot_name: str,
+    message: str,
+    warning: bool,
+    market: str = None,
+    tm: datetime = None,
+    fill=False,
+) -> None:
     """
     Displays information about a specific bot and saves it to bot.log.
 
@@ -1192,8 +1199,14 @@ def insert_bot_log(bot_name: str, message: str, warning: bool, fill=False) -> No
         Time the message was created.
     warning: bool
         Warning or error messages are displayed in red.
+    market: str
+        Exchange name.
+    fill: bool
+        True, if only it refills text_bot_log widget when switching between
+        bots.
     """
     if not fill:
+        message = service.format_message(market=market, message=message, tm=tm)
         Bots[bot_name].log.append((warning, message))
         path = f"{bot_manager.algo_dir}{bot_name}/bot.log"
         with open(path, "a") as f:

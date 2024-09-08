@@ -1,11 +1,10 @@
-from datetime import datetime, timezone
-
 import services as service
 
 from .variables import Variables as disp
 
 
-def info_display(market: str, message: str, warning=False) -> None:
+def info_display(market: str, message: str, warning=False, tm=None) -> None:
+    message = service.format_message(market=market, message=message, tm=tm)
     num = message.count("\n")
     disp.text_info.insert("1.0", message)
     if warning:
