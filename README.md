@@ -209,7 +209,7 @@ Deribit_SYMBOLS='BTC-PERPETUAL'
 - SYMBOLS — a list of instruments to which the web socket subscription will be made.
 
 > [!NOTE]
-> Currently, you can update the settings via the app settings menu, but adding new instruments to the subscription list must be done manually in the .env.Subscriptions file. The list should be comma-separated and may look like this: ```Bitmex_SYMBOLS="XBTUSDT, ETHUSD, XBTUSD"```.
+> Currently, you can update the settings via the app settings menu, but adding new instruments to the subscription list must be done manually in the .env.Subscriptions file. The list should be comma-separated and may look like this: ```Bitmex_SYMBOLS="XBTUSDT, ETHUSD, XBTUSD"```. While the app is loading and unclosed positions or open positions are found for a particular instrument, that instrument will also be automatically subscribed to.
 
 ## Troubleshooting
 
@@ -405,7 +405,7 @@ print(Bitmex["XBTUSDT"].asks)
 ```
 
 > [!IMPORTANT]
-> *To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.*
+> To access the asks data of the Bybit ```BTCUSDT``` instrument, you must be subscribed to this instrument in the ```.env.Bybit``` file in the ```SYMBOLS``` field. The same applies to Bitmex ```XBTUSDT```. The order book data is updated via a websocket, so a subscription is required. However, to get a value such as ```qtyStep```, a subscription is not required. Such values ​​are preloaded for all available instruments after the program is launched.
 
 ### Adding kline (candlestick) data to the instrument
 
@@ -525,7 +525,7 @@ Returns open first bid price of the latest period.
 ```
 
 > [!NOTE]
-> *All data refers to the timeframe (timefr) specified in the bot parameters.*
+> All data refers to the timeframe (timefr) specified in the bot parameters.
 
 ### Buying and Selling instructions
 
