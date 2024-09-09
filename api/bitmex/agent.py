@@ -317,8 +317,8 @@ class Agent(Bitmex):
                             + " was ignored."
                         )
                 return spot_not_included
-            else:
-                self.logNumFatal = "SETUP"
+            # else:
+            #    self.logNumFatal = "SETUP"
 
     def open_orders(self) -> int:
         path = Listing.OPEN_ORDERS
@@ -451,9 +451,9 @@ class Agent(Bitmex):
                             instrument.unrealisedPnl = values["unrealisedPnl"]
         else:
             self.logger.error(
-                "The list was expected when the positions were loaded, but it was not received. Reboot."
+                "The list was expected when the positions were loaded, but it was not received."
             )
-            self.logNumFatal = "SETUP"
+            # self.logNumFatal = "SETUP"
 
     def activate_funding_thread(self):
         """

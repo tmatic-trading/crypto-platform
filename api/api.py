@@ -104,13 +104,16 @@ class WS(Variables):
             [thread.join() for thread in threads]
         except Exception as exception:
             display_exception(exception)
-            self.logNumFatal = "SETUP"
+            # self.logNumFatal = "SETUP"
         if self.logNumFatal:
-            self.logger.error(
-                self.name
-                + ": The websocket is not running, or the user information, wallet balance or position information is not loaded. Reboot."
-            )
-            return -1
+            if self.logNumFatal == "FATAL":
+                self.logger.error(
+                    self.name
+                    + ": The websocket is not running, or the user "
+                    + "information, wallet balance or position information "
+                    + "is not loaded. Reboot."
+                )
+            return self.logNumFatal
         var.queue_info.put(
             {
                 "market": self.name,

@@ -312,7 +312,7 @@ class ErrorStatus(Enum):
         182107: "Adjustment failed, Maintenance Margin Rate too high",
     }
     CANCEL = {
-        400: "Bad request. Need to send the request with GET / POST (must be capitalized)",
+        # 400: "Bad request. Need to send the request with GET / POST (must be capitalized)",
         401: "Invalid request. 1. Need to use the correct key to access; 2. Need to put authentication params in the request header",
         403: "Forbidden request. Possible causes: 1. IP rate limit breached; 2. You send GET request with an empty json body; 3. You are using U.S IP",
         404: "Cannot find path. Possible causes: 1. Wrong path; 2. Category value does not match account mode",

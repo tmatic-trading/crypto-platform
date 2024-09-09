@@ -8,6 +8,23 @@ from api.variables import Variables
 from common.variables import Variables as var
 
 
+class HostNameIsInvalid(Exception):
+    """
+    Exception thrown for Tmatic returned errors if HTTP or WebSocket name is
+    incorrect.
+
+    Parameters:
+    ----------
+    uri: str
+        HTTP or Websocket name.
+    """
+
+    def __init__(self, uri: str) -> None:
+        self.message = f"{uri} host name is invalid"
+        self.status_code = 404
+        self.code = self.status_code
+
+
 class GetErrorStatus(Enum):
     Bitmex = BitmexErrorStatus
     Bybit = BybitErrorStatus
@@ -47,9 +64,9 @@ class Error(Variables):
             FATAL   This market will be reloaded.
             RETRY   Retry request (Bitmex, Deribit).
         """
-        prefix = f"{self.name} - "
-        canceled = f" {self.name} loading cancelled."
+        canceled = f" - {self.name} loading cancelled."
         error_name = exception.__class__.__name__
+        prefix = f"{self.name} - {error_name} - "
         if error_name in ["ConnectionError", "ReadTimeout"]:
             status = "RETRY"
             error_message = prefix + error_name + ". Unable to contact API"
@@ -65,7 +82,12 @@ class Error(Variables):
         elif error_name == "TopicMismatchError":
             status = "IGNORE"
             error_message = prefix + error_name + " " + str(exception)
-        elif error_name in ["HTTPError", "InvalidRequestError", "FailedRequestError"]:
+        elif error_name in [
+            "HTTPError",
+            "InvalidRequestError",
+            "FailedRequestError",
+            "WebSocketBadStatusException",
+        ]:
             response = try_response(response, exception)
             status_code = response["error"]["code"]
             status = GetErrorStatus.get_status(self.name, response)
@@ -84,7 +106,11 @@ class Error(Variables):
                     + " "
                     + response["error"]["message"]
                 )
-        elif error_name == "MissingSchema":
+        elif error_name in [
+            "MissingSchema",
+            "WebSocketAddressException",
+            "HostNameIsInvalid",
+        ]:
             status = "CANCEL"
             error_message = (
                 prefix
@@ -128,6 +154,12 @@ class Error(Variables):
             logger_message += canceled
             self.logger.error(logger_message)
             var.queue_info.put(queue_message)
+        if self.logNumFatal == "CANCEL":  # Since the loading process is
+            # performed in threads, it may happen that one thread will
+            # receive an error like "RETRY" or "FATAL" and another will
+            # receive the "CANCEL" error. "CANCEL" has a higher priority and
+            # stops the loading process.
+            status = "CANCEL"
         self.logNumFatal = status
 
         return status
@@ -141,6 +173,15 @@ def try_response(response, exception):
         try:
             code = exception.__dict__["response"].status_code
             message = str(exception.__dict__["response"]._content)
+            return {"error": {"code": code, "message": message}}
+        except Exception:
+            pass
+        try:
+            code = exception.status_code
+            if hasattr(exception, "message"):
+                message = exception.message
+            else:
+                message = ""
             return {"error": {"code": code, "message": message}}
         except Exception:
             pass

@@ -6,12 +6,6 @@ import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 
-from dotenv import dotenv_values
-
-if not os.path.isfile(".env"):
-    print("The .env file does not exist.")
-    exit(1)
-
 
 class ListenLogger(logging.Filter):
     def filter(self, record):

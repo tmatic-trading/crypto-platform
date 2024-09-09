@@ -356,3 +356,15 @@ def event_config(event, canvas_event: tk.Canvas, frame: tk.Frame, padx: int):
 
 def event_width(event, canvas_id, canvas_event: tk.Canvas):
     canvas_event.itemconfig(canvas_id, width=event.width)
+
+
+def cancel_market(market: str) -> None:
+    """
+    Removes an exchange from the boot process if an error like "Host name is 
+    invalid" occurs.
+    """
+    if market in var.market_list:
+        var.market_list.remove(market)
+    if var.market_list:
+        var.current_market = var.market_list[0]
+        var.symbol = var.env[var.current_market]["SYMBOLS"][0]

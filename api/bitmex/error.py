@@ -99,7 +99,7 @@ class ErrorStatus(Enum):
         "Position has insufficient isolated margin",
     }
     CANCEL = {
-        400: "Bad Request",
+        # 400: "Bad Request",
         401: "Unauthorized",
         404: "Not Found",
     }

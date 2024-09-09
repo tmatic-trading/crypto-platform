@@ -27,7 +27,7 @@ Bybit.transaction = Function.transaction
 Deribit.transaction = Function.transaction
 thread = threading.Thread(target=functions.kline_update)
 thread.start()
-settings.load()
+#settings.load()
 
 
 def setup(reload=False):
@@ -40,12 +40,14 @@ def setup(reload=False):
     settings.load()
     common.setup_database_connecion()
     threads = []
-    for name in var.market_list:
-        if name in MetaMarket.dictionary:
-            Setup.variables(Markets[name])
-        t = threading.Thread(target=setup_market, args=(Markets[name], reload))
-        threads.append(t)
-        t.start()
+    for name in var.market_list.copy():
+        ws = Markets[name]
+        #if name in MetaMarket.dictionary:
+        Setup.variables(ws)
+        if name in var.market_list:
+            t = threading.Thread(target=setup_market, args=(ws, reload))
+            threads.append(t)
+            t.start()
     [thread.join() for thread in threads]
     for name in var.market_list:
         finish_setup(Markets[name])
@@ -122,7 +124,8 @@ def setup_market(ws: Markets, reload=False):
         ws.logNumFatal = WS.start_ws(ws)
         if ws.logNumFatal:
             WS.exit(ws)
-            sleep(2)
+            if ws.logNumFatal != "CANCEL":
+                sleep(2)
         else:
             common.Init.clear_params(ws)
             if not ws.logNumFatal:
@@ -151,10 +154,7 @@ def setup_market(ws: Markets, reload=False):
                 var.logger.info("No robots loaded.")
                 sleep(2)
         if ws.logNumFatal == "CANCEL":
-            var.market_list.remove(ws.name)
-            if var.market_list:
-                var.current_market = var.market_list[0]
-                var.symbol = var.env[var.current_market]["SYMBOLS"][0]
+            service.cancel_market(market=ws.name)
         if ws.logNumFatal not in ["", "CANCEL"]:
             var.logger.info("\n\n")
             var.logger.info(

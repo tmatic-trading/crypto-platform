@@ -83,7 +83,8 @@ class Send(Variables):
                     return status
             else:
                 if response:
-                    self.logNumFatal = ""
+                    if self.logNumFatal != "CANCEL":
+                        self.logNumFatal = ""
                     return response.json()
                 else:
                     return None

@@ -138,7 +138,7 @@ class ErrorStatus(Enum):
         -32000: "Missing params",
     }
     CANCEL = {
-        400: "Bad Request",
+        # 400: "Bad Request",
         401: "Unauthorized",
         404: "Not Found",
         10000: "authorization_required",

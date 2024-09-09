@@ -40,13 +40,11 @@ class Bot(BotData):
             Order ID. Example: "1348642035.Super"
         """
         if clOrdID in self.bot_orders:
-            order=self.bot_orders[clOrdID]
+            order = self.bot_orders[clOrdID]
             ws = Markets[order["market"]]
             WS.remove_order(ws, order=self.bot_orders[clOrdID])
         else:
-            message = (
-                "Removing. Order with clOrdID=" + clOrdID + " not found."
-            )
+            message = "Removing. Order with clOrdID=" + clOrdID + " not found."
             var.queue_info.put(
                 {
                     "market": "",
@@ -71,8 +69,8 @@ class Bot(BotData):
         price: float
             New price to reset order to.
         """
-        if clOrdID in self.bot_orders:   
-            order=self.bot_orders[clOrdID]
+        if clOrdID in self.bot_orders:
+            order = self.bot_orders[clOrdID]
             ws = Markets[order["market"]]
             WS.replace_limit(
                 ws,
@@ -82,9 +80,7 @@ class Bot(BotData):
                 symbol=order["symbol"],
             )
         else:
-            message = (
-                "Replacing. Order with clOrdID=" + clOrdID + " not found."
-            )
+            message = "Replacing. Order with clOrdID=" + clOrdID + " not found."
             var.queue_info.put(
                 {
                     "market": "",

@@ -99,7 +99,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path="Private",
                 )
             self.ws_private.pinging = "pong"
@@ -119,7 +119,7 @@ class Bybit(Variables):
             Unify.error_handler(
                 self,
                 exception=exception,
-                verb="WS",
+                verb="WebSocket",
                 path="Private wallet_stream",
             )
         try:
@@ -128,7 +128,7 @@ class Bybit(Variables):
             Unify.error_handler(
                 self,
                 exception=exception,
-                verb="WS",
+                verb="WebSocket",
                 path="Private position_stream",
             )
         try:
@@ -137,7 +137,7 @@ class Bybit(Variables):
             Unify.error_handler(
                 self,
                 exception=exception,
-                verb="WS",
+                verb="WebSocket",
                 path="Private order_stream",
             )
         try:
@@ -146,7 +146,7 @@ class Bybit(Variables):
             Unify.error_handler(
                 self,
                 exception=exception,
-                verb="WS",
+                verb="WebSocket",
                 path="Private execution_stream",
             )
 
@@ -380,7 +380,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=category,
                 )
             self.ws[category].pinging = "pong"
@@ -406,7 +406,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
             self.logger.info(
@@ -426,7 +426,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"ticker_stream {symbol}",
                 )
 
@@ -451,7 +451,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
             self.logger.info(
@@ -471,7 +471,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"ticker_stream {symbol}",
                 )
 
@@ -496,7 +496,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
             self.logger.info(
@@ -516,7 +516,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"ticker_stream {symbol}",
                 )
 
@@ -541,7 +541,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
             self.logger.info(
@@ -561,7 +561,7 @@ class Bybit(Variables):
                 Unify.error_handler(
                     self,
                     exception=exception,
-                    verb="WS",
+                    verb="WebSocket",
                     path=f"ticker_stream {symbol}",
                 )
 

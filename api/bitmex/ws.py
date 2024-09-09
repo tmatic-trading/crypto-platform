@@ -9,6 +9,7 @@ import requests
 import websocket
 
 import services as service
+from api.errors import Error
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
@@ -98,27 +99,39 @@ class Bitmex(Variables):
             newth = threading.Thread(target=lambda: self.ws.run_forever())
             newth.daemon = True
             newth.start()
-            self.logger.debug("Thread started")
             # Waits for connection established
             time_out = 5
-            while (not self.ws.sock or not self.ws.sock.connected) and time_out >= 0:
+            while (
+                (not self.ws.sock or not self.ws.sock.connected)
+                and time_out >= 0
+                and not self.logNumFatal
+            ):
                 sleep(0.1)
                 time_out -= 0.1
+
             if time_out <= 0:
                 self.logger.error("Couldn't connect to websocket!")
-                self.logNumFatal = "SETUP"
+                self.logNumFatal = "FATAL"
             else:
-                # Subscribes symbol by symbol to all tables given
-                for symbol in self.symbol_list:
-                    subscriptions = []
-                    for sub in self.table_subscription:
-                        subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
-                    self.logger.info("ws subscribe - " + str(subscriptions))
-                    self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
+                if not self.logNumFatal:
+                    # Subscribes symbol by symbol to all tables given
+                    for symbol in self.symbol_list:
+                        subscriptions = []
+                        for sub in self.table_subscription:
+                            subscriptions += [
+                                sub + ":" + self.Instrument[symbol].ticker
+                            ]
+                        self.logger.info("ws subscribe - " + str(subscriptions))
+                        self.ws.send(
+                            json.dumps({"op": "subscribe", "args": subscriptions})
+                        )
         except Exception as exception:
             display_exception(exception)
-            self.logger.error("Exception while connecting to websocket. Restarting...")
-            self.logNumFatal = "SETUP"
+            message = "Exception while connecting to websocket."
+            if not self.logNumFatal:
+                message += " Reboot."
+                self.logNumFatal = "FATAL"
+            self.logger.error(message)
 
     def subscribe_symbol(self, symbol: tuple) -> None:
         subscriptions = []
@@ -164,7 +177,7 @@ class Bitmex(Variables):
                 return []
         except Exception:
             self.logger.error("Exception while authenticating. Restarting...")
-            self.logNumFatal = "SETUP"
+            self.logNumFatal = "FATAL"
             return []
 
     def __wait_for_tables(self) -> None:
@@ -173,22 +186,23 @@ class Bitmex(Variables):
         received after the timeout expires, the websocket is rebooted.
         """
         count = 0
-        while not self.table_subscription <= set(self.keys):
-            count += 1
-            if count > 30:  # fails after 3 seconds
-                table_lack = self.table_subscription.copy()
-                for table in self.keys.keys():
-                    if table in self.table_subscription:
-                        table_lack.remove(table)
-                self.logger.info(
-                    "Timeout expired. Not all tables has been loaded. "
-                    + str(table_lack)
-                    + " - missing."
-                )
-                self.logNumFatal = "SETUP"
-                return
-            sleep(0.1)
-        count = 0
+        if not self.logNumFatal:
+            while not self.table_subscription <= set(self.keys):
+                count += 1
+                if count > 30:  # fails after 3 seconds
+                    table_lack = self.table_subscription.copy()
+                    for table in self.keys.keys():
+                        if table in self.table_subscription:
+                            table_lack.remove(table)
+                    self.logger.info(
+                        "Timeout expired. Not all tables has been loaded. "
+                        + str(table_lack)
+                        + " - missing."
+                    )
+                    self.logNumFatal = "FATAL"
+                    return
+                sleep(0.1)
+            count = 0
         while len(self.data["instrument"]) != len(self.symbol_list):
             count += 1
             if count > 30:  # fails after 3 seconds
@@ -201,7 +215,7 @@ class Bitmex(Variables):
                     + str(instr_lack)
                     + " - missing in the instrument table."
                 )
-                self.logNumFatal = "SETUP"
+                self.logNumFatal = "FATAL"
                 return
             sleep(0.1)
 
@@ -345,15 +359,15 @@ class Bitmex(Variables):
         """
         We are here if websocket has fatal errors.
         """
-        self.logger.error("Error: %s" % error)
-        self.logNumFatal = "FATAL"
+        Error.handler(self, exception=error, verb="WebSocket")
+        # self.logger.error("Error: %s" % error)
 
     def __on_open(self, ws) -> None:
         self.logger.debug("Websocket opened")
 
     def __on_close(self, *args) -> None:
         self.logger.info(self.name + " - Websocket closed")
-        self.logNumFatal = "FATAL"
+        # self.logNumFatal = "FATAL"
 
     def __reset(self) -> None:
         """
@@ -489,7 +503,7 @@ class Bitmex(Variables):
                 self.ws.send("ping")
             except Exception:
                 self.logger.error("Bitmex websocket ping error. Reboot")
-                self.logNumFatal = "SETUP"
+                self.logNumFatal = "FATAL"
                 return False
             return True
 
