@@ -28,6 +28,74 @@ class Bot(BotData):
         bot = Bots[bot_name]
         self.__dict__ = bot.__dict__
 
+    def remove(self, clOrdID: str) -> None:
+        """
+        Removes the open order by its clOrdID.
+
+        Parameters:
+        -----------
+        bot: Bot
+            An instance of a bot in the Bot class.
+        clOrdID: str
+            Order ID. Example: "1348642035.Super"
+        """
+        if clOrdID in self.bot_orders:
+            order=self.bot_orders[clOrdID]
+            ws = Markets[order["market"]]
+            WS.remove_order(ws, order=self.bot_orders[clOrdID])
+        else:
+            message = (
+                "Removing. Order with clOrdID=" + clOrdID + " not found."
+            )
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                    "emi": self.name,
+                    "bot_log": True,
+                }
+            )
+
+    def replace(self, clOrdID: str, price: float) -> None:
+        """
+        Moves an open order to a new price using its clOrdID.
+
+        Parameters:
+        -----------
+        bot: Bot
+            An instance of a bot in the Bot class.
+        clOrdID: str
+            Order ID. Order ID. Example: "1348642035.Super"
+        price: float
+            New price to reset order to.
+        """
+        if clOrdID in self.bot_orders:   
+            order=self.bot_orders[clOrdID]
+            ws = Markets[order["market"]]
+            WS.replace_limit(
+                ws,
+                quantity=order["leavesQty"],
+                price=price,
+                orderID=order["orderID"],
+                symbol=order["symbol"],
+            )
+        else:
+            message = (
+                "Replacing. Order with clOrdID=" + clOrdID + " not found."
+            )
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                    "emi": self.name,
+                    "bot_log": True,
+                }
+            )
+
 
 class Tool(Instrument):
     def __init__(self, instrument: Instrument) -> None:

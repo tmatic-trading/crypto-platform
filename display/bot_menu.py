@@ -1164,7 +1164,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
             var.queue_info.put(
                 {
                     "market": "",
-                    "message": bot_name + " has been updated successfully.",
+                    "message": bot_name + " updated successfully.",
                     "time": datetime.now(tz=timezone.utc),
                     "warning": False,
                     "emi": bot_name,

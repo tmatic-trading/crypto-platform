@@ -576,7 +576,7 @@ str | None
 The parameters of the sell order are described above. All parameters except ```bot``` are optional and can be omitted.
 
 > [!NOTE]
-> *The parameters of the buy order are the same, except that the price defaults to the first bid in the order book, the method moves the last buy order and cancels all sell orders accordingly.*
+> The parameters of the buy order are the same, except that the price defaults to the first bid in the order book, the method moves the last buy order and cancels all sell orders accordingly.
 
 Examples:
 
@@ -801,6 +801,73 @@ OrderedDict(
     ]
 )
 ```
+
+### Remove order
+
+Use the ```remove()``` method to delete an open order by its clOrdID.
+
+```Python
+"""
+Parameters:
+-----------
+bot: Bot
+    An instance of a bot in the Bot class.
+clOrdID: str
+    Order ID. Example: "1348642035.Super"
+"""
+```
+
+Example: This example shows how to place a sell order at the first ask price and remove it in 5 seconds.
+
+```Python
+import time
+import Bitmex, Bot
+
+bot = Bot()
+
+id = Bitmex["XBTUSDT"].sell(bot=bot)
+time.sleep(5)
+bot.remove(clOrdID=id)
+```
+
+> [!NOTE]
+> If the deletion failed in case the clOrdID is not found, a message will appear in the bot log. You can see it in the Bot menu, on the Log tab, in the Notepad widget.
+
+### Replace order
+
+Use the ```replace()``` method to move an open order to a new price using its clOrdID.
+
+```Python
+"""
+Parameters
+----------
+bot: Bot
+    An instance of a bot in the Bot class.
+clOrdID: str
+    Order ID. Order ID. Example: "1348642035.Super"
+price: float
+    New price to reset order to.
+"""
+```
+
+Example: This example shows how to place a sell order at the first ask price and move it to the first ask price + 100 in 5 seconds.
+
+```Python
+import time
+import Bitmex, Bot
+
+bot = Bot()
+instrument = Bitmex["XBTUSDT"]
+
+id = instrument.sell(bot=bot)
+time.sleep(5)
+price = instrument.asks[0][0] + 100
+bot.replace(clOrdID=id, price=price)
+```
+
+> [!NOTE]
+> If the replacement failed in case the clOrdID is not found, a message will appear in the bot log. You can see it in the Bot menu, on the Log tab, in the Notepad widget.
+
 
 ### Strategy example
 
