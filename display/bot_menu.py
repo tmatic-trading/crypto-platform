@@ -1132,7 +1132,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "market": "",
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
-                "warning": True,
+                "warning": "warning",
                 "emi": bot_name,
             }
         )
@@ -1151,7 +1151,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "market": "",
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
-                "warning": True,
+                "warning": "warning",
                 "emi": bot_name,
             }
         )
@@ -1166,7 +1166,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                     "market": "",
                     "message": bot_name + " updated successfully.",
                     "time": datetime.now(tz=timezone.utc),
-                    "warning": False,
+                    "warning": None,
                     "emi": bot_name,
                 }
             )
@@ -1181,7 +1181,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
 def insert_bot_log(
     bot_name: str,
     message: str,
-    warning: bool,
+    warning: Union[str, None],
     market: str = None,
     tm: datetime = None,
     fill=False,
@@ -1197,7 +1197,7 @@ def insert_bot_log(
         Information to display and save.
     tm: datetime
         Time the message was created.
-    warning: bool
+    warning: str | None
         Warning or error messages are displayed in red.
     market: str
         Exchange name.
@@ -1214,9 +1214,13 @@ def insert_bot_log(
     if bot_name == disp.bot_name:
         num = message.count("\n")
         disp.text_bot_log.insert("1.0", message)
+        if warning == "error":
+            color = disp.red_color
+        elif warning == "warning":
+            color = disp.warning_color
         if warning:
             disp.text_bot_log.tag_add(" ", "1.0", f"{num}.1000")
-            disp.text_bot_log.tag_config(" ", foreground=disp.red_color)
+            disp.text_bot_log.tag_config(" ", foreground=color)
         if len(Bots[bot_name].log) > disp.text_line_limit:
             limit = f"{disp.text_line_limit + 1}.0"
             disp.text_bot_log.delete(limit, "end")

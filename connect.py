@@ -27,7 +27,7 @@ Bybit.transaction = Function.transaction
 Deribit.transaction = Function.transaction
 thread = threading.Thread(target=functions.kline_update)
 thread.start()
-#settings.load()
+# settings.load()
 
 
 def setup(reload=False):
@@ -42,7 +42,7 @@ def setup(reload=False):
     threads = []
     for name in var.market_list.copy():
         ws = Markets[name]
-        #if name in MetaMarket.dictionary:
+        # if name in MetaMarket.dictionary:
         Setup.variables(ws)
         if name in var.market_list:
             t = threading.Thread(target=setup_market, args=(ws, reload))
@@ -270,9 +270,9 @@ def refresh() -> None:
                 if utc > ws.message_time + timedelta(seconds=10):
                     if not WS.ping_pong(ws):
                         info_display(
-                            ws.name,
-                            "The websocket does not respond within 10 sec. Reboot",
-                            warning=True,
+                            market=ws.name,
+                            message="The websocket does not respond within 10 sec. Reboot",
+                            warning="error",
                         )
                         ws.logNumFatal = "FATAL"  # reboot
                     ws.message_time = utc
@@ -307,7 +307,7 @@ def terminal_reload(event) -> None:
     disp.menu_robots.pack_forget()
     disp.settings.pack_forget()
     disp.pw_rest1.pack(fill="both", expand="yes")
-    functions.info_display("Tmatic", "Restarting...")
+    functions.info_display(market="Tmatic", message="Restarting...")
     service.close(Markets)
     disp.root.update()
     setup()

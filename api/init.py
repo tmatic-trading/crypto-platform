@@ -1,9 +1,9 @@
 from urllib.parse import urlparse
 
+import services as service
 from api.errors import Error, HostNameIsInvalid
 from api.variables import Variables
 from common.variables import Variables as var
-import services as service 
 
 
 def URI_validator(uri: str):

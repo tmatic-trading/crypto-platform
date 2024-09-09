@@ -311,7 +311,7 @@ class Function(WS, Variables):
                                 "market": self.name,
                                 "message": message,
                                 "time": datetime.now(tz=timezone.utc),
-                                "warning": True,
+                                "warning": "error",
                             }
                         )
                     else:
@@ -472,7 +472,7 @@ class Function(WS, Variables):
                     "market": self.name,
                     "message": message,
                     "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
+                    "warning": "warning",
                 }
             )
 
@@ -585,7 +585,7 @@ class Function(WS, Variables):
                         "market": self.name,
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": False,
+                        "warning": None,
                         "emi": emi,
                     }
                 )
@@ -1455,7 +1455,7 @@ class Function(WS, Variables):
         values = service.add_space(line)
         TreeTable.market.update(row=row, values=[values])
         if message:
-            info_display(self.name, message)
+            info_display(market=self.name, message=message)
         if error:
             TreeTable.market.paint(row=row, configure="Reload")
         else:
@@ -1552,13 +1552,17 @@ def handler_order(event) -> None:
                 var.orders[emi][clOrdID]
             except KeyError:
                 message = "Order " + clOrdID + " does not exist!"
-                info_display(ws.name, message)
+                info_display(market=ws.name, message=message, warning="warning")
                 var.logger.info(message)
                 return
             if not ws.logNumFatal:
                 Function.del_order(ws, order=order, clOrdID=clOrdID)
             else:
-                info_display(ws.name, "The operation failed. Websocket closed!")
+                info_display(
+                    market=ws.name,
+                    message="The operation failed. Websocket closed!",
+                    warning="warning",
+                )
             on_closing()
 
         def replace(clOrdID) -> None:
@@ -1572,7 +1576,9 @@ def handler_order(event) -> None:
             try:
                 float(price_replace.get())
             except ValueError:
-                info_display(ws.name, "Price must be numeric!")
+                info_display(
+                    market=ws.name, message="Price must be numeric!", warning="warning"
+                )
                 return
             if not ws.logNumFatal:
                 roundSide = var.orders[emi][clOrdID]["leavesQty"]
@@ -1585,7 +1591,11 @@ def handler_order(event) -> None:
                     rside=roundSide,
                 )
                 if price == var.orders[emi][clOrdID]["price"]:
-                    info_display(ws.name, "Price is the same but must be different!")
+                    info_display(
+                        market=ws.name,
+                        message="Price is the same but must be different!",
+                        warning="warning",
+                    )
                     return
                 clOrdID = Function.put_order(
                     ws,
@@ -1595,7 +1605,11 @@ def handler_order(event) -> None:
                     qty=var.orders[emi][clOrdID]["leavesQty"],
                 )
             else:
-                info_display(ws.name, "The operation failed. Websocket closed!")
+                info_display(
+                    market=ws.name,
+                    message="The operation failed. Websocket closed!",
+                    warning="warning",
+                )
             on_closing()
 
         if disp.order_window_trigger == "off":
@@ -1673,7 +1687,7 @@ def handler_orderbook(event) -> None:
             info_display(
                 market=ws.name,
                 message=ws.name + ": You cannot add new orders during a reboot.\n",
-                warning=True,
+                warning="warning",
             )
         return
     disp.handler_orderbook_symbol = var.symbol

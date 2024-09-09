@@ -360,7 +360,7 @@ def event_width(event, canvas_id, canvas_event: tk.Canvas):
 
 def cancel_market(market: str) -> None:
     """
-    Removes an exchange from the boot process if an error like "Host name is 
+    Removes an exchange from the boot process if an error like "Host name is
     invalid" occurs.
     """
     if market in var.market_list:

@@ -82,7 +82,7 @@ class Agent(Bitmex):
                         "market": "Bitmex",
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
+                        "warning": "error",
                     }
                 )
                 return
@@ -246,7 +246,7 @@ class Agent(Bitmex):
                         "market": self.name,
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
+                        "warning": "error",
                     }
                 )
             return filtered
@@ -371,7 +371,7 @@ class Agent(Bitmex):
                 "market": self.name,
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
-                "warning": True,
+                "warning": "warning",
             }
             var.queue_info.put(queue_message)
             return

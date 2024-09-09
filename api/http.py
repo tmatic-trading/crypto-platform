@@ -95,7 +95,7 @@ class Send(Variables):
                         "market": self.name,
                         "message": "Max retries hit. Reboot",
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
+                        "warning": "error",
                     }
                 )
                 break

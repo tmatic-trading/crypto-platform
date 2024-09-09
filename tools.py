@@ -50,7 +50,7 @@ class Bot(BotData):
                     "market": "",
                     "message": message,
                     "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
+                    "warning": "warning",
                     "emi": self.name,
                     "bot_log": True,
                 }
@@ -86,7 +86,7 @@ class Bot(BotData):
                     "market": "",
                     "message": message,
                     "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
+                    "warning": "warning",
                     "emi": self.name,
                     "bot_log": True,
                 }
@@ -480,7 +480,7 @@ class Tool(Instrument):
                     "market": "",
                     "message": message,
                     "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
+                    "warning": "warning",
                     "emi": bot_name,
                     "bot_log": True,
                 }
@@ -500,7 +500,7 @@ class Tool(Instrument):
                 "market": "",
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
-                "warning": True,
+                "warning": "warning",
             }
         )
 

@@ -132,7 +132,7 @@ class Error(Variables):
             "market": self.name,
             "message": logger_message,
             "time": datetime.now(tz=timezone.utc),
-            "warning": True,
+            "warning": "error",
         }
         wait = 2
         if status == "RETRY":
@@ -145,10 +145,12 @@ class Error(Variables):
             var.queue_info.put(queue_message)
         elif status == "IGNORE":
             self.logger.warning(logger_message)
+            queue_message["warning"] = "warning"
             var.queue_info.put(queue_message)
         elif status == "BLOCK":
             logger_message += ". Trading stopped."
             self.logger.warning(logger_message)
+            queue_message["warning"] = "warning"
             var.queue_info.put(queue_message)
         elif status == "CANCEL":
             logger_message += canceled

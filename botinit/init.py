@@ -37,7 +37,7 @@ def add_subscription(subscriptions: list) -> None:
                 + str(symbol)
                 + " but "
                 + symbol[1]
-                + " is not active. Check the .env file."
+                + " is not active. Check the .env.Subscriptions file."
             )
             var.logger.warning(message)
             var.queue_info.put(
@@ -45,7 +45,7 @@ def add_subscription(subscriptions: list) -> None:
                     "market": symbol[1],
                     "message": message,
                     "time": datetime.now(tz=timezone.utc),
-                    "warning": True,
+                    "warning": "warning",
                 }
             )
 
@@ -171,7 +171,7 @@ def load_bots() -> None:
                                 "market": "",
                                 "message": message,
                                 "time": datetime.now(tz=timezone.utc),
-                                "warning": True,
+                                "warning": "error",
                             }
                         )
     var.lock.release()
@@ -230,7 +230,7 @@ def load_bots() -> None:
                     + str(symbol)
                     + " ignored. Add "
                     + value["MARKET"]
-                    + " to the .env file."
+                    + " to the .env.Settings file."
                 )
                 var.logger.warning(message)
                 var.queue_info.put(
@@ -238,7 +238,7 @@ def load_bots() -> None:
                         "market": "",
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
+                        "warning": "warning",
                     }
                 )
         var.lock.release()

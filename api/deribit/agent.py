@@ -757,7 +757,7 @@ class Agent(Deribit):
                         "market": self.name,
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
+                        "warning": "error",
                     }
                 )
             while time.time() < self.response[id]["request_time"]:
@@ -773,7 +773,7 @@ class Agent(Deribit):
                             "market": self.name,
                             "message": logger_message,
                             "time": datetime.now(tz=timezone.utc),
-                            "warning": True,
+                            "warning": "error",
                         }
                         if status == "RETRY":
                             tm = 0.5
@@ -821,7 +821,7 @@ class Agent(Deribit):
                         "market": self.name,
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
+                        "warning": "error",
                     }
                 )
                 self.logNumFatal = "FATAL"
@@ -875,7 +875,7 @@ class Agent(Deribit):
                                     "market": self.name,
                                     "message": message,
                                     "time": datetime.now(tz=timezone.utc),
-                                    "warning": True,
+                                    "warning": "error",
                                 }
                             )
             time.sleep(1 - time.time() % 1)

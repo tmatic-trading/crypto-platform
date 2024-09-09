@@ -119,7 +119,7 @@ class WS(Variables):
                 "market": self.name,
                 "message": "Connected to websocket.",
                 "time": datetime.now(tz=timezone.utc),
-                "warning": False,
+                "warning": None,
             }
         )
 
