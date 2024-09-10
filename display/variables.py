@@ -68,7 +68,7 @@ def on_canvas_mousewheel(event, canvas, scroll, ostype):
 class ScrollFrame(tk.Frame):
     def __init__(self, parent: tk.Frame, bg: str, bd: int):
         super().__init__(parent)
-        canvas = tk.Canvas(parent, borderwidth=0, highlightthickness=0, bg=bg)
+        canvas = tk.Canvas(parent, highlightthickness=0, bg=bg, bd=bd)
         canvas.grid(row=0, column=0, sticky="NSEW")
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(0, weight=1)
@@ -76,11 +76,11 @@ class ScrollFrame(tk.Frame):
         scroll.config(command=canvas.yview)
         scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
-        page = tk.Frame(canvas, bg=bg, borderwidth=bd)
+        page = tk.Frame(canvas, bg=bg, bd=0)
         id = canvas.create_window((0, 0), window=page, anchor="nw")
         canvas.bind(
             "<Configure>",
-            lambda event, id=id, can=canvas: event_width(event, id, can),
+            lambda event, id=id, can=canvas: event_width(event, id, can, bd),
         )
         page.bind(
             "<Configure>",
@@ -94,8 +94,8 @@ class ScrollFrame(tk.Frame):
             canvas_event.configure(scrollregion=canvas_event.bbox("all"))
             service.wrap(frame=frame, padx=padx)
 
-        def event_width(event, canvas_id, canvas_event: tk.Canvas):
-            canvas_event.itemconfig(canvas_id, width=event.width)
+        def event_width(event, canvas_id, canvas_event: tk.Canvas, bd):
+            canvas_event.itemconfig(canvas_id, width=event.width - bd * 2)
 
 class CustomButton(tk.Frame):
     def __init__(
