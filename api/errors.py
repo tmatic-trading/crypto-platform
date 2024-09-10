@@ -193,3 +193,20 @@ def try_response(response, exception):
             return {"error": {"code": code, "message": message}}
         except Exception:
             pass
+        
+        print("___________try_response")
+        print(exception)
+        print("-----")
+        print(exception.__dict__)
+        print("-----")
+        print(response)
+        print("-----")
+        print(response.__dict__)
+        print("-----")
+        print(response["error"])
+        print("-----")
+
+        raise
+
+        # return {"error": {"code": 0, "message": ""}}
+

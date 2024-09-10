@@ -627,7 +627,7 @@ class Agent(Deribit):
                 return klines
             else:
                 self.logger.error(
-                    "A dict was expected when loading klines, but was not received. Reboot"
+                    "A dict was expected when loading klines, but was not received."
                 )
 
     def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):

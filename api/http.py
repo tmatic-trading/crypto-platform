@@ -41,12 +41,29 @@ class Send(Variables):
         self,
         path: str = None,
         verb: str = None,
-        postData=None,
+        postData: dict = None,
         timeout=7,
-        theorPrice=None,
-    ) -> Union[dict, list, None]:
+    ) -> Union[dict, None]:
         """
         Sends a request to the exchange.
+
+        Parameters
+        ----------
+        self: object
+            Markets class instance.
+        path: str
+            Endpoint path.
+        verb: str
+            Methods of type GET, POST, PUT.
+        postData:
+            Payload body of a HTTP request.
+        timeout:
+            Request timeout.
+
+        Returns
+        -------
+        dict | None
+            Usually requested data in dictionary format. On failure - None.
         """
         url = self.http_url + path
         cur_retries = 1
@@ -80,14 +97,14 @@ class Send(Variables):
                 if status == "RETRY":
                     cur_retries += 1
                 else:
-                    return status
+                    return
             else:
                 if response:
                     if self.logNumFatal != "CANCEL":
                         self.logNumFatal = ""
                     return response.json()
                 else:
-                    return None
+                    return
             if cur_retries > self.maxRetryRest:
                 self.logger.error(f"{self.name}: Max retries hit. Reboot")
                 var.queue_info.put(

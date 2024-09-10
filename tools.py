@@ -154,12 +154,12 @@ class Tool(Instrument):
                 if move is True:
                     clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Sell")
                 if clOrdID is None:
-                    new_clOrdID = service.set_clOrdID(emi=bot.name)
+                    clOrdID = service.set_clOrdID(emi=bot.name)
                     res = WS.place_limit(
                         ws,
                         quantity=-abs(qty),
                         price=price,
-                        clOrdID=new_clOrdID,
+                        clOrdID=clOrdID,
                         symbol=self.symbol_tuple,
                     )
                 else:
@@ -228,12 +228,12 @@ class Tool(Instrument):
                 if move is True:
                     clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Buy")
                 if clOrdID is None:
-                    new_clOrdID = service.set_clOrdID(emi=bot.name)
+                    clOrdID = service.set_clOrdID(emi=bot.name)
                     res = WS.place_limit(
                         ws,
                         quantity=qty,
                         price=price,
-                        clOrdID=new_clOrdID,
+                        clOrdID=clOrdID,
                         symbol=self.symbol_tuple,
                     )
                 else:
