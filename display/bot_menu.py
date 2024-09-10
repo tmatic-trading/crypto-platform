@@ -75,7 +75,7 @@ class SettingsApp:
             "Duplicate": self.dublicate,
             "Delete": self.delete,
         }
-        self.padx = 10
+        self.padx = 0
         self.pady = 5
         with open("display/new_bot_text.txt", "r") as f:
             self.new_bot_text = f.read()
@@ -89,7 +89,7 @@ class SettingsApp:
 
         # Create initial frames
 
-        self.brief_frame = ScrollFrame(info_right, bg=disp.bg_color)
+        self.brief_frame = ScrollFrame(info_right, bg=disp.bg_color, bd=5)
         self.modules = dict()
 
     def onFrameConfigure(self, event):

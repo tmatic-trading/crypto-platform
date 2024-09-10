@@ -29,9 +29,44 @@ class AutoScrollbar(tk.Scrollbar):
             self.grid()
         tk.Scrollbar.set(self, low, high)
 
+def on_canvas_enter(event, canvas, scroll, ostype):
+    if ostype == "Linux":
+        canvas.bind_all(
+            "<Button-4>",
+            lambda event: on_canvas_mousewheel(event, canvas, scroll, ostype),
+        )
+        canvas.bind_all(
+            "<Button-5>",
+            lambda event: on_canvas_mousewheel(event, canvas, scroll, ostype),
+        )
+    else:
+        canvas.bind_all(
+            "<MouseWheel>",
+            lambda event: on_canvas_mousewheel(event, canvas, scroll, ostype),
+        )
+
+def on_canvas_leave(event, canvas, ostype):
+    if ostype == "Linux":
+        canvas.unbind_all("<Button-4>")
+        canvas.unbind_all("<Button-5>")
+    else:
+        canvas.unbind_all("<MouseWheel>")
+
+def on_canvas_mousewheel(event, canvas, scroll, ostype):
+    slider_position = scroll.get()
+    if slider_position != (0.0, 1.0):  # Scrollbar is not full
+        if ostype == "Windows":
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        elif ostype == "Mac":
+            canvas.yview_scroll(int(-1 * event.delta), "units")
+        else:
+            if event.num == 4:
+                canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                canvas.yview_scroll(1, "units")
 
 class ScrollFrame(tk.Frame):
-    def __init__(self, parent: tk.Frame, bg: str):
+    def __init__(self, parent: tk.Frame, bg: str, bd: int):
         super().__init__(parent)
         canvas = tk.Canvas(parent, borderwidth=0, highlightthickness=0, bg=bg)
         canvas.grid(row=0, column=0, sticky="NSEW")
@@ -41,18 +76,26 @@ class ScrollFrame(tk.Frame):
         scroll.config(command=canvas.yview)
         scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
-        page = tk.Frame(canvas, bg=bg, borderwidth=0)
+        page = tk.Frame(canvas, bg=bg, borderwidth=bd)
         id = canvas.create_window((0, 0), window=page, anchor="nw")
         canvas.bind(
             "<Configure>",
-            lambda event, id=id, can=canvas: service.event_width(event, id, can),
+            lambda event, id=id, can=canvas: event_width(event, id, can),
         )
         page.bind(
             "<Configure>",
-            lambda event: service.event_config(event, canvas, page, 5),
+            lambda event: event_config(event, canvas, page, 5),
         )
+        canvas.bind("<Enter>", lambda event: on_canvas_enter(event, canvas, scroll, Variables.ostype))
+        canvas.bind("<Leave>", lambda event: on_canvas_leave(event, canvas, Variables.ostype))
         self.__dict__ = page.__dict__
 
+        def event_config(event, canvas_event: tk.Canvas, frame: tk.Frame, padx: int):
+            canvas_event.configure(scrollregion=canvas_event.bbox("all"))
+            service.wrap(frame=frame, padx=padx)
+
+        def event_width(event, canvas_id, canvas_event: tk.Canvas):
+            canvas_event.itemconfig(canvas_id, width=event.width)
 
 class CustomButton(tk.Frame):
     def __init__(
@@ -158,6 +201,7 @@ class CustomButton(tk.Frame):
 class Variables:
     root = tk.Tk()
     root.bind("<F7>", lambda event: Variables.on_bot_menu(event))
+    root.bind("<F8>", lambda event: Variables.on_settings())
     root.bind("<F9>", lambda event: on_trade_state(event))
     platform_name = "Tmatic"
     root.title(platform_name)
@@ -357,7 +401,7 @@ class Variables:
             on_trade_state("none")
         elif value == "<F3> Reload All":
             on_f3_reload()
-        elif value == "Settings":
+        elif value == "<F8> Settings":
             Variables.on_settings()
 
     menu_button = CustomButton(
@@ -369,9 +413,9 @@ class Variables:
         command=on_menu_select,
         menu_items=[
             "<F9> Trading ON",
+            "<F8> Settings",
             "<F7> Bot Menu",
             "<F3> Reload All",
-            "Settings",
         ],  # , "Settings", "About"],
     )
     menu_button.pack(side="left", padx=4)
@@ -655,10 +699,12 @@ class Variables:
     s_pw_main.add(s_right)
     v_line = tk.Frame(s_right, bg=title_color)
     v_line.pack(fill="both", side="left")
-    s_set = tk.Frame(s_right, padx=5, pady=5, bg=bg_color)
-    s_set.pack(fill="both", expand=True, side="left")
-    settings_page = ScrollFrame(s_set, bg=bg_color)
-    frame_tips = ScrollFrame(s_left, bg=light_gray_color)
+    #s_pad = tk.Frame(s_right, bg=bg_color)
+    #s_pad.pack(fill="both", expand=True, side="left")
+    s_set = tk.Frame(s_right, padx=0, pady=0, bg=bg_color)
+    s_set.pack(fill="both", expand=True)
+    settings_page = ScrollFrame(s_set, bg=bg_color, bd=5)
+    frame_tips = ScrollFrame(s_left, bg=light_gray_color, bd=5)
     s_label = tk.Label(frame_tips, text="Tips", bg=light_gray_color)
     s_label.config(font=("", symbol_height, "bold"))
     s_label.pack(anchor="nw")

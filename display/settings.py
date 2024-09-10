@@ -21,7 +21,7 @@ class SettingsApp:
         self.root_frame.grid_rowconfigure(0, weight=1)
         self.bg_select_color = disp.bg_select_color
         self.bg_entry = disp.light_gray_color
-        self.bg_active = "yellow"
+        self.bg_active = disp.bg_select_color
         self.bg_changed = "yellow"
 
         self.title_color = tk.Label(root, text=" TRADING: ")["background"]
