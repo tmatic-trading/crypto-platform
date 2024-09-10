@@ -349,15 +349,6 @@ def wrap(frame: tk.Frame, padx):
             child.config(wraplength=frame.winfo_width() - padx * 2)
 
 
-def event_config(event, canvas_event: tk.Canvas, frame: tk.Frame, padx: int):
-    canvas_event.configure(scrollregion=canvas_event.bbox("all"))
-    wrap(frame=frame, padx=padx)
-
-
-def event_width(event, canvas_id, canvas_event: tk.Canvas):
-    canvas_event.itemconfig(canvas_id, width=event.width)
-
-
 def cancel_market(market: str) -> None:
     """
     Removes an exchange from the boot process if an error like "Host name is
