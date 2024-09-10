@@ -127,7 +127,7 @@ class SettingsApp:
         self.setting_button = tk.Button(
             self.settings_bottom,
             bg=self.title_color,
-            activebackground=self.bg_active,
+            activebackground=self.bg_changed,
             text="Settings Saved",
             command=lambda: self.save_dotenv("button"),
         )
