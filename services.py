@@ -6,6 +6,7 @@ from typing import Union
 
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
+from display.messages import ErrorMessage, Message
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
@@ -356,6 +357,67 @@ def cancel_market(market: str) -> None:
     """
     if market in var.market_list:
         var.market_list.remove(market)
-    if var.market_list:
-        var.current_market = var.market_list[0]
-        var.symbol = var.env[var.current_market]["SYMBOLS"][0]
+
+
+def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
+    """
+    Checks if the symbols in the symbol_list of a given market are valid for
+    further websocket subscription. Removes misspelled or expired symbols
+    from the symbol_list. If symbol_list is empty after removal, adds a
+    default symbol.
+
+    Parameters
+    ----------
+    symbols: list
+        List of symbols of all available active instruments, which is
+        received from the exchange.
+    market: str
+        Exchange name.
+    symbol_list: list
+        Symbols for subscription.
+
+    Returns
+    -------
+    list
+        Corrected symbol_list.
+    """
+    def put_default(symbol_list: list):
+        if not symbol_list:
+            default = var.default_symbol[market]
+            symbol_list = var.default_symbol[market]
+            message = Message.DEFAULT_SYMBOL_ADDED.format(
+                SYMBOL=default[0], MARKET=market
+            )
+            var.queue_info.put(
+                {
+                    "market": market,
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": "warning",
+                }
+            )
+            var.logger.info(message)
+
+        return symbol_list
+
+    if symbols:
+        for symbol in symbol_list.copy():
+            if symbol not in symbols:
+                message = ErrorMessage.UNKNOWN_SYMBOL.format(
+                    SYMBOL=symbol[0], MARKET=market
+                )
+                var.queue_info.put(
+                    {
+                        "market": market,
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": "warning",
+                    }
+                )
+                var.logger.warning(message)
+                symbol_list.remove(symbol)
+        symbol_list = put_default(symbol_list=symbol_list)
+    else:
+        symbol_list = put_default(symbol_list=symbol_list)
+
+    return symbol_list

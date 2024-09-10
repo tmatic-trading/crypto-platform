@@ -60,6 +60,9 @@ def setup(reload=False):
         var.market_list = ["Fake"]
         var.current_market = "Fake"
         var.symbol = "BTCUSDT"
+    else:
+        var.current_market = var.market_list[0]
+        var.symbol = Markets[var.current_market].symbol_list[0][0]
     functions.init_tables()
     bot_manager.create_bots_menu()
     bot_threads()

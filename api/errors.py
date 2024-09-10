@@ -9,7 +9,6 @@ from api.variables import Variables
 from common.variables import Variables as var
 
 
-
 class HostNameIsInvalid(Exception):
     """
     Exception thrown for Tmatic returned errors if HTTP or WebSocket name is
@@ -175,7 +174,6 @@ def try_response(response, exception):
         return response
     except Exception:
         try:
-            
             code = exception.__dict__["response"].status_code
             message = exception.__dict__["response"]._content
             message = json.loads(message)["error"]
@@ -193,7 +191,7 @@ def try_response(response, exception):
             return {"error": {"code": code, "message": message}}
         except Exception:
             pass
-        
+
         print("___________try_response")
         print(exception)
         print("-----")
@@ -209,4 +207,3 @@ def try_response(response, exception):
         raise
 
         # return {"error": {"code": 0, "message": ""}}
-

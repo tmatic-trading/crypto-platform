@@ -32,29 +32,21 @@ class Agent(Deribit):
                             self,
                             values=values,
                         )
-                    if self.Instrument.get_keys():
-                        for symbol in self.symbol_list:
-                            if symbol not in self.Instrument.get_keys():
-                                message = ErrorMessage.UNKNOWN_SYMBOL.format(
-                                    SYMBOL=symbol[0], MARKET=self.name
-                                )
-                                self.logger.error(message)
-                                return -1
-                    else:
-                        self.logger.error(
-                            "There are no entries in the Instrument class."
-                        )
-                        return -1
-                    return 0
+                    self.symbol_list = service.check_symbol_list(
+                        symbols=self.Instrument.get_keys(),
+                        market=self.name,
+                        symbol_list=self.symbol_list,
+                    )
+                    return ""
                 else:
-                    error = "A list was expected when loading instruments, but was not received. Reboot"
+                    error = "A list was expected when loading instruments, but was not received."
             else:
                 error = "When loading instruments 'result' was not received."
         else:
             error = "Invalid data was received when loading instruments. " + str(data)
         self.logger.error(error)
 
-        return -1
+        return "error"
 
     def get_instrument(self, ticker: str, category=None) -> None:
         path = Listing.GET_INSTRUMENT_DATA
@@ -198,9 +190,7 @@ class Agent(Deribit):
                 account.limits["private/get_transaction_log"] = {"burst": 10, "rate": 2}
             return
         # self.logNumFatal = "SETUP"
-        message = (
-            "A user ID was requested from the exchange but was not received."
-        )
+        message = "A user ID was requested from the exchange but was not received."
         self.logger.error(message)
 
     def get_wallet_balance(self) -> None:

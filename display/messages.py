@@ -3,6 +3,9 @@ from enum import Enum
 
 class Message(str, Enum):
     SUBSCRIPTION_ADDED = "Added subscription to {SYMBOL}."
+    DEFAULT_SYMBOL_ADDED = (
+        "{MARKET} symbol list is empty. Added default symbol {SYMBOL}."
+    )
 
     def __str__(self) -> str:
         return self.value
@@ -42,9 +45,10 @@ class ErrorMessage(str, Enum):
         + "{TICKER} is ignored."
     )
     UNKNOWN_SYMBOL = (
-        "Unknown symbol: {SYMBOL}. Check the SYMBOLS in the .env.{MARKET} "
-        + "file. Perhaps the name of the symbol does not correspond to the "
-        + "category or such symbol does not exist. Reboot."
+        "Unknown {MARKET} symbol {SYMBOL}. Check the SYMBOLS in the "
+        + ".env.Subscriptions file. It is possible that the symbol name is "
+        + "misspelled, or such symbol does not exist, or the instrument has "
+        + "expired. Symbol has been removed from {MARKET} subscription."
     )
 
     def __str__(self) -> str:

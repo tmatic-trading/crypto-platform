@@ -29,6 +29,7 @@ class AutoScrollbar(tk.Scrollbar):
             self.grid()
         tk.Scrollbar.set(self, low, high)
 
+
 def on_canvas_enter(event, canvas, scroll, ostype):
     if ostype == "Linux":
         canvas.bind_all(
@@ -45,12 +46,14 @@ def on_canvas_enter(event, canvas, scroll, ostype):
             lambda event: on_canvas_mousewheel(event, canvas, scroll, ostype),
         )
 
+
 def on_canvas_leave(event, canvas, ostype):
     if ostype == "Linux":
         canvas.unbind_all("<Button-4>")
         canvas.unbind_all("<Button-5>")
     else:
         canvas.unbind_all("<MouseWheel>")
+
 
 def on_canvas_mousewheel(event, canvas, scroll, ostype):
     slider_position = scroll.get()
@@ -64,6 +67,7 @@ def on_canvas_mousewheel(event, canvas, scroll, ostype):
                 canvas.yview_scroll(-1, "units")
             elif event.num == 5:
                 canvas.yview_scroll(1, "units")
+
 
 class ScrollFrame(tk.Frame):
     def __init__(self, parent: tk.Frame, bg: str, bd: int):
@@ -86,8 +90,13 @@ class ScrollFrame(tk.Frame):
             "<Configure>",
             lambda event: event_config(event, canvas, page, 5),
         )
-        canvas.bind("<Enter>", lambda event: on_canvas_enter(event, canvas, scroll, Variables.ostype))
-        canvas.bind("<Leave>", lambda event: on_canvas_leave(event, canvas, Variables.ostype))
+        canvas.bind(
+            "<Enter>",
+            lambda event: on_canvas_enter(event, canvas, scroll, Variables.ostype),
+        )
+        canvas.bind(
+            "<Leave>", lambda event: on_canvas_leave(event, canvas, Variables.ostype)
+        )
         self.__dict__ = page.__dict__
 
         def event_config(event, canvas_event: tk.Canvas, frame: tk.Frame, padx: int):
@@ -96,6 +105,7 @@ class ScrollFrame(tk.Frame):
 
         def event_width(event, canvas_id, canvas_event: tk.Canvas, bd):
             canvas_event.itemconfig(canvas_id, width=event.width - bd * 2)
+
 
 class CustomButton(tk.Frame):
     def __init__(
@@ -699,8 +709,8 @@ class Variables:
     s_pw_main.add(s_right)
     v_line = tk.Frame(s_right, bg=title_color)
     v_line.pack(fill="both", side="left")
-    #s_pad = tk.Frame(s_right, bg=bg_color)
-    #s_pad.pack(fill="both", expand=True, side="left")
+    # s_pad = tk.Frame(s_right, bg=bg_color)
+    # s_pad.pack(fill="both", expand=True, side="left")
     s_set = tk.Frame(s_right, padx=0, pady=0, bg=bg_color)
     s_set.pack(fill="both", expand=True)
     settings_page = ScrollFrame(s_set, bg=bg_color, bd=5)

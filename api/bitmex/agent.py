@@ -17,27 +17,21 @@ class Agent(Bitmex):
         data = Send.request(self, path=Listing.GET_ACTIVE_INSTRUMENTS, verb="GET")
         if not isinstance(data, list):
             self.logger.error(
-                "A list was expected when loading instruments, but was not received. Reboot"
+                "A list was expected when loading instruments, but was not received."
             )
-            return -1
+            return "error"
         for instrument in data:
             Agent.fill_instrument(
                 self,
                 instrument=instrument,
             )
-        if self.Instrument.get_keys():
-            for symbol in self.symbol_list:
-                if symbol not in self.Instrument.get_keys():
-                    message = ErrorMessage.UNKNOWN_SYMBOL.format(
-                        SYMBOL=symbol[0], MARKET=self.name
-                    )
-                    self.logger.error(message)
-                    return -1
-        else:
-            self.logger.error("There are no entries in the Instrument class.")
-            return -1
+        self.symbol_list = service.check_symbol_list(
+            symbols=self.Instrument.get_keys(),
+            market=self.name,
+            symbol_list=self.symbol_list,
+        )
 
-        return 0
+        return ""
 
     def get_user(self) -> Union[dict, None]:
         """
@@ -358,7 +352,7 @@ class Agent(Bitmex):
         self, quantity: float, price: float, clOrdID: str, symbol: tuple
     ) -> Union[dict, None]:
         """
-        Places a limit order
+        Places a limit order.
         """
         if self.Instrument[symbol].category == "spot":
             message = (
@@ -408,7 +402,7 @@ class Agent(Bitmex):
 
     def remove_order(self, order: dict) -> Union[list, None]:
         """
-        Deletes an order
+        Deletes an order.
         """
         path = Listing.ORDER_ACTIONS
         postData = {"orderID": order["orderID"]}

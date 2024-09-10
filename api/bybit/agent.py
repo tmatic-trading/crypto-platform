@@ -59,18 +59,12 @@ class Agent(Bybit):
                         + "but for some categories it was not received. Reboot."
                     )
                 return error
-
-        if self.Instrument.get_keys():
-            for symbol in self.symbol_list:
-                if symbol not in self.Instrument.get_keys():
-                    message = ErrorMessage.UNKNOWN_SYMBOL.format(
-                        SYMBOL=symbol[0], MARKET=self.name
-                    )
-                    self.logger.error(message)
-                    return "BLOCK"
-        else:
-            self.logger.error("There are no entries in the Instrument class.")
-            return "BLOCK"
+            
+        self.symbol_list = service.check_symbol_list(
+            symbols=self.Instrument.get_keys(),
+            market=self.name,
+            symbol_list=self.symbol_list,
+        )
 
         return ""
 

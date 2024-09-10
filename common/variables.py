@@ -236,3 +236,8 @@ class Variables:
             ("1h", 60),
         ]
     )
+    default_symbol = {
+        "Bitmex": [("XBTUSDT", "Bitmex")],
+        "Bybit": [("BTCUSDT", "Bybit")],
+        "Deribit": [("BTC-PERPETUAL", "Deribit")],
+    }

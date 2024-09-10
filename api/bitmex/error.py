@@ -102,7 +102,7 @@ class ErrorStatus(Enum):
         # 400: "Bad Request",
         401: "Unauthorized",
         404: "Not Found",
-        504: "Server Error: Gateway Time-out"
+        504: "Server Error: Gateway Time-out",
     }
 
     def error_status(res):

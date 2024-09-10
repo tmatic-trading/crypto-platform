@@ -35,9 +35,9 @@ class SettingsApp:
         self.common_settings["BOTTOM_FRAME"] = "robots"
         self.common_settings["REFRESH_RATE"] = "5"
         self.default_subscriptions = OrderedDict()
-        self.default_subscriptions["Bitmex"] = ["XBTUSDT"]
-        self.default_subscriptions["Bybit"] = ["BTCUSDT"]
-        self.default_subscriptions["Deribit"] = ["BTC-PERPETUAL"]
+        self.default_subscriptions["Bitmex"] = var.default_symbol["Bitmex"]
+        self.default_subscriptions["Bybit"] = var.default_symbol["Bybit"]
+        self.default_subscriptions["Deribit"] = var.default_symbol["Deribit"]
         for setting in self.common_settings.keys():
             self.common_trace_changed[setting] = StringVar(name=setting + str(self))
             self.common_trace_changed[setting].set(self.common_settings[setting])
