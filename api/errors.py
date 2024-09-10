@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from enum import Enum
 
@@ -6,6 +7,7 @@ from api.bybit.error import ErrorStatus as BybitErrorStatus
 from api.deribit.error import ErrorStatus as DeribitErrorStatus
 from api.variables import Variables
 from common.variables import Variables as var
+
 
 
 class HostNameIsInvalid(Exception):
@@ -69,19 +71,19 @@ class Error(Variables):
         prefix = f"{self.name} - {error_name} - "
         if error_name in ["ConnectionError", "ReadTimeout"]:
             status = "RETRY"
-            error_message = prefix + error_name + ". Unable to contact API"
+            error_message = prefix + ". Unable to contact API"
         elif error_name == "InvalidChannelTypeError":
             status = "BLOCK"
-            error_message = prefix + error_name + " " + str(exception)
+            error_message = prefix + " " + str(exception)
         elif error_name in ["Timeout", "SSLError", "WebSocketTimeoutException"]:
             status = "FATAL"
-            error_message = prefix + error_name + " " + str(exception)
+            error_message = prefix + " " + str(exception)
         elif error_name == "UnauthorizedExceptionError":
             status = "CANCEL"
-            error_message = prefix + error_name
+            error_message = prefix
         elif error_name == "TopicMismatchError":
             status = "IGNORE"
-            error_message = prefix + error_name + " " + str(exception)
+            error_message = prefix + " " + str(exception)
         elif error_name in [
             "HTTPError",
             "InvalidRequestError",
@@ -98,6 +100,7 @@ class Error(Variables):
                     message = response["error"]["message"]
                 error_message = f"{prefix}{status_code} {message}"
             else:
+                print("+++++", type(response["error"]["message"]))
                 status = "IGNORE"
                 error_message = (
                     prefix
@@ -174,8 +177,9 @@ def try_response(response, exception):
     except Exception:
         try:
             code = exception.__dict__["response"].status_code
-            message = str(exception.__dict__["response"]._content)
-            return {"error": {"code": code, "message": message}}
+            message = exception.__dict__["response"]._content
+            message = json.loads(message)["error"]
+            return {"error": message}
         except Exception:
             pass
         try:
