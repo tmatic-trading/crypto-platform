@@ -100,7 +100,6 @@ class Error(Variables):
                     message = response["error"]["message"]
                 error_message = f"{prefix}{status_code} {message}"
             else:
-                print("+++++", type(response["error"]["message"]))
                 status = "IGNORE"
                 error_message = (
                     prefix
@@ -176,9 +175,12 @@ def try_response(response, exception):
         return response
     except Exception:
         try:
+            
             code = exception.__dict__["response"].status_code
             message = exception.__dict__["response"]._content
             message = json.loads(message)["error"]
+            if "code" not in message:
+                message["code"] = code
             return {"error": message}
         except Exception:
             pass

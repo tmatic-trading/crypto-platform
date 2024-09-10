@@ -68,7 +68,7 @@ class Agent(Deribit):
             self.logger.error(
                 "A dict was expected when loading instrument, but was not received. Reboot"
             )
-            self.logNumFatal = "SETUP"
+            self.logNumFatal = "FATAL"
 
     def fill_instrument(self, values: dict) -> str:
         """
