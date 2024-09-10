@@ -474,6 +474,7 @@ class Variables:
     # text_info.configure(state="disabled")
     if ostype == "Mac":
         bg_color = title_color
+        light_gray_color = text_info["background"]
     else:
         bg_color = text_info["background"]
 
@@ -707,10 +708,8 @@ class Variables:
     s_right = tk.Frame(s_pw_main, bg=bg_color)
     s_pw_main.add(s_left)
     s_pw_main.add(s_right)
-    v_line = tk.Frame(s_right, bg=title_color)
+    v_line = tk.Frame(s_right, bg=light_gray_color)
     v_line.pack(fill="both", side="left")
-    # s_pad = tk.Frame(s_right, bg=bg_color)
-    # s_pad.pack(fill="both", expand=True, side="left")
     s_set = tk.Frame(s_right, padx=0, pady=0, bg=bg_color)
     s_set.pack(fill="both", expand=True)
     settings_page = ScrollFrame(s_set, bg=bg_color, bd=5)
