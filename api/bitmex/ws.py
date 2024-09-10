@@ -66,6 +66,12 @@ class Bitmex(Variables):
         self.pinging = "pong"
         self.ticker = dict()
 
+    def setup_session(self):
+        """
+        Not used in Bitmex.
+        """
+        pass
+
     def start(self):
         if not self.logNumFatal:
             for symbol in self.symbol_list:

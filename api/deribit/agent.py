@@ -66,7 +66,7 @@ class Agent(Deribit):
             Agent.fill_instrument(self, values=self.response[id]["result"])
         else:
             self.logger.error(
-                "A dict was expected when loading instrument, but was not received. Reboot"
+                "A dict was expected when loading instrument, but was not received."
             )
             self.logNumFatal = "FATAL"
 
@@ -165,11 +165,11 @@ class Agent(Deribit):
                     self.setup_orders = data["result"]
                     return 0
                 else:
-                    error = "The list was expected when the orders were loaded, but was not received. Reboot"
+                    error = "The list was expected when the orders were loaded, but was not received."
             else:
-                error = "When loading instruments 'result' was not received."
+                error = "When loading open orders 'result' was not received."
         else:
-            error = "Invalid data was received when loading instruments. " + str(data)
+            error = "Invalid data was received when loading open orders. " + str(data)
         self.logger.error(error)
 
         return -1
@@ -197,9 +197,9 @@ class Agent(Deribit):
                 account.limits = values["limits"]
                 account.limits["private/get_transaction_log"] = {"burst": 10, "rate": 2}
             return
-        self.logNumFatal = "SETUP"
+        # self.logNumFatal = "SETUP"
         message = (
-            "A user ID was requested from the exchange but was not received. Reboot"
+            "A user ID was requested from the exchange but was not received."
         )
         self.logger.error(message)
 
@@ -229,9 +229,9 @@ class Agent(Deribit):
                     instrument.marginCallPrice = "None"
         else:
             self.logger.error(
-                "The dict was expected when the positions were loaded, but it was not received. Reboot."
+                "The dict was expected when the positions were loaded, but it was not received."
             )
-            self.logNumFatal = "SETUP"
+            # self.logNumFatal = "SETUP"
 
     def trading_history(
         self, histCount: int, start_time: datetime = None, funding: bool = False

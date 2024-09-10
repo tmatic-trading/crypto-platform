@@ -44,6 +44,7 @@ def setup(reload=False):
         ws = Markets[name]
         # if name in MetaMarket.dictionary:
         Setup.variables(ws)
+        ws.setup_session()
         if name in var.market_list:
             t = threading.Thread(target=setup_market, args=(ws, reload))
             threads.append(t)

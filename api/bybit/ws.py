@@ -25,11 +25,6 @@ class Bybit(Variables):
     def __init__(self):
         self.name = "Bybit"
         Setup.variables(self)
-        self.session: HTTP = HTTP(
-            api_key=self.api_key,
-            api_secret=self.api_secret,
-            testnet=self.testnet,
-        )
         self.categories = ["spot", "inverse", "option", "linear"]
         self.settlCurrency_list = {
             "spot": [],
@@ -50,6 +45,13 @@ class Bybit(Variables):
         self.account_disp = ""
         WebSocket._on_message = Bybit._on_message
         self.ticker = dict()
+
+    def setup_session(self):
+        self.session: HTTP = HTTP(
+            api_key=self.api_key,
+            api_secret=self.api_secret,
+            testnet=self.testnet,
+        )
 
     def start(self):
         for symbol in self.symbol_list:

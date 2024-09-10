@@ -78,6 +78,12 @@ class Deribit(Variables):
         self.ticker = dict()
         self.funding_thread_active = True
 
+    def setup_session(self):
+        """
+        Not used in Deribit.
+        """
+        pass
+
     def start(self):
         for symbol in self.symbol_list:
             instrument = self.Instrument[symbol]
