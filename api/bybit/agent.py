@@ -59,7 +59,7 @@ class Agent(Bybit):
                         + "but for some categories it was not received. Reboot."
                     )
                 return error
-            
+
         self.symbol_list = service.check_symbol_list(
             symbols=self.Instrument.get_keys(),
             market=self.name,

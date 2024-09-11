@@ -6,11 +6,11 @@ from datetime import datetime, timezone
 from typing import Union
 
 import services as service
+from api.errors import Error
 from api.http import Send
 from common.variables import Variables as var
-from display.messages import ErrorMessage
 
-from .error import ErrorStatus
+from .error import DeribitWsRequestError, ErrorStatus
 from .path import Listing, Matching_engine
 from .ws import Deribit
 
@@ -686,10 +686,16 @@ class Agent(Deribit):
 
         Errors
         ------
-            WAIT - the request is non-fatal, wait and try again.
-            FATAL - reboot.
-            IGNORE - the error only appears on the screen and does not cause a
+            WAIT    the request is non-fatal, wait and try again.
+            FATAL   reboot.
+            IGNORE  the error only appears on the screen and does not cause a
             reboot.
+            CANCEL  loading cancels.
+            BLOCK   trading should bo blocked.
+
+        Returns
+        -------
+            Requested information. If failed - None.
         """
         account = self.Account[(currency, self.name)]
         limit = account.limits
@@ -754,46 +760,18 @@ class Agent(Deribit):
                 res = self.response[id]["result"]
                 if res:
                     if "error" in res:
-                        status = ErrorStatus.error_status(res)
-                        error_message = res["error"]["message"]
-                        logger_message = (
-                            "On request " + path + text + " - error - " + error_message
+                        error = Error.handler(
+                            self,
+                            exception=DeribitWsRequestError(response=res),
+                            response=res,
+                            verb="request via ws",
+                            path=path,
                         )
-                        queue_message = {
-                            "market": self.name,
-                            "message": logger_message,
-                            "time": datetime.now(tz=timezone.utc),
-                            "warning": "error",
-                        }
-                        if status == "RETRY":
-                            tm = 0.5
-                            logger_message += f" - wait {tm} sec"
-                            self.logger.warning(logger_message)
-                            time.sleep(tm)
+                        if error == "RETRY":
+                            time.sleep(0.5)
                             break
-                        elif status == "FATAL":
-                            logger_message += " - fatal. Reboot"
-                            queue_message["message"] = logger_message
-                            self.logger.error(logger_message)
-                            var.queue_info.put(queue_message)
-                            self.logNumFatal = status
-                            return
-                        elif status == "IGNORE":
-                            self.logger.warning(logger_message)
-                            var.queue_info.put(queue_message)
-                            return "ignore"
-                        elif status == "BLOCK":
-                            logger_message += ". Trading stopped."
-                            self.logger.warning(logger_message)
-                            var.queue_info.put(queue_message)
-                            self.logNumFatal = status
-                            return status
                         else:
-                            logger_message = " unexpected error " + logger_message
-                            queue_message["message"] = logger_message
-                            self.logger.warning(logger_message)
-                            var.queue_info.put(queue_message)
-                            return "ignore"
+                            return
                     else:
                         return res
                 time.sleep(0.05)

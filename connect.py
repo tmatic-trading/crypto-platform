@@ -150,10 +150,8 @@ def setup_market(ws: Markets, reload=False):
                 [thread.join() for thread in threads]
                 if not success["history"]:
                     var.logger.error(ws.name + ": The trade history is not loaded.")
-                    ws.logNumFatal = "SETUP"
                 if not success["kline"]:
                     var.logger.error(ws.name + ": Klines are not loaded.")
-                    ws.logNumFatal = "SETUP"
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)

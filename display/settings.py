@@ -277,10 +277,10 @@ class SettingsApp:
                     self,
                     market,
                     bg=my_bg,
-                    #text=market,
-                    #relief="groove",
+                    # text=market,
+                    # relief="groove",
                     bd=0,
-                    #activebackground=self.bg_active,
+                    # activebackground=self.bg_active,
                 )
                 if self.market_saved[market]["CONNECTED"] == "YES":
                     frame.var.set(1)
@@ -504,7 +504,7 @@ class SettingsApp:
         self.set_button_color(0)
 
     def create_static_frames(self):
-        #static_frames_list = []
+        # static_frames_list = []
         widget_row = 0
         self.settings_top = tk.Frame(self.root_frame, bg=disp.bg_color)
         self.settings_top.grid_columnconfigure(0, weight=1)
@@ -515,7 +515,7 @@ class SettingsApp:
             text="The settings are located in the .env.Settings file.\n",
             bg=disp.bg_color,
         )
-        #static_frames_list.append(self.settings_top)
+        # static_frames_list.append(self.settings_top)
         self.setting_label.pack()
 
         # Custom style for the Combobox and Entry widgets
@@ -611,7 +611,7 @@ class SettingsApp:
                     "<FocusIn>", lambda event: self.on_tip(event)
                 )
                 self.entry_common[setting].pack()
-                #static_frames_list.append(self.common_col_0[setting])
+                # static_frames_list.append(self.common_col_0[setting])
                 # Set the initial value for common setting
                 self.common_defaults[setting] = self.entry_common[setting].get()
             else:
@@ -622,14 +622,14 @@ class SettingsApp:
 
         # Calculate the total height of static frames
         self.static_frames_height = self.setting_label.winfo_reqheight()
-        '''for frame in static_frames_list:
+        """for frame in static_frames_list:
             frame.update_idletasks()
             self.static_frames_height += frame.winfo_reqheight()
-            print(self.static_frames_height)'''
-        #print()
+            print(self.static_frames_height)"""
+        # print()
         for item in self.entry_common:
             self.static_frames_height += self.entry_common[item].winfo_reqheight()
-            #print(self.static_frames_height, self.entry_common[item].winfo_reqheight())
+            # print(self.static_frames_height, self.entry_common[item].winfo_reqheight())
 
         self.root_frame.grid_columnconfigure(0, weight=1)
         self.root_frame.grid_columnconfigure(1, weight=2)
@@ -742,13 +742,21 @@ class DraggableFrame(tk.Frame):
         self.app = app
         self.market = market
         self.var = tk.IntVar()
-        self.check_box = tk.Checkbutton(self, text=market, variable=self.var, onvalue=1, offvalue=0, bg=master["background"], activebackground=self.app.bg_active)#, command=self.box_toggle)
+        self.check_box = tk.Checkbutton(
+            self,
+            text=market,
+            variable=self.var,
+            onvalue=1,
+            offvalue=0,
+            bg=master["background"],
+            activebackground=self.app.bg_active,
+        )  # , command=self.box_toggle)
         if len(self.app.settings_center) == 0:
             self.check_box.config(bg=self.app.bg_select_color)
         else:
             self.check_box.config(bg=self.app.bg_entry)
         self.check_box.pack()
-        #self.config(variable=self.var, onvalue=1, offvalue=0)
+        # self.config(variable=self.var, onvalue=1, offvalue=0)
         self.w_name = "MARKET"
         self.bind("<ButtonPress-1>", self.on_press)
         self.bind("<B1-Motion>", self.on_drag)
@@ -759,7 +767,7 @@ class DraggableFrame(tk.Frame):
         self.start_y = None
         self.is_dragging = False
 
-    '''def box_toggle(self):
+    """def box_toggle(self):
         box_x, x = self.check_box.winfo_rootx(), self.app.root_frame.winfo_pointerx()
         checked = "false"
         if x < box_x or x > box_x + 24:
@@ -773,7 +781,7 @@ class DraggableFrame(tk.Frame):
             else:
                 self.app.market_changed[self.market]["CONNECTED"] = "NO"
             self.app.check_market_flag("CONNECTED", self.market)
-        self.set_background_color(checked)'''
+        self.set_background_color(checked)"""
 
     def on_press(self, event):
         self.app.on_tip("MARKET")
@@ -782,15 +790,15 @@ class DraggableFrame(tk.Frame):
         # Bring the frame to the front
         self.lift()
         box_x, x = self.check_box.winfo_rootx(), self.app.root_frame.winfo_pointerx()
-        #print(box_x, x)
+        # print(box_x, x)
         checked = "false"
         if x < box_x or x > box_x + 24:
-            #print(x, self.check_box.winfo_width(), self.check_box.winfo_rootx())
+            # print(x, self.check_box.winfo_width(), self.check_box.winfo_rootx())
             # No check or uncheck here
             if event.widget == self.check_box:
                 self.check_box.toggle()
         else:
-            #print(box_x, x)
+            # print(box_x, x)
             checked = "true"
             if self.var.get() == 0:
                 self.app.market_changed[self.market]["CONNECTED"] = "YES"

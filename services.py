@@ -381,6 +381,7 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
     list
         Corrected symbol_list.
     """
+
     def put_default(symbol_list: list):
         if not symbol_list:
             default = var.default_symbol[market]
@@ -411,10 +412,10 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
                         "market": market,
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": "warning",
+                        "warning": "error",
                     }
                 )
-                var.logger.warning(message)
+                var.logger.error(message)
                 symbol_list.remove(symbol)
         symbol_list = put_default(symbol_list=symbol_list)
     else:

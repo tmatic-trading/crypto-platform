@@ -14,7 +14,7 @@ class HostNameIsInvalid(Exception):
     Exception thrown for Tmatic returned errors if HTTP or WebSocket name is
     incorrect.
 
-    Parameters:
+    Parameters
     ----------
     uri: str
         HTTP or Websocket name.
@@ -54,7 +54,7 @@ class Error(Variables):
         verb: str
             HTTP method: GET, POST, PUT.
         path: str
-            HTTP path or method name for Bybit.
+            HTTP path or method name.
 
         Returns
         -------
@@ -88,6 +88,7 @@ class Error(Variables):
             "InvalidRequestError",
             "FailedRequestError",
             "WebSocketBadStatusException",
+            "DeribitWsRequestError",
         ]:
             response = try_response(response, exception)
             status_code = response["error"]["code"]
@@ -122,7 +123,7 @@ class Error(Variables):
             )
         else:
             status = "FATAL"
-            error_message = prefix + "Unexpected error " + error_name
+            error_message = prefix + "Unexpected error "
 
         logger_message = "On request %s %s - error - %s" % (
             verb,
