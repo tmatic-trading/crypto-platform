@@ -123,15 +123,14 @@ class SettingsApp:
 
         self.env_file_settings = Path(var.settings)
         self.env_file_subscriptions = Path(var.subscriptions)
-        self.settings_bottom = tk.Frame(self.root_frame, bg=disp.bg_color)
         self.setting_button = tk.Button(
-            self.settings_bottom,
+            self.root_frame,
             bg=self.title_color,
             activebackground=self.bg_changed,
             text="Settings Saved",
             command=lambda: self.save_dotenv("button"),
+            anchor="center",
         )
-        self.setting_button.pack()
         self.setting_button.config(state="disabled")
         self.initialized = False
         self.click_label = tk.Label()
@@ -269,7 +268,7 @@ class SettingsApp:
         Create the initial static frames.
         """
         if not self.initialized:
-            self.create_static_frames()
+            self.create_static_widgets()
             for i, market in enumerate(self.market_list):
                 my_bg = self.bg_entry if i != 0 else self.bg_select_color
                 frame = DraggableFrame(
@@ -277,10 +276,10 @@ class SettingsApp:
                     self,
                     market,
                     bg=my_bg,
-                    # text=market,
-                    # relief="groove",
+                    #text=market,
+                    #relief="groove",
                     bd=0,
-                    # activebackground=self.bg_active,
+                    #activebackground=self.bg_active,
                 )
                 if self.market_saved[market]["CONNECTED"] == "YES":
                     frame.var.set(1)
@@ -303,12 +302,12 @@ class SettingsApp:
 
     def reorder_frames(self):
         self.settings_center.sort(key=lambda f: f.winfo_y())
-        total_height = self.static_frames_height
+        total_height = self.static_widgets_height - int(len(self.market_list) * self.market_row_borders / 2)
         for frame in self.settings_center:
             frame.update_idletasks()
             frame_height = frame.winfo_reqheight()
             frame.place_configure(
-                x=0, y=total_height + frame_height, height=frame_height, relwidth=1.0
+                x=0, y=total_height + frame_height / 2, height=frame_height, relwidth=1.0
             )
             total_height += frame_height
         # Update market_list
@@ -379,6 +378,9 @@ class SettingsApp:
         return ",".join(str(x) for x in self.market_list)
 
     def insert_comment(self, file_path, comment):
+        """
+        Inserts a text comment into a file.
+        """
         with open(file_path, "a") as file:
             file.write(f"# {comment}\n")
 
@@ -464,7 +466,7 @@ class SettingsApp:
         Saves common and market settings into .env file.
         """
         # with open(self.env_file_path, "w") as f:
-        #    pass
+        print(status)
         self.env_file_settings.touch(mode=0o600)
         for setting in self.common_settings.keys():
             set_key(
@@ -474,7 +476,8 @@ class SettingsApp:
             )
             self.common_defaults[setting] = self.common_trace_changed[setting].get()
         for market in self.market_list:
-            self.insert_comment(self.env_file_settings, f"")
+            if status != "button":
+                self.insert_comment(self.env_file_settings, "")
             for setting in self.market_settings:
                 set_key(
                     dotenv_path=self.env_file_settings,
@@ -503,20 +506,14 @@ class SettingsApp:
                 frame.config(bg=self.market_color[frame.market])
         self.set_button_color(0)
 
-    def create_static_frames(self):
-        # static_frames_list = []
+    def create_static_widgets(self):
         widget_row = 0
-        self.settings_top = tk.Frame(self.root_frame, bg=disp.bg_color)
-        self.settings_top.grid_columnconfigure(0, weight=1)
-        # self.settings_top.grid_rowconfigure(0, weight=1)
-        self.settings_top.grid(row=widget_row, column=0, sticky="W", columnspan=3)
-        self.setting_label = tk.Label(
-            self.settings_top,
+        setting_label = tk.Label(
+            self.root_frame,
             text="The settings are located in the .env.Settings file.\n",
             bg=disp.bg_color,
         )
-        # static_frames_list.append(self.settings_top)
-        self.setting_label.pack()
+        setting_label.grid(row=widget_row, column=0, sticky="W", columnspan=3)
 
         # Custom style for the Combobox and Entry widgets
         ttk.Style().map(
@@ -537,32 +534,23 @@ class SettingsApp:
         ttk.Style().configure("changed.TEntry", fieldbackground=self.bg_changed)
 
         # Draw grid for common settings
-        self.common_col_0 = {}
-        self.common_col_0_label = {}
-        self.common_col_1 = {}
         self.entry_common = {}
         for setting in self.common_settings.keys():
             # self.common_trace_changed[setting] = StringVar(name=setting + str(self))
             if setting != "MARKET_LIST":
                 widget_row += 1
-                self.common_col_0[setting] = tk.Frame(self.root_frame)
-                l = tk.Label(self.root_frame, bg=disp.bg_color)
-                l.grid(row=widget_row, column=0, sticky="W")
-                self.common_col_0[setting].grid(row=widget_row, column=1, sticky="W")
-                self.common_col_0_label[setting] = tk.Label(
-                    self.common_col_0[setting],
+                tk.Label(self.root_frame, bg=disp.bg_color).grid(row=widget_row, column=0)
+                tk.Label(
+                    self.root_frame,
                     text=setting + self.indent,
                     bg=disp.bg_color,
-                )
-                self.common_col_0_label[setting].pack()
-                self.common_col_1[setting] = tk.Frame(self.root_frame)
-                self.common_col_1[setting].grid(row=widget_row, column=2, sticky="W")
+                ).grid(row=widget_row, column=1, sticky="W")
                 self.common_trace_changed[setting].trace_add(
                     "write", self.common_trace_callback
                 )
                 if setting == "SQLITE_DATABASE":
                     self.entry_common[setting] = ttk.Entry(
-                        self.common_col_1[setting],
+                        self.root_frame,
                         width=self.entry_width,
                         textvariable=self.common_trace_changed[setting],
                         style="default.TEntry",
@@ -570,7 +558,7 @@ class SettingsApp:
                     # self.entry_common[setting].insert(0, "tmatic.db")
                 elif setting == "ORDER_BOOK_DEPTH":
                     self.entry_common[setting] = ttk.Combobox(
-                        self.common_col_1[setting],
+                        self.root_frame,
                         width=self.entry_width,
                         textvariable=self.common_trace_changed[setting],
                         state="readonly",
@@ -580,7 +568,7 @@ class SettingsApp:
                     self.entry_common[setting].current(0)
                 elif setting == "BOTTOM_FRAME":
                     self.entry_common[setting] = ttk.Combobox(
-                        self.common_col_1[setting],
+                        self.root_frame,
                         width=self.entry_width,
                         textvariable=self.common_trace_changed[setting],
                         state="readonly",
@@ -597,7 +585,7 @@ class SettingsApp:
                     self.entry_common[setting].current(1)
                 elif setting == "REFRESH_RATE":
                     self.entry_common[setting] = ttk.Combobox(
-                        self.common_col_1[setting],
+                        self.root_frame,
                         width=self.entry_width,
                         textvariable=self.common_trace_changed[setting],
                         state="readonly",
@@ -610,8 +598,7 @@ class SettingsApp:
                 self.entry_common[setting].bind(
                     "<FocusIn>", lambda event: self.on_tip(event)
                 )
-                self.entry_common[setting].pack()
-                # static_frames_list.append(self.common_col_0[setting])
+                self.entry_common[setting].grid(row=widget_row, column=2, sticky="W")
                 # Set the initial value for common setting
                 self.common_defaults[setting] = self.entry_common[setting].get()
             else:
@@ -620,64 +607,39 @@ class SettingsApp:
             self.common_trace_changed[setting].set(self.common_defaults[setting])
             self.common_flag[setting] = 0
 
-        # Calculate the total height of static frames
-        self.static_frames_height = self.setting_label.winfo_reqheight()
-        """for frame in static_frames_list:
-            frame.update_idletasks()
-            self.static_frames_height += frame.winfo_reqheight()
-            print(self.static_frames_height)"""
-        # print()
+        # Calculate the total height of static widgets
+        self.market_row_borders = 2
+        self.static_widgets_height = setting_label.winfo_reqheight()
         for item in self.entry_common:
-            self.static_frames_height += self.entry_common[item].winfo_reqheight()
-            # print(self.static_frames_height, self.entry_common[item].winfo_reqheight())
+            self.static_widgets_height += self.entry_common[item].winfo_reqheight() + self.market_row_borders
 
         self.root_frame.grid_columnconfigure(0, weight=1)
         self.root_frame.grid_columnconfigure(1, weight=2)
         self.root_frame.grid_columnconfigure(2, weight=2)
 
-        # Draw blank frames. They are of no use
-        self.blank_row = []
-        self.blank_label = []
-        for i in range(len(self.market_list)):
+        # Draw blank labels. They are of no use
+        for i in range(len(self.market_list) + 2):
             widget_row += 1
-            self.blank_row.append(tk.Frame(self.root_frame, bg=disp.bg_color))
-            self.blank_row[i].grid(row=widget_row, column=0, sticky="EW", columnspan=3)
-            self.blank_label.append(
-                tk.Label(self.blank_row[i], text="", bg=disp.bg_color)
-            )
-            self.blank_label[i].pack()
-
-        widget_row += 1
-        l = tk.Label(self.root_frame, text="\n", bg=disp.bg_color)
-        l.grid(row=widget_row, column=0, sticky="W", columnspan=3)
+            tk.Label(self.root_frame, bg=disp.bg_color).grid(row=widget_row, column=0)
 
         # Draw grid representing settings for markets
-        self.market_col_0 = {}
-        self.market_col_0_label = {}
-        self.market_col_1 = {}
         self.entry_market = {}
         for setting in self.market_settings:
             self.market_trace[setting] = StringVar(name=setting + str(self))
             if setting != "CONNECTED":
                 widget_row += 1
-                self.market_col_0[setting] = tk.Frame(self.root_frame)
-                l = tk.Label(self.root_frame, bg=disp.bg_color)
-                l.grid(row=widget_row, column=0, sticky="W")
-                self.market_col_0[setting].grid(row=widget_row, column=1, sticky="W")
-                self.market_col_0_label[setting] = tk.Label(
-                    self.market_col_0[setting],
+                tk.Label(self.root_frame, bg=disp.bg_color).grid(row=widget_row, column=0)
+                tk.Label(
+                    self.root_frame,
                     text=setting + self.indent,
                     bg=disp.bg_color,
-                )
-                self.market_col_0_label[setting].pack(side="left", fill="both")
-                self.market_col_1[setting] = tk.Frame(self.root_frame)
-                self.market_col_1[setting].grid(row=widget_row, column=2, sticky="W")
+                ).grid(row=widget_row, column=1, sticky="W")
                 self.market_trace[setting].trace_add(
                     "write", self.market_trace_callback
                 )
                 if setting == "TESTNET":
                     self.entry_market[setting] = ttk.Combobox(
-                        self.market_col_1[setting],
+                        self.root_frame,
                         width=self.entry_width,
                         textvariable=self.market_trace[setting],
                         state="readonly",
@@ -685,32 +647,26 @@ class SettingsApp:
                     )
                     self.entry_market[setting]["values"] = ("YES", "NO")
                     self.entry_market[setting].current(0)
-                    self.entry_market[setting].pack()
+                    self.entry_market[setting].grid(row=widget_row, column=2, sticky="W")
                 else:
                     self.entry_market[setting] = ttk.Entry(
-                        self.market_col_1[setting],
+                        self.root_frame,
                         width=self.entry_width,
                         textvariable=self.market_trace[setting],
                         style="default.TEntry",
                     )
-                    self.entry_market[setting].pack()
+                    self.entry_market[setting].grid(row=widget_row, column=2, sticky="W")
                 self.entry_market[setting].w_name = setting
                 self.entry_market[setting].bind(
                     "<FocusIn>", lambda event: self.on_tip(event)
                 )
 
         widget_row += 1
-        self.settings_indent_row = tk.Frame(self.root_frame, bg=disp.bg_color)
-        self.settings_indent_row.grid(
-            row=widget_row, column=0, sticky="EW", columnspan=3
-        )
-        self.settings_indent_label = tk.Label(
-            self.settings_indent_row, text="", bg=disp.bg_color
-        )
-        self.settings_indent_label.pack()
+        tk.Label(self.root_frame, bg=disp.bg_color).grid(row=widget_row, column=0)
 
         widget_row += 1
-        self.settings_bottom.grid(row=widget_row, column=0, sticky="EW", columnspan=3)
+        self.setting_button.grid(row=widget_row, column=0, columnspan=3)
+
         for i in range(widget_row):
             self.root_frame.grid_rowconfigure(i, weight=0)
 
@@ -742,21 +698,13 @@ class DraggableFrame(tk.Frame):
         self.app = app
         self.market = market
         self.var = tk.IntVar()
-        self.check_box = tk.Checkbutton(
-            self,
-            text=market,
-            variable=self.var,
-            onvalue=1,
-            offvalue=0,
-            bg=master["background"],
-            activebackground=self.app.bg_active,
-        )  # , command=self.box_toggle)
+        self.check_box = tk.Checkbutton(self, text=market, variable=self.var, onvalue=1, offvalue=0, activebackground=self.app.bg_active)#, command=self.box_toggle)
         if len(self.app.settings_center) == 0:
             self.check_box.config(bg=self.app.bg_select_color)
         else:
             self.check_box.config(bg=self.app.bg_entry)
-        self.check_box.pack()
-        # self.config(variable=self.var, onvalue=1, offvalue=0)
+        self.check_box.pack(fill="both", expand="yes")
+        #self.config(variable=self.var, onvalue=1, offvalue=0)
         self.w_name = "MARKET"
         self.bind("<ButtonPress-1>", self.on_press)
         self.bind("<B1-Motion>", self.on_drag)
@@ -767,7 +715,7 @@ class DraggableFrame(tk.Frame):
         self.start_y = None
         self.is_dragging = False
 
-    """def box_toggle(self):
+    '''def box_toggle(self):
         box_x, x = self.check_box.winfo_rootx(), self.app.root_frame.winfo_pointerx()
         checked = "false"
         if x < box_x or x > box_x + 24:
@@ -781,24 +729,24 @@ class DraggableFrame(tk.Frame):
             else:
                 self.app.market_changed[self.market]["CONNECTED"] = "NO"
             self.app.check_market_flag("CONNECTED", self.market)
-        self.set_background_color(checked)"""
+        self.set_background_color(checked)'''
 
     def on_press(self, event):
         self.app.on_tip("MARKET")
         self.start_y = event.y_root
         self.is_dragging = True
+
         # Bring the frame to the front
         self.lift()
-        box_x, x = self.check_box.winfo_rootx(), self.app.root_frame.winfo_pointerx()
-        # print(box_x, x)
+
+        box_x = int(self.check_box.winfo_rootx() + self.check_box.winfo_width() / 2 - self.check_box.winfo_reqwidth() / 2)
+        x = self.app.root_frame.winfo_pointerx()
         checked = "false"
-        if x < box_x or x > box_x + 24:
-            # print(x, self.check_box.winfo_width(), self.check_box.winfo_rootx())
+        if x < box_x + 6 or x > box_x + 24:
             # No check or uncheck here
             if event.widget == self.check_box:
                 self.check_box.toggle()
         else:
-            # print(box_x, x)
             checked = "true"
             if self.var.get() == 0:
                 self.app.market_changed[self.market]["CONNECTED"] = "YES"
