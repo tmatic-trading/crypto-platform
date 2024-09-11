@@ -9,12 +9,11 @@ import services as service
 from api.errors import Error
 from api.http import Send
 from common.variables import Variables as var
+from display.messages import ErrorMessage
 
 from .error import DeribitWsRequestError, ErrorStatus
 from .path import Listing, Matching_engine
 from .ws import Deribit
-
-from display.messages import ErrorMessage
 
 
 class Agent(Deribit):
@@ -211,14 +210,17 @@ class Agent(Deribit):
                     account.account = res["result"]["id"]
                     account.settlCurrency = values["currency"]
                     account.limits = values["limits"]
-                    account.limits["private/get_transaction_log"] = {"burst": 10, "rate": 2}
+                    account.limits["private/get_transaction_log"] = {
+                        "burst": 10,
+                        "rate": 2,
+                    }
             else:
                 self.logger.error(ErrorMessage.USER_ID_NOT_FOUND)
                 return "FATAL"
         elif not isinstance(res, str):
             res = "FATAL"
         self.logger.error(ErrorMessage.USER_ID_NOT_RECEIVED)
-        
+
         return res
 
     def get_wallet_balance(self) -> None:

@@ -55,10 +55,10 @@ class Agent(Bitmex):
             else:
                 self.logger.error(ErrorMessage.USER_ID_NOT_FOUND)
                 return "FATAL"
-        elif not isinstance(res, str):        
+        elif not isinstance(res, str):
             res = "FATAL"
         self.logger.error(ErrorMessage.USER_ID_NOT_RECEIVED)
-        
+
         return res
 
     def get_instrument(self, ticker: str, category=None) -> None:

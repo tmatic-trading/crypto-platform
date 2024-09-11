@@ -70,7 +70,7 @@ class WS(Variables):
                 if error:
                     success[method_name] = error
                 else:
-                    success[method_name] = "" # success
+                    success[method_name] = ""  # success
 
             except Exception as exception:
                 display_exception(exception)
@@ -114,7 +114,7 @@ class WS(Variables):
             threads.append(t)
             t.start()
             success["get_user"] = "FATAL"
-            t = threading.Thread(target=get_in_thread, args=(WS.get_user, ))
+            t = threading.Thread(target=get_in_thread, args=(WS.get_user,))
             threads.append(t)
             t.start()
             success["get_wallet_balance"] = "FATAL"
@@ -131,11 +131,10 @@ class WS(Variables):
         for method_name, error in success.items():
             if error:
                 self.logger.error(
-                    self.name
-                    + ": error occurred while loading " + method_name
+                    self.name + ": error occurred while loading " + method_name
                 )
                 return error
-        if self.logNumFatal:             
+        if self.logNumFatal:
             return self.logNumFatal
         var.queue_info.put(
             {
@@ -156,18 +155,18 @@ class WS(Variables):
 
     def get_active_instruments(self: Markets) -> str:
         """
-        Gets all active instruments from the exchange. This data stores in 
+        Gets all active instruments from the exchange. This data stores in
         the self.Instrument[<symbol>].
 
         Parameters
         ----------
         self: Markets
             Markets class instances such as Bitmex, Bybit, Deribit
-        
+
         Returns
         -------
         str
-            On success, "" is returned, otherwise an error type, such as 
+            On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting all active instruments.")
@@ -181,7 +180,7 @@ class WS(Variables):
         Returns
         -------
         str
-            On success, "" is returned, otherwise an error type, such as 
+            On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting user information.")
@@ -255,11 +254,11 @@ class WS(Variables):
         ----------
         self: Markets
             Markets class instances such as Bitmex, Bybit, Deribit
-        
+
         Returns
         -------
         str
-            On success, "" is returned, otherwise an error type, such as 
+            On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting open orders.")
