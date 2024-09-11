@@ -271,12 +271,12 @@ class SettingsApp:
         if not self.initialized:
             self.create_static_widgets()
             for i, market in enumerate(self.market_list):
-                my_bg = self.bg_entry if i != 0 else self.bg_select_color
+                #my_bg = self.bg_entry if i != 0 else self.bg_select_color
                 frame = DraggableFrame(
                     self.root_frame,
                     self,
                     market,
-                    bg=my_bg,
+                    #bg=my_bg,
                     #text=market,
                     #relief="groove",
                     bd=0,
@@ -303,7 +303,7 @@ class SettingsApp:
 
     def reorder_frames(self):
         self.settings_center.sort(key=lambda f: f.winfo_y())
-        total_height = self.static_widgets_height - int(len(self.market_list) * self.market_row_borders / 2)
+        total_height = self.static_widgets_height
         for frame in self.settings_center:
             frame.update_idletasks()
             frame_height = frame.winfo_reqheight()
@@ -609,17 +609,16 @@ class SettingsApp:
             self.common_flag[setting] = 0
 
         # Calculate the total height of static widgets
-        self.market_row_borders = 2
         self.static_widgets_height = setting_label.winfo_reqheight()
         for item in self.entry_common:
-            self.static_widgets_height += self.entry_common[item].winfo_reqheight() + self.market_row_borders
+            self.static_widgets_height += self.entry_common[item].winfo_reqheight() + 1
 
         self.root_frame.grid_columnconfigure(0, weight=1)
         self.root_frame.grid_columnconfigure(1, weight=2)
         self.root_frame.grid_columnconfigure(2, weight=2)
 
         # Draw blank labels. They are of no use
-        for i in range(len(self.market_list) + 2):
+        for i in range(len(self.market_list) + 1):
             widget_row += 1
             tk.Label(self.root_frame, bg=disp.bg_color).grid(row=widget_row, column=0)
 
@@ -699,23 +698,29 @@ class DraggableFrame(tk.Frame):
         self.app = app
         self.market = market
         self.var = tk.IntVar()
-        self.check_box = tk.Checkbutton(self, text=market, variable=self.var, onvalue=1, offvalue=0, activebackground=self.app.bg_active)#, command=self.box_toggle)
+        self.check_box = tk.Checkbutton(self, bd=0, highlightthickness=0, text=market, variable=self.var, onvalue=1, offvalue=0)#, command=self.box_toggle)
         if len(self.app.settings_center) == 0:
-            self.check_box.config(bg=self.app.bg_select_color)
+            self.bg_market(self, self.app.bg_select_color)
         else:
-            self.check_box.config(bg=self.app.bg_entry)
-        self.check_box.pack(fill="both", expand="yes")
-        #self.config(variable=self.var, onvalue=1, offvalue=0)
+            self.bg_market(self, self.app.bg_entry)
+        self.check_box.pack()
         self.w_name = "MARKET"
         self.bind("<ButtonPress-1>", self.on_press)
         self.bind("<B1-Motion>", self.on_drag)
         self.bind("<ButtonRelease-1>", self.on_release)
+        self.bind("<Motion>", self.on_hover)
+        self.bind("<Leave>", self.on_leave)
         self.check_box.bind("<ButtonPress-1>", self.on_press)
         self.check_box.bind("<B1-Motion>", self.on_drag)
         self.check_box.bind("<ButtonRelease-1>", self.on_release)
+        self.check_box.bind("<Motion>", self.on_hover)
+        self.check_box.bind("<Leave>", self.on_leave)
         self.start_y = None
         self.is_dragging = False
 
+    def bg_market(self, widget, color):
+        widget.config(bg=color)
+        widget.check_box.config(bg=color)
     '''def box_toggle(self):
         box_x, x = self.check_box.winfo_rootx(), self.app.root_frame.winfo_pointerx()
         checked = "false"
@@ -731,6 +736,14 @@ class DraggableFrame(tk.Frame):
                 self.app.market_changed[self.market]["CONNECTED"] = "NO"
             self.app.check_market_flag("CONNECTED", self.market)
         self.set_background_color(checked)'''
+
+    def on_hover(self, event):
+        if self != self.app.selected_frame:
+            self.bg_market(self, self.app.bg_select_color)
+
+    def on_leave(self, event):
+        if self != self.app.selected_frame:
+            self.bg_market(self, self.app.bg_entry)
 
     def on_press(self, event):
         self.app.on_tip("MARKET")
@@ -778,15 +791,9 @@ class DraggableFrame(tk.Frame):
         Set background color for selected market.
         """
         if self != self.app.selected_frame or checked == "true":
-            self.app.selected_frame.config(
-                bg=self.app.market_color[self.app.selected_frame.market]
-            )
-            self.app.selected_frame.check_box.config(
-                bg=self.app.market_color[self.app.selected_frame.market]
-            )
+            self.bg_market(self.app.selected_frame, self.app.market_color[self.app.selected_frame.market])
             self.app.selected_frame = self
-            self.config(bg=self.app.bg_select_color)
-            self.check_box.config(bg=self.app.bg_select_color)
+            self.bg_market(self, self.app.bg_select_color)
             self.app.click_market = "true"
             self.app.set_market_fields(self.market)
             self.app.click_market = "false"
