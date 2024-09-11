@@ -12,7 +12,15 @@ from .ws import Bybit
 
 
 class Agent(Bybit):
-    def get_active_instruments(self):
+    def get_active_instruments(self) -> str:
+        """
+        Instruments are requested in threads according to categories.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
+        """
         def get_in_thread(category, success, num):
             cursor = "no"
             while cursor:
@@ -68,24 +76,33 @@ class Agent(Bybit):
 
         return ""
 
-    def get_user(self) -> None:
+    def get_user(self) -> str:
         """
         Returns the user ID and other useful information about the user and
-        places it in self.user. If unsuccessful, logNumFatal is not ''.
+        places it in self.user.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
         """
         try:
-            data = self.session.get_uid_wallet_type()
-            if isinstance(data, dict):
-                self.user = data
-                id = find_value_by_key(data=data, key="uid")
+            res = self.session.get_uid_wallet_type()
+            if isinstance(res, dict):
+                id = find_value_by_key(data=res, key="uid")
                 if id:
                     self.user_id = id
-                    return
-            self.logNumFatal = "FATAL"
-            message = (
-                "A user ID was requested from the exchange but was not received. Reboot"
-            )
-            self.logger.error(message)
+                    self.user = res
+                    return ""
+                else:
+                    self.logger.error(ErrorMessage.USER_ID_NOT_FOUND)
+                    return "FATAL"
+            elif not isinstance(res, str):
+                res = "FATAL"            
+            self.logger.error(ErrorMessage.USER_ID_NOT_RECEIVED)
+            
+            return res
+        
         except Exception as exception:
             Unify.error_handler(
                 self,
@@ -93,7 +110,12 @@ class Agent(Bybit):
                 verb="GET",
                 path="get_uid_wallet_type",
             )
-            return
+            self.logger.error(ErrorMessage.USER_ID_NOT_RECEIVED)
+
+            if self.logNumFatal:
+                return self.logNumFatal
+            else:
+                return "FATAL"
 
     def get_instrument(self, ticker: str, category: str) -> None:
         try:
@@ -275,6 +297,14 @@ class Agent(Bybit):
         return trade_history
 
     def open_orders(self) -> int:
+        """
+        Open orders are requested in threads according to categories.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
+        """
         myOrders = list()
         base = {"openOnly": 0, "limit": 50}
 
@@ -362,7 +392,7 @@ class Agent(Bybit):
                 if error == "FATAL":
                     self.logger.error(
                         "The list was expected when the orders were loaded, "
-                        + "but for some categories it was not received. Reboot"
+                        + "but for some categories it was not received."
                     )
                 return error
         self.setup_orders = myOrders

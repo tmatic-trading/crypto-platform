@@ -46,10 +46,15 @@ class Agents(Enum):
 
 
 class WS(Variables):
-    def start_ws(self: Markets) -> None:
+    def start_ws(self: Markets) -> str:
         """
         Loading instruments, orders, user ID, wallet balance, position
         information and initializing websockets.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type or error message.
         """
 
         def start_ws_in_thread():
@@ -57,62 +62,80 @@ class WS(Variables):
                 Markets[self.name].start()
             except Exception as exception:
                 display_exception(exception)
-                # self.logNumFatal = "SETUP"
 
         def get_in_thread(method):
+            method_name = method.__name__
             try:
-                method(self)
+                error = method(self)
+                if error:
+                    success[method_name] = error
+                else:
+                    success[method_name] = "" # success
+
             except Exception as exception:
                 display_exception(exception)
-                # self.logNumFatal = "SETUP"
+
+        # It starts here.
 
         try:
-            if WS.get_active_instruments(self):
-                return self.logNumFatal
+            error = WS.get_active_instruments(self)
+            if error:
+                return error
         except Exception as exception:
             display_exception(exception)
-            self.logger.error(self.name + " Instruments not loaded. Reboot.")
-            return self.logNumFatal
+            message = self.name + " Instruments not loaded."
+            self.logger.error()
+            if self.logNumFatal:
+                return self.logNumFatal
+            else:
+                return message
         try:
             Agents[self.name].value.activate_funding_thread(self)
         except:
             display_exception(exception)
-            self.logger.error(self.name + " Error calling activate_funding_thread().")
-            return self.logNumFatal
-        self.logNumFatal = ""
+            message = self.name + " Error calling activate_funding_thread()."
+            self.logger.error(message)
+            return message
         try:
-            if WS.open_orders(self):
-                return self.logNumFatal
+            error = WS.open_orders(self)
+            if error:
+                return error
         except Exception as exception:
             display_exception(exception)
             self.logger.error(self.name + " Orders not loaded. Reboot.")
-            return self.logNumFatal
+            if self.logNumFatal:
+                return self.logNumFatal
+            else:
+                return message
+        threads = []
+        success = {}
         try:
-            threads = []
             t = threading.Thread(target=start_ws_in_thread)
             threads.append(t)
             t.start()
-            t = threading.Thread(target=get_in_thread, args=(WS.get_user,))
+            success["get_user"] = "FATAL"
+            t = threading.Thread(target=get_in_thread, args=(WS.get_user, ))
             threads.append(t)
             t.start()
+            success["get_wallet_balance"] = "FATAL"
             t = threading.Thread(target=get_in_thread, args=(WS.get_wallet_balance,))
             threads.append(t)
             t.start()
+            success["get_position_info"] = "FATAL"
             t = threading.Thread(target=get_in_thread, args=(WS.get_position_info,))
             threads.append(t)
             t.start()
             [thread.join() for thread in threads]
         except Exception as exception:
             display_exception(exception)
-            # self.logNumFatal = "SETUP"
-        if self.logNumFatal:
-            if self.logNumFatal == "FATAL":
+        for method_name, error in success.items():
+            if error:
                 self.logger.error(
                     self.name
-                    + ": The websocket is not running, or the user "
-                    + "information, wallet balance or position information "
-                    + "is not loaded. Reboot."
+                    + ": error occurred while loading " + method_name
                 )
+                return error
+        if self.logNumFatal:             
             return self.logNumFatal
         var.queue_info.put(
             {
@@ -131,9 +154,21 @@ class WS(Variables):
         """
         Markets[self.name].exit()
 
-    def get_active_instruments(self: Markets) -> int:
+    def get_active_instruments(self: Markets) -> str:
         """
-        Gets all active instruments from the exchange REST API.
+        Gets all active instruments from the exchange. This data stores in 
+        the self.Instrument[<symbol>].
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit
+        
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as 
+            FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting all active instruments.")
 
@@ -142,6 +177,12 @@ class WS(Variables):
     def get_user(self: Markets) -> Union[dict, None]:
         """
         Gets account info.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as 
+            FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting user information.")
 
@@ -206,9 +247,20 @@ class WS(Variables):
             self, histCount=histCount, start_time=start_time
         )
 
-    def open_orders(self: Markets) -> list:
+    def open_orders(self: Markets) -> str:
         """
         Gets open orders.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit
+        
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as 
+            FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting open orders.")
 

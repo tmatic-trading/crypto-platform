@@ -14,13 +14,20 @@ from .error import DeribitWsRequestError, ErrorStatus
 from .path import Listing, Matching_engine
 from .ws import Deribit
 
+from display.messages import ErrorMessage
+
 
 class Agent(Deribit):
-    def get_active_instruments(self) -> int:
+    def get_active_instruments(self) -> str:
         """
         Retrieves available trading instruments. This method can be used to
         see which instruments are available for trading, or which
         instruments have recently expired.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise "error".
         """
         path = self.api_version + Listing.GET_ACTIVE_INSTRUMENTS
         data = Send.request(self, path=path, verb="GET")
@@ -41,12 +48,14 @@ class Agent(Deribit):
                 else:
                     error = "A list was expected when loading instruments, but was not received."
             else:
-                error = "When loading instruments 'result' was not received."
+                error = "When loading instruments, 'result' was not received."
         else:
             error = "Invalid data was received when loading instruments. " + str(data)
         self.logger.error(error)
-
-        return "error"
+        if self.logNumFatal:
+            return self.logNumFatal
+        else:
+            return "FATAL"
 
     def get_instrument(self, ticker: str, category=None) -> None:
         path = Listing.GET_INSTRUMENT_DATA
@@ -119,9 +128,14 @@ class Agent(Deribit):
         instrument.bids = [[0, 0]]
         instrument.valueOfOneContract = 1
 
-    def open_orders(self) -> int:
+    def open_orders(self) -> str:
         """
         Retrieves list of user's open orders across many currencies.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
         """
         msg = {
             "jsonrpc": "2.0",
@@ -155,7 +169,7 @@ class Agent(Deribit):
                         if symbol not in self.symbol_list:
                             self.symbol_list.append(symbol)
                     self.setup_orders = data["result"]
-                    return 0
+                    return ""
                 else:
                     error = "The list was expected when the orders were loaded, but was not received."
             else:
@@ -164,12 +178,20 @@ class Agent(Deribit):
             error = "Invalid data was received when loading open orders. " + str(data)
         self.logger.error(error)
 
-        return -1
+        if self.logNumFatal:
+            return self.logNumFatal
+        else:
+            return "FATAL"
 
-    def get_user(self) -> None:
+    def get_user(self) -> str:
         """
         Returns the user ID and other useful information about the user and
-        places it in self.user. If unsuccessful, logNumFatal is not 0.
+        places it in self.user.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
         """
         path = self.api_version + Listing.GET_ACCOUNT_INFO
         msg = {
@@ -178,20 +200,26 @@ class Agent(Deribit):
             "method": "private/get_account_summaries",
             "params": {"extended": True},
         }
-        data = Send.request(self, path=path, verb="POST", postData=msg)
-        if isinstance(data, dict):
-            self.user_id = data["result"]["id"]
-            for values in data["result"]["summaries"]:
-                currency = (values["currency"], self.name)
-                account = self.Account[currency]
-                account.account = data["result"]["id"]
-                account.settlCurrency = values["currency"]
-                account.limits = values["limits"]
-                account.limits["private/get_transaction_log"] = {"burst": 10, "rate": 2}
-            return
-        # self.logNumFatal = "SETUP"
-        message = "A user ID was requested from the exchange but was not received."
-        self.logger.error(message)
+        res = Send.request(self, path=path, verb="POST", postData=msg)
+        if isinstance(res, dict):
+            if "id" in res["result"]:
+                self.user = res
+                self.user_id = res["result"]["id"]
+                for values in res["result"]["summaries"]:
+                    currency = (values["currency"], self.name)
+                    account = self.Account[currency]
+                    account.account = res["result"]["id"]
+                    account.settlCurrency = values["currency"]
+                    account.limits = values["limits"]
+                    account.limits["private/get_transaction_log"] = {"burst": 10, "rate": 2}
+            else:
+                self.logger.error(ErrorMessage.USER_ID_NOT_FOUND)
+                return "FATAL"
+        elif not isinstance(res, str):
+            res = "FATAL"
+        self.logger.error(ErrorMessage.USER_ID_NOT_RECEIVED)
+        
+        return res
 
     def get_wallet_balance(self) -> None:
         """

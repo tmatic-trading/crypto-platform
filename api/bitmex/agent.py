@@ -19,7 +19,10 @@ class Agent(Bitmex):
             self.logger.error(
                 "A list was expected when loading instruments, but was not received."
             )
-            return "error"
+            if self.logNumFatal:
+                return self.logNumFatal
+            else:
+                return "FATAL"
         for instrument in data:
             Agent.fill_instrument(
                 self,
@@ -33,15 +36,30 @@ class Agent(Bitmex):
 
         return ""
 
-    def get_user(self) -> Union[dict, None]:
+    def get_user(self) -> str:
         """
-        Returns the user ID and other useful information about the user and
-        places it in self.user. If unsuccessful, logNumFatal is not ''.
+        Requests the user ID and other useful information about the user and
+        places it in self.user.
+
+        Returns
+        -------
+        str
+            On success, "" is returned.
         """
-        result = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
-        if result:
-            self.user_id = result["id"]
-            self.user = result
+        res = Send.request(self, path=Listing.GET_ACCOUNT_INFO, verb="GET")
+        if isinstance(res, dict):
+            if "id" in res:
+                self.user_id = res["id"]
+                self.user = res
+                return ""
+            else:
+                self.logger.error(ErrorMessage.USER_ID_NOT_FOUND)
+                return "FATAL"
+        elif not isinstance(res, str):        
+            res = "FATAL"
+        self.logger.error(ErrorMessage.USER_ID_NOT_RECEIVED)
+        
+        return res
 
     def get_instrument(self, ticker: str, category=None) -> None:
         """
@@ -314,7 +332,7 @@ class Agent(Bitmex):
             # else:
             #    self.logNumFatal = "SETUP"
 
-    def open_orders(self) -> int:
+    def open_orders(self) -> str:
         path = Listing.OPEN_ORDERS
         res = Send.request(
             self,
@@ -341,9 +359,12 @@ class Agent(Bitmex):
                     self.symbol_list.append(order["symbol"])
         else:
             self.logger.error(
-                "The list was expected when the orders were loaded, but it was not received. Reboot."
+                "The list was expected when the orders were loaded, but it was not received."
             )
-            return -1
+            if self.logNumFatal:
+                return self.logNumFatal
+            else:
+                return "FATAL"
         self.setup_orders = res
 
         return ""

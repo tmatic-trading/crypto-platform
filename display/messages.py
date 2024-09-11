@@ -50,6 +50,13 @@ class ErrorMessage(str, Enum):
         + "misspelled, or such symbol does not exist, or the instrument has "
         + "expired. Symbol has been removed from {MARKET} subscription."
     )
+    USER_ID_NOT_FOUND = (
+        "A response from the exchange has been received, but it does not "
+        + "contain a user ID."
+    )
+    USER_ID_NOT_RECEIVED = (
+        "A user ID was requested from the exchange but was not received."
+    )
 
     def __str__(self) -> str:
         return self.value

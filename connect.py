@@ -98,13 +98,12 @@ def setup_market(ws: Markets, reload=False):
        end of loading in the load_trading_history() function.
     3) Simultaneous download:
         1. Subscribe to websockets only for those instruments that are
-           specified in the .env files.
+           specified in the .env.Subscriptions files.
         2. Getting the user id.
         3. Obtaining information on account balances.
         4. Obtaining initial information about the positions of signed
            instruments.
-    4) Reading active bots from the database.
-    5) Simultaneous download:
+    4) Simultaneous download:
         1. Receiving klines only for those instruments and timeframes that are
            used by bots.
         2. Trading history.
@@ -124,6 +123,7 @@ def setup_market(ws: Markets, reload=False):
         WS.exit(ws)
         sleep(3)
     while ws.logNumFatal not in ["", "CANCEL"]:
+        ws.logNumFatal = ""
         var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)
         if ws.logNumFatal:
