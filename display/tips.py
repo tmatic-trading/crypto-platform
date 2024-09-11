@@ -50,22 +50,22 @@ class Tips(Enum):
     TESTNET_WS_URL = URLS
     docs = {
         "Bitmex": {
-            "HTTP_URL": "www.bitmex.com/app/apiOverview",
-            "WS_URL": "www.bitmex.com/app/apiOverview",
-            "TESTNET_HTTP_URL": "testnet.bitmex.com/app/apiOverview",
-            "TESTNET_WS_URL": "testnet.bitmex.com/app/apiOverview",
+            "HTTP_URL": "https://www.bitmex.com/app/apiOverview",
+            "WS_URL": "https://www.bitmex.com/app/apiOverview",
+            "TESTNET_HTTP_URL": "https://testnet.bitmex.com/app/apiOverview",
+            "TESTNET_WS_URL": "https://testnet.bitmex.com/app/apiOverview",
         },
         "Bybit": {
-            "HTTP_URL": "bybit-exchange.github.io/docs/v5/intro",
-            "WS_URL": "bybit-exchange.github.io/docs/v5/intro",
-            "TESTNET_HTTP_URL": "bybit-exchange.github.io/docs/v5/intro",
-            "TESTNET_WS_URL": "bybit-exchange.github.io/docs/v5/intro",
+            "HTTP_URL": "https://bybit-exchange.github.io/docs/v5/intro",
+            "WS_URL": "https://bybit-exchange.github.io/docs/v5/intro",
+            "TESTNET_HTTP_URL": "https://bybit-exchange.github.io/docs/v5/intro",
+            "TESTNET_WS_URL": "https://bybit-exchange.github.io/docs/v5/intro",
         },
         "Deribit": {
-            "HTTP_URL": "docs.deribit.com/",
-            "WS_URL": "docs.deribit.com/",
-            "TESTNET_HTTP_URL": "docs.deribit.com/",
-            "TESTNET_WS_URL": "docs.deribit.com/",
+            "HTTP_URL": "https://docs.deribit.com/",
+            "WS_URL": "https://docs.deribit.com/",
+            "TESTNET_HTTP_URL": "https://docs.deribit.com/",
+            "TESTNET_WS_URL": "https://docs.deribit.com/",
         },
     }
     API = "API keys can be obtained from the link below."
@@ -75,22 +75,22 @@ class Tips(Enum):
     TESTNET_API_SECRET = API
     api = {
         "Bitmex": {
-            "API_KEY": "www.bitmex.com/app/apiKeys",
-            "API_SECRET": "www.bitmex.com/app/apiKeys",
-            "TESTNET_API_KEY": "testnet.bitmex.com/app/apiKeys",
-            "TESTNET_API_SECRET": "testnet.bitmex.com/app/apiKeys",
+            "API_KEY": "https://www.bitmex.com/app/apiKeys",
+            "API_SECRET": "https://www.bitmex.com/app/apiKeys",
+            "TESTNET_API_KEY": "https://testnet.bitmex.com/app/apiKeys",
+            "TESTNET_API_SECRET": "https://testnet.bitmex.com/app/apiKeys",
         },
         "Bybit": {
-            "API_KEY": "www.bybit.com/app/user/api-management",
-            "API_SECRET": "www.bybit.com/app/user/api-management",
-            "TESTNET_API_KEY": "testnet.bybit.com/app/user/api-management",
-            "TESTNET_API_SECRET": "testnet.bybit.com/app/user/api-management",
+            "API_KEY": "https://www.bybit.com/app/user/api-management",
+            "API_SECRET": "https://www.bybit.com/app/user/api-management",
+            "TESTNET_API_KEY": "https://testnet.bybit.com/app/user/api-management",
+            "TESTNET_API_SECRET": "https://testnet.bybit.com/app/user/api-management",
         },
         "Deribit": {
-            "API_KEY": "www.deribit.com/account/BTC/API",
-            "API_SECRET": "www.deribit.com/account/BTC/API",
-            "TESTNET_API_KEY": "test.deribit.com/account/BTC/API",
-            "TESTNET_API_SECRET": "test.deribit.com/account/BTC/API",
+            "API_KEY": "https://www.deribit.com/account/BTC/API",
+            "API_SECRET": "https://www.deribit.com/account/BTC/API",
+            "TESTNET_API_KEY": "https://test.deribit.com/account/BTC/API",
+            "TESTNET_API_SECRET": "https://test.deribit.com/account/BTC/API",
         },
     }
     TESTNET = "Select YES if you are using a test account, otherwise select NO."
