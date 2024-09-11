@@ -276,17 +276,14 @@ class SettingsApp:
                     self.root_frame,
                     self,
                     market,
-                    # bg=my_bg,
-                    # text=market,
-                    # relief="groove",
                     bd=0,
-                    # activebackground=self.bg_active,
                 )
                 if self.market_saved[market]["CONNECTED"] == "YES":
                     frame.var.set(1)
                 if i == 0:
                     self.selected_frame = frame
                 self.settings_center.append(frame)
+                frame.update_idletasks()
             self.reorder_frames()
             self.set_market_fields(self.market_list[0])
 
@@ -305,7 +302,7 @@ class SettingsApp:
         self.settings_center.sort(key=lambda f: f.winfo_y())
         total_height = self.static_widgets_height
         for frame in self.settings_center:
-            frame.update_idletasks()
+            # frame.update_idletasks()
             frame_height = frame.winfo_reqheight()
             frame.place_configure(
                 x=0,
@@ -319,7 +316,6 @@ class SettingsApp:
         # Remember the new market order
         self.common_trace_changed["MARKET_LIST"].set(self.get_str_markets())
         self.check_common_flag("MARKET_LIST")
-        # print(self.common_defaults["MARKET_LIST"], self.common_trace_changed["MARKET_LIST"].get())
 
     def update_positions(self, moving_frame):
         current_y = moving_frame.winfo_y()
@@ -469,8 +465,6 @@ class SettingsApp:
         """
         Saves common and market settings into .env file.
         """
-        # with open(self.env_file_path, "w") as f:
-        print(status)
         self.env_file_settings.touch(mode=0o600)
         for setting in self.common_settings.keys():
             set_key(
@@ -717,6 +711,7 @@ class DraggableFrame(tk.Frame):
             variable=self.var,
             onvalue=1,
             offvalue=0,
+            activebackground=self.app.bg_active,
         )  # , command=self.box_toggle)
         if len(self.app.settings_center) == 0:
             self.bg_market(self, self.app.bg_select_color)
@@ -773,17 +768,16 @@ class DraggableFrame(tk.Frame):
         # Bring the frame to the front
         self.lift()
 
-        box_x = int(
-            self.check_box.winfo_rootx()
-            + self.check_box.winfo_width() / 2
-            - self.check_box.winfo_reqwidth() / 2
-        )
+        box_x = self.check_box.winfo_rootx()
         x = self.app.root_frame.winfo_pointerx()
         checked = "false"
-        if x < box_x + 6 or x > box_x + 24:
+
+        # print(self.check_box.winfo_rootx(), "self =", self.winfo_width(), x, "---", self.check_box.winfo_rootx(), self.check_box.winfo_width(), self.check_box.winfo_reqwidth(), "---", box_x)
+
+        if x < box_x or x > box_x + 20:
             # No check or uncheck here
             if event.widget == self.check_box:
-                self.check_box.toggle()
+                self.check_box.config(state="disabled")
         else:
             checked = "true"
             if self.var.get() == 0:
@@ -809,6 +803,8 @@ class DraggableFrame(tk.Frame):
     def on_release(self, event):
         self.is_dragging = False
         self.app.reorder_frames()
+        if event.widget == self.check_box and self.check_box["state"] == "disabled":
+            self.check_box.config(state="normal")
 
     def set_background_color(self, checked):
         """
