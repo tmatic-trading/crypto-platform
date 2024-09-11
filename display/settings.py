@@ -257,10 +257,11 @@ class SettingsApp:
         """
         self.env_file_subscriptions.touch(mode=0o600)
         for market in self.market_list:
-            set_key(
-                dotenv_path=self.env_file_subscriptions,
-                key_to_set=f"{market}_SYMBOLS",
-                value_to_set=str(subscriptions[market])[2:-2],
+            for symbol in subscriptions[market]:
+                set_key(
+                    dotenv_path=self.env_file_subscriptions,
+                    key_to_set=f"{market}_SYMBOLS",
+                    value_to_set=symbol[0],
             )
 
     def init(self):
