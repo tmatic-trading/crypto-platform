@@ -727,7 +727,7 @@ class Variables:
     s_pw_main.bind(
         "<Configure>",
         lambda event: Variables.resize_width(
-            event, Variables.s_pw_main, Variables.window_width // 3, 4
+            event, Variables.s_pw_main, Variables.window_width // 3.8, 3.8
         ),
     )
 

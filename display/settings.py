@@ -32,7 +32,7 @@ class SettingsApp:
         self.common_settings["MARKET_LIST"] = "Bitmex,Bybit,Deribit"
         self.common_settings["SQLITE_DATABASE"] = "tmatic.db"
         self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook"
-        self.common_settings["BOTTOM_FRAME"] = "robots"
+        self.common_settings["BOTTOM_FRAME"] = "Robots"
         self.common_settings["REFRESH_RATE"] = "5"
         self.default_subscriptions = OrderedDict()
         self.default_subscriptions["Bitmex"] = var.default_symbol["Bitmex"]
@@ -186,13 +186,31 @@ class SettingsApp:
                     ]
             self.save_dotenv("new")
         else:
+            # Load common data from .env file
+            missed_data = None
             dotenv_data = dotenv_values(self.env_file_settings)
             for setting in self.common_settings.keys():
                 try:
                     self.common_defaults[setting] = dotenv_data[setting]
                 except KeyError:
                     self.common_defaults[setting] = self.common_settings[setting]
+                    missed_data = 1
                 self.common_trace_changed[setting].set(self.common_defaults[setting])
+
+            # Change markets sorting from default value (if differs)
+            actual_list = self.common_defaults["MARKET_LIST"].split(",")
+            actual_str = ""
+            for market in self.market_list:
+                if market not in actual_list:
+                    # If this market is missing in .env file
+                    actual_list.append(market)
+                    missed_data = 1
+            self.market_list = actual_list.copy()
+            actual_str = self.get_str_markets()
+            self.common_defaults["MARKET_LIST"] = actual_str
+            self.common_trace_changed["MARKET_LIST"].set(actual_str)
+
+            # Load data from .env file for each market
             for market in self.market_list:
                 for setting in self.market_settings:
                     try:
@@ -203,9 +221,15 @@ class SettingsApp:
                         self.market_saved[market][setting] = self.market_defaults[
                             market
                         ][setting]
+                        missed_data = 1
                     self.market_changed[market][setting] = self.market_saved[market][
                         setting
                     ]
+
+            if missed_data is not None:
+                os.remove(self.env_file_settings)
+                self.save_dotenv("new")
+
         for setting in self.common_settings.keys():
             var.env[setting] = self.common_defaults[setting]
         for market in self.market_list:
@@ -555,7 +579,6 @@ class SettingsApp:
                         textvariable=self.common_trace_changed[setting],
                         style="default.TEntry",
                     )
-                    # self.entry_common[setting].insert(0, "tmatic.db")
                 elif setting == "ORDER_BOOK_DEPTH":
                     self.entry_common[setting] = ttk.Combobox(
                         self.root_frame,
@@ -564,8 +587,8 @@ class SettingsApp:
                         state="readonly",
                         style="default.TCombobox",
                     )
-                    self.entry_common[setting]["values"] = ("orderBook", "quote")
-                    self.entry_common[setting].current(0)
+                    values = ("orderBook", "quote")
+                    self.entry_common[setting]["values"] = values
                 elif setting == "BOTTOM_FRAME":
                     self.entry_common[setting] = ttk.Combobox(
                         self.root_frame,
@@ -574,15 +597,16 @@ class SettingsApp:
                         state="readonly",
                         style="default.TCombobox",
                     )
-                    self.entry_common[setting]["values"] = (
+                    values = (
                         "Orders",
-                        "Robots",
-                        "Wallet",
+                        "Positions",
                         "Trades",
                         "Funding",
+                        "Account",
                         "Result",
+                        "Robots",
                     )
-                    self.entry_common[setting].current(1)
+                    self.entry_common[setting]["values"] = values
                 elif setting == "REFRESH_RATE":
                     self.entry_common[setting] = ttk.Combobox(
                         self.root_frame,
@@ -591,9 +615,8 @@ class SettingsApp:
                         state="readonly",
                         style="default.TCombobox",
                     )
-                    values = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                    values = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
                     self.entry_common[setting]["values"] = values
-                    self.entry_common[setting].current(4)
                 self.entry_common[setting].w_name = setting
                 self.entry_common[setting].bind(
                     "<FocusIn>", lambda event: self.on_tip(event)
@@ -647,7 +670,6 @@ class SettingsApp:
                         style="default.TCombobox",
                     )
                     self.entry_market[setting]["values"] = ("YES", "NO")
-                    self.entry_market[setting].current(0)
                     self.entry_market[setting].grid(
                         row=widget_row, column=2, sticky="W"
                     )
@@ -712,7 +734,7 @@ class DraggableFrame(tk.Frame):
             onvalue=1,
             offvalue=0,
             activebackground=self.app.bg_active,
-        )  # , command=self.box_toggle)
+        )
         if len(self.app.settings_center) == 0:
             self.bg_market(self, self.app.bg_select_color)
         else:
@@ -736,22 +758,6 @@ class DraggableFrame(tk.Frame):
         widget.config(bg=color)
         widget.check_box.config(bg=color)
 
-    """def box_toggle(self):
-        box_x, x = self.check_box.winfo_rootx(), self.app.root_frame.winfo_pointerx()
-        checked = "false"
-        if x < box_x or x > box_x + 24:
-            #print(x, self.check_box.winfo_width(), self.check_box.winfo_rootx())
-            # No check or uncheck here
-            self.check_box.toggle()
-        else:
-            checked = "true"
-            if self.var.get() == 0:
-                self.app.market_changed[self.market]["CONNECTED"] = "YES"
-            else:
-                self.app.market_changed[self.market]["CONNECTED"] = "NO"
-            self.app.check_market_flag("CONNECTED", self.market)
-        self.set_background_color(checked)"""
-
     def on_hover(self, event):
         if self != self.app.selected_frame:
             self.bg_market(self, self.app.bg_select_color)
@@ -772,12 +778,9 @@ class DraggableFrame(tk.Frame):
         x = self.app.root_frame.winfo_pointerx()
         checked = "false"
 
-        # print(self.check_box.winfo_rootx(), "self =", self.winfo_width(), x, "---", self.check_box.winfo_rootx(), self.check_box.winfo_width(), self.check_box.winfo_reqwidth(), "---", box_x)
-
         if x < box_x or x > box_x + 20:
             # No check or uncheck here
-            if event.widget == self.check_box:
-                self.check_box.config(state="disabled")
+            self.check_box.config(state="disabled")
         else:
             checked = "true"
             if self.var.get() == 0:
@@ -803,7 +806,7 @@ class DraggableFrame(tk.Frame):
     def on_release(self, event):
         self.is_dragging = False
         self.app.reorder_frames()
-        if event.widget == self.check_box and self.check_box["state"] == "disabled":
+        if self.check_box["state"] == "disabled":
             self.check_box.config(state="normal")
 
     def set_background_color(self, checked):

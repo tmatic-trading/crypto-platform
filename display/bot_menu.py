@@ -345,7 +345,7 @@ class SettingsApp:
             highlightthickness=0,
             # highlightbackground=disp.title_color,
             # highlightcolor=disp.title_color,
-            bg=disp.light_gray_color,
+            bg=disp.text_info["background"],
             yscrollcommand=self.strategy_scroll.set,
         )
         self.strategy_text.bind("<KeyRelease>", self.on_modify_strategy)
