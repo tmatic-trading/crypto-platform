@@ -440,7 +440,7 @@ class Agent(Bybit):
 
     def place_limit(
         self, quantity: float, price: float, clOrdID: str, symbol: tuple
-    ) -> Union[str, None]:
+    ) -> Union[dict, str]:
         side = "Buy" if quantity > 0 else "Sell"
         instrument = self.Instrument[symbol]
         try:
@@ -462,7 +462,7 @@ class Agent(Bybit):
 
     def replace_limit(
         self, quantity: float, price: float, orderID: str, symbol: tuple
-    ) -> Union[str, None]:
+    ) -> Union[dict, str]:
         instrument = self.Instrument[symbol]
         try:
             return self.session.amend_order(
@@ -479,7 +479,7 @@ class Agent(Bybit):
 
             return error
 
-    def remove_order(self, order: dict):
+    def remove_order(self, order: dict) -> Union[dict, str]:
         try:
             return self.session.cancel_order(
                 category=self.Instrument[order["symbol"]].category,

@@ -222,7 +222,7 @@ class WS(Variables):
 
     def trade_bucketed(
         self: Markets, symbol: tuple, time: datetime, timeframe: str
-    ) -> Union[list, None]:
+    ) -> Union[list, str]:
         """
         Gets kline data.
 
@@ -240,7 +240,7 @@ class WS(Variables):
         Returns
         -------
         str | None
-            On success, list is returned, otherwise None.
+            On success, list is returned, otherwise error type.
         """
         parameters = (
             f"symbol={symbol[0]}" + f", start_time={time}" + f", timeframe={timeframe}"
@@ -259,7 +259,7 @@ class WS(Variables):
 
         return data
 
-    def trading_history(self: Markets, histCount: int, start_time: datetime) -> list:
+    def trading_history(self: Markets, histCount: int, start_time: datetime) -> Union[list, str]:
         """
         Gets trades, funding and delivery from the exchange for the period starting
         from start_time.
@@ -276,7 +276,7 @@ class WS(Variables):
         Returns
         -------
         list
-            On success, list is returned, otherwise None.
+            On success, list is returned, otherwise error type.
         """
         var.logger.info(
             self.name + " - Requesting trading history - start_time=" + str(start_time)
@@ -293,8 +293,7 @@ class WS(Variables):
         Returns
         -------
         str
-            On success, "" is returned, otherwise an error type, such as
-            FATAL, CANCEL.
+            On success, "" is returned, otherwise an error type.
         """
         var.logger.info(self.name + " - Requesting open orders.")
 
@@ -302,9 +301,28 @@ class WS(Variables):
 
     def place_limit(
         self: Markets, quantity: float, price: float, clOrdID: str, symbol: tuple
-    ) -> Union[dict, None]:
+    ) -> Union[dict, str]:
         """
-        Places a limit order
+        Places a limit order.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit.
+        quantity: float
+            Order quantity.
+        price: float
+            Order price.
+        clOrdID: str
+            Unique order identifier, including the bot name.   
+        symbol: str
+            Instrument symbol. Example ("BTCUSDT", "Bybit").
+
+        Returns
+        -------
+        dict | str
+            If successful, a response from the exchange server is returned, 
+            otherwise - the error type (str).
         """
         var.logger.info(
             self.name
@@ -325,9 +343,28 @@ class WS(Variables):
 
     def replace_limit(
         self: Markets, quantity: float, price: float, orderID: str, symbol: tuple
-    ) -> Union[dict, None]:
+    ) -> Union[dict, str]:
         """
-        Moves a limit order
+        Moves a limit order.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit.
+        quantity: float
+            Order quantity.
+        price: float
+            Order price.
+        clOrdID: str
+            Unique order identifier, including the bot name.   
+        symbol: str
+            Instrument symbol. Example ("BTCUSDT", "Bybit").
+
+        Returns
+        -------
+        dict | str
+            If successful, a response from the exchange server is returned, 
+            otherwise - the error type (str).
         """
         var.logger.info(
             self.name
@@ -346,9 +383,22 @@ class WS(Variables):
             self, quantity=quantity, price=price, orderID=orderID, symbol=symbol
         )
 
-    def remove_order(self: Markets, order: dict) -> Union[list, None]:
+    def remove_order(self: Markets, order: dict) -> Union[dict, str]:
         """
-        Deletes an order
+        Deletes an order.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit.
+        order: dict
+            Order parameters.
+
+        Returns
+        -------
+        dict | str
+            If successful, a response from the exchange server is returned, 
+            otherwise - the error type (str).
         """
         var.logger.info(
             self.name
@@ -358,7 +408,7 @@ class WS(Variables):
             + ", orderID="
             + order["orderID"]
         )
-
+        
         return Agents[self.name].value.remove_order(self, order=order)
 
     def get_wallet_balance(self: Markets) -> str:
@@ -392,7 +442,7 @@ class WS(Variables):
 
     def ping_pong(self: Markets) -> None:
         """
-        Check if websocket is working
+        Check if websocket is working.
         """
 
         return Markets[self.name].ping_pong()

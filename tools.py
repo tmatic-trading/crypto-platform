@@ -56,29 +56,36 @@ class Bot(BotData):
                 }
             )
 
-    def replace(self, clOrdID: str, price: float) -> None:
+    def replace(self, clOrdID: str, price: float) -> Union[str, None]:
         """
         Moves an open order to a new price using its clOrdID.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         bot: Bot
             An instance of a bot in the Bot class.
         clOrdID: str
             Order ID. Order ID. Example: "1348642035.Super"
         price: float
             New price to reset order to.
+
+        Returns
+        -------
+        str | None
+            On success, clOrdID is returned, otherwise an error type.
         """
         if clOrdID in self.bot_orders:
             order = self.bot_orders[clOrdID]
             ws = Markets[order["market"]]
-            WS.replace_limit(
+            res = WS.replace_limit(
                 ws,
                 quantity=order["leavesQty"],
                 price=price,
                 orderID=order["orderID"],
                 symbol=order["symbol"],
             )
+            if isinstance(res, dict):
+                return clOrdID
         else:
             message = "Replacing. Order with clOrdID=" + clOrdID + " not found."
             var.queue_info.put(
@@ -177,7 +184,7 @@ class Tool(Instrument):
         if cancel is not None:
             self._remove_orders(orders=bot.bot_orders, side="Buy")
 
-        if res is not None:
+        if isinstance(res, dict):
             return clOrdID
 
     def buy(
@@ -251,7 +258,7 @@ class Tool(Instrument):
         if cancel is not None:
             self._remove_orders(orders=bot.bot_orders, side="Sell")
 
-        if res is not None:
+        if isinstance(res, dict):
             return clOrdID
 
     def EMA(self, period: int) -> float:

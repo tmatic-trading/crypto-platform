@@ -63,7 +63,7 @@ class Error(Variables):
             BLOCK   Trading blocked for this exchange.
             IGNORE  Error ignored, only saved to log file and displayed.
             FATAL   This market will be reloaded.
-            RETRY   Retry request (Bitmex, Deribit).
+            RETRY   Retry the request.
         """
         canceled = f" - {self.name} loading cancelled."
         error_name = exception.__class__.__name__

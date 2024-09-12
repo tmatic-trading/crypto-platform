@@ -158,9 +158,9 @@ class Init(WS, Variables):
                         self, histCount=count_val, start_time=last_history_time
                     )
                     if not isinstance(history, list):
-                        return
+                        return service.unexpected_error(self)
         else:
-            return
+            return service.unexpected_error(self)
         message = self.name + ": Empty trading history."
         var.logger.warning(message)
         var.queue_info.put(

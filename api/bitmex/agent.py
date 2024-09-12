@@ -407,9 +407,14 @@ class Agent(Bitmex):
 
     def place_limit(
         self, quantity: float, price: float, clOrdID: str, symbol: tuple
-    ) -> Union[dict, None]:
+    ) -> Union[dict, str]:
         """
         Places a limit order.
+
+        Returns
+        -------
+        dict | str
+            On success, dict is returned, otherwise an error type.
         """
         if self.Instrument[symbol].category == "spot":
             message = (
@@ -440,7 +445,7 @@ class Agent(Bitmex):
 
     def replace_limit(
         self, quantity: float, price: float, orderID: str, symbol: tuple
-    ) -> Union[dict, None]:
+    ) -> Union[dict, str]:
         """
         Moves a limit order
         """
@@ -457,7 +462,7 @@ class Agent(Bitmex):
 
         return Send.request(self, path=path, postData=postData, verb="PUT")
 
-    def remove_order(self, order: dict) -> Union[list, None]:
+    def remove_order(self, order: dict) -> Union[dict, str]:
         """
         Deletes an order.
         """

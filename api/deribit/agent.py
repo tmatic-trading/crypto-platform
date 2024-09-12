@@ -274,7 +274,7 @@ class Agent(Deribit):
 
     def trading_history(
         self, histCount: int, start_time: datetime = None, funding: bool = False
-    ) -> list:
+    ) -> Union[list, str]:
         """
         Downloading trading and funding history from the endpoints:
             private/get_user_trades_by_currency_and_time
@@ -310,6 +310,11 @@ class Agent(Deribit):
             Cancels the "private/get_user_trades_by_currency_and_time"
             endpoint request if only funding and delivery are requested once
             a day at 8:00.
+
+        Returns
+        -------
+        list | str
+            On success, list is returned, otherwise error type.
 
         Notes
         -----
@@ -535,7 +540,7 @@ class Agent(Deribit):
                 if data_type == "logs" and continuation is None:
                     break
             if cursor > -1:
-                success[num] = "success"
+                success[num] = ""
 
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             endTime = startTime + step
@@ -547,7 +552,7 @@ class Agent(Deribit):
                     get_last_trades = True
             threads, success = [], []
             for currency in self.settleCoin_list:
-                success.append(None)
+                success.append("FATAL")
                 path = Listing.TRADES_AND_FUNDING_TRANSACTION_LOG
                 t = threading.Thread(
                     target=get_in_thread,
@@ -565,7 +570,7 @@ class Agent(Deribit):
                 threads.append(t)
                 t.start()
                 if get_last_trades:
-                    success.append(None)
+                    success.append("FATAL")
                     path = Listing.TRADES_LAST_5_DAYS
                     t = threading.Thread(
                         target=get_in_thread,
@@ -583,9 +588,9 @@ class Agent(Deribit):
                     threads.append(t)
                     t.start()
             [thread.join() for thread in threads]
-            for s in success:
-                if not s:
-                    return
+            for error in success:
+                if error:
+                    return error
             tmp = []
             for el in trade_history:
                 if el not in tmp:
@@ -677,7 +682,15 @@ class Agent(Deribit):
             return service.unexpected_error(self)
         
 
-    def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
+    def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple) -> Union[dict, str]:
+        """
+        Places a limit order.
+
+        Returns
+        -------
+        dict | str
+            On success, dict is returned, otherwise an error type.
+        """
         side = "buy" if quantity > 0 else "sell"
         path = Listing.PLACE_LIMIT.format(SIDE=side)
         id = f"{path}_{clOrdID}"
@@ -698,7 +711,7 @@ class Agent(Deribit):
         }
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
-    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple):
+    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple) -> Union[dict, str]:
         path = Listing.REPLACE_LIMIT
         id = f"{path}_{orderID}"
         text = (
@@ -710,13 +723,15 @@ class Agent(Deribit):
             + str(abs(quantity))
         )
         params = {"order_id": orderID, "amount": quantity, "price": price}
+
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
-    def remove_order(self, order: dict):
+    def remove_order(self, order: dict) -> Union[dict, str]:
         path = Listing.REMOVE_ORDER
         id = f"{path}_{order['orderID']}"
         text = " - symbol - " + str(order["symbol"][0])
         params = {"order_id": order["orderID"]}
+
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
     def ws_request(
