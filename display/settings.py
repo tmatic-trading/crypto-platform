@@ -526,6 +526,7 @@ class SettingsApp:
         for frame in self.settings_center:
             if frame != self.selected_frame:
                 frame.config(bg=self.market_color[frame.market])
+                frame.check_box.config(bg=self.market_color[frame.market])
         self.set_button_color(0)
 
     def create_static_widgets(self):
