@@ -422,3 +422,16 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
         symbol_list = put_default(symbol_list=symbol_list)
 
     return symbol_list
+
+
+def unexpected_error(ws) -> str:
+    """
+    If the http request is correct, but the received data does not match the 
+    expected one.
+    """
+    if not ws.logNumFatal:
+        ws.logNumFatal = "FATAL"
+    
+    return ws.logNumFatal
+
+

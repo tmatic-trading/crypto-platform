@@ -164,7 +164,8 @@ class Error(Variables):
             # receive the "CANCEL" error. "CANCEL" has a higher priority and
             # stops the loading process.
             status = "CANCEL"
-        self.logNumFatal = status
+        if status in ["CANCEL", "BLOCK", "FATAL"]:
+            self.logNumFatal = status
 
         return status
 

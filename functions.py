@@ -2104,7 +2104,7 @@ def download_kline_data(
         data = WS.trade_bucketed(
             self, symbol=symbol, time=start_time, timeframe=timeframe
         )
-        if data:
+        if isinstance(data, list):
             last = start_time
             res += data
             start_time = data[-1]["timestamp"] + timedelta(minutes=timeframe)
@@ -2113,11 +2113,11 @@ def download_kline_data(
 
         else:
             message = (
-                "When downloading trade/bucketed data NoneType was recieved. Reboot"
+                "When downloading trade/bucketed data, list was recieved. Reboot."
             )
             var.logger.error(message)
-            return None
-    self.logNumFatal = ""
+            return service.unexpected_error(self)
+
     return res
 
 

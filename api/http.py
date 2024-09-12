@@ -43,7 +43,7 @@ class Send(Variables):
         verb: str = None,
         postData: dict = None,
         timeout=7,
-    ) -> Union[dict, None]:
+    ) -> Union[dict, str]:
         """
         Sends a request to the exchange.
 
@@ -63,7 +63,8 @@ class Send(Variables):
         Returns
         -------
         dict | None
-            Usually requested data in dictionary format. On failure - None.
+            Usually requested data in dictionary format. On failure - error 
+            type.
         """
         url = self.http_url + path
         cur_retries = 1
@@ -97,14 +98,14 @@ class Send(Variables):
                 if status == "RETRY":
                     cur_retries += 1
                 else:
-                    return
+                    return status
             else:
                 if response:
-                    if self.logNumFatal != "CANCEL":
+                    if self.logNumFatal not in ["CANCEL", "BLOCK"]:
                         self.logNumFatal = ""
                     return response.json()
                 else:
-                    return
+                    return status
             if cur_retries > self.maxRetryRest:
                 self.logger.error(f"{self.name}: Max retries hit. Reboot")
                 var.queue_info.put(

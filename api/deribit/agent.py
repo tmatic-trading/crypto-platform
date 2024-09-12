@@ -51,10 +51,7 @@ class Agent(Deribit):
         else:
             error = "Invalid data was received when loading instruments. " + str(data)
         self.logger.error(error)
-        if self.logNumFatal:
-            return self.logNumFatal
-        else:
-            return "FATAL"
+        return service.unexpected_error(self)
 
     def get_instrument(self, ticker: str, category=None) -> str:
         """
@@ -152,11 +149,13 @@ class Agent(Deribit):
             "params": {},
         }
         path = self.api_version + Listing.OPEN_ORDERS
-        data = Send.request(self, path=path, verb="POST", postData=msg)
-        if isinstance(data, dict):
-            if "result" in data:
-                if isinstance(data["result"], list):
-                    for order in data["result"]:
+        res = Send.request(self, path=path, verb="POST", postData=msg)
+        if isinstance(res, str):
+            return res # error
+        if isinstance(res, dict):
+            if "result" in res:
+                if isinstance(res["result"], list):
+                    for order in res["result"]:
                         symbol = (self.ticker[order["instrument_name"]], self.name)
                         instrument = self.Instrument[symbol]
                         order["symbol"] = symbol
@@ -176,20 +175,17 @@ class Agent(Deribit):
                             order["side"] = "Sell"
                         if symbol not in self.symbol_list:
                             self.symbol_list.append(symbol)
-                    self.setup_orders = data["result"]
+                    self.setup_orders = res["result"]
                     return ""
                 else:
-                    error = "The list was expected when the orders were loaded, but was not received."
+                    error = "The list was expected when the orders were loaded, but was not received."                   
             else:
                 error = "When loading open orders 'result' was not received."
         else:
-            error = "Invalid data was received when loading open orders. " + str(data)
-        self.logger.error(error)
+            error = "Invalid data was received when loading open orders. " + str(res)
+        self.logger.error(error)        
 
-        if self.logNumFatal:
-            return self.logNumFatal
-        else:
-            return "FATAL"
+        return service.unexpected_error(self)
 
     def get_user(self) -> str:
         """
@@ -619,7 +615,7 @@ class Agent(Deribit):
 
     def trade_bucketed(
         self, symbol: tuple, start_time: datetime, timeframe: Union[int, str]
-    ) -> Union[list, None]:
+    ) -> Union[list, str]:
         """
         Returns kline data in in 1000 rows. Available timeframes: 1, 3, 5, 10,
         15, 30, 60, 120, 180, 360, 720, 1D
@@ -635,6 +631,11 @@ class Agent(Deribit):
         timeframe: int | str
             Time frames are expressed in minutes or '1D' in case of daily
             period.
+
+        Returns
+        -------
+        str | None
+            On success, list is returned, otherwise error type.
         """
         path = Listing.TRADE_BUCKETED
         id = f"{path}_{symbol}"
@@ -652,26 +653,29 @@ class Agent(Deribit):
         }
         text = " - symbol - " + str(symbol) + " - interval - " + str(timeframe)
         res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
-        if res:
-            if isinstance(res, dict):
-                klines = []
-                for step in range(len(res["ticks"])):
-                    klines.append(
-                        {
-                            "timestamp": service.time_converter(
-                                time=res["ticks"][step] / 1000
-                            ),
-                            "open": res["open"][step],
-                            "high": res["high"][step],
-                            "low": res["low"][step],
-                            "close": res["close"][step],
-                        }
-                    )
-                return klines
-            else:
-                self.logger.error(
-                    "A dict was expected when loading klines, but was not received."
+        if isinstance(res, dict):
+            klines = []
+            for step in range(len(res["ticks"])):
+                klines.append(
+                    {
+                        "timestamp": service.time_converter(
+                            time=res["ticks"][step] / 1000
+                        ),
+                        "open": res["open"][step],
+                        "high": res["high"][step],
+                        "low": res["low"][step],
+                        "close": res["close"][step],
+                    }
                 )
+            return klines
+        elif isinstance(res, str):
+            return res # error
+        else:
+            self.logger.error(
+                "A dict was expected when loading klines, but was not received."
+            )
+            return service.unexpected_error(self)
+        
 
     def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple):
         side = "buy" if quantity > 0 else "sell"

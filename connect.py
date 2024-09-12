@@ -114,8 +114,9 @@ def setup_market(ws: Markets, reload=False):
             success["kline"] = "success"
 
     def get_history(ws, success, num):
-        if common.Init.load_trading_history(ws):
-            success["history"] = "success"
+        res = common.Init.load_trading_history(ws)
+        if res in ["success", "empty"]:
+            success["history"] = res
 
     ws.logNumFatal = "SETUP"
     ws.api_is_active = False

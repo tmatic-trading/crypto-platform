@@ -16,6 +16,8 @@ from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
 
+from display.messages import ErrorMessage
+
 var.working_directory = os.path.abspath(os.getcwd())
 
 
@@ -138,25 +140,39 @@ class Init(WS, Variables):
             self, histCount=count_val, start_time=last_history_time
         )
         if isinstance(history, list):
-            while history:
-                for row in history:
-                    data = service.select_database(  # read_database
-                        "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
-                        % (row["execID"], self.user_id, self.name),
+            if history:
+                while history:
+                    for row in history:
+                        data = service.select_database(  # read_database
+                            "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
+                            % (row["execID"], self.user_id, self.name),
+                        )
+                        if not data:
+                            Function.transaction(self, row=row, info="History")
+                    last_history_time = history[-1]["transactTime"]
+                    if not self.logNumFatal:
+                        Init.save_history_file(self, time=last_history_time)
+                    if len(history) < count_val:
+                        return "success"
+                    history = WS.trading_history(
+                        self, histCount=count_val, start_time=last_history_time
                     )
-                    if not data:
-                        Function.transaction(self, row=row, info="History")
-                last_history_time = history[-1]["transactTime"]
-                if not self.logNumFatal:
-                    Init.save_history_file(self, time=last_history_time)
-                if len(history) < count_val:
-                    return "success"
-                history = WS.trading_history(
-                    self, histCount=count_val, start_time=last_history_time
-                )
-                if not isinstance(history, list):
-                    # self.logNumFatal = "FATAL"
-                    return
+                    if not isinstance(history, list):
+                        return
+        else:
+            return
+        message = self.name + ": Empty trading history."
+        var.logger.warning(message)
+        var.queue_info.put(
+            {
+                "market": self.name,
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": "warning",
+            }
+        )
+
+        return "empty"
 
     def account_balances(self: Markets) -> None:
         """

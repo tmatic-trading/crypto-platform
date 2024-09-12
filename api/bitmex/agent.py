@@ -19,10 +19,7 @@ class Agent(Bitmex):
             self.logger.error(
                 "A list was expected when loading instruments, but was not received."
             )
-            if self.logNumFatal:
-                return self.logNumFatal
-            else:
-                return "FATAL"
+            return service.unexpected_error(self)
         for instrument in data:
             Agent.fill_instrument(
                 self,
@@ -227,48 +224,66 @@ class Agent(Bitmex):
 
     def trade_bucketed(
         self, symbol: tuple, start_time: datetime, timeframe: int
-    ) -> Union[list, None]:
+    ) -> Union[list, str]:
         """
-        Gets timeframe data. Available time interval: 1m,5m,1h,1d.
+        Gets timeframe data. Available time intervals: 1m,5m,1h,1d.
+
+        Returns
+        -------
+        str | None
+            On success, list is returned, otherwise error type.
         """
         path = Listing.TRADE_BUCKETED.format(
             TIMEFRAME=self.timefrs[timeframe],
             SYMBOL=self.Instrument[symbol].ticker,
             TIME=str(start_time)[:19],
         )
-        data = Send.request(self, path=path, verb="GET")
-        if isinstance(data, list):
-            filtered = []
-            count = 0
-            last_time = ""
-            for values in data:
-                values["symbol"] = symbol
-                values["timestamp"] = service.time_converter(time=values["timestamp"])
-                if "open" and "high" and "low" and "close" in values:
-                    filtered.append(values)
-                else:
-                    count += 1
-                    last_time = values["timestamp"]
-            if count:
-                if count == 1:
-                    t = ("s", "This row is")
-                else:
-                    t = ("", "These rows are")
-                message = (
-                    "Kline's data obtained from the Bitmex API is not complete for "
-                    + str(symbol)
-                    + " at the "
-                    + self.timefrs[timeframe]
-                    + " time interval. "
-                    + str(count)
-                    + " row"
-                    + t[0]
-                    + " do not contain: open, high, low or closed. "
-                    + t[1]
-                    + " skipped. The time of the last row is "
-                    + str(last_time)
-                )
-                self.logger.warning(message)
+        res = Send.request(self, path=path, verb="GET")
+        if isinstance(res, list):
+            if res:
+                filtered = []
+                count = 0
+                last_time = ""
+                for values in res:
+                    values["symbol"] = symbol
+                    values["timestamp"] = service.time_converter(time=values["timestamp"])
+                    if "open" and "high" and "low" and "close" in values:
+                        filtered.append(values)
+                    else:
+                        count += 1
+                        last_time = values["timestamp"]
+                if count:
+                    if count == 1:
+                        t = ("s", "This row is")
+                    else:
+                        t = ("", "These rows are")
+                    message = (
+                        "Kline's data obtained from the Bitmex API is not complete for "
+                        + str(symbol)
+                        + " at the "
+                        + self.timefrs[timeframe]
+                        + " time interval. "
+                        + str(count)
+                        + " row"
+                        + t[0]
+                        + " do not contain: open, high, low or closed. "
+                        + t[1]
+                        + " skipped. The time of the last row is "
+                        + str(last_time)
+                    )
+                    self.logger.warning(message)
+                    var.queue_info.put(
+                        {
+                            "market": self.name,
+                            "message": message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": "warning",
+                        }
+                    )
+                return filtered
+            else:
+                message = ErrorMessage.REQUEST_EMPTY.format(PATH=path)
+                self.logger.error(message)
                 var.queue_info.put(
                     {
                         "market": self.name,
@@ -277,76 +292,84 @@ class Agent(Bitmex):
                         "warning": "error",
                     }
                 )
-            return filtered
+                return service.unexpected_error(self)
         else:
-            return None
+            return res # error
 
-    def trading_history(self, histCount: int, start_time=None) -> Union[list, str]:
-        if start_time:
-            path = Listing.TRADING_HISTORY.format(
-                HISTCOUNT=histCount, TIME=str(start_time)[:19]
-            )
-            res = Send.request(
-                self,
-                path=path,
-                verb="GET",
-            )
-            if isinstance(res, list):
-                spot_not_included = list()
-                for row in res:
-                    row["ticker"] = row["symbol"]
-                    if row["symbol"] not in self.ticker:
-                        self.logger.info(
-                            self.name
-                            + " - Requesting instrument - ticker="
-                            + row["symbol"]
-                        )
-                        Agent.get_instrument(
-                            self,
-                            ticker=row["symbol"],
-                        )
+    def trading_history(self, histCount: int, start_time: datetime) -> Union[list, str]:
+        """
+        Gets trades, funding and delivery from the exchange for the period starting
+        from start_time.
 
-                    row["market"] = self.name
-                    row["symbol"] = (
-                        self.ticker[row["symbol"]],
-                        self.name,
+        Returns
+        -------
+        list | str
+            On success, list is returned, otherwise error type.
+        """
+        path = Listing.TRADING_HISTORY.format(
+            HISTCOUNT=histCount, TIME=str(start_time)[:19]
+        )
+        res = Send.request(
+            self,
+            path=path,
+            verb="GET",
+        )
+        if isinstance(res, list):
+            spot_not_included = list()
+            for row in res:
+                row["ticker"] = row["symbol"]
+                if row["symbol"] not in self.ticker:
+                    self.logger.info(
+                        self.name
+                        + " - Requesting instrument - ticker="
+                        + row["symbol"]
                     )
-                    instrument = self.Instrument[row["symbol"]]
-                    row["category"] = instrument.category
-                    row["transactTime"] = service.time_converter(
-                        time=row["transactTime"], usec=True
+                    Agent.get_instrument(
+                        self,
+                        ticker=row["symbol"],
                     )
-                    if instrument.category == "spot":
-                        if row["side"] == "Buy":
-                            row["settlCurrency"] = (instrument.quoteCoin, self.name)
-                        else:
-                            row["settlCurrency"] = (instrument.baseCoin, self.name)
+
+                row["market"] = self.name
+                row["symbol"] = (
+                    self.ticker[row["symbol"]],
+                    self.name,
+                )
+                instrument = self.Instrument[row["symbol"]]
+                row["category"] = instrument.category
+                row["transactTime"] = service.time_converter(
+                    time=row["transactTime"], usec=True
+                )
+                if instrument.category == "spot":
+                    if row["side"] == "Buy":
+                        row["settlCurrency"] = (instrument.quoteCoin, self.name)
                     else:
-                        row["settlCurrency"] = instrument.settlCurrency
-                    if "lastQty" in row:
-                        # row["lastQty"] *= instrument.valueOfOneContract
-                        row["lastQty"] /= instrument.myMultiplier
-                    if "leavesQty" in row:
-                        # row["leavesQty"] *= instrument.valueOfOneContract
-                        row["leavesQty"] /= instrument.myMultiplier
-                    if row["execType"] == "Funding":
-                        if row["foreignNotional"] > 0:
-                            row["lastQty"] = -row["lastQty"]
-                            row["commission"] = -row["commission"]
-                    elif row["execType"] == "Settlement":
-                        row["execType"] = "Delivery"
-                    row["execFee"] = None
-                    if instrument.category != "spot":
-                        spot_not_included.append(row)
-                    else:
-                        self.logger.warning(
-                            "Tmatic does not support spot trading on Bitmex. The trading history entry with execID "
-                            + row["execID"]
-                            + " was ignored."
-                        )
-                return spot_not_included
-            # else:
-            #    self.logNumFatal = "SETUP"
+                        row["settlCurrency"] = (instrument.baseCoin, self.name)
+                else:
+                    row["settlCurrency"] = instrument.settlCurrency
+                if "lastQty" in row:
+                    # row["lastQty"] *= instrument.valueOfOneContract
+                    row["lastQty"] /= instrument.myMultiplier
+                if "leavesQty" in row:
+                    # row["leavesQty"] *= instrument.valueOfOneContract
+                    row["leavesQty"] /= instrument.myMultiplier
+                if row["execType"] == "Funding":
+                    if row["foreignNotional"] > 0:
+                        row["lastQty"] = -row["lastQty"]
+                        row["commission"] = -row["commission"]
+                elif row["execType"] == "Settlement":
+                    row["execType"] = "Delivery"
+                row["execFee"] = None
+                if instrument.category != "spot":
+                    spot_not_included.append(row)
+                else:
+                    self.logger.warning(
+                        "Tmatic does not support spot trading on Bitmex. The trading history entry with execID "
+                        + row["execID"]
+                        + " was ignored."
+                    )
+            return spot_not_included
+        else:
+            res # error type
 
     def open_orders(self) -> str:
         path = Listing.OPEN_ORDERS
@@ -377,10 +400,7 @@ class Agent(Bitmex):
             self.logger.error(
                 "The list was expected when the orders were loaded, but it was not received."
             )
-            if self.logNumFatal:
-                return self.logNumFatal
-            else:
-                return "FATAL"
+            return service.unexpected_error(self)
         self.setup_orders = res
 
         return ""

@@ -12,7 +12,7 @@ from api.deribit.agent import Agent as DeribitAgent
 from api.deribit.ws import Deribit
 from api.fake import Fake
 from common.variables import Variables as var
-from services import display_exception
+import services as service
 
 from .variables import Variables
 
@@ -61,7 +61,7 @@ class WS(Variables):
             try:
                 Markets[self.name].start()
             except Exception as exception:
-                display_exception(exception)
+                service.display_exception(exception)
 
         def get_in_thread(method):
             method_name = method.__name__
@@ -73,7 +73,7 @@ class WS(Variables):
                     success[method_name] = ""  # success
 
             except Exception as exception:
-                display_exception(exception)
+                service.display_exception(exception)
 
         # It starts here.
 
@@ -82,17 +82,14 @@ class WS(Variables):
             if error:
                 return error
         except Exception as exception:
-            display_exception(exception)
+            service.display_exception(exception)
             message = self.name + " Instruments not loaded."
-            self.logger.error()
-            if self.logNumFatal:
-                return self.logNumFatal
-            else:
-                return message
+            self.logger.error(message)
+            return service.unexpected_error(self)
         try:
             Agents[self.name].value.activate_funding_thread(self)
         except:
-            display_exception(exception)
+            service.display_exception(exception)
             message = self.name + " Error calling activate_funding_thread()."
             self.logger.error(message)
             return message
@@ -101,12 +98,9 @@ class WS(Variables):
             if error:
                 return error
         except Exception as exception:
-            display_exception(exception)
+            service.display_exception(exception)
             self.logger.error(self.name + " Orders not loaded. Reboot.")
-            if self.logNumFatal:
-                return self.logNumFatal
-            else:
-                return message
+            return service.unexpected_error(self)
         threads = []
         success = {}
         try:
@@ -127,7 +121,7 @@ class WS(Variables):
             t.start()
             [thread.join() for thread in threads]
         except Exception as exception:
-            display_exception(exception)
+            service.display_exception(exception)
             return "FATAL"
 
         for method_name, error in success.items():
@@ -193,7 +187,7 @@ class WS(Variables):
         Parameters
         ----------
         self: Markets
-            Markets class instances such as Bitmex, Bybit, Deribit
+            Markets class instances such as Bitmex, Bybit, Deribit.
         ticker: str
             The name of the instrument in the classification of a specific
             exchange.
@@ -221,6 +215,7 @@ class WS(Variables):
     def get_position(self: Markets, symbol: tuple) -> None:
         """
         Gets information about an open position for a specific instrument.
+        Currently not in use.
         """
 
         return Agents[self.name].value.get_position(self, symbol=symbol)
@@ -230,6 +225,22 @@ class WS(Variables):
     ) -> Union[list, None]:
         """
         Gets kline data.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit.
+        symbol: tuple
+            Instrument symbol. Example ("BTCUSDT", "Bybit").
+        start_time: datetime
+            Initial time to download timeframe data.
+        timeframe: str
+            Time interval.
+
+        Returns
+        -------
+        str | None
+            On success, list is returned, otherwise None.
         """
         parameters = (
             f"symbol={symbol[0]}" + f", start_time={time}" + f", timeframe={timeframe}"
@@ -250,8 +261,22 @@ class WS(Variables):
 
     def trading_history(self: Markets, histCount: int, start_time: datetime) -> list:
         """
-        Gets all trades and funding from the exchange for the period starting
-        from 'time'
+        Gets trades, funding and delivery from the exchange for the period starting
+        from start_time.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit.
+        histCount: int
+            The number of rows of data to retrieve.
+        start_time: datetime
+            Initial time to download data.
+            
+        Returns
+        -------
+        list
+            On success, list is returned, otherwise None.
         """
         var.logger.info(
             self.name + " - Requesting trading history - start_time=" + str(start_time)

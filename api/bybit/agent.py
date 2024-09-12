@@ -7,6 +7,7 @@ import services as service
 from api.bybit.erruni import Unify
 from api.errors import Error
 from display.messages import ErrorMessage
+from common.variables import Variables as var
 
 from .ws import Bybit
 
@@ -157,7 +158,16 @@ class Agent(Bybit):
 
     def trade_bucketed(
         self, symbol: tuple, start_time: datetime, timeframe: str
-    ) -> Union[list, None]:
+    ) -> Union[list, str]:
+        """
+        Gets timeframe data. Available time intervals: 1, 3, 5, 15, 30, 60, 
+        120, 240, 360, 720, D, M, W.        
+
+        Returns
+        -------
+        str | None
+            On success, list is returned, otherwise None.
+        """
         instrument = self.Instrument[symbol]
         try:
             kline = self.session.get_kline(
@@ -191,97 +201,118 @@ class Agent(Bybit):
             res.sort(key=lambda x: x["timestamp"])
 
             return res
+        
+        else:
+            message = ErrorMessage.REQUEST_EMPTY.format(PATH="get_kline")
+            self.logger.error(message)
+            var.queue_info.put(
+                {
+                    "market": self.name,
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": "error",
+                }
+            )
+            return service.unexpected_error(self)
 
-    def trading_history(self, histCount: int, start_time=None) -> list:
-        if start_time:
-            trade_history = []
-            utc = datetime.now(timezone.utc)
-            if utc - start_time > timedelta(days=729):
-                self.logger.info(
-                    "Bybit only allows you to query trading history for the last 2 years."
-                )
-                start_time = utc - timedelta(days=729)
-                self.logger.info("Time changed to " + str(start_time))
-            startTime = service.time_converter(start_time)
-            limit = min(100, histCount)
+    def trading_history(self, histCount: int, start_time: datetime) -> Union[list, str]:
+        """
+        Gets trades, funding and delivery from the exchange for the period starting
+        from start_time.
 
-            def get_in_thread(category, startTime, limit, success, num):
-                nonlocal trade_history
-                cursor = "no"
-                while cursor:
-                    try:
-                        data = self.session.get_executions(
-                            category=category,
-                            startTime=startTime,
-                            limit=limit,
-                            cursor=cursor,
-                        )
-                    except Exception as exception:
-                        error = Unify.error_handler(
-                            self,
-                            exception=exception,
-                            verb="GET",
-                            path="get_executions",
-                        )
-                        success[num] = error
-                        return
+        Returns
+        -------
+        list | str
+            On success, list is returned, otherwise error type.
+        """
+        trade_history = []
+        utc = datetime.now(timezone.utc)
+        if utc - start_time > timedelta(days=729):
+            self.logger.info(
+                "Bybit only allows you to query trading history for the last 2 years."
+            )
+            start_time = utc - timedelta(days=729)
+            self.logger.info("Time changed to " + str(start_time))
+        startTime = service.time_converter(start_time)
+        limit = min(100, histCount)
 
-                    cursor = data["result"]["nextPageCursor"]
-                    res = data["result"]["list"]
-                    if isinstance(data["result"]["list"], list):
-                        for row in res:
-                            if (row["symbol"], category) not in self.ticker:
-                                self.logger.info(
-                                    self.name
-                                    + " - Requesting instrument - ticker="
-                                    + row["symbol"]
-                                    + ", category="
-                                    + category
-                                )
-                                Agent.get_instrument(
-                                    self,
-                                    ticker=row["symbol"],
-                                    category=category,
-                                )
-                            row["ticker"] = (row["symbol"],)
-                            row["symbol"] = (
-                                self.ticker[(row["symbol"], category)],
-                                self.name,
+        def get_in_thread(category, startTime, limit, success, num):
+            nonlocal trade_history
+            cursor = "no"
+            while cursor:
+                try:
+                    data = self.session.get_executions(
+                        category=category,
+                        startTime=startTime,
+                        limit=limit,
+                        cursor=cursor,
+                    )
+                except Exception as exception:
+                    error = Unify.error_handler(
+                        self,
+                        exception=exception,
+                        verb="GET",
+                        path="get_executions",
+                    )
+                    success[num] = error
+                    return
+
+                cursor = data["result"]["nextPageCursor"]
+                res = data["result"]["list"]
+                if isinstance(data["result"]["list"], list):
+                    for row in res:
+                        if (row["symbol"], category) not in self.ticker:
+                            self.logger.info(
+                                self.name
+                                + " - Requesting instrument - ticker="
+                                + row["symbol"]
+                                + ", category="
+                                + category
                             )
-                            row["execID"] = row["execId"]
-                            row["orderID"] = row["orderId"]
-                            row["category"] = category
-                            row["lastPx"] = float(row["execPrice"])
-                            row["leavesQty"] = float(row["leavesQty"])
-                            row["transactTime"] = service.time_converter(
-                                time=int(row["execTime"]) / 1000, usec=True
+                            Agent.get_instrument(
+                                self,
+                                ticker=row["symbol"],
+                                category=category,
                             )
-                            row["commission"] = float(row["feeRate"])
-                            if row["orderLinkId"]:
-                                row["clOrdID"] = row["orderLinkId"]
-                            row["price"] = float(row["orderPrice"])
-                            if category == "spot":
-                                row["settlCurrency"] = (row["feeCurrency"], self.name)
-                            else:
-                                row["settlCurrency"] = self.Instrument[
-                                    row["symbol"]
-                                ].settlCurrency
-                            row["lastQty"] = float(row["execQty"])
-                            row["market"] = self.name
-                            if row["execType"] == "Funding":
-                                if row["side"] == "Sell":
-                                    row["lastQty"] = -row["lastQty"]
-                            row["execFee"] = float(row["execFee"])
-                        trade_history += res
-                        success[num] = ""  # success
-
-                    else:
-                        self.logger.error(
-                            "The list was expected when the trading history were loaded, but for the category "
-                            + category
-                            + " it was not received. Reboot."
+                        row["ticker"] = (row["symbol"],)
+                        row["symbol"] = (
+                            self.ticker[(row["symbol"], category)],
+                            self.name,
                         )
-                        return
+                        row["execID"] = row["execId"]
+                        row["orderID"] = row["orderId"]
+                        row["category"] = category
+                        row["lastPx"] = float(row["execPrice"])
+                        row["leavesQty"] = float(row["leavesQty"])
+                        row["transactTime"] = service.time_converter(
+                            time=int(row["execTime"]) / 1000, usec=True
+                        )
+                        row["commission"] = float(row["feeRate"])
+                        if row["orderLinkId"]:
+                            row["clOrdID"] = row["orderLinkId"]
+                        row["price"] = float(row["orderPrice"])
+                        if category == "spot":
+                            row["settlCurrency"] = (row["feeCurrency"], self.name)
+                        else:
+                            row["settlCurrency"] = self.Instrument[
+                                row["symbol"]
+                            ].settlCurrency
+                        row["lastQty"] = float(row["execQty"])
+                        row["market"] = self.name
+                        if row["execType"] == "Funding":
+                            if row["side"] == "Sell":
+                                row["lastQty"] = -row["lastQty"]
+                        row["execFee"] = float(row["execFee"])
+                    trade_history += res
+                    success[num] = ""  # success
+
+                else:
+                    self.logger.error(
+                        "The list was expected when the trading history were loaded, but for the category "
+                        + category
+                        + " it was not received. Reboot."
+                    )
+                    return service.unexpected_error(self)
 
         while startTime < service.time_converter(datetime.now(tz=timezone.utc)):
             threads, success = [], []
@@ -297,7 +328,7 @@ class Agent(Bybit):
             for error in success:
                 if error:
                     self.logNumFatal = error
-                    return
+                    return error
             if len(trade_history) > histCount:
                 break
             startTime += 604800000  # +7 days
