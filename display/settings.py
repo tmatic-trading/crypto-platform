@@ -22,7 +22,7 @@ class SettingsApp:
         self.bg_select_color = disp.bg_select_color
         self.bg_entry = disp.light_gray_color
         self.bg_active = disp.bg_select_color
-        self.bg_changed = "yellow"
+        self.bg_changed = "khaki3"  # indianred1,lightcoral,khaki3,#FF9912
 
         self.title_color = tk.Label(root, text=" TRADING: ")["background"]
 
@@ -764,7 +764,7 @@ class DraggableFrame(tk.Frame):
 
     def on_leave(self, event):
         if self != self.app.selected_frame:
-            self.bg_market(self, self.app.bg_entry)
+            self.bg_market(self, self.app.market_color[self.market])
 
     def on_press(self, event):
         self.app.on_tip("MARKET")
