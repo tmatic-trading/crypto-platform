@@ -192,18 +192,40 @@ def try_response(response, exception):
             return {"error": {"code": code, "message": message}}
         except Exception:
             pass
+        try:
+            # Bitmex HTTPError: 530 Server Error
+            code = response.status_code
+            return {"error": {"code": code, "message": str(exception)}}
+        except Exception:
+            pass
 
         print("___________try_response")
         print(exception)
-        print("-----")
+        print("========")
         print(exception.__dict__)
-        print("-----")
+        print("========")
         print(response)
-        print("-----")
+        print("========")
         print(response.__dict__)
-        print("-----")
-        print(response["error"])
-        print("-----")
+        print("========")
+        print(exception.args)
+        print("========")
+        try:
+            for arg in exception.args:
+                print("_____________exception args")
+                print("===", arg)
+                print("===", type(arg))
+                print("===", arg.__dict__)
+        except Exception:
+            pass
+        try:
+            for arg in response.args:
+                print("_____________response args")
+                print("===", arg)
+                print("===", type(arg))
+                print("===", arg.__dict__)
+        except Exception:
+            pass
 
         raise
 

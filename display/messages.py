@@ -57,6 +57,12 @@ class ErrorMessage(str, Enum):
     USER_ID_NOT_RECEIVED = (
         "A user ID was requested from the exchange but was not received."
     )
+    POSITIONS_NOT_RECEIVED = (
+        "A list was expected when the positions were loaded, but it was not received."
+    )
+    INSTRUMENT_NOT_FOUND = (
+        "Request {PATH} received empty. ({TICKER} {CATEGORY}) instrument not found."
+    )
 
     def __str__(self) -> str:
         return self.value

@@ -56,19 +56,28 @@ class Agent(Deribit):
         else:
             return "FATAL"
 
-    def get_instrument(self, ticker: str, category=None) -> None:
+    def get_instrument(self, ticker: str, category=None) -> str:
+        """
+        Gets a specific instrument by symbol. Fills the
+        self.Instrument[<symbol>] array with data.
+
+        Returns
+        -------
+        str
+            On success, "" is returned.
+        """
         path = Listing.GET_INSTRUMENT_DATA
         params = {"instrument_name": ticker}
         id = f"{path}_{ticker}"
         text = " - symbol - " + ticker
         res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
         if isinstance(res, dict):
-            Agent.fill_instrument(self, values=self.response[id]["result"])
+            Agent.fill_instrument(self, values=res)
+
+            return ""
+
         else:
-            self.logger.error(
-                "A dict was expected when loading instrument, but was not received."
-            )
-            self.logNumFatal = "FATAL"
+            return res  # error type
 
     def fill_instrument(self, values: dict) -> str:
         """
@@ -214,6 +223,8 @@ class Agent(Deribit):
                         "burst": 10,
                         "rate": 2,
                     }
+                return ""
+
             else:
                 self.logger.error(ErrorMessage.USER_ID_NOT_FOUND)
                 return "FATAL"
@@ -228,9 +239,18 @@ class Agent(Deribit):
         Receives data on currency accounts through the websocket channel
         user.portfolio.any in the api/deribit/ws.py
         """
-        pass
+
+        return ""
 
     def get_position_info(self):
+        """
+        Gets current positions.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
+        """
         path = self.api_version + Listing.GET_POSITION_INFO
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, dict):
@@ -249,9 +269,12 @@ class Agent(Deribit):
                     instrument.marginCallPrice = "None"
         else:
             self.logger.error(
-                "The dict was expected when the positions were loaded, but it was not received."
+                "The dict was expected when the positions were loaded, but "
+                + "it was not received."
             )
-            # self.logNumFatal = "SETUP"
+            return "FATAL"
+
+        return ""
 
     def trading_history(
         self, histCount: int, start_time: datetime = None, funding: bool = False
@@ -694,7 +717,7 @@ class Agent(Deribit):
 
     def ws_request(
         self, path: str, id: str, params: dict, text: str, currency="BTC"
-    ) -> Union[str, list, dict, None]:
+    ) -> Union[str, list, dict]:
         """
         Requests data over websocket connection. Request limits are taken
         into account according to
@@ -725,7 +748,7 @@ class Agent(Deribit):
 
         Returns
         -------
-            Requested information. If failed - None.
+            Requested information. If failed - error type.
         """
         account = self.Account[(currency, self.name)]
         limit = account.limits
@@ -801,7 +824,7 @@ class Agent(Deribit):
                             time.sleep(0.5)
                             break
                         else:
-                            return
+                            return error
                     else:
                         return res
                 time.sleep(0.05)
@@ -823,7 +846,8 @@ class Agent(Deribit):
                     }
                 )
                 self.logNumFatal = "FATAL"
-                return
+
+                return self.logNumFatal
 
     def activate_funding_thread(self):
         """

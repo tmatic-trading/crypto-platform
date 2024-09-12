@@ -61,17 +61,33 @@ class Agent(Bitmex):
 
         return res
 
-    def get_instrument(self, ticker: str, category=None) -> None:
+    def get_instrument(self, ticker: str, category=None) -> str:
         """
-        Adds fields such as: isInverse, multiplier...
+        Gets a specific instrument by symbol. Fills the
+        self.Instrument[<symbol>] array with data.
+
+        Returns
+        -------
+        str
+            On success, "" is returned.
         """
         path = Listing.GET_INSTRUMENT_DATA.format(SYMBOL=ticker)
         res = Send.request(self, path=path, verb="GET")
         if res:
             instrument = res[0]
             Agent.fill_instrument(self, instrument=instrument)
+
+            return ""
+
+        elif isinstance(res, str):  # error
+            return res
         else:
-            self.logger.info(ticker + " not found in get_instrument()")
+            message = ErrorMessage.INSTRUMENT_NOT_FOUND.format(
+                PATH=path, TICKER=ticker, CATEGORY=category
+            )
+            self.logger.warning(message)
+
+            return message
 
     def fill_instrument(self, instrument: dict) -> Union[str, None]:
         """
@@ -434,11 +450,18 @@ class Agent(Bitmex):
         """
         Bitmex sends this information via websocket, "margin" subscription.
         """
-        pass
 
-    def get_position_info(self) -> None:
+        return ""
+
+    def get_position_info(self) -> str:
         """
-        Gets current positions
+        Gets current positions.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as
+            FATAL, CANCEL.
         """
         path = Listing.GET_POSITION_INFO
         data = Send.request(self, path=path, verb="GET")
@@ -465,10 +488,10 @@ class Agent(Bitmex):
                         if "unrealisedPnl" in values:
                             instrument.unrealisedPnl = values["unrealisedPnl"]
         else:
-            self.logger.error(
-                "The list was expected when the positions were loaded, but it was not received."
-            )
-            # self.logNumFatal = "SETUP"
+            self.logger.error(ErrorMessage.POSITIONS_NOT_RECEIVED)
+            return "FATAL"
+
+        return ""
 
     def activate_funding_thread(self):
         """

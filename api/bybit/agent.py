@@ -62,11 +62,10 @@ class Agent(Bybit):
         [thread.join() for thread in threads]
         for error in success:
             if error:
-                if error == "FATAL":
-                    self.logger.error(
-                        "The list was expected when the instruments were loaded, "
-                        + "but for some categories it was not received. Reboot."
-                    )
+                self.logger.error(
+                    "The list was expected when the instruments were loaded, "
+                    + "but for some categories it was not received."
+                )
                 return error
 
         self.symbol_list = service.check_symbol_list(
@@ -105,7 +104,7 @@ class Agent(Bybit):
             return res
 
         except Exception as exception:
-            Unify.error_handler(
+            error = Unify.error_handler(
                 self,
                 exception=exception,
                 verb="GET",
@@ -113,36 +112,45 @@ class Agent(Bybit):
             )
             self.logger.error(ErrorMessage.USER_ID_NOT_RECEIVED)
 
-            if self.logNumFatal:
-                return self.logNumFatal
-            else:
-                return "FATAL"
+            return error
 
-    def get_instrument(self, ticker: str, category: str) -> None:
+    def get_instrument(self, ticker: str, category: str) -> str:
+        """
+        Gets a specific instrument by symbol. Fills the
+        self.Instrument[<symbol>] array with data.
+
+        Returns
+        -------
+        str
+            On success, "" is returned.
+        """
         try:
             instrument = self.session.get_instruments_info(
                 symbol=ticker, category=category
             )
         except Exception as exception:
-            Unify.error_handler(
+            error = Unify.error_handler(
                 self,
                 exception=exception,
                 verb="GET",
                 path="get_instruments_info",
             )
-            return
+            return error
 
-        if isinstance(instrument["result"]["list"], list):
+        if instrument["result"]["list"]:
             Agent.fill_instrument(
                 self, instrument=instrument["result"]["list"][0], category=category
             )
+
+            return ""
+
         else:
-            self.logger.error(
-                "The list was expected when the instrument "
-                + ticker
-                + " is loaded, but was not received. Reboot."
+            message = ErrorMessage.INSTRUMENT_NOT_FOUND.format(
+                PATH="get_instruments_info", TICKER=ticker, CATEGORY=category
             )
-            self.logNumFatal = "FATAL"
+            self.logger.warning(message)
+
+            return message
 
     def get_position(self, symbol: tuple = False):
         print("___get_position", symbol)
@@ -160,13 +168,13 @@ class Agent(Bybit):
                 limit=1000,
             )
         except Exception as exception:
-            Unify.error_handler(
+            error = Unify.error_handler(
                 self,
                 exception=exception,
                 verb="GET",
                 path="get_kline",
             )
-            return
+            return error
 
         if kline["result"]["list"]:
             res = []
@@ -390,11 +398,10 @@ class Agent(Bybit):
         [thread.join() for thread in threads]
         for error in success:
             if error:
-                if error == "FATAL":
-                    self.logger.error(
-                        "The list was expected when the orders were loaded, "
-                        + "but for some categories it was not received."
-                    )
+                self.logger.error(
+                    "The list was expected when the orders were loaded, "
+                    + "but for some categories it was not received."
+                )
                 return error
         self.setup_orders = myOrders
 
@@ -455,26 +462,32 @@ class Agent(Bybit):
 
             return error
 
-    def get_wallet_balance(self) -> None:
+    def get_wallet_balance(self) -> str:
         """
         Requests wallet balance usually for two types of accounts: UNIFIED,
         CONTRACT.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
         """
         for account_type in self.account_types:
             try:
-                data = self.session.get_wallet_balance(accountType=account_type)
+                res = self.session.get_wallet_balance(accountType=account_type)
             except Exception as exception:
-                Unify.error_handler(
+                error = Unify.error_handler(
                     self, exception=exception, verb="GET", path="get_wallet_balance"
                 )
-                return
+                return error
 
             # Bybit bug patch 20/08/2024 on request accountType = "CONTRACT"
-            if "list" in data["result"]:
-                data = data["result"]["list"]
+            if "list" in res["result"]:
+                res = res["result"]["list"]
             else:
-                data = data["result"]["result"]["list"]
-            for values in data:
+                res = res["result"]["result"]["list"]
+
+            for values in res:
                 for coin in values["coin"]:
                     currency = (coin["coin"] + "." + values["accountType"], self.name)
                     account = self.Account[currency]
@@ -505,9 +518,20 @@ class Agent(Bybit):
                     # self.Account[currency].result = 0
                     account.settlCurrency = currency
                     # self.Account[currency].sumreal = 0
-                break
+
+        return ""
 
     def get_position_info(self):
+        """
+        Gets current positions in parallel threads, each category and
+        currency in its own thread.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type.
+        """
+
         def get_in_thread(category, settlCurrency, success, num):
             cursor = "no"
             while cursor:
@@ -519,9 +543,10 @@ class Agent(Bybit):
                         cursor=cursor,
                     )
                 except Exception as exception:
-                    Unify.error_handler(
+                    error = Unify.error_handler(
                         self, exception=exception, verb="GET", path="get_positions"
                     )
+                    success[num] = error
                     return
 
                 cursor = res["result"]["nextPageCursor"]
@@ -553,12 +578,12 @@ class Agent(Bybit):
         [thread.join() for thread in threads]
         for error in success:
             if error:
-                if error == "FATAL":
-                    self.logger.error(
-                        "The list was expected when the positions were loaded, "
-                        + "but for some categories and settlCurrency it was not "
-                        + "received. Reboot"
-                    )
+                self.logger.error(
+                    "The list was expected when the positions were loaded, "
+                    + "but for some categories and settlCurrency it was not "
+                    + "received"
+                )
+                return error
 
     def fill_instrument(self, instrument: dict, category: str):
         """

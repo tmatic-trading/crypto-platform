@@ -128,6 +128,8 @@ class WS(Variables):
             [thread.join() for thread in threads]
         except Exception as exception:
             display_exception(exception)
+            return "FATAL"
+
         for method_name, error in success.items():
             if error:
                 self.logger.error(
@@ -149,7 +151,7 @@ class WS(Variables):
 
     def exit(self: Markets) -> None:
         """
-        Closes websocket
+        Closes websocket.
         """
         Markets[self.name].exit()
 
@@ -157,11 +159,6 @@ class WS(Variables):
         """
         Gets all active instruments from the exchange. This data stores in
         the self.Instrument[<symbol>].
-
-        Parameters
-        ----------
-        self: Markets
-            Markets class instances such as Bitmex, Bybit, Deribit
 
         Returns
         -------
@@ -173,9 +170,10 @@ class WS(Variables):
 
         return Agents[self.name].value.get_active_instruments(self)
 
-    def get_user(self: Markets) -> Union[dict, None]:
+    def get_user(self: Markets) -> str:
         """
-        Gets account info.
+        Gets account info. It turns out user_id, which is the account number.
+        It can receive other information. Depends on the specific exchange.
 
         Returns
         -------
@@ -187,9 +185,26 @@ class WS(Variables):
 
         return Agents[self.name].value.get_user(self)
 
-    def get_instrument(self: Markets, ticker: str, category: str) -> None:
+    def get_instrument(self: Markets, ticker: str, category: str) -> str:
         """
-        Gets a specific instrument by symbol name and category.
+        Gets a specific instrument by symbol. Fills the
+        self.Instrument[<symbol>] array with data.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit
+        ticker: str
+            The name of the instrument in the classification of a specific
+            exchange.
+        category:
+            The category of the instrument such as linear, inverse etc.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as
+            FATAL, CANCEL.
         """
         var.logger.info(
             self.name
@@ -249,11 +264,6 @@ class WS(Variables):
     def open_orders(self: Markets) -> str:
         """
         Gets open orders.
-
-        Parameters
-        ----------
-        self: Markets
-            Markets class instances such as Bitmex, Bybit, Deribit
 
         Returns
         -------
@@ -326,10 +336,16 @@ class WS(Variables):
 
         return Agents[self.name].value.remove_order(self, order=order)
 
-    def get_wallet_balance(self: Markets) -> dict:
+    def get_wallet_balance(self: Markets) -> str:
         """
         Obtain wallet balance, query asset information of each currency, and
         account risk rate information.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as
+            FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting account.")
 
@@ -338,6 +354,12 @@ class WS(Variables):
     def get_position_info(self: Markets) -> dict:
         """
         Get position information.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as
+            FATAL, CANCEL.
         """
         var.logger.info(self.name + " - Requesting positions.")
 

@@ -101,8 +101,12 @@ class ErrorStatus(Enum):
     CANCEL = {
         # 400: "Bad Request",
         401: "Unauthorized",
+        403: "Account Restrictions or Bans, Incorrect API Key Permissions, Authentication and Authorization Issues, Network or Server Issues",
         404: "Not Found",
+        429: "Rate limit exceeded",
+        503: "Service Unavailable, Deployment/Restart, System Overload",
         504: "Server Error: Gateway Time-out",
+        530: "Server Error",
     }
 
     def error_status(res):
