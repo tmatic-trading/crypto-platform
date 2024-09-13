@@ -70,7 +70,7 @@ class Error(Variables):
         prefix = f"{self.name} - {error_name} - "
         if error_name in ["ConnectionError", "ReadTimeout"]:
             status = "RETRY"
-            error_message = prefix + ". Unable to contact API"
+            error_message = prefix + "Unable to contact API"
         elif error_name == "InvalidChannelTypeError":
             status = "BLOCK"
             error_message = prefix + " " + str(exception)
@@ -200,34 +200,48 @@ def try_response(response, exception):
         except Exception:
             pass
 
-        print("___________try_response")
-        print(exception)
-        print("========")
-        print(exception.__dict__)
-        print("========")
-        print(response)
-        print("========")
-        print(response.__dict__)
-        print("========")
-        print(exception.args)
-        print("========")
-        try:
-            for arg in exception.args:
-                print("_____________exception args")
-                print("===", arg)
-                print("===", type(arg))
-                print("===", arg.__dict__)
-        except Exception:
-            pass
-        try:
-            for arg in response.args:
-                print("_____________response args")
-                print("===", arg)
-                print("===", type(arg))
-                print("===", arg.__dict__)
-        except Exception:
-            pass
+        # Save error in error.log when try_response failed.
 
-        raise
+        error += f"{exception.__class__.args}\n#\n"
+        error = f"try_response failed {datetime.now()}\n#\n"
+        error += f"___exception {exception}\n#\n"
+        error += f"___exception.__class__.__name__ {exception.__class__.__name__}\n#\n"
+        try:
+            error += f"___exception.__class__.args {exception.__class__.args}\n#\n"
+        except:
+            error += f"exception.__class__.args\n#\n"
+        error += f"___exception.__dict__ {exception.__dict__}\n#\n"
+        try:
+            error += f"___exception.status_code {exception.status_code}\n#\n"
+        except:
+            error += f"no exception.status_code\n#\n"
+        try:
+            error += f"___exception.message {exception.message}\n#\n"
+        except:
+            error += f"no exception.message\n#\n"
+        try:
+            error += f"___ exception.args {exception.args}\n#\n"
+        except:
+            error += f"no exception.args\n#\n"        
+        error += f"___response {response}\n#\n"
+        try:
+            error += f"___ response.__dict__ {response.__dict__}\n#\n"
+        except:
+            error += f"no response.__dict__\n#\n"
+        try:
+            error += f"___ response.status_code {response.status_code}\n#\n"
+        except:
+            error += f"no response.status_code\n#\n"
+        try:
+            error += f"___response.message {response.message}\n#\n"
+        except:
+            error += f"no response.message\n#\n"
+        try:
+            error += f"___ response.args {response.args}\n#\n"
+        except:
+            error += f"no response.args\n#\n"
+        error += "#\n#\n"
+        with open("error.log", "a") as f:
+            f.write(error)
 
-        # return {"error": {"code": 0, "message": ""}}
+        return {"error": {"code": 0, "message": ""}}

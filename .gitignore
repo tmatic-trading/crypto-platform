@@ -14,5 +14,6 @@ check.py
 description.md
 log.md
 logfile.log
+error.log
 history.ini
 tmatic.db
