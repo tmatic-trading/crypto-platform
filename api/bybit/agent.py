@@ -6,8 +6,8 @@ from typing import Union
 import services as service
 from api.bybit.erruni import Unify
 from api.errors import Error
-from display.messages import ErrorMessage
 from common.variables import Variables as var
+from display.messages import ErrorMessage
 
 from .ws import Bybit
 
@@ -160,8 +160,8 @@ class Agent(Bybit):
         self, symbol: tuple, start_time: datetime, timeframe: str
     ) -> Union[list, str]:
         """
-        Gets timeframe data. Available time intervals: 1, 3, 5, 15, 30, 60, 
-        120, 240, 360, 720, D, M, W.        
+        Gets timeframe data. Available time intervals: 1, 3, 5, 15, 30, 60,
+        120, 240, 360, 720, D, M, W.
 
         Returns
         -------
@@ -201,7 +201,7 @@ class Agent(Bybit):
             res.sort(key=lambda x: x["timestamp"])
 
             return res
-        
+
         else:
             message = ErrorMessage.REQUEST_EMPTY.format(PATH="get_kline")
             self.logger.error(message)

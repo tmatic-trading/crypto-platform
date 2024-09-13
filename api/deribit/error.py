@@ -160,7 +160,7 @@ class ErrorStatus(Enum):
         10048: "not_on_this_server",
         10049: "cancel_on_disconnect_failed",
         11056: "unauthenticated_public_requests_temporarily_disabled",
-        # 13004: "invalid_credentials",
+        13004: "invalid_credentials",
         13005: "pwd_match_error",
         13006: "security_error",
         13007: "user_not_found",

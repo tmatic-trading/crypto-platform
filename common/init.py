@@ -12,11 +12,10 @@ from api.init import Variables
 from common.data import Bots
 from common.variables import Variables as var
 from display.functions import info_display
+from display.messages import ErrorMessage
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function
-
-from display.messages import ErrorMessage
 
 var.working_directory = os.path.abspath(os.getcwd())
 

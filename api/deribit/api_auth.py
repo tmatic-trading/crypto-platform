@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import random
+import string
 import time
 
 from requests.auth import AuthBase
@@ -14,7 +15,9 @@ class API_auth(AuthBase):
         Called when forming a request - generates api key headers.
         """
         tstamp = str(int(time.time()) * 1000)
-        nonce = str(random.randbytes(15))
+        nonce = "".join(
+            random.choice(string.ascii_lowercase + string.digits) for _ in range(8)
+        )
         signature = API_auth.generate_signature(
             tstamp=tstamp,
             secret=api_secret,

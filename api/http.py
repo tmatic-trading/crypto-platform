@@ -63,7 +63,7 @@ class Send(Variables):
         Returns
         -------
         dict | None
-            Usually requested data in dictionary format. On failure - error 
+            Usually requested data in dictionary format. On failure - error
             type.
         """
         url = self.http_url + path

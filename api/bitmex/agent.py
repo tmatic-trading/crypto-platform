@@ -246,7 +246,9 @@ class Agent(Bitmex):
                 last_time = ""
                 for values in res:
                     values["symbol"] = symbol
-                    values["timestamp"] = service.time_converter(time=values["timestamp"])
+                    values["timestamp"] = service.time_converter(
+                        time=values["timestamp"]
+                    )
                     if "open" and "high" and "low" and "close" in values:
                         filtered.append(values)
                     else:
@@ -294,7 +296,7 @@ class Agent(Bitmex):
                 )
                 return service.unexpected_error(self)
         else:
-            return res # error
+            return res  # error
 
     def trading_history(self, histCount: int, start_time: datetime) -> Union[list, str]:
         """
@@ -320,9 +322,7 @@ class Agent(Bitmex):
                 row["ticker"] = row["symbol"]
                 if row["symbol"] not in self.ticker:
                     self.logger.info(
-                        self.name
-                        + " - Requesting instrument - ticker="
-                        + row["symbol"]
+                        self.name + " - Requesting instrument - ticker=" + row["symbol"]
                     )
                     Agent.get_instrument(
                         self,
@@ -369,7 +369,7 @@ class Agent(Bitmex):
                     )
             return spot_not_included
         else:
-            res # error type
+            res  # error type
 
     def open_orders(self) -> str:
         path = Listing.OPEN_ORDERS

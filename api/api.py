@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Union
 
+import services as service
 from api.bitmex.agent import Agent as BitmexAgent
 from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
@@ -12,7 +13,6 @@ from api.deribit.agent import Agent as DeribitAgent
 from api.deribit.ws import Deribit
 from api.fake import Fake
 from common.variables import Variables as var
-import services as service
 
 from .variables import Variables
 
@@ -259,7 +259,9 @@ class WS(Variables):
 
         return data
 
-    def trading_history(self: Markets, histCount: int, start_time: datetime) -> Union[list, str]:
+    def trading_history(
+        self: Markets, histCount: int, start_time: datetime
+    ) -> Union[list, str]:
         """
         Gets trades, funding and delivery from the exchange for the period starting
         from start_time.
@@ -272,7 +274,7 @@ class WS(Variables):
             The number of rows of data to retrieve.
         start_time: datetime
             Initial time to download data.
-            
+
         Returns
         -------
         list
@@ -314,14 +316,14 @@ class WS(Variables):
         price: float
             Order price.
         clOrdID: str
-            Unique order identifier, including the bot name.   
+            Unique order identifier, including the bot name.
         symbol: str
             Instrument symbol. Example ("BTCUSDT", "Bybit").
 
         Returns
         -------
         dict | str
-            If successful, a response from the exchange server is returned, 
+            If successful, a response from the exchange server is returned,
             otherwise - the error type (str).
         """
         var.logger.info(
@@ -356,14 +358,14 @@ class WS(Variables):
         price: float
             Order price.
         clOrdID: str
-            Unique order identifier, including the bot name.   
+            Unique order identifier, including the bot name.
         symbol: str
             Instrument symbol. Example ("BTCUSDT", "Bybit").
 
         Returns
         -------
         dict | str
-            If successful, a response from the exchange server is returned, 
+            If successful, a response from the exchange server is returned,
             otherwise - the error type (str).
         """
         var.logger.info(
@@ -397,7 +399,7 @@ class WS(Variables):
         Returns
         -------
         dict | str
-            If successful, a response from the exchange server is returned, 
+            If successful, a response from the exchange server is returned,
             otherwise - the error type (str).
         """
         var.logger.info(
@@ -408,7 +410,7 @@ class WS(Variables):
             + ", orderID="
             + order["orderID"]
         )
-        
+
         return Agents[self.name].value.remove_order(self, order=order)
 
     def get_wallet_balance(self: Markets) -> str:

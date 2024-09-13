@@ -151,7 +151,7 @@ class Agent(Deribit):
         path = self.api_version + Listing.OPEN_ORDERS
         res = Send.request(self, path=path, verb="POST", postData=msg)
         if isinstance(res, str):
-            return res # error
+            return res  # error
         if isinstance(res, dict):
             if "result" in res:
                 if isinstance(res["result"], list):
@@ -178,12 +178,12 @@ class Agent(Deribit):
                     self.setup_orders = res["result"]
                     return ""
                 else:
-                    error = "The list was expected when the orders were loaded, but was not received."                   
+                    error = "The list was expected when the orders were loaded, but was not received."
             else:
                 error = "When loading open orders 'result' was not received."
         else:
             error = "Invalid data was received when loading open orders. " + str(res)
-        self.logger.error(error)        
+        self.logger.error(error)
 
         return service.unexpected_error(self)
 
@@ -674,15 +674,16 @@ class Agent(Deribit):
                 )
             return klines
         elif isinstance(res, str):
-            return res # error
+            return res  # error
         else:
             self.logger.error(
                 "A dict was expected when loading klines, but was not received."
             )
             return service.unexpected_error(self)
-        
 
-    def place_limit(self, quantity: float, price: float, clOrdID: str, symbol: tuple) -> Union[dict, str]:
+    def place_limit(
+        self, quantity: float, price: float, clOrdID: str, symbol: tuple
+    ) -> Union[dict, str]:
         """
         Places a limit order.
 
@@ -711,7 +712,9 @@ class Agent(Deribit):
         }
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
-    def replace_limit(self, quantity: float, price: float, orderID: str, symbol: tuple) -> Union[dict, str]:
+    def replace_limit(
+        self, quantity: float, price: float, orderID: str, symbol: tuple
+    ) -> Union[dict, str]:
         path = Listing.REPLACE_LIMIT
         id = f"{path}_{orderID}"
         text = (

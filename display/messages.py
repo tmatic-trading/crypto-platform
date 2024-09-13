@@ -63,9 +63,7 @@ class ErrorMessage(str, Enum):
     INSTRUMENT_NOT_FOUND = (
         "Request {PATH} received empty. ({TICKER} {CATEGORY}) instrument not found."
     )
-    REQUEST_EMPTY =(
-        "Request {PATH} received empty."
-    )
+    REQUEST_EMPTY = "Request {PATH} received empty."
 
     def __str__(self) -> str:
         return self.value

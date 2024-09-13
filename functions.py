@@ -2112,9 +2112,7 @@ def download_kline_data(
                 return res
 
         else:
-            message = (
-                "When downloading trade/bucketed data, list was recieved. Reboot."
-            )
+            message = "When downloading trade/bucketed data, list was recieved. Reboot."
             var.logger.error(message)
             return service.unexpected_error(self)
 

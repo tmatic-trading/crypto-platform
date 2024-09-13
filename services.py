@@ -426,13 +426,11 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
 
 def unexpected_error(ws) -> str:
     """
-    if the http request produces an error, or if it is correct but the data 
-    received does not match the expected data, and this error is assumed to 
+    if the http request produces an error, or if it is correct but the data
+    received does not match the expected data, and this error is assumed to
     be FATAL.
     """
     if not ws.logNumFatal:
         ws.logNumFatal = "FATAL"
-    
+
     return ws.logNumFatal
-
-
