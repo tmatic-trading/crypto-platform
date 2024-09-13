@@ -1683,7 +1683,7 @@ def handler_orderbook(event) -> None:
         warning_window("Tmatic does not support spot trading on Bitmex.")
         return
     if not ws.api_is_active:
-        if ws.name is not "Fake":
+        if ws.name != "Fake":
             info_display(
                 market=ws.name,
                 message=ws.name + ": You cannot add new orders during a reboot.\n",
