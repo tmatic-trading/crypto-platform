@@ -222,7 +222,7 @@ def try_response(response, exception):
         try:
             error += f"___ exception.args {exception.args}\n#\n"
         except:
-            error += f"no exception.args\n#\n"        
+            error += f"no exception.args\n#\n"
         error += f"___response {response}\n#\n"
         try:
             error += f"___ response.__dict__ {response.__dict__}\n#\n"

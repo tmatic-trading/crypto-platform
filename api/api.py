@@ -284,9 +284,14 @@ class WS(Variables):
             self.name + " - Requesting trading history - start_time=" + str(start_time)
         )
 
-        return Agents[self.name].value.trading_history(
+        res = Agents[self.name].value.trading_history(
             self, histCount=histCount, start_time=start_time
         )
+        var.logger.info(
+            self.name + " - Trading history, received: " + str(len(res)) + " records"
+        )
+
+        return res
 
     def open_orders(self: Markets) -> str:
         """

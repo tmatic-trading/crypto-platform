@@ -240,6 +240,12 @@ class Agent(Bybit):
             nonlocal trade_history
             cursor = "no"
             while cursor:
+                self.logger.info(
+                    "Requesting trading history - category - "
+                    + category
+                    + " - startTime - "
+                    + str(service.time_converter(startTime / 1000))
+                )
                 try:
                     data = self.session.get_executions(
                         category=category,
@@ -310,7 +316,7 @@ class Agent(Bybit):
                     self.logger.error(
                         "The list was expected when the trading history were loaded, but for the category "
                         + category
-                        + " it was not received. Reboot."
+                        + " it was not received."
                     )
                     return service.unexpected_error(self)
 
@@ -329,6 +335,13 @@ class Agent(Bybit):
                 if error:
                     self.logNumFatal = error
                     return error
+            self.logger.info(
+                "Trading history, startTime="
+                + str(start_time)
+                + ", received: "
+                + str(len(trade_history))
+                + " records"
+            )
             if len(trade_history) > histCount:
                 break
             startTime += 604800000  # +7 days

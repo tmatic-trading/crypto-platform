@@ -60,7 +60,7 @@ def setup(reload=False):
         var.market_list = ["Fake"]
         var.current_market = "Fake"
         var.symbol = "Fake"
-    else:        
+    else:
         var.current_market = var.market_list[0]
         var.symbol = Markets[var.current_market].symbol_list[0]
     functions.init_tables()
