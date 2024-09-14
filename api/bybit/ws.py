@@ -177,30 +177,29 @@ class Bybit(Variables):
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:
             for coin in value["coin"]:
-                if coin["coin"] in self.currencies:
-                    currency = (coin["coin"] + "." + value["accountType"], self.name)
-                    account = self.Account[currency]
-                    total = 0
-                    check = 0
-                    if "locked" in coin:
-                        if coin["locked"] != "":
-                            total += float(coin["locked"])
-                            check += 1
-                    if "totalOrderIM" in coin:
-                        total += float(coin["totalOrderIM"])
+                currency = (coin["coin"] + "." + value["accountType"], self.name)
+                account = self.Account[currency]
+                total = 0
+                check = 0
+                if "locked" in coin:
+                    if coin["locked"] != "":
+                        total += float(coin["locked"])
                         check += 1
-                    if check:
-                        account.orderMargin = total
-                    if "totalPositionIM" in coin:
-                        account.positionMagrin = float(coin["totalPositionIM"])
-                    if "availableToWithdraw" in coin:
-                        account.availableMargin = float(coin["availableToWithdraw"])
-                    if "equity" in coin:
-                        account.marginBalance = float(coin["equity"])
-                    if "walletBalance" in coin:
-                        account.walletBalance = float(coin["walletBalance"])
-                    if "unrealisedPnl" in coin:
-                        account.unrealisedPnl = float(coin["unrealisedPnl"])
+                if "totalOrderIM" in coin:
+                    total += float(coin["totalOrderIM"])
+                    check += 1
+                if check:
+                    account.orderMargin = total
+                if "totalPositionIM" in coin:
+                    account.positionMagrin = float(coin["totalPositionIM"])
+                if "availableToWithdraw" in coin:
+                    account.availableMargin = float(coin["availableToWithdraw"])
+                if "equity" in coin:
+                    account.marginBalance = float(coin["equity"])
+                if "walletBalance" in coin:
+                    account.walletBalance = float(coin["walletBalance"])
+                if "unrealisedPnl" in coin:
+                    account.unrealisedPnl = float(coin["unrealisedPnl"])
 
     def __update_position(self, values: dict) -> None:
         for value in values["data"]:

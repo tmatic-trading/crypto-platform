@@ -364,7 +364,6 @@ class Agent(Bybit):
         def request_open_orders(parameters: dict):
             nonlocal myOrders
             cursor = "no"
-            parameters["cursor"] = cursor
             success = parameters["success"]
             num = parameters["num"]
             parameters.pop("success")
@@ -392,11 +391,7 @@ class Agent(Bybit):
                     order["account"] = self.user_id
                     order["orderQty"] = float(order["qty"])
                     order["price"] = float(order["price"])
-                    if "settlCurrency" in parameters:
-                        order["settlCurrency"] = (
-                            parameters["settlCurrency"],
-                            self.name,
-                        )
+                    order["settlCurrency"] = self.Instrument[order["symbol"]].settlCurrency
                     order["ordType"] = order["orderType"]
                     order["ordStatus"] = order["orderStatus"]
                     order["leavesQty"] = float(order["leavesQty"])
@@ -414,7 +409,20 @@ class Agent(Bybit):
 
         threads, success = [], []
         for category in self.categories:
-            if category == "spot":
+            if category == "linear":
+                for settleCoin in self.settlCurrency_list[category]:
+                    success.append("FATAL")
+                    parameters = base.copy()
+                    parameters["category"] = category
+                    parameters["settleCoin"] = settleCoin
+                    t = threading.Thread(
+                        target=lambda par=parameters: get_in_thread(
+                            **par, success=success, num=len(success) - 1
+                        )
+                    )
+                    threads.append(t)
+                    t.start()
+            else:
                 success.append("FATAL")
                 parameters = base.copy()
                 parameters["category"] = category
@@ -425,20 +433,6 @@ class Agent(Bybit):
                 )
                 threads.append(t)
                 t.start()
-            else:
-                for settleCoin in self.currencies:
-                    if settleCoin in self.settlCurrency_list[category]:
-                        success.append("FATAL")
-                        parameters = base.copy()
-                        parameters["category"] = category
-                        parameters["settleCoin"] = settleCoin
-                        t = threading.Thread(
-                            target=lambda par=parameters: get_in_thread(
-                                **par, success=success, num=len(success) - 1
-                            )
-                        )
-                        threads.append(t)
-                        t.start()
         [thread.join() for thread in threads]
         for error in success:
             if error:
@@ -580,12 +574,10 @@ class Agent(Bybit):
             cursor = "no"
             while cursor:
                 try:
-                    res = self.session.get_positions(
-                        category=category,
-                        settleCoin=settlCurrency,
-                        limit=200,
-                        cursor=cursor,
-                    )
+                    parameters = {"category": category, "limit": 200, "cursor": cursor}
+                    if category == "linear":
+                        parameters["settleCoin"] = settlCurrency
+                    res = self.session.get_positions(**parameters)
                 except Exception as exception:
                     error = Unify.error_handler(
                         self, exception=exception, verb="GET", path="get_positions"
@@ -610,8 +602,8 @@ class Agent(Bybit):
 
         threads, success = [], []
         for category in self.categories:
-            for settlCurrency in self.settlCurrency_list[category]:
-                if settlCurrency in self.currencies:
+            if category == "linear":
+                for settlCurrency in self.settlCurrency_list[category]:
                     success.append("FATAL")
                     t = threading.Thread(
                         target=get_in_thread,
@@ -619,6 +611,14 @@ class Agent(Bybit):
                     )
                     threads.append(t)
                     t.start()
+            elif category != "spot":
+                success.append("FATAL")
+                t = threading.Thread(
+                    target=get_in_thread,
+                    args=(category, None, success, len(success) - 1),
+                )
+                threads.append(t)
+                t.start()
         [thread.join() for thread in threads]
         for error in success:
             if error:

@@ -42,4 +42,3 @@ class Setup(Variables):
                 exception = HostNameIsInvalid(uri=self.http_url)
                 Error.handler(self, exception=exception, verb="Host name check")
                 service.cancel_market(market=self.name)
-            # self.currencies = var.env[name]["CURRENCIES"]

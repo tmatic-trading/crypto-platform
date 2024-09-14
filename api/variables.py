@@ -17,7 +17,6 @@ class Variables:
     http_url = ""
     symbol_list = list()
     category_list = list()
-    currencies = list()
     positions = OrderedDict()
     logger = logging
     logNumFatal = ""
