@@ -336,11 +336,9 @@ class Agent(Bybit):
                     self.logNumFatal = error
                     return error
             self.logger.info(
-                "Trading history, startTime="
-                + str(start_time)
-                + ", received: "
+                "Trading history data, received: "
                 + str(len(trade_history))
-                + " records"
+                + " records."
             )
             if len(trade_history) > histCount:
                 break

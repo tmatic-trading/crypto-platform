@@ -367,6 +367,12 @@ class Agent(Deribit):
                     + " - "
                     + str(service.time_converter(end / 1000))
                 )
+                self.logger.info(
+                    "Requesting trading history - currency - "
+                    + currency
+                    + " - startTime - "
+                    + str(service.time_converter(start / 1000))
+                )
                 res = Agent.ws_request(
                     self, path=path, id=id, params=params, text=text, currency=currency
                 )
@@ -596,6 +602,12 @@ class Agent(Deribit):
                 if el not in tmp:
                     tmp.append(el)
             trade_history = tmp
+            message = (
+                "Trading history data, received: "
+                + str(len(trade_history))
+                + " records."
+            )
+            self.logger.info(message)
             if len(trade_history) > histCount:
                 break
             startTime = endTime
