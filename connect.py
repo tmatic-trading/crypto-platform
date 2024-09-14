@@ -221,7 +221,7 @@ def refresh() -> None:
                 message=info["message"],
                 warning=info["warning"],
                 tm=info["time"],
-            )    
+            )
     if not var.reloading:
         utc = datetime.now(tz=timezone.utc)
         if disp.f3:
@@ -271,16 +271,16 @@ def refresh() -> None:
             ws = Markets[name]
             if ws.api_is_active:
                 if not ws.logNumFatal:
-                    #if ws.api_is_active:
-                        if utc > ws.message_time + timedelta(seconds=10):
-                            if not WS.ping_pong(ws):
-                                info_display(
-                                    market=ws.name,
-                                    message="The websocket does not respond within 10 sec. Reboot",
-                                    warning="error",
-                                )
-                                ws.logNumFatal = "FATAL"  # reboot
-                            ws.message_time = utc
+                    # if ws.api_is_active:
+                    if utc > ws.message_time + timedelta(seconds=10):
+                        if not WS.ping_pong(ws):
+                            info_display(
+                                market=ws.name,
+                                message="The websocket does not respond within 10 sec. Reboot",
+                                warning="error",
+                            )
+                            ws.logNumFatal = "FATAL"  # reboot
+                        ws.message_time = utc
                 elif ws.logNumFatal == "BLOCK":
                     if ws.message2000 == "":
                         ws.message2000 = "Fatal error. Trading stopped"
@@ -289,9 +289,9 @@ def refresh() -> None:
                         )
                     sleep(1)
                 elif ws.logNumFatal == "FATAL":  # reboot
-                    #if ws.api_is_active:
-                        t = threading.Thread(target=reload_market, args=(ws,))
-                        t.start()
+                    # if ws.api_is_active:
+                    t = threading.Thread(target=reload_market, args=(ws,))
+                    t.start()
         var.lock_market_switch.acquire(True)
         ws = Markets[var.current_market]
         if ws.api_is_active:
@@ -306,6 +306,7 @@ def clear_params():
 def bot_threads() -> None:
     for bot_name in Bots.keys():
         functions.activate_bot_thread(bot_name=bot_name)
+
 
 def terminal_reload_thread() -> None:
     var.reloading = True
@@ -326,6 +327,7 @@ def terminal_reload(event) -> None:
         target=terminal_reload_thread,
     )
     t.start()
+
 
 def on_closing(root, refresh_var):
     root.after_cancel(refresh_var)

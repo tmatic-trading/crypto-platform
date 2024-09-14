@@ -160,7 +160,7 @@ class WS(Variables):
             On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
-        var.logger.info(self.name + " - Requesting all active instruments.")
+        WS._put_message(self, message="Requesting all active instruments.")
 
         return Agents[self.name].value.get_active_instruments(self)
 
@@ -175,7 +175,7 @@ class WS(Variables):
             On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
-        var.logger.info(self.name + " - Requesting user information.")
+        WS._put_message(self, message="Requesting user information.")
 
         return Agents[self.name].value.get_user(self)
 
@@ -200,13 +200,8 @@ class WS(Variables):
             On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
-        var.logger.info(
-            self.name
-            + " - Requesting instrument - ticker="
-            + ticker
-            + ", category="
-            + category
-        )
+        message = "Requesting instrument - ticker=" + ticker + ", category=" + category
+        WS._put_message(self, message=message)
 
         return Agents[self.name].value.get_instrument(
             self, ticker=ticker, category=category
@@ -245,17 +240,16 @@ class WS(Variables):
         parameters = (
             f"symbol={symbol[0]}" + f", start_time={time}" + f", timeframe={timeframe}"
         )
-        var.logger.info(self.name + " - Requesting kline data - " + parameters)
+        message = "Requesting kline data - " + parameters
+        WS._put_message(self, message=message)
         data = Agents[self.name].value.trade_bucketed(
             self, symbol=symbol, start_time=time, timeframe=timeframe
         )
         if data:
-            var.logger.info(
-                self.name
-                + " - Klines - "
-                + parameters
-                + f", received {len(data)} records."
+            message = (
+                "Klines - " + parameters + ", received " + str(len(data)) + " records."
             )
+            WS._put_message(self, message=message)
 
         return data
 
@@ -281,7 +275,7 @@ class WS(Variables):
             On success, list is returned, otherwise error type.
         """
         message = "Request for trading history since " + str(start_time)
-        WS._put_message(self, message=message)     
+        WS._put_message(self, message=message)
         res = Agents[self.name].value.trading_history(
             self, histCount=histCount, start_time=start_time
         )
@@ -440,7 +434,7 @@ class WS(Variables):
             On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
-        var.logger.info(self.name + " - Requesting positions.")
+        WS._put_message(self, message="Requesting positions.")
 
         return Agents[self.name].value.get_position_info(self)
 
@@ -450,7 +444,7 @@ class WS(Variables):
         """
 
         return Markets[self.name].ping_pong()
-    
+
     def _put_message(self: Markets, message: str) -> None:
         """
         Places an information message into the queue and the logger.
@@ -464,4 +458,3 @@ class WS(Variables):
             }
         )
         var.logger.info(self.name + " - " + message)
-

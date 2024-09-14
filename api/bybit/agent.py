@@ -389,7 +389,9 @@ class Agent(Bybit):
                     order["account"] = self.user_id
                     order["orderQty"] = float(order["qty"])
                     order["price"] = float(order["price"])
-                    order["settlCurrency"] = self.Instrument[order["symbol"]].settlCurrency
+                    order["settlCurrency"] = self.Instrument[
+                        order["symbol"]
+                    ].settlCurrency
                     order["ordType"] = order["orderType"]
                     order["ordStatus"] = order["orderStatus"]
                     order["leavesQty"] = float(order["leavesQty"])
