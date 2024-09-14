@@ -205,14 +205,6 @@ def reload_market(ws: Markets):
 
 
 def refresh() -> None:
-    if disp.f3:
-        terminal_reload("None")
-    while not var.queue_reload.empty():
-        ws = var.queue_reload.get()
-        finish_setup(ws=ws)
-        merge_orders()
-        Function.market_status(ws, status="ONLINE", message="", error=False)
-        functions.clear_tables()
     while not var.queue_info.empty():
         info = var.queue_info.get()
         if not "bot_log" in info:
@@ -229,72 +221,82 @@ def refresh() -> None:
                 message=info["message"],
                 warning=info["warning"],
                 tm=info["time"],
-            )
-    while not var.queue_order.empty():
-        """
-        The queue thread-safely displays current orders that can be queued:
-        1. From the websockets of the markets.
-        2. When retrieving current orders from the endpoints when loading or
-           reloading the market.
-        3. When processing the trading history data.
-
-        Possible queue jobs:
-        1.     "action": "put"
-           Display a row with the new order in the table. If an order with the
-           same clOrdID already exists, then first remove it from the table
-           and print the order on the first line.
-        2.     "action": "delete"
-           Delete order by clOrdID.
-        3.     "action": "clear"
-           Before reloading the market, delete all orders of a particular
-           market from the table, because the reboot process will update
-           information about current orders, so possibly canceled orders
-           during the reloading will be removed.
-        """
-        job = var.queue_order.get()
-        if job["action"] == "delete":
-            clOrdID = job["clOrdID"]
-            if clOrdID in TreeTable.orders.children:
-                TreeTable.orders.delete(iid=clOrdID)
-        elif job["action"] == "put":
-            order = job["order"]
-            clOrdID = order["clOrdID"]
-            ws = Markets[order["market"]]
-            if clOrdID in var.orders[order["emi"]]:
-                Function.orders_display(ws, val=order)
-        elif job["action"] == "clear":
-            TreeTable.orders.clear_all(market=job["market"])
-
-    for name in var.market_list:
-        ws = Markets[name]
+            )    
+    if not var.reloading:
         utc = datetime.now(tz=timezone.utc)
-        if not ws.logNumFatal:
+        if disp.f3:
+            terminal_reload("None")
+        while not var.queue_reload.empty():
+            ws = var.queue_reload.get()
+            finish_setup(ws=ws)
+            merge_orders()
+            Function.market_status(ws, status="ONLINE", message="", error=False)
+            functions.clear_tables()
+        while not var.queue_order.empty():
+            """
+            The queue thread-safely displays current orders that can be queued:
+            1. From the websockets of the markets.
+            2. When retrieving current orders from the endpoints when loading or
+            reloading the market.
+            3. When processing the trading history data.
+
+            Possible queue jobs:
+            1.     "action": "put"
+            Display a row with the new order in the table. If an order with the
+            same clOrdID already exists, then first remove it from the table
+            and print the order on the first line.
+            2.     "action": "delete"
+            Delete order by clOrdID.
+            3.     "action": "clear"
+            Before reloading the market, delete all orders of a particular
+            market from the table, because the reboot process will update
+            information about current orders, so possibly canceled orders
+            during the reloading will be removed.
+            """
+            job = var.queue_order.get()
+            if job["action"] == "delete":
+                clOrdID = job["clOrdID"]
+                if clOrdID in TreeTable.orders.children:
+                    TreeTable.orders.delete(iid=clOrdID)
+            elif job["action"] == "put":
+                order = job["order"]
+                clOrdID = order["clOrdID"]
+                ws = Markets[order["market"]]
+                if clOrdID in var.orders[order["emi"]]:
+                    Function.orders_display(ws, val=order)
+            elif job["action"] == "clear":
+                TreeTable.orders.clear_all(market=job["market"])
+
+        for name in var.market_list:
+            ws = Markets[name]
             if ws.api_is_active:
-                if utc > ws.message_time + timedelta(seconds=10):
-                    if not WS.ping_pong(ws):
-                        info_display(
-                            market=ws.name,
-                            message="The websocket does not respond within 10 sec. Reboot",
-                            warning="error",
+                if not ws.logNumFatal:
+                    #if ws.api_is_active:
+                        if utc > ws.message_time + timedelta(seconds=10):
+                            if not WS.ping_pong(ws):
+                                info_display(
+                                    market=ws.name,
+                                    message="The websocket does not respond within 10 sec. Reboot",
+                                    warning="error",
+                                )
+                                ws.logNumFatal = "FATAL"  # reboot
+                            ws.message_time = utc
+                elif ws.logNumFatal == "BLOCK":
+                    if ws.message2000 == "":
+                        ws.message2000 = "Fatal error. Trading stopped"
+                        Function.market_status(
+                            ws, status="Error", message=ws.message2000, error=True
                         )
-                        ws.logNumFatal = "FATAL"  # reboot
-                    ws.message_time = utc
-        elif ws.logNumFatal == "BLOCK":
-            if ws.message2000 == "":
-                ws.message2000 = "Fatal error. Trading stopped"
-                Function.market_status(
-                    ws, status="Error", message=ws.message2000, error=True
-                )
-            sleep(1)
-        elif ws.logNumFatal == "FATAL":  # reboot
-            if ws.api_is_active:
-                t = threading.Thread(target=reload_market, args=(ws,))
-                t.start()
-    var.lock_market_switch.acquire(True)
-    ws = Markets[var.current_market]
-    if ws.api_is_active:
-        Function.refresh_on_screen(Markets[var.current_market], utc=utc)
-    var.lock_market_switch.release()
+                    sleep(1)
+                elif ws.logNumFatal == "FATAL":  # reboot
+                    #if ws.api_is_active:
+                        t = threading.Thread(target=reload_market, args=(ws,))
+                        t.start()
+        var.lock_market_switch.acquire(True)
+        ws = Markets[var.current_market]
+        if ws.api_is_active:
+            Function.refresh_on_screen(ws, utc=utc)
+        var.lock_market_switch.release()
 
 
 def clear_params():
@@ -305,8 +307,8 @@ def bot_threads() -> None:
     for bot_name in Bots.keys():
         functions.activate_bot_thread(bot_name=bot_name)
 
-
-def terminal_reload(event) -> None:
+def terminal_reload_thread() -> None:
+    var.reloading = True
     disp.menu_robots.pack_forget()
     disp.settings.pack_forget()
     disp.pw_rest1.pack(fill="both", expand="yes")
@@ -316,7 +318,14 @@ def terminal_reload(event) -> None:
     setup()
     functions.clear_tables()
     disp.f3 = False
+    var.reloading = False
 
+
+def terminal_reload(event) -> None:
+    t = threading.Thread(
+        target=terminal_reload_thread,
+    )
+    t.start()
 
 def on_closing(root, refresh_var):
     root.after_cancel(refresh_var)

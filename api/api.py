@@ -280,16 +280,13 @@ class WS(Variables):
         list
             On success, list is returned, otherwise error type.
         """
-        var.logger.info(
-            self.name + " - Requesting trading history - start_time=" + str(start_time)
-        )
-
+        message = "Request for trading history since " + str(start_time)
+        WS._put_message(self, message=message)     
         res = Agents[self.name].value.trading_history(
             self, histCount=histCount, start_time=start_time
         )
-        var.logger.info(
-            self.name + " - Trading history, received: " + str(len(res)) + " records"
-        )
+        message = "From the trading history received: " + str(len(res)) + " records"
+        WS._put_message(self, message=message)
 
         return res
 
@@ -453,3 +450,18 @@ class WS(Variables):
         """
 
         return Markets[self.name].ping_pong()
+    
+    def _put_message(self: Markets, message: str) -> None:
+        """
+        Places an information message into the queue and the logger.
+        """
+        var.queue_info.put(
+            {
+                "market": self.name,
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": None,
+            }
+        )
+        var.logger.info(self.name + " - " + message)
+

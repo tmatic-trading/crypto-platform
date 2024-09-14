@@ -241,3 +241,4 @@ class Variables:
         "Bybit": [("BTCUSDT", "Bybit")],
         "Deribit": [("BTC-PERPETUAL", "Deribit")],
     }
+    reloading = False
