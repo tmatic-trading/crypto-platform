@@ -213,7 +213,29 @@ Deribit_SYMBOLS='BTC-PERPETUAL'
 
 ## Troubleshooting
 
-If the program does not start, check the logfile.log file for errors. For example, your computer's system time may be out of sync. If your OS is Windows you should check the “Date and Time” settings: in the “Synchronize clocks” section, you must click the “Sync now” button.
+If the program does not start or a warning or error appears, check the logfile.log file or the information widget at the top for errors.
+
+<table>
+    <thead>
+        <tr>
+            <th>Error or warning</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td width="30%">This request has expired</td>
+            <td rowspan=2 width="70%"> <b>1.</b> Bad internet connection. <b>2.</b> Your computer's system time may be out of sync. If your OS is Windows you should check the “Date and Time” settings: in the “Synchronize clocks” section, you must click the “Sync now” button.</td>
+        </tr>
+        <tr>
+            <td>Invalid request, please check your server timestamp</td>        
+        </tr>
+        <tr>
+            <td>Empty trading history</td>
+            <td>This warning may appear when a trade history was requested, the answer was correct, but it was an empty list. The warning may appear: <b>1.</b> You have a new account and there is no previous trading activity. <b>2.</b> Normally after loading the trading history, the history.ini file contains the time of the last transaction. When you restart Tmatic, you receive this transaction from the exchange again, and the response is not empty. If you manually changed the entry in histori.ini to a time later than the time of the last transaction, this warning appears.</td>
+        </tr>
+    </tbody>
+</table>
 
 ## Trade History
 

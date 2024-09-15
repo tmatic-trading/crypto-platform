@@ -103,9 +103,7 @@ class Error(Variables):
                 status = "IGNORE"
                 error_message = (
                     prefix
-                    + "Unexpected "
-                    + error_name
-                    + " "
+                    + "Unexpected error "
                     + response["error"]["message"]
                 )
         elif error_name in [
@@ -116,8 +114,7 @@ class Error(Variables):
             status = "CANCEL"
             error_message = (
                 prefix
-                + error_name
-                + ". Probably the URL is incorrect. "
+                + "Probably the URL is incorrect. "
                 + self.name
                 + " loading cancelled."
             )
