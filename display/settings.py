@@ -19,12 +19,12 @@ class SettingsApp:
         self.root_frame.config(bg=disp.bg_color)
         self.root_frame.grid_columnconfigure(0, weight=1)
         self.root_frame.grid_rowconfigure(0, weight=1)
-        self.bg_select_color = "#9cd3f4" # disp.bg_select_color
+        self.bg_select_color = disp.bg_select_color
         self.bg_entry = disp.light_gray_color
-        self.bg_active = "#9cd3f4" #disp.bg_select_color
-        self.bg_changed = "#36adf5" #"#f3a6a6"# "khaki3"  # indianred1,lightcoral,khaki3,#FF9912
+        self.bg_active = disp.bg_select_color
+        self.fg_changed = disp.warning_color
 
-        self.title_color = tk.Label(root, text=" TRADING: ")["background"]
+        self.title_color = disp.title_color
 
         self.common_trace_changed = {}
 
@@ -126,7 +126,7 @@ class SettingsApp:
         self.setting_button = tk.Button(
             self.root_frame,
             bg=self.title_color,
-            activebackground=self.bg_changed,
+            activebackground=self.bg_select_color,
             text="Settings Saved",
             command=lambda: self.save_dotenv("button"),
             anchor="center",
@@ -447,6 +447,11 @@ class SettingsApp:
                         self.entry_common[var].config(style=f"default.{widget_type}")
                     self.set_button_color(self.settings_flag)
             # print(var, self.common_trace_changed[var].get(), self.common_defaults[var], self.common_flag[var], self.settings_flag)
+                    
+    def market_color_update(self, market, color):
+        for frame in self.settings_center:
+            if frame.market == market:
+                frame.check_box.config(fg=color)
 
     def check_market_flag(self, var, market):
         """
@@ -459,8 +464,9 @@ class SettingsApp:
                 self.market_flag[market][var] = 1
                 if var != "CONNECTED":
                     widget_type = self.entry_market[var].winfo_class()
-                    self.entry_market[var].config(style=f"changed.{widget_type}")
-                self.market_color[market] = self.bg_changed
+                    self.entry_market[var].config(style=f"changed.{widget_type}")                    
+                #self.market_color[market] = self.fg_changed
+                self.market_color_update(market=market, color=self.fg_changed)
                 self.set_button_color(self.settings_flag)
         else:
             if self.market_flag[market][var] != 0:
@@ -469,10 +475,12 @@ class SettingsApp:
                 if var != "CONNECTED":
                     widget_type = self.entry_market[var].winfo_class()
                     self.entry_market[var].config(style=f"default.{widget_type}")
-                self.market_color[market] = self.bg_entry
+                #self.market_color[market] = self.bg_entry
+                self.market_color_update(market=market, color=disp.fg_color)
                 for setting in self.market_changed[market]:
                     if self.market_flag[market][setting] != 0:
-                        self.market_color[market] = self.bg_changed
+                        #self.market_color[market] = self.fg_changed
+                        self.market_color_update(market=market, color=self.fg_changed)
                         break
                 self.set_button_color(self.settings_flag)
 
@@ -482,7 +490,7 @@ class SettingsApp:
             self.setting_button.config(state="disabled")
             self.on_tip("SETTINGS")
         else:
-            self.setting_button.configure(bg=self.bg_changed, text="Update")
+            self.setting_button.configure(bg=self.bg_select_color, text="Update")
             self.setting_button.config(state="active")
 
     def save_dotenv(self, status):
@@ -525,8 +533,9 @@ class SettingsApp:
                 self.market_flag[market][setting] = 0
         for frame in self.settings_center:
             if frame != self.selected_frame:
-                frame.config(bg=self.market_color[frame.market])
-                frame.check_box.config(bg=self.market_color[frame.market])
+                #frame.config(bg=self.market_color[frame.market])
+                #frame.check_box.config(bg=self.market_color[frame.market])
+                frame.check_box.config(fg=disp.fg_color)
         self.set_button_color(0)
 
     def create_static_widgets(self):
@@ -544,17 +553,21 @@ class SettingsApp:
             fieldbackground=[
                 ("readonly", self.bg_entry),
                 ("disabled", self.title_color),
-            ],
+            ]
         )
         ttk.Style().map(
             "changed.TCombobox",
             fieldbackground=[
-                ("readonly", self.bg_changed),
+                ("readonly", disp.bg_color),
                 ("disabled", self.title_color),
-            ],
+            ],foreground=[
+                ("readonly", self.fg_changed),
+                ("disabled", self.fg_changed),
+            ]
         )
         ttk.Style().configure("default.TEntry", fieldbackground=self.bg_entry)
-        ttk.Style().configure("changed.TEntry", fieldbackground=self.bg_changed)
+        ttk.Style().configure("changed.TEntry", fieldbackground=disp.bg_color)
+        ttk.Style().configure("changed.TEntry", foreground=self.fg_changed)
 
         # Draw grid for common settings
         self.entry_common = {}
