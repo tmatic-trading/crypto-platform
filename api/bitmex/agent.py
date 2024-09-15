@@ -298,7 +298,7 @@ class Agent(Bitmex):
         else:
             return res  # error
 
-    def trading_history(self, histCount: int, start_time: datetime) -> Union[list, str]:
+    def trading_history(self, histCount: int, start_time: datetime) -> Union[dict, str]:
         """
         Gets trades, funding and delivery from the exchange for the period starting
         from start_time.
@@ -367,7 +367,7 @@ class Agent(Bitmex):
                         + row["execID"]
                         + " was ignored."
                     )
-            return spot_not_included
+            return {"data": spot_not_included, "length": len(res)}
         else:
             res  # error type
 

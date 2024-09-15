@@ -138,25 +138,27 @@ class Init(WS, Variables):
         history = WS.trading_history(
             self, histCount=count_val, start_time=last_history_time
         )
-        if isinstance(history, list):
-            if history:
-                while history:
-                    for row in history:
+        his_data = history["data"]
+        if isinstance(his_data, list):
+            if his_data:
+                while his_data:
+                    for row in his_data:
                         data = service.select_database(  # read_database
                             "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
                             % (row["execID"], self.user_id, self.name),
                         )
                         if not data:
                             Function.transaction(self, row=row, info="History")
-                    last_history_time = history[-1]["transactTime"]
+                    last_history_time = his_data[-1]["transactTime"]
                     if not self.logNumFatal:
                         Init.save_history_file(self, time=last_history_time)
-                    if len(history) < count_val:
+                    if history["length"] < count_val:
                         return "success"
                     history = WS.trading_history(
                         self, histCount=count_val, start_time=last_history_time
                     )
-                    if not isinstance(history, list):
+                    his_data = history["data"]
+                    if not isinstance(his_data, list):
                         return service.unexpected_error(self)
         else:
             return service.unexpected_error(self)

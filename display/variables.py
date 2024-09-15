@@ -286,7 +286,7 @@ class Variables:
     white_color = "#FFFFFF"
     black_color = "#000000"
     gray_color = "#777777"
-    warning_color = "cyan4"
+    warning_color = "#36adf5" #"#7e9cbd"
     light_gray_color = "gray92"
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
     symbol_width = tkinter.font.Font().measure("01234567890.") / 12

@@ -274,7 +274,7 @@ class Agent(Deribit):
 
     def trading_history(
         self, histCount: int, start_time: datetime = None, funding: bool = False
-    ) -> Union[list, str]:
+    ) -> Union[dict, str]:
         """
         Downloading trading and funding history from the endpoints:
             private/get_user_trades_by_currency_and_time
@@ -628,7 +628,7 @@ class Agent(Deribit):
 
         # os.abort()
 
-        return trade_history
+        return {"data": trade_history, "length": len(trade_history)}
 
     def trade_bucketed(
         self, symbol: tuple, start_time: datetime, timeframe: Union[int, str]

@@ -19,10 +19,10 @@ class SettingsApp:
         self.root_frame.config(bg=disp.bg_color)
         self.root_frame.grid_columnconfigure(0, weight=1)
         self.root_frame.grid_rowconfigure(0, weight=1)
-        self.bg_select_color = disp.bg_select_color
+        self.bg_select_color = "#9cd3f4" # disp.bg_select_color
         self.bg_entry = disp.light_gray_color
-        self.bg_active = disp.bg_select_color
-        self.bg_changed = "khaki3"  # indianred1,lightcoral,khaki3,#FF9912
+        self.bg_active = "#9cd3f4" #disp.bg_select_color
+        self.bg_changed = "#36adf5" #"#f3a6a6"# "khaki3"  # indianred1,lightcoral,khaki3,#FF9912
 
         self.title_color = tk.Label(root, text=" TRADING: ")["background"]
 

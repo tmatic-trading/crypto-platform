@@ -215,7 +215,7 @@ class Agent(Bybit):
             )
             return service.unexpected_error(self)
 
-    def trading_history(self, histCount: int, start_time: datetime) -> Union[list, str]:
+    def trading_history(self, histCount: int, start_time: datetime) -> Union[dict, str]:
         """
         Gets trades, funding and delivery from the exchange for the period starting
         from start_time.
@@ -345,7 +345,7 @@ class Agent(Bybit):
             startTime += 604800000  # +7 days
         trade_history.sort(key=lambda x: x["transactTime"])
 
-        return trade_history
+        return {"data": trade_history, "length": len(trade_history)}
 
     def open_orders(self) -> int:
         """

@@ -279,7 +279,7 @@ class WS(Variables):
         res = Agents[self.name].value.trading_history(
             self, histCount=histCount, start_time=start_time
         )
-        message = "From the trading history received: " + str(len(res)) + " records"
+        message = "From the trading history received: " + str(res["length"]) + " records"
         WS._put_message(self, message=message)
 
         return res
