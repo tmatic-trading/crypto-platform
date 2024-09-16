@@ -252,11 +252,26 @@ class Init(WS, Variables):
             var.logger.error("SQL error in account_balances() function")
             self.logNumFatal = "SETUP"
 
+    def clear_orders_by_market(self: Markets):
+        """
+        Clears the var.orders dictionary of entries for a specific market 
+        when the market is restarted.
+        """
+        orders_copy = var.orders.copy()
+        for emi, orders in orders_copy.items():
+            emi_orders_copy = orders.copy()
+            for clOrdID, order in emi_orders_copy.items():
+                if order["market"] == self.name:
+                    del var.orders[emi][clOrdID]
+            if not var.orders[emi]:
+                del var.orders[emi]
+
     def load_orders(self: Markets, myOrders: list) -> None:
         """
         All open orders received from the exchange endpoint as a result of an
         HTTP request are taken into account in the orders array.
         """
+
         myOrders.sort(key=lambda x: x["transactTime"], reverse=True)
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
@@ -284,6 +299,9 @@ class Init(WS, Variables):
                         emi = ".".join(res[1:])
                     else:
                         emi = res[1]
+
+                print("_____________order", clOrdID)
+                print(val)
 
                 category = self.Instrument[val["symbol"]].category
                 service.fill_order(

@@ -125,6 +125,7 @@ def setup_market(ws: Markets, reload=False):
         sleep(3)
     while ws.logNumFatal not in ["", "CANCEL"]:
         ws.logNumFatal = ""
+        common.Init.clear_orders_by_market(ws)
         var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)
         if ws.logNumFatal:
