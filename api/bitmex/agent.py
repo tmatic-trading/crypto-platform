@@ -94,6 +94,15 @@ class Agent(Bitmex):
         The data fields of different exchanges are unified through the
         Instrument class. See detailed description of the fields there.
         """
+        """
+        Check:
+            P_KAMALAX24
+            P_TRUMPX24
+            P_SBFPARDONF25
+            P_POWELLK26
+            P_GENSLERM26
+            P_FTXZ26
+        """
         if "settlCurrency" in instrument:
             try:
                 self.currency_divisor[instrument["settlCurrency"]]

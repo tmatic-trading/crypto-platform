@@ -228,7 +228,7 @@ If the program does not start or a warning or error appears, check the logfile.l
             <td rowspan=2 width="70%"> <b>1.</b> Bad internet connection. <b>2.</b> Your computer's system time may be out of sync. If your OS is Windows you should check the “Date and Time” settings: in the “Synchronize clocks” section, you must click the “Sync now” button.</td>
         </tr>
         <tr>
-            <td>Invalid request, please check your server timestamp</td>        
+            <td>Invalid request, please check your server timestamp</td>
         </tr>
         <tr>
             <td>Empty trading history</td>

@@ -102,9 +102,7 @@ class Error(Variables):
             else:
                 status = "IGNORE"
                 error_message = (
-                    prefix
-                    + "Unexpected error "
-                    + response["error"]["message"]
+                    prefix + "Unexpected error " + response["error"]["message"]
                 )
         elif error_name in [
             "MissingSchema",

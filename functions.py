@@ -62,6 +62,7 @@ class Function(WS, Variables):
             "funding: - funding value, negative if in favor of the trader.
         """
         instrument = self.Instrument[symbol]
+        coef = instrument.valueOfOneContract * instrument.myMultiplier
         if instrument.category in ["inverse", "future reversed"]:
             sumreal = qty / price * fund
             if execFee is not None:
@@ -86,7 +87,11 @@ class Function(WS, Variables):
                 commiss = abs(qty) * price * rate
                 funding = qty * price * rate
 
-        return {"sumreal": sumreal, "commiss": commiss, "funding": funding}
+        return {
+            "sumreal": sumreal * coef,
+            "commiss": commiss * coef,
+            "funding": funding * coef,
+        }
 
     def add_symbol(self: Markets, symbol: str, ticker: str, category: str) -> None:
         if (symbol, self.name) not in self.Instrument.get_keys():
