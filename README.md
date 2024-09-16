@@ -747,7 +747,7 @@ Result:
 
 ### Get orders
 
-Use the ```position()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in descending order.
+Use the ```orders()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in descending order.
 
 ```Python
 """
@@ -869,6 +869,11 @@ clOrdID: str
     Order ID. Order ID. Example: "1348642035.Super"
 price: float
     New price to reset order to.
+
+Returns
+-------
+str | None
+    On success, clOrdID is returned, otherwise an error type.
 """
 ```
 
