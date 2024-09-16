@@ -254,7 +254,7 @@ class Init(WS, Variables):
 
     def clear_orders_by_market(self: Markets):
         """
-        Clears the var.orders dictionary of entries for a specific market 
+        Clears the var.orders dictionary of entries for a specific market
         when the market is restarted.
         """
         orders_copy = var.orders.copy()
@@ -299,10 +299,6 @@ class Init(WS, Variables):
                         emi = ".".join(res[1:])
                     else:
                         emi = res[1]
-
-                print("_____________order", clOrdID)
-                print(val)
-
                 category = self.Instrument[val["symbol"]].category
                 service.fill_order(
                     emi=emi, clOrdID=clOrdID, category=category, value=val

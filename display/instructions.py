@@ -132,46 +132,46 @@
 # ----------
 # bot: Bot
 #     An instance of a bot in the Bot class.
-# 
+#
 # Returns
 # -------
 # float
 #     Bot position limit for the instrument.
 #
 # Example:
-# 
+#
 # import Bitmex, Bot
 # bot = Bot()
-# 
+#
 # limit = Bitmex["XBTUSDT"].limit(bot=bot)
 #
 # 7.5 position()
 #
 # Gets the bot position for the given instrument.
-# 
+#
 # Parameters
 # ----------
 # bot: Bot
 #     An instance of a bot in the Bot class.
-# 
+#
 # Returns
 # -------
 # float
 #     The bot position value for the instrument.
-# 
+#
 # Example:
-# 
+#
 # import Bitmex, Bot
 # bot = Bot()
-# 
+#
 # position = Bitmex["XBTUSDT"].position(bot=bot))
 #
 # 7.6 orders()
-# 
-# Gets the current open orders for a given instrument. If necessary, it 
-# filters the orders by sell or buy side and sort them in descending 
+#
+# Gets the current open orders for a given instrument. If necessary, it
+# filters the orders by sell or buy side and sort them in descending
 # order.
-# 
+#
 # Parameters
 # ----------
 # bot: Bot
@@ -182,15 +182,15 @@
 # descend: bool
 #     If omitted, the data is sorted in ascending order by the value of
 #     ``transactTime``. If True, descending order is returned.
-# 
+#
 # Returns
 # -------
 # OrderedDict
 #     Orders are sorted by ``transactTime`` in the order specified in the
 #     ``descend`` parameter. The OrderedDict key is the clOrdID value.
-# 
+#
 # Example:
-# 
+#
 # import Bitmex, Bot
 # bot = Bot()
 #
@@ -204,7 +204,7 @@
 # <bot>.replace()       moves an open order to a new price using its clOrdID.
 #
 # 8.1. remove()
-# 
+#
 # Parameters:
 # -----------
 # bot: Bot
@@ -212,14 +212,14 @@
 # clOrdID: str
 #    Order ID. Example: "1348642035.Super"
 #
-# Example: This example shows how to place a sell order at the first ask 
+# Example: This example shows how to place a sell order at the first ask
 # price and remove it in 5 seconds.
 #
 # import time
 # import Bitmex, Bot
-# 
+#
 # bot = Bot()
-# 
+#
 # id = Bitmex["XBTUSDT"].sell(bot=bot)
 # time.sleep(5)
 # bot.remove(clOrdID=id)
@@ -234,21 +234,21 @@
 #     Order ID. Order ID. Example: "1348642035.Super"
 # price: float
 #     New price to reset order to.
-# 
+#
 # Returns
 # -------
 # str | None
 #     On success, clOrdID is returned, otherwise an error type.
-# 
-# Example: This example shows how to place a sell order at the first ask 
+#
+# Example: This example shows how to place a sell order at the first ask
 # price and move it to the first ask price + 100 in 5 seconds.
-# 
+#
 # import time
 # import Bitmex, Bot
-# 
+#
 # bot = Bot()
 # instrument = Bitmex["XBTUSDT"]
-# 
+#
 # id = instrument.sell(bot=bot)
 # time.sleep(5)
 # price = instrument.asks[0][0] + 100
