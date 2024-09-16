@@ -40,7 +40,6 @@ class Bybit(Variables):
         else:
             self.orderbook_depth = 50
         self.klines = dict()
-        self.robot_status = dict()
         self.setup_orders = list()
         self.account_disp = ""
         WebSocket._on_message = Bybit._on_message

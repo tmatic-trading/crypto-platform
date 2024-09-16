@@ -25,8 +25,6 @@ class Init(WS, Variables):
 
     def clear_params(self: Markets) -> None:
         self.connect_count += 1
-        for bot_name in Bots.keys():
-            self.robot_status[bot_name] = Bots[bot_name].state
         self.account_disp = "Acc." + str(self.user_id)
 
     def save_history_file(self: Markets, time: datetime):

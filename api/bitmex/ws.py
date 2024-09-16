@@ -60,7 +60,6 @@ class Bitmex(Variables):
         self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
         self.logger = var.logger
         self.klines = dict()
-        self.robot_status = dict()
         self.setup_orders = list()
         self.account_disp = ""
         self.pinging = "pong"

@@ -188,8 +188,6 @@ def finish_setup(ws: Markets):
     common.Init.load_database(ws)
     common.Init.account_balances(ws)
     common.Init.load_orders(ws, ws.setup_orders)
-    for bot_name in Bots.keys():
-        ws.robot_status[bot_name] = Bots[bot_name].state
     ws.message_time = datetime.now(tz=timezone.utc)
     ws.api_is_active = True
 
@@ -301,6 +299,7 @@ def refresh() -> None:
 
 def clear_params():
     var.market_list = []
+    var.orders = dict()
 
 
 def bot_threads() -> None:
