@@ -1,5 +1,4 @@
 import inspect
-import os
 import platform
 from collections import OrderedDict
 from datetime import datetime, timezone

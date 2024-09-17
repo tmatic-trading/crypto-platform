@@ -29,7 +29,6 @@ from typing import Union
 from pygments import lex
 from pygments.lexers import PythonLexer
 from pygments.styles import get_style_by_name
-from pygments.token import Token
 
 import functions
 import services as service
@@ -277,7 +276,7 @@ class SettingsApp:
             )
             import_bot_module(disp.bot_name, update=True)
             qwr = (
-                f"UPDATE robots SET"
+                "UPDATE robots SET"
                 + f" UPDATED = CURRENT_TIMESTAMP WHERE EMI = '{disp.bot_name}'"
             )
             err = service.update_database(query=qwr)
@@ -504,8 +503,8 @@ class SettingsApp:
                     bots.append(item)
             if not bots:
                 text = (
-                    f"No available bots to be merged with. "
-                    + f"Only bots with state ``Suspended`` allowed."
+                    "No available bots to be merged with. "
+                    + "Only bots with state ``Suspended`` allowed."
                 )
                 self.finish_operation(text)
             return bots
@@ -531,8 +530,8 @@ class SettingsApp:
             if bots:
                 content = (
                     f"To merge bot named ``{bot_name}`` "
-                    + f"please select one of the bots below available to be "
-                    + f"merged with:"
+                    + "please select one of the bots below available to be "
+                    + "merged with:"
                 )
                 label_first = tk.Label(
                     self.brief_frame,
@@ -550,8 +549,8 @@ class SettingsApp:
                 label_second = tk.Label(
                     self.brief_frame,
                     text=(
-                        f"As a result of merge operation the selected bot will be "
-                        + f"deleted. All its records in the database will move on "
+                        "As a result of merge operation the selected bot will be "
+                        + "deleted. All its records in the database will move on "
                         + f"to bot ``{bot_name}``."
                     ),
                     bg=disp.bg_color,
@@ -625,7 +624,7 @@ class SettingsApp:
                 self.brief_frame,
                 text=(
                     f"You are about to duplicate ``{bot_name}``. The newly "
-                    + f"created bot will get the same set of parameters as "
+                    + "created bot will get the same set of parameters as "
                     + f"``{bot_name}`` currently has."
                 ),
                 bg=disp.bg_color,
@@ -684,11 +683,11 @@ class SettingsApp:
         tk.Label(
             self.brief_frame,
             text=(
-                f"After you press the ``Delete bot`` button, the "
+                "After you press the ``Delete bot`` button, the "
                 + f"``/{bot_name}/`` subdirectory will be "
-                + f"erased and this bot will no longer exist. Each database "
+                + "erased and this bot will no longer exist. Each database "
                 + f"record belonging to the ``{bot_name}`` will change its ``EMI`` "
-                + f"field value to the default one taken from the field ``SYMBOL``."
+                + "field value to the default one taken from the field ``SYMBOL``."
             ),
             bg=disp.bg_color,
             justify=tk.LEFT,

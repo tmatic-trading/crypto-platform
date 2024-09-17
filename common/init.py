@@ -1,18 +1,14 @@
-# import logging
 import os
 import sqlite3
 import threading
-from collections import OrderedDict
 from datetime import datetime, timezone
 from sqlite3 import Error
 
 import services as service
 from api.api import WS, Markets
 from api.init import Variables
-from common.data import Bots
 from common.variables import Variables as var
 from display.functions import info_display
-from display.messages import ErrorMessage
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from functions import Function

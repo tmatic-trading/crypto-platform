@@ -197,44 +197,44 @@ def try_response(response, exception):
 
         # Save error in error.log when try_response failed.
 
-        error += f"{exception.__class__.args}\n#\n"
         error = f"try_response failed {datetime.now()}\n#\n"
+        error += f"{exception.__class__.args}\n#\n"
         error += f"___exception {exception}\n#\n"
         error += f"___exception.__class__.__name__ {exception.__class__.__name__}\n#\n"
         try:
             error += f"___exception.__class__.args {exception.__class__.args}\n#\n"
-        except:
-            error += f"exception.__class__.args\n#\n"
+        except Exception:
+            error += "exception.__class__.args\n#\n"
         error += f"___exception.__dict__ {exception.__dict__}\n#\n"
         try:
             error += f"___exception.status_code {exception.status_code}\n#\n"
-        except:
-            error += f"no exception.status_code\n#\n"
+        except Exception:
+            error += "no exception.status_code\n#\n"
         try:
             error += f"___exception.message {exception.message}\n#\n"
-        except:
-            error += f"no exception.message\n#\n"
+        except Exception:
+            error += "no exception.message\n#\n"
         try:
             error += f"___ exception.args {exception.args}\n#\n"
-        except:
-            error += f"no exception.args\n#\n"
+        except Exception:
+            error += "no exception.args\n#\n"
         error += f"___response {response}\n#\n"
         try:
             error += f"___ response.__dict__ {response.__dict__}\n#\n"
-        except:
-            error += f"no response.__dict__\n#\n"
+        except Exception:
+            error += "no response.__dict__\n#\n"
         try:
             error += f"___ response.status_code {response.status_code}\n#\n"
-        except:
-            error += f"no response.status_code\n#\n"
+        except Exception:
+            error += "no response.status_code\n#\n"
         try:
             error += f"___response.message {response.message}\n#\n"
-        except:
-            error += f"no response.message\n#\n"
+        except Exception:
+            error += "no response.message\n#\n"
         try:
             error += f"___ response.args {response.args}\n#\n"
-        except:
-            error += f"no response.args\n#\n"
+        except Exception:
+            error += "no response.args\n#\n"
         error += "#\n#\n"
         with open("error.log", "a") as f:
             f.write(error)

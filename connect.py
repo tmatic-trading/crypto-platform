@@ -6,7 +6,7 @@ import botinit.init as botinit
 import common.init as common
 import functions
 import services as service
-from api.api import WS, Markets, MetaMarket
+from api.api import WS, Markets
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
@@ -206,7 +206,7 @@ def reload_market(ws: Markets):
 def refresh() -> None:
     while not var.queue_info.empty():
         info = var.queue_info.get()
-        if not "bot_log" in info:
+        if "bot_log" not in info:
             info_display(
                 market=info["market"],
                 message=info["message"],

@@ -11,7 +11,7 @@ from api.http import Send
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 
-from .error import DeribitWsRequestError, ErrorStatus
+from .error import DeribitWsRequestError
 from .path import Listing, Matching_engine
 from .ws import Deribit
 

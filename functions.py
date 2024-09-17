@@ -1160,7 +1160,7 @@ class Function(WS, Variables):
             # Bot positions table
 
             if current_bot_note_tab == "Positions":
-                tm = datetime.now()
+                # d tm = datetime.now()
                 tree = TreeTable.bot_position
                 pos_by_market = {market: False for market in var.market_list}
                 if disp.bot_name:
