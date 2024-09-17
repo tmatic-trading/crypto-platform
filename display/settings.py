@@ -565,6 +565,10 @@ class SettingsApp:
                 ("readonly", self.fg_changed),
                 ("disabled", self.fg_changed),
             ],
+            selectforeground=[
+                ("readonly", self.fg_changed),
+                ("disabled", self.fg_changed),
+            ],
         )
         ttk.Style().configure("default.TEntry", fieldbackground=self.bg_entry)
         ttk.Style().configure("changed.TEntry", fieldbackground=disp.bg_color)
