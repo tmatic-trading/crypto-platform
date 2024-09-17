@@ -20,7 +20,6 @@ class Variables:
     positions = OrderedDict()
     logger = logging
     logNumFatal = ""
-    depth = var.order_book_depth
     connect_count = 0
     user_id = None
     user = dict()

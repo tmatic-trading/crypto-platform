@@ -43,10 +43,6 @@ class Deribit(Variables):
         self.settleCoin_list = list()
         self.ws = websocket
         self.logger = var.logger
-        if self.depth == "quote":
-            self.orderbook_depth = 1
-        else:
-            self.orderbook_depth = 10
         self.klines = dict()
         self.setup_orders = list()
         self.account_disp = ""
@@ -84,6 +80,10 @@ class Deribit(Variables):
         pass
 
     def start(self):
+        if var.order_book_depth == "quote":
+            self.orderbook_depth = 1
+        else:
+            self.orderbook_depth = 10
         for symbol in self.symbol_list:
             instrument = self.Instrument[symbol]
             if "linear" in instrument.category:

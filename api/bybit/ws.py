@@ -35,10 +35,6 @@ class Bybit(Variables):
         self.account_types = ["UNIFIED", "CONTRACT"]
         self.settleCoin_list = list()
         self.logger = var.logger
-        if self.depth == "quote":
-            self.orderbook_depth = 1
-        else:
-            self.orderbook_depth = 50
         self.klines = dict()
         self.setup_orders = list()
         self.account_disp = ""
@@ -53,6 +49,10 @@ class Bybit(Variables):
         )
 
     def start(self):
+        if var.order_book_depth == "quote":
+            self.orderbook_depth = 1
+        else:
+            self.orderbook_depth = 50
         for symbol in self.symbol_list:
             instrument = self.Instrument[symbol]
             if instrument.category == "linear":

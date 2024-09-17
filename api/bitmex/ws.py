@@ -35,21 +35,9 @@ class Bitmex(Variables):
         self.Api_auth = API_auth
         Setup.variables(self)
         self.session = requests.Session()
-        depth = "quote"
-        if self.depth != "quote":
-            depth = "orderBook10"
         self.session.headers.update({"user-agent": "Tmatic"})
         self.session.headers.update({"content-type": "application/json"})
         self.session.headers.update({"accept": "application/json"})
-        self.table_subscription = {
-            "margin",
-            "execution",
-            "instrument",
-            "position",
-            depth,
-            # "order",
-            # "trade",
-        }
         self.currency_divisor = {
             "XBt": 100000000,
             "USDt": 1000000,
@@ -72,6 +60,19 @@ class Bitmex(Variables):
         pass
 
     def start(self):
+        if var.order_book_depth != "quote":
+            depth = "orderBook10"
+        else:
+            depth = "quote"
+        self.table_subscription = {
+            "margin",
+            "execution",
+            "instrument",
+            "position",
+            depth,
+            # "order",
+            # "trade",
+        }
         if not self.logNumFatal:
             for symbol in self.symbol_list:
                 instrument = self.Instrument[symbol]
