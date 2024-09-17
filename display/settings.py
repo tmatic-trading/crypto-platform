@@ -552,14 +552,14 @@ class SettingsApp:
             "default.TCombobox",
             fieldbackground=[
                 ("readonly", self.bg_entry),
-                ("disabled", self.title_color),
+                ("disabled", self.bg_entry),
             ],
         )
         ttk.Style().map(
             "changed.TCombobox",
             fieldbackground=[
                 ("readonly", disp.bg_color),
-                ("disabled", self.title_color),
+                ("disabled", self.bg_entry),
             ],
             foreground=[
                 ("readonly", self.fg_changed),
@@ -570,9 +570,24 @@ class SettingsApp:
                 ("disabled", self.fg_changed),
             ],
         )
-        ttk.Style().configure("default.TEntry", fieldbackground=self.bg_entry)
-        ttk.Style().configure("changed.TEntry", fieldbackground=disp.bg_color)
-        ttk.Style().configure("changed.TEntry", foreground=self.fg_changed)
+        ttk.Style().map(
+            "default.TEntry",
+            fieldbackground=[
+                ("!disabled", self.bg_entry),
+                ("disabled", self.bg_entry),
+            ],
+        )
+        ttk.Style().map(
+            "changed.TEntry",
+            fieldbackground=[
+                ("!disabled", disp.bg_color),
+                ("disabled", self.bg_entry),
+            ],
+            foreground=[
+                ("!disabled", self.fg_changed),
+                ("disabled", self.fg_changed),
+            ],
+        )
 
         # Draw grid for common settings
         self.entry_common = {}
