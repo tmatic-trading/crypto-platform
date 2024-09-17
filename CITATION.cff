@@ -7,8 +7,8 @@ authors:
     family-names: Romensky
 repository-code: 'https://github.com/evgrmn/tmatic'
 abstract: >-
-  This software is designed for trading on the Bitmex.com, Bybit.com
+  This software is designed for trading on the Bitmex, Bybit
   and Deribit marketplaces and allows you to control trade balances
   and make transactions manually and automatically.
-version: 24.8.1 Beta
-date-released: '2024-08-30'
+version: 24.9.0 Beta
+date-released: '2024-09-17'

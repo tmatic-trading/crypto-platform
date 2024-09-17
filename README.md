@@ -121,7 +121,11 @@ Launch the program:
 - in Linux or macOS terminal ```python3 main.py```
 - in Windows command prompt (cmd.exe) ```python main.py```
 
-If you don’t have API credentials set up, you’ll be redirected to the settings page. Follow the Tmatic setup instructions and add your API keys and secret. If you don’t have them, here are a few places you can get them for the testnet environment:
+If you don’t have API credentials set up, you’ll be redirected to the settings page.
+
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/settings_menu.png)
+
+Follow the Tmatic setup instructions and add your API keys and secret. If you don’t have them, here are a few places you can get them for the testnet environment:
 
 |exchange|url|
 | ------------- | ------------------ |
