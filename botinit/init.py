@@ -118,9 +118,10 @@ def load_bots() -> None:
             instrument.sumreal = float(value["SUM_SUMREAL"])
         var.lock.release()
 
-    # Searching for unclosed positions by bots that are not in the 'robots'
-    # table. If found, EMI becomes the default SYMBOL name. If such a SYMBOL
-    # is not subscribed, it is added to the subscription.
+    # Search for unclosed positions. If an unclosed position belongs to a bot 
+    # that is not in the "robots" table, EMI becomes the default SYMBOL name. 
+    # If the SYMBOL of the unclosed position is not subscribed, it is added 
+    # to the subscription.
 
     qwr = (
         "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
@@ -133,20 +134,38 @@ def load_bots() -> None:
     subscriptions = list()
     for value in data:
         if value["MARKET"] in var.market_list:
+            ws = Markets[value["MARKET"]]
+            functions.Function.add_symbol(
+                ws,
+                symbol=value["SYMBOL"],
+                ticker=value["TICKER"],
+                category=value["CATEGORY"],
+            )
+            symb = (value["SYMBOL"], ws.name)
+            if symb not in ws.symbol_list:
+                if ws.Instrument[symb].state == "Open":
+                    subscriptions.append(symb)
+                    message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symb)
+                    var.logger.info(message)
+                else:
+                    message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
+                        SYMBOL=symb, STATE=ws.Instrument[symb].state
+                    )
+                    var.logger.warning(message)
+                    var.queue_info.put(
+                        {
+                            "market": "",
+                            "message": message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": "error",
+                        }
+                    )
             name = value["EMI"]
             if name not in Bots.keys():
-                ws = Markets[value["MARKET"]]
-
-                functions.Function.add_symbol(
-                    ws,
-                    symbol=value["SYMBOL"],
-                    ticker=value["TICKER"],
-                    category=value["CATEGORY"],
-                )
-                if value["SYMBOL"] != value["EMI"]:
+                if value["SYMBOL"] != name:
                     qwr = (
                         "select ID, EMI, SYMBOL from coins where side <> 'Fund' and EMI = '%s'"
-                        % (value["EMI"])
+                        % (name)
                     )
                     data = service.select_database(qwr)
                     for row in data:
@@ -155,25 +174,6 @@ def load_bots() -> None:
                             row["ID"],
                         )
                         service.update_database(query=qwr)
-                symb = (value["SYMBOL"], ws.name)
-                if symb not in ws.symbol_list:
-                    if ws.Instrument[symb].state == "Open":
-                        subscriptions.append(symb)
-                        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symb)
-                        var.logger.info(message)
-                    else:
-                        message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
-                            SYMBOL=symb, STATE=ws.Instrument[symb].state
-                        )
-                        var.logger.warning(message)
-                        var.queue_info.put(
-                            {
-                                "market": "",
-                                "message": message,
-                                "time": datetime.now(tz=timezone.utc),
-                                "warning": "error",
-                            }
-                        )
     var.lock.release()
 
     add_subscription(subscriptions=subscriptions)
