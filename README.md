@@ -209,7 +209,7 @@ Deribit_SYMBOLS='BTC-PERPETUAL'
 - SYMBOLS — a list of instruments to which the web socket subscription will be made.
 
 > [!NOTE]
-> Currently, you can update the settings via the app settings menu, but adding new instruments to the subscription list must be done manually in the .env.Subscriptions file. The list should be comma-separated and may look like this: ```Bitmex_SYMBOLS="XBTUSDT, ETHUSD, XBTUSD"```. While the app is loading and unclosed positions or open positions are found for a particular instrument, that instrument will also be automatically subscribed to.
+> Currently, you can update the settings via the app settings menu, but adding new instruments to the subscription list must be done manually in the .env.Subscriptions file. The list should be comma-separated and may look like this: ```Bitmex_SYMBOLS="XBTUSDT, ETHUSD, XBTUSD"```. While the app is loading and unclosed positions or open orders are found for a particular instrument, that instrument will also be automatically subscribed to.
 
 ## Troubleshooting
 
