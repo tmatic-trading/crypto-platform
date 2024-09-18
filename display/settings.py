@@ -380,8 +380,13 @@ class SettingsApp:
             if setting != "CONNECTED":
                 widget_type = self.entry_market[setting].winfo_class()
                 if widget_type == "TCombobox":
-                    self.entry_market[setting].config(state="readonly")
                     self.entry_market[setting].set(value)
+                    if self.market_changed[market]["CONNECTED"] == "NO":
+                        self.entry_market[setting].config(state="disabled")
+                        self.market_label[setting].config(fg=disp.disabled_fg)
+                    else:
+                        self.entry_market[setting].config(state="readonly")
+                        self.market_label[setting].config(fg=disp.fg_color)
                 else:
                     self.entry_market[setting].delete(0, tk.END)
                     self.entry_market[setting].insert(0, value)
@@ -389,26 +394,30 @@ class SettingsApp:
                     if testnet_value:
                         testnet_setting = setting.split("_")
                         if testnet_value == "YES":
-                            if testnet_setting[0] == "TESTNET":
-                                self.entry_market[setting].config(state="normal")
-                                self.market_label[setting].config(fg=disp.fg_color)
-                            else:
+                            if (
+                                testnet_setting[0] != "TESTNET"
+                                or self.market_changed[market]["CONNECTED"] == "NO"
+                            ):
                                 self.entry_market[setting].config(state="disabled")
                                 self.market_label[setting].config(fg=disp.disabled_fg)
+                            else:
+                                self.entry_market[setting].config(state="normal")
+                                self.market_label[setting].config(fg=disp.fg_color)
                         else:
-                            if testnet_setting[0] != "TESTNET":
-                                self.entry_market[setting].config(state="normal")
-                                self.market_label[setting].config(fg=disp.fg_color)
-                            else:
+                            if (
+                                testnet_setting[0] == "TESTNET"
+                                or self.market_changed[market]["CONNECTED"] == "NO"
+                            ):
                                 self.entry_market[setting].config(state="disabled")
                                 self.market_label[setting].config(fg=disp.disabled_fg)
+                            else:
+                                self.entry_market[setting].config(state="normal")
+                                self.market_label[setting].config(fg=disp.fg_color)
                 self.entry_market[setting].selection_clear()
                 if self.market_flag[market][setting] != 0:
                     self.entry_market[setting].config(style=f"changed.{widget_type}")
                 else:
                     self.entry_market[setting].config(style=f"default.{widget_type}")
-                if self.market_changed[market]["CONNECTED"] == "NO":
-                    self.entry_market[setting].config(state="disabled")
         self.root_frame.focus()
 
     def get_str_markets(self):
