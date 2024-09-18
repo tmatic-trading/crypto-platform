@@ -459,7 +459,9 @@ class SettingsApp:
                     if var != "MARKET_LIST":
                         widget_type = self.entry_common[var].winfo_class()
                         self.entry_common[var].config(style=f"changed.{widget_type}")
-                    self.set_button_color(self.settings_flag)
+                        self.set_button_color(self.settings_flag, var)
+                    else:
+                        self.set_button_color(self.settings_flag, "MARKET")
             else:
                 if self.common_flag[var] != 0:
                     self.settings_flag -= 1
@@ -467,7 +469,9 @@ class SettingsApp:
                     if var != "MARKET_LIST":
                         widget_type = self.entry_common[var].winfo_class()
                         self.entry_common[var].config(style=f"default.{widget_type}")
-                    self.set_button_color(self.settings_flag)
+                        self.set_button_color(self.settings_flag, var)
+                    else:
+                        self.set_button_color(self.settings_flag, "MARKET")
 
     def market_color_update(self, market, color):
         for frame in self.settings_center:
@@ -486,9 +490,12 @@ class SettingsApp:
                 if var != "CONNECTED":
                     widget_type = self.entry_market[var].winfo_class()
                     self.entry_market[var].config(style=f"changed.{widget_type}")
+                    self.set_button_color(self.settings_flag, var)
+                else:
+                    self.set_button_color(self.settings_flag, "MARKET")
                 # self.market_color[market] = self.fg_changed
                 self.market_color_update(market=market, color=self.fg_changed)
-                self.set_button_color(self.settings_flag)
+
         else:
             if self.market_flag[market][var] != 0:
                 self.settings_flag -= 1
@@ -496,6 +503,9 @@ class SettingsApp:
                 if var != "CONNECTED":
                     widget_type = self.entry_market[var].winfo_class()
                     self.entry_market[var].config(style=f"default.{widget_type}")
+                    self.set_button_color(self.settings_flag, var)
+                else:
+                    self.set_button_color(self.settings_flag, "MARKET")
                 # self.market_color[market] = self.bg_entry
                 self.market_color_update(market=market, color=disp.fg_color)
                 for setting in self.market_changed[market]:
@@ -503,15 +513,16 @@ class SettingsApp:
                         # self.market_color[market] = self.fg_changed
                         self.market_color_update(market=market, color=self.fg_changed)
                         break
-                self.set_button_color(self.settings_flag)
+            else:
+                self.market_color_update(market=market, color=disp.fg_color)
         if var == "TESTNET":
             self.set_market_fields(market)
 
-    def set_button_color(self, flag):
+    def set_button_color(self, flag, setting_name):
         if flag == 0:
             self.setting_button.configure(bg=self.title_color, text="Settings Saved")
             self.setting_button.config(state="disabled")
-            self.on_tip("SETTINGS")
+            self.on_tip(setting_name)
         else:
             self.setting_button.configure(bg=self.bg_select_color, text="Update")
             self.setting_button.config(state="active")
@@ -544,6 +555,7 @@ class SettingsApp:
         if status != "new":
             self.set_market_fields(self.selected_frame.market)
             self.set_common_fields()
+        self.set_button_color(0, "SETTINGS")
         self.setting_button.config(state="disabled")
 
     def set_all_flags_to_zero(self):
@@ -559,7 +571,6 @@ class SettingsApp:
                 # frame.config(bg=self.market_color[frame.market])
                 # frame.check_box.config(bg=self.market_color[frame.market])
                 frame.check_box.config(fg=disp.fg_color)
-        self.set_button_color(0)
 
     def create_static_widgets(self):
         widget_row = 0
@@ -676,7 +687,7 @@ class SettingsApp:
                     self.entry_common[setting]["values"] = values
                 self.entry_common[setting].w_name = setting
                 self.entry_common[setting].bind(
-                    "<FocusIn>", lambda event: self.on_tip(event)
+                    "<FocusIn>", lambda event: self.on_focused(event)
                 )
                 self.entry_common[setting].grid(row=widget_row, column=2, sticky="W")
                 # Set the initial value for common setting
@@ -745,7 +756,7 @@ class SettingsApp:
                     )
                 self.entry_market[setting].w_name = setting
                 self.entry_market[setting].bind(
-                    "<FocusIn>", lambda event: self.on_tip(event)
+                    "<FocusIn>", lambda event: self.on_focused(event)
                 )
 
         widget_row += 1
@@ -757,14 +768,13 @@ class SettingsApp:
         for i in range(widget_row):
             self.root_frame.grid_rowconfigure(i, weight=0)
 
-    def on_tip(self, event) -> None:
+    def on_focused(self, event) -> None:
+        self.on_tip(event.widget.w_name)
+
+    def on_tip(self, setting):
         """
         Displays a recommendation when the widget has focus.
         """
-        if event == "SETTINGS" or event == "MARKET":
-            setting = event
-        else:
-            setting = event.widget.w_name
         text = Tips[setting].value
         if setting == "SQLITE_DATABASE":
             text = Tips.SQLITE_DATABASE.value.format(DATABASE=var.db_sqlite)
