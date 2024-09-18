@@ -293,6 +293,7 @@ class Variables:
     symbol_height = tkinter.font.nametofont("TkDefaultFont").actual()["size"]
     button_height = 20
     style = ttk.Style()
+    disabled_fg = style.lookup('TEntry', 'foreground', ('disabled',))
 
     # Paned window: up - information field, down - the rest interface
     pw_info_rest = tk.PanedWindow(

@@ -23,7 +23,6 @@ class SettingsApp:
         self.bg_entry = disp.light_gray_color
         self.bg_active = disp.bg_select_color
         self.fg_changed = disp.warning_color
-
         self.title_color = disp.title_color
 
         self.common_trace_changed = {}
@@ -295,7 +294,6 @@ class SettingsApp:
         if not self.initialized:
             self.create_static_widgets()
             for i, market in enumerate(self.market_list):
-                # my_bg = self.bg_entry if i != 0 else self.bg_select_color
                 frame = DraggableFrame(
                     self.root_frame,
                     self,
@@ -326,7 +324,6 @@ class SettingsApp:
         self.settings_center.sort(key=lambda f: f.winfo_y())
         total_height = self.static_widgets_height
         for frame in self.settings_center:
-            # frame.update_idletasks()
             frame_height = frame.winfo_reqheight()
             frame.place_configure(
                 x=0,
@@ -386,9 +383,25 @@ class SettingsApp:
                     self.entry_market[setting].config(state="readonly")
                     self.entry_market[setting].set(value)
                 else:
-                    self.entry_market[setting].config(state="normal")
                     self.entry_market[setting].delete(0, tk.END)
                     self.entry_market[setting].insert(0, value)
+                    testnet_value = self.market_changed[market]["TESTNET"]
+                    if testnet_value:
+                        testnet_setting = setting.split("_")
+                        if testnet_value == "YES":
+                            if testnet_setting[0] == "TESTNET":
+                                self.entry_market[setting].config(state="normal")
+                                self.market_label[setting].config(fg=disp.fg_color)
+                            else:
+                                self.entry_market[setting].config(state="disabled")
+                                self.market_label[setting].config(fg=disp.disabled_fg)
+                        else:
+                            if testnet_setting[0] != "TESTNET":
+                                self.entry_market[setting].config(state="normal")
+                                self.market_label[setting].config(fg=disp.fg_color)
+                            else:
+                                self.entry_market[setting].config(state="disabled")
+                                self.market_label[setting].config(fg=disp.disabled_fg)
                 self.entry_market[setting].selection_clear()
                 if self.market_flag[market][setting] != 0:
                     self.entry_market[setting].config(style=f"changed.{widget_type}")
@@ -446,12 +459,11 @@ class SettingsApp:
                         widget_type = self.entry_common[var].winfo_class()
                         self.entry_common[var].config(style=f"default.{widget_type}")
                     self.set_button_color(self.settings_flag)
-            # print(var, self.common_trace_changed[var].get(), self.common_defaults[var], self.common_flag[var], self.settings_flag)
 
     def market_color_update(self, market, color):
         for frame in self.settings_center:
             if frame.market == market:
-                frame.check_box.config(fg=color)
+                frame.check_box.config(fg=color, activeforeground=color)
 
     def check_market_flag(self, var, market):
         """
@@ -483,6 +495,8 @@ class SettingsApp:
                         self.market_color_update(market=market, color=self.fg_changed)
                         break
                 self.set_button_color(self.settings_flag)
+        if var == "TESTNET":
+            self.set_market_fields(market)
 
     def set_button_color(self, flag):
         if flag == 0:
@@ -680,6 +694,7 @@ class SettingsApp:
 
         # Draw grid representing settings for markets
         self.entry_market = {}
+        self.market_label = {}
         for setting in self.market_settings:
             self.market_trace[setting] = StringVar(name=setting + str(self))
             if setting != "CONNECTED":
@@ -687,11 +702,13 @@ class SettingsApp:
                 tk.Label(self.root_frame, bg=disp.bg_color).grid(
                     row=widget_row, column=0
                 )
-                tk.Label(
+                self.market_label[setting] = tk.Label(
                     self.root_frame,
                     text=setting + self.indent,
                     bg=disp.bg_color,
-                ).grid(row=widget_row, column=1, sticky="W")
+                    fg=disp.fg_color,
+                )
+                self.market_label[setting].grid(row=widget_row, column=1, sticky="W")
                 self.market_trace[setting].trace_add(
                     "write", self.market_trace_callback
                 )
