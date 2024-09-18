@@ -205,6 +205,9 @@ class Agent(Bitmex):
         self.Instrument[symbol].baseCoin = instrument["underlying"]
         self.Instrument[symbol].quoteCoin = instrument["quoteCurrency"]
         self.Instrument[symbol].valueOfOneContract = valueOfOneContract
+        self.instrument_index = service.fill_instrument_index(
+            index=self.instrument_index, instrument=self.Instrument[symbol]
+        )
 
         return category
 

@@ -71,6 +71,7 @@ class Deribit(Variables):
         }
         self.ticker = dict()
         self.funding_thread_active = True
+        self.instrument_index = dict()
 
     def setup_session(self):
         """
@@ -360,6 +361,15 @@ class Deribit(Variables):
         instrument.volume24h = values["stats"]["volume"]
         if "funding_8h" in values:
             instrument.fundingRate = values["funding_8h"] * 100
+        if "spot" not in instrument.category:
+            instrument.openInterest = values["open_interest"]
+        if "option" in instrument.category:
+            instrument.delta = values["greeks"]["delta"]
+            instrument.vega = values["greeks"]["vega"]
+            instrument.delta = values["greeks"]["theta"]
+            instrument.vega = values["greeks"]["gamma"]
+            instrument.bidIv = values["bid_iv"]
+            instrument.vega = values["ask_iv"]
 
     def __update_portfolio(self, values: dict) -> None:
         currency = (values["currency"], self.name)

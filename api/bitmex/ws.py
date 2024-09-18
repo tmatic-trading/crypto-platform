@@ -52,6 +52,7 @@ class Bitmex(Variables):
         self.account_disp = ""
         self.pinging = "pong"
         self.ticker = dict()
+        self.instrument_index = dict()
 
     def setup_session(self):
         """
@@ -457,6 +458,7 @@ class Bitmex(Variables):
             instrument.volume24h = values["volume24h"]
         if "state" in values:
             instrument.state = values["state"]
+        instrument.openInterest = 0
 
     def __update_account(self, settlCurrency: tuple, values: dict):
         account = self.Account[settlCurrency]

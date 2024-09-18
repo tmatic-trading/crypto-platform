@@ -434,3 +434,45 @@ def unexpected_error(ws) -> str:
         ws.logNumFatal = "FATAL"
 
     return ws.logNumFatal
+
+
+def fill_instrument_index(index: dict, instrument: Instrument) -> dict:
+    """
+    Adds an instrument to the instrument_index dictionary.
+
+    Parameters
+    ----------
+    index: dict
+        The instrument_index is used for the Instrument Menu. It ranks
+        instruments by category, currency.
+    instrument: Instrument
+        An Instrument instance, which belongs to a particular exchange.
+
+    Returns
+    -------
+    dict
+        The instrument_index dictionary.
+
+    """
+    category = instrument.category
+    if "spot" in category:
+        currency = instrument.baseCoin
+    else:
+        currency = instrument.settlCurrency[0]
+    if category not in index:
+        index[category] = dict()
+    if currency not in index[category]:
+        index[category][currency] = list()
+    symbol = instrument.symbol
+    if "option" in category:
+        tmp = symbol.split("-")
+        if "option_combo" in category:
+            num = 3
+        else:
+            num = 2
+        option_serie = "-".join(tmp[:num])
+        index[category][currency].append(option_serie)
+    else:
+        index[category][currency].append(symbol)
+
+    return index

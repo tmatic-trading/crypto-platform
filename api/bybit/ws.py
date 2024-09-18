@@ -40,6 +40,7 @@ class Bybit(Variables):
         self.account_disp = ""
         WebSocket._on_message = Bybit._on_message
         self.ticker = dict()
+        self.instrument_index = dict()
 
     def setup_session(self):
         self.session: HTTP = HTTP(
@@ -172,6 +173,15 @@ class Bybit(Variables):
         if "fundingRate" in values:
             if values["fundingRate"]:
                 instrument.fundingRate = float(values["fundingRate"]) * 100
+        if category != "spot":
+            instrument.openInterest = values["openInterest"]
+            if "option" in instrument.category:
+                instrument.delta = values["greeks"]["delta"]
+                instrument.vega = values["greeks"]["vega"]
+                instrument.delta = values["greeks"]["theta"]
+                instrument.vega = values["greeks"]["gamma"]
+                instrument.bidIv = values["bid_iv"]
+                instrument.vega = values["ask_iv"]
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:
