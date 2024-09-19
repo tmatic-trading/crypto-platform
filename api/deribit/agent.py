@@ -86,7 +86,7 @@ class Agent(Deribit):
         The data fields of different exchanges are unified through the
         Instrument class. See detailed description of the fields there.
         """
-        category = values["kind"] + " " + values["instrument_type"]
+        category = values["kind"] + "_" + values["instrument_type"]
         if "spot" in category:
             symb = values["base_currency"] + "/" + values["quote_currency"]
         else:

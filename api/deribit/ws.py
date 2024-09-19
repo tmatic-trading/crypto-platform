@@ -339,14 +339,6 @@ class Deribit(Variables):
         # self.logNumFatal = "SETUP"
         self.funding_thread_active = False
 
-    def ping_pong(self):
-        if datetime.now(tz=timezone.utc) - self.pinging > timedelta(
-            seconds=self.heartbeat_interval + 2
-        ):
-            self.logger.error("Deribit websocket heartbeat error. Reboot")
-            return False
-        return True
-
     def __update_orderbook(self, values: dict) -> None:
         symbol = (self.ticker[values["instrument_name"]], self.name)
         instrument = self.Instrument[symbol]
@@ -469,6 +461,14 @@ class Deribit(Variables):
                     row["market"] = self.name
                     row["commission"] = "Not supported"
                     self.transaction(row=row)
+
+    def ping_pong(self):
+        if datetime.now(tz=timezone.utc) - self.pinging > timedelta(
+            seconds=self.heartbeat_interval + 2
+        ):
+            self.logger.error("Deribit websocket heartbeat error. Reboot")
+            return False
+        return True
 
     def subscribe_symbol(self, symbol: tuple) -> None:
         ticker = self.Instrument[symbol].ticker

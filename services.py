@@ -471,8 +471,10 @@ def fill_instrument_index(index: dict, instrument: Instrument) -> dict:
         else:
             num = 2
         option_serie = "-".join(tmp[:num])
-        index[category][currency].append(option_serie)
+        if option_serie not in index[category][currency]:
+            index[category][currency].append(option_serie)
     else:
-        index[category][currency].append(symbol)
+        if symbol not in index[category][currency]:
+            index[category][currency].append(symbol)
 
     return index

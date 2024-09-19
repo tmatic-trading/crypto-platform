@@ -4,7 +4,7 @@ import tkinter.font
 import webbrowser
 from datetime import datetime
 from tkinter import ttk
-from typing import Callable
+from typing import Callable, Union
 
 import services as service
 from api.api import Markets
@@ -732,6 +732,17 @@ class Variables:
         ),
     )
 
+    # Instruments menu widgets
+
+    frame_instrument_menu_category = tk.Frame(root)
+    frame_instrument_menu_currency = tk.Frame(root)
+    frame_instrument_menu_list = tk.Frame(root)
+    instrument_menu = {
+        "market": "",
+        "category": "",
+        "currency": "",
+    }
+
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
         if ratio < min_ratio:
@@ -794,7 +805,7 @@ class TreeviewTable(Variables):
         frame: tk.Frame,
         name: str,
         title: list,
-        size=0,
+        size: Union[int, list] = 0,
         style="",
         bind=None,
         hide=[],
@@ -803,18 +814,26 @@ class TreeviewTable(Variables):
         hierarchy=False,
         lines=[],
         rollup=False,
+        hover=True,
     ) -> None:
+        self.frame: tk.Frame = frame
         self.title = title
         self.max_rows = 200
         self.name = name
         self.title = title
         self.cache = list()
         self.bind = bind
-        self.size = size
+        if isinstance(size, int):
+            self.lst = [num for num in range(size)]
+            self.size = size
+        else:
+            self.lst = size
+            self.size = len(size)
         self.count = 0
         self.hierarchy = hierarchy
         self.lines = lines
         self.rollup = rollup
+        self.active_row = 0
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)
         if hierarchy:
@@ -861,9 +880,13 @@ class TreeviewTable(Variables):
             self.tree.tag_configure("Gray", background="gray90")
         else:
             self.tree.tag_configure("Gray", background=self.title_color)
-        self.tree.tag_configure(
+        """self.tree.tag_configure(
             "Market", background=self.title_color, foreground=self.fg_color
-        )
+        )"""
+        self.tree.tag_configure("highlight", background=self.bg_select_color)
+        if hover:
+            self.tree.bind("<Motion>", self.on_hover)
+            self.tree.bind("<Leave>", self.on_leave)
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.iid_count = 0
@@ -892,10 +915,9 @@ class TreeviewTable(Variables):
             self.init_hierarchical()
             return
         blank = ["" for _ in self.title]
-        for num in range(size):
-            # self.insert(values=blank, market="")
-            self.tree.insert("", tk.END, iid=num, values=blank)
-            self.cache[num] = blank
+        for item in self.lst:
+            self.tree.insert("", tk.END, iid=item, values=blank)
+            self.cache[item] = blank
         self.children = self.tree.get_children()
 
     def init_hierarchical(self):
@@ -954,16 +976,17 @@ class TreeviewTable(Variables):
         self.children_hierarchical[parent] = self.tree.get_children(parent)
         del self.cache[iid]
 
-    def update(self, row: int, values: list) -> None:
-        self.tree.item(row, values=values)
+    def update(self, row: int, values: list, text="") -> None:
+        self.tree.item(row, values=values, text=text)
 
     def update_hierarchical(self, parent: str, iid: str, values: list) -> None:
         self.tree.item(iid, values=values)
 
-    def paint(self, row: int, configure: str) -> None:
-        self.tree.item(self.children[row], tags=configure)
+    def paint(self, row: Union[int, str], configure: str) -> None:
+        row = str(row)
+        self.tree.item(row, tags=configure)
         if self.tree.selection():
-            selected = len(self.children) - int(self.tree.selection()[0])
+            selected = self.tree.selection()[0]
         if self.name == "market":
             if configure == "Reload" and row == selected:
                 self.style.map(
@@ -1094,12 +1117,101 @@ class TreeviewTable(Variables):
             self.tree.item(parent, open=True)
         self.tree.selection_set(iid)
 
+    def on_hover(self, event):
+        widget = event.widget
+        item = widget.identify_row(event.y)
+        if self.active_row != item:
+            widget.tk.call(widget, "tag", "remove", "highlight")
+            widget.tk.call(widget, "tag", "add", "highlight", item)
+        self.active_row = item
+
+    def on_leave(self, event):
+        widget = event.widget
+        widget.tk.call(widget, "tag", "remove", "highlight")
+
+
+class SubTreeviewTable(TreeviewTable):
+    def __init__(self, subtable=False, place=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.subtable: TreeviewTable = subtable
+        self.place = place
+
+    def on_hover(self, event):
+        widget = event.widget
+        item = widget.identify_row(event.y)
+        if self.subtable:
+            if self.subtable.subtable:
+                self.subtable.subtable.frame.place(x=-1000, y=-1000)
+        if self.active_row != item:
+            widget.tk.call(widget, "tag", "remove", "highlight")
+            if item:
+                widget.tk.call(widget, "tag", "add", "highlight", item)
+                if self.subtable:                    
+                    self.display_subtable(item=item)
+        self.active_row = item
+
+    def display_subtable(self, item: str):
+        self.instrument_menu[self.name] = item
+        ws = Markets[self.instrument_menu["market"]]
+        if self.name == "market":
+            lst = ws.instrument_index.keys()
+            x_pos = self.frame_market.winfo_width()
+        elif self.name == "category":
+            lst = ws.instrument_index[self.instrument_menu["category"]].keys()
+            x_pos = (
+                self.frame_market.winfo_width()
+                + self.frame_instrument_menu_category.winfo_width()
+            )
+        elif self.name == "currency":
+            lst = ws.instrument_index[self.instrument_menu["category"]][
+                self.instrument_menu["currency"]
+            ]
+            x_pos = (
+                self.frame_market.winfo_width()
+                + self.frame_instrument_menu_category.winfo_width()
+                + self.frame_instrument_menu_currency.winfo_width()
+            )
+        y_pos = (
+            self.tree.winfo_rooty()
+            - self.root.winfo_rooty()
+            + self.tree.bbox(item=item)[1]
+        )
+        self.subtable.clear_all()
+        for item in lst:
+            try:
+                print(self.subtable.tree.item(item))
+            except:
+                pass
+            self.subtable.insert(values=[item], iid=item)
+        self.subtable.tree.column("1", width=200)
+        self.subtable.tree.config(height=len(self.subtable.tree.get_children()))
+        self.subtable.frame.place(x=x_pos, y=y_pos)
+        self.subtable.frame.place()
+    
+    def on_leave(self, event):
+        height = self.tree.winfo_height()
+        x, y = self.root.winfo_pointerxy()
+        pos_y = self.tree.winfo_rooty()
+        if y < pos_y or y > pos_y + height - 1:
+            self.del_all(TreeTable.market)
+
+    '''def print_widget_under_mouse(self):
+        x,y = self.root.winfo_pointerxy()
+        widget = self.root.winfo_containing(x,y)'''
+
+
+    def del_all(self, ttt):
+        if ttt.subtable:
+            ttt.subtable.frame.place(x=-1000, y=-1000)
+        if ttt.subtable:
+            self.del_all(ttt.subtable)
+
 
 class TreeTable:
     instrument: TreeviewTable
     account: TreeviewTable
     orderbook: TreeviewTable
-    market: TreeviewTable
+    market: SubTreeviewTable
     results: TreeviewTable
     trades: TreeviewTable
     funding: TreeviewTable
@@ -1111,6 +1223,9 @@ class TreeTable:
     bot_position: TreeviewTable
     bot_orders: TreeviewTable
     bot_results: TreeviewTable
+    instrument_category: SubTreeviewTable
+    instrument_currency: SubTreeviewTable
+    instrument_list: TreeviewTable
 
 
 class ClickLabel(tk.Label):

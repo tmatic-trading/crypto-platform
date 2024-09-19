@@ -15,7 +15,7 @@ from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.functions import info_display
 from display.messages import ErrorMessage
-from display.variables import AutoScrollbar, TreeTable, TreeviewTable
+from display.variables import AutoScrollbar, SubTreeviewTable, TreeTable, TreeviewTable
 from display.variables import Variables as disp
 
 
@@ -1143,13 +1143,11 @@ class Function(WS, Variables):
             if not ws.api_is_active:
                 status = "RELOADING..."
             compare = service.add_space([ws.name, ws.account_disp, status])
-            if compare != tree.cache[num]:
-                tree.cache[num] = compare
-                tree.update(row=num, values=[compare])
+            if compare != tree.cache[name]:
+                tree.cache[name] = compare
+                tree.update(row=name, values=[compare], text=name)
                 configure = "Market" if "ONLINE" in status else "Reload"
-                TreeTable.market.paint(
-                    row=var.market_list.index(ws.name), configure=configure
-                )
+                TreeTable.market.paint(row=name, configure=configure)
         # d print("___market", datetime.now() - tm)
 
         # Refresh bot menu tables
@@ -1448,7 +1446,7 @@ class Function(WS, Variables):
         return self.logNumFatal
 
     def market_status(self: Markets, status: str, message: str, error=False) -> None:
-        row = var.market_list.index(self.name)
+        row = self.name  # var.market_list.index(self.name)
         if status == "ONLINE":
             line = [
                 self.name,
@@ -2005,13 +2003,9 @@ def handler_market(event) -> None:
         if shift != var.current_market:
             var.current_market = shift
             if Markets[var.current_market].api_is_active:
-                TreeTable.market.paint(
-                    row=var.market_list.index(shift), configure="Market"
-                )
+                TreeTable.market.paint(row=shift, configure="Market")
             else:
-                TreeTable.market.paint(
-                    row=var.market_list.index(shift), configure="Reload"
-                )
+                TreeTable.market.paint(row=shift, configure="Reload")
             ws = Markets[var.current_market]
             var.symbol = ws.symbol_list[0]
             clear_tables()
@@ -2453,10 +2447,12 @@ def init_tables() -> None:
         frame=disp.frame_market,
         name="market",
         title=var.name_market,
-        size=len(var.market_list),
+        size=var.market_list,
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
+        #subtable=TreeTable.instrument_category,
+        #place=False,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,
@@ -2513,8 +2509,7 @@ def init_tables() -> None:
         hierarchy=True,
     )
     TreeTable.instrument.set_selection()
-    indx = var.market_list.index(var.current_market)
-    TreeTable.market.set_selection(index=indx)
+    TreeTable.market.set_selection(index=var.current_market)
     init_bot_treetable_trades()
 
 
@@ -2550,5 +2545,26 @@ TreeTable.bot_orders = TreeviewTable(
     bind=handler_order,
     hide=["8", "3", "5"],
 )
+TreeTable.instrument_list = SubTreeviewTable(
+    frame=disp.frame_instrument_menu_list,
+    name="list",
+    size=0,
+    title=["List"],
+)
+TreeTable.instrument_currency = SubTreeviewTable(
+    frame=disp.frame_instrument_menu_currency,
+    name="currency",
+    size=0,
+    title=["Currency"],
+    subtable=TreeTable.instrument_list,
+)
+TreeTable.instrument_category = SubTreeviewTable(
+    frame=disp.frame_instrument_menu_category,
+    name="category",
+    size=0,
+    title=["Category"],
+    subtable=TreeTable.instrument_currency,
+)
+
 
 # change_color(color=disp.title_color, container=disp.root)
