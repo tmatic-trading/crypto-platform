@@ -147,7 +147,7 @@ class Bitmex(Variables):
         self.logger.info("ws subscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
         res = self.__wait_for_tables()  # subscription confirmation
-        
+
         return res
 
     def unsubscribe_symbol(self, symbol: str) -> None:

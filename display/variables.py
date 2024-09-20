@@ -442,6 +442,7 @@ class Variables:
 
     label_time = tk.Label(frame_state, anchor="e", foreground=fg_color, bg=title_color)
     label_time.pack(side="right")
+    last_gmtime_sec = 0
 
     pw_info_rest.grid(row=1, column=0, sticky="NSEW")
     frame_left.grid_rowconfigure(1, weight=1)
@@ -1217,7 +1218,7 @@ class SubTreeviewTable(TreeviewTable):
 
     def del_sub(self, widget):
         """
-        Deletes all nested tables cascadingly, starting with the subtable of 
+        Deletes all nested tables cascadingly, starting with the subtable of
         this table.
         """
         if widget:
