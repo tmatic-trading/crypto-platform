@@ -73,7 +73,7 @@ class Variables:
 
 def get_usage():
     per_second = int(1000 / var.refresh_rate)
-    if Variables.usage_count == per_second:
+    if Variables.usage_count >= per_second:
         # Comes here 1 time every second
         current_time = time.time()
         current_cpu = os.times()
