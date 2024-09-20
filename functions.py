@@ -2481,7 +2481,7 @@ def init_tables() -> None:
         lines=var.market_list,
         hide=["3", "5", "6"],
     )
-    TreeTable.market = SubTreeviewTable(
+    TreeTable.market = TreeviewTable(
         frame=disp.frame_market,
         name="market",
         title=var.name_market,
@@ -2489,7 +2489,7 @@ def init_tables() -> None:
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
-        subtable=TreeTable.i_category,
+        #subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,
