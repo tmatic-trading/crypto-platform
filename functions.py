@@ -465,6 +465,7 @@ class Function(WS, Variables):
                 + " not found."
             )
             _put_message(market=self.name, message=message, warning="warning")
+
         if "clOrdID" in row:
             if row["clOrdID"]:
                 clOrdID = row["clOrdID"]
@@ -761,7 +762,14 @@ class Function(WS, Variables):
             service.select_database("select count(*) cou from robots")
             var.refresh_hour = utc.hour
             var.logger.info("Emboldening SQLite")
-        disp.label_time["text"] = time.asctime(time.gmtime())
+        current_time = time.gmtime()
+        if current_time.tm_sec != disp.last_gmtime_sec:
+            # We are here once a second
+            asctime = time.asctime(current_time)
+            disp.label_time[
+                "text"
+            ] = f"CPU: {service.Variables.cpu_usage}% MEM: {service.Variables.memory_usage}MB  |  {asctime[0:len(asctime) - 4]}"
+            disp.last_gmtime_sec = current_time.tm_sec
         Function.refresh_tables(self)
 
     def refresh_tables(self: Markets) -> None:
@@ -1982,13 +1990,13 @@ def handler_subscription(event) -> None:
     print("______", market, symb)
     print(var.env[market]["SYMBOLS"])
 
-    #var.env[market]["SYMBOLS"].append(symbol)
+    # var.env[market]["SYMBOLS"].append(symbol)
     value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
-    '''service.set_dotenv(
+    """service.set_dotenv(
         dotenv_path=var.subscriptions,
         key=service.define_symbol_key(market=market),
         value=value,
-    )'''
+    )"""
     TreeTable.market.del_sub(TreeTable.market)
     ws = Markets[market]
     if ws.subscribe_symbol(symbol=symbol):
@@ -1996,14 +2004,14 @@ def handler_subscription(event) -> None:
         _put_message(market=market, message=message)
     else:
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
-        _put_message(market=market, message=message, warning="error")    
+        _put_message(market=market, message=message, warning="error")
 
 
 def handler_bot(event) -> None:
     """
     Handles the event when the bot table is clicked.
     """
-    tree = event.widget 
+    tree = event.widget
     iid = tree.selection()
     if iid:
         iid = tree.selection()[0]
@@ -2425,6 +2433,7 @@ def setup_klines():
                 indx = market_list.index(market)
                 market_list.pop(indx)
 
+
 def _put_message(market: str, message: str, warning=None) -> None:
     """
     Places an information message into the queue and the logger.
@@ -2489,7 +2498,7 @@ def init_tables() -> None:
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
-        #subtable=TreeTable.i_category,
+        # subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,

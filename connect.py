@@ -296,6 +296,8 @@ def refresh() -> None:
         if ws.api_is_active:
             Function.refresh_on_screen(ws, utc=utc)
         var.lock_market_switch.release()
+    # Get Tmatic's CPU and Memory usage
+    service.get_usage()
 
 
 def clear_params():

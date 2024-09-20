@@ -1,3 +1,6 @@
+import os
+import platform
+import time
 import tkinter as tk
 import traceback
 from collections import OrderedDict
@@ -9,6 +12,89 @@ from dotenv import dotenv_values, set_key
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
+
+if platform.system() == "Windows":
+    import ctypes
+    import ctypes.wintypes
+
+    PROCESS_QUERY_INFORMATION = 0x0400
+    PROCESS_VM_READ = 0x0010
+    pid = os.getpid()  # Current process PID
+
+    class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+        _fields_ = [
+            ("cb", ctypes.wintypes.DWORD),
+            ("PageFaultCount", ctypes.wintypes.DWORD),
+            ("PeakWorkingSetSize", ctypes.wintypes.ctypes.c_size_t),
+            ("WorkingSetSize", ctypes.wintypes.ctypes.c_size_t),
+            ("QuotaPeakPagedPoolUsage", ctypes.wintypes.ctypes.c_size_t),
+            ("QuotaPagedPoolUsage", ctypes.wintypes.ctypes.c_size_t),
+            ("QuotaPeakNonPagedPoolUsage", ctypes.wintypes.ctypes.c_size_t),
+            ("QuotaNonPagedPoolUsage", ctypes.wintypes.ctypes.c_size_t),
+            ("PagefileUsage", ctypes.wintypes.ctypes.c_size_t),
+            ("PeakPagefileUsage", ctypes.wintypes.ctypes.c_size_t),
+        ]
+
+    counters = PROCESS_MEMORY_COUNTERS()
+    process_handle = ctypes.windll.kernel32.OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid
+    )
+
+    def get_memory_usage():
+        """Get the memory usage of the current process (Windows)"""
+        ctypes.windll.psapi.GetProcessMemoryInfo(
+            process_handle, ctypes.byref(counters), ctypes.sizeof(counters)
+        )
+        # Return memory usage in bytes (WorkingSetSize = physical memory
+        # currently used by the process)
+        return counters.WorkingSetSize / (1024**2)  # Convert bytes to MB
+
+else:
+    # Unix-like OS (Darwin is macOS)
+    import resource
+
+    def get_memory_usage():
+        """Get the memory usage of the current process (Unix)"""
+        usage = resource.getrusage(resource.RUSAGE_SELF)
+        return usage.ru_maxrss / 1024  # Convert KB to MB
+
+
+class Variables:
+    cpu_count = 1  # os.cpu_count()
+    start_time = 0
+    cpu_start = 0
+    cpu_usage = 0
+    memory_usage = 0
+    usage_count = 0
+
+
+def get_usage():
+    per_second = int(1000 / var.refresh_rate)
+    if Variables.usage_count == per_second:
+        # Comes here 1 time every second
+        current_time = time.time()
+        current_cpu = os.times()
+        if Variables.start_time != 0:
+            # Calculate elapsed real and user times
+            elapsed_real_time = current_time - Variables.start_time
+            elapsed_user_time = current_cpu.user - Variables.cpu_start.user
+            elapsed_sys_time = current_cpu.system - Variables.cpu_start.system
+            # Calculate CPU usage percentage
+            Variables.cpu_usage = int(
+                round(
+                    ((elapsed_user_time + elapsed_sys_time) / elapsed_real_time)
+                    * 100
+                    / Variables.cpu_count,
+                    0,
+                )
+            )
+            # Calculate memory usage in MB
+            Variables.memory_usage = int(round(get_memory_usage(), 0))
+            # print(f"s={current_time}, f={time.time()}, e={time.time() - current_time}")
+        Variables.start_time = current_time
+        Variables.cpu_start = current_cpu
+        Variables.usage_count = 0
+    Variables.usage_count += 1
 
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
