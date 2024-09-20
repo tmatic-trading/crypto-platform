@@ -2451,8 +2451,7 @@ def init_tables() -> None:
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
-        #subtable=TreeTable.instrument_category,
-        #place=False,
+        #subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,
@@ -2479,7 +2478,7 @@ def init_tables() -> None:
         frame=bot_menu.menu_frame,
         name="bot_menu",
         title=var.name_bot_menu,
-        style="bot_menu.Treeview",
+        style="menu.Treeview",
         bind=bot_menu.handler_bot_menu,
         autoscroll=True,
         hierarchy=True,
@@ -2545,25 +2544,28 @@ TreeTable.bot_orders = TreeviewTable(
     bind=handler_order,
     hide=["8", "3", "5"],
 )
-TreeTable.instrument_list = SubTreeviewTable(
-    frame=disp.frame_instrument_menu_list,
+TreeTable.i_list = SubTreeviewTable(
+    frame=disp.frame_i_list,
     name="list",
     size=0,
-    title=["List"],
+    style="menu.Treeview",
+    title=["Instrument"],
 )
-TreeTable.instrument_currency = SubTreeviewTable(
-    frame=disp.frame_instrument_menu_currency,
+TreeTable.i_currency = SubTreeviewTable(
+    frame=disp.frame_i_currency,
     name="currency",
     size=0,
+    style="menu.Treeview",
     title=["Currency"],
-    subtable=TreeTable.instrument_list,
+    subtable=TreeTable.i_list,
 )
-TreeTable.instrument_category = SubTreeviewTable(
-    frame=disp.frame_instrument_menu_category,
+TreeTable.i_category = SubTreeviewTable(
+    frame=disp.frame_i_category,
     name="category",
     size=0,
+    style="menu.Treeview",
     title=["Category"],
-    subtable=TreeTable.instrument_currency,
+    subtable=TreeTable.i_currency,
 )
 
 

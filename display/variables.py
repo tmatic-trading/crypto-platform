@@ -384,7 +384,7 @@ class Variables:
         rowheight=line_height * 3,
     )
     style.configure(
-        "bot_menu.Treeview",
+        "menu.Treeview",
         fieldbackground=title_color,
         background=title_color,
     )
@@ -734,14 +734,15 @@ class Variables:
 
     # Instruments menu widgets
 
-    frame_instrument_menu_category = tk.Frame(root)
-    frame_instrument_menu_currency = tk.Frame(root)
-    frame_instrument_menu_list = tk.Frame(root)
-    instrument_menu = {
-        "market": "",
-        "category": "",
-        "currency": "",
-    }
+    frame_i_category = tk.Frame(
+        root, highlightbackground=bg_select_color, highlightthickness=1
+    )
+    frame_i_currency = tk.Frame(
+        root, highlightbackground=bg_select_color, highlightthickness=1
+    )
+    frame_i_list = tk.Frame(
+        root, highlightbackground=bg_select_color, highlightthickness=1
+    )
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
@@ -860,13 +861,13 @@ class TreeviewTable(Variables):
             self.tree.heading(num, text=name)
             self.tree.column(num, anchor=tk.CENTER, width=50)
         if autoscroll:
-            scroll = AutoScrollbar(frame, orient="vertical")
+            self.scroll = AutoScrollbar(frame, orient="vertical")
         else:
-            scroll = tk.Scrollbar(frame, orient="vertical")
-        scroll.config(command=self.tree.yview)
-        self.tree.config(yscrollcommand=scroll.set)
+            self.scroll = tk.Scrollbar(frame, orient="vertical")
+        self.scroll.config(command=self.tree.yview)
+        self.tree.config(yscrollcommand=self.scroll.set)
         self.tree.grid(row=0, column=0, sticky="NSEW")
-        scroll.grid(row=0, column=1, sticky="NS")
+        self.scroll.grid(row=0, column=1, sticky="NS")
         self.children = list()
         self.children_hierarchical = dict()
         self.tree.tag_configure("Select", background=self.bg_select_color)
@@ -904,7 +905,7 @@ class TreeviewTable(Variables):
         if multicolor:
             self.setup_color_cell()
             self.tree.bind("<Configure>", self.on_window_resize)
-            scroll.resize_init(self.on_scroll_resize)
+            self.scroll.resize_init(self.on_scroll_resize)
             self.tree.bind("<B1-Motion>", self.on_window_resize)
             self.tree.update()
 
@@ -1131,45 +1132,42 @@ class TreeviewTable(Variables):
 
 
 class SubTreeviewTable(TreeviewTable):
-    def __init__(self, subtable=False, place=True, *args, **kwargs):
+    def __init__(self, subtable=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subtable: TreeviewTable = subtable
-        self.place = place
+        self.frame.bind("<Leave>", self.on_leave_frame)
 
     def on_hover(self, event):
-        widget = event.widget
-        item = widget.identify_row(event.y)
-        if self.subtable:
-            if self.subtable.subtable:
-                self.subtable.subtable.frame.place(x=-1000, y=-1000)
+        item = self.tree.identify_row(event.y)
+        self.del_sub(self.subtable)
         if self.active_row != item:
-            widget.tk.call(widget, "tag", "remove", "highlight")
+            self.active_row = item
+            self.tree.tk.call(self.tree, "tag", "remove", "highlight")
             if item:
-                widget.tk.call(widget, "tag", "add", "highlight", item)
-                if self.subtable:                    
+                self.tree.tk.call(self.tree, "tag", "add", "highlight", item)
+                if self.subtable and TreeTable.market.active_row:
                     self.display_subtable(item=item)
-        self.active_row = item
+            else:
+                self.del_sub(self)
 
     def display_subtable(self, item: str):
-        self.instrument_menu[self.name] = item
-        ws = Markets[self.instrument_menu["market"]]
+        ws = Markets[TreeTable.market.active_row]
         if self.name == "market":
             lst = ws.instrument_index.keys()
             x_pos = self.frame_market.winfo_width()
         elif self.name == "category":
-            lst = ws.instrument_index[self.instrument_menu["category"]].keys()
+            lst = ws.instrument_index[TreeTable.i_category.active_row].keys()
             x_pos = (
-                self.frame_market.winfo_width()
-                + self.frame_instrument_menu_category.winfo_width()
+                self.frame_market.winfo_width() + self.frame_i_category.winfo_width()
             )
         elif self.name == "currency":
-            lst = ws.instrument_index[self.instrument_menu["category"]][
-                self.instrument_menu["currency"]
+            lst = ws.instrument_index[TreeTable.i_category.active_row][
+                TreeTable.i_currency.active_row
             ]
             x_pos = (
                 self.frame_market.winfo_width()
-                + self.frame_instrument_menu_category.winfo_width()
-                + self.frame_instrument_menu_currency.winfo_width()
+                + self.frame_i_category.winfo_width()
+                + self.frame_i_currency.winfo_width()
             )
         y_pos = (
             self.tree.winfo_rooty()
@@ -1178,33 +1176,42 @@ class SubTreeviewTable(TreeviewTable):
         )
         self.subtable.clear_all()
         for item in lst:
-            try:
-                print(self.subtable.tree.item(item))
-            except:
-                pass
             self.subtable.insert(values=[item], iid=item)
         self.subtable.tree.column("1", width=200)
-        self.subtable.tree.config(height=len(self.subtable.tree.get_children()))
+        height = len(self.subtable.tree.get_children())
+        if height > 20:
+            height = 20
+            self.subtable.scroll.grid(row=0, column=1, sticky="NS")
+        else:
+            self.subtable.scroll.grid_forget()
+        self.subtable.tree.config(height=height)
         self.subtable.frame.place(x=x_pos, y=y_pos)
-        self.subtable.frame.place()
-    
+
     def on_leave(self, event):
         height = self.tree.winfo_height()
         x, y = self.root.winfo_pointerxy()
         pos_y = self.tree.winfo_rooty()
-        if y < pos_y or y > pos_y + height - 1:
-            self.del_all(TreeTable.market)
+        if y < pos_y or y >= pos_y + height:
+            self.del_sub(TreeTable.market)
+            TreeTable.market.tree.tk.call(
+                TreeTable.market.tree, "tag", "remove", "highlight"
+            )
 
-    '''def print_widget_under_mouse(self):
-        x,y = self.root.winfo_pointerxy()
-        widget = self.root.winfo_containing(x,y)'''
+    def on_leave_frame(self, event):
+        x, y = self.root.winfo_pointerxy()
+        if not self.subtable:
+            if x >= self.frame.winfo_width() + self.frame.winfo_rootx():
+                self.del_sub(TreeTable.market)
+                TreeTable.market.tree.tk.call(
+                    TreeTable.market.tree, "tag", "remove", "highlight"
+                )
 
-
-    def del_all(self, ttt):
-        if ttt.subtable:
-            ttt.subtable.frame.place(x=-1000, y=-1000)
-        if ttt.subtable:
-            self.del_all(ttt.subtable)
+    def del_sub(self, widget):
+        if widget:
+            if widget.subtable:
+                widget.subtable.frame.place(x=-1000, y=-1000)
+                widget.active_row = ""
+                self.del_sub(widget.subtable)
 
 
 class TreeTable:
@@ -1223,9 +1230,9 @@ class TreeTable:
     bot_position: TreeviewTable
     bot_orders: TreeviewTable
     bot_results: TreeviewTable
-    instrument_category: SubTreeviewTable
-    instrument_currency: SubTreeviewTable
-    instrument_list: TreeviewTable
+    i_category: SubTreeviewTable
+    i_currency: SubTreeviewTable
+    i_list: SubTreeviewTable
 
 
 class ClickLabel(tk.Label):
