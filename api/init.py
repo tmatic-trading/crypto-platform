@@ -33,7 +33,7 @@ class Setup(Variables):
             self.api_secret = var.env[name][testnet + "API_SECRET"]
             self.ws_url = var.env[name][testnet + "WS_URL"]
             self.http_url = var.env[name][testnet + "HTTP_URL"]
-            self.symbol_list = var.env[name]["SYMBOLS"]
+            self.symbol_list = var.env[name]["SYMBOLS"].copy()
             if not URI_validator(self.ws_url):
                 exception = HostNameIsInvalid(uri=self.ws_url)
                 Error.handler(self, exception=exception, verb="Host name check")

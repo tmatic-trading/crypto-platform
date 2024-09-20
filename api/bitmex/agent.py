@@ -397,9 +397,6 @@ class Agent(Bitmex):
                     self.name,
                 )
                 instrument = self.Instrument[order["symbol"]]
-                # order["orderQty"] *= instrument.valueOfOneContract
-                # order["leavesQty"] *= instrument.valueOfOneContract
-                # order["cumQty"] *= instrument.valueOfOneContract
                 order["orderQty"] /= instrument.myMultiplier
                 order["leavesQty"] /= instrument.myMultiplier
                 order["cumQty"] /= instrument.myMultiplier

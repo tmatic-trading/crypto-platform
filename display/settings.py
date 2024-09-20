@@ -246,7 +246,7 @@ class SettingsApp:
         for market in self.market_list:
             var.env[market]["SYMBOLS"] = list()
             try:
-                sub = f"{market}_SYMBOLS"
+                sub = service.define_symbol_key(market=market)
                 symbols = values[sub].replace(",", " ").split()
                 for symb in symbols:
                     var.env[market]["SYMBOLS"].append((symb, market))
@@ -255,7 +255,7 @@ class SettingsApp:
                     var.env[market]["SYMBOLS"].append((symb, market))
                 set_key(
                     dotenv_path=self.env_file_subscriptions,
-                    key_to_set=f"{market}_SYMBOLS",
+                    key_to_set=service.define_symbol_key(market=market),
                     value_to_set=str(self.default_subscriptions[market])[2:-2],
                 )
 
@@ -277,13 +277,19 @@ class SettingsApp:
         ----------
         subscriptions: OrderedDict
             Every dictionary item is a list of instrument symbols.
+            Example:
+                OrderedDict(
+                    [('Bitmex', [('XBTUSDT', 'Bitmex')]),
+                        ('Bybit', [('BTCUSDT', 'Bybit')]),
+                            ('Deribit', [('BTC-PERPETUAL', 'Deribit')])]
+                )
         """
         self.env_file_subscriptions.touch(mode=0o600)
         for market in self.market_list:
             for symbol in subscriptions[market]:
                 set_key(
                     dotenv_path=self.env_file_subscriptions,
-                    key_to_set=f"{market}_SYMBOLS",
+                    key_to_set=service.define_symbol_key(market=market),
                     value_to_set=symbol[0],
                 )
 

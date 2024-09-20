@@ -4,6 +4,8 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
+from dotenv import dotenv_values, set_key
+
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
@@ -478,3 +480,18 @@ def fill_instrument_index(index: dict, instrument: Instrument) -> dict:
             index[category][currency].append(symbol)
 
     return index
+
+
+def define_symbol_key(market: str):
+    return f"{market}_SYMBOLS"
+
+
+def set_dotenv(dotenv_path: str, key: str, value: str):
+    """
+    Updates dotenv file.
+    """
+    set_key(
+        dotenv_path=dotenv_path,
+        key_to_set=key,
+        value_to_set=value,
+    )

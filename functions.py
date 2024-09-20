@@ -1,6 +1,7 @@
 import threading
 import time
 import tkinter as tk
+from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from random import randint
@@ -14,7 +15,7 @@ from botinit.variables import Variables as robo
 from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.functions import info_display
-from display.messages import ErrorMessage
+from display.messages import ErrorMessage, Message
 from display.variables import AutoScrollbar, SubTreeviewTable, TreeTable, TreeviewTable
 from display.variables import Variables as disp
 
@@ -310,15 +311,7 @@ class Function(WS, Variables):
                             MARKET=self.name,
                             POSITION=data["sum"],
                         )
-                        self.logger.error(message)
-                        var.queue_info.put(
-                            {
-                                "market": self.name,
-                                "message": message,
-                                "time": datetime.now(tz=timezone.utc),
-                                "warning": "error",
-                            }
-                        )
+                        _put_message(market=self.name, message=message, warning="error")
                     else:
                         emi = row["symbol"][0]
                         if diff > 0:
@@ -471,16 +464,7 @@ class Function(WS, Variables):
                 + clOrdID
                 + " not found."
             )
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": self.name,
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": "warning",
-                }
-            )
-
+            _put_message(market=self.name, message=message, warning="warning")
         if "clOrdID" in row:
             if row["clOrdID"]:
                 clOrdID = row["clOrdID"]
@@ -1939,37 +1923,6 @@ def format_number(number: Union[float, str]) -> str:
     return number
 
 
-def warning_window(
-    message: str, widget=None, item=None, width=400, height=150, title="Warning"
-) -> None:
-    def on_closing() -> None:
-        warn_window.destroy()
-        if widget:
-            widget.selection_remove(item)
-
-    warn_window = tk.Toplevel()
-    warn_window.geometry(
-        "{}x{}+{}+{}".format(
-            width,
-            height,
-            disp.screen_width // 2 - width // 2 - randint(0, 7) * 15,
-            disp.screen_height // 2 - height // 2,
-        )
-    )
-    warn_window.title(title)
-    warn_window.protocol("WM_DELETE_WINDOW", on_closing)
-    warn_window.attributes("-topmost", 1)
-    text = tk.Text(warn_window, wrap="word")
-    scroll = AutoScrollbar(warn_window, orient="vertical")
-    scroll.config(command=text.yview)
-    text.config(yscrollcommand=scroll.set)
-    text.insert("insert", message)
-    text.grid(row=0, column=0, sticky="NSEW")
-    scroll.grid(row=0, column=1, sticky="NS")
-    warn_window.grid_columnconfigure(0, weight=1)
-    warn_window.grid_rowconfigure(0, weight=1)
-
-
 def handler_instrument(event) -> None:
     tree = event.widget
     items = tree.selection()
@@ -2011,16 +1964,82 @@ def handler_market(event) -> None:
             clear_tables()
 
 
+def handler_subscription(event) -> None:
+    """
+    Opens a websocket subscription for an instrument selected in the
+    Instruments menu.
+
+    Parameters
+    ----------
+    market: str
+        Market names such as Bitmex, Bybit.
+    symbol: str
+        Instrument symbol.
+    """
+    market = TreeTable.market.active_row
+    symb = TreeTable.i_list.active_row
+    symbol = (symb, market)
+    print("______", market, symb)
+    print(var.env[market]["SYMBOLS"])
+
+    #var.env[market]["SYMBOLS"].append(symbol)
+    value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
+    '''service.set_dotenv(
+        dotenv_path=var.subscriptions,
+        key=service.define_symbol_key(market=market),
+        value=value,
+    )'''
+    TreeTable.market.del_sub(TreeTable.market)
+    ws = Markets[market]
+    if ws.subscribe_symbol(symbol=symbol):
+        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
+        _put_message(market=market, message=message)
+    else:
+        message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
+        _put_message(market=market, message=message, warning="error")    
+
+
 def handler_bot(event) -> None:
     """
     Handles the event when the bot table is clicked.
     """
-    tree = event.widget
+    tree = event.widget 
     iid = tree.selection()
     if iid:
         iid = tree.selection()[0]
         disp.on_bot_menu("None")
         bot_menu.bot_manager.show(iid)
+
+
+def warning_window(
+    message: str, widget=None, item=None, width=400, height=150, title="Warning"
+) -> None:
+    def on_closing() -> None:
+        warn_window.destroy()
+        if widget:
+            widget.selection_remove(item)
+
+    warn_window = tk.Toplevel()
+    warn_window.geometry(
+        "{}x{}+{}+{}".format(
+            width,
+            height,
+            disp.screen_width // 2 - width // 2 - randint(0, 7) * 15,
+            disp.screen_height // 2 - height // 2,
+        )
+    )
+    warn_window.title(title)
+    warn_window.protocol("WM_DELETE_WINDOW", on_closing)
+    warn_window.attributes("-topmost", 1)
+    text = tk.Text(warn_window, wrap="word")
+    scroll = AutoScrollbar(warn_window, orient="vertical")
+    scroll.config(command=text.yview)
+    text.config(yscrollcommand=scroll.set)
+    text.insert("insert", message)
+    text.grid(row=0, column=0, sticky="NSEW")
+    scroll.grid(row=0, column=1, sticky="NS")
+    warn_window.grid_columnconfigure(0, weight=1)
+    warn_window.grid_rowconfigure(0, weight=1)
 
 
 def change_color(color: str, container=None) -> None:
@@ -2406,6 +2425,25 @@ def setup_klines():
                 indx = market_list.index(market)
                 market_list.pop(indx)
 
+def _put_message(market: str, message: str, warning=None) -> None:
+    """
+    Places an information message into the queue and the logger.
+    """
+    var.queue_info.put(
+        {
+            "market": market,
+            "message": message,
+            "time": datetime.now(tz=timezone.utc),
+            "warning": warning,
+        }
+    )
+    if not warning:
+        var.logger.info(market + " - " + message)
+    elif warning == "warning":
+        var.logger.warning(market + " - " + message)
+    else:
+        var.logger.error(market + " - " + message)
+
 
 def clear_klines():
     """
@@ -2443,7 +2481,7 @@ def init_tables() -> None:
         lines=var.market_list,
         hide=["3", "5", "6"],
     )
-    TreeTable.market = TreeviewTable(
+    TreeTable.market = SubTreeviewTable(
         frame=disp.frame_market,
         name="market",
         title=var.name_market,
@@ -2451,7 +2489,7 @@ def init_tables() -> None:
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
-        #subtable=TreeTable.i_category,
+        subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,
@@ -2550,6 +2588,7 @@ TreeTable.i_list = SubTreeviewTable(
     size=0,
     style="menu.Treeview",
     title=["Instrument"],
+    bind=handler_subscription,
 )
 TreeTable.i_currency = SubTreeviewTable(
     frame=disp.frame_i_currency,

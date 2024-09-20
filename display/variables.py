@@ -735,13 +735,22 @@ class Variables:
     # Instruments menu widgets
 
     frame_i_category = tk.Frame(
-        root, highlightbackground=bg_select_color, highlightthickness=1
+        root,
+        highlightbackground=bg_select_color,
+        highlightcolor=bg_select_color,
+        highlightthickness=1,
     )
     frame_i_currency = tk.Frame(
-        root, highlightbackground=bg_select_color, highlightthickness=1
+        root,
+        highlightbackground=bg_select_color,
+        highlightcolor=bg_select_color,
+        highlightthickness=1,
     )
     frame_i_list = tk.Frame(
-        root, highlightbackground=bg_select_color, highlightthickness=1
+        root,
+        highlightbackground=bg_select_color,
+        highlightcolor=bg_select_color,
+        highlightthickness=1,
     )
 
     def resize_width(event, pw, start_width, min_ratio):
@@ -1207,6 +1216,10 @@ class SubTreeviewTable(TreeviewTable):
                 )
 
     def del_sub(self, widget):
+        """
+        Deletes all nested tables cascadingly, starting with the subtable of 
+        this table.
+        """
         if widget:
             if widget.subtable:
                 widget.subtable.frame.place(x=-1000, y=-1000)

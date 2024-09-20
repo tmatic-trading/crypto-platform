@@ -146,7 +146,9 @@ class Bitmex(Variables):
             subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
         self.logger.info("ws subscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
-        self.__wait_for_tables()  # subscription confirmation
+        res = self.__wait_for_tables()  # subscription confirmation
+        
+        return res
 
     def unsubscribe_symbol(self, symbol: str) -> None:
         subscriptions = []
@@ -225,6 +227,8 @@ class Bitmex(Variables):
                 self.logNumFatal = "FATAL"
                 return
             sleep(0.1)
+
+        return "success"
 
     def __on_message(self, ws, message) -> None:
         """

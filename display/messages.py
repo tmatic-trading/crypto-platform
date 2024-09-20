@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class Message(str, Enum):
-    SUBSCRIPTION_ADDED = "Added subscription to {SYMBOL}."
+    SUBSCRIPTION_ADDED = "Subscription successfully added to {SYMBOL}."
     DEFAULT_SYMBOL_ADDED = (
         "{MARKET} symbol list is empty. Added default symbol {SYMBOL}."
     )
@@ -64,6 +64,7 @@ class ErrorMessage(str, Enum):
         "Request {PATH} received empty. ({TICKER} {CATEGORY}) instrument not found."
     )
     REQUEST_EMPTY = "Request {PATH} received empty."
+    FAILED_SUBSCRIPTION = "Failed to subscribe to {SYMBOL}"
 
     def __str__(self) -> str:
         return self.value
