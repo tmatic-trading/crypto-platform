@@ -768,7 +768,7 @@ class Function(WS, Variables):
             asctime = time.asctime(current_time)
             disp.label_time[
                 "text"
-            ] = f"CPU: {service.Variables.cpu_usage}% MEM: {service.Variables.memory_usage}MB  |  {asctime[0:len(asctime) - 4]}"
+            ] = f"CPU: {service.Variables.cpu_usage}%  MEM: {service.Variables.memory_usage}MB  |  {asctime[0:len(asctime) - 4]}"
             disp.last_gmtime_sec = current_time.tm_sec
         Function.refresh_tables(self)
 

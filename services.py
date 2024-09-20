@@ -56,7 +56,10 @@ else:
     def get_memory_usage():
         """Get the memory usage of the current process (Unix)"""
         usage = resource.getrusage(resource.RUSAGE_SELF)
-        return usage.ru_maxrss / 1024  # Convert KB to MB
+        if platform.system() == "Darwin":
+            return usage.ru_maxrss / 1048576  # Convert B to MB
+        else:
+            return usage.ru_maxrss / 1024  # Convert KB to MB
 
 
 class Variables:
