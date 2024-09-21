@@ -134,9 +134,10 @@ class Agent(Deribit):
         instrument.asks = [[0, 0]]
         instrument.bids = [[0, 0]]
         instrument.valueOfOneContract = 1
-        self.instrument_index = service.fill_instrument_index(
-            index=self.instrument_index, instrument=instrument
-        )
+        if instrument.state == "Open":
+            self.instrument_index = service.fill_instrument_index(
+                index=self.instrument_index, instrument=instrument
+            )
 
     def open_orders(self) -> str:
         """

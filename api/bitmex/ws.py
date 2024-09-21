@@ -83,7 +83,7 @@ class Bitmex(Variables):
             self.__connect(self.__get_url())
             if not self.logNumFatal:
                 self.logger.info("Connected to websocket.")
-                self.__wait_for_tables()
+                self.__wait_for_tables(self.symbol_list)
                 if not self.logNumFatal:
                     self.logger.info("Data received. Continuing.")
                     self.pinging = "pong"
@@ -146,7 +146,9 @@ class Bitmex(Variables):
             subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
         self.logger.info("ws subscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
-        res = self.__wait_for_tables()  # subscription confirmation
+        symbol_list = self.symbol_list.copy()
+        symbol_list.append(symbol)
+        res = self.__wait_for_tables(symbol_list)  # subscription confirmation
 
         return res
 
@@ -189,7 +191,7 @@ class Bitmex(Variables):
             self.logNumFatal = "FATAL"
             return []
 
-    def __wait_for_tables(self) -> None:
+    def __wait_for_tables(self, symbol_list) -> None:
         """
         Waiting for data to be loaded from the websocket. If not all data is
         received after the timeout expires, the websocket is rebooted.
@@ -212,13 +214,14 @@ class Bitmex(Variables):
                     return self.logNumFatal
                 sleep(0.1)
             count = 0
-        while len(self.data["instrument"]) != len(self.symbol_list):
+        while len(self.data["instrument"]) != len(symbol_list):
             count += 1
             if count > 30:  # fails after 3 seconds
-                instr_lack = self.symbol_list.copy()
+                instr_lack = symbol_list.copy()
                 for instrument in self.data["instrument"].values():
-                    if instrument["symbol"] in self.symbol_list:
-                        instr_lack.remove(instrument["symbol"])
+                    symb = (instrument["symbol"], self.name)
+                    if symb in symbol_list:
+                        instr_lack.remove(symb)
                 self.logger.info(
                     "Timeout expired. Not all instruments has been loaded. "
                     + str(instr_lack)

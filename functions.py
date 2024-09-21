@@ -1987,21 +1987,21 @@ def handler_subscription(event) -> None:
     market = TreeTable.market.active_row
     symb = TreeTable.i_list.active_row
     print("______", market, symb)
-    if market:
-        symbol = (symb, market)
+    if market:        
+        symbol = (symb, market)        
         print(var.env[market]["SYMBOLS"])
         TreeTable.market.del_sub(TreeTable.market)
         ws = Markets[market]
         if not ws.subscribe_symbol(symbol=symbol):
             message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
             _put_message(market=market, message=message)
-            """var.env[market]["SYMBOLS"].append(symbol)
+            '''var.env[market]["SYMBOLS"].append(symbol)
             value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
             service.set_dotenv(
                 dotenv_path=var.subscriptions,
                 key=service.define_symbol_key(market=market),
                 value=value,
-            )"""
+            )'''
         else:
             message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
             _put_message(market=market, message=message, warning="error")
@@ -2499,7 +2499,7 @@ def init_tables() -> None:
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
-        # subtable=TreeTable.i_category,
+        #subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,

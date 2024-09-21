@@ -15,8 +15,8 @@ def add_subscription(subscriptions: list) -> None:
         if symbol[1] in var.market_list:
             ws = Markets[symbol[1]]
             ws.positions[symbol] = {"POS": 0}
-            ws.symbol_list.append(symbol)
             if not ws.subscribe_symbol(symbol=symbol):
+                ws.symbol_list.append(symbol)
                 message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
                 _put_message(market=ws.name, message=message)
             else:
