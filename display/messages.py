@@ -2,7 +2,8 @@ from enum import Enum
 
 
 class Message(str, Enum):
-    SUBSCRIPTION_ADDED = "Subscription added for {SYMBOL}."
+    SUBSCRIPTION_WAITING = "Subscription to {SYMBOL}. Waiting for confirmation."
+    SUBSCRIPTION_ADDED = "Added subscription to {SYMBOL}."
     DEFAULT_SYMBOL_ADDED = (
         "{MARKET} symbol list is empty. Added default symbol {SYMBOL}."
     )

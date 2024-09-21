@@ -73,6 +73,7 @@ class Variables:
         "lotSize",
     ]
     name_instrument = [
+        "MARKET",
         "SYMBOL",
         "CAT",
         "POS",
@@ -242,3 +243,4 @@ class Variables:
         "Deribit": [("BTC-PERPETUAL", "Deribit")],
     }
     reloading = False
+    subscription_res = dict()

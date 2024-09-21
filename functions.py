@@ -1,7 +1,6 @@
 import threading
 import time
 import tkinter as tk
-from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from random import randint
@@ -12,7 +11,7 @@ import services as service
 from api.api import WS, Markets
 from api.variables import Variables
 from botinit.variables import Variables as robo
-from common.data import BotData, Bots
+from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.functions import info_display
 from display.messages import ErrorMessage, Message
@@ -775,13 +774,12 @@ class Function(WS, Variables):
     def refresh_tables(self: Markets) -> None:
         current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
 
-        # Refresh instrument table
+        # service.count_orders()
 
-        service.count_orders()
+        # Refresh instrument table
 
         tree = TreeTable.instrument
 
-        # d tm = datetime.now()
         for num, symbol in enumerate(self.symbol_list):
             instrument = self.Instrument[symbol]
             compare = [
@@ -813,6 +811,47 @@ class Function(WS, Variables):
                     instrument.fundingRate,
                 ]
                 tree.update(row=num, values=row)
+
+        # d tm = datetime.now()
+        """for market in var.market_list:
+            ws = Markets[market]
+            for symbol in ws.symbol_list:
+                instrument = ws.Instrument[symbol]
+                compare = [
+                    symbol[0],
+                    instrument.category,
+                    instrument.currentQty,
+                    instrument.avgEntryPrice,
+                    instrument.unrealisedPnl,
+                    instrument.marginCallPrice,
+                    instrument.state,
+                    instrument.volume24h,
+                    instrument.expire,
+                    instrument.fundingRate,
+                ]
+                iid = market + symbol[0]
+                if iid in tree.children_hierarchical[market]:
+                    if compare != tree.cache[iid]:
+                        tree.cache[iid] = compare.copy()
+                        tree.update_hierarchical(
+                            parent=market,
+                            iid=iid,
+                            values=Function.form_instrument_line(
+                                self,
+                                compare=compare,
+                                instrument=instrument,
+                                symbol=symbol,
+                            ),
+                        )
+                else:
+                    tree.insert_hierarchical(
+                        parent=market,
+                        iid=iid,
+                        values=Function.form_instrument_line(
+                            self, compare=compare, instrument=instrument, symbol=symbol
+                        ),
+                        indx=0,
+                    )"""
         # d print("___instrument", datetime.now() - tm)
 
         # Refresh orderbook table
@@ -1272,6 +1311,18 @@ class Function(WS, Variables):
                     if len(tree.children) > 1 and "notification" in tree.children:
                         tree.delete(iid="notification")
 
+    def form_instrument_line(
+        self, compare: list, instrument: Instrument, symbol: tuple
+    ) -> list:
+        compare[2] = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
+        compare[3] = Function.format_price(
+            self, number=instrument.avgEntryPrice, symbol=symbol
+        )
+        compare[4] = format_number(number=instrument.unrealisedPnl)
+        compare[7] = Function.humanFormat(self, instrument.volume24h, symbol)
+
+        return compare
+
     def update_result_line(
         self, iid: str, compare: list, market: str, tree: TreeviewTable
     ) -> None:
@@ -1524,6 +1575,11 @@ class Function(WS, Variables):
             pnl = "-"
 
         return pnl
+
+
+def delete_instrument_TreeTable(symbol):
+    tree = TreeTable.instrument
+    tree.delete_hierarchical(parent=symbol[1], iid=symbol[1] + symbol[0])
 
 
 def handler_order(event) -> None:
@@ -1972,6 +2028,30 @@ def handler_market(event) -> None:
             clear_tables()
 
 
+def confirm_subscription(market, symb, timeout=None):
+    ws = Markets[market]
+    symbol = (symb, market)
+    message = Message.SUBSCRIPTION_WAITING.format(SYMBOL=symbol[0])
+    _put_message(market=market, message=message)
+    res = ws.subscribe_symbol(symbol=symbol, timeout=timeout)
+    if not res:
+        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
+        _put_message(market=market, message=message)
+        ws.symbol_list = [symbol] + ws.symbol_list
+        """var.env[market]["SYMBOLS"].append(symbol)
+        value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
+        service.set_dotenv(
+            dotenv_path=var.subscriptions,
+            key=service.define_symbol_key(market=market),
+            value=value,
+        )"""
+        return "success"
+    else:
+        message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
+        _put_message(market=market, message=message, warning="error")
+        return
+
+
 def handler_subscription(event) -> None:
     """
     Opens a websocket subscription for an instrument selected in the
@@ -1986,25 +2066,13 @@ def handler_subscription(event) -> None:
     """
     market = TreeTable.market.active_row
     symb = TreeTable.i_list.active_row
-    print("______", market, symb)
-    if market:        
-        symbol = (symb, market)        
+    if market:
+        # symbol = (symb, market)
         print(var.env[market]["SYMBOLS"])
         TreeTable.market.del_sub(TreeTable.market)
-        ws = Markets[market]
-        if not ws.subscribe_symbol(symbol=symbol):
-            message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
-            _put_message(market=market, message=message)
-            '''var.env[market]["SYMBOLS"].append(symbol)
-            value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
-            service.set_dotenv(
-                dotenv_path=var.subscriptions,
-                key=service.define_symbol_key(market=market),
-                value=value,
-            )'''
-        else:
-            message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
-            _put_message(market=market, message=message, warning="error")
+        # ws = Markets[market]
+        t = threading.Thread(target=confirm_subscription, args=(market, symb))
+        t.start()
         TreeTable.i_list.clear_all()
 
 
@@ -2480,6 +2548,8 @@ def init_tables() -> None:
         title=var.name_instrument,
         size=len(ws.symbol_list),
         bind=handler_instrument,
+        # hierarchy=True,
+        # lines=var.market_list,
         hide=["9", "8", "2"],
     )
     TreeTable.account = TreeviewTable(
@@ -2499,7 +2569,7 @@ def init_tables() -> None:
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
-        #subtable=TreeTable.i_category,
+        # subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,

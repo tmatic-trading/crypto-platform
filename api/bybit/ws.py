@@ -1,6 +1,7 @@
 import json
 import threading
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import services as service
@@ -9,6 +10,7 @@ from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
+from display.messages import ErrorMessage, Message
 
 from .pybit.unified_trading import HTTP, WebSocket
 
@@ -85,10 +87,14 @@ class Bybit(Variables):
             for symbol in self.symbol_list:
                 if self.Instrument[symbol].category == category:
                     lst.append(symbol)
+            threads = []
             for symbol in lst:
-                error = self.subscribe_symbol(symbol=symbol)
-                if error:
-                    break
+                t = threading.Thread(
+                    target=self.subscribe_symbol, args=(symbol, True, 7)
+                )
+                t.start()
+                threads.append(t)
+            [thread.join() for thread in threads]
 
         def private_in_thread():
             try:
@@ -183,6 +189,7 @@ class Bybit(Variables):
                 instrument.vega = values["greeks"]["gamma"]
                 instrument.bidIv = values["bid_iv"]
                 instrument.vega = values["ask_iv"]
+        instrument.confirm = True
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:
@@ -340,7 +347,6 @@ class Bybit(Variables):
             self.ws_private.exit()
         except Exception:
             pass
-        # self.logNumFatal = "SETUP"
         self.logger.info(self.name + " - Websocket closed")
 
     def transaction(self, **kwargs):
@@ -378,7 +384,7 @@ class Bybit(Variables):
 
         return True
 
-    def subscribe_symbol(self, symbol: tuple) -> None:
+    def subscribe(self, symbol: tuple) -> str:
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
         category = instrument.category
@@ -600,3 +606,43 @@ class Bybit(Variables):
             self.ws[category].callback_directory.pop(arg_ticker)
         if arg_orderbook in self.ws[category].callback_directory:
             self.ws[category].callback_directory.pop(arg_ticker)
+
+    def subscribe_symbol(self, symbol: tuple, answer=False, timeout=None) -> str:
+        self.subscribe(symbol=symbol)
+        """message = Message.SUBSCRIPTION_WAITING.format(SYMBOL=symbol[0])
+        self._put_message(message=message)"""
+        instrument = self.Instrument[symbol]
+        count = 0
+        sleep = 0.1
+        while self.api_is_active:
+            if instrument.confirm:
+                if answer:
+                    message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
+                    self._put_message(message=message)
+                return
+            count += sleep
+            if timeout and count > timeout:
+                message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol[0])
+                self._put_message(message=message)
+                self.logNumFatal = "FATAL"
+                return
+            time.sleep(sleep)
+
+    def _put_message(self, message: str, warning=None) -> None:
+        """
+        Places an information message into the queue and the logger.
+        """
+        var.queue_info.put(
+            {
+                "market": self.name,
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": warning,
+            }
+        )
+        if not warning:
+            var.logger.info(self.name + " - " + message)
+        elif warning == "warning":
+            var.logger.warning(self.name + " - " + message)
+        else:
+            var.logger.error(self.name + " - " + message)

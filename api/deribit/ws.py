@@ -473,7 +473,7 @@ class Deribit(Variables):
             return False
         return True
 
-    def subscribe_symbol(self, symbol: tuple) -> None:
+    def subscribe_symbol(self, symbol: tuple, timeout=None) -> None:
         ticker = self.Instrument[symbol].ticker
         channel = [f"book.{ticker}.none.{self.orderbook_depth}.100ms"]
         self.logger.info("ws subscription - Orderbook - channel - " + str(channel))

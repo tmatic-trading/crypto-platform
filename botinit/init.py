@@ -1,3 +1,4 @@
+import threading
 from collections import OrderedDict
 from datetime import datetime, timezone
 
@@ -11,17 +12,34 @@ from display.messages import ErrorMessage, Message
 
 
 def add_subscription(subscriptions: list) -> None:
+    threads = []
+    var.subscription_res = dict()
     for symbol in subscriptions:
         if symbol[1] in var.market_list:
             ws = Markets[symbol[1]]
             ws.positions[symbol] = {"POS": 0}
-            if not ws.subscribe_symbol(symbol=symbol):
-                ws.symbol_list.append(symbol)
-                message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
-                _put_message(market=ws.name, message=message)
-            else:
-                message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
-                _put_message(market=ws.name, message=message, warning="error")
+            var.subscription_res[symbol] = None
+            t = threading.Thread(
+                target=functions.confirm_subscription,
+                args=(
+                    symbol[1],
+                    symbol[0],
+                    None,
+                ),
+            )
+            t.start()
+        else:
+            message = (
+                "You are trying to subscribe "
+                + str(symbol)
+                + " but "
+                + symbol[1]
+                + " is not active. Check the .env.Subscriptions file."
+            )
+            _put_message(market=ws.name, message=message, warning="warning")
+    [thread.join() for thread in threads]
+    for symbol, res in var.subscription_res.items():
+        if res:
             qwr = (
                 "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY from coins where "
                 + "SYMBOL = '"
@@ -34,15 +52,6 @@ def add_subscription(subscriptions: list) -> None:
             )
             data = service.select_database(qwr)
             ws.Instrument[symbol].volume = data[0]["SUM_QTY"]
-        else:
-            message = (
-                "You are trying to subscribe "
-                + str(symbol)
-                + " but "
-                + symbol[1]
-                + " is not active. Check the .env.Subscriptions file."
-            )
-            _put_message(market=ws.name, message=message, warning="warning")
 
 
 def load_bots() -> None:
@@ -136,15 +145,15 @@ def load_bots() -> None:
                 ticker=value["TICKER"],
                 category=value["CATEGORY"],
             )
-            symb = (value["SYMBOL"], ws.name)
-            if symb not in ws.symbol_list:
-                if ws.Instrument[symb].state == "Open":
-                    subscriptions.append(symb)
-                    message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symb)
+            symbol = (value["SYMBOL"], ws.name)
+            if symbol not in ws.symbol_list:
+                if ws.Instrument[symbol].state == "Open":
+                    subscriptions.append(symbol)
+                    message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
                     var.logger.info(message)
                 else:
                     message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
-                        SYMBOL=symb, STATE=ws.Instrument[symb].state
+                        SYMBOL=symbol[0], STATE=ws.Instrument[symbol].state
                     )
                     _put_message(market="", message=message, warning="error")
             name = value["EMI"]

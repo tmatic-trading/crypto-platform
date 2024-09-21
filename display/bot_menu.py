@@ -243,8 +243,13 @@ class SettingsApp:
 
     def insert_bot_menu(self, name: str, new=False) -> None:
         tree = TreeTable.bot_menu
+        if new:
+            if "New_bot!" in tree.children:
+                indx = tree.children.index("New_bot!")
+        else:
+            indx = "end"
         tree.insert_hierarchical(
-            parent="", iid=name, text=name, configure="Gray", new=new
+            parent="", iid=name, text=name, configure="Gray", indx=indx
         )
         for option in self.bot_options.keys():
             iid = f"{name}!{option}"

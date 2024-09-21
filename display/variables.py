@@ -960,13 +960,8 @@ class TreeviewTable(Variables):
         self.children_hierarchical[parent] = self.tree.get_children(parent)
 
     def insert_hierarchical(
-        self, parent: str, iid: str, values=[], configure="", text="", new=False
+        self, parent: str, iid: str, values=[], configure="", text="", indx="end"
     ):
-        if new:
-            if "New_bot!" in self.children:
-                indx = self.children.index("New_bot!")
-        else:
-            indx = "end"
         self.tree.insert(
             parent, indx, iid=iid, values=values, tags=configure, text=text
         )

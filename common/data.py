@@ -54,6 +54,9 @@ class Instrument:
             ``option linear``,
             ``option reversed``,
             ``option_combo reversed``,
+    confirm: bool
+        Confirmation of successful subscription to the instrument (Bybit
+        only).
     currentQty: float
         Position size
     expire: datetime
@@ -75,6 +78,8 @@ class Instrument:
     myMultiplier: int
         :::For Bitmex only::: Converts quantity when displayed on screen.
         For other exchanges it is equal to 1.
+    openInterest: float
+        Open interest size.
     precision: int
         Based on the ``lotSize`` of the instrument. Used to round volumes
         ​​when displayed on the screen.
@@ -151,6 +156,8 @@ class Instrument:
     theta: float
     gamma: float
     change24h: float
+
+    confirm: bool = False
 
     def __iter__(self):
         return Ret.iter(self)
