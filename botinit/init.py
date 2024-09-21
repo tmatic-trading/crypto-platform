@@ -16,7 +16,12 @@ def add_subscription(subscriptions: list) -> None:
             ws = Markets[symbol[1]]
             ws.positions[symbol] = {"POS": 0}
             ws.symbol_list.append(symbol)
-            ws.subscribe_symbol(symbol=symbol)
+            if not ws.subscribe_symbol(symbol=symbol):
+                message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
+                _put_message(market=ws.name, message=message)
+            else:
+                message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
+                _put_message(market=ws.name, message=message, warning="error")
             qwr = (
                 "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY from coins where "
                 + "SYMBOL = '"
@@ -37,15 +42,7 @@ def add_subscription(subscriptions: list) -> None:
                 + symbol[1]
                 + " is not active. Check the .env.Subscriptions file."
             )
-            var.logger.warning(message)
-            var.queue_info.put(
-                {
-                    "market": symbol[1],
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": "warning",
-                }
-            )
+            _put_message(market=ws.name, message=message, warning="warning")
 
 
 def load_bots() -> None:
@@ -149,15 +146,7 @@ def load_bots() -> None:
                     message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
                         SYMBOL=symb, STATE=ws.Instrument[symb].state
                     )
-                    var.logger.warning(message)
-                    var.queue_info.put(
-                        {
-                            "market": "",
-                            "message": message,
-                            "time": datetime.now(tz=timezone.utc),
-                            "warning": "error",
-                        }
-                    )
+                    _put_message(market="", message=message, warning="error")
             name = value["EMI"]
             if name not in Bots.keys():
                 if value["SYMBOL"] != name:
@@ -230,18 +219,30 @@ def load_bots() -> None:
                     + value["MARKET"]
                     + " to the .env.Settings file."
                 )
-                var.logger.warning(message)
-                var.queue_info.put(
-                    {
-                        "market": "",
-                        "message": message,
-                        "time": datetime.now(tz=timezone.utc),
-                        "warning": "warning",
-                    }
-                )
+                _put_message(market="", message=message, warning="warning")
         var.lock.release()
 
     # Importing the strategy.py bot files
 
     for bot_name in Bots.keys():
         import_bot_module(bot_name=bot_name)
+
+
+def _put_message(market: str, message: str, warning=None) -> None:
+    """
+    Places an information message into the queue and the logger.
+    """
+    var.queue_info.put(
+        {
+            "market": market,
+            "message": message,
+            "time": datetime.now(tz=timezone.utc),
+            "warning": warning,
+        }
+    )
+    if not warning:
+        var.logger.info(market + " - " + message)
+    elif warning == "warning":
+        var.logger.warning(market + " - " + message)
+    else:
+        var.logger.error(market + " - " + message)

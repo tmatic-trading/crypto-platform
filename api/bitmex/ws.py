@@ -209,7 +209,7 @@ class Bitmex(Variables):
                         + " - missing."
                     )
                     self.logNumFatal = "FATAL"
-                    return
+                    return self.logNumFatal
                 sleep(0.1)
             count = 0
         while len(self.data["instrument"]) != len(self.symbol_list):
@@ -225,10 +225,10 @@ class Bitmex(Variables):
                     + " - missing in the instrument table."
                 )
                 self.logNumFatal = "FATAL"
-                return
+                return self.logNumFatal
             sleep(0.1)
 
-        return "success"
+        return ""
 
     def __on_message(self, ws, message) -> None:
         """

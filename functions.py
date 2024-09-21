@@ -1999,7 +1999,7 @@ def handler_subscription(event) -> None:
     )"""
     TreeTable.market.del_sub(TreeTable.market)
     ws = Markets[market]
-    if ws.subscribe_symbol(symbol=symbol):
+    if not ws.subscribe_symbol(symbol=symbol):
         message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
         _put_message(market=market, message=message)
     else:

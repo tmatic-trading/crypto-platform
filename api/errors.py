@@ -65,6 +65,11 @@ class Error(Variables):
             FATAL   This market will be reloaded.
             RETRY   Retry the request.
         """
+        print("___________________")
+        print(exception)
+        print("----")
+        print(response)
+        print("----")
         canceled = f" - {self.name} loading cancelled."
         error_name = exception.__class__.__name__
         prefix = f"{self.name} - {error_name} - "
@@ -102,7 +107,11 @@ class Error(Variables):
             else:
                 status = "IGNORE"
                 error_message = (
-                    prefix + "Unexpected error " + response["error"]["message"]
+                    prefix
+                    + "Unexpected error "
+                    + response["error"]["message"]
+                    + " "
+                    + str(exception)
                 )
         elif error_name in [
             "MissingSchema",

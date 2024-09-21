@@ -100,7 +100,9 @@ class Deribit(Variables):
             self.logger.info("Connected to websocket.")
             self.__establish_heartbeat()
             self.__subscribe()
-            self.__confirm_subscription()
+            res = self.__confirm_subscription()
+            if not res:
+                self.logger.info("All subscriptions are successful. Continuing.")
 
     def __connect(self) -> None:
         """
@@ -284,10 +286,11 @@ class Deribit(Variables):
             if timeout <= 0:
                 for sub in self.subscriptions:
                     self.logger.error("Failed to " + action + " " + str(sub))
-                self.logNumFatal = "SETUP"
-                return
+                self.logNumFatal = "FATAL"
+                return self.logNumFatal
             time.sleep(slp)
-        self.logger.info("All subscriptions are successful. Continuing.")
+
+        return ""
 
     def __subscribe_channels(
         self, type: str, channels: list, id: str, callback: Callable
@@ -481,7 +484,7 @@ class Deribit(Variables):
             id="subscription",
             callback=self.__update_orderbook,
         )
-        channel = [f"ticker.{symbol[0]}.100ms"]
+        channel = [f"ticker.{ticker}.100ms"]
         self.logger.info("ws subscription - Ticker - channel - " + str(channel))
         self.subscriptions.append(channel)
         self.__subscribe_channels(
@@ -490,7 +493,8 @@ class Deribit(Variables):
             id="subscription",
             callback=self.__update_ticker,
         )
-        self.__confirm_subscription()
+
+        return self.__confirm_subscription()
 
     def unsubscribe_symbol(self, symbol: str) -> None:
         msg = {
