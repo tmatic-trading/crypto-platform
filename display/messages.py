@@ -64,7 +64,7 @@ class ErrorMessage(str, Enum):
         "Request {PATH} received empty. ({TICKER} {CATEGORY}) instrument not found."
     )
     REQUEST_EMPTY = "Request {PATH} received empty."
-    FAILED_SUBSCRIPTION = "Failed to subscribe to {SYMBOL}"
+    FAILED_SUBSCRIPTION = "Failed to subscribe to {SYMBOL}."
 
     def __str__(self) -> str:
         return self.value

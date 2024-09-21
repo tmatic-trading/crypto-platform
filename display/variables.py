@@ -899,7 +899,7 @@ class TreeviewTable(Variables):
             self.tree.bind("<Motion>", self.on_hover)
             self.tree.bind("<Leave>", self.on_leave)
         if bind:
-            self.tree.bind("<ButtonRelease>", bind)
+            self.tree.bind("<<TreeviewSelect>>", bind)
         self.iid_count = 0
         self.init(size=size)
         if hide:

@@ -7,7 +7,7 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
-from dotenv import dotenv_values, set_key
+from dotenv import set_key
 
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var

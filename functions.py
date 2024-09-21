@@ -1986,25 +1986,26 @@ def handler_subscription(event) -> None:
     """
     market = TreeTable.market.active_row
     symb = TreeTable.i_list.active_row
-    symbol = (symb, market)
     print("______", market, symb)
-    print(var.env[market]["SYMBOLS"])
-
-    # var.env[market]["SYMBOLS"].append(symbol)
-    value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
-    """service.set_dotenv(
-        dotenv_path=var.subscriptions,
-        key=service.define_symbol_key(market=market),
-        value=value,
-    )"""
-    TreeTable.market.del_sub(TreeTable.market)
-    ws = Markets[market]
-    if not ws.subscribe_symbol(symbol=symbol):
-        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
-        _put_message(market=market, message=message)
-    else:
-        message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
-        _put_message(market=market, message=message, warning="error")
+    if market:
+        symbol = (symb, market)
+        print(var.env[market]["SYMBOLS"])
+        TreeTable.market.del_sub(TreeTable.market)
+        ws = Markets[market]
+        if not ws.subscribe_symbol(symbol=symbol):
+            message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol)
+            _put_message(market=market, message=message)
+            """var.env[market]["SYMBOLS"].append(symbol)
+            value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
+            service.set_dotenv(
+                dotenv_path=var.subscriptions,
+                key=service.define_symbol_key(market=market),
+                value=value,
+            )"""
+        else:
+            message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
+            _put_message(market=market, message=message, warning="error")
+        TreeTable.i_list.clear_all()
 
 
 def handler_bot(event) -> None:
