@@ -73,7 +73,7 @@ class Variables:
         "lotSize",
     ]
     name_instrument = [
-        "MARKET",
+        #"MARKET",
         "SYMBOL",
         "CAT",
         "POS",
