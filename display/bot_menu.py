@@ -1048,7 +1048,7 @@ def init_bot_trades(bot_name: str) -> None:
                 )
                 line = True
         if not line:
-            trade_treeTable[bot_name].insert(values=["No trades"], iid="No trades")
+            trade_treeTable[bot_name].insert(values=["No trades"], iid="notification")
 
 
 def refresh_bot_orders():
@@ -1069,7 +1069,7 @@ def refresh_bot_orders():
         if "No orders" in bot_tree.children:
             bot_tree.delete(iid="No orders")
     else:
-        bot_tree.insert(values=["No orders"], iid="No orders")
+        bot_tree.insert(values=["No orders"], iid="notification")
 
 
 def winfo_destroy() -> None:
