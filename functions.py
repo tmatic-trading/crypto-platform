@@ -765,9 +765,14 @@ class Function(WS, Variables):
         if current_time.tm_sec != disp.last_gmtime_sec:
             # We are here once a second
             asctime = time.asctime(current_time)
-            disp.label_time[
-                "text"
-            ] = f"CPU: {service.Variables.cpu_usage}%  MEM: {service.Variables.memory_usage}MB  |  {asctime[0:len(asctime) - 4]}"
+            disp.label_time["text"] = (
+                "CPU: "
+                + str(service.Variables.cpu_usage)
+                + "%  MEM: "
+                + str(service.Variables.memory_usage)
+                + "MB  |  "
+                + str(asctime[0 : len(asctime) - 4])
+            )
             disp.last_gmtime_sec = current_time.tm_sec
         Function.refresh_tables(self)
 
@@ -813,7 +818,7 @@ class Function(WS, Variables):
                 tree.update(row=num, values=row)
 
         # d tm = datetime.now()
-        """for market in var.market_list:
+        '''for market in var.market_list:
             ws = Markets[market]
             for symbol in ws.symbol_list:
                 instrument = ws.Instrument[symbol]
@@ -829,7 +834,7 @@ class Function(WS, Variables):
                     instrument.expire,
                     instrument.fundingRate,
                 ]
-                iid = market + symbol[0]
+                iid = f"{symbol[1]}!{symbol[0]}"
                 if iid in tree.children_hierarchical[market]:
                     if compare != tree.cache[iid]:
                         tree.cache[iid] = compare.copy()
@@ -851,7 +856,8 @@ class Function(WS, Variables):
                             self, compare=compare, instrument=instrument, symbol=symbol
                         ),
                         indx=0,
-                    )"""
+                        image=disp.image_cancel
+                    )'''
         # d print("___instrument", datetime.now() - tm)
 
         # Refresh orderbook table
@@ -1987,6 +1993,25 @@ def format_number(number: Union[float, str]) -> str:
     return number
 
 
+'''def handler_instrument(event) -> None:
+    tree = event.widget
+    items = tree.selection()
+    if items:        
+        symb = items[0].split("!")[1]
+        market = tree.parent(items[0])
+        if market:
+            if var.symbol != (symb, market):
+                var.symbol = (symb, market)
+                TreeTable.orderbook.clear_color_cell()
+            bbox = tree.bbox(items[0], "#0")
+            x, y = bbox[0], bbox[1]
+            x_pos = tree.winfo_pointerx() - tree.winfo_rootx()
+            y_pos = tree.winfo_pointery() - tree.winfo_rooty()
+            if 18 < x_pos - x < 27:
+                if 5 < y_pos - y < 16:
+                    t = threading.Thread(target=confirm_unsubscribe, args=(market, symb))
+                    t.start()'''
+
 def handler_instrument(event) -> None:
     tree = event.widget
     items = tree.selection()
@@ -2050,6 +2075,12 @@ def confirm_subscription(market, symb, timeout=None):
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
         _put_message(market=market, message=message, warning="error")
         return
+    
+def confirm_unsubscribe(market, symb):
+    ws = Markets[market]
+    symbol = (symb, market)
+    res = ws.unsubscribe_symbol(symbol)
+
 
 
 def handler_subscription(event) -> None:
@@ -2542,14 +2573,22 @@ def init_tables() -> None:
         multicolor=True,
         autoscroll=True,
     )
+    '''TreeTable.instrument = SubTreeviewTable(
+        frame=disp.frame_instrument,
+        name="instrument",
+        title=var.name_instrument,
+        size=len(ws.symbol_list),
+        bind=handler_instrument,
+        hierarchy=True,
+        lines=var.market_list,
+        hide=["9", "8", "2"],
+    )'''
     TreeTable.instrument = TreeviewTable(
         frame=disp.frame_instrument,
         name="instrument",
         title=var.name_instrument,
         size=len(ws.symbol_list),
         bind=handler_instrument,
-        # hierarchy=True,
-        # lines=var.market_list,
         hide=["9", "8", "2"],
     )
     TreeTable.account = TreeviewTable(
@@ -2569,7 +2608,7 @@ def init_tables() -> None:
         style="market.Treeview",
         bind=handler_market,
         autoscroll=True,
-        # subtable=TreeTable.i_category,
+        #subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,

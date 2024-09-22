@@ -620,6 +620,7 @@ class Variables:
     bot_orders_processing = False
     bot_event_prev = ""
     bot_menu_option = ""
+    image_cancel = tk.PhotoImage(file="display/cancel.png")
 
     # Bot menu widgets
 
@@ -960,10 +961,10 @@ class TreeviewTable(Variables):
         self.children_hierarchical[parent] = self.tree.get_children(parent)
 
     def insert_hierarchical(
-        self, parent: str, iid: str, values=[], configure="", text="", indx="end"
+        self, parent: str, iid: str, values=[], configure="", text="", indx="end", image=""
     ):
         self.tree.insert(
-            parent, indx, iid=iid, values=values, tags=configure, text=text
+            parent, indx, iid=iid, values=values, tags=configure, text=text, image=image
         )
         self.children_hierarchical[parent] = self.tree.get_children(parent)
         self.children = self.tree.get_children()

@@ -53,6 +53,7 @@ class Bitmex(Variables):
         self.pinging = "pong"
         self.ticker = dict()
         self.instrument_index = dict()
+        self.unsubscribe = dict()
 
     def setup_session(self):
         """
@@ -62,15 +63,15 @@ class Bitmex(Variables):
 
     def start(self):
         if var.order_book_depth != "quote":
-            depth = "orderBook10"
+            self.depth = "orderBook10"
         else:
-            depth = "quote"
+            self.depth = "quote"
         self.table_subscription = {
             "margin",
             "execution",
             "instrument",
             "position",
-            depth,
+            self.depth,
             # "order",
             # "trade",
         }
@@ -152,13 +153,26 @@ class Bitmex(Variables):
 
         return res
 
-    def unsubscribe_symbol(self, symbol: str) -> None:
+    def unsubscribe_symbol(self, symbol: tuple) -> None:
         subscriptions = []
+        symb = self.Instrument[symbol].symbol
         for sub in self.table_subscription:
-            subscriptions += [sub + ":" + symbol]
-        self.logger.info("ws unsubscribe - " + subscriptions)
+            subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
+        self.unsubscribe[symb] = subscriptions
+        self.logger.info("ws unsubscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "unsubscribe", "args": subscriptions}))
-        self.__wait_for_tables()  # unsubscription confirmation
+        #self.__wait_for_tables()  # unsubscription confirmation
+        while self.unsubscribe[symb]:
+            time.sleep(0.1)
+        del self.unsubscribe[symb]
+        del self.data["instrument"][symbol]
+        del self.data[self.depth][symbol]
+        del self.data["position"][(self.user_id, symb, self.name)]
+        for key, value in self.data.items():
+            print("-----------", key, self.keys[key])
+            for k in value.keys():
+                print("   ", k)
+        
 
     def __get_url(self) -> str:
         """
@@ -237,6 +251,10 @@ class Bitmex(Variables):
                 return ""
             sleep(0.1)
 
+    def _generate_key(self, keys: list, val: dict) -> tuple:
+        val["market"] = self.name
+        return tuple((val[key]) for key in keys)
+
     def __on_message(self, ws, message) -> None:
         """
         Parses websocket messages.
@@ -245,16 +263,13 @@ class Bitmex(Variables):
             self.pinging = "pong"
             return
 
-        def generate_key(keys: list, val: dict) -> tuple:
-            val["market"] = self.name
-            return tuple((val[key]) for key in keys)
-
         message = json.loads(message)
         action = message["action"] if "action" in message else None
         table = message["table"] if "table" in message else None
         try:
             if action:
-                table_name = "orderBook" if table == "orderBook10" else table
+                #table_name = "orderBook" if table == "orderBook10" else table
+                table_name = table
                 if table_name not in self.data:
                     self.data[table_name] = OrderedDict()
                 if action == "partial":  # table snapshot
@@ -276,7 +291,7 @@ class Bitmex(Variables):
                                 if key not in val:
                                     break
                         else:
-                            key = generate_key(self.keys[table], val)
+                            key = self._generate_key(self.keys[table], val)
                             self.data[table_name][key] = val
                             if table == "orderBook10":
                                 self.__update_orderbook(symbol=key, values=val)
@@ -291,7 +306,7 @@ class Bitmex(Variables):
                                 )
                 elif action == "insert":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val=val)
+                        key = self._generate_key(self.keys[table], val=val)
                         if table == "quote":
                             self.__update_orderbook(symbol=key, values=val, quote=True)
                         elif table == "execution":
@@ -347,7 +362,7 @@ class Bitmex(Variables):
                             self.data[table_name][key] = val
                 elif action == "update":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val=val)
+                        key = self._generate_key(self.keys[table], val=val)
                         if key not in self.data[table_name]:
                             return  # No key to update
                         if table == "orderBook10":
@@ -365,8 +380,12 @@ class Bitmex(Variables):
                                 self.data[table_name].pop(key)
                 elif action == "delete":
                     for val in message["data"]:
-                        key = generate_key(self.keys[table], val)
+                        key = self._generate_key(self.keys[table], val)
                         self.data[table_name].pop(key)
+            elif "unsubscribe" in message:
+                print("___", message)
+                symb = message["unsubscribe"].split(":")[1]
+                self.unsubscribe[symb].remove(message["unsubscribe"])
         except Exception:
             self.logger.error(
                 traceback.format_exc()
