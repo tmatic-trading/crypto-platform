@@ -63,15 +63,21 @@ def setup(reload=False):
     else:
         var.current_market = var.market_list[0]
         var.symbol = Markets[var.current_market].symbol_list[0]
+    ws = Markets[var.current_market]
     functions.init_tables()
     bot_manager.create_bots_menu()
     bot_threads()
     settings.init()
+    var.symbol = ws.symbol_list[0]
     if "Fake" in var.market_list:
         disp.on_settings()
         settings.return_main_page()
     else:
         disp.on_main()
+        Function.display_instruments(ws, "end")
+        TreeTable.instrument.set_selection(
+            index=f"{var.current_market}!{var.symbol[0]}"
+        )
 
 
 def setup_market(ws: Markets, reload=False):

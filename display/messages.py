@@ -2,8 +2,14 @@ from enum import Enum
 
 
 class Message(str, Enum):
-    SUBSCRIPTION_WAITING = "Subscription to {SYMBOL}. Waiting for confirmation."
+    SUBSCRIPTION_WAITING = (
+        "Subscription to {SYMBOL}. Waiting for confirmation from {MARKET}."
+    )
     SUBSCRIPTION_ADDED = "Added subscription to {SYMBOL}."
+    UNSUBSCRIPTION_WAITING = (
+        "Unsubscribe to {SYMBOL}. Waiting for confirmation from {MARKET}."
+    )
+    UNSUBSCRIBED = "You have unsubscribed from {SYMBOL}."
     DEFAULT_SYMBOL_ADDED = (
         "{MARKET} symbol list is empty. Added default symbol {SYMBOL}."
     )
@@ -66,6 +72,12 @@ class ErrorMessage(str, Enum):
     )
     REQUEST_EMPTY = "Request {PATH} received empty."
     FAILED_SUBSCRIPTION = "Failed to subscribe to {SYMBOL}."
+    FAILED_UNSUBSCRIPTION = "Unable to unsubscribe from {SYMBOL}."
+    UNSUBSCRIPTION_WARNING = (
+        "You can't unsubscribe from all instruments. At least one must be in "
+        + "the list."
+    )
+    SUBSCRIPTION_WARNING = "The {SYMBOL} instrument is already subscribed."
 
     def __str__(self) -> str:
         return self.value

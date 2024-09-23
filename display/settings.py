@@ -248,6 +248,8 @@ class SettingsApp:
             try:
                 sub = service.define_symbol_key(market=market)
                 symbols = values[sub].replace(",", " ").split()
+                if not symbols:
+                    symbols = [var.default_symbol[market][0][0]]
                 for symb in symbols:
                     var.env[market]["SYMBOLS"].append((symb, market))
             except KeyError:

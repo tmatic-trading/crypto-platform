@@ -89,6 +89,7 @@ class _WebSocketManager:
         """
         Parse incoming messages.
         """
+
         message = json.loads(message)
         if self._is_custom_pong(message):
             return

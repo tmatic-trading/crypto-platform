@@ -206,9 +206,10 @@ class Agent(Bitmex):
         self.Instrument[symbol].quoteCoin = instrument["quoteCurrency"]
         self.Instrument[symbol].valueOfOneContract = valueOfOneContract
         if instrument["state"] == "Open":
-            self.instrument_index = service.fill_instrument_index(
-                index=self.instrument_index, instrument=self.Instrument[symbol]
-            )
+            if category != "spot":
+                self.instrument_index = service.fill_instrument_index(
+                    index=self.instrument_index, instrument=self.Instrument[symbol]
+                )
 
         return category
 

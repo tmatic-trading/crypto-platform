@@ -6,6 +6,8 @@ from decimal import Decimal
 from random import randint
 from typing import Tuple, Union
 
+from dotenv import dotenv_values
+
 import display.bot_menu as bot_menu
 import services as service
 from api.api import WS, Markets
@@ -776,49 +778,10 @@ class Function(WS, Variables):
             disp.last_gmtime_sec = current_time.tm_sec
         Function.refresh_tables(self)
 
-    def refresh_tables(self: Markets) -> None:
-        current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
-
-        # service.count_orders()
-
-        # Refresh instrument table
-
+    def display_instruments(self: Markets, indx=0):
         tree = TreeTable.instrument
-
-        for num, symbol in enumerate(self.symbol_list):
-            instrument = self.Instrument[symbol]
-            compare = [
-                symbol[0],
-                instrument.category,
-                instrument.currentQty,
-                instrument.avgEntryPrice,
-                instrument.unrealisedPnl,
-                instrument.marginCallPrice,
-                instrument.state,
-                instrument.volume24h,
-                instrument.expire,
-                instrument.fundingRate,
-            ]
-            if compare != tree.cache[num]:
-                tree.cache[num] = compare
-                row = [
-                    symbol[0],
-                    instrument.category,
-                    Function.volume(self, qty=instrument.currentQty, symbol=symbol),
-                    Function.format_price(
-                        self, number=instrument.avgEntryPrice, symbol=symbol
-                    ),
-                    format_number(number=instrument.unrealisedPnl),
-                    instrument.marginCallPrice,
-                    instrument.state,
-                    Function.humanFormat(self, instrument.volume24h, symbol),
-                    instrument.expire,
-                    instrument.fundingRate,
-                ]
-                tree.update(row=num, values=row)
-
         # d tm = datetime.now()
-        '''for market in var.market_list:
+        for market in var.market_list:
             ws = Markets[market]
             for symbol in ws.symbol_list:
                 instrument = ws.Instrument[symbol]
@@ -855,10 +818,19 @@ class Function(WS, Variables):
                         values=Function.form_instrument_line(
                             self, compare=compare, instrument=instrument, symbol=symbol
                         ),
-                        indx=0,
-                        image=disp.image_cancel
-                    )'''
+                        indx=indx,
+                        image=disp.image_cancel,
+                    )
         # d print("___instrument", datetime.now() - tm)
+
+    def refresh_tables(self: Markets) -> None:
+        current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
+
+        # service.count_orders()
+
+        # Refresh instrument table
+
+        Function.display_instruments(self)
 
         # Refresh orderbook table
 
@@ -1993,36 +1965,34 @@ def format_number(number: Union[float, str]) -> str:
     return number
 
 
-'''def handler_instrument(event) -> None:
-    tree = event.widget
-    items = tree.selection()
-    if items:        
-        symb = items[0].split("!")[1]
-        market = tree.parent(items[0])
-        if market:
-            if var.symbol != (symb, market):
-                var.symbol = (symb, market)
-                TreeTable.orderbook.clear_color_cell()
-            bbox = tree.bbox(items[0], "#0")
-            x, y = bbox[0], bbox[1]
-            x_pos = tree.winfo_pointerx() - tree.winfo_rootx()
-            y_pos = tree.winfo_pointery() - tree.winfo_rooty()
-            if 18 < x_pos - x < 27:
-                if 5 < y_pos - y < 16:
-                    t = threading.Thread(target=confirm_unsubscribe, args=(market, symb))
-                    t.start()'''
-
 def handler_instrument(event) -> None:
     tree = event.widget
     items = tree.selection()
     if items:
-        ws = Markets[var.current_market]
-        item = items[0]
-        children = tree.get_children()
-        row_position = children.index(item)
-        if var.symbol != ws.symbol_list[row_position]:
-            var.symbol = ws.symbol_list[row_position]
-            TreeTable.orderbook.clear_color_cell()
+        lst = items[0].split("!")
+        if len(lst) > 1:
+            symb = lst[1]
+            market = tree.parent(items[0])
+            if market:
+                if var.symbol != (symb, market):
+                    var.symbol = (symb, market)
+                    TreeTable.orderbook.clear_color_cell()
+                if time.time() - var.select_time > 0.2:
+                    if (symb, market) not in var.unsubscription:
+                        bbox = tree.bbox(items[0], "#0")
+                        if bbox:
+                            x, y = bbox[0], bbox[1]
+                            x_pos = tree.winfo_pointerx() - tree.winfo_rootx()
+                            y_pos = tree.winfo_pointery() - tree.winfo_rooty()
+                            if 18 < x_pos - x < 27:
+                                if 5 < y_pos - y < 16:
+                                    t = threading.Thread(
+                                        target=confirm_unsubscribe, args=(market, symb)
+                                    )
+                                    t.start()
+                            if var.message_response:
+                                warning_window(var.message_response)
+                                var.message_response = ""
 
 
 def handler_account(event) -> None:
@@ -2034,53 +2004,86 @@ def handler_account(event) -> None:
         tree.selection_remove(items[0])
 
 
-def handler_market(event) -> None:
-    tree = event.widget
-    items = tree.selection()
-    if items:
-        item = items[0]
-        children = tree.get_children()
-        row_position = children.index(item)
-        shift = var.market_list[row_position]
-        if shift != var.current_market:
-            var.current_market = shift
-            if Markets[var.current_market].api_is_active:
-                TreeTable.market.paint(row=shift, configure="Market")
-            else:
-                TreeTable.market.paint(row=shift, configure="Reload")
-            ws = Markets[var.current_market]
-            var.symbol = ws.symbol_list[0]
-            clear_tables()
+def confirm_subscription(market: str, symb: str, timeout=None, init=False):
+    """
+    Adds an instrument to a websocket subscription of a specific exchange.
+    After receiving confirmation from the exchange, writes the symbol to the
+    .env.Subscriptions file.
 
-
-def confirm_subscription(market, symb, timeout=None):
+    Parameters
+    ----------
+    market: str
+        Exchange name.
+    symb: str
+        Instrument symbol.
+    timeout: int
+        Subscription confirmation timeout in seconds.
+    init: bool
+        Prevents writing a symbol to the .env.Subscriptions file on
+        initialization and detects symbols that are not subscribed but have
+        unclosed positions.
+    """
     ws = Markets[market]
     symbol = (symb, market)
-    message = Message.SUBSCRIPTION_WAITING.format(SYMBOL=symbol[0])
+    message = Message.SUBSCRIPTION_WAITING.format(SYMBOL=symb, MARKET=market)
     _put_message(market=market, message=message)
     res = ws.subscribe_symbol(symbol=symbol, timeout=timeout)
     if not res:
-        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
+        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symb)
         _put_message(market=market, message=message)
         ws.symbol_list = [symbol] + ws.symbol_list
-        """var.env[market]["SYMBOLS"].append(symbol)
-        value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
-        service.set_dotenv(
-            dotenv_path=var.subscriptions,
-            key=service.define_symbol_key(market=market),
-            value=value,
-        )"""
-        return "success"
+        if not init:
+            var.env[market]["SYMBOLS"] = [symbol] + var.env[market]["SYMBOLS"]
+            value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
+            service.set_dotenv(
+                dotenv_path=var.subscriptions,
+                key=service.define_symbol_key(market=market),
+                value=value,
+            )
     else:
-        message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol)
+        message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")
-        return
-    
-def confirm_unsubscribe(market, symb):
-    ws = Markets[market]
-    symbol = (symb, market)
-    res = ws.unsubscribe_symbol(symbol)
 
+
+def confirm_unsubscribe(market, symb):
+    """
+    Removes an instrument from a websocket subscription for a specific exchange.
+    """
+    ws = Markets[market]
+    if len(ws.symbol_list) == 1:
+        var.message_response = ErrorMessage.UNSUBSCRIPTION_WARNING
+        return
+    symbol = (symb, market)
+    message = Message.UNSUBSCRIPTION_WAITING.format(SYMBOL=symb, MARKET=market)
+    _put_message(market=market, message=message)
+    var.unsubscription.add(symbol)
+    res = ws.unsubscribe_symbol(symbol)
+    if not res:
+        message = Message.UNSUBSCRIBED.format(SYMBOL=symb)
+        _put_message(market=market, message=message)
+        ws.symbol_list.remove(symbol)
+        var.symbol = ws.symbol_list[0]
+        if symbol in var.env[market]["SYMBOLS"]:
+            var.env[market]["SYMBOLS"].remove(symbol)
+        dotenv_data = dotenv_values(var.subscriptions)
+        key = service.define_symbol_key(market=market)
+        data = dotenv_data[key].replace(" ", "")
+        data = data.split(",")
+        for item in ["", symb]:
+            while item in data:
+                data.remove(item)
+        data = ",".join(data)
+        service.set_dotenv(var.subscriptions, key=key, value=data)
+        tree = TreeTable.instrument
+        tree.delete_hierarchical(parent=market, iid=f"{market}!{symb}")
+        var.select_time = time.time()
+        TreeTable.instrument.set_selection(
+            index=f"{var.current_market}!{var.symbol[0]}"
+        )
+    else:
+        message = ErrorMessage.FAILED_UNSUBSCRIPTION.format(SYMBOL=symb)
+        _put_message(market=market, message=message, warning="error")
+    var.unsubscription.remove(symbol)
 
 
 def handler_subscription(event) -> None:
@@ -2098,12 +2101,13 @@ def handler_subscription(event) -> None:
     market = TreeTable.market.active_row
     symb = TreeTable.i_list.active_row
     if market:
-        # symbol = (symb, market)
-        print(var.env[market]["SYMBOLS"])
+        ws = Markets[market]
+        if (symb, market) not in ws.symbol_list:
+            t = threading.Thread(target=confirm_subscription, args=(market, symb))
+            t.start()
+        else:
+            warning_window(ErrorMessage.SUBSCRIPTION_WARNING.format(SYMBOL=symb))
         TreeTable.market.del_sub(TreeTable.market)
-        # ws = Markets[market]
-        t = threading.Thread(target=confirm_subscription, args=(market, symb))
-        t.start()
         TreeTable.i_list.clear_all()
 
 
@@ -2132,8 +2136,8 @@ def warning_window(
         "{}x{}+{}+{}".format(
             width,
             height,
-            disp.screen_width // 2 - width // 2 - randint(0, 7) * 15,
-            disp.screen_height // 2 - height // 2,
+            str(disp.screen_width // 2 - width // 2 - randint(0, 7) * 15),
+            str(disp.screen_height // 2 - height // 2),
         )
     )
     warn_window.title(title)
@@ -2178,7 +2182,8 @@ def clear_tables():
     ws = Markets[var.current_market]
     TreeTable.instrument.init(size=len(ws.symbol_list))
     TreeTable.orderbook.init(size=disp.num_book)
-    TreeTable.instrument.set_selection()
+    Function.display_instruments(ws, "end")
+    TreeTable.instrument.set_selection(index=f"{var.current_market}!{var.symbol[0]}")
     var.lock_market_switch.release()
 
 
@@ -2573,7 +2578,7 @@ def init_tables() -> None:
         multicolor=True,
         autoscroll=True,
     )
-    '''TreeTable.instrument = SubTreeviewTable(
+    TreeTable.instrument = SubTreeviewTable(
         frame=disp.frame_instrument,
         name="instrument",
         title=var.name_instrument,
@@ -2581,14 +2586,6 @@ def init_tables() -> None:
         bind=handler_instrument,
         hierarchy=True,
         lines=var.market_list,
-        hide=["9", "8", "2"],
-    )'''
-    TreeTable.instrument = TreeviewTable(
-        frame=disp.frame_instrument,
-        name="instrument",
-        title=var.name_instrument,
-        size=len(ws.symbol_list),
-        bind=handler_instrument,
         hide=["9", "8", "2"],
     )
     TreeTable.account = TreeviewTable(
@@ -2600,15 +2597,14 @@ def init_tables() -> None:
         lines=var.market_list,
         hide=["3", "5", "6"],
     )
-    TreeTable.market = TreeviewTable(
+    TreeTable.market = SubTreeviewTable(
         frame=disp.frame_market,
         name="market",
         title=var.name_market,
         size=var.market_list,
         style="market.Treeview",
-        bind=handler_market,
         autoscroll=True,
-        #subtable=TreeTable.i_category,
+        subtable=TreeTable.i_category,
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,
@@ -2664,8 +2660,6 @@ def init_tables() -> None:
         autoscroll=True,
         hierarchy=True,
     )
-    TreeTable.instrument.set_selection()
-    TreeTable.market.set_selection(index=var.current_market)
     init_bot_treetable_trades()
 
 

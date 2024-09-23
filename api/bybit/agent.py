@@ -708,9 +708,10 @@ class Agent(Bybit):
         self.Instrument[symbol].bids = [[0, 0]]
         self.Instrument[symbol].valueOfOneContract = 1
         if self.Instrument[symbol].state == "Open":
-            self.instrument_index = service.fill_instrument_index(
-                index=self.instrument_index, instrument=self.Instrument[symbol]
-            )
+            if category != "option":
+                self.instrument_index = service.fill_instrument_index(
+                    index=self.instrument_index, instrument=self.Instrument[symbol]
+                )
 
     def activate_funding_thread(self):
         """

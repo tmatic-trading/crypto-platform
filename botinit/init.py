@@ -11,7 +11,7 @@ from display.bot_menu import import_bot_module
 from display.messages import ErrorMessage, Message
 
 
-def add_subscription(subscriptions: list) -> None:
+def add_subscription(subscriptions: set) -> None:
     threads = []
     var.subscription_res = dict()
     for symbol in subscriptions:
@@ -25,6 +25,7 @@ def add_subscription(subscriptions: list) -> None:
                     symbol[1],
                     symbol[0],
                     None,
+                    True,
                 ),
             )
             t.start()
@@ -135,7 +136,7 @@ def load_bots() -> None:
     )
     var.lock.acquire(True)
     data = service.select_database(qwr)
-    subscriptions = list()
+    subscriptions = set()
     for value in data:
         if value["MARKET"] in var.market_list:
             ws = Markets[value["MARKET"]]
@@ -148,7 +149,7 @@ def load_bots() -> None:
             symbol = (value["SYMBOL"], ws.name)
             if symbol not in ws.symbol_list:
                 if ws.Instrument[symbol].state == "Open":
-                    subscriptions.append(symbol)
+                    subscriptions.add(symbol)
                     message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
                     var.logger.info(message)
                 else:

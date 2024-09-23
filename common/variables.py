@@ -73,7 +73,7 @@ class Variables:
         "lotSize",
     ]
     name_instrument = [
-        #"MARKET",
+        "MARKET",
         "SYMBOL",
         "CAT",
         "POS",
@@ -244,3 +244,7 @@ class Variables:
     }
     reloading = False
     subscription_res = dict()
+    timeout = 7
+    select_time = time.time()
+    message_response = ""
+    unsubscription = set()

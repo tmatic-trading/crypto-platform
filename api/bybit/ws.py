@@ -12,6 +12,7 @@ from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
 
+from .pybit._websocket_stream import _V5WebSocketManager
 from .pybit.unified_trading import HTTP, WebSocket
 
 
@@ -593,10 +594,10 @@ class Bybit(Variables):
         unsubscription_args = list()
         if arg_ticker in self.ws[category].callback_directory:
             unsubscription_args.append(arg_ticker)
-            self.ws[category].callback_directory.pop(arg_ticker)
+            # self.ws[category].callback_directory.pop(arg_ticker)
         if arg_orderbook in self.ws[category].callback_directory:
             unsubscription_args.append(arg_orderbook)
-            self.ws[category].callback_directory.pop(arg_ticker)
+            # self.ws[category].callback_directory.pop(arg_orderbook)
         req_id = str(uuid4())
         unsubscription_message = json.dumps(
             {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
@@ -605,12 +606,10 @@ class Bybit(Variables):
         if arg_ticker in self.ws[category].callback_directory:
             self.ws[category].callback_directory.pop(arg_ticker)
         if arg_orderbook in self.ws[category].callback_directory:
-            self.ws[category].callback_directory.pop(arg_ticker)
+            self.ws[category].callback_directory.pop(arg_orderbook)
 
     def subscribe_symbol(self, symbol: tuple, answer=False, timeout=None) -> str:
         self.subscribe(symbol=symbol)
-        """message = Message.SUBSCRIPTION_WAITING.format(SYMBOL=symbol[0])
-        self._put_message(message=message)"""
         instrument = self.Instrument[symbol]
         count = 0
         sleep = 0.1
@@ -646,3 +645,40 @@ class Bybit(Variables):
             var.logger.warning(self.name + " - " + message)
         else:
             var.logger.error(self.name + " - " + message)
+
+    def _process_unsubscription_message(message):
+        pass
+
+    def _handle_incoming_message(self, message):
+        def is_auth_message():
+            if message.get("op") == "auth" or message.get("type") == "AUTH_RESP":
+                return True
+            else:
+                return False
+
+        def is_subscription_message():
+            if (
+                message.get("op") == "subscribe"
+                or message.get("type") == "COMMAND_RESP"
+            ):
+                return True
+            else:
+                return False
+
+        def is_unsubscription_message():
+            if message.get("op") == "unsubscribe":
+                return True
+            else:
+                return False
+
+        if is_auth_message():
+            self._process_auth_message(message)
+        elif is_subscription_message():
+            self._process_subscription_message(message)
+        elif is_unsubscription_message():
+            Bybit._process_unsubscription_message(message)
+        else:
+            self._process_normal_message(message)
+
+
+# _V5WebSocketManager._handle_incoming_message = Bybit._handle_incoming_message

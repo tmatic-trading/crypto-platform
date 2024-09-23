@@ -161,18 +161,21 @@ class Bitmex(Variables):
         self.unsubscribe[symb] = subscriptions
         self.logger.info("ws unsubscribe - " + str(subscriptions))
         self.ws.send(json.dumps({"op": "unsubscribe", "args": subscriptions}))
-        #self.__wait_for_tables()  # unsubscription confirmation
+        tm, sl = 0, 0.1
         while self.unsubscribe[symb]:
-            time.sleep(0.1)
+            if tm > var.timeout:
+                return "timeout"
+            tm += sl
+            sleep(sl)
         del self.unsubscribe[symb]
-        del self.data["instrument"][symbol]
-        del self.data[self.depth][symbol]
-        del self.data["position"][(self.user_id, symb, self.name)]
-        for key, value in self.data.items():
-            print("-----------", key, self.keys[key])
-            for k in value.keys():
-                print("   ", k)
-        
+        if symbol in self.data["instrument"]:
+            del self.data["instrument"][symbol]
+        if symbol in self.data[self.depth]:
+            del self.data[self.depth][symbol]
+        if (self.user_id, symb, self.name) in self.data["position"]:
+            del self.data["position"][(self.user_id, symb, self.name)]
+
+        return ""
 
     def __get_url(self) -> str:
         """
@@ -268,7 +271,7 @@ class Bitmex(Variables):
         table = message["table"] if "table" in message else None
         try:
             if action:
-                #table_name = "orderBook" if table == "orderBook10" else table
+                # table_name = "orderBook" if table == "orderBook10" else table
                 table_name = table
                 if table_name not in self.data:
                     self.data[table_name] = OrderedDict()
@@ -383,9 +386,9 @@ class Bitmex(Variables):
                         key = self._generate_key(self.keys[table], val)
                         self.data[table_name].pop(key)
             elif "unsubscribe" in message:
-                print("___", message)
                 symb = message["unsubscribe"].split(":")[1]
-                self.unsubscribe[symb].remove(message["unsubscribe"])
+                if symb in self.unsubscribe:
+                    self.unsubscribe[symb].remove(message["unsubscribe"])
         except Exception:
             self.logger.error(
                 traceback.format_exc()
