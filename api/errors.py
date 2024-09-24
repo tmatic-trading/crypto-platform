@@ -105,7 +105,7 @@ class Error(Variables):
                     prefix
                     + "Unexpected error "
                     + response["error"]["message"]
-                    + " "
+                    + " - "
                     + str(exception)
                 )
         elif error_name in [
@@ -122,7 +122,7 @@ class Error(Variables):
             )
         else:
             status = "FATAL"
-            error_message = prefix + "Unexpected error "
+            error_message = prefix + "Unexpected error - " + str(exception)
 
         logger_message = "On request %s %s - error - %s" % (
             verb,

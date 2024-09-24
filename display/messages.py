@@ -71,8 +71,8 @@ class ErrorMessage(str, Enum):
         "Request {PATH} received empty. ({TICKER} {CATEGORY}) instrument not found."
     )
     REQUEST_EMPTY = "Request {PATH} received empty."
-    FAILED_SUBSCRIPTION = "Failed to subscribe to {SYMBOL}."
-    FAILED_UNSUBSCRIPTION = "Unable to unsubscribe from {SYMBOL}."
+    FAILED_SUBSCRIPTION = "Failed to subscribe to {SYMBOL}. Reboot"
+    FAILED_UNSUBSCRIPTION = "Unable to unsubscribe from {SYMBOL}. Reboot"
     UNSUBSCRIPTION_WARNING = (
         "You can't unsubscribe from all instruments. At least one must be in "
         + "the list."

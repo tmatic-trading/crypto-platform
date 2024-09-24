@@ -54,8 +54,11 @@ class Instrument:
             ``option linear``,
             ``option reversed``,
             ``option_combo reversed``,
-    confirm: bool
+    confirm_subscription: set
         Confirmation of successful subscription to the instrument (Bybit
+        only).
+    confirm_unsubscription: set
+        Confirmation of successful unsubscription to the instrument (Bybit
         only).
     currentQty: float
         Position size
@@ -119,6 +122,8 @@ class Instrument:
     baseCoin: str
     bids: list
     category: str
+    confirm_subscription: set
+    confirm_unsubscription: set
     currentQty: float = 0
     expire: datetime
     fundingRate: float = 0
@@ -156,8 +161,6 @@ class Instrument:
     theta: float
     gamma: float
     change24h: float
-
-    confirm: bool = False
 
     def __iter__(self):
         return Ret.iter(self)

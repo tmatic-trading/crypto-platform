@@ -999,7 +999,7 @@ class TreeviewTable(Variables):
     def paint(self, row: Union[int, str], configure: str) -> None:
         row = str(row)
         self.tree.item(row, tags=configure)
-        if self.tree.selection():
+        """if self.tree.selection():
             selected = self.tree.selection()[0]
         if self.name == "market":
             if configure == "Reload" and row == selected:
@@ -1011,7 +1011,7 @@ class TreeviewTable(Variables):
                 self.style.map(
                     "market.Treeview",
                     foreground=[("selected", self.fg_color)],
-                )
+                )"""
 
     def clear_all(self, market=None):
         if not market:

@@ -244,8 +244,7 @@ class Bitmex(Variables):
                     + str(instr_lack)
                     + " - missing in the instrument table."
                 )
-                self.logNumFatal = "FATAL"
-                return self.logNumFatal
+                return "error"
             num = 0
             for symbol in symbol_list:
                 if symbol in self.data["instrument"].keys():

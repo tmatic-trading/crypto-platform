@@ -248,3 +248,4 @@ class Variables:
     select_time = time.time()
     message_response = ""
     unsubscription = set()
+    market_object = dict()

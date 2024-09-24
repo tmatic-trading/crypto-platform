@@ -45,6 +45,7 @@ class Bybit(Variables):
         WebSocket._on_message = Bybit._on_message
         self.ticker = dict()
         self.instrument_index = dict()
+        var.market_object[self.name] = self
 
     def setup_session(self):
         self.session: HTTP = HTTP(
@@ -163,8 +164,8 @@ class Bybit(Variables):
     def __update_orderbook(self, values: dict, category: str) -> None:
         symbol = (self.ticker[(values["s"], category)], self.name)
         instrument = self.Instrument[symbol]
-        asks = values["a"]
-        bids = values["b"]
+        asks = values["a"][:10]
+        bids = values["b"][:10]
         asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
         bids = list(map(lambda x: [float(x[0]), float(x[1])], bids))
         asks.sort(key=lambda x: x[0])
@@ -173,6 +174,7 @@ class Bybit(Variables):
         instrument.bids = bids
         if symbol in self.klines:
             service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
+        instrument.confirm_subscription.add("orderbook")
 
     def __update_ticker(self, values: dict, category: str) -> None:
         symbol = self.ticker[(values["symbol"], category)]
@@ -190,7 +192,7 @@ class Bybit(Variables):
                 instrument.vega = values["greeks"]["gamma"]
                 instrument.bidIv = values["bid_iv"]
                 instrument.vega = values["ask_iv"]
-        instrument.confirm = True
+        instrument.confirm_subscription.add("ticker")
 
     def __update_account(self, values: dict) -> None:
         for value in values["data"]:
@@ -585,7 +587,7 @@ class Bybit(Variables):
 
         return self.logNumFatal
 
-    def unsubscribe_symbol(self, symbol: tuple):
+    def unsubscribe_symbol(self, symbol: tuple) -> str:
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
         category = instrument.category
@@ -594,38 +596,49 @@ class Bybit(Variables):
         unsubscription_args = list()
         if arg_ticker in self.ws[category].callback_directory:
             unsubscription_args.append(arg_ticker)
-            # self.ws[category].callback_directory.pop(arg_ticker)
         if arg_orderbook in self.ws[category].callback_directory:
             unsubscription_args.append(arg_orderbook)
-            # self.ws[category].callback_directory.pop(arg_orderbook)
-        req_id = str(uuid4())
+        req_id = symbol[0]  # str(uuid4())
         unsubscription_message = json.dumps(
             {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
         )
         self.ws[category].ws.send(unsubscription_message)
+        count = 0
+        slp = 0.1
+        instrument.confirm_unsubscription = ""
+        while not instrument.confirm_unsubscription:
+            count += slp
+            if count > var.timeout:
+                return "error"
+            time.sleep(slp)
         if arg_ticker in self.ws[category].callback_directory:
             self.ws[category].callback_directory.pop(arg_ticker)
         if arg_orderbook in self.ws[category].callback_directory:
             self.ws[category].callback_directory.pop(arg_orderbook)
 
+        return ""
+
     def subscribe_symbol(self, symbol: tuple, answer=False, timeout=None) -> str:
         self.subscribe(symbol=symbol)
         instrument = self.Instrument[symbol]
         count = 0
-        sleep = 0.1
+        slp = 0.1
+        instrument.confirm_subscription = set()
         while self.api_is_active:
-            if instrument.confirm:
+            if (
+                "ticker" in instrument.confirm_subscription
+                and "orderbook" in instrument.confirm_subscription
+            ):
                 if answer:
                     message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
                     self._put_message(message=message)
-                return
-            count += sleep
+                return ""
+            count += slp
             if timeout and count > timeout:
                 message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol[0])
                 self._put_message(message=message)
-                self.logNumFatal = "FATAL"
-                return
-            time.sleep(sleep)
+                return "error"
+            time.sleep(slp)
 
     def _put_message(self, message: str, warning=None) -> None:
         """
@@ -646,39 +659,22 @@ class Bybit(Variables):
         else:
             var.logger.error(self.name + " - " + message)
 
+    @staticmethod
     def _process_unsubscription_message(message):
-        pass
+        ws = var.market_object["Bybit"]
+        symbol = (message["req_id"], "Bybit")
+        if symbol in ws.Instrument.get_keys():
+            ws.Instrument[symbol].confirm_unsubscription = "success"
 
     def _handle_incoming_message(self, message):
-        def is_auth_message():
-            if message.get("op") == "auth" or message.get("type") == "AUTH_RESP":
-                return True
-            else:
-                return False
-
-        def is_subscription_message():
-            if (
-                message.get("op") == "subscribe"
-                or message.get("type") == "COMMAND_RESP"
-            ):
-                return True
-            else:
-                return False
-
-        def is_unsubscription_message():
-            if message.get("op") == "unsubscribe":
-                return True
-            else:
-                return False
-
-        if is_auth_message():
+        if message.get("op") == "auth" or message.get("type") == "AUTH_RESP":
             self._process_auth_message(message)
-        elif is_subscription_message():
+        elif message.get("op") == "subscribe" or message.get("type") == "COMMAND_RESP":
             self._process_subscription_message(message)
-        elif is_unsubscription_message():
+        elif message.get("op") == "unsubscribe":
             Bybit._process_unsubscription_message(message)
         else:
             self._process_normal_message(message)
 
 
-# _V5WebSocketManager._handle_incoming_message = Bybit._handle_incoming_message
+_V5WebSocketManager._handle_incoming_message = Bybit._handle_incoming_message

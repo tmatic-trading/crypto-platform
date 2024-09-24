@@ -2043,6 +2043,7 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False):
     else:
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")
+        ws.logNumFatal = "FATAL"
 
 
 def confirm_unsubscribe(market, symb):
@@ -2083,6 +2084,7 @@ def confirm_unsubscribe(market, symb):
     else:
         message = ErrorMessage.FAILED_UNSUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")
+        ws.logNumFatal = "FATAL"
     var.unsubscription.remove(symbol)
 
 
