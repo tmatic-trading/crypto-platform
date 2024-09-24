@@ -280,14 +280,13 @@ class Deribit(Variables):
         """
         Checks that all subscriptions are successful.
         """
-        timeout, slp = 3, 0.05
+        timeout, slp = 5, 0.05
         while self.subscriptions:
             timeout -= slp
             if timeout <= 0:
                 for sub in self.subscriptions:
                     self.logger.error("Failed to " + action + " " + str(sub))
-                self.logNumFatal = "FATAL"
-                return self.logNumFatal
+                return "error"
             time.sleep(slp)
 
         return ""
@@ -356,8 +355,10 @@ class Deribit(Variables):
         instrument.volume24h = values["stats"]["volume"]
         if "funding_8h" in values:
             instrument.fundingRate = values["funding_8h"] * 100
-        if "spot" not in instrument.category:
+        try:
             instrument.openInterest = values["open_interest"]
+        except Exception:
+            pass
         if "option" in instrument.category:
             instrument.delta = values["greeks"]["delta"]
             instrument.vega = values["greeks"]["vega"]
@@ -496,24 +497,27 @@ class Deribit(Variables):
 
         return self.__confirm_subscription()
 
-    def unsubscribe_symbol(self, symbol: str) -> None:
+    def unsubscribe_symbol(self, symbol: tuple) -> None:
         msg = {
             "jsonrpc": "2.0",
             "id": "subscription",
             "method": "public/unsubscribe",
             "params": {"channels": None},
         }
-        channel = [f"book.{symbol}.none.{self.orderbook_depth}.100ms"]
+        instrument = self.Instrument[symbol]
+        ticker = instrument.ticker
+        channel = [f"book.{ticker}.none.{self.orderbook_depth}.100ms"]
         self.logger.info("ws unsubscribe - Orderbook - channel - " + str(channel))
         self.subscriptions.append(channel)
         msg["params"]["channels"] = channel
         self.ws.send(json.dumps(msg))
-        channel = [f"ticker.{symbol}.100ms"]
+        channel = [f"ticker.{ticker}.100ms"]
         self.logger.info("ws unsubscribe - Ticker - channel - " + str(channel))
         self.subscriptions.append(channel)
         msg["params"]["channels"] = channel
         self.ws.send(json.dumps(msg))
-        self.__confirm_subscription(action="unsubscribe")
+
+        return self.__confirm_subscription(action="unsubscribe")
 
     def transaction(self, **kwargs):
         """
