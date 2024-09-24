@@ -1970,9 +1970,9 @@ def handler_instrument(event) -> None:
     items = tree.selection()
     if items:
         lst = items[0].split("!")
+        market = tree.parent(items[0])
         if len(lst) > 1:
-            symb = lst[1]
-            market = tree.parent(items[0])
+            symb = lst[1]            
             if market:
                 if var.symbol != (symb, market):
                     var.symbol = (symb, market)
@@ -1993,6 +1993,9 @@ def handler_instrument(event) -> None:
                             if var.message_response:
                                 warning_window(var.message_response)
                                 var.message_response = ""
+        else:
+            var.current_market = items[0]
+            TreeTable.instrument.on_rollup(iid=items[0], setup="child")
 
 
 def handler_account(event) -> None:
@@ -2040,6 +2043,8 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False):
                 key=service.define_symbol_key(market=market),
                 value=value,
             )
+            Function.display_instruments(ws)
+            TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
     else:
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")
@@ -2081,6 +2086,7 @@ def confirm_unsubscribe(market, symb):
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{var.symbol[0]}"
         )
+        var.current_market = market
     else:
         message = ErrorMessage.FAILED_UNSUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")

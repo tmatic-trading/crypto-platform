@@ -1122,14 +1122,19 @@ class TreeviewTable(Variables):
     def on_scroll_resize(self):
         self.on_window_resize("scroll")
 
-    def on_rollup(self, iid=None):
+    def on_rollup(self, iid=None, setup="parent"):
         parent = iid.split("!")[0]
         for child in self.children:
             if child != parent:
                 self.tree.item(child, open=False)
         if parent in self.children:
             self.tree.item(parent, open=True)
-        self.tree.selection_set(iid)
+        if setup == "parent":
+            self.tree.selection_set(iid)
+        else:
+            if self.children_hierarchical:
+                iid = self.children_hierarchical[parent][0]
+                self.tree.selection_set(iid)
 
     def on_hover(self, event):
         widget = event.widget

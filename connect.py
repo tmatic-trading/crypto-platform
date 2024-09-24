@@ -78,6 +78,7 @@ def setup(reload=False):
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{var.symbol[0]}"
         )
+        TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
 
 
 def setup_market(ws: Markets, reload=False):
