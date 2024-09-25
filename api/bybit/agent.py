@@ -710,7 +710,9 @@ class Agent(Bybit):
         if self.Instrument[symbol].state == "Open":
             if category != "option":
                 self.instrument_index = service.fill_instrument_index(
-                    index=self.instrument_index, instrument=self.Instrument[symbol]
+                    index=self.instrument_index,
+                    instrument=self.Instrument[symbol],
+                    ws=self,
                 )
 
     def activate_funding_thread(self):

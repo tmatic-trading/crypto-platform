@@ -527,7 +527,7 @@ def unexpected_error(ws) -> str:
     return ws.logNumFatal
 
 
-def fill_instrument_index(index: dict, instrument: Instrument) -> dict:
+def fill_instrument_index(index: dict, instrument: Instrument, ws) -> dict:
     """
     Adds an instrument to the instrument_index dictionary.
 
@@ -538,6 +538,8 @@ def fill_instrument_index(index: dict, instrument: Instrument) -> dict:
         instruments by category, currency.
     instrument: Instrument
         An Instrument instance, which belongs to a particular exchange.
+    ws: Markets
+        Bitmex, Bybit or Deribit object.
 
     Returns
     -------
@@ -553,7 +555,7 @@ def fill_instrument_index(index: dict, instrument: Instrument) -> dict:
     if category not in index:
         index[category] = dict()
     if currency not in index[category]:
-        index[category][currency] = list()
+        index[category][currency] = dict()
     symbol = instrument.symbol
     if "option" in category:
         tmp = symbol.split("-")
@@ -563,10 +565,34 @@ def fill_instrument_index(index: dict, instrument: Instrument) -> dict:
             num = 2
         option_serie = "-".join(tmp[:num])
         if option_serie not in index[category][currency]:
-            index[category][currency].append(option_serie)
+            index[category][currency][option_serie] = list()
+        index[category][currency][option_serie].append(symbol)
+
+        # Add a series of options.
+
+        symbol = (option_serie, instrument.market)
+        series: Instrument = ws.Instrument[symbol]
+        series.symbol = option_serie
+        series.ticker = "option!"
+        series.category = instrument.category
+        series.settlCurrency = instrument.settlCurrency
+        series.currentQty = "-"
+        series.avgEntryPrice = "-"
+        series.unrealisedPnl = "-"
+        series.marginCallPrice = "-"
+        series.state = instrument.state
+        series.volume24h = "-"
+        series.expire = instrument.expire
+        series.fundingRate = "-"
+        series.baseCoin = instrument.baseCoin
+        series.precision = instrument.precision
+        series.asks = [["-", "-"]]
+        series.bids = [["-", "-"]]
+        series.price_precision = 1
+
     else:
         if symbol not in index[category][currency]:
-            index[category][currency].append(symbol)
+            index[category][currency][symbol] = None
 
     return index
 

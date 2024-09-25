@@ -618,7 +618,8 @@ class Bybit(Variables):
 
         return ""
 
-    def subscribe_symbol(self, symbol: tuple, answer=False, timeout=None) -> str:
+    def subscribe_symbol(self, symb: list, answer=False, timeout=None) -> str:
+        symbol = (symb[0], self.name)
         self.subscribe(symbol=symbol)
         instrument = self.Instrument[symbol]
         count = 0

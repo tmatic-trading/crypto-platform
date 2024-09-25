@@ -173,7 +173,7 @@ def load_bots() -> None:
                         service.update_database(query=qwr)
     var.lock.release()
 
-    # add_subscription(subscriptions=subscriptions)
+    add_subscription(subscriptions=subscriptions)
 
     # Loading trades and summing up the results for each bot.
 

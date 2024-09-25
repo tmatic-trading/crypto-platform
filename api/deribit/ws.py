@@ -12,6 +12,7 @@ from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
+from display.messages import Message
 from services import display_exception
 
 
@@ -144,11 +145,30 @@ class Deribit(Variables):
         # Orderbook
 
         for symbol in self.symbol_list:
-            ticker = self.Instrument[symbol].ticker
-            channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
-            self.logger.info("ws subscription - Orderbook - channel - " + str(channel))
-            channels.append(channel)
+            instrument = self.Instrument[symbol]
+            ticker = instrument.ticker
+            if ticker != "option!":
+                channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Orderbook", CHANNEL=channel
+                )
+                self._put_message(message)
+                channels.append(channel)
+            else:
+                lst = self.instrument_index[instrument.category][
+                    instrument.settlCurrency[0]
+                ][instrument.symbol]
+                option_channels = list()
+                for option in lst:
+                    channel = f"book.{option}.none.{self.orderbook_depth}.100ms"
+                    channels.append(channel)
+                    option_channels.append(channel)
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Orderbook", CHANNEL=str(option_channels)
+                )
+                self._put_message(message)
         self.subscriptions.append(channels)
+
         self.__subscribe_channels(
             type="public",
             channels=channels,
@@ -161,9 +181,26 @@ class Deribit(Variables):
         channels = list()
         for symbol in self.symbol_list:
             ticker = self.Instrument[symbol].ticker
-            channel = f"ticker.{ticker}.100ms"
-            self.logger.info("ws subscription - Ticker - channel - " + str(channel))
-            channels.append(channel)
+            if ticker != "option!":
+                channel = f"ticker.{ticker}.100ms"
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Ticker", CHANNEL=channel
+                )
+                self._put_message(message)
+                channels.append(channel)
+            else:
+                lst = self.instrument_index[instrument.category][
+                    instrument.settlCurrency[0]
+                ][instrument.symbol]
+                option_channels = list()
+                for option in lst:
+                    channel = f"ticker.{option}.100ms"
+                    channels.append(channel)
+                    option_channels.append(channel)
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Ticker", CHANNEL=str(option_channels)
+                )
+                self._put_message(message)
         self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="public",
@@ -474,23 +511,31 @@ class Deribit(Variables):
             return False
         return True
 
-    def subscribe_symbol(self, symbol: tuple, timeout=None) -> None:
-        ticker = self.Instrument[symbol].ticker
-        channel = [f"book.{ticker}.none.{self.orderbook_depth}.100ms"]
-        self.logger.info("ws subscription - Orderbook - channel - " + str(channel))
-        self.subscriptions.append(channel)
+    def subscribe_symbol(self, symb: list, timeout=None) -> None:
+        channel_orderbook = []
+        channel_ticker = []
+        for sym in symb:
+            symbol = (sym, self.name)
+            instrument = self.Instrument[symbol]
+            ticker = instrument.ticker
+            channel_orderbook.append(f"book.{ticker}.none.{self.orderbook_depth}.100ms")
+            channel_ticker.append(f"ticker.{ticker}.100ms")
+
+        self.logger.info(
+            "ws subscription - Orderbook - channel - " + str(channel_orderbook)
+        )
+
+        self.subscriptions = [channel_orderbook] + [channel_ticker]
         self.__subscribe_channels(
             type="public",
-            channels=channel,
+            channels=channel_orderbook,
             id="subscription",
             callback=self.__update_orderbook,
         )
-        channel = [f"ticker.{ticker}.100ms"]
-        self.logger.info("ws subscription - Ticker - channel - " + str(channel))
-        self.subscriptions.append(channel)
+        self.logger.info("ws subscription - Ticker - channel - " + str(channel_ticker))
         self.__subscribe_channels(
             type="public",
-            channels=channel,
+            channels=channel_ticker,
             id="subscription",
             callback=self.__update_ticker,
         )
@@ -525,3 +570,22 @@ class Deribit(Variables):
         application is launched.
         """
         pass
+
+    def _put_message(self, message: str, warning=None) -> None:
+        """
+        Places an information message into the queue and the logger.
+        """
+        var.queue_info.put(
+            {
+                "market": self.name,
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": warning,
+            }
+        )
+        if not warning:
+            var.logger.info(self.name + " - " + message)
+        elif warning == "warning":
+            var.logger.warning(self.name + " - " + message)
+        else:
+            var.logger.error(self.name + " - " + message)

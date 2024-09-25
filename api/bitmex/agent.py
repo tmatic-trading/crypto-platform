@@ -208,7 +208,9 @@ class Agent(Bitmex):
         if instrument["state"] == "Open":
             if category != "spot":
                 self.instrument_index = service.fill_instrument_index(
-                    index=self.instrument_index, instrument=self.Instrument[symbol]
+                    index=self.instrument_index,
+                    instrument=self.Instrument[symbol],
+                    ws=self,
                 )
 
         return category

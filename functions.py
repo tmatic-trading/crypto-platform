@@ -697,7 +697,7 @@ class Function(WS, Variables):
         )
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
-        if qty in ["", "None"]:
+        if qty in ["-", "None"]:
             return qty
         if qty == 0:
             qty = "0"
@@ -783,25 +783,37 @@ class Function(WS, Variables):
         # d tm = datetime.now()
         for market in var.market_list:
             ws = Markets[market]
-            for symbol in ws.symbol_list:
-                instrument = ws.Instrument[symbol]
-                compare = [
-                    symbol[0],
-                    instrument.category,
-                    instrument.currentQty,
-                    instrument.avgEntryPrice,
-                    instrument.unrealisedPnl,
-                    instrument.marginCallPrice,
-                    instrument.state,
-                    instrument.volume24h,
-                    instrument.expire,
-                    instrument.fundingRate,
-                ]
-                iid = f"{symbol[1]}!{symbol[0]}"
-                if iid in tree.children_hierarchical[market]:
-                    if compare != tree.cache[iid]:
-                        tree.cache[iid] = compare.copy()
-                        tree.update_hierarchical(
+            if market == var.current_market:
+                for symbol in ws.symbol_list:
+                    instrument = ws.Instrument[symbol]
+                    compare = [
+                        symbol[0],
+                        instrument.category,
+                        instrument.currentQty,
+                        instrument.avgEntryPrice,
+                        instrument.unrealisedPnl,
+                        instrument.marginCallPrice,
+                        instrument.state,
+                        instrument.volume24h,
+                        instrument.expire,
+                        instrument.fundingRate,
+                    ]
+                    iid = f"{symbol[1]}!{symbol[0]}"
+                    if iid in tree.children_hierarchical[market]:
+                        if compare != tree.cache[iid]:
+                            tree.cache[iid] = compare.copy()
+                            tree.update_hierarchical(
+                                parent=market,
+                                iid=iid,
+                                values=Function.form_instrument_line(
+                                    self,
+                                    compare=compare,
+                                    instrument=instrument,
+                                    symbol=symbol,
+                                ),
+                            )
+                    else:
+                        tree.insert_hierarchical(
                             parent=market,
                             iid=iid,
                             values=Function.form_instrument_line(
@@ -810,17 +822,9 @@ class Function(WS, Variables):
                                 instrument=instrument,
                                 symbol=symbol,
                             ),
+                            indx=indx,
+                            image=disp.image_cancel,
                         )
-                else:
-                    tree.insert_hierarchical(
-                        parent=market,
-                        iid=iid,
-                        values=Function.form_instrument_line(
-                            self, compare=compare, instrument=instrument, symbol=symbol
-                        ),
-                        indx=indx,
-                        image=disp.image_cancel,
-                    )
         # d print("___instrument", datetime.now() - tm)
 
     def refresh_tables(self: Markets) -> None:
@@ -981,15 +985,16 @@ class Function(WS, Variables):
                 for symbol in ws.symbol_list:
                     instrument = ws.Instrument[symbol]
                     if "spot" not in instrument.category:
-                        if instrument.currentQty != 0:
-                            value = Function.close_value(
-                                ws, symbol=symbol, pos=instrument.currentQty
-                            )
-                            currency = instrument.settlCurrency
-                            if currency in results:
-                                results[currency] += value
-                            else:
-                                results[currency] = value
+                        if instrument.ticker != "option!":
+                            if instrument.currentQty != 0:
+                                value = Function.close_value(
+                                    ws, symbol=symbol, pos=instrument.currentQty
+                                )
+                                currency = instrument.settlCurrency
+                                if currency in results:
+                                    results[currency] += value
+                                else:
+                                    results[currency] = value
                 for currency in ws.Result.keys():
                     result = ws.Result[currency]
                     result.result = 0
@@ -1069,42 +1074,43 @@ class Function(WS, Variables):
                 for symbol in ws.symbol_list:
                     instrument = ws.Instrument[symbol]
                     if "spot" not in instrument.category:
-                        pnl = Function.calculate_pnl(
-                            ws,
-                            symbol=symbol,
-                            qty=instrument.currentQty,
-                            sumreal=instrument.sumreal,
-                        )
-                        if symbol in rest:
-                            position = instrument.currentQty - rest[symbol]
-                            volume = instrument.volume - rest_volume[symbol]
-                            pnl = pnl - rest_sumreal[symbol]
-                        else:
-                            position = instrument.currentQty
-                            volume = instrument.volume
-                        iid = market + instrument.symbol
-                        if position == 0:
-                            if iid in tree.children_hierarchical[market]:
-                                tree.delete_hierarchical(parent=market, iid=iid)
-                        else:
-                            notificate = False
-                            compare = [
-                                "----",
-                                instrument.symbol,
-                                instrument.category,
-                                position,
-                                volume,
-                                pnl,
-                            ]
-                            Function.update_position_line(
-                                self,
-                                iid=iid,
-                                compare=compare,
-                                columns=[3, 4],
+                        if instrument.ticker != "option!":
+                            pnl = Function.calculate_pnl(
+                                ws,
                                 symbol=symbol,
-                                market=market,
-                                tree=tree,
+                                qty=instrument.currentQty,
+                                sumreal=instrument.sumreal,
                             )
+                            if symbol in rest:
+                                position = instrument.currentQty - rest[symbol]
+                                volume = instrument.volume - rest_volume[symbol]
+                                pnl = pnl - rest_sumreal[symbol]
+                            else:
+                                position = instrument.currentQty
+                                volume = instrument.volume
+                            iid = market + instrument.symbol
+                            if position == 0:
+                                if iid in tree.children_hierarchical[market]:
+                                    tree.delete_hierarchical(parent=market, iid=iid)
+                            else:
+                                notificate = False
+                                compare = [
+                                    "----",
+                                    instrument.symbol,
+                                    instrument.category,
+                                    position,
+                                    volume,
+                                    pnl,
+                                ]
+                                Function.update_position_line(
+                                    self,
+                                    iid=iid,
+                                    compare=compare,
+                                    columns=[3, 4],
+                                    symbol=symbol,
+                                    market=market,
+                                    tree=tree,
+                                )
                 notification = market + "_notification"
                 if notificate:
                     if notification not in tree.children_hierarchical[market]:
@@ -1369,7 +1375,6 @@ class Function(WS, Variables):
             rate=0,
             fund=1,
         )
-
         return calc["sumreal"]
 
     def round_price(self: Markets, symbol: tuple, price: float, rside: int) -> float:
@@ -1487,6 +1492,8 @@ class Function(WS, Variables):
         TreeTable.market.tree.update()
 
     def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
+        if volNow == "-":
+            return volNow
         if volNow > 1000000000:
             volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
         elif volNow > 1000000:
@@ -1972,7 +1979,7 @@ def handler_instrument(event) -> None:
         lst = items[0].split("!")
         market = tree.parent(items[0])
         if len(lst) > 1:
-            symb = lst[1]            
+            symb = lst[1]
             if market:
                 if var.symbol != (symb, market):
                     var.symbol = (symb, market)
@@ -2007,7 +2014,7 @@ def handler_account(event) -> None:
         tree.selection_remove(items[0])
 
 
-def confirm_subscription(market: str, symb: str, timeout=None, init=False):
+def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> None:
     """
     Adds an instrument to a websocket subscription of a specific exchange.
     After receiving confirmation from the exchange, writes the symbol to the
@@ -2030,7 +2037,13 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False):
     symbol = (symb, market)
     message = Message.SUBSCRIPTION_WAITING.format(SYMBOL=symb, MARKET=market)
     _put_message(market=market, message=message)
-    res = ws.subscribe_symbol(symbol=symbol, timeout=timeout)
+
+    """ws = Markets[symbol]
+    instrument = ws.Instrument[symbol]
+    if "option" in instrument.category:
+        print("_________________")"""
+
+    res = ws.subscribe_symbol(symb=[symb], timeout=timeout)
     if not res:
         message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symb)
         _put_message(market=market, message=message)
@@ -2107,9 +2120,18 @@ def handler_subscription(event) -> None:
         Instrument symbol.
     """
     market = TreeTable.market.active_row
+    # currency = TreeTable.i_currency.active_row
+    # category = TreeTable.i_category.active_row
     symb = TreeTable.i_list.active_row
     if market:
         ws = Markets[market]
+        # print("----------", market, category, currency, symb)
+        # print(ws.instrument_index[category][currency][symb])
+        # index = ws.instrument_index[category][currency][symb]
+        # if isinstance(index, list):
+        #    symb = index
+        # else:
+        #    symb = [symb]
         if (symb, market) not in ws.symbol_list:
             t = threading.Thread(target=confirm_subscription, args=(market, symb))
             t.start()

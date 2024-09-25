@@ -51,6 +51,7 @@ class Agent(Deribit):
         else:
             error = "Invalid data was received when loading instruments. " + str(data)
         self.logger.error(error)
+
         return service.unexpected_error(self)
 
     def get_instrument(self, ticker: str, category=None) -> str:
@@ -135,10 +136,9 @@ class Agent(Deribit):
         instrument.bids = [[0, 0]]
         instrument.valueOfOneContract = 1
         if instrument.state == "Open":
-            if category != "option":
-                self.instrument_index = service.fill_instrument_index(
-                    index=self.instrument_index, instrument=instrument
-                )
+            self.instrument_index = service.fill_instrument_index(
+                index=self.instrument_index, instrument=instrument, ws=self
+            )
 
     def open_orders(self) -> str:
         """
