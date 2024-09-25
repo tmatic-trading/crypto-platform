@@ -2016,6 +2016,8 @@ def handler_account(event) -> None:
 
 def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> None:
     """
+    Called when using the Instruments menu or while initial loading if an 
+    instrument is not subscribed, but unclosed positions are found for it.
     Adds an instrument to a websocket subscription of a specific exchange.
     After receiving confirmation from the exchange, writes the symbol to the
     .env.Subscriptions file.
@@ -2037,13 +2039,7 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
     symbol = (symb, market)
     message = Message.SUBSCRIPTION_WAITING.format(SYMBOL=symb, MARKET=market)
     _put_message(market=market, message=message)
-
-    """ws = Markets[symbol]
-    instrument = ws.Instrument[symbol]
-    if "option" in instrument.category:
-        print("_________________")"""
-
-    res = ws.subscribe_symbol(symb=[symb], timeout=timeout)
+    res = ws.subscribe_symbol(symbol=symbol, timeout=timeout)
     if not res:
         message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symb)
         _put_message(market=market, message=message)
@@ -2066,7 +2062,9 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
 
 def confirm_unsubscribe(market, symb):
     """
-    Removes an instrument from a websocket subscription for a specific exchange.
+    Removes an instrument from a websocket subscription for a specific 
+    exchange. After receiving confirmation from the exchange, removes the 
+    symbol from the .env.Subscriptions file.
     """
     ws = Markets[market]
     if len(ws.symbol_list) == 1:

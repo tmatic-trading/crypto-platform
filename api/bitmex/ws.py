@@ -141,8 +141,7 @@ class Bitmex(Variables):
                 self.logNumFatal = "FATAL"
             self.logger.error(message)
 
-    def subscribe_symbol(self, symb: list, timeout=None) -> None:
-        symbol = (symb[0], self.name)
+    def subscribe_symbol(self, symbol: tuple, timeout=None) -> None:
         subscriptions = []
         for sub in self.table_subscription:
             subscriptions += [sub + ":" + self.Instrument[symbol].ticker]

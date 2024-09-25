@@ -73,6 +73,7 @@ class Deribit(Variables):
         self.ticker = dict()
         self.funding_thread_active = True
         self.instrument_index = dict()
+        self.subscriptions = list()
 
     def setup_session(self):
         """
@@ -127,87 +128,23 @@ class Deribit(Variables):
             time_out -= slp
         if time_out <= 0:
             self.logger.error("Couldn't connect to websocket!")
-            self.logNumFatal = "SETUP"
+            self.logNumFatal = "FATAL"
         time_out, slp = 3, 0.05
         while not self.access_token:
             time_out -= slp
             if time_out <= 0:
                 self.logger.error("Access_token not received. Reboot.")
-                self.logNumFatal = "SETUP"
+                self.logNumFatal = "FATAL"
                 return
             time.sleep(slp)
         self.logger.info("access_token received")
 
     def __subscribe(self):
-        channels = list()
         self.subscriptions = list()
 
-        # Orderbook
+        # Orderbook and Ticker
 
-        for symbol in self.symbol_list:
-            instrument = self.Instrument[symbol]
-            ticker = instrument.ticker
-            if ticker != "option!":
-                channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Orderbook", CHANNEL=channel
-                )
-                self._put_message(message)
-                channels.append(channel)
-            else:
-                lst = self.instrument_index[instrument.category][
-                    instrument.settlCurrency[0]
-                ][instrument.symbol]
-                option_channels = list()
-                for option in lst:
-                    channel = f"book.{option}.none.{self.orderbook_depth}.100ms"
-                    channels.append(channel)
-                    option_channels.append(channel)
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Orderbook", CHANNEL=str(option_channels)
-                )
-                self._put_message(message)
-        self.subscriptions.append(channels)
-
-        self.__subscribe_channels(
-            type="public",
-            channels=channels,
-            id="subscription",
-            callback=self.__update_orderbook,
-        )
-
-        # Ticker
-
-        channels = list()
-        for symbol in self.symbol_list:
-            ticker = self.Instrument[symbol].ticker
-            if ticker != "option!":
-                channel = f"ticker.{ticker}.100ms"
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Ticker", CHANNEL=channel
-                )
-                self._put_message(message)
-                channels.append(channel)
-            else:
-                lst = self.instrument_index[instrument.category][
-                    instrument.settlCurrency[0]
-                ][instrument.symbol]
-                option_channels = list()
-                for option in lst:
-                    channel = f"ticker.{option}.100ms"
-                    channels.append(channel)
-                    option_channels.append(channel)
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Ticker", CHANNEL=str(option_channels)
-                )
-                self._put_message(message)
-        self.subscriptions.append(channels)
-        self.__subscribe_channels(
-            type="public",
-            channels=channels,
-            id="subscription",
-            callback=self.__update_ticker,
-        )
+        self._subscribe_symbols(symbol_list=self.symbol_list)
 
         # Portfolio
 
@@ -245,6 +182,79 @@ class Deribit(Variables):
             channels=channels,
             id="subscription",
             callback=self.__update_user_changes,
+        )
+
+    def _subscribe_symbols(self, symbol_list: list) -> None:
+        """
+        Orderbook and ticker subscription. Called at boot or reboot time or 
+        via the Instruments menu, the options series subscribes to all 
+        available put and call strikes.
+        """
+        channels = list()
+        for symbol in symbol_list:
+            instrument = self.Instrument[symbol]
+            ticker = instrument.ticker
+            if ticker != "option!":
+                channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Orderbook", CHANNEL=channel
+                )
+                self._put_message(message)
+                channels.append(channel)
+            else:
+                lst = self.instrument_index[instrument.category][
+                    instrument.settlCurrency[0]
+                ][instrument.symbol]
+                option_channels = list()
+                for option in lst:
+                    channel = f"book.{option}.none.{self.orderbook_depth}.100ms"
+                    channels.append(channel)
+                    option_channels.append(channel)
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Orderbook", CHANNEL=str(option_channels)
+                )
+                self._put_message(message)
+        self.subscriptions.append(channels)
+
+        self.__subscribe_channels(
+            type="public",
+            channels=channels,
+            id="subscription",
+            callback=self.__update_orderbook,
+        )
+
+        # Ticker
+
+        channels = list()
+        for symbol in symbol_list:
+            instrument = self.Instrument[symbol]
+            ticker = instrument.ticker
+            if ticker != "option!":
+                channel = f"ticker.{ticker}.100ms"
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Ticker", CHANNEL=channel
+                )
+                self._put_message(message)
+                channels.append(channel)
+            else:
+                lst = self.instrument_index[instrument.category][
+                    instrument.settlCurrency[0]
+                ][instrument.symbol]
+                option_channels = list()
+                for option in lst:
+                    channel = f"ticker.{option}.100ms"
+                    channels.append(channel)
+                    option_channels.append(channel)
+                message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                    NAME="Ticker", CHANNEL=str(option_channels)
+                )
+                self._put_message(message)
+        self.subscriptions.append(channels)
+        self.__subscribe_channels(
+            type="public",
+            channels=channels,
+            id="subscription",
+            callback=self.__update_ticker,
         )
 
     def __on_message(self, ws, message):
@@ -511,34 +521,12 @@ class Deribit(Variables):
             return False
         return True
 
-    def subscribe_symbol(self, symb: list, timeout=None) -> None:
-        channel_orderbook = []
-        channel_ticker = []
-        for sym in symb:
-            symbol = (sym, self.name)
-            instrument = self.Instrument[symbol]
-            ticker = instrument.ticker
-            channel_orderbook.append(f"book.{ticker}.none.{self.orderbook_depth}.100ms")
-            channel_ticker.append(f"ticker.{ticker}.100ms")
-
-        self.logger.info(
-            "ws subscription - Orderbook - channel - " + str(channel_orderbook)
-        )
-
-        self.subscriptions = [channel_orderbook] + [channel_ticker]
-        self.__subscribe_channels(
-            type="public",
-            channels=channel_orderbook,
-            id="subscription",
-            callback=self.__update_orderbook,
-        )
-        self.logger.info("ws subscription - Ticker - channel - " + str(channel_ticker))
-        self.__subscribe_channels(
-            type="public",
-            channels=channel_ticker,
-            id="subscription",
-            callback=self.__update_ticker,
-        )
+    def subscribe_symbol(self, symbol: tuple, timeout=None) -> None:
+        """
+        Called when using the Instruments menu or while initial loading if an 
+        instrument is not subscribed, but unclosed positions are found for it.
+        """
+        self._subscribe_symbols(symbol_list=[symbol])
 
         return self.__confirm_subscription()
 
