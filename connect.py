@@ -16,7 +16,7 @@ from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log
 from display.functions import info_display
 from display.settings import SettingsApp
-from display.variables import TreeTable
+from display.variables import TreeTable, trim_col_width
 from display.variables import Variables as disp
 from functions import Function
 
@@ -80,6 +80,8 @@ def setup(reload=False):
             index=f"{var.current_market}!{var.symbol[0]}"
         )
         TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
+        TreeTable.instrument.tree.update_idletasks()
+        trim_col_width(TreeTable.instrument, TreeTable.instrument.column_hide[0])
 
 
 def setup_market(ws: Markets, reload=False):

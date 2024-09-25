@@ -1287,25 +1287,44 @@ def resize_col(event, pw, ratio):
     pw.paneconfig(pw.panes()[0], width=pw.winfo_width() // ratio)
 
 
-def trim_col_width(tview: ttk.Treeview, cols: list, plus: int = 0):
+def trim_col_width(tview: TreeviewTable, cols: list):
     """
     Aligns the width of columns when a column is hidden.
 
     Parameters
     ----------
-    tview: ttk.Treeview
-        Treeview object.
+    tview: TreeviewTable
+        TreeviewTable object.
     cols:
         List of columns to align.
     plus:
         If the table is hierarchical, then alignment is performed taking into
         account the first column #0.
     """
-    width = tview.winfo_width() // (len(cols) + plus)
-    if plus:
-        tview.column("#0", width=width)
+    if tview.hierarchy is True:
+        plus = 1
+    else:
+        plus = 0
+    width_all = tview.tree.winfo_width()
+    if tview.tree == TreeTable.instrument.tree:
+        ratio_1 = 1.85  # the ratio of the column "1" to the normal columns
+        ratio_2 = 1.35  # the ratio of the column "2" to the normal columns
+        width = int(width_all / (ratio_1 + ratio_2 + len(cols) + plus - 2))
+        width_1 = int(width * ratio_1)
+        width_2 = int(width * ratio_2)
+    else:
+        width = width_all // (len(cols) + plus)
+        width_1 = width
+        width_2 = width
+    if plus != 0:
+        tview.tree.column("#0", width=width)
     for col in cols:
-        tview.column(col, width=width)
+        if col == "1":
+            tview.tree.column(col, width=width_1)
+        elif col == "2":
+            tview.tree.column(col, width=width_2)
+        else:
+            tview.tree.column(col, width=width)
 
 
 # Hide / show adaptive columns in order to save space in the tables
@@ -1326,34 +1345,32 @@ def hide_columns(event):
                 )
                 TreeTable.instrument.hide_num = 3
                 trim_col_width(
-                    TreeTable.instrument.tree, TreeTable.instrument.column_hide[3]
+                    TreeTable.instrument, TreeTable.instrument.column_hide[3]
                 )
             if TreeTable.orders.hide_num != 3:
                 TreeTable.orders.tree.config(
                     displaycolumns=TreeTable.orders.column_hide[3]
                 )
                 TreeTable.orders.hide_num = 3
-                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[3])
+                trim_col_width(TreeTable.orders, TreeTable.orders.column_hide[3])
             if TreeTable.trades.hide_num != 3:
                 TreeTable.trades.tree.config(
                     displaycolumns=TreeTable.trades.column_hide[3]
                 )
                 TreeTable.trades.hide_num = 3
-                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[3])
+                trim_col_width(TreeTable.trades, TreeTable.trades.column_hide[3])
             if TreeTable.funding.hide_num != 3:
                 TreeTable.funding.tree.config(
                     displaycolumns=TreeTable.funding.column_hide[3]
                 )
                 TreeTable.funding.hide_num = 3
-                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[3])
+                trim_col_width(TreeTable.funding, TreeTable.funding.column_hide[3])
             if TreeTable.account.hide_num != 3:
                 TreeTable.account.tree.config(
                     displaycolumns=TreeTable.account.column_hide[3]
                 )
                 TreeTable.account.hide_num = 3
-                trim_col_width(
-                    TreeTable.account.tree, TreeTable.account.column_hide[3], plus=1
-                )
+                trim_col_width(TreeTable.account, TreeTable.account.column_hide[3])
         elif ratio < Variables.adaptive_ratio - 0.1:
             if (
                 TreeTable.instrument.hide_num != 2
@@ -1364,34 +1381,32 @@ def hide_columns(event):
                 )
                 TreeTable.instrument.hide_num = 2
                 trim_col_width(
-                    TreeTable.instrument.tree, TreeTable.instrument.column_hide[2]
+                    TreeTable.instrument, TreeTable.instrument.column_hide[2]
                 )
             if TreeTable.orders.hide_num != 2:
                 TreeTable.orders.tree.config(
                     displaycolumns=TreeTable.orders.column_hide[2]
                 )
                 TreeTable.orders.hide_num = 2
-                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[2])
+                trim_col_width(TreeTable.orders, TreeTable.orders.column_hide[2])
             if TreeTable.trades.hide_num != 2:
                 TreeTable.trades.tree.config(
                     displaycolumns=TreeTable.trades.column_hide[2]
                 )
                 TreeTable.trades.hide_num = 2
-                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[2])
+                trim_col_width(TreeTable.trades, TreeTable.trades.column_hide[2])
             if TreeTable.funding.hide_num != 2:
                 TreeTable.funding.tree.config(
                     displaycolumns=TreeTable.funding.column_hide[2]
                 )
                 TreeTable.funding.hide_num = 2
-                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[2])
+                trim_col_width(TreeTable.funding, TreeTable.funding.column_hide[2])
             if TreeTable.account.hide_num != 2:
                 TreeTable.account.tree.config(
                     displaycolumns=TreeTable.account.column_hide[2]
                 )
                 TreeTable.account.hide_num = 2
-                trim_col_width(
-                    TreeTable.account.tree, TreeTable.account.column_hide[2], plus=1
-                )
+                trim_col_width(TreeTable.account, TreeTable.account.column_hide[2])
         elif ratio < Variables.adaptive_ratio:
             if (
                 TreeTable.instrument.hide_num != 1
@@ -1402,34 +1417,32 @@ def hide_columns(event):
                 )
                 TreeTable.instrument.hide_num = 1
                 trim_col_width(
-                    TreeTable.instrument.tree, TreeTable.instrument.column_hide[1]
+                    TreeTable.instrument, TreeTable.instrument.column_hide[1]
                 )
             if TreeTable.orders.hide_num != 1:
                 TreeTable.orders.tree.config(
                     displaycolumns=TreeTable.orders.column_hide[1]
                 )
                 TreeTable.orders.hide_num = 1
-                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[1])
+                trim_col_width(TreeTable.orders, TreeTable.orders.column_hide[1])
             if TreeTable.trades.hide_num != 1:
                 TreeTable.trades.tree.config(
                     displaycolumns=TreeTable.trades.column_hide[1]
                 )
                 TreeTable.trades.hide_num = 1
-                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[1])
+                trim_col_width(TreeTable.trades, TreeTable.trades.column_hide[1])
             if TreeTable.funding.hide_num != 1:
                 TreeTable.funding.tree.config(
                     displaycolumns=TreeTable.funding.column_hide[1]
                 )
                 TreeTable.funding.hide_num = 1
-                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[1])
+                trim_col_width(TreeTable.funding, TreeTable.funding.column_hide[1])
             if TreeTable.account.hide_num != 1:
                 TreeTable.account.tree.config(
                     displaycolumns=TreeTable.account.column_hide[1]
                 )
                 TreeTable.account.hide_num = 1
-                trim_col_width(
-                    TreeTable.account.tree, TreeTable.account.column_hide[1], plus=1
-                )
+                trim_col_width(TreeTable.account, TreeTable.account.column_hide[1])
         elif ratio > Variables.adaptive_ratio:
             if TreeTable.instrument.hide_num != 0:
                 TreeTable.instrument.tree.config(
@@ -1437,34 +1450,32 @@ def hide_columns(event):
                 )
                 TreeTable.instrument.hide_num = 0
                 trim_col_width(
-                    TreeTable.instrument.tree, TreeTable.instrument.column_hide[0]
+                    TreeTable.instrument, TreeTable.instrument.column_hide[0]
                 )
             if TreeTable.orders.hide_num != 0:
                 TreeTable.orders.tree.config(
                     displaycolumns=TreeTable.orders.column_hide[0]
                 )
                 TreeTable.orders.hide_num = 0
-                trim_col_width(TreeTable.orders.tree, TreeTable.orders.column_hide[0])
+                trim_col_width(TreeTable.orders, TreeTable.orders.column_hide[0])
             if TreeTable.trades.hide_num != 0:
                 TreeTable.trades.tree.config(
                     displaycolumns=TreeTable.trades.column_hide[0]
                 )
                 TreeTable.trades.hide_num = 0
-                trim_col_width(TreeTable.trades.tree, TreeTable.trades.column_hide[0])
+                trim_col_width(TreeTable.trades, TreeTable.trades.column_hide[0])
             if TreeTable.funding.hide_num != 0:
                 TreeTable.funding.tree.config(
                     displaycolumns=TreeTable.funding.column_hide[0]
                 )
                 TreeTable.funding.hide_num = 0
-                trim_col_width(TreeTable.funding.tree, TreeTable.funding.column_hide[0])
+                trim_col_width(TreeTable.funding, TreeTable.funding.column_hide[0])
             if TreeTable.account.hide_num != 0:
                 TreeTable.account.tree.config(
                     displaycolumns=TreeTable.account.column_hide[0]
                 )
                 TreeTable.account.hide_num = 0
-                trim_col_width(
-                    TreeTable.account.tree, TreeTable.account.column_hide[0], plus=1
-                )
+                trim_col_width(TreeTable.account, TreeTable.account.column_hide[0])
         Variables.last_market = var.current_market
 
     now_width = Variables.root.winfo_width()
