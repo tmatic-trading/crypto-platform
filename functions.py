@@ -2614,7 +2614,7 @@ def init_tables() -> None:
         bind=handler_instrument,
         hierarchy=True,
         lines=var.market_list,
-        hide=["9", "8", "2"],
+        hide=["7", "8", "9"],
     )
     TreeTable.account = TreeviewTable(
         frame=disp.frame_account,
