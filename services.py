@@ -563,16 +563,16 @@ def fill_instrument_index(index: dict, instrument: Instrument, ws) -> dict:
             num = 3
         else:
             num = 2
-        option_serie = "-".join(tmp[:num])
-        if option_serie not in index[category][currency]:
-            index[category][currency][option_serie] = list()
-        index[category][currency][option_serie].append(symbol)
+        option_series = "-".join(tmp[:num]) + "-"
+        if option_series not in index[category][currency]:
+            index[category][currency][option_series] = list()
+        index[category][currency][option_series].append(symbol)
 
         # Add a series of options.
 
-        symbol = (option_serie, instrument.market)
+        symbol = (option_series, instrument.market)
         series: Instrument = ws.Instrument[symbol]
-        series.symbol = option_serie
+        series.symbol = option_series
         series.ticker = "option!"
         series.category = instrument.category
         series.settlCurrency = instrument.settlCurrency
@@ -589,7 +589,6 @@ def fill_instrument_index(index: dict, instrument: Instrument, ws) -> dict:
         series.asks = [["-", "-"]]
         series.bids = [["-", "-"]]
         series.price_precision = 1
-
     else:
         if symbol not in index[category][currency]:
             index[category][currency][symbol] = None

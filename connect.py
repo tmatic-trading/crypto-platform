@@ -60,21 +60,22 @@ def setup(reload=False):
         var.market_list = ["Fake"]
         var.current_market = "Fake"
         var.symbol = "Fake"
-    else:
-        var.current_market = var.market_list[0]
-        var.symbol = Markets[var.current_market].symbol_list[0]
-    ws = Markets[var.current_market]
     functions.init_tables()
     bot_manager.create_bots_menu()
     bot_threads()
     settings.init()
-    var.symbol = ws.symbol_list[0]
     if "Fake" in var.market_list:
         disp.on_settings()
         settings.return_main_page()
     else:
         disp.on_main()
-        Function.display_instruments(ws, "end")
+        for market in var.market_list:
+            ws = Markets[market]
+            var.current_market = market
+            Function.display_instruments(ws, "end")
+        var.current_market = var.market_list[0]
+        ws = Markets[var.current_market]
+        var.symbol = ws.symbol_list[0]
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{var.symbol[0]}"
         )

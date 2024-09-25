@@ -186,8 +186,8 @@ class Deribit(Variables):
 
     def _subscribe_symbols(self, symbol_list: list) -> None:
         """
-        Orderbook and ticker subscription. Called at boot or reboot time or 
-        via the Instruments menu, the options series subscribes to all 
+        Orderbook and ticker subscription. Called at boot or reboot time or
+        via the Instruments menu, the options series subscribes to all
         available put and call strikes.
         """
         channels = list()
@@ -327,7 +327,7 @@ class Deribit(Variables):
         """
         Checks that all subscriptions are successful.
         """
-        timeout, slp = 5, 0.05
+        timeout, slp = var.timeout, 0.05
         while self.subscriptions:
             timeout -= slp
             if timeout <= 0:
@@ -409,10 +409,10 @@ class Deribit(Variables):
         if "option" in instrument.category:
             instrument.delta = values["greeks"]["delta"]
             instrument.vega = values["greeks"]["vega"]
-            instrument.delta = values["greeks"]["theta"]
-            instrument.vega = values["greeks"]["gamma"]
+            instrument.theta = values["greeks"]["theta"]
+            instrument.gamma = values["greeks"]["gamma"]
             instrument.bidIv = values["bid_iv"]
-            instrument.vega = values["ask_iv"]
+            instrument.askIv = values["ask_iv"]
 
     def __update_portfolio(self, values: dict) -> None:
         currency = (values["currency"], self.name)
@@ -523,7 +523,7 @@ class Deribit(Variables):
 
     def subscribe_symbol(self, symbol: tuple, timeout=None) -> None:
         """
-        Called when using the Instruments menu or while initial loading if an 
+        Called when using the Instruments menu or while initial loading if an
         instrument is not subscribed, but unclosed positions are found for it.
         """
         self._subscribe_symbols(symbol_list=[symbol])

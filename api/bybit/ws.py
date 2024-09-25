@@ -91,9 +91,7 @@ class Bybit(Variables):
                     lst.append(symbol)
             threads = []
             for symbol in lst:
-                t = threading.Thread(
-                    target=self.subscribe_symbol, args=(symbol, True, 7)
-                )
+                t = threading.Thread(target=self.subscribe_symbol, args=(symbol, True))
                 t.start()
                 threads.append(t)
             [thread.join() for thread in threads]
@@ -174,11 +172,11 @@ class Bybit(Variables):
         instrument.bids = bids
         if symbol in self.klines:
             service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
-        instrument.confirm_subscription.add("orderbook")
+        # d instrument.confirm_subscription.add("orderbook")
 
     def __update_ticker(self, values: dict, category: str) -> None:
-        symbol = self.ticker[(values["symbol"], category)]
-        instrument = self.Instrument[(symbol, self.name)]
+        symb = self.ticker[(values["symbol"], category)]
+        instrument = self.Instrument[(symb, self.name)]
         instrument.volume24h = float(values["volume24h"])
         if "fundingRate" in values:
             if values["fundingRate"]:
@@ -186,12 +184,12 @@ class Bybit(Variables):
         if category != "spot":
             instrument.openInterest = values["openInterest"]
             if "option" in instrument.category:
-                instrument.delta = values["greeks"]["delta"]
-                instrument.vega = values["greeks"]["vega"]
-                instrument.delta = values["greeks"]["theta"]
-                instrument.vega = values["greeks"]["gamma"]
-                instrument.bidIv = values["bid_iv"]
-                instrument.vega = values["ask_iv"]
+                instrument.delta = values["delta"]
+                instrument.vega = values["vega"]
+                instrument.theta = values["theta"]
+                instrument.gamma = values["gamma"]
+                instrument.bidIv = values["bidIv"]
+                instrument.askIv = values["askIv"]
         instrument.confirm_subscription.add("ticker")
 
     def __update_account(self, values: dict) -> None:
@@ -387,10 +385,21 @@ class Bybit(Variables):
 
         return True
 
-    def subscribe(self, symbol: tuple) -> str:
+    def _subscribe(self, symbol: tuple) -> str:
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
         category = instrument.category
+        if ticker == "option!":
+            lst = self.instrument_index[instrument.category][
+                instrument.settlCurrency[0]
+            ][instrument.symbol]
+            ticker = list()
+            for option in lst:
+                instrument = self.Instrument[(option, self.name)]
+                instrument.confirm_subscription = set()
+                ticker.append(option)
+        else:
+            instrument.confirm_subscription = set()
         if not self.ws[category].__class__.__name__ == "WebSocket":
             try:
                 self.ws[category] = WebSocket(
@@ -408,12 +417,10 @@ class Bybit(Variables):
         # Linear
 
         if category == "linear":
-            self.logger.info(
-                "ws subscription - orderbook_stream - category - "
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Orderbook", CHANNEL=category + " " + ticker
             )
+            self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
                     depth=self.orderbook_depth,
@@ -429,12 +436,10 @@ class Bybit(Variables):
                     verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
-            self.logger.info(
-                "ws subscription - ticker_stream - category - "
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Ticker", CHANNEL=category + " " + ticker
             )
+            self._put_message(message)
             try:
                 self.ws[category].ticker_stream(
                     symbol=ticker,
@@ -453,12 +458,10 @@ class Bybit(Variables):
         # Inverse
 
         elif category == "inverse":
-            self.logger.info(
-                "ws subscription - orderbook_stream - category - "
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Orderbook", CHANNEL=category + " " + ticker
             )
+            self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
                     depth=self.orderbook_depth,
@@ -474,12 +477,10 @@ class Bybit(Variables):
                     verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
-            self.logger.info(
-                "ws subscription - ticker_stream - category - "
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Ticker", CHANNEL=category + " " + ticker
             )
+            self._put_message(message)
             try:
                 self.ws[category].ticker_stream(
                     symbol=ticker,
@@ -498,12 +499,10 @@ class Bybit(Variables):
         # Spot
 
         elif category == "spot":
-            self.logger.info(
-                "ws subscription - orderbook_stream - category - "
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Orderbook", CHANNEL=category + " " + ticker
             )
+            self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
                     depth=self.orderbook_depth,
@@ -519,12 +518,10 @@ class Bybit(Variables):
                     verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
-            self.logger.info(
-                "ws subscription - ticker_stream - category - "
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Ticker", CHANNEL=category + " " + ticker
             )
+            self._put_message(message)
             try:
                 self.ws[category].ticker_stream(
                     symbol=ticker,
@@ -543,12 +540,10 @@ class Bybit(Variables):
         # Option
 
         elif category == "option":
-            self.logger.info(
-                "ws subscription - orderbook_stream - category - "
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Orderbook", CHANNEL=category + " " + str(ticker)
             )
+            self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
                     depth=self.orderbook_depth,
@@ -564,12 +559,10 @@ class Bybit(Variables):
                     verb="WebSocket",
                     path=f"orderbook_stream {symbol}",
                 )
-            self.logger.info(
-                "ws subscription - ticker_stream - category -"
-                + category
-                + " - symbol - "
-                + str(symbol)
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Ticker", CHANNEL=category + " " + str(ticker)
             )
+            self._put_message(message)
             try:
                 self.ws[category].ticker_stream(
                     symbol=ticker,
@@ -618,27 +611,45 @@ class Bybit(Variables):
 
         return ""
 
-    def subscribe_symbol(self, symbol: tuple, answer=False, timeout=None) -> str:
-        self.subscribe(symbol=symbol)
+    def subscribe_symbol(self, symbol: tuple, answer=False) -> str:
+        self._subscribe(symbol=symbol)
+
+        # Confirmation
+
         instrument = self.Instrument[symbol]
-        count = 0
+        count = var.timeout
         slp = 0.1
-        instrument.confirm_subscription = set()
-        while self.api_is_active:
-            if (
-                "ticker" in instrument.confirm_subscription
-                and "orderbook" in instrument.confirm_subscription
-            ):
-                if answer:
-                    message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
-                    self._put_message(message=message)
-                return ""
-            count += slp
-            if timeout and count > timeout:
-                message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbol[0])
+        subscriptions = dict()
+
+        if "option" in instrument.category:
+            symbols = list()
+            lst = self.instrument_index[instrument.category][
+                instrument.settlCurrency[0]
+            ][instrument.symbol]
+            for option in lst:
+                subscriptions[(option, self.name)] = {"orderbook", "ticker"}
+                symbols.append(option)
+        else:
+            subscriptions[symbol] = {"orderbook", "ticker"}
+            symbols = symbol[0]
+        s_copy = subscriptions.copy()
+        while subscriptions:
+            for symbol in s_copy:
+                instrument = self.Instrument[symbol]
+                if "ticker" in instrument.confirm_subscription:
+                    if symbol in subscriptions:
+                        del subscriptions[symbol]
+            count -= slp
+            if count < 0:
+                message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symbols)
                 self._put_message(message=message)
                 return "error"
             time.sleep(slp)
+        if answer:
+            message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbols)
+            self._put_message(message=message)
+
+        return ""
 
     def _put_message(self, message: str, warning=None) -> None:
         """

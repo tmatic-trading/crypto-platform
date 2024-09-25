@@ -61,6 +61,7 @@ class Agent(Bybit):
             threads.append(t)
             t.start()
         [thread.join() for thread in threads]
+
         for error in success:
             if error:
                 self.logger.error(
@@ -708,12 +709,11 @@ class Agent(Bybit):
         self.Instrument[symbol].bids = [[0, 0]]
         self.Instrument[symbol].valueOfOneContract = 1
         if self.Instrument[symbol].state == "Open":
-            if category != "option":
-                self.instrument_index = service.fill_instrument_index(
-                    index=self.instrument_index,
-                    instrument=self.Instrument[symbol],
-                    ws=self,
-                )
+            self.instrument_index = service.fill_instrument_index(
+                index=self.instrument_index,
+                instrument=self.Instrument[symbol],
+                ws=self,
+            )
 
     def activate_funding_thread(self):
         """
