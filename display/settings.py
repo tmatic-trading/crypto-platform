@@ -674,7 +674,9 @@ class SettingsApp:
                         state="readonly",
                         style="default.TCombobox",
                     )
-                    self.entry_common[setting]["values"] = disp.notebook_tabs
+                    self.entry_common[setting]["values"] = tuple(
+                        disp.notebook_frames.keys()
+                    )
                 elif setting == "REFRESH_RATE":
                     self.entry_common[setting] = ttk.Combobox(
                         self.root_frame,

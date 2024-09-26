@@ -249,3 +249,4 @@ class Variables:
     message_response = ""
     unsubscription = set()
     market_object = dict()
+    display_bottom: callable

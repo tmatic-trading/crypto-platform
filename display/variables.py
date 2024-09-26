@@ -502,41 +502,28 @@ class Variables:
     else:
         notebook = ttk.Notebook(pw_rest4, padding=0)
 
-    notebook_tabs = ()
     notebook_frames = {}
 
     # Frame for active orders
     frame_orders = tk.Frame()
-    notebook_frames["Orders"] = frame_orders
 
     # Positions frame
     frame_positions = tk.Frame()
-    notebook_frames["Positions"] = frame_positions
 
     # Trades frame
     frame_trades = tk.Frame()
-    notebook_frames["Trades"] = frame_trades
 
     # Funding frame
     frame_funding = tk.Frame()
-    notebook_frames["Funding"] = frame_funding
 
     # Account frame
     frame_account = tk.Frame()
-    notebook_frames["Account"] = frame_account
 
     # Financial results by currencies
     frame_results = tk.Frame()
-    notebook_frames["Results"] = frame_results
 
     # Bots frame
     frame_bots = tk.Frame()
-    notebook_frames["Robots"] = frame_bots
-
-    for name, frame in notebook_frames.items():
-        if name != "Robots":
-            notebook.add(frame, text=name)
-        notebook_tabs += (name,)
 
     pw_ratios[pw_info_rest] = 9
     pw_ratios[pw_rest3] = 4

@@ -75,16 +75,18 @@ def setup(reload=False):
         TreeTable.instrument.tree.update_idletasks()
         trim_col_width(TreeTable.instrument, TreeTable.instrument.column_hide[0])
 
-    check_frame = disp.notebook_frames[var.env["BOTTOM_FRAME"]]
+    frame = disp.notebook_frames[var.env["BOTTOM_FRAME"]]
+    check_frame = frame["frame"]
     if str(check_frame) in disp.notebook.tabs():
         # Bottom frame moved --> reorganize the disp.notebook
-        for tab, frame in disp.notebook_frames.items():
-            if str(frame) not in disp.notebook.tabs():
+        for tab, values in disp.notebook_frames.items():
+            if str(values["frame"]) not in disp.notebook.tabs():
                 disp.notebook.forget(check_frame)
-                disp.notebook.add(frame, text=tab)
-                disp.pw_rest4.forget(frame)
+                disp.notebook.add(values["frame"], text=tab)
+                disp.pw_rest4.forget(values["frame"])
                 disp.pw_rest4.add(check_frame)
                 break
+    var.display_bottom = frame["method"]
 
 
 def setup_market(ws: Markets, reload=False):
