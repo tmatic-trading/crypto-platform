@@ -29,8 +29,7 @@ class Tips(Enum):
         + "`Trades`, `Funding`, `Account`, `Results`, `Robots`, which will "
         + "always be visible at the bottom of the main page. Other tables "
         + "will be grouped in the notebook widget. The default table is "
-        + "`Robots`. NOTE: This setting is currently under development "
-        + "and will not go into effect."
+        + "`Robots`."
     )
     REFRESH_RATE = (
         "This setting determines how often the information on the screen "

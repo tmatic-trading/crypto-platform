@@ -496,46 +496,51 @@ class Variables:
     # Frame for instruments and their positions
     frame_instrument = tk.Frame(pw_rest3)
 
-    # Bots frame
-    frame_bots = tk.Frame(pw_rest4)
-
     # Notebook tabs: Orders | Positions | Trades | Funding | Account | Results
     if ostype == "Mac":
         notebook = ttk.Notebook(pw_rest4, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_rest4, padding=0)
 
+    notebook_tabs = ()
+    notebook_frames = {}
+
     # Frame for active orders
-    frame_orders = tk.Frame(notebook)
+    frame_orders = tk.Frame()
+    notebook_frames["Orders"] = frame_orders
 
     # Positions frame
-    frame_positions = tk.Frame(notebook)
+    frame_positions = tk.Frame()
+    notebook_frames["Positions"] = frame_positions
 
     # Trades frame
-    frame_trades = tk.Frame(notebook)
+    frame_trades = tk.Frame()
+    notebook_frames["Trades"] = frame_trades
 
     # Funding frame
-    frame_funding = tk.Frame(notebook)
+    frame_funding = tk.Frame()
+    notebook_frames["Funding"] = frame_funding
 
     # Account frame
-    frame_account = tk.Frame(notebook)
+    frame_account = tk.Frame()
+    notebook_frames["Account"] = frame_account
 
     # Financial results by currencies
-    frame_results = tk.Frame(notebook)
+    frame_results = tk.Frame()
+    notebook_frames["Results"] = frame_results
 
-    # Frame for the robots table (obsolete, will be deleted)
-    frame_robots = tk.Frame()
+    # Bots frame
+    frame_bots = tk.Frame()
+    notebook_frames["Robots"] = frame_bots
+
+    for name, frame in notebook_frames.items():
+        if name != "Robots":
+            notebook.add(frame, text=name)
+        notebook_tabs += (name,)
 
     pw_ratios[pw_info_rest] = 9
     pw_ratios[pw_rest3] = 4
     pw_ratios[pw_rest4] = 2
-
-    notebook.add(frame_orders, text="Orders")
-    notebook.add(frame_positions, text="Positions")
-    notebook.add(frame_trades, text="Trades")
-    notebook.add(frame_funding, text="Funding")
-    notebook.add(frame_account, text="Account")
-    notebook.add(frame_results, text="Results")
 
     pw_rest4.add(notebook)
     pw_rest4.add(frame_bots)
