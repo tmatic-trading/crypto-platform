@@ -33,6 +33,7 @@ class SettingsApp:
         self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook"
         self.common_settings["BOTTOM_FRAME"] = "Robots"
         self.common_settings["REFRESH_RATE"] = "5"
+
         self.default_subscriptions = OrderedDict()
         self.default_subscriptions["Bitmex"] = var.default_symbol["Bitmex"]
         self.default_subscriptions["Bybit"] = var.default_symbol["Bybit"]
@@ -673,16 +674,7 @@ class SettingsApp:
                         state="readonly",
                         style="default.TCombobox",
                     )
-                    values = (
-                        "Orders",
-                        "Positions",
-                        "Trades",
-                        "Funding",
-                        "Account",
-                        "Result",
-                        "Robots",
-                    )
-                    self.entry_common[setting]["values"] = values
+                    self.entry_common[setting]["values"] = disp.notebook_tabs
                 elif setting == "REFRESH_RATE":
                     self.entry_common[setting] = ttk.Combobox(
                         self.root_frame,

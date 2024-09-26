@@ -184,9 +184,9 @@ Deribit_TESTNET='YES'
 
 - ORDER_BOOK_DEPTH is a choice between "orderBook" which allows you to see the order book ten lines deep, and "quote" which shows only the best buy and sell while significantly reducing network traffic.
 
-- BOTTOM_FRAME — currently unavailable.
+- BOTTOM_FRAME — selects your preferred table from Orders, Positions, Trades, Funding, Account, Results and Robots, which will always be visible at the bottom of the main page.
 
-- REFRESH_RATE determines how often the information on the screen is refreshed, from 1 to 10 times per second.
+- REFRESH_RATE — determines how often the information on the screen is refreshed, from 1 to 10 times per second.
 
 - CONNECTED — "YES" means that the exchange must be connected.
 
