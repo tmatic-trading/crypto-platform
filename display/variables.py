@@ -496,6 +496,9 @@ class Variables:
     # Frame for instruments and their positions
     frame_instrument = tk.Frame(pw_rest3)
 
+    # Bots frame
+    frame_bots = tk.Frame(pw_rest4)
+
     # Notebook tabs: Orders | Positions | Trades | Funding | Account | Results
     if ostype == "Mac":
         notebook = ttk.Notebook(pw_rest4, padding=(-9, 0, -9, -9))
@@ -505,25 +508,22 @@ class Variables:
     notebook_frames = {}
 
     # Frame for active orders
-    frame_orders = tk.Frame()
+    frame_orders = tk.Frame(pw_rest4)
 
     # Positions frame
-    frame_positions = tk.Frame()
+    frame_positions = tk.Frame(pw_rest4)
 
     # Trades frame
-    frame_trades = tk.Frame()
+    frame_trades = tk.Frame(pw_rest4)
 
     # Funding frame
-    frame_funding = tk.Frame()
+    frame_funding = tk.Frame(pw_rest4)
 
     # Account frame
-    frame_account = tk.Frame()
+    frame_account = tk.Frame(pw_rest4)
 
     # Financial results by currencies
-    frame_results = tk.Frame()
-
-    # Bots frame
-    frame_bots = tk.Frame()
+    frame_results = tk.Frame(pw_rest4)
 
     pw_ratios[pw_info_rest] = 9
     pw_ratios[pw_rest3] = 4
