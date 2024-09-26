@@ -300,6 +300,10 @@ class Variables:
         frame_left, orient=tk.VERTICAL, sashrelief="raised", bd=0
     )
 
+    # Information field
+    frame_info = tk.Frame(pw_info_rest)
+    frame_info.pack(fill="both", expand="yes")
+
     menu_frame = tk.Frame(pw_info_rest)
     menu_frame.pack(fill="both", expand="yes")
 
@@ -325,6 +329,9 @@ class Variables:
     # trades, fundings, results, account, bots
     pw_rest3 = tk.PanedWindow(pw_rest2, orient=tk.VERTICAL, sashrelief="raised", bd=0)
     pw_rest3.pack(fill="both", expand="yes")
+
+    # Frame for instruments and their positions
+    frame_instrument = tk.Frame(pw_rest3)
 
     # This technical PanedWindow contains positions, orders, trades, fundings,
     # results, account, bots
@@ -447,10 +454,6 @@ class Variables:
     pw_info_rest.grid(row=1, column=0, sticky="NSEW")
     frame_left.grid_rowconfigure(1, weight=1)
 
-    # Information field
-    frame_info = tk.Frame(pw_info_rest)
-    frame_info.pack(fill="both", expand="yes")
-
     # Information widget
     if ostype == "Mac":
         text_info = tk.Text(
@@ -493,41 +496,38 @@ class Variables:
     # Frame for the order book
     frame_orderbook = tk.Frame(pw_rest2)
 
-    # Frame for instruments and their positions
-    frame_instrument = tk.Frame(pw_rest3)
+    notebook_frames = {}
+
+    pw_ratios[pw_info_rest] = 9
+    pw_ratios[pw_rest3] = 4
+    pw_ratios[pw_rest4] = 2
+
+    # Frame for active orders
+    frame_orders = tk.Frame()
+
+    # Positions frame
+    frame_positions = tk.Frame()
+
+    # Trades frame
+    frame_trades = tk.Frame()
+
+    # Funding frame
+    frame_funding = tk.Frame()
+
+    # Account frame
+    frame_account = tk.Frame()
+
+    # Financial results by currencies
+    frame_results = tk.Frame()
 
     # Bots frame
-    frame_bots = tk.Frame(pw_rest4)
+    frame_bots = tk.Frame()
 
     # Notebook tabs: Orders | Positions | Trades | Funding | Account | Results
     if ostype == "Mac":
         notebook = ttk.Notebook(pw_rest4, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_rest4, padding=0)
-
-    notebook_frames = {}
-
-    # Frame for active orders
-    frame_orders = tk.Frame(pw_rest4)
-
-    # Positions frame
-    frame_positions = tk.Frame(pw_rest4)
-
-    # Trades frame
-    frame_trades = tk.Frame(pw_rest4)
-
-    # Funding frame
-    frame_funding = tk.Frame(pw_rest4)
-
-    # Account frame
-    frame_account = tk.Frame(pw_rest4)
-
-    # Financial results by currencies
-    frame_results = tk.Frame(pw_rest4)
-
-    pw_ratios[pw_info_rest] = 9
-    pw_ratios[pw_rest3] = 4
-    pw_ratios[pw_rest4] = 2
 
     pw_rest4.add(notebook)
     pw_rest4.add(frame_bots)
@@ -760,7 +760,7 @@ class Variables:
 
     def on_sash_move(event, pw):
         panes = pw.winfo_children()
-        Variables.pw_ratios[pw] = pw.winfo_height() / panes[1].winfo_height()
+        Variables.pw_ratios[pw] = pw.winfo_height() / panes[0].winfo_height()
 
     def on_bot_menu(event) -> None:
         Variables.pw_rest1.pack_forget()
