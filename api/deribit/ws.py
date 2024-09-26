@@ -196,24 +196,18 @@ class Deribit(Variables):
             ticker = instrument.ticker
             if ticker != "option!":
                 channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Orderbook", CHANNEL=channel
-                )
-                self._put_message(message)
                 channels.append(channel)
             else:
                 lst = self.instrument_index[instrument.category][
                     instrument.settlCurrency[0]
                 ][instrument.symbol]
-                option_channels = list()
                 for option in lst:
                     channel = f"book.{option}.none.{self.orderbook_depth}.100ms"
                     channels.append(channel)
-                    option_channels.append(channel)
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Orderbook", CHANNEL=str(option_channels)
-                )
-                self._put_message(message)
+        message = Message.WEBSOCKET_SUBSCRIPTION.format(
+            NAME="Orderbook", CHANNEL=str(channels)
+        )
+        self._put_message(message=message)
         self.subscriptions.append(channels)
 
         self.__subscribe_channels(
@@ -231,24 +225,18 @@ class Deribit(Variables):
             ticker = instrument.ticker
             if ticker != "option!":
                 channel = f"ticker.{ticker}.100ms"
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Ticker", CHANNEL=channel
-                )
-                self._put_message(message)
                 channels.append(channel)
             else:
                 lst = self.instrument_index[instrument.category][
                     instrument.settlCurrency[0]
                 ][instrument.symbol]
-                option_channels = list()
                 for option in lst:
                     channel = f"ticker.{option}.100ms"
                     channels.append(channel)
-                    option_channels.append(channel)
-                message = Message.WEBSOCKET_SUBSCRIPTION.format(
-                    NAME="Ticker", CHANNEL=str(option_channels)
-                )
-                self._put_message(message)
+        message = Message.WEBSOCKET_SUBSCRIPTION.format(
+            NAME="Ticker", CHANNEL=str(channels)
+        )
+        self._put_message(message=message)
         self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="public",
@@ -330,7 +318,7 @@ class Deribit(Variables):
         timeout, slp = var.timeout, 0.05
         while self.subscriptions:
             timeout -= slp
-            if timeout <= 0:
+            if timeout <= 0 or not self.api_is_active:
                 for sub in self.subscriptions:
                     self.logger.error("Failed to " + action + " " + str(sub))
                 return "error"
@@ -340,7 +328,7 @@ class Deribit(Variables):
 
     def __subscribe_channels(
         self, type: str, channels: list, id: str, callback: Callable
-    ):
+    ) -> None:
         msg = {
             "jsonrpc": "2.0",
             "method": type + "/subscribe",
@@ -385,7 +373,7 @@ class Deribit(Variables):
             self.ws.close()
         except Exception:
             pass
-        # self.logNumFatal = "SETUP"
+        self.api_is_active = False
         self.funding_thread_active = False
 
     def __update_orderbook(self, values: dict) -> None:
@@ -537,20 +525,37 @@ class Deribit(Variables):
             "method": "public/unsubscribe",
             "params": {"channels": None},
         }
+        channels = list()
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
-        channel = [f"book.{ticker}.none.{self.orderbook_depth}.100ms"]
-        self.logger.info("ws unsubscribe - Orderbook - channel - " + str(channel))
-        self.subscriptions.append(channel)
-        msg["params"]["channels"] = channel
+        if ticker != "option!":
+            channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
+            channels.append(channel)
+            channel = f"ticker.{ticker}.100ms"
+            channels.append(channel)
+        else:
+            lst = self.instrument_index[instrument.category][
+                instrument.settlCurrency[0]
+            ][instrument.symbol]
+            for option in lst:
+                channel = f"book.{option}.none.{self.orderbook_depth}.100ms"
+                channels.append(channel)
+                channel = f"ticker.{option}.100ms"
+                channels.append(channel)
+        msg["params"]["channels"] = channels
+        self.subscriptions.append(channels)
+        message = Message.WEBSOCKET_UNSUBSCRIBE.format(
+            NAME="Orderbook, Ticker", CHANNEL=channels
+        )
+        self._put_message(message=message)
         self.ws.send(json.dumps(msg))
-        channel = [f"ticker.{ticker}.100ms"]
-        self.logger.info("ws unsubscribe - Ticker - channel - " + str(channel))
-        self.subscriptions.append(channel)
-        msg["params"]["channels"] = channel
-        self.ws.send(json.dumps(msg))
+        res = self.__confirm_subscription(action="unsubscribe")
 
-        return self.__confirm_subscription(action="unsubscribe")
+        if not res:
+            for channel in channels:
+                del self.callback_directory[channel]
+
+        return res
 
     def transaction(self, **kwargs):
         """
@@ -559,18 +564,19 @@ class Deribit(Variables):
         """
         pass
 
-    def _put_message(self, message: str, warning=None) -> None:
+    def _put_message(self, message: str, warning=None, info=True) -> None:
         """
         Places an information message into the queue and the logger.
         """
-        var.queue_info.put(
-            {
-                "market": self.name,
-                "message": message,
-                "time": datetime.now(tz=timezone.utc),
-                "warning": warning,
-            }
-        )
+        if info:
+            var.queue_info.put(
+                {
+                    "market": self.name,
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": warning,
+                }
+            )
         if not warning:
             var.logger.info(self.name + " - " + message)
         elif warning == "warning":

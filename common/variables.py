@@ -75,7 +75,7 @@ class Variables:
     name_instrument = [
         "MARKET",
         "SYMBOL",
-        "CAT",
+        "CATEGORY",
         "POS",
         "ENTRY",
         "PNL",

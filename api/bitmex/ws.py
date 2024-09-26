@@ -527,7 +527,7 @@ class Bitmex(Variables):
             self.ws.close()
         except Exception:
             pass
-        # self.logNumFatal = "SETUP"
+        self.api_is_active = False
 
     def transaction(self, **kwargs):
         """

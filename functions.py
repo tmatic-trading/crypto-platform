@@ -2060,7 +2060,7 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
         ws.logNumFatal = "FATAL"
 
 
-def confirm_unsubscribe(market, symb):
+def confirm_unsubscribe(market: str, symb: str) -> None:
     """
     Removes an instrument from a websocket subscription for a specific
     exchange. After receiving confirmation from the exchange, removes the

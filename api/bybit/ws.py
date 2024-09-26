@@ -348,6 +348,7 @@ class Bybit(Variables):
             self.ws_private.exit()
         except Exception:
             pass
+        self.api_is_active = False
         self.logger.info(self.name + " - Websocket closed")
 
     def transaction(self, **kwargs):
@@ -595,6 +596,10 @@ class Bybit(Variables):
         unsubscription_message = json.dumps(
             {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
         )
+        message = Message.WEBSOCKET_UNSUBSCRIBE.format(
+            NAME="Orderbook, Ticker", CHANNELS=unsubscription_args
+        )
+        self.logger.info(message)
         self.ws[category].ws.send(unsubscription_message)
         count = 0
         slp = 0.1

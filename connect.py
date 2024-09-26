@@ -16,8 +16,9 @@ from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log
 from display.functions import info_display
 from display.settings import SettingsApp
-from display.variables import TreeTable, trim_col_width
+from display.variables import TreeTable
 from display.variables import Variables as disp
+from display.variables import trim_col_width
 from functions import Function
 
 settings = SettingsApp(disp.settings_page)
