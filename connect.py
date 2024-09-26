@@ -70,17 +70,7 @@ def setup(reload=False):
         settings.return_main_page()
     else:
         disp.on_main()
-        for market in var.market_list:
-            ws = Markets[market]
-            var.current_market = market
-            Function.display_instruments(ws, "end")
-        var.current_market = var.market_list[0]
-        ws = Markets[var.current_market]
-        var.symbol = ws.symbol_list[0]
-        TreeTable.instrument.set_selection(
-            index=f"{var.current_market}!{var.symbol[0]}"
-        )
-        TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
+        functions.clear_tables()
         TreeTable.instrument.tree.update_idletasks()
         trim_col_width(TreeTable.instrument, TreeTable.instrument.column_hide[0])
 
@@ -330,7 +320,6 @@ def terminal_reload_thread() -> None:
     service.close(Markets)
     disp.root.update()
     setup()
-    functions.clear_tables()
     disp.f3 = False
     var.reloading = False
 

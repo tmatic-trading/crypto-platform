@@ -902,7 +902,7 @@ class TreeviewTable(Variables):
         if bind:
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.iid_count = 0
-        self.init(size=size)
+        self.init()
         if hide:
             self.column_hide = []
             self.hide_num = 0
@@ -920,7 +920,7 @@ class TreeviewTable(Variables):
             self.tree.bind("<B1-Motion>", self.on_window_resize)
             self.tree.update()
 
-    def init(self, size):
+    def init(self):
         self.clear_all()
         self.cache = dict()
         if self.hierarchy:

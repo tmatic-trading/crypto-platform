@@ -104,7 +104,7 @@ class ErrorStatus(Enum):
         403: "Account Restrictions or Bans, Incorrect API Key Permissions, Authentication and Authorization Issues, Network or Server Issues",
         404: "Not Found",
         429: "Rate limit exceeded",
-        503: "Service Unavailable, Deployment/Restart, System Overload",
+        503: "Service Unavailable, or Deployment/Restart, or System Overload",
         504: "Server Error: Gateway Time-out",
         530: "Server Error",
     }

@@ -2208,10 +2208,17 @@ def init_bot_treetable_trades():
 def clear_tables():
     var.lock_market_switch.acquire(True)
     ws = Markets[var.current_market]
-    TreeTable.instrument.init(size=len(ws.symbol_list))
-    TreeTable.orderbook.init(size=disp.num_book)
-    Function.display_instruments(ws, "end")
+    TreeTable.instrument.init()
+    TreeTable.orderbook.init()
+    for market in var.market_list:
+        ws = Markets[market]
+        var.current_market = market
+        Function.display_instruments(ws, "end")
+    var.current_market = var.market_list[0]
+    ws = Markets[var.current_market]
+    var.symbol = ws.symbol_list[0]
     TreeTable.instrument.set_selection(index=f"{var.current_market}!{var.symbol[0]}")
+    TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
     var.lock_market_switch.release()
 
 
@@ -2610,7 +2617,6 @@ def init_tables() -> None:
         frame=disp.frame_instrument,
         name="instrument",
         title=var.name_instrument,
-        size=len(ws.symbol_list),
         bind=handler_instrument,
         hierarchy=True,
         lines=var.market_list,
