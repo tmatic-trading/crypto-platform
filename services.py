@@ -609,3 +609,16 @@ def set_dotenv(dotenv_path: str, key: str, value: str):
         key_to_set=key,
         value_to_set=value,
     )
+
+def option_sort(data):
+    """
+    The data is sorted by the `sort` parameter, options are additionally 
+    sorted by ascending strike price.
+    """
+    for lst in data.values():
+        lst.sort(key=lambda x: list(x.values())[0]["sort"])
+        for series in lst:
+            for values in series.values():
+                for key, value in values.items():            
+                    if key in ["CALLS", "PUTS"]:
+                        value.sort(key=lambda x: float(x.split("-")[-2]))
