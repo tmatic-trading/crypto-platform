@@ -9,7 +9,7 @@ class Message(str, Enum):
     UNSUBSCRIPTION_WAITING = (
         "Unsubscribe to {SYMBOL}. Waiting for confirmation from {MARKET}."
     )
-    UNSUBSCRIBED = "You have unsubscribed from {SYMBOL}."
+    UNSUBSCRIBED = "Unsubscribed from {SYMBOL}."
     DEFAULT_SYMBOL_ADDED = (
         "{MARKET} symbol list is empty. Added default symbol {SYMBOL}."
     )

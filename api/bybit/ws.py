@@ -46,6 +46,7 @@ class Bybit(Variables):
         self.ticker = dict()
         self.instrument_index = dict()
         var.market_object[self.name] = self
+        self.unsubscriptions = list()
 
     def setup_session(self):
         self.session: HTTP = HTTP(
@@ -341,6 +342,7 @@ class Bybit(Variables):
         """
         for category in self.categories:
             try:
+                
                 self.ws[category].exit()
             except Exception:
                 pass
@@ -401,6 +403,9 @@ class Bybit(Variables):
                 ticker.append(option)
         else:
             instrument.confirm_subscription = set()
+
+        # ws connection
+
         if not self.ws[category].__class__.__name__ == "WebSocket":
             try:
                 self.ws[category] = WebSocket(
@@ -581,41 +586,6 @@ class Bybit(Variables):
 
         return self.logNumFatal
 
-    def unsubscribe_symbol(self, symbol: tuple) -> str:
-        instrument = self.Instrument[symbol]
-        ticker = instrument.ticker
-        category = instrument.category
-        arg_ticker = f"tickers.{ticker}"
-        arg_orderbook = f"orderbook.{self.orderbook_depth}.{ticker}"
-        unsubscription_args = list()
-        if arg_ticker in self.ws[category].callback_directory:
-            unsubscription_args.append(arg_ticker)
-        if arg_orderbook in self.ws[category].callback_directory:
-            unsubscription_args.append(arg_orderbook)
-        req_id = symbol[0]  # str(uuid4())
-        unsubscription_message = json.dumps(
-            {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
-        )
-        message = Message.WEBSOCKET_UNSUBSCRIBE.format(
-            NAME="Orderbook, Ticker", CHANNELS=unsubscription_args
-        )
-        self.logger.info(message)
-        self.ws[category].ws.send(unsubscription_message)
-        count = 0
-        slp = 0.1
-        instrument.confirm_unsubscription = ""
-        while not instrument.confirm_unsubscription:
-            count += slp
-            if count > var.timeout:
-                return "error"
-            time.sleep(slp)
-        if arg_ticker in self.ws[category].callback_directory:
-            self.ws[category].callback_directory.pop(arg_ticker)
-        if arg_orderbook in self.ws[category].callback_directory:
-            self.ws[category].callback_directory.pop(arg_orderbook)
-
-        return ""
-
     def subscribe_symbol(self, symbol: tuple, answer=False) -> str:
         self._subscribe(symbol=symbol)
 
@@ -626,7 +596,7 @@ class Bybit(Variables):
         slp = 0.1
         subscriptions = dict()
 
-        if "option" in instrument.category:
+        if instrument.ticker == "option!":
             symbols = list()
             lst = self.instrument_index[instrument.category][
                 instrument.settlCurrency[0]
@@ -655,6 +625,95 @@ class Bybit(Variables):
             self._put_message(message=message)
 
         return ""
+    
+    def _subscribe_args(self, args: list, symbol: tuple):
+        instrument = self.Instrument[symbol]
+        ticker = instrument.ticker
+        arg_ticker = f"tickers.{ticker}"
+        arg_orderbook = f"orderbook.{self.orderbook_depth}.{ticker}"
+        args.append(arg_ticker)
+        args.append(arg_orderbook)
+
+        return args
+    
+    def _subscribe_args_list(self, symbol: tuple) -> list:
+        instrument = self.Instrument[symbol]
+        ticker = instrument.ticker
+        unsubscription_args = list()
+        if ticker == "option!":
+            lst = self.instrument_index[instrument.category][
+                instrument.settlCurrency[0]
+            ][instrument.symbol]
+            for option in lst:
+                unsubscription_args = self._subscribe_args(
+                    args=unsubscription_args, symbol=(option, self.name)
+                )
+        else:
+            unsubscription_args = self._subscribe_args(
+                args=unsubscription_args, symbol=symbol
+            )
+        
+        return unsubscription_args
+
+    def unsubscribe_symbol(self, symbol: tuple) -> str:
+        unsubscription_args = self._subscribe_args_list(symbol=symbol)
+        instrument = self.Instrument[symbol]
+        category = instrument.category
+        instrument.confirm_subscription = set()
+        req_id = symbol[0]
+        message = Message.WEBSOCKET_UNSUBSCRIBE.format(
+            NAME="Orderbook, Ticker", CHANNEL=unsubscription_args
+        )
+        self.logger.info(message)
+        self.unsubscriptions.append(req_id)
+        unsubscription_message = json.dumps(
+            {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
+        )
+        self.ws[category].ws.send(unsubscription_message)
+
+        # Confirmation
+
+        count = 0
+        slp = 0.1
+        while req_id in self.unsubscriptions:
+            count += slp
+            if count > 1000 or not self.api_is_active:
+                return "error"
+            time.sleep(slp)
+        for arg in unsubscription_args:
+            if arg in self.ws[category].callback_directory:
+                self.ws[category].callback_directory.pop(arg)
+
+        return ""
+
+    @staticmethod
+    def _process_unsubscription_message(message):
+        ws = var.market_object["Bybit"]
+        if message["req_id"] in ws.unsubscriptions: 
+            ws.unsubscriptions.remove(message["req_id"])
+
+    @staticmethod
+    def _process_unsubscription_options(message):
+        ws = var.market_object["Bybit"]
+        if message["success"]:
+            topic = message["data"]["successTopics"]
+            if topic in ws.unsubscriptions:
+                ws.unsubscriptions.remove(topic)
+                return True
+                
+        return False
+
+    def _handle_incoming_message(self, message):
+        if message.get("op") == "auth" or message.get("type") == "AUTH_RESP":
+            self._process_auth_message(message)
+        elif message.get("op") == "subscribe":
+            self._process_subscription_message(message)
+        elif message.get("type") == "COMMAND_RESP":
+            self._process_subscription_message(message)            
+        elif message.get("op") == "unsubscribe":
+            Bybit._process_unsubscription_message(message)
+        else:
+            self._process_normal_message(message)
 
     def _put_message(self, message: str, warning=None) -> None:
         """
@@ -674,23 +733,6 @@ class Bybit(Variables):
             var.logger.warning(self.name + " - " + message)
         else:
             var.logger.error(self.name + " - " + message)
-
-    @staticmethod
-    def _process_unsubscription_message(message):
-        ws = var.market_object["Bybit"]
-        symbol = (message["req_id"], "Bybit")
-        if symbol in ws.Instrument.get_keys():
-            ws.Instrument[symbol].confirm_unsubscription = "success"
-
-    def _handle_incoming_message(self, message):
-        if message.get("op") == "auth" or message.get("type") == "AUTH_RESP":
-            self._process_auth_message(message)
-        elif message.get("op") == "subscribe" or message.get("type") == "COMMAND_RESP":
-            self._process_subscription_message(message)
-        elif message.get("op") == "unsubscribe":
-            Bybit._process_unsubscription_message(message)
-        else:
-            self._process_normal_message(message)
 
 
 _V5WebSocketManager._handle_incoming_message = Bybit._handle_incoming_message

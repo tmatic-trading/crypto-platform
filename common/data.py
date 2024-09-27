@@ -57,9 +57,6 @@ class Instrument:
     confirm_subscription: set
         Confirmation of successful subscription to the instrument (Bybit
         only).
-    confirm_unsubscription: set
-        Confirmation of successful unsubscription to the instrument (Bybit
-        only).
     currentQty: float
         Position size
     expire: datetime
@@ -123,7 +120,6 @@ class Instrument:
     bids: list
     category: str
     confirm_subscription: set
-    confirm_unsubscription: set
     currentQty: float = 0
     expire: datetime
     fundingRate: float = 0
