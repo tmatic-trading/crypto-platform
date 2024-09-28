@@ -30,6 +30,9 @@ class Agent(Bitmex):
             market=self.name,
             symbol_list=self.symbol_list,
         )
+        self.instrument_index = service.sort_instrument_index(
+            index=self.instrument_index
+        )
 
         return ""
 
