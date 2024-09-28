@@ -784,7 +784,7 @@ class Function(WS, Variables):
         for market in var.market_list:
             ws = Markets[market]
             if market == var.current_market:
-                for symbol in ws.symbol_list:
+                for symbol in ws.symbol_list:                    
                     instrument = ws.Instrument[symbol]
                     compare = [
                         symbol[0],
@@ -2069,6 +2069,7 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
                 key=service.define_symbol_key(market=market),
                 value=value,
             )
+            var.current_market = ws.name
             Function.display_instruments(ws)
             TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
     else:
@@ -2135,18 +2136,9 @@ def handler_subscription(event) -> None:
         Instrument symbol.
     """
     market = TreeTable.market.active_row
-    # currency = TreeTable.i_currency.active_row
-    # category = TreeTable.i_category.active_row
     symb = TreeTable.i_list.active_row
     if market:
         ws = Markets[market]
-        # print("----------", market, category, currency, symb)
-        # print(ws.instrument_index[category][currency][symb])
-        # index = ws.instrument_index[category][currency][symb]
-        # if isinstance(index, list):
-        #    symb = index
-        # else:
-        #    symb = [symb]
         if (symb, market) not in ws.symbol_list:
             t = threading.Thread(target=confirm_subscription, args=(market, symb))
             t.start()
