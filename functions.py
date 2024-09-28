@@ -2656,6 +2656,7 @@ def init_tables() -> None:
         style="market.Treeview",
         autoscroll=True,
         subtable=TreeTable.i_category,
+        selectmode="none",
     )
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,

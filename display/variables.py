@@ -819,6 +819,7 @@ class TreeviewTable(Variables):
         lines=[],
         rollup=False,
         hover=True,
+        selectmode="browse"
     ) -> None:
         self.frame: tk.Frame = frame
         self.title = title
@@ -852,7 +853,7 @@ class TreeviewTable(Variables):
             style=style,
             columns=columns,
             show=show,
-            selectmode="browse",
+            selectmode=selectmode,
             height=self.size,
         )
         for num, name in enumerate(title, start=1):
