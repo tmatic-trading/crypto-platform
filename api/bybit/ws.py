@@ -15,6 +15,8 @@ from display.messages import ErrorMessage, Message
 from .pybit._websocket_stream import _V5WebSocketManager
 from .pybit.unified_trading import HTTP, WebSocket
 
+from collections import OrderedDict
+
 
 class Bybit(Variables):
     class Account(metaclass=MetaAccount):
@@ -44,7 +46,7 @@ class Bybit(Variables):
         self.account_disp = ""
         WebSocket._on_message = Bybit._on_message
         self.ticker = dict()
-        self.instrument_index = dict()
+        self.instrument_index = OrderedDict()
         var.market_object[self.name] = self
         self.unsubscriptions = list()
 
@@ -342,7 +344,6 @@ class Bybit(Variables):
         """
         for category in self.categories:
             try:
-                
                 self.ws[category].exit()
             except Exception:
                 pass
@@ -393,9 +394,9 @@ class Bybit(Variables):
         ticker = instrument.ticker
         category = instrument.category
         if ticker == "option!":
-            lst = self.instrument_index[instrument.category][
-                instrument.settlCurrency[0]
-            ][instrument.symbol]
+            lst = service.select_option_strikes(
+                index=self.instrument_index, instrument=instrument
+            )
             ticker = list()
             for option in lst:
                 instrument = self.Instrument[(option, self.name)]
@@ -598,9 +599,9 @@ class Bybit(Variables):
 
         if instrument.ticker == "option!":
             symbols = list()
-            lst = self.instrument_index[instrument.category][
-                instrument.settlCurrency[0]
-            ][instrument.symbol]
+            lst = service.select_option_strikes(
+                index=self.instrument_index, instrument=instrument
+            )
             for option in lst:
                 subscriptions[(option, self.name)] = {"orderbook", "ticker"}
                 symbols.append(option)
@@ -625,7 +626,7 @@ class Bybit(Variables):
             self._put_message(message=message)
 
         return ""
-    
+
     def _subscribe_args(self, args: list, symbol: tuple):
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
@@ -635,15 +636,15 @@ class Bybit(Variables):
         args.append(arg_orderbook)
 
         return args
-    
+
     def _subscribe_args_list(self, symbol: tuple) -> list:
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
         unsubscription_args = list()
         if ticker == "option!":
-            lst = self.instrument_index[instrument.category][
-                instrument.settlCurrency[0]
-            ][instrument.symbol]
+            lst = service.select_option_strikes(
+                index=self.instrument_index, instrument=instrument
+            )
             for option in lst:
                 unsubscription_args = self._subscribe_args(
                     args=unsubscription_args, symbol=(option, self.name)
@@ -652,7 +653,7 @@ class Bybit(Variables):
             unsubscription_args = self._subscribe_args(
                 args=unsubscription_args, symbol=symbol
             )
-        
+
         return unsubscription_args
 
     def unsubscribe_symbol(self, symbol: tuple) -> str:
@@ -689,7 +690,7 @@ class Bybit(Variables):
     @staticmethod
     def _process_unsubscription_message(message):
         ws = var.market_object["Bybit"]
-        if message["req_id"] in ws.unsubscriptions: 
+        if message["req_id"] in ws.unsubscriptions:
             ws.unsubscriptions.remove(message["req_id"])
 
     @staticmethod
@@ -700,7 +701,7 @@ class Bybit(Variables):
             if topic in ws.unsubscriptions:
                 ws.unsubscriptions.remove(topic)
                 return True
-                
+
         return False
 
     def _handle_incoming_message(self, message):
@@ -709,7 +710,7 @@ class Bybit(Variables):
         elif message.get("op") == "subscribe":
             self._process_subscription_message(message)
         elif message.get("type") == "COMMAND_RESP":
-            self._process_subscription_message(message)            
+            self._process_subscription_message(message)
         elif message.get("op") == "unsubscribe":
             Bybit._process_unsubscription_message(message)
         else:

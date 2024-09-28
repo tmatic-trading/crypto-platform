@@ -527,7 +527,7 @@ def unexpected_error(ws) -> str:
     return ws.logNumFatal
 
 
-def fill_instrument_index(index: dict, instrument: Instrument, ws) -> dict:
+def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dict:
     """
     Adds an instrument to the instrument_index dictionary.
 
@@ -553,20 +553,26 @@ def fill_instrument_index(index: dict, instrument: Instrument, ws) -> dict:
     else:
         currency = instrument.settlCurrency[0]
     if category not in index:
-        index[category] = dict()
+        index[category] = OrderedDict()
     if currency not in index[category]:
-        index[category][currency] = dict()
-    symbol = instrument.symbol
+        index[category][currency] = OrderedDict()
+    symb = instrument.symbol
     if "option" in category:
-        tmp = symbol.split("-")
+        parts = symb.split("-")
         if "option_combo" in category:
             num = 3
         else:
             num = 2
-        option_series = "-".join(tmp[:num]) + "_series"
+        option_series = "-".join(parts[:num]) + "_series"
         if option_series not in index[category][currency]:
-            index[category][currency][option_series] = list()
-        index[category][currency][option_series].append(symbol)
+            index[category][currency][option_series] = OrderedDict()
+            index[category][currency][option_series]["CALLS"] = list()
+            index[category][currency][option_series]["PUTS"] = list()
+            index[category][currency][option_series]["sort"] = option_series
+        if parts[-1] == "C":
+            index[category][currency][option_series]["CALLS"].append(symb)
+        else:
+            index[category][currency][option_series]["PUTS"].append(symb)
 
         # Add a series of options.
 
@@ -590,8 +596,8 @@ def fill_instrument_index(index: dict, instrument: Instrument, ws) -> dict:
         series.bids = [["-", "-"]]
         series.price_precision = 1
     else:
-        if symbol not in index[category][currency]:
-            index[category][currency][symbol] = None
+        if symb not in index[category][currency]:
+            index[category][currency][symb] = {"sort": symb}
 
     return index
 
@@ -610,15 +616,35 @@ def set_dotenv(dotenv_path: str, key: str, value: str):
         value_to_set=value,
     )
 
-def option_sort(data):
+
+def sort_instrument_index(index: OrderedDict) -> OrderedDict:
     """
-    The data is sorted by the `sort` parameter, options are additionally 
-    sorted by ascending strike price.
+    Categories and currencies are sorted by name, instruments by the `sort`
+    parameter, options are additionally sorted by ascending strike price.
     """
-    for lst in data.values():
-        lst.sort(key=lambda x: list(x.values())[0]["sort"])
-        for series in lst:
-            for values in series.values():
-                for key, value in values.items():            
+    res = OrderedDict(sorted(index.items(), key=lambda x: x[0]))
+    for category, values_category in index.items():
+        res[category] = OrderedDict(sorted(values_category.items(), key=lambda x: x[0]))
+        for currency, values_currency in res[category].items():
+            res[category][currency] = OrderedDict(
+                sorted(values_currency.items(), key=lambda x: x[1]["sort"])
+            )
+            for series, values in res[category][currency].items():
+                for key, value in values.items():
                     if key in ["CALLS", "PUTS"]:
-                        value.sort(key=lambda x: float(x.split("-")[-2]))
+                        try:
+                            value.sort(key=lambda x: float(x.split("-")[-2]))
+                        except Exception:
+                            value.sort()
+                        res[category][currency][series][key] = value
+
+    return res
+
+
+def select_option_strikes(index: dict, instrument: Instrument) -> list:
+    """
+    Extracts all strikes from a series of options.
+    """
+    series = index[instrument.category][instrument.settlCurrency[0]][instrument.symbol]
+
+    return series["CALLS"] + series["PUTS"]

@@ -819,7 +819,7 @@ class TreeviewTable(Variables):
         lines=[],
         rollup=False,
         hover=True,
-        selectmode="browse"
+        selectmode="browse",
     ) -> None:
         self.frame: tk.Frame = frame
         self.title = title
@@ -1186,7 +1186,7 @@ class SubTreeviewTable(TreeviewTable):
             + self.tree.bbox(item=item)[1]
         )
         self.subtable.clear_all()
-        for item in lst:
+        for item in reversed(lst):
             self.subtable.insert(values=[item], iid=item)
         self.subtable.tree.column("1", width=200)
         height = len(self.subtable.tree.get_children())

@@ -784,7 +784,7 @@ class Function(WS, Variables):
         for market in var.market_list:
             ws = Markets[market]
             if market == var.current_market:
-                for symbol in ws.symbol_list:                    
+                for symbol in ws.symbol_list:
                     instrument = ws.Instrument[symbol]
                     compare = [
                         symbol[0],

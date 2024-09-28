@@ -43,6 +43,9 @@ class Agent(Deribit):
                         market=self.name,
                         symbol_list=self.symbol_list,
                     )
+                    self.instrument_index = service.sort_instrument_index(
+                        index=self.instrument_index
+                    )
                     return ""
                 else:
                     error = "A list was expected when loading instruments, but was not received."

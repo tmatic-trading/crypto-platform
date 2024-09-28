@@ -52,7 +52,7 @@ class Bitmex(Variables):
         self.account_disp = ""
         self.pinging = "pong"
         self.ticker = dict()
-        self.instrument_index = dict()
+        self.instrument_index = OrderedDict()
         self.unsubscribe = dict()
 
     def setup_session(self):

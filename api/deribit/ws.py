@@ -1,6 +1,7 @@
 import json
 import threading
 import time
+from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from typing import Callable
 
@@ -72,7 +73,7 @@ class Deribit(Variables):
         }
         self.ticker = dict()
         self.funding_thread_active = True
-        self.instrument_index = dict()
+        self.instrument_index = OrderedDict()
         self.subscriptions = list()
 
     def setup_session(self):
@@ -102,7 +103,7 @@ class Deribit(Variables):
             self.logger.info("Connected to websocket.")
             self.__establish_heartbeat()
             self.__subscribe()
-            res = self.__confirm_subscription()
+            res = self._confirm_subscription()
             if not res:
                 self.logger.info("All subscriptions are successful. Continuing.")
 
@@ -198,9 +199,9 @@ class Deribit(Variables):
                 channel = f"book.{ticker}.none.{self.orderbook_depth}.100ms"
                 channels.append(channel)
             else:
-                lst = self.instrument_index[instrument.category][
-                    instrument.settlCurrency[0]
-                ][instrument.symbol]
+                lst = service.select_option_strikes(
+                    index=self.instrument_index, instrument=instrument
+                )
                 for option in lst:
                     channel = f"book.{option}.none.{self.orderbook_depth}.100ms"
                     channels.append(channel)
@@ -227,9 +228,9 @@ class Deribit(Variables):
                 channel = f"ticker.{ticker}.100ms"
                 channels.append(channel)
             else:
-                lst = self.instrument_index[instrument.category][
-                    instrument.settlCurrency[0]
-                ][instrument.symbol]
+                lst = service.select_option_strikes(
+                    index=self.instrument_index, instrument=instrument
+                )
                 for option in lst:
                     channel = f"ticker.{option}.100ms"
                     channels.append(channel)
@@ -311,7 +312,7 @@ class Deribit(Variables):
     def __on_open(self, ws):
         self.__ws_auth()
 
-    def __confirm_subscription(self, action="subscribe"):
+    def _confirm_subscription(self, action="subscribe"):
         """
         Checks that all subscriptions are successful.
         """
@@ -516,7 +517,7 @@ class Deribit(Variables):
         """
         self._subscribe_symbols(symbol_list=[symbol])
 
-        return self.__confirm_subscription()
+        return self._confirm_subscription()
 
     def unsubscribe_symbol(self, symbol: tuple) -> None:
         msg = {
@@ -534,9 +535,9 @@ class Deribit(Variables):
             channel = f"ticker.{ticker}.100ms"
             channels.append(channel)
         else:
-            lst = self.instrument_index[instrument.category][
-                instrument.settlCurrency[0]
-            ][instrument.symbol]
+            lst = service.select_option_strikes(
+                index=self.instrument_index, instrument=instrument
+            )
             for option in lst:
                 channel = f"book.{option}.none.{self.orderbook_depth}.100ms"
                 channels.append(channel)
@@ -549,7 +550,7 @@ class Deribit(Variables):
         )
         self._put_message(message=message)
         self.ws.send(json.dumps(msg))
-        res = self.__confirm_subscription(action="unsubscribe")
+        res = self._confirm_subscription(action="unsubscribe")
 
         if not res:
             for channel in channels:

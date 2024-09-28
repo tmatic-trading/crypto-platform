@@ -199,25 +199,25 @@ class Variables:
         "DELTA",
         "SIZE",
         "IV Bid",
-        "Bid", 
-        "MARK", 
-        "Ask", 
-        "IV Ask", 
-        "SIZE", 
+        "Bid",
+        "MARK",
+        "Ask",
+        "IV Ask",
+        "SIZE",
     ]
     option_puts = [
         "SIZE",
         "IV Bid",
         "Bid",
         "MARK",
-        "Ask", 
-        "IV Ask", 
-        "SIZE", 
-        "DELTA", 
-        "OPEN", 
+        "Ask",
+        "IV Ask",
+        "SIZE",
+        "DELTA",
+        "OPEN",
     ]
     option_strikes = ["STRIKE"]
-    
+
     logger: logging = setup_logger()
     connect_sqlite = None
     cursor_sqlite = None
