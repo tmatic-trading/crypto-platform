@@ -294,6 +294,9 @@ class Variables:
     button_height = 20
     style = ttk.Style()
     disabled_fg = style.lookup("TEntry", "foreground", ("disabled",))
+    current_font = tkinter.font.nametofont(tk.Label().cget("font"))
+    bold_font = current_font.copy()
+    bold_font.config(weight="bold")
 
     # Paned window: up - information field, down - the rest interface
     pw_info_rest = tk.PanedWindow(

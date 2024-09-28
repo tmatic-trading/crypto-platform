@@ -578,10 +578,12 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
 
         symbol = (option_series, instrument.market)
         series: Instrument = ws.Instrument[symbol]
+        series.market = instrument.market
         series.symbol = option_series
         series.ticker = "option!"
         series.category = instrument.category
         series.settlCurrency = instrument.settlCurrency
+        series.quoteCoin = instrument.quoteCoin
         series.currentQty = "-"
         series.avgEntryPrice = "-"
         series.unrealisedPnl = "-"

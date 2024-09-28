@@ -402,6 +402,9 @@ class Deribit(Variables):
             instrument.gamma = values["greeks"]["gamma"]
             instrument.bidIv = values["bid_iv"]
             instrument.askIv = values["ask_iv"]
+        instrument.bidPrice = values["best_bid_price"]
+        instrument.askPrice = values["best_ask_price"]
+        instrument.markPrice = values["mark_price"]
 
     def __update_portfolio(self, values: dict) -> None:
         currency = (values["currency"], self.name)

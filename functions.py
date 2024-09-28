@@ -17,6 +17,7 @@ from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.functions import info_display
 from display.messages import ErrorMessage, Message
+from display.option_desk import OptionDesk
 from display.variables import AutoScrollbar, SubTreeviewTable, TreeTable, TreeviewTable
 from display.variables import Variables as disp
 
@@ -2001,6 +2002,10 @@ def handler_instrument(event) -> None:
                 if var.symbol != (symb, market):
                     var.symbol = (symb, market)
                     TreeTable.orderbook.clear_color_cell()
+                ws = Markets[market]
+                #instrument = ws.Instrument[(symb, market)]
+                #if "option" in instrument.category:
+                #    display_options_desk(instrument=instrument)
                 if time.time() - var.select_time > 0.2:
                     if (symb, market) not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
@@ -2010,8 +2015,9 @@ def handler_instrument(event) -> None:
                             y_pos = tree.winfo_pointery() - tree.winfo_rooty()
                             if 18 < x_pos - x < 27:
                                 if 5 < y_pos - y < 16:
+                                    symbol = (market, symb)
                                     t = threading.Thread(
-                                        target=confirm_unsubscribe, args=(market, symb)
+                                        target=confirm_unsubscribe, args=symbol
                                     )
                                     t.start()
                             if var.message_response:
@@ -2139,13 +2145,21 @@ def handler_subscription(event) -> None:
     symb = TreeTable.i_list.active_row
     if market:
         ws = Markets[market]
-        if (symb, market) not in ws.symbol_list:
+        symbol = (symb, market)
+        if symbol not in ws.symbol_list:
             t = threading.Thread(target=confirm_subscription, args=(market, symb))
             t.start()
         else:
             warning_window(ErrorMessage.SUBSCRIPTION_WARNING.format(SYMBOL=symb))
         TreeTable.market.del_sub(TreeTable.market)
         TreeTable.i_list.clear_all()
+
+
+def display_options_desk(instrument: Instrument) -> None:
+    """
+    Displays all strikes of the selected option series.
+    """
+    OptionDesk.create(instrument=instrument)
 
 
 def handler_bot(event) -> None:

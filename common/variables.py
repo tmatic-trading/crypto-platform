@@ -194,7 +194,7 @@ class Variables:
         "PNL SUM",
         "COMMISSION SUM",
     ]
-    option_calls = [
+    name_calls = [
         "OPEN",
         "DELTA",
         "SIZE",
@@ -205,7 +205,7 @@ class Variables:
         "IV Ask",
         "SIZE",
     ]
-    option_puts = [
+    name_puts = [
         "SIZE",
         "IV Bid",
         "Bid",
@@ -216,7 +216,7 @@ class Variables:
         "DELTA",
         "OPEN",
     ]
-    option_strikes = ["STRIKE"]
+    name_strikes = ["STRIKES"]
 
     logger: logging = setup_logger()
     connect_sqlite = None

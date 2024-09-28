@@ -1,6 +1,7 @@
 import json
 import threading
 import time
+from collections import OrderedDict
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -14,8 +15,6 @@ from display.messages import ErrorMessage, Message
 
 from .pybit._websocket_stream import _V5WebSocketManager
 from .pybit.unified_trading import HTTP, WebSocket
-
-from collections import OrderedDict
 
 
 class Bybit(Variables):
