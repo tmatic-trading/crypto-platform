@@ -17,9 +17,10 @@ from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.functions import info_display
 from display.messages import ErrorMessage, Message
-from display.option_desk import OptionDesk
+from display.option_desk import options_desk
 from display.variables import AutoScrollbar, SubTreeviewTable, TreeTable, TreeviewTable
 from display.variables import Variables as disp
+from display.headers import Header
 
 
 class Function(WS, Variables):
@@ -1026,6 +1027,9 @@ class Function(WS, Variables):
                 tree.insert(iid=iid, values=compare, position="end")
         # d print("___bots", datetime.now() - tm)
 
+    def display_options_desk(self):
+        pass
+
     def refresh_tables(self: Markets) -> None:
         current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
 
@@ -1162,6 +1166,11 @@ class Function(WS, Variables):
         # Refresh market table
 
         tree = TreeTable.market
+
+        # Refresh options desk
+
+        #if disp.options_desk_on:
+        #    Function.display_options_desk(self)
 
         # d tm = datetime.now()
         for num, name in enumerate(var.market_list):
@@ -2004,9 +2013,9 @@ def handler_instrument(event) -> None:
                     TreeTable.orderbook.clear_color_cell()
                 ws = Markets[market]
                 #####
-                # instrument = ws.Instrument[(symb, market)]
-                # if "option" in instrument.category:
-                #    display_options_desk(instrument=instrument)
+                #instrument = ws.Instrument[(symb, market)]
+                #if "option" in instrument.category:
+                #    var.options_desk.create(instrument=instrument)
                 if time.time() - var.select_time > 0.2:
                     if (symb, market) not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
@@ -2154,13 +2163,6 @@ def handler_subscription(event) -> None:
             warning_window(ErrorMessage.SUBSCRIPTION_WARNING.format(SYMBOL=symb))
         TreeTable.market.del_sub(TreeTable.market)
         TreeTable.i_list.clear_all()
-
-
-def display_options_desk(instrument: Instrument) -> None:
-    """
-    Displays all strikes of the selected option series.
-    """
-    OptionDesk.create(instrument=instrument)
 
 
 def handler_bot(event) -> None:
@@ -2631,7 +2633,7 @@ def init_tables() -> None:
     TreeTable.orderbook = TreeviewTable(
         frame=disp.frame_orderbook,
         name="orderbook",
-        title=var.name_book,
+        title=Header.name_book,
         size=disp.num_book,
         bind=handler_orderbook,
         multicolor=True,
@@ -2640,7 +2642,7 @@ def init_tables() -> None:
     TreeTable.instrument = SubTreeviewTable(
         frame=disp.frame_instrument,
         name="instrument",
-        title=var.name_instrument,
+        title=Header.name_instrument,
         bind=handler_instrument,
         hierarchy=True,
         lines=var.market_list,
@@ -2649,7 +2651,7 @@ def init_tables() -> None:
     TreeTable.account = TreeviewTable(
         frame=disp.frame_account,
         name="account",
-        title=var.name_account,
+        title=Header.name_account,
         bind=handler_account,
         hierarchy=True,
         lines=var.market_list,
@@ -2658,7 +2660,7 @@ def init_tables() -> None:
     TreeTable.market = SubTreeviewTable(
         frame=disp.frame_market,
         name="market",
-        title=var.name_market,
+        title=Header.name_market,
         size=var.market_list,
         style="market.Treeview",
         autoscroll=True,
@@ -2668,28 +2670,28 @@ def init_tables() -> None:
     TreeTable.results = TreeviewTable(
         frame=disp.frame_results,
         name="results",
-        title=var.name_results,
+        title=Header.name_results,
         hierarchy=True,
         lines=var.market_list,
     )
     TreeTable.position = TreeviewTable(
         frame=disp.frame_positions,
         name="position",
-        title=var.name_position,
+        title=Header.name_position,
         hierarchy=True,
         lines=var.market_list,
     )
     TreeTable.bots = TreeviewTable(
         frame=disp.frame_bots,
         name="bots",
-        title=var.name_bots,
+        title=Header.name_bots,
         bind=handler_bot,
         hierarchy=False,
     )
     TreeTable.bot_menu = TreeviewTable(
         frame=bot_menu.menu_frame,
         name="bot_menu",
-        title=var.name_bot_menu,
+        title=Header.name_bot_menu,
         style="menu.Treeview",
         bind=bot_menu.handler_bot_menu,
         autoscroll=True,
@@ -2699,7 +2701,7 @@ def init_tables() -> None:
     TreeTable.bot_info = TreeviewTable(
         frame=disp.frame_bot_parameters,
         name="bot_info",
-        title=var.name_bot,
+        title=Header.name_bot,
         bind=bot_menu.handler_bot_info,
         size=1,
         autoscroll=True,
@@ -2707,7 +2709,7 @@ def init_tables() -> None:
     TreeTable.bot_position = TreeviewTable(
         frame=disp.bot_positions,
         name="bot_position",
-        title=var.name_bot_position,
+        title=Header.name_bot_position,
         autoscroll=True,
         hierarchy=True,
         lines=var.market_list,
@@ -2715,7 +2717,7 @@ def init_tables() -> None:
     TreeTable.bot_results = TreeviewTable(
         frame=disp.bot_results,
         name="bot_results",
-        title=var.name_bot_results,
+        title=Header.name_bot_results,
         autoscroll=True,
         hierarchy=True,
     )
@@ -2726,7 +2728,7 @@ TreeTable.orders = TreeviewTable(
     frame=disp.frame_orders,
     name="orders",
     size=0,
-    title=var.name_order,
+    title=Header.name_order,
     bind=handler_order,
     hide=["8", "3", "5"],
 )
@@ -2734,7 +2736,7 @@ TreeTable.trades = TreeviewTable(
     frame=disp.frame_trades,
     name="trades",
     size=0,
-    title=var.name_trade,
+    title=Header.name_trade,
     bind=handler_account,
     hide=["8", "3", "5"],
 )
@@ -2742,7 +2744,7 @@ TreeTable.funding = TreeviewTable(
     frame=disp.frame_funding,
     name="funding",
     size=0,
-    title=var.name_funding,
+    title=Header.name_funding,
     bind=handler_account,
     hide=["8", "3", "5"],
 )
@@ -2750,7 +2752,7 @@ TreeTable.bot_orders = TreeviewTable(
     frame=disp.bot_orders,
     name="bot_orders",
     size=0,
-    title=var.name_bot_order,
+    title=Header.name_bot_order,
     bind=handler_order,
     hide=["8", "3", "5"],
 )

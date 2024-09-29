@@ -2,27 +2,36 @@ import tkinter as tk
 
 from api.api import Markets
 from common.data import Instrument
-from common.variables import Variables as var
 
 from .variables import ScrollFrame, TreeTable, TreeviewTable
 from .variables import Variables as disp
+from .headers import Header
 
 
 class OptionDesk:
-    def create(instrument: Instrument):
-        market = instrument.market
-        category = instrument.category
-        currency = instrument.settlCurrency[0]
-        ws = Markets[market]
-        calls = ws.instrument_index[category][currency][instrument.symbol]["CALLS"]
-        puts = ws.instrument_index[category][currency][instrument.symbol]["PUTS"]
+    def __init__(self) -> None:
+        self.is_on = False
+        self.ws: Markets
+
+    def create(self, instrument: Instrument):
+        self.is_on = True
+        self.market = instrument.market
+        self.category = instrument.category
+        self.currency = instrument.settlCurrency[0]
+        self.ws = Markets[self.market]
+        calls = self.ws.instrument_index[self.category][self.currency][instrument.symbol][
+            "CALLS"
+        ]
+        puts = self.ws.instrument_index[self.category][self.currency][instrument.symbol][
+            "PUTS"
+        ]
         call_strikes = list(map(lambda x: x.split("-")[-2], calls))
         put_strikes = list(map(lambda x: x.split("-")[-2], puts))
         strikes = sorted(list(set(call_strikes).union(set(put_strikes))))
 
         desk = tk.Toplevel()
         desk.geometry("{}x{}".format(disp.window_width, int(disp.window_height * 0.8)))
-        desk.title(f"{market} options ({currency})")
+        desk.title(f"{self.market} options ({self.currency})")
         desk.grid_rowconfigure(0, weight=0)
         desk.grid_rowconfigure(1, weight=1000)  # change weight to 4
         desk.grid_columnconfigure(0, weight=1)
@@ -59,21 +68,21 @@ class OptionDesk:
         headers_calls = TreeviewTable(
             frame=calls_headers,
             name="t",
-            title=var.name_calls,
+            title=Header.name_calls,
             size=0,
             cancel_scroll=True,
         )
         headers_strikes = TreeviewTable(
             frame=strikes_headers,
             name="t",
-            title=var.name_strikes,
+            title=Header.name_strikes,
             size=0,
             cancel_scroll=True,
         )
         headers_puts = TreeviewTable(
             frame=puts_headers,
             name="t",
-            title=var.name_puts,
+            title=Header.name_puts,
             size=0,
             cancel_scroll=True,
         )
@@ -97,9 +106,8 @@ class OptionDesk:
         TreeTable.calls = TreeviewTable(
             frame=calls_body,
             name="calls",
-            title=var.name_calls,
+            title=Header.name_calls,
             # bind=OptionDesk.handler,
-            # size=len(strikes),
             style="menu.Treeview",
             cancel_scroll=True,
             headings=False,
@@ -107,7 +115,7 @@ class OptionDesk:
         TreeTable.strike = TreeviewTable(
             frame=strikes_body,
             name="strikes",
-            title=var.name_strikes,
+            title=Header.name_strikes,
             size=len(strikes),
             style="menu.Treeview",
             cancel_scroll=True,
@@ -116,9 +124,8 @@ class OptionDesk:
         TreeTable.puts = TreeviewTable(
             frame=puts_body,
             name="puts",
-            title=var.name_puts,
+            title=Header.name_puts,
             # bind=OptionDesk.handler,
-            # size=len(strikes),
             style="menu.Treeview",
             cancel_scroll=True,
             headings=False,
@@ -132,7 +139,7 @@ class OptionDesk:
         )
 
         for symb in calls:
-            option = ws.Instrument[(symb, market)]
+            option = self.ws.Instrument[(symb, self.market)]
             # line =
             print("-------", option.symbol)
             for item in option:
@@ -156,3 +163,6 @@ def trim_columns(event, body: TreeTable):
     cols = ("#0",) + headers.cget("columns")  # tuple of all columns
     for column in cols:
         body.tree.column(column, width=headers.column(column, "width"))
+
+
+options_desk = OptionDesk()

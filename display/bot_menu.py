@@ -40,6 +40,7 @@ from display.messages import ErrorMessage
 
 from .variables import AutoScrollbar, ScrollFrame, TreeTable, TreeviewTable
 from .variables import Variables as disp
+from .headers import Header
 
 
 class BoldLabel(tk.Label):
@@ -1018,7 +1019,7 @@ def init_bot_trades(bot_name: str) -> None:
             frame=bot_trades_sub[bot_name],
             name="bot trades",
             size=0,
-            title=var.name_bot_trade,
+            title=Header.name_bot_trade,
         )
         sql = (
             "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, ABS(QTY) "
