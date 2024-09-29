@@ -4,14 +4,8 @@ from api.api import Markets
 from common.data import Instrument
 from common.variables import Variables as var
 
-from .variables import ScrollFrame, TreeviewTable
+from .variables import ScrollFrame, TreeTable, TreeviewTable
 from .variables import Variables as disp
-
-
-class TreeTable:
-    calls: TreeviewTable
-    strike: TreeviewTable
-    puts: TreeviewTable
 
 
 class OptionDesk:
@@ -19,54 +13,124 @@ class OptionDesk:
         market = instrument.market
         category = instrument.category
         currency = instrument.settlCurrency[0]
+        ws = Markets[market]
+        calls = ws.instrument_index[category][currency][instrument.symbol]["CALLS"]
+        puts = ws.instrument_index[category][currency][instrument.symbol]["PUTS"]
+        call_strikes = list(map(lambda x: x.split("-")[-2], calls))
+        put_strikes = list(map(lambda x: x.split("-")[-2], puts))
+        strikes = sorted(list(set(call_strikes).union(set(put_strikes))))
+
         desk = tk.Toplevel()
         desk.geometry("{}x{}".format(disp.window_width, int(disp.window_height * 0.8)))
         desk.title(f"{market} options ({currency})")
-        main = tk.Frame(desk)
-        main.pack(fill="both", expand="yes")
-        frame = ScrollFrame(main, bg="blue", bd=0)
-        tk.Label(frame, text="Calls", font=disp.bold_font).grid(
+        desk.grid_rowconfigure(0, weight=0)
+        desk.grid_rowconfigure(1, weight=1000)  # change weight to 4
+        desk.grid_columnconfigure(0, weight=1)
+        desk.grid_columnconfigure(1, weight=0)
+        desk.grid_columnconfigure(2, weight=1)
+
+        tk.Label(desk, text="Calls", font=disp.bold_font).grid(
             row=0, column=0, sticky="NSEW"
         )
-        tk.Label(frame, text=instrument.symbol, font=disp.bold_font).grid(
+        tk.Label(desk, text=instrument.symbol, font=disp.bold_font).grid(
             row=0, column=1, sticky="NSEW"
         )
-        tk.Label(frame, text="Puts", font=disp.bold_font).grid(
+        tk.Label(desk, text="Puts", font=disp.bold_font).grid(
             row=0, column=2, sticky="NSEW"
         )
-        frame.grid_columnconfigure(0, weight=10)
-        frame.grid_columnconfigure(1, weight=1)
-        frame.grid_columnconfigure(2, weight=10)
-        frame.grid_rowconfigure(0, weight=0)
-        frame.grid_rowconfigure(1, weight=1)
-        frame_calls = tk.Frame(frame)
-        frame_strikes = tk.Frame(frame)
-        frame_puts = tk.Frame(frame)
-        frame_calls.grid(row=1, column=0, sticky="NSEW")
-        frame_strikes.grid(row=1, column=1, sticky="NSEW")
-        frame_puts.grid(row=1, column=2, sticky="NSEW")
+
+        bottom = tk.Frame(desk)
+        bottom.grid(row=1, column=0, columnspan=3, sticky="NSEW")
+        bottom.grid_rowconfigure(0, weight=0)
+        bottom.grid_rowconfigure(1, weight=100)
+        bottom.grid_columnconfigure(0, weight=10)
+        bottom.grid_columnconfigure(1, weight=1)
+        bottom.grid_columnconfigure(2, weight=10)
+        bottom.grid_columnconfigure(3, weight=0)
+        calls_headers = tk.Frame(bottom)
+        strikes_headers = tk.Frame(bottom)
+        puts_headers = tk.Frame(bottom)
+        calls_headers.grid(row=0, column=0, sticky="NEWS")
+        strikes_headers.grid(row=0, column=1, sticky="NEWS")
+        puts_headers.grid(row=0, column=2, sticky="NEWS")
+        trim = tk.Label(bottom, image=disp.empty_image)
+        trim.grid(row=0, column=3)
+
+        headers_calls = TreeviewTable(
+            frame=calls_headers,
+            name="t",
+            title=var.name_calls,
+            size=0,
+            cancel_scroll=True,
+        )
+        headers_strikes = TreeviewTable(
+            frame=strikes_headers,
+            name="t",
+            title=var.name_strikes,
+            size=0,
+            cancel_scroll=True,
+        )
+        headers_puts = TreeviewTable(
+            frame=puts_headers,
+            name="t",
+            title=var.name_puts,
+            size=0,
+            cancel_scroll=True,
+        )
+
+        bottom_sub = tk.Frame(bottom)
+        bottom_sub.grid_rowconfigure(0, weight=1)
+        bottom_sub.grid_columnconfigure(0, weight=1)
+        bottom_sub.grid(row=1, column=0, columnspan=4, sticky="NEWS")
+        main = ScrollFrame(bottom_sub, bg=disp.title_color, bd=0, trim=trim)
+        main.grid_rowconfigure(0, weight=1)
+        main.grid_columnconfigure(0, weight=10)
+        main.grid_columnconfigure(1, weight=1)
+        main.grid_columnconfigure(2, weight=10)
+        calls_body = tk.Frame(main)
+        strikes_body = tk.Frame(main)
+        puts_body = tk.Frame(main)
+        calls_body.grid(row=0, column=0, sticky="NEWS")
+        strikes_body.grid(row=0, column=1, sticky="NEWS")
+        puts_body.grid(row=0, column=2, sticky="NEWS")
+
         TreeTable.calls = TreeviewTable(
-            frame=frame_calls,
+            frame=calls_body,
             name="calls",
             title=var.name_calls,
-            bind=OptionDesk.handler,
-            size=10, 
+            # bind=OptionDesk.handler,
+            # size=len(strikes),
+            style="menu.Treeview",
+            cancel_scroll=True,
+            headings=False,
         )
         TreeTable.strike = TreeviewTable(
-            frame=frame_strikes,
+            frame=strikes_body,
             name="strikes",
             title=var.name_strikes,
-            size=10,
+            size=len(strikes),
+            style="menu.Treeview",
+            cancel_scroll=True,
+            headings=False,
         )
-        TreeTable.calls = TreeviewTable(
-            frame=frame_puts,
+        TreeTable.puts = TreeviewTable(
+            frame=puts_body,
             name="puts",
             title=var.name_puts,
-            bind=OptionDesk.handler,
-            size=10,
+            # bind=OptionDesk.handler,
+            # size=len(strikes),
+            style="menu.Treeview",
+            cancel_scroll=True,
+            headings=False,
         )
-        ws = Markets[market]
-        calls = ws.instrument_index[category][currency][instrument.symbol]["CALLS"]
+
+        headers_calls.tree.bind(
+            "<B1-Motion>", lambda event: trim_columns(event, TreeTable.calls)
+        )
+        headers_puts.tree.bind(
+            "<B1-Motion>", lambda event: trim_columns(event, TreeTable.puts)
+        )
+
         for symb in calls:
             option = ws.Instrument[(symb, market)]
             # line =
@@ -74,20 +138,21 @@ class OptionDesk:
             for item in option:
                 print(item.name, item.value)
             values = [
-                "Open",
+                option.openInterest,
                 option.delta,
-                "size",
+                option.bidSize,
                 option.bidIv,
                 option.bidPrice,
                 option.markPrice,
                 option.askPrice,
                 option.askPrice,
-                "size",
+                option.askSize,
             ]
             TreeTable.calls.insert(values=values, iid=symb)
-        """print("___________", calls)
-        puts = ws.instrument_index[category][currency][instrument.symbol]["PUTS"]
-        print("___________", puts)"""
 
-    def handler():
-        pass
+
+def trim_columns(event, body: TreeTable):
+    headers = event.widget
+    cols = ("#0",) + headers.cget("columns")  # tuple of all columns
+    for column in cols:
+        body.tree.column(column, width=headers.column(column, "width"))

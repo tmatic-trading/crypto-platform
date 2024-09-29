@@ -404,6 +404,8 @@ class Deribit(Variables):
             instrument.askIv = values["ask_iv"]
         instrument.bidPrice = values["best_bid_price"]
         instrument.askPrice = values["best_ask_price"]
+        instrument.bidSize = values["best_bid_amount"]
+        instrument.askSize = values["best_ask_amount"]
         instrument.markPrice = values["mark_price"]
 
     def __update_portfolio(self, values: dict) -> None:

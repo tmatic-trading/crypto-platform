@@ -2003,8 +2003,9 @@ def handler_instrument(event) -> None:
                     var.symbol = (symb, market)
                     TreeTable.orderbook.clear_color_cell()
                 ws = Markets[market]
-                #instrument = ws.Instrument[(symb, market)]
-                #if "option" in instrument.category:
+                #####
+                # instrument = ws.Instrument[(symb, market)]
+                # if "option" in instrument.category:
                 #    display_options_desk(instrument=instrument)
                 if time.time() - var.select_time > 0.2:
                     if (symb, market) not in var.unsubscription:

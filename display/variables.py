@@ -23,10 +23,16 @@ class AutoScrollbar(tk.Scrollbar):
     def set(self, low, high):
         if float(low) <= 0.0 and float(high) >= 1.0:
             self.tk.call("grid", "remove", self)
+            if hasattr(self, "trim_columns"):
+                if self.trim_columns:
+                    self.trim_columns.grid_forget()
         else:
             if hasattr(self, "on_scroll_resize"):
                 self.on_scroll_resize()
             self.grid()
+            if hasattr(self, "trim_columns"):
+                if self.trim_columns:
+                    self.trim_columns.grid(row=0, column=3)
         tk.Scrollbar.set(self, low, high)
 
 
@@ -70,13 +76,14 @@ def on_canvas_mousewheel(event, canvas, scroll, ostype):
 
 
 class ScrollFrame(tk.Frame):
-    def __init__(self, parent: tk.Frame, bg: str, bd: int):
+    def __init__(self, parent: tk.Frame, bg: str, bd: int, trim=None):
         super().__init__(parent)
         canvas = tk.Canvas(parent, highlightthickness=0, bg=bg, bd=bd)
         canvas.grid(row=0, column=0, sticky="NSEW")
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(0, weight=1)
         scroll = AutoScrollbar(parent, orient="vertical")
+        scroll.trim_columns = trim
         scroll.config(command=canvas.yview)
         scroll.grid(row=0, column=1, sticky="NS")
         canvas.config(yscrollcommand=scroll.set)
@@ -616,6 +623,7 @@ class Variables:
     bot_event_prev = ""
     bot_menu_option = ""
     image_cancel = tk.PhotoImage(file="display/cancel.png")
+    empty_image = tk.PhotoImage(file="display/empty.png")
 
     # Bot menu widgets
 
@@ -823,6 +831,8 @@ class TreeviewTable(Variables):
         rollup=False,
         hover=True,
         selectmode="browse",
+        cancel_scroll=False,
+        headings=True,
     ) -> None:
         self.frame: tk.Frame = frame
         self.title = title
@@ -848,7 +858,10 @@ class TreeviewTable(Variables):
             show = "tree headings"
             length = len(title)
         else:
-            show = "headings"
+            if headings:
+                show = "headings"
+            else:
+                show = ""
             length = len(title) + 1
         columns = [num for num in range(1, length)]
         self.tree = ttk.Treeview(
@@ -867,14 +880,15 @@ class TreeviewTable(Variables):
                     num -= 1
             self.tree.heading(num, text=name)
             self.tree.column(num, anchor=tk.CENTER, width=50)
-        if autoscroll:
-            self.scroll = AutoScrollbar(frame, orient="vertical")
-        else:
-            self.scroll = tk.Scrollbar(frame, orient="vertical")
-        self.scroll.config(command=self.tree.yview)
-        self.tree.config(yscrollcommand=self.scroll.set)
+        if not cancel_scroll:
+            if autoscroll:
+                self.scroll = AutoScrollbar(frame, orient="vertical")
+            else:
+                self.scroll = tk.Scrollbar(frame, orient="vertical")
+            self.scroll.config(command=self.tree.yview)
+            self.tree.config(yscrollcommand=self.scroll.set)
+            self.scroll.grid(row=0, column=1, sticky="NS")
         self.tree.grid(row=0, column=0, sticky="NSEW")
-        self.scroll.grid(row=0, column=1, sticky="NS")
         self.children = list()
         self.children_hierarchical = dict()
         self.tree.tag_configure("Select", background=self.bg_select_color)
@@ -1251,6 +1265,9 @@ class TreeTable:
     i_category: SubTreeviewTable
     i_currency: SubTreeviewTable
     i_list: SubTreeviewTable
+    calls: TreeviewTable
+    strike: TreeviewTable
+    puts: TreeviewTable
 
 
 class ClickLabel(tk.Label):
