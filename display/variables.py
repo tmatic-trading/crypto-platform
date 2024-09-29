@@ -1266,7 +1266,7 @@ class TreeTable:
     i_currency: SubTreeviewTable
     i_list: SubTreeviewTable
     calls: TreeviewTable
-    strike: TreeviewTable
+    strikes: TreeviewTable
     puts: TreeviewTable
 
 

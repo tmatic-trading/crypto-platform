@@ -16,11 +16,11 @@ from botinit.variables import Variables as robo
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.functions import info_display
+from display.headers import Header
 from display.messages import ErrorMessage, Message
 from display.option_desk import options_desk
 from display.variables import AutoScrollbar, SubTreeviewTable, TreeTable, TreeviewTable
 from display.variables import Variables as disp
-from display.headers import Header
 
 
 class Function(WS, Variables):
@@ -1028,7 +1028,46 @@ class Function(WS, Variables):
         # d print("___bots", datetime.now() - tm)
 
     def display_options_desk(self):
-        pass
+        tree = TreeTable.calls
+        for num, option in enumerate(options_desk._calls):
+            if option in options_desk.calls_set:
+                instrument = options_desk.ws.Instrument[(option, options_desk.market)]
+                compare = [
+                    instrument.openInterest,
+                    instrument.delta,
+                    instrument.bidSize,
+                    instrument.bidIv,
+                    instrument.bidPrice,
+                    instrument.markPrice,
+                    instrument.askPrice,
+                    instrument.askIv,
+                    instrument.askSize,
+                ]
+            else:
+                compare = options_desk.dash
+            if compare != tree.cache[num]:
+                tree.update(row=num, values=compare)
+                tree.cache[num] = compare
+        tree = TreeTable.puts
+        for num, option in enumerate(options_desk._puts):
+            if option in options_desk.puts_set:
+                instrument = options_desk.ws.Instrument[(option, options_desk.market)]
+                compare = [
+                    instrument.bidSize,
+                    instrument.bidIv,
+                    instrument.bidPrice,
+                    instrument.markPrice,
+                    instrument.askPrice,
+                    instrument.askIv,
+                    instrument.askSize,
+                    instrument.delta,
+                    instrument.openInterest,
+                ]
+            else:
+                compare = options_desk.dash
+            if compare != tree.cache[num]:
+                tree.update(row=num, values=compare)
+                tree.cache[num] = compare
 
     def refresh_tables(self: Markets) -> None:
         current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
@@ -1169,8 +1208,8 @@ class Function(WS, Variables):
 
         # Refresh options desk
 
-        #if disp.options_desk_on:
-        #    Function.display_options_desk(self)
+        if options_desk.is_on:
+            Function.display_options_desk(self)
 
         # d tm = datetime.now()
         for num, name in enumerate(var.market_list):
@@ -2008,14 +2047,10 @@ def handler_instrument(event) -> None:
         if len(lst) > 1:
             symb = lst[1]
             if market:
+                create = True
                 if var.symbol != (symb, market):
                     var.symbol = (symb, market)
                     TreeTable.orderbook.clear_color_cell()
-                ws = Markets[market]
-                #####
-                #instrument = ws.Instrument[(symb, market)]
-                #if "option" in instrument.category:
-                #    var.options_desk.create(instrument=instrument)
                 if time.time() - var.select_time > 0.2:
                     if (symb, market) not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
@@ -2025,6 +2060,7 @@ def handler_instrument(event) -> None:
                             y_pos = tree.winfo_pointery() - tree.winfo_rooty()
                             if 18 < x_pos - x < 27:
                                 if 5 < y_pos - y < 16:
+                                    create = False
                                     symbol = (market, symb)
                                     t = threading.Thread(
                                         target=confirm_unsubscribe, args=symbol
@@ -2033,6 +2069,11 @@ def handler_instrument(event) -> None:
                             if var.message_response:
                                 warning_window(var.message_response)
                                 var.message_response = ""
+                if create:
+                    ws = Markets[market]
+                    instrument = ws.Instrument[(symb, market)]
+                    if "option" in instrument.category:
+                        options_desk.create(instrument=instrument)
         else:
             var.current_market = items[0]
             TreeTable.instrument.on_rollup(iid=items[0], setup="child")

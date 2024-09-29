@@ -38,9 +38,9 @@ from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 
+from .headers import Header
 from .variables import AutoScrollbar, ScrollFrame, TreeTable, TreeviewTable
 from .variables import Variables as disp
-from .headers import Header
 
 
 class BoldLabel(tk.Label):

@@ -563,7 +563,7 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
             num = 3
         else:
             num = 2
-        option_series = "-".join(parts[:num]) + "_series"
+        option_series = "-".join(parts[:num]) + var._series
         if option_series not in index[category][currency]:
             index[category][currency][option_series] = OrderedDict()
             index[category][currency][option_series]["CALLS"] = list()
