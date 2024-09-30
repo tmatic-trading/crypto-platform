@@ -91,6 +91,7 @@ class Agent(Deribit):
         Instrument class. See detailed description of the fields there.
         """
         category = values["kind"] + "_" + values["instrument_type"]
+        category = self.define_category[category]
         if "spot" in category:
             symb = values["base_currency"] + "/" + values["quote_currency"]
         else:

@@ -33,13 +33,13 @@ class Deribit(Variables):
         Setup.variables(self)
         self.session = requests.Session()
         self.define_category = {
-            "future linear": "future L",
-            "future reversed": "future R",
-            "future_combo reversed": "future CR",
-            "spot linear": "spot L",
-            "option linear": "option L",
-            "option reversed": "option R",
-            "option_combo reversed": "option CR",
+            "future_linear": "fut_linear",
+            "future_reversed": "fut_reversed",
+            "future_combo_reversed": "fut_combo_reversed",
+            "spot_linear": "spot_linear",
+            "option_linear": "option_linear",
+            "option_reversed": "option_rev",
+            "option_combo_reversed": "option_combo_rev",
         }
         self.settleCoin_list = list()
         self.ws = websocket

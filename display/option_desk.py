@@ -79,7 +79,7 @@ class OptionDesk:
         self.calls_headers.grid(row=0, column=0, sticky="NEWS")
         strikes_headers.grid(row=0, column=1, sticky="NEWS")
         puts_headers.grid(row=0, column=2, sticky="NEWS")
-        trim = tk.Label(bottom, image=disp.empty_image)
+        trim = tk.Label(bottom, text="  ")
         trim.grid(row=0, column=3)
 
         headers_calls = TreeviewTable(
