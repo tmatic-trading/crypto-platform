@@ -2212,7 +2212,10 @@ def handler_subscription(event) -> None:
             t = threading.Thread(target=confirm_subscription, args=(market, symb))
             t.start()
         else:
-            warning_window(ErrorMessage.SUBSCRIPTION_WARNING.format(SYMBOL=symb))
+            warning_window(ErrorMessage.SUBSCRIPTION_WARNING.format(SYMBOL=symb))            
+            var.symbol = symbol
+            var.current_market = market
+            TreeTable.instrument.on_rollup(iid=f"{market}!{symb}", setup="child")     
         TreeTable.market.del_sub(TreeTable.market)
         TreeTable.i_list.clear_all()
 
@@ -2681,7 +2684,6 @@ def clear_klines():
 
 
 def init_tables() -> None:
-    ws = Markets[var.current_market]
     TreeTable.orderbook = TreeviewTable(
         frame=disp.frame_orderbook,
         name="orderbook",
@@ -2691,7 +2693,7 @@ def init_tables() -> None:
         multicolor=True,
         autoscroll=True,
     )
-    TreeTable.instrument = SubTreeviewTable(
+    TreeTable.instrument = TreeviewTable(
         frame=disp.frame_instrument,
         name="instrument",
         title=Header.name_instrument,
