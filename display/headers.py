@@ -144,4 +144,4 @@ class Header:
         "DELTA",
         "OPEN",
     ]
-    name_strikes = ["STRIKES"]
+    name_strikes = ["STRIKE"]

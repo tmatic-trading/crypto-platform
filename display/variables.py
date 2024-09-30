@@ -405,6 +405,10 @@ class Variables:
         fieldbackground=title_color,
         background=title_color,
     )
+    style.configure(
+        "option.Treeview",
+        rowheight=line_height * 2,
+    )
     style.configure("Treeview.Heading", foreground=fg_color)
     style.configure(
         "TNotebook", borderwidth=0, background=light_gray_color, tabposition="n"

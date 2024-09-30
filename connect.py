@@ -16,7 +16,6 @@ from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log
 from display.functions import info_display
-from display.option_desk import OptionDesk
 from display.settings import SettingsApp
 from display.variables import TreeTable
 from display.variables import Variables as disp

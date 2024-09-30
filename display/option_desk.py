@@ -35,10 +35,12 @@ class OptionDesk:
         self.puts_set = set(self.puts)
         call_strikes = list(map(lambda x: x.split("-")[-2], self.calls))
         put_strikes = list(map(lambda x: x.split("-")[-2], self.puts))
-        self.strikes = sorted(list(set(call_strikes).union(set(put_strikes))))
-
+        self.strikes = list(set(call_strikes).union(set(put_strikes)))
+        try:
+            self.strikes.sort(key=lambda x: float(x))
+        except Exception:
+            self.strikes.sort()
         symb = instrument.symbol.split(var._series)[0]
-
         self._calls = [f"{symb}-{strike}-C" for strike in self.strikes]
         self._puts = [f"{symb}-{strike}-P" for strike in self.strikes]
 
@@ -54,9 +56,8 @@ class OptionDesk:
         self.desk.grid_columnconfigure(1, weight=0)
         self.desk.grid_columnconfigure(2, weight=1)
 
-        tk.Label(self.desk, text="Calls", font=disp.bold_font).grid(
-            row=0, column=0, sticky="NSEW"
-        )
+        self.label = tk.Label(self.desk, text="Calls", font=disp.bold_font)
+        self.label.grid(row=0, column=0, sticky="NSEW")
         tk.Label(self.desk, text=instrument.symbol, font=disp.bold_font).grid(
             row=0, column=1, sticky="NSEW"
         )
@@ -64,7 +65,7 @@ class OptionDesk:
             row=0, column=2, sticky="NSEW"
         )
 
-        bottom = tk.Frame(self.desk)
+        bottom = tk.Frame(self.desk, bg=disp.bg_color)
         bottom.grid(row=1, column=0, columnspan=3, sticky="NSEW")
         bottom.grid_rowconfigure(0, weight=0)
         bottom.grid_rowconfigure(1, weight=100)
@@ -72,17 +73,17 @@ class OptionDesk:
         bottom.grid_columnconfigure(1, weight=1)
         bottom.grid_columnconfigure(2, weight=10)
         bottom.grid_columnconfigure(3, weight=0)
-        calls_headers = tk.Frame(bottom)
+        self.calls_headers = tk.Frame(bottom)
         strikes_headers = tk.Frame(bottom)
         puts_headers = tk.Frame(bottom)
-        calls_headers.grid(row=0, column=0, sticky="NEWS")
+        self.calls_headers.grid(row=0, column=0, sticky="NEWS")
         strikes_headers.grid(row=0, column=1, sticky="NEWS")
         puts_headers.grid(row=0, column=2, sticky="NEWS")
         trim = tk.Label(bottom, image=disp.empty_image)
         trim.grid(row=0, column=3)
 
         headers_calls = TreeviewTable(
-            frame=calls_headers,
+            frame=self.calls_headers,
             name="t",
             title=Header.name_calls,
             size=0,
@@ -103,18 +104,18 @@ class OptionDesk:
             cancel_scroll=True,
         )
 
-        bottom_sub = tk.Frame(bottom)
+        bottom_sub = tk.Frame(bottom, bg=disp.bg_color)
         bottom_sub.grid_rowconfigure(0, weight=1)
         bottom_sub.grid_columnconfigure(0, weight=1)
         bottom_sub.grid(row=1, column=0, columnspan=4, sticky="NEWS")
-        main = ScrollFrame(bottom_sub, bg=disp.title_color, bd=0, trim=trim)
+        main = ScrollFrame(bottom_sub, bg=disp.bg_color, bd=0, trim=trim)
         main.grid_rowconfigure(0, weight=1)
         main.grid_columnconfigure(0, weight=10)
         main.grid_columnconfigure(1, weight=1)
         main.grid_columnconfigure(2, weight=10)
-        calls_body = tk.Frame(main)
-        strikes_body = tk.Frame(main)
-        puts_body = tk.Frame(main)
+        calls_body = tk.Frame(main, bg=disp.bg_color)
+        strikes_body = tk.Frame(main, bg=disp.bg_color)
+        puts_body = tk.Frame(main, bg=disp.bg_color)
         calls_body.grid(row=0, column=0, sticky="NEWS")
         strikes_body.grid(row=0, column=1, sticky="NEWS")
         puts_body.grid(row=0, column=2, sticky="NEWS")
@@ -125,7 +126,7 @@ class OptionDesk:
             title=Header.name_calls,
             size=len(self.strikes),
             # bind=OptionDesk.handler,
-            style="menu.Treeview",
+            style="option.Treeview",
             cancel_scroll=True,
             headings=False,
         )
@@ -134,7 +135,7 @@ class OptionDesk:
             name="strikes",
             title=Header.name_strikes,
             size=len(self.strikes),
-            style="menu.Treeview",
+            style="option.Treeview",
             cancel_scroll=True,
             headings=False,
         )
@@ -144,7 +145,7 @@ class OptionDesk:
             title=Header.name_puts,
             size=len(self.strikes),
             # bind=OptionDesk.handler,
-            style="menu.Treeview",
+            style="option.Treeview",
             cancel_scroll=True,
             headings=False,
         )

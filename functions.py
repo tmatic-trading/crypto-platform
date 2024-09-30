@@ -2074,6 +2074,17 @@ def handler_instrument(event) -> None:
                     instrument = ws.Instrument[(symb, market)]
                     if "option" in instrument.category:
                         options_desk.create(instrument=instrument)
+                        disp.root.update()
+                        height = (
+                            options_desk.label.winfo_height()
+                            + options_desk.calls_headers.winfo_height()
+                            + TreeTable.calls.tree.winfo_height()
+                        )
+                        if height > int(disp.window_height * 0.8):
+                            height = int(disp.window_height * 0.8)
+                        options_desk.desk.geometry(
+                            "{}x{}".format(disp.window_width, height)
+                        )
         else:
             var.current_market = items[0]
             TreeTable.instrument.on_rollup(iid=items[0], setup="child")
