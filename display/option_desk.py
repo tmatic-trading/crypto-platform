@@ -40,6 +40,20 @@ class OptionDesk:
             self.strikes.sort(key=lambda x: float(x))
         except Exception:
             self.strikes.sort()
+        self.calls_list = list()
+        self.puts_list = list()
+        option_symb = instrument.symbol.split(var._series)[0]
+        for num, strike in enumerate(self.strikes):
+            call = f"{option_symb}-{strike}-C"
+            put = f"{option_symb}-{strike}-P"
+            if call in self.calls:
+                self.calls_list.append(call)
+            else:
+                self.calls_list.append("-")
+            if put in self.puts:
+                self.puts_list.append(put)
+            else:
+                self.puts_list.append("-")
         symb = instrument.symbol.split(var._series)[0]
         self._calls = [f"{symb}-{strike}-C" for strike in self.strikes]
         self._puts = [f"{symb}-{strike}-P" for strike in self.strikes]
@@ -125,7 +139,7 @@ class OptionDesk:
             name="calls",
             title=Header.name_calls,
             size=len(self.strikes),
-            # bind=OptionDesk.handler,
+            bind=lambda event: self.select_instrument(event, "calls", self.market), 
             style="option.Treeview",
             cancel_scroll=True,
             headings=False,
@@ -144,7 +158,7 @@ class OptionDesk:
             name="puts",
             title=Header.name_puts,
             size=len(self.strikes),
-            # bind=OptionDesk.handler,
+            bind=lambda event: self.select_instrument(event, "puts", self.market), 
             style="option.Treeview",
             cancel_scroll=True,
             headings=False,
@@ -161,6 +175,20 @@ class OptionDesk:
             values = [strike]
             TreeTable.strikes.update(num, values=values)
 
+    def select_instrument(self, event, kind, market):        
+        tree = event.widget
+        items = tree.selection()
+        if items:
+            iid = int(items[0])
+            if kind == "calls":
+                options = self.calls_list
+            else:
+                options = self.puts_list
+            if options[iid] != "-":
+                var.symbol = (options[iid], market)
+                var.current_market = market
+                self.on_closing()
+                
 
 def trim_columns(event, body: TreeTable):
     headers = event.widget
