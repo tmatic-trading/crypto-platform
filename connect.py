@@ -306,11 +306,11 @@ def refresh() -> None:
                     # if ws.api_is_active:
                     t = threading.Thread(target=reload_market, args=(ws,))
                     t.start()
-        var.lock_market_switch.acquire(True)
+        var.lock_display.acquire(True)
         ws = Markets[var.current_market]
         if ws.api_is_active:
             Function.refresh_on_screen(ws, utc=utc)
-        var.lock_market_switch.release()
+        var.lock_display.release()
     # Get Tmatic's CPU and Memory usage
     service.get_usage()
 

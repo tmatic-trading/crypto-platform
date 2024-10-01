@@ -2138,7 +2138,9 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
                 value=value,
             )
             var.current_market = ws.name
+            var.lock_display.acquire(True)
             Function.display_instruments(ws)
+            var.lock_display.release()
             TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
     else:
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symb)
@@ -2287,8 +2289,7 @@ def init_bot_treetable_trades():
 
 
 def clear_tables():
-    var.lock_market_switch.acquire(True)
-    ws = Markets[var.current_market]
+    var.lock_display.acquire(True)
     TreeTable.instrument.init()
     TreeTable.orderbook.init()
     for market in var.market_list:
@@ -2300,7 +2301,7 @@ def clear_tables():
     var.symbol = ws.symbol_list[0]
     TreeTable.instrument.set_selection(index=f"{var.current_market}!{var.symbol[0]}")
     TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
-    var.lock_market_switch.release()
+    var.lock_display.release()
 
 
 def target_time(timeframe_sec):
