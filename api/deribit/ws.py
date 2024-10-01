@@ -556,10 +556,12 @@ class Deribit(Variables):
         self._put_message(message=message)
         self.ws.send(json.dumps(msg))
         res = self._confirm_subscription(action="unsubscribe")
-
         if not res:
             for channel in channels:
-                del self.callback_directory[channel]
+                if channel in self.callback_directory:
+                    del self.callback_directory[channel]
+                else:
+                    print("____channel not found", ticker, channel)
 
         return res
 

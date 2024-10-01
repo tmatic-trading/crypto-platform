@@ -1206,11 +1206,6 @@ class Function(WS, Variables):
 
         tree = TreeTable.market
 
-        # Refresh options desk
-
-        if options_desk.is_on:
-            Function.display_options_desk(self)
-
         # d tm = datetime.now()
         for num, name in enumerate(var.market_list):
             ws = Markets[name]
@@ -1224,6 +1219,11 @@ class Function(WS, Variables):
                 configure = "Market" if "ONLINE" in status else "Reload"
                 TreeTable.market.paint(row=name, configure=configure)
         # d print("___market", datetime.now() - tm)
+
+        # Refresh options desk
+
+        if options_desk.is_on:
+            Function.display_options_desk(self)
 
         # Refresh bot menu tables
 
@@ -2213,11 +2213,10 @@ def handler_subscription(event) -> None:
         if symbol not in ws.symbol_list:
             t = threading.Thread(target=confirm_subscription, args=(market, symb))
             t.start()
-        else:
-            warning_window(ErrorMessage.SUBSCRIPTION_WARNING.format(SYMBOL=symb))            
+        else:         
             var.symbol = symbol
             var.current_market = market
-            TreeTable.instrument.on_rollup(iid=f"{market}!{symb}", setup="child")     
+            TreeTable.instrument.on_rollup(iid=f"{market}!{symb}", setup="child")
         TreeTable.market.del_sub(TreeTable.market)
         TreeTable.i_list.clear_all()
 
@@ -2509,6 +2508,7 @@ def init_market_klines(
         success[number] = "success"
 
     threads = []
+
     for symbol, timeframes in self.klines.items():
         for timefr in timeframes.keys():
             success.append(None)
