@@ -2454,13 +2454,14 @@ def load_klines(
     target = target.replace(second=0, microsecond=0)
     timefr_minutes = var.timeframe_human_format[timefr]
     prev = 1
-    for tf_min, tf_str in self.timefrs.items():
+    for tf_min in reversed(self.timefrs.keys()):
         if tf_min == timefr_minutes:
             prev = tf_min
             break
-        elif tf_min > timefr_minutes:
-            break
-        prev = tf_min
+        elif tf_min < timefr_minutes:
+            if timefr_minutes % tf_min == 0:
+                prev = tf_min
+                break
     factor = int(timefr_minutes / prev)
     timefr_minutes = prev
     start_time = target - timedelta(
