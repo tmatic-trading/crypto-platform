@@ -394,14 +394,23 @@ class Variables:
         "Treeview",
         foreground=fg_color,
     )
-    style.layout("Treeview.Item", [
-        ('Treeitem.padding', {'sticky': 'nswe', 'children': [
-            ('Treeitem.indicator', {'side': 'left', 'sticky': ''}),
-            ('Treeitem.image', {'sticky': 'e'}),
-            ('Treeitem.text', {'sticky': 'nswe'})
-        ]})
-    ])
-    #style.configure("Treeview.Item", padding=(0, 0, 0, 0))
+    style.layout(
+        "Treeview.Item",
+        [
+            (
+                "Treeitem.padding",
+                {
+                    "sticky": "nswe",
+                    "children": [
+                        ("Treeitem.indicator", {"side": "left", "sticky": ""}),
+                        ("Treeitem.image", {"sticky": "e"}),
+                        ("Treeitem.text", {"sticky": "nswe"}),
+                    ],
+                },
+            )
+        ],
+    )
+    # style.configure("Treeview.Item", padding=(0, 0, 0, 0))
     style.configure(
         "market.Treeview",
         fieldbackground=title_color,

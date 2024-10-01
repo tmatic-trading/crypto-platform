@@ -2058,7 +2058,7 @@ def handler_instrument(event) -> None:
                             width, y = bbox[2], bbox[1]
                             x_pos = tree.winfo_pointerx() - tree.winfo_rootx()
                             y_pos = tree.winfo_pointery() - tree.winfo_rooty()
-                            if -13 < width - x_pos < -2:
+                            if 1 < x_pos - width < 13:
                                 if 5 < y_pos - y < 16:
                                     create = False
                                     symbol = (market, symb)
@@ -2213,7 +2213,7 @@ def handler_subscription(event) -> None:
         if symbol not in ws.symbol_list:
             t = threading.Thread(target=confirm_subscription, args=(market, symb))
             t.start()
-        else:         
+        else:
             var.symbol = symbol
             var.current_market = market
             TreeTable.instrument.on_rollup(iid=f"{market}!{symb}", setup="child")
@@ -2379,6 +2379,63 @@ def kline_update():
         time.sleep(rest)
 
 
+def merge_klines(data: list, timefr_minutes: int, prev: int):
+    op = 0
+    hi = 0
+    lo = 0
+    cl = 0
+    res = list()
+    prev, fl = None, "append"
+    for el in data:
+        m = el["timestamp"]
+        delta = timedelta(
+            minutes=timefr_minutes
+            - m.minute % timefr_minutes
+            - (m.hour * 60) % timefr_minutes
+        )
+        next_t = el["timestamp"] + delta
+        if prev != next_t:
+            if op != 0:
+                res.append(
+                    {
+                        "timestamp": timestamp,
+                        "symbol": symbol,
+                        "open": op,
+                        "high": hi,
+                        "low": lo,
+                        "close": cl,
+                    }
+                )
+            timestamp = el["timestamp"]
+            op = el["open"]
+            hi = el["high"]
+            lo = el["low"]
+            cl = el["close"]
+            symbol = el["symbol"]
+            fl = "append"
+        else:
+            if el["high"] > hi:
+                hi = el["high"]
+            if el["low"] < lo:
+                lo = el["low"]
+            cl = el["close"]
+            fl = ""
+        prev = next_t
+    if fl == "":
+        res.append(
+            {
+                "timestamp": timestamp,
+                "symbol": symbol,
+                "open": op,
+                "high": hi,
+                "low": lo,
+                "close": cl,
+            }
+        )
+
+    return res
+
+
 def load_klines(
     self: Markets,
     symbol: tuple,
@@ -2396,8 +2453,18 @@ def load_klines(
     target = datetime.now(tz=timezone.utc)
     target = target.replace(second=0, microsecond=0)
     timefr_minutes = var.timeframe_human_format[timefr]
+    prev = 1
+    for tf_min, tf_str in self.timefrs.items():
+        if tf_min == timefr_minutes:
+            prev = tf_min
+            break
+        elif tf_min > timefr_minutes:
+            break
+        prev = tf_min
+    factor = int(timefr_minutes / prev)
+    timefr_minutes = prev
     start_time = target - timedelta(
-        minutes=robo.CANDLESTICK_NUMBER * timefr_minutes - timefr_minutes
+        minutes=robo.CANDLESTICK_NUMBER * timefr_minutes * factor - timefr_minutes
     )
     delta = timedelta(
         minutes=target.minute % timefr_minutes + (target.hour * 60) % timefr_minutes
@@ -2427,9 +2494,12 @@ def load_klines(
             r["timestamp"] -= delta
 
     # The 'klines' array is filled with timeframe data.
-
     if res[0]["timestamp"] > res[-1]["timestamp"]:
         res.reverse()
+
+    if factor > 1:
+        res = merge_klines(data=res, timefr_minutes=timefr_minutes, prev=prev)
+        
     klines[symbol][timefr]["data"] = []
     for num, row in enumerate(res):
         tm = row["timestamp"] - timedelta(minutes=timefr_minutes)

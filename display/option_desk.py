@@ -139,7 +139,7 @@ class OptionDesk:
             name="calls",
             title=Header.name_calls,
             size=len(self.strikes),
-            bind=lambda event: self.select_instrument(event, "calls", self.market), 
+            bind=lambda event: self.select_instrument(event, "calls", self.market),
             style="option.Treeview",
             cancel_scroll=True,
             headings=False,
@@ -158,7 +158,7 @@ class OptionDesk:
             name="puts",
             title=Header.name_puts,
             size=len(self.strikes),
-            bind=lambda event: self.select_instrument(event, "puts", self.market), 
+            bind=lambda event: self.select_instrument(event, "puts", self.market),
             style="option.Treeview",
             cancel_scroll=True,
             headings=False,
@@ -175,7 +175,7 @@ class OptionDesk:
             values = [strike]
             TreeTable.strikes.update(num, values=values)
 
-    def select_instrument(self, event, kind, market):        
+    def select_instrument(self, event, kind, market):
         tree = event.widget
         items = tree.selection()
         if items:
@@ -188,7 +188,7 @@ class OptionDesk:
                 var.symbol = (options[iid], market)
                 var.current_market = market
                 self.on_closing()
-                
+
 
 def trim_columns(event, body: TreeTable):
     headers = event.widget

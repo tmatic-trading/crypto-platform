@@ -45,7 +45,7 @@ class Bitmex(Variables):
             "MATIc": 1000000,
             "BBx": 1000000,
         }  # MATIc, BBx are probably incorrect
-        self.timefrs = {1: "1m", 5: "5m", 60: "1h"}
+        self.timefrs = OrderedDict([(1, "1m"), (5, "5m"), (60, "1h")])
         self.logger = var.logger
         self.klines = dict()
         self.setup_orders = list()

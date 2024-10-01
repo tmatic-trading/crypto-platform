@@ -62,7 +62,7 @@ class Variables:
     lock = threading.Lock()
     lock_kline_update = threading.Lock()
     lock_display = threading.Lock()
-    sql_lock = threading.Lock()    
+    sql_lock = threading.Lock()
     working_directory: str
     kline_update_active = True
     orders = dict()

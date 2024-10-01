@@ -73,21 +73,22 @@ class Agent(Bitmex):
         """
         path = Listing.GET_INSTRUMENT_DATA.format(SYMBOL=ticker)
         res = Send.request(self, path=path, verb="GET")
-        if res:
-            instrument = res[0]
-            Agent.fill_instrument(self, instrument=instrument)
+        if self.logNumFatal == "":
+            if res:
+                instrument = res[0]
+                Agent.fill_instrument(self, instrument=instrument)
 
-            return ""
+                return ""
 
-        elif isinstance(res, str):  # error
-            return res
-        else:
-            message = ErrorMessage.INSTRUMENT_NOT_FOUND.format(
-                PATH=path, TICKER=ticker, CATEGORY=category
-            )
-            self.logger.warning(message)
+            elif isinstance(res, str):  # error
+                return res
+            else:
+                message = ErrorMessage.INSTRUMENT_NOT_FOUND.format(
+                    PATH=path, TICKER=ticker, CATEGORY=category
+                )
+                self.logger.warning(message)
 
-            return message
+                return message
 
     def fill_instrument(self, instrument: dict) -> Union[str, None]:
         """
