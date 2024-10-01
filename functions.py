@@ -2055,10 +2055,10 @@ def handler_instrument(event) -> None:
                     if (symb, market) not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
                         if bbox:
-                            x, y = bbox[0], bbox[1]
+                            width, y = bbox[2], bbox[1]
                             x_pos = tree.winfo_pointerx() - tree.winfo_rootx()
                             y_pos = tree.winfo_pointery() - tree.winfo_rooty()
-                            if 18 < x_pos - x < 27:
+                            if -13 < width - x_pos < -2:
                                 if 5 < y_pos - y < 16:
                                     create = False
                                     symbol = (market, symb)

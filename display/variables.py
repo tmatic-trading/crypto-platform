@@ -394,6 +394,14 @@ class Variables:
         "Treeview",
         foreground=fg_color,
     )
+    style.layout("Treeview.Item", [
+        ('Treeitem.padding', {'sticky': 'nswe', 'children': [
+            ('Treeitem.indicator', {'side': 'left', 'sticky': ''}),
+            ('Treeitem.image', {'sticky': 'e'}),
+            ('Treeitem.text', {'sticky': 'nswe'})
+        ]})
+    ])
+    #style.configure("Treeview.Item", padding=(0, 0, 0, 0))
     style.configure(
         "market.Treeview",
         fieldbackground=title_color,
@@ -626,7 +634,7 @@ class Variables:
     bot_orders_processing = False
     bot_event_prev = ""
     bot_menu_option = ""
-    image_cancel = tk.PhotoImage(file="display/cancel.png")
+    image_cancel = tk.PhotoImage(file="display/unsubscribe.png")
     empty_image = tk.PhotoImage(file="display/empty.png")
 
     # Bot menu widgets
