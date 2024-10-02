@@ -1223,6 +1223,7 @@ class SubTreeviewTable(TreeviewTable):
             self.tree.winfo_rooty()
             - self.root.winfo_rooty()
             + self.tree.bbox(item=item)[1]
+            + self.tree.bbox(item=item)[3] // 2
         )
         self.subtable.clear_all()
         for item in reversed(lst):
@@ -1234,6 +1235,9 @@ class SubTreeviewTable(TreeviewTable):
             self.subtable.scroll.grid(row=0, column=1, sticky="NS")
         else:
             self.subtable.scroll.grid_forget()
+        y_pos -= self.tree.bbox(self.tree.get_children()[0])[1] * (height + 1) // 2
+        if y_pos < self.root.winfo_rooty():
+            y_pos = self.root.winfo_rooty()
         self.subtable.tree.config(height=height)
         self.subtable.frame.place(x=x_pos, y=y_pos)
 
