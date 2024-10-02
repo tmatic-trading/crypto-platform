@@ -383,6 +383,10 @@ class Variables:
             "menu.Treeview",
             background=[("selected", "invalid", "#b3d7ff")],
         )
+        style.map(
+            "bots.Treeview",
+            background=[("selected", "#b3d7ff")],
+        )
         title_color = frame_state["background"]
         label_trading.config(bg=title_color)
         bg_select_color = "#b3d7ff"
@@ -419,6 +423,11 @@ class Variables:
     )
     style.configure(
         "menu.Treeview",
+        fieldbackground=title_color,
+        background=title_color,
+    )
+    style.configure(
+        "bots.Treeview",
         fieldbackground=title_color,
         background=title_color,
     )

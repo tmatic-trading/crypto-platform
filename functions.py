@@ -2818,7 +2818,7 @@ def init_tables() -> None:
         frame=bot_menu.menu_frame,
         name="bot_menu",
         title=Header.name_bot_menu,
-        style="menu.Treeview",
+        style="bots.Treeview",
         bind=bot_menu.handler_bot_menu,
         autoscroll=True,
         hierarchy=True,
