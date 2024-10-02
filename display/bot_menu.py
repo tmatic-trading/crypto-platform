@@ -41,6 +41,7 @@ from display.messages import ErrorMessage
 from .headers import Header
 from .variables import AutoScrollbar, ScrollFrame, TreeTable, TreeviewTable
 from .variables import Variables as disp
+from .headers import Header
 
 
 class BoldLabel(tk.Label):
@@ -53,15 +54,9 @@ class BoldLabel(tk.Label):
 
 class SettingsApp:
     def __init__(self):
-        # self.root_frame = root
-        # self.button_height = 25
         self.button_strategy = None
-
-        # self.pop_up = None
-        # self.selected_bot = ""
         self.algo_dir = f"{os.getcwd()}/algo/"
         self.strategy_file = "strategy.py"
-        # self.action = ""
         self.timeframes = var.timeframe_human_format
         self.bot_entry = {}
         self.name_trace = StringVar(name="Name" + str(self))
@@ -192,12 +187,6 @@ class SettingsApp:
             os.mkdir(bot_path)
             # Create the '__init__.py' file in the new directory. This file is empty
             self.create_file(f"{str(bot_path)}/__init__.py")
-            # d Load the content of 'init.py' file
-            # d content = self.read_file(f"{self.algo_dir}init.py")
-            # Create new 'init.py' file in the new directory
-            # d self.create_file(f"{str(bot_path)}/init.py")
-            # Write the initial content into the new 'init.py' file
-            # d self.write_file(f"{str(bot_path)}/init.py", content)
             # Create new 'strategy.py' file in the new directory
             self.create_file(f"{str(bot_path)}/{self.strategy_file}")
             # Write the initial content into the new 'strategy.py' file
@@ -669,7 +658,7 @@ class SettingsApp:
             message = self.delete_all_bot_info(bot_name, query, "Delete")
             if message[0] is None:
                 message[1] = "The delete operation completed successfully."
-                values = ["" for _ in var.name_bot]
+                values = ["" for _ in Header.name_bot]
                 TreeTable.bot_info.update(row=0, values=values)
             else:
                 if message[1] == "":
@@ -680,7 +669,7 @@ class SettingsApp:
                     ] += (
                         f"\n{message[0]}\n\nThe delete operation completed with errors."
                     )
-                    values = ["" for _ in var.name_bot]
+                    values = ["" for _ in Header.name_bot]
                     TreeTable.bot_info.update(row=0, values=values)
             self.finish_operation(message[1])
 
@@ -730,7 +719,7 @@ class SettingsApp:
                 self.show(bot_name)
 
         self.switch(option="option")
-        values = ["" for _ in var.name_bot]
+        values = ["" for _ in Header.name_bot]
         TreeTable.bot_info.update(row=0, values=values)
         tk.Label(
             self.brief_frame,

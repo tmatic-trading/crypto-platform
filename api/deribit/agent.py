@@ -673,11 +673,12 @@ class Agent(Deribit):
         else:
             number = 86400 * 1000000
         end_timestamp = start_timestamp + number
+        resolution = self.timefrs[timeframe]
         params = {
             "instrument_name": self.Instrument[symbol].ticker,
             "start_timestamp": start_timestamp,
             "end_timestamp": end_timestamp,
-            "resolution": str(timeframe),
+            "resolution": str(resolution),
         }
         text = " - symbol - " + str(symbol) + " - interval - " + str(timeframe)
         res = Agent.ws_request(self, path=path, id=id, params=params, text=text)

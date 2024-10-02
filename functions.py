@@ -2500,7 +2500,7 @@ def load_klines(
 
     if factor > 1:
         res = merge_klines(data=res, timefr_minutes=timefr_minutes, prev=prev)
-        
+
     klines[symbol][timefr]["data"] = []
     for num, row in enumerate(res):
         tm = row["timestamp"] - timedelta(minutes=timefr_minutes)

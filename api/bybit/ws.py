@@ -37,7 +37,21 @@ class Bybit(Variables):
             "option": [],
             "linear": [],
         }
-        self.timefrs = OrderedDict([(1, "1m"), (5, "5m"), (60, "1h")])
+        self.timefrs = OrderedDict(
+            [
+                (1, 1),
+                (3, 3),
+                (5, 5),
+                (15, 15),
+                (30, 30),
+                (60, 60),
+                (120, 120),
+                (240, 240),
+                (360, 360),
+                (720, 720),
+                (1440, "D"),
+            ]
+        )
         self.account_types = ["UNIFIED", "CONTRACT"]
         self.settleCoin_list = list()
         self.logger = var.logger

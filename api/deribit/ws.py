@@ -41,7 +41,22 @@ class Deribit(Variables):
             "option_reversed": "option_rev",
             "option_combo_reversed": "option_combo_rev",
         }
-        self.timefrs = OrderedDict([(1, "1m"), (5, "5m"), (60, "1h")])
+        self.timefrs = OrderedDict(
+            [
+                (1, 1),
+                (3, 3),
+                (5, 5),
+                (10, 10),
+                (15, 15),
+                (30, 30),
+                (60, 60),
+                (120, 120),
+                (180, 180),
+                (360, 360),
+                (720, 720),
+                (1440, "1D"),
+            ]
+        )
         self.settleCoin_list = list()
         self.ws = websocket
         self.logger = var.logger

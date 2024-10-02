@@ -173,11 +173,12 @@ class Agent(Bybit):
             On success, list is returned, otherwise None.
         """
         instrument = self.Instrument[symbol]
+        interval = self.timefrs[timeframe]
         try:
             kline = self.session.get_kline(
                 category=instrument.category,
                 symbol=instrument.ticker,
-                interval=str(timeframe),
+                interval=str(interval),
                 start=service.time_converter(time=start_time),
                 limit=1000,
             )
