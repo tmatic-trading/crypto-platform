@@ -7,7 +7,7 @@ class Message(str, Enum):
     )
     SUBSCRIPTION_ADDED = "Added subscription to {SYMBOL}."
     UNSUBSCRIPTION_WAITING = (
-        "Unsubscribe to {SYMBOL}. Waiting for confirmation from {MARKET}."
+        "Unsubscribe from {SYMBOL}. Waiting for confirmation from {MARKET}."
     )
     UNSUBSCRIBED = "Unsubscribed from {SYMBOL}."
     DEFAULT_SYMBOL_ADDED = (

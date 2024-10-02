@@ -1236,8 +1236,8 @@ class SubTreeviewTable(TreeviewTable):
         else:
             self.subtable.scroll.grid_forget()
         y_pos -= self.tree.bbox(self.tree.get_children()[0])[1] * (height + 1) // 2
-        if y_pos < self.root.winfo_rooty():
-            y_pos = self.root.winfo_rooty()
+        if y_pos < 0:
+            y_pos = 0
         self.subtable.tree.config(height=height)
         self.subtable.frame.place(x=x_pos, y=y_pos)
 
