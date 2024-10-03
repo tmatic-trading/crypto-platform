@@ -20,7 +20,6 @@ class OptionDesk:
         self.desk.destroy()
 
     def create(self, instrument: Instrument):
-        self.is_on = True
         self.market = instrument.market
         self.category = instrument.category
         self.currency = instrument.settlCurrency[0]
@@ -33,9 +32,24 @@ class OptionDesk:
         ]["PUTS"]
         self.calls_set = set(self.calls)
         self.puts_set = set(self.puts)
-        call_strikes = list(map(lambda x: x.split("-")[-2], self.calls))
-        put_strikes = list(map(lambda x: x.split("-")[-2], self.puts))
+        if self.calls:
+            if self.calls[0].split("-")[-1] in ["C"]:
+                indx = -2
+            else:
+                indx = -1
+            call_strikes = list(map(lambda x: x.split("-")[indx], self.calls))
+        else:
+            call_strikes = []
+        if self.puts:
+            if self.puts[0].split("-")[-1] in ["P"]:
+                indx = -2
+            else:
+                indx = -1
+            put_strikes = list(map(lambda x: x.split("-")[indx], self.puts))
+        else:
+            put_strikes = []        
         self.strikes = list(set(call_strikes).union(set(put_strikes)))
+        self.strikes = list(map(lambda x: x.replace("d", "."), self.strikes))
         try:
             self.strikes.sort(key=lambda x: float(x))
         except Exception:
@@ -83,9 +97,9 @@ class OptionDesk:
         bottom.grid(row=1, column=0, columnspan=3, sticky="NSEW")
         bottom.grid_rowconfigure(0, weight=0)
         bottom.grid_rowconfigure(1, weight=100)
-        bottom.grid_columnconfigure(0, weight=10)
+        bottom.grid_columnconfigure(0, weight=6)
         bottom.grid_columnconfigure(1, weight=1)
-        bottom.grid_columnconfigure(2, weight=10)
+        bottom.grid_columnconfigure(2, weight=6)
         bottom.grid_columnconfigure(3, weight=0)
         self.calls_headers = tk.Frame(bottom)
         strikes_headers = tk.Frame(bottom)
@@ -124,9 +138,9 @@ class OptionDesk:
         bottom_sub.grid(row=1, column=0, columnspan=4, sticky="NEWS")
         main = ScrollFrame(bottom_sub, bg=disp.bg_color, bd=0, trim=trim)
         main.grid_rowconfigure(0, weight=1)
-        main.grid_columnconfigure(0, weight=10)
+        main.grid_columnconfigure(0, weight=6)
         main.grid_columnconfigure(1, weight=1)
-        main.grid_columnconfigure(2, weight=10)
+        main.grid_columnconfigure(2, weight=6)
         calls_body = tk.Frame(main, bg=disp.bg_color)
         strikes_body = tk.Frame(main, bg=disp.bg_color)
         puts_body = tk.Frame(main, bg=disp.bg_color)
@@ -174,6 +188,8 @@ class OptionDesk:
         for num, strike in enumerate(self.strikes):
             values = [strike]
             TreeTable.strikes.update(num, values=values)
+
+        self.is_on = True
 
     def select_instrument(self, event, kind, market):
         tree = event.widget

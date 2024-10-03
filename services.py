@@ -635,9 +635,16 @@ def sort_instrument_index(index: OrderedDict) -> OrderedDict:
                 for key, value in values.items():
                     if key in ["CALLS", "PUTS"]:
                         try:
-                            value.sort(key=lambda x: float(x.split("-")[-2]))
+                            value.sort(
+                                key=lambda x: float(x.split("-")[-2].replace("d", "."))
+                            )
                         except Exception:
-                            value.sort()
+                            try:
+                                value.sort(
+                                    key=lambda x: float(x.split("-")[-1].split("_")[0])
+                                )
+                            except Exception:
+                                value.sort()
                         res[category][currency][series][key] = value
 
     return res
