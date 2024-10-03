@@ -433,7 +433,7 @@ class Variables:
     )
     style.configure(
         "option.Treeview",
-        rowheight=line_height * 2,
+        rowheight=int(line_height * 1.5),
     )
     style.configure("Treeview.Heading", foreground=fg_color)
     style.configure(

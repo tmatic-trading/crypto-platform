@@ -72,10 +72,11 @@ class OptionDesk:
         self._calls = [f"{symb}-{strike}-C" for strike in self.strikes]
         self._puts = [f"{symb}-{strike}-P" for strike in self.strikes]
 
-        self.desk = tk.Toplevel()
-        self.desk.geometry(
-            "{}x{}".format(disp.window_width, int(disp.window_height * 0.8))
-        )
+        if not self.is_on:
+            self.desk = tk.Toplevel()
+            self.desk.geometry(
+                "{}x{}".format(disp.window_width, int(disp.window_height * 0.5))
+            )
         self.desk.title(f"{self.market} options ({self.currency})")
         self.desk.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.desk.grid_rowconfigure(0, weight=0)
@@ -189,6 +190,7 @@ class OptionDesk:
             values = [strike]
             TreeTable.strikes.update(num, values=values)
 
+        self.desk.lift()
         self.is_on = True
 
     def select_instrument(self, event, kind, market):
