@@ -863,8 +863,10 @@ class TreeviewTable(Variables):
         selectmode="browse",
         cancel_scroll=False,
         headings=True,
+        bold=False, 
     ) -> None:
         self.frame: tk.Frame = frame
+        self.bold = bold
         self.title = title
         self.max_rows = 200
         self.name = name
@@ -936,6 +938,7 @@ class TreeviewTable(Variables):
             "Market", background=self.title_color, foreground=self.fg_color
         )"""
         self.tree.tag_configure("highlight", background=self.bg_select_color)
+        self.tree.tag_configure('Bold', font=('', self.symbol_height, 'bold'))
         if hover:
             self.tree.bind("<Motion>", self.on_hover)
             self.tree.bind("<Leave>", self.on_leave)
@@ -968,7 +971,10 @@ class TreeviewTable(Variables):
             return
         blank = ["" for _ in self.title]
         for item in self.lst:
-            self.tree.insert("", tk.END, iid=item, values=blank)
+            if self.bold:
+                self.tree.insert("", tk.END, iid=item, values=blank, tags="Bold")
+            else:
+                self.tree.insert("", tk.END, iid=item, values=blank)
             self.cache[item] = blank
         self.children = self.tree.get_children()
 

@@ -167,6 +167,9 @@ class OptionDesk:
             style="option.Treeview",
             cancel_scroll=True,
             headings=False,
+            hover=False, 
+            selectmode="none", 
+            bold=True, 
         )
         TreeTable.puts = TreeviewTable(
             frame=puts_body,
