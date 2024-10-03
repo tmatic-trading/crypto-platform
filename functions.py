@@ -19,7 +19,13 @@ from display.functions import info_display
 from display.headers import Header
 from display.messages import ErrorMessage, Message
 from display.option_desk import options_desk
-from display.variables import AutoScrollbar, SubTreeviewTable, TreeTable, TreeviewTable
+from display.variables import (
+    AutoScrollbar,
+    CustomLabel,
+    SubTreeviewTable,
+    TreeTable,
+    TreeviewTable,
+)
 from display.variables import Variables as disp
 
 
@@ -1772,6 +1778,138 @@ def handler_order(event) -> None:
             frame_up.pack(side="top", fill="x")
             frame_dn.pack(side="top", fill="x")
             change_color(color=disp.title_color, container=order_window)
+
+
+def first_price(prices: list) -> float:
+    if prices:
+        return prices[0][0]
+    else:
+        return "None"
+    
+def setup_order_form_tmp():
+    main = tk.Frame(
+        disp.frame_order_form, relief="sunken", borderwidth=1, bg=disp.bg_color
+    )
+    main.pack(fill="both", expand=True)
+
+
+def setup_order_form():
+    ws = Markets[var.current_market]
+    main = tk.Frame(
+        disp.frame_order_form, relief="sunken", borderwidth=1
+    )  # , bg=disp.light_gray_color)
+    main.pack(fill="both")
+    main.grid_columnconfigure(0, weight=0)
+    main.grid_columnconfigure(1, weight=1)
+    buttons = tk.Frame(main)
+    buttons.grid_columnconfigure(0, weight=1)
+    buttons.grid_columnconfigure(1, weight=1)
+    sell_limit = tk.Button(buttons, text="Sell Limit")  # , command=callback_sell_limit)
+    buy_limit = tk.Button(buttons, text="Buy Limit")  # , command=callback_buy_limit)
+    buttons.grid(row=4, column=0, columnspan=2, sticky="NEWS")
+    quantity = tk.StringVar()
+    price = tk.StringVar()
+    entry_price = tk.Entry(main, width=10, bg=disp.bg_color, textvariable=price)
+    instrument = ws.Instrument[var.symbol]
+    entry_price.insert(
+        0,
+        Function.format_price(
+            ws,
+            number=first_price(instrument.asks),
+            symbol=var.symbol,
+        ),
+    )
+    entry_quantity = tk.Entry(main, width=9, bg=disp.bg_color, textvariable=quantity)
+    entry_quantity.insert(
+        0,
+        Function.volume(ws, qty=instrument.minOrderQty, symbol=var.symbol),
+    )
+    label_title = tk.Label(
+        main, text=var.symbol[0], font=disp.bold_font
+    )  # , bg=disp.light_gray_color)
+    label_price = tk.Label(main, text="Price:")  # , bg=disp.light_gray_color)
+    label_quantity = tk.Label(main, text="Qty:")  # , bg=disp.light_gray_color)
+    label_emi = tk.Label(main, text="EMI:")  # , bg=disp.light_gray_color)
+    emi_number = tk.StringVar()
+    options = list()
+    for name in Bots.keys():
+        options.append(name)
+    options.append(var.symbol[0])
+    option_emi = tk.OptionMenu(main, emi_number, *options)
+    label_title.grid(row=0, column=0, sticky="NEWS", columnspan=2)
+    label_emi.grid(row=1, column=0, sticky="NEWS")
+    option_emi.grid(row=1, column=1, sticky="W")
+    label_quantity.grid(row=2, column=0, sticky="NEWS")
+    entry_quantity.grid(row=2, column=1, sticky="NEWS")
+    label_price.grid(row=3, column=0, sticky="NEWS")
+    entry_price.grid(row=3, column=1, sticky="NEWS")
+    sell_limit.grid(row=0, column=0, sticky="NEWS")
+    buy_limit.grid(row=0, column=1, sticky="NEWS")
+
+    # Instrument parameters
+
+    parameters = tk.Frame(
+        disp.frame_order_form,
+        relief="sunken",
+        borderwidth=1,
+        bg=disp.light_gray_color,
+    )
+    parameters.pack(fill="both", expand=True)
+    parameters.grid_columnconfigure(0, weight=0)
+    parameters.grid_columnconfigure(1, weight=1)
+    label_parameters = CustomLabel(
+        parameters, text="Instrument parameters", font=disp.bold_font
+    )
+    label_category = CustomLabel(parameters, text="category")
+    label_settlcurrency = CustomLabel(parameters, text="settlCurrency")
+    label_expiry = CustomLabel(parameters, text="expiry")
+    label_minOrderQty = CustomLabel(parameters, text="minOrderQty")
+    label_ticksize = CustomLabel(parameters, text="tickSize")
+    label_parameters.grid(row=0, column=0, sticky="NEWS", columnspan=2)
+    label_category.grid(row=1, column=0, sticky="W")
+    label_settlcurrency.grid(row=2, column=0, sticky="W")
+    label_expiry.grid(row=3, column=0, sticky="W")
+    label_minOrderQty.grid(row=4, column=0, sticky="W")
+    label_ticksize.grid(row=5, column=0, sticky="W")
+
+    instrument = ws.Instrument[var.symbol]
+
+    category_value = CustomLabel(parameters, text=instrument.category)
+    settlcurrency_value = CustomLabel(parameters, text=instrument.settlCurrency[0])
+    expiry_value = CustomLabel(parameters, text=instrument.expire)
+    minOrderQty_value = CustomLabel(parameters, text=instrument.minOrderQty)
+    ticksize_value = CustomLabel(parameters, text=instrument.tickSize)
+    category_value.grid(row=1, column=1, sticky="E")
+    settlcurrency_value.grid(row=2, column=1, sticky="E")
+    expiry_value.grid(row=3, column=1, sticky="E")
+    minOrderQty_value.grid(row=4, column=1, sticky="E")
+    ticksize_value.grid(row=5, column=1, sticky="E")
+
+    if instrument.makerFee != None:
+        label_takersfee = CustomLabel(parameters, text="Taker's fee")
+        label_makersfee = CustomLabel(parameters, text="Maker's fee")
+        takersfee_value = CustomLabel(parameters, text=f"{instrument.takerFee*100}%")
+        makerfee_value = CustomLabel(parameters, text=f"{instrument.makerFee*100}%")
+        label_takersfee.grid(row=6, column=0, sticky="W")
+        label_makersfee.grid(row=7, column=0, sticky="W")
+        takersfee_value.grid(row=6, column=1, sticky="E")
+        makerfee_value.grid(row=7, column=1, sticky="E")
+
+    # Empty frame
+
+    '''empty = tk.Frame(
+        disp.frame_order_form,
+        relief="sunken",
+        borderwidth=1,
+        bg=disp.bg_color,
+    )
+    empty.pack(fill="both", expand=True)
+    label_empty = tk.Label(empty, text=" ", fg=disp.bg_color, bg=disp.bg_color)
+    label_empty.grid(row=0, column=0, sticky="NEWS")
+    empty.grid_rowconfigure(0, weight=1)'''
+
+    #t = threading.Thread(target=refresh)
+    #t.start()"""
 
 
 def handler_orderbook(event) -> None:

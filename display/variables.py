@@ -533,8 +533,15 @@ class Variables:
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
 
+    frame_symbol = tk.Frame(pw_rest2, bg=bg_color)
+
     # Frame for the order book
-    frame_orderbook = tk.Frame(pw_rest2)
+    frame_orderbook = tk.Frame(frame_symbol)
+    frame_orderbook.pack(fill="both")
+
+    # Frame for the new order form
+    frame_order_form = tk.Frame(frame_symbol)
+    frame_order_form.pack(fill="both", expand=True)
 
     notebook_frames = {}
 
@@ -595,7 +602,7 @@ class Variables:
         lambda event: Variables.on_sash_move(event, Variables.pw_rest3),
     )
 
-    pw_rest2.add(frame_orderbook)
+    pw_rest2.add(frame_symbol)
     pw_rest2.add(pw_rest3)
     pw_rest2.bind(
         "<Configure>",
@@ -863,7 +870,7 @@ class TreeviewTable(Variables):
         selectmode="browse",
         cancel_scroll=False,
         headings=True,
-        bold=False, 
+        bold=False,
     ) -> None:
         self.frame: tk.Frame = frame
         self.bold = bold
@@ -938,7 +945,7 @@ class TreeviewTable(Variables):
             "Market", background=self.title_color, foreground=self.fg_color
         )"""
         self.tree.tag_configure("highlight", background=self.bg_select_color)
-        self.tree.tag_configure('Bold', font=('', self.symbol_height, 'bold'))
+        self.tree.tag_configure("Bold", font=("", self.symbol_height, "bold"))
         if hover:
             self.tree.bind("<Motion>", self.on_hover)
             self.tree.bind("<Leave>", self.on_leave)
@@ -1540,3 +1547,9 @@ def hide_columns(event):
         else:
             Variables.root.title(Variables.platform_name)
         Variables.all_width = now_width
+
+
+class CustomLabel(tk.Label):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.configure(bg=Variables.light_gray_color)

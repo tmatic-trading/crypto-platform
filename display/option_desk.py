@@ -47,7 +47,7 @@ class OptionDesk:
                 indx = -1
             put_strikes = list(map(lambda x: x.split("-")[indx], self.puts))
         else:
-            put_strikes = []        
+            put_strikes = []
         self.strikes = list(set(call_strikes).union(set(put_strikes)))
         self.strikes = list(map(lambda x: x.replace("d", "."), self.strikes))
         try:
@@ -167,9 +167,9 @@ class OptionDesk:
             style="option.Treeview",
             cancel_scroll=True,
             headings=False,
-            hover=False, 
-            selectmode="none", 
-            bold=True, 
+            hover=False,
+            selectmode="none",
+            bold=True,
         )
         TreeTable.puts = TreeviewTable(
             frame=puts_body,

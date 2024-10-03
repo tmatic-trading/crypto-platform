@@ -1,6 +1,7 @@
+from collections import OrderedDict
+
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
-from collections import OrderedDict
 
 
 class Fake(Variables):

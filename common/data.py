@@ -63,6 +63,8 @@ class Instrument:
         Expiration time.
     fundingRate: float
         Funding rate.
+    makerFee: float
+        Taker commission for instrument.
     marginCallPrice: float
         Position margin call or liquidation price.
     market: str
@@ -99,6 +101,8 @@ class Instrument:
     symbol: str
         A unique value corresponding to the ticker, except in the spot
         category, where the symbol matches "baseCoin/quoteCoin".
+    takerFee: float
+        Taker commission for instrument.
     ticker: str
         Symbol of the instrument in the exchange classification.
     tickSize: float
@@ -123,6 +127,7 @@ class Instrument:
     currentQty: float = 0
     expire: datetime
     fundingRate: float = 0
+    makerFee: float = None
     market: str
     marginCallPrice: float = 0
     maxOrderQty: float
@@ -137,6 +142,7 @@ class Instrument:
     sumreal: float = 0
     state: str
     symbol: str
+    takerFee: float = None
     ticker: str
     tickSize: float
     unrealisedPnl: float = 0
