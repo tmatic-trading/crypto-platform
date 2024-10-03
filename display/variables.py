@@ -1553,3 +1553,80 @@ class CustomLabel(tk.Label):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
         self.configure(bg=Variables.light_gray_color)
+
+
+class OrderForm:
+    '''main = tk.Frame(Variables.frame_order_form, relief="sunken", borderwidth=1)
+    main.pack(fill="both")
+    main.grid_columnconfigure(0, weight=0)
+    main.grid_columnconfigure(1, weight=1)
+    buttons = tk.Frame(main)
+    buttons.grid_columnconfigure(0, weight=1)
+    buttons.grid_columnconfigure(1, weight=1)
+    sell_limit = tk.Button(buttons, text="Sell Limit")
+    buy_limit = tk.Button(buttons, text="Buy Limit")
+    buttons.grid(row=4, column=0, columnspan=2, sticky="NEWS")
+    quantity = tk.StringVar()
+    price = tk.StringVar()
+    entry_price = tk.Entry(main, width=10, bg=Variables.bg_color, textvariable=price)
+    entry_quantity = tk.Entry(
+        main, width=9, bg=Variables.bg_color, textvariable=quantity
+    )
+    label_title = tk.Label(main, text="-", font=Variables.bold_font)
+    label_price = tk.Label(main, text="Price:")
+    label_quantity = tk.Label(main, text="Qty:")
+    label_emi = tk.Label(main, text="EMI:")
+    emi_number = tk.StringVar()
+    options = ["-"]
+    option_emi = tk.OptionMenu(main, emi_number, *options)
+    label_title.grid(row=0, column=0, sticky="NEWS", columnspan=2)
+    label_emi.grid(row=1, column=0, sticky="NEWS")
+    option_emi.grid(row=1, column=1, sticky="W")
+    label_quantity.grid(row=2, column=0, sticky="NEWS")
+    entry_quantity.grid(row=2, column=1, sticky="NEWS")
+    label_price.grid(row=3, column=0, sticky="NEWS")
+    entry_price.grid(row=3, column=1, sticky="NEWS")
+    sell_limit.grid(row=0, column=0, sticky="NEWS")
+    buy_limit.grid(row=0, column=1, sticky="NEWS")
+
+    # Instrument parameters
+
+    parameters = tk.Frame(
+        Variables.frame_order_form,
+        relief="sunken",
+        borderwidth=1,
+        bg=Variables.light_gray_color,
+    )
+    parameters.pack(fill="both", expand=True)
+    parameters.grid_columnconfigure(0, weight=0)
+    parameters.grid_columnconfigure(1, weight=1)
+    label_parameters = CustomLabel(
+        parameters, text="Instrument parameters", font=Variables.bold_font
+    )
+    label_category = CustomLabel(parameters, text="category")
+    label_settlcurrency = CustomLabel(parameters, text="settlCurrency")
+    label_expiry = CustomLabel(parameters, text="expiry")
+    label_minOrderQty = CustomLabel(parameters, text="minOrderQty")
+    label_ticksize = CustomLabel(parameters, text="tickSize")
+    label_parameters.grid(row=0, column=0, sticky="NEWS", columnspan=2)
+    label_category.grid(row=1, column=0, sticky="W")
+    label_settlcurrency.grid(row=2, column=0, sticky="W")
+    label_expiry.grid(row=3, column=0, sticky="W")
+    label_minOrderQty.grid(row=4, column=0, sticky="W")
+    label_ticksize.grid(row=5, column=0, sticky="W")
+
+    category_value = CustomLabel(parameters, text="-")
+    settlcurrency_value = CustomLabel(parameters, text="-")
+    expiry_value = CustomLabel(parameters, text="-")
+    minOrderQty_value = CustomLabel(parameters, text="-")
+    ticksize_value = CustomLabel(parameters, text="-")
+    category_value.grid(row=1, column=1, sticky="E")
+    settlcurrency_value.grid(row=2, column=1, sticky="E")
+    expiry_value.grid(row=3, column=1, sticky="E")
+    minOrderQty_value.grid(row=4, column=1, sticky="E")
+    ticksize_value.grid(row=5, column=1, sticky="E")
+
+    label_takerfee = CustomLabel(parameters, text="Taker's fee")
+    label_makerfee = CustomLabel(parameters, text="Maker's fee")
+    takerfee_value = CustomLabel(parameters, text="-")
+    makerfee_value = CustomLabel(parameters, text="-")'''
