@@ -140,7 +140,7 @@ The settings are stored in two files: ```.env.Settings``` and ```.env.Subscripti
 ```Python
 MARKET_LIST='Bitmex,Bybit,Deribit'
 SQLITE_DATABASE='tmatic.db'
-ORDER_BOOK_DEPTH='orderBook'
+ORDER_BOOK_DEPTH='orderBook 7'
 BOTTOM_FRAME='robots'
 REFRESH_RATE='5'
 #
@@ -182,7 +182,7 @@ Deribit_TESTNET='YES'
 
 - SQLITE_DATABASE — the name of the database.
 
-- ORDER_BOOK_DEPTH is a choice between "orderBook" which allows you to see the order book ten lines deep, and "quote" which shows only the best buy and sell while significantly reducing network traffic.
+- ORDER_BOOK_DEPTH is a choice between "orderBook" which allows you to see the order book two to ten lines deep, and "quote" which shows only the best buy and sell while significantly reducing network traffic.
 
 - BOTTOM_FRAME — selects your preferred table from Orders, Positions, Trades, Funding, Account, Results and Robots, which will always be visible at the bottom of the main page.
 

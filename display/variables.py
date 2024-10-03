@@ -259,7 +259,7 @@ class Variables:
         slash = "/"
 
     num_robots = 1
-    num_book = 20  # Must be even
+    num_book = 14  # Must be even
     col1_book = 0
 
     pw_main = tk.PanedWindow(
