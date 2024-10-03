@@ -24,6 +24,11 @@ class Tips(Enum):
         + "best bid and ask quotes. Setting ``qoute`` reduces network "
         + "traffic since the amount of data received is smaller."
     )
+    ORDER_BOOK_DEPTH_VALUE = (
+        "You can choose the depth of the order book that is displayed on the "
+        + "screen. Set the value from 2 to 10, which will show the "
+        + "corresponding number of buy and sell lines."
+    )
     BOTTOM_FRAME = (
         "You can select your preferred table from `Orders`, `Positions`, "
         + "`Trades`, `Funding`, `Account`, `Results`, `Robots`, which will "

@@ -31,6 +31,7 @@ class SettingsApp:
         self.common_settings["MARKET_LIST"] = "Bitmex,Bybit,Deribit"
         self.common_settings["SQLITE_DATABASE"] = "tmatic.db"
         self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook"
+        self.common_settings["ORDER_BOOK_DEPTH_VALUE"] = "10"
         self.common_settings["BOTTOM_FRAME"] = "Robots"
         self.common_settings["REFRESH_RATE"] = "5"
 
@@ -270,6 +271,7 @@ class SettingsApp:
         var.order_book_depth = var.env["ORDER_BOOK_DEPTH"]
         var.db_sqlite = var.env["SQLITE_DATABASE"]
         var.refresh_rate = min(max(100, int(1000 / int(var.env["REFRESH_RATE"]))), 1000)
+        disp.num_book = int(var.env["ORDER_BOOK_DEPTH_VALUE"]) * 2
 
     def save_dotenv_subscriptions(self, subscriptions: OrderedDict) -> None:
         """
@@ -635,7 +637,6 @@ class SettingsApp:
         # Draw grid for common settings
         self.entry_common = {}
         for setting in self.common_settings.keys():
-            # self.common_trace_changed[setting] = StringVar(name=setting + str(self))
             if setting != "MARKET_LIST":
                 widget_row += 1
                 tk.Label(self.root_frame, bg=disp.bg_color).grid(
@@ -665,6 +666,16 @@ class SettingsApp:
                         style="default.TCombobox",
                     )
                     values = ("orderBook", "quote")
+                    self.entry_common[setting]["values"] = values
+                elif setting == "ORDER_BOOK_DEPTH_VALUE":
+                    self.entry_common[setting] = ttk.Combobox(
+                        self.root_frame,
+                        width=self.entry_width,
+                        textvariable=self.common_trace_changed[setting],
+                        state="readonly",
+                        style="default.TCombobox",
+                    )
+                    values = ("2", "3", "4", "5", "6", "7", "8", "9", "10")
                     self.entry_common[setting]["values"] = values
                 elif setting == "BOTTOM_FRAME":
                     self.entry_common[setting] = ttk.Combobox(

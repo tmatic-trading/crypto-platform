@@ -44,7 +44,6 @@ def setup(reload=False):
     threads = []
     for name in var.market_list.copy():
         ws = Markets[name]
-        # if name in MetaMarket.dictionary:
         Setup.variables(ws)
         ws.setup_session()
         if name in var.market_list:
