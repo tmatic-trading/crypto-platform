@@ -19,15 +19,10 @@ class Tips(Enum):
         + "will take effect after restarting <f3> or relaunching Tmatic."
     )
     ORDER_BOOK_DEPTH = (
-        "Select ``orderBook`` for an order book depth of between 10 lines "
+        "Select ``orderBook`` for an order book depth of between 2-10 lines "
         + "for both buys and sells, or ``qoute`` which displays only the "
         + "best bid and ask quotes. Setting ``qoute`` reduces network "
         + "traffic since the amount of data received is smaller."
-    )
-    ORDER_BOOK_DEPTH_VALUE = (
-        "You can choose the depth of the order book that is displayed on the "
-        + "screen. Set the value from 2 to 10, which will show the "
-        + "corresponding number of buy and sell lines."
     )
     BOTTOM_FRAME = (
         "You can select your preferred table from `Orders`, `Positions`, "

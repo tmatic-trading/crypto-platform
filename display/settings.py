@@ -30,8 +30,7 @@ class SettingsApp:
         self.common_settings = OrderedDict()
         self.common_settings["MARKET_LIST"] = "Bitmex,Bybit,Deribit"
         self.common_settings["SQLITE_DATABASE"] = "tmatic.db"
-        self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook"
-        self.common_settings["ORDER_BOOK_DEPTH_VALUE"] = "10"
+        self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook 7"
         self.common_settings["BOTTOM_FRAME"] = "Robots"
         self.common_settings["REFRESH_RATE"] = "5"
 
@@ -268,10 +267,14 @@ class SettingsApp:
         if var.market_list:
             var.current_market = var.market_list[0]
             var.symbol = var.env[var.current_market]["SYMBOLS"][0]
-        var.order_book_depth = var.env["ORDER_BOOK_DEPTH"]
+        book_depth = var.env["ORDER_BOOK_DEPTH"].split(" ")
+        var.order_book_depth = book_depth[0]
         var.db_sqlite = var.env["SQLITE_DATABASE"]
         var.refresh_rate = min(max(100, int(1000 / int(var.env["REFRESH_RATE"]))), 1000)
-        disp.num_book = int(var.env["ORDER_BOOK_DEPTH_VALUE"]) * 2
+        if var.order_book_depth != "quote":
+            disp.num_book = int(book_depth[1]) * 2
+        else:
+            disp.num_book = 2
 
     def save_dotenv_subscriptions(self, subscriptions: OrderedDict) -> None:
         """
@@ -665,17 +668,18 @@ class SettingsApp:
                         state="readonly",
                         style="default.TCombobox",
                     )
-                    values = ("orderBook", "quote")
-                    self.entry_common[setting]["values"] = values
-                elif setting == "ORDER_BOOK_DEPTH_VALUE":
-                    self.entry_common[setting] = ttk.Combobox(
-                        self.root_frame,
-                        width=self.entry_width,
-                        textvariable=self.common_trace_changed[setting],
-                        state="readonly",
-                        style="default.TCombobox",
+                    values = (
+                        "quote",
+                        "orderBook 2",
+                        "orderBook 3",
+                        "orderBook 4",
+                        "orderBook 5",
+                        "orderBook 6",
+                        "orderBook 7",
+                        "orderBook 8",
+                        "orderBook 9",
+                        "orderBook 10",
                     )
-                    values = ("2", "3", "4", "5", "6", "7", "8", "9", "10")
                     self.entry_common[setting]["values"] = values
                 elif setting == "BOTTOM_FRAME":
                     self.entry_common[setting] = ttk.Combobox(

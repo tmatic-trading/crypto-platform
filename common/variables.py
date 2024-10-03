@@ -44,7 +44,7 @@ class Variables:
     current_market = ""
     symbol = ""
     refresh_rate = 5
-    order_book_depth = "orderBook"
+    order_book_depth = "orderBook 7"
     db_sqlite = "tmatic.db"
     settings = ".env.Settings"
     subscriptions = ".env.Subscriptions"
