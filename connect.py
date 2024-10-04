@@ -86,7 +86,7 @@ def setup(reload=False):
                 disp.pw_rest4.add(check_frame)
                 break
     var.display_bottom = frame["method"]
-    # functions.update_order_form()
+    #functions.update_order_form()
     functions.setup_order_form_tmp()
 
 

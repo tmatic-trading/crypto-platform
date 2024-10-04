@@ -1819,23 +1819,23 @@ def update_order_form():
         Function.volume(ws, qty=instrument.minOrderQty, symbol=var.symbol),
     )
     form.label_title["text"] = var.symbol[0]
-    form.category_value["text"] = instrument.category
-    form.settlcurrency_value["text"] = instrument.settlCurrency[0]
-    form.expiry_value["text"] = instrument.expire
-    form.minOrderQty_value["text"] = instrument.minOrderQty
-    form.ticksize_value["text"] = instrument.tickSize
+    form.category.value["text"] = instrument.category
+    form.settlcurrency.value["text"] = instrument.settlCurrency[0]
+    form.expiry.value["text"] = str(instrument.expire).split("+")[0]
+    form.ticksize.value["text"] = instrument.tickSize
+    form.minOrderQty.value["text"] = instrument.minOrderQty    
     if instrument.makerFee != None:
-        form.label_takerfee.grid(row=6, column=0, sticky="W")
-        form.label_makerfee.grid(row=7, column=0, sticky="W")
-        form.takerfee_value.grid(row=6, column=1, sticky="E")
-        form.makerfee_value.grid(row=7, column=1, sticky="E")
-        form.takerfee_value["text"] = instrument.takerFee
-        form.makerfee_value["text"] = instrument.makerFee
+        form.takerfee.name.grid(row=0, column=0, sticky="W")
+        form.takerfee.value.grid(row=0, column=1, sticky="E")
+        form.makerfee.name.grid(row=0, column=0, sticky="W")
+        form.makerfee.value.grid(row=0, column=1, sticky="E")
+        form.takerfee.value["text"] = f"{instrument.takerFee*100}%"
+        form.makerfee.value["text"] = f"{instrument.makerFee*100}%"
     else:
-        form.label_takerfee.grid_forget()
-        form.label_makerfee.grid_forget()
-        form.takerfee_value.grid_forget()
-        form.makerfee_value.grid_forget()
+        form.takerfee.name.grid_forget()
+        form.takerfee.value.grid_forget()
+        form.makerfee.name.grid_forget()
+        form.makerfee.value.grid_forget()
 
 
 def handler_orderbook(event) -> None:
