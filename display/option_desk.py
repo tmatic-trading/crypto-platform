@@ -195,21 +195,33 @@ class OptionDesk:
         self.desk.lift()
         self.is_on = True
 
+        option = var.selected_option[(self.symbol, self.market)][0]
+        kind = option.split("-")[-1]
+        self.close_window = False
+        if kind == "C":
+            indx = self.calls_list.index(option)
+            TreeTable.calls.set_selection(index=indx)
+        else:
+            indx = self.puts_list.index(option)
+            TreeTable.puts.set_selection(index=indx)
+
     def select_instrument(self, event, kind, market):
-        tree = event.widget
-        items = tree.selection()
-        if items:
-            iid = int(items[0])
-            if kind == "calls":
-                options = self.calls_list
-            else:
-                options = self.puts_list
-            if options[iid] != "-":
-                var.symbol = (options[iid], market)
-                var.current_market = market
-                var.selected_option[(self.symbol, self.market)] = var.symbol
-                self.update()
-                self.on_closing()
+        if self.close_window:
+            tree = event.widget
+            items = tree.selection()
+            if items:
+                iid = int(items[0])
+                if kind == "calls":
+                    options = self.calls_list
+                else:
+                    options = self.puts_list
+                if options[iid] != "-":
+                    var.symbol = (options[iid], market)
+                    var.current_market = market
+                    var.selected_option[(self.symbol, self.market)] = var.symbol
+                    self.update()
+                    self.on_closing()
+        self.close_window = True
 
 
 def trim_columns(event, body: TreeTable):
