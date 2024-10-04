@@ -1785,16 +1785,113 @@ def first_price(prices: list) -> float:
         return "None"
 
 
-def setup_order_form_tmp():
-    main = tk.Frame(
-        disp.frame_order_form, relief="sunken", borderwidth=1, bg=disp.bg_color
-    )
-    main.pack(fill="both", expand=True)
+def minimum_qty(qnt):
+    minOrderQty = form.instrument.minOrderQty
+    if qnt < minOrderQty:
+        message = (
+            "The "
+            + str(var.symbol)
+            + " quantity must be greater than or equal to "
+            + Function.volume(form.ws, qty=minOrderQty, symbol=var.symbol)
+        )
+        warning_window(message)
+        return "error"
+    qnt_d = Decimal(str(qnt))
+    qtyStep = Decimal(str(form.instrument.qtyStep))
+    if qnt_d % qtyStep != 0:
+        message = (
+            "The "
+            + str(var.symbol)
+            + " quantity must be multiple to "
+            + Function.volume(form.ws, qty=qtyStep, symbol=var.symbol)
+        )
+        warning_window(message)
+        return "error"
+
+
+def check_order_warning():
+    if form.ws.name == "Bitmex" and var.symbol[1] == "spot":
+        warning_window("Tmatic does not support spot trading on Bitmex.")
+        return False
+    if not form.ws.api_is_active:
+        if form.ws.name != "Fake":
+            info_display(
+                market=form.ws.name,
+                message=form.ws.name + ": You cannot add new orders during a reboot.\n",
+                warning="warning",
+            )
+            return False
+
+    return True
+
+
+def callback_sell_limit() -> None:
+    if check_order_warning():
+        if form.quantity.get() and form.price.get() and form.emi_number.get():
+            try:
+                qnt = abs(float(form.quantity.get()))
+                price = float(form.price.get())
+                res = "yes"
+            except Exception:
+                warning_window("Fields must be numbers!")
+                res = "no"
+            if res == "yes" and qnt != 0:
+                price = Function.round_price(
+                    form.ws, symbol=var.symbol, price=price, rside=-qnt
+                )
+                if price <= 0:
+                    warning_window("The price must be above zero.")
+                    return
+                if minimum_qty(qnt):
+                    return
+                Function.post_order(
+                    form.ws,
+                    name=form.ws.name,
+                    symbol=var.symbol,
+                    emi=form.emi_number.get(),
+                    side="Sell",
+                    price=price,
+                    qty=qnt,
+                )
+        else:
+            warning_window("Some of the fields are empty!")
+
+
+def callback_buy_limit() -> None:
+    if check_order_warning():
+        if form.quantity.get() and form.price.get() and form.emi_number.get():
+            try:
+                qnt = abs(float(form.quantity.get()))
+                price = float(form.price.get())
+                res = "yes"
+            except Exception:
+                warning_window("Fields must be numbers!")
+                res = "no"
+            if res == "yes" and qnt != 0:
+                price = Function.round_price(
+                    form.ws, symbol=var.symbol, price=price, rside=qnt
+                )
+                if price <= 0:
+                    warning_window("The price must be above zero.")
+                    return
+                if minimum_qty(qnt):
+                    return
+                Function.post_order(
+                    form.ws,
+                    name=form.ws.name,
+                    symbol=var.symbol,
+                    emi=form.emi_number.get(),
+                    side="Buy",
+                    price=price,
+                    qty=qnt,
+                )
+        else:
+            warning_window("Some of the fields are empty!")
 
 
 def update_order_form():
-    ws = Markets[var.current_market]
-    instrument = ws.Instrument[var.symbol]
+    form.ws = Markets[var.current_market]
+    form.instrument = form.ws.Instrument[var.symbol]
     form.option_emi["menu"].delete(0, "end")
     options = list()
     for name in Bots.keys():
@@ -1818,7 +1915,7 @@ def update_order_form():
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(
         0,
-        Function.volume(ws, qty=instrument.minOrderQty, symbol=var.symbol),
+        Function.volume(form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol),
     )
     if len(var.symbol[0]) > 22:
         splt = var.symbol[0].split("-")
@@ -1831,18 +1928,18 @@ def update_order_form():
         title = var.symbol[0]
         form.label_title.config(justify=tk.CENTER)
     form.label_title["text"] = title
-    form.category.value["text"] = instrument.category
-    form.settlcurrency.value["text"] = instrument.settlCurrency[0]
-    form.expiry.value["text"] = str(instrument.expire).split("+")[0]
-    form.ticksize.value["text"] = instrument.tickSize
-    form.minOrderQty.value["text"] = instrument.minOrderQty
-    if instrument.makerFee != None:
+    form.category.value["text"] = form.instrument.category
+    form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
+    form.expiry.value["text"] = str(form.instrument.expire).split("+")[0]
+    form.ticksize.value["text"] = form.instrument.tickSize
+    form.minOrderQty.value["text"] = form.instrument.minOrderQty
+    if form.instrument.makerFee != None:
         form.takerfee.name.grid(row=0, column=0, sticky="W")
         form.takerfee.value.grid(row=0, column=1, sticky="E")
         form.makerfee.name.grid(row=0, column=0, sticky="W")
         form.makerfee.value.grid(row=0, column=1, sticky="E")
-        form.takerfee.value["text"] = f"{instrument.takerFee*100}%"
-        form.makerfee.value["text"] = f"{instrument.makerFee*100}%"
+        form.takerfee.value["text"] = f"{form.instrument.takerFee*100}%"
+        form.makerfee.value["text"] = f"{form.instrument.makerFee*100}%"
     else:
         form.takerfee.name.grid_forget()
         form.takerfee.value.grid_forget()
@@ -1856,249 +1953,7 @@ def handler_orderbook(event) -> None:
     if items:
         tree.update()
         tree.selection_remove(items[0])
-    ws = Markets[var.current_market]
-    if ws.name == "Bitmex" and var.symbol[1] == "spot":
-        warning_window("Tmatic does not support spot trading on Bitmex.")
-        return
-    if not ws.api_is_active:
-        if ws.name != "Fake":
-            info_display(
-                market=ws.name,
-                message=ws.name + ": You cannot add new orders during a reboot.\n",
-                warning="warning",
-            )
-        return
-    disp.handler_orderbook_symbol = var.symbol
-
-    def first_price(prices: list) -> float:
-        if prices:
-            return prices[0][0]
-        else:
-            return "None"
-
-    def refresh() -> None:
-        while disp.refresh_handler_orderbook:
-            try:
-                book_window.title(var.symbol)
-            except Exception:
-                pass
-            if disp.handler_orderbook_symbol != var.symbol:
-                ws = Markets[var.current_market]
-                entry_price_ask.delete(0, "end")
-                entry_price_ask.insert(
-                    0,
-                    Function.format_price(
-                        ws,
-                        number=first_price(ws.Instrument[var.symbol].asks),
-                        symbol=var.symbol,
-                    ),
-                )
-                entry_price_bid.delete(0, "end")
-                entry_price_bid.insert(
-                    0,
-                    Function.format_price(
-                        ws,
-                        number=first_price(ws.Instrument[var.symbol].bids),
-                        symbol=var.symbol,
-                    ),
-                )
-                entry_quantity.delete(0, "end")
-                entry_quantity.insert(
-                    0,
-                    Function.volume(
-                        ws, qty=ws.Instrument[var.symbol].minOrderQty, symbol=var.symbol
-                    ),
-                )
-                option_robots["menu"].delete(0, "end")
-                options = list()
-                for name in Bots.keys():
-                    bot = Bots[name]
-                    for symbol, pos in bot.bot_positions.items():
-                        if symbol == var.symbol and pos["position"] != 0:
-                            options.append(name)
-                options.append(var.symbol[0])
-                for option in options:
-                    option_robots["menu"].add_command(
-                        label=option,
-                        command=lambda v=emi_number, optn=option: v.set(optn),
-                    )
-                emi_number.set("")
-                disp.handler_orderbook_symbol = var.symbol
-            time.sleep(0.1)
-
-    def on_closing() -> None:
-        disp.book_window_trigger = "off"
-        disp.refresh_handler_orderbook = False
-        book_window.destroy()
-
-    def minimum_qty(qnt):
-        minOrderQty = ws.Instrument[var.symbol].minOrderQty
-        if qnt < minOrderQty:
-            message = (
-                "The "
-                + str(var.symbol)
-                + " quantity must be greater than or equal to "
-                + Function.volume(ws, qty=minOrderQty, symbol=var.symbol)
-            )
-            warning_window(message)
-            return "error"
-        qnt_d = Decimal(str(qnt))
-        qtyStep = Decimal(str(ws.Instrument[var.symbol].qtyStep))
-        if qnt_d % qtyStep != 0:
-            message = (
-                "The "
-                + str(var.symbol)
-                + " quantity must be multiple to "
-                + Function.volume(ws, qty=qtyStep, symbol=var.symbol)
-            )
-            warning_window(message)
-            return "error"
-
-    def callback_sell_limit() -> None:
-        if quantity.get() and price_ask.get() and emi_number.get():
-            try:
-                qnt = abs(float(quantity.get()))
-                price = float(price_ask.get())
-                res = "yes"
-            except Exception:
-                warning_window("Fields must be numbers!")
-                res = "no"
-            if res == "yes" and qnt != 0:
-                price = Function.round_price(
-                    ws, symbol=var.symbol, price=price, rside=-qnt
-                )
-                if price <= 0:
-                    warning_window("The price must be above zero.")
-                    return
-                if minimum_qty(qnt):
-                    return
-                Function.post_order(
-                    ws,
-                    name=ws.name,
-                    symbol=var.symbol,
-                    emi=emi_number.get(),
-                    side="Sell",
-                    price=price,
-                    qty=qnt,
-                )
-        else:
-            warning_window("Some of the fields are empty!")
-
-    def callback_buy_limit() -> None:
-        if quantity.get() and price_bid.get() and emi_number.get():
-            try:
-                qnt = abs(float(quantity.get()))
-                price = float(price_bid.get())
-                res = "yes"
-            except Exception:
-                warning_window("Fields must be numbers!")
-                res = "no"
-            if res == "yes" and qnt != 0:
-                price = Function.round_price(
-                    ws, symbol=var.symbol, price=price, rside=qnt
-                )
-                if price <= 0:
-                    warning_window("The price must be above zero.")
-                    return
-                if minimum_qty(qnt):
-                    return
-                Function.post_order(
-                    ws,
-                    name=ws.name,
-                    symbol=var.symbol,
-                    emi=emi_number.get(),
-                    side="Buy",
-                    price=price,
-                    qty=qnt,
-                )
-        else:
-            warning_window("Some of the fields are empty!")
-
-    if disp.book_window_trigger == "off":
-        disp.book_window_trigger = "on"
-        book_window = tk.Toplevel(disp.root, padx=10, pady=20)
-        cx = disp.root.winfo_pointerx()
-        cy = disp.root.winfo_pointery()
-        book_window.geometry("+{}+{}".format(cx + 200, cy))
-        book_window.title(var.symbol)
-        book_window.protocol("WM_DELETE_WINDOW", on_closing)
-        book_window.attributes("-topmost", 1)
-        frame_quantity = tk.Frame(book_window)
-        frame_market_ask = tk.Frame(book_window)
-        frame_market_bid = tk.Frame(book_window)
-        frame_robots = tk.Frame(book_window)
-        sell_limit = tk.Button(
-            book_window, text="Sell Limit", command=callback_sell_limit
-        )
-        buy_limit = tk.Button(book_window, text="Buy Limit", command=callback_buy_limit)
-        quantity = tk.StringVar()
-        price_ask = tk.StringVar()
-        price_bid = tk.StringVar()
-        entry_price_ask = tk.Entry(
-            frame_market_ask, width=10, bg=disp.bg_color, textvariable=price_ask
-        )
-        entry_price_bid = tk.Entry(
-            frame_market_bid, width=10, bg=disp.bg_color, textvariable=price_bid
-        )
-        instrument = ws.Instrument[var.symbol]
-        entry_price_ask.insert(
-            0,
-            Function.format_price(
-                ws,
-                number=first_price(instrument.asks),
-                symbol=var.symbol,
-            ),
-        )
-        entry_price_bid.insert(
-            0,
-            Function.format_price(
-                ws,
-                number=first_price(instrument.bids),
-                symbol=var.symbol,
-            ),
-        )
-        entry_quantity = tk.Entry(
-            frame_quantity, width=9, bg=disp.bg_color, textvariable=quantity
-        )
-        entry_quantity.insert(
-            0,
-            Function.volume(ws, qty=instrument.minOrderQty, symbol=var.symbol),
-        )
-        label_ask = tk.Label(frame_market_ask, text="Price:")
-        label_bid = tk.Label(frame_market_bid, text="Price:")
-        label_quantity = tk.Label(frame_quantity, text="Quantity:")
-        label_robots = tk.Label(frame_robots, text="EMI:")
-        emi_number = tk.StringVar()
-        options = list()
-        for name in Bots.keys():
-            options.append(name)
-        options.append(var.symbol[0])
-        option_robots = tk.OptionMenu(frame_robots, emi_number, *options)
-        frame_robots.grid(row=1, column=0, sticky="NSWE", columnspan=2, padx=10, pady=0)
-        label_robots.pack(side="left")
-        option_robots.pack()
-        frame_quantity.grid(
-            row=2,
-            column=0,
-            sticky="NSWE",
-            columnspan=2,
-            padx=10,
-            pady=10,
-        )
-        label_quantity.pack(side="left")
-        entry_quantity.pack()
-        frame_market_ask.grid(row=3, column=0, sticky="NSWE")
-        frame_market_bid.grid(row=3, column=1, sticky="NSWE")
-        label_ask.pack(side="left")
-        entry_price_ask.pack()
-        label_bid.pack(side="left")
-        entry_price_bid.pack()
-        sell_limit.grid(row=4, column=0, sticky="NSWE", pady=10)
-        buy_limit.grid(row=4, column=1, sticky="NSWE", pady=10)
-        change_color(color=disp.title_color, container=book_window)
-        disp.refresh_handler_orderbook = True
-        t = threading.Thread(target=refresh)
-        t.start()
+        print("_____orderbook")
 
 
 def format_number(number: Union[float, str]) -> str:
@@ -2872,7 +2727,7 @@ def init_tables() -> None:
         name="orderbook",
         title=Header.name_book,
         size=disp.num_book,
-        style="orderbook.Treeview", 
+        style="orderbook.Treeview",
         bind=handler_orderbook,
         multicolor=True,
         autoscroll=True,
@@ -3049,5 +2904,8 @@ for name, values in disp.notebook_frames.items():
         disp.notebook.add(values["frame"], text=name)
     else:
         var.display_bottom = values["method"]
+
+form.sell_limit.configure(command=callback_sell_limit)
+form.buy_limit.configure(command=callback_buy_limit)
 
 # change_color(color=disp.title_color, container=disp.root)

@@ -87,7 +87,6 @@ def setup(reload=False):
                 break
     var.display_bottom = frame["method"]
     functions.update_order_form()
-    # functions.setup_order_form_tmp()
 
 
 def setup_market(ws: Markets, reload=False):
