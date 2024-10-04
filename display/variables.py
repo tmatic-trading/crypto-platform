@@ -422,6 +422,11 @@ class Variables:
         rowheight=line_height * 3,
     )
     style.configure(
+        "orderbook.Treeview",
+        fieldbackground=light_gray_color,
+        background=light_gray_color,
+    )
+    style.configure(
         "menu.Treeview",
         fieldbackground=title_color,
         background=title_color,

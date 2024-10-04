@@ -2872,6 +2872,7 @@ def init_tables() -> None:
         name="orderbook",
         title=Header.name_book,
         size=disp.num_book,
+        style="orderbook.Treeview", 
         bind=handler_orderbook,
         multicolor=True,
         autoscroll=True,
