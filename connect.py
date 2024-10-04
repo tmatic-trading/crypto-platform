@@ -86,8 +86,8 @@ def setup(reload=False):
                 disp.pw_rest4.add(check_frame)
                 break
     var.display_bottom = frame["method"]
-    #functions.update_order_form()
-    functions.setup_order_form_tmp()
+    functions.update_order_form()
+    # functions.setup_order_form_tmp()
 
 
 def setup_market(ws: Markets, reload=False):
@@ -217,6 +217,7 @@ def reload_market(ws: Markets):
     TreeTable.market.tree.update()
     setup_market(ws=ws, reload=True)
     var.queue_reload.put(ws)
+    functions.update_order_form()
 
 
 def refresh() -> None:

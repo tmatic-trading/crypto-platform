@@ -1031,7 +1031,7 @@ class Function(WS, Variables):
 
     def display_options_desk(self):
         tree = TreeTable.calls
-        for num, option in enumerate(options_desk._calls):
+        for num, option in enumerate(options_desk.calls_list):
             if option in options_desk.calls_set:
                 instrument = options_desk.ws.Instrument[(option, options_desk.market)]
                 compare = [
@@ -1051,7 +1051,7 @@ class Function(WS, Variables):
                 tree.update(row=num, values=compare)
                 tree.cache[num] = compare
         tree = TreeTable.puts
-        for num, option in enumerate(options_desk._puts):
+        for num, option in enumerate(options_desk.puts_list):
             if option in options_desk.puts_set:
                 instrument = options_desk.ws.Instrument[(option, options_desk.market)]
                 compare = [
@@ -1818,12 +1818,19 @@ def update_order_form():
         0,
         Function.volume(ws, qty=instrument.minOrderQty, symbol=var.symbol),
     )
-    form.label_title["text"] = var.symbol[0]
+    if len(var.symbol[0]) > 22:
+        splt = var.symbol[0].split("-")
+        title = "-".join(splt[:1]) + "-\n" + "       " + "-".join(splt[1:])
+        form.label_title.config(justify=tk.LEFT)
+    else:
+        title = var.symbol[0]
+        form.label_title.config(justify=tk.CENTER)
+    form.label_title["text"] = title
     form.category.value["text"] = instrument.category
     form.settlcurrency.value["text"] = instrument.settlCurrency[0]
     form.expiry.value["text"] = str(instrument.expire).split("+")[0]
     form.ticksize.value["text"] = instrument.tickSize
-    form.minOrderQty.value["text"] = instrument.minOrderQty    
+    form.minOrderQty.value["text"] = instrument.minOrderQty
     if instrument.makerFee != None:
         form.takerfee.name.grid(row=0, column=0, sticky="W")
         form.takerfee.value.grid(row=0, column=1, sticky="E")
@@ -2112,12 +2119,35 @@ def handler_instrument(event) -> None:
             symb = lst[1]
             if market:
                 create = True
-                if var.symbol != (symb, market):
-                    var.symbol = (symb, market)
-                    TreeTable.orderbook.clear_color_cell()
+                symbol = (symb, market)
+                _symb = symb
+                ws = Markets[market]
+                instrument = ws.Instrument[symbol]
+                if var.symbol != symbol:
+                    if "option" in instrument.category:
+                        if symbol in var.selected_option:
+                            symbol = var.selected_option[symbol]
+                            if var.symbol != symbol: # Opens the options 
+                                # desk only on the second click
+                                create = False                            
+                            var.symbol = symbol                                               
+                        else:
+                            series = ws.instrument_index[instrument.category][
+                                instrument.settlCurrency[0]
+                            ][symbol[0]]                          
+                            if series["CALLS"]:                                
+                                symb = series["CALLS"][0]
+                            elif series["PUTS"]:
+                                symb = series["PUTS"][0]                            
+                            var.selected_option[symbol] = (symb, market)
+                            symbol = (symb, market)
+                            var.symbol = symbol
+                    else:
+                        var.symbol = symbol
                     update_order_form()
+                    TreeTable.orderbook.clear_color_cell()                    
                 if time.time() - var.select_time > 0.2:
-                    if (symb, market) not in var.unsubscription:
+                    if symbol not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
                         if bbox:
                             width, y = bbox[2], bbox[1]
@@ -2126,19 +2156,16 @@ def handler_instrument(event) -> None:
                             if 1 < x_pos - width < 13:
                                 if 5 < y_pos - y < 16:
                                     create = False
-                                    symbol = (market, symb)
                                     t = threading.Thread(
-                                        target=confirm_unsubscribe, args=symbol
+                                        target=confirm_unsubscribe, args=(market, _symb)
                                     )
                                     t.start()
                             if var.message_response:
                                 warning_window(var.message_response)
                                 var.message_response = ""
                 if create:
-                    ws = Markets[market]
-                    instrument = ws.Instrument[(symb, market)]
                     if "option" in instrument.category:
-                        options_desk.create(instrument=instrument)
+                        options_desk.create(instrument=instrument, update=update_order_form)
                         disp.root.update()
                         height = (
                             options_desk.label.winfo_height()
@@ -2203,10 +2230,11 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
                 value=value,
             )
             var.current_market = ws.name
+            #var.symbol = symbol
             var.lock_display.acquire(True)
             Function.display_instruments(ws)
             var.lock_display.release()
-            TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
+            TreeTable.instrument.on_rollup(iid=f"{ws.name}!{symb}", setup="child")
     else:
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")
@@ -2224,6 +2252,8 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
         var.message_response = ErrorMessage.UNSUBSCRIPTION_WARNING
         return
     symbol = (symb, market)
+    if symbol in var.selected_option:
+        del var.selected_option[symbol]
     message = Message.UNSUBSCRIPTION_WAITING.format(SYMBOL=symb, MARKET=market)
     _put_message(market=market, message=message)
     var.unsubscription.add(symbol)
@@ -2251,6 +2281,7 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
             index=f"{var.current_market}!{var.symbol[0]}"
         )
         var.current_market = market
+        update_order_form()
     else:
         message = ErrorMessage.FAILED_UNSUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")

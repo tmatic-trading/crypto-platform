@@ -99,3 +99,4 @@ class Variables:
     market_object = dict()
     display_bottom: callable
     _series = "_series"
+    selected_option = dict()

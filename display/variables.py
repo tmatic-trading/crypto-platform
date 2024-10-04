@@ -1564,11 +1564,16 @@ class ParametersFrame(tk.Label):
         self.name.grid(row=0, column=0, sticky="W")
         self.value.grid(row=0, column=1, sticky="E")
         sub.grid_columnconfigure(0, weight=1)
-        sub.grid_columnconfigure(1, weight=1)     
+        sub.grid_columnconfigure(1, weight=1)
 
 
 class OrderForm:
-    '''main = tk.Frame(Variables.frame_order_form, relief="sunken", borderwidth=1, bg=Variables.light_gray_color)
+    main = tk.Frame(
+        Variables.frame_order_form,
+        relief="sunken",
+        borderwidth=1,
+        bg=Variables.light_gray_color,
+    )
     main.pack(fill="both")
     main.grid_columnconfigure(0, weight=0)
     main.grid_columnconfigure(1, weight=1)
@@ -1617,4 +1622,4 @@ class OrderForm:
     ticksize = ParametersFrame(parameters, 3, "Tick Size")
     minOrderQty = ParametersFrame(parameters, 4, "Min Order Size")
     takerfee = ParametersFrame(parameters, 5, "Taker's fee")
-    makerfee = ParametersFrame(parameters, 6, "Maker's fee")'''
+    makerfee = ParametersFrame(parameters, 6, "Maker's fee")

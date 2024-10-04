@@ -19,10 +19,12 @@ class OptionDesk:
         self.is_on = False
         self.desk.destroy()
 
-    def create(self, instrument: Instrument):
+    def create(self, instrument: Instrument, update: callable):
+        self.update = update
         self.market = instrument.market
         self.category = instrument.category
         self.currency = instrument.settlCurrency[0]
+        self.symbol = instrument.symbol
         self.ws = Markets[self.market]
         self.calls = self.ws.instrument_index[self.category][self.currency][
             instrument.symbol
@@ -58,8 +60,8 @@ class OptionDesk:
         self.puts_list = list()
         option_symb = instrument.symbol.split(var._series)[0]
         for num, strike in enumerate(self.strikes):
-            call = f"{option_symb}-{strike}-C"
-            put = f"{option_symb}-{strike}-P"
+            call = f"{option_symb}-{strike.replace('.', 'd')}-C"
+            put = f"{option_symb}-{strike.replace('.', 'd')}-P"
             if call in self.calls:
                 self.calls_list.append(call)
             else:
@@ -68,9 +70,6 @@ class OptionDesk:
                 self.puts_list.append(put)
             else:
                 self.puts_list.append("-")
-        symb = instrument.symbol.split(var._series)[0]
-        self._calls = [f"{symb}-{strike}-C" for strike in self.strikes]
-        self._puts = [f"{symb}-{strike}-P" for strike in self.strikes]
 
         if not self.is_on:
             self.desk = tk.Toplevel()
@@ -208,6 +207,8 @@ class OptionDesk:
             if options[iid] != "-":
                 var.symbol = (options[iid], market)
                 var.current_market = market
+                var.selected_option[(self.symbol, self.market)] = var.symbol
+                self.update()
                 self.on_closing()
 
 
