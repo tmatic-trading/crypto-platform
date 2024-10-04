@@ -201,7 +201,7 @@ class OptionDesk:
         if kind == "C":
             indx = self.calls_list.index(option)
             TreeTable.calls.set_selection(index=indx)
-        else:
+        elif kind == "P":
             indx = self.puts_list.index(option)
             TreeTable.puts.set_selection(index=indx)
 

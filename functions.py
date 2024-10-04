@@ -783,6 +783,7 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def display_instruments(self: Markets, indx=0):
+        # print("_______lock 5")
         tree = TreeTable.instrument
         # d tm = datetime.now()
         for market in var.market_list:
@@ -829,6 +830,7 @@ class Function(WS, Variables):
                             indx=indx,
                             image=disp.image_cancel,
                         )
+        # print("_______lock 6")
         # d print("___instrument", datetime.now() - tm)
 
     def display_account(self: Markets):
@@ -1820,7 +1822,10 @@ def update_order_form():
     )
     if len(var.symbol[0]) > 22:
         splt = var.symbol[0].split("-")
-        title = "-".join(splt[:1]) + "-\n" + "       " + "-".join(splt[1:])
+        indx = len(splt) - 1
+        if len(splt[indx:]) < 5 and len(splt) > 2:
+            indx -= 1
+        title = "-".join(splt[:indx]) + "-\n" + "       " + "-".join(splt[indx:])
         form.label_title.config(justify=tk.LEFT)
     else:
         title = var.symbol[0]
@@ -2124,28 +2129,31 @@ def handler_instrument(event) -> None:
                 ws = Markets[market]
                 instrument = ws.Instrument[symbol]
                 if var.symbol != symbol:
-                    if "option" in instrument.category:
+                    if (
+                        "option" in instrument.category
+                        and "combo" not in instrument.category
+                    ):
                         if symbol in var.selected_option:
                             symbol = var.selected_option[symbol]
-                            if var.symbol != symbol: # Opens the options 
+                            if var.symbol != symbol:  # Opens the options
                                 # desk only on the second click
-                                create = False                            
-                            var.symbol = symbol                                               
+                                create = False
+                            var.symbol = symbol
                         else:
                             series = ws.instrument_index[instrument.category][
                                 instrument.settlCurrency[0]
-                            ][symbol[0]]                          
-                            if series["CALLS"]:                                
+                            ][symbol[0]]
+                            if series["CALLS"]:
                                 symb = series["CALLS"][0]
                             elif series["PUTS"]:
-                                symb = series["PUTS"][0]                            
+                                symb = series["PUTS"][0]
                             var.selected_option[symbol] = (symb, market)
                             symbol = (symb, market)
                             var.symbol = symbol
                     else:
                         var.symbol = symbol
                     update_order_form()
-                    TreeTable.orderbook.clear_color_cell()                    
+                    TreeTable.orderbook.clear_color_cell()
                 if time.time() - var.select_time > 0.2:
                     if symbol not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
@@ -2164,8 +2172,13 @@ def handler_instrument(event) -> None:
                                 warning_window(var.message_response)
                                 var.message_response = ""
                 if create:
-                    if "option" in instrument.category:
-                        options_desk.create(instrument=instrument, update=update_order_form)
+                    if (
+                        "option" in instrument.category
+                        and "combo" not in instrument.category
+                    ):
+                        options_desk.create(
+                            instrument=instrument, update=update_order_form
+                        )
                         disp.root.update()
                         height = (
                             options_desk.label.winfo_height()
@@ -2230,9 +2243,11 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
                 value=value,
             )
             var.current_market = ws.name
-            #var.symbol = symbol
+            # var.symbol = symbol
             var.lock_display.acquire(True)
+            # print("_______lock 1")
             Function.display_instruments(ws)
+            # print("_______lock 2")
             var.lock_display.release()
             TreeTable.instrument.on_rollup(iid=f"{ws.name}!{symb}", setup="child")
     else:

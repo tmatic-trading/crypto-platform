@@ -557,13 +557,9 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
     if currency not in index[category]:
         index[category][currency] = OrderedDict()
     symb = instrument.symbol
-    if "option" in category:
+    if "option" in category and "combo" not in category:
         parts = symb.split("-")
-        if "option_combo" in category:
-            num = 3
-        else:
-            num = 2
-        option_series = "-".join(parts[:num]) + var._series
+        option_series = "-".join(parts[:2]) + var._series
         if option_series not in index[category][currency]:
             index[category][currency][option_series] = OrderedDict()
             index[category][currency][option_series]["CALLS"] = list()
