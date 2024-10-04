@@ -1893,6 +1893,7 @@ def update_order_form():
     form.ws = Markets[var.current_market]
     form.instrument = form.ws.Instrument[var.symbol]
     form.option_emi["menu"].delete(0, "end")
+    form.entry_price.delete(0, "end")
     options = list()
     for name in Bots.keys():
         options.append(name)
@@ -1903,15 +1904,6 @@ def update_order_form():
             command=lambda v=form.emi_number, optn=option: v.set(optn),
         )
     form.emi_number.set("")
-    form.entry_price.delete(0, "end")
-    """form.entry_price.insert(
-        0,
-        Function.format_price(
-            ws,
-            number=first_price(instrument.asks),
-            symbol=var.symbol,
-        ),
-    )"""
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(
         0,
@@ -1949,11 +1941,24 @@ def update_order_form():
 
 def handler_orderbook(event) -> None:
     tree = event.widget
-    items = tree.selection()
+    items = tree.selection()    
     if items:
         tree.update()
         tree.selection_remove(items[0])
-        print("_____orderbook")
+        try:
+            price = float(tree.item(items[0])["values"][1])
+            form.entry_price.delete(0, "end")
+            form.entry_price.insert(
+                0,
+                Function.format_price(
+                    form.ws,
+                    number=price,
+                    symbol=var.symbol,
+                ),
+            )
+        except Exception:
+            pass
+
 
 
 def format_number(number: Union[float, str]) -> str:
