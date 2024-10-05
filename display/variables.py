@@ -296,6 +296,7 @@ class Variables:
     gray_color = "#777777"
     warning_color = "#36adf5"  # "#7e9cbd"
     light_gray_color = "gray92"
+
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
     symbol_width = tkinter.font.Font().measure("01234567890.") / 12
     symbol_height = tkinter.font.nametofont("TkDefaultFont").actual()["size"]
@@ -363,14 +364,20 @@ class Variables:
         selectbackground=[("readonly", "")],
         selectforeground=[("readonly", fg_color)],
     )
+
     if platform.system() == "Darwin":
         # ostype = "Mac"
-        title_color = frame_state["background"]
+        bg_color = frame_state["background"] 
+        title_color = bg_color
+        light_gray_color = tk.Text()["background"]
+        book_color = title_color
         bg_select_color = "systemSelectedTextBackgroundColor"
         bg_active = bg_select_color
     else:
         style.theme_use("default")
         frame_state.configure(bg="grey82")
+        bg_color = tk.Text()["background"]
+        book_color = light_gray_color
         # if platform.system() == "Windows":
         #     ostype = "Windows"
         # else:
@@ -424,8 +431,8 @@ class Variables:
     )
     style.configure(
         "orderbook.Treeview",
-        fieldbackground=light_gray_color,
-        background=light_gray_color,
+        fieldbackground=book_color,
+        background=book_color,
     )
     style.configure(
         "menu.Treeview",
@@ -523,11 +530,6 @@ class Variables:
     frame_info.grid_columnconfigure(1, weight=0)
     frame_info.grid_rowconfigure(0, weight=1)
     # text_info.configure(state="disabled")
-    if ostype == "Mac":
-        bg_color = title_color
-        light_gray_color = text_info["background"]
-    else:
-        bg_color = text_info["background"]
 
     # Intended to display the main area of the terminal or the minor pages
     # (bots info, settings)
@@ -539,7 +541,7 @@ class Variables:
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
 
-    frame_symbol = tk.Frame(pw_rest2, bg=bg_color)
+    frame_symbol = tk.Frame(pw_rest2, bg=book_color)
 
     # Frame for the order book
     frame_orderbook = tk.Frame(frame_symbol)
@@ -947,6 +949,7 @@ class TreeviewTable(Variables):
             self.tree.tag_configure("Gray", background="gray90")
         else:
             self.tree.tag_configure("Gray", background=self.title_color)
+            self.frame.config(borderwidth=1, relief="sunken")
         """self.tree.tag_configure(
             "Market", background=self.title_color, foreground=self.fg_color
         )"""
@@ -1558,12 +1561,12 @@ def hide_columns(event):
 class CustomLabel(tk.Label):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-        self.configure(bg=Variables.light_gray_color)
+        self.configure(bg=Variables.book_color)
 
 
 class ParametersFrame(tk.Label):
     def __init__(self, frame, row, name):
-        sub = tk.Frame(frame, bg=Variables.light_gray_color)
+        sub = tk.Frame(frame, bg=Variables.book_color)
         sub.grid(row=row, column=0, sticky="NEWS")
         self.name = CustomLabel(sub, text=name)
         self.value = CustomLabel(sub, text="-")
@@ -1578,7 +1581,7 @@ class OrderForm:
         Variables.frame_order_form,
         relief="sunken",
         borderwidth=1,
-        bg=Variables.light_gray_color,
+        bg=Variables.book_color,
     )
     ws = None
     instrument: Instrument
@@ -1620,7 +1623,7 @@ class OrderForm:
         Variables.frame_order_form,
         relief="sunken",
         borderwidth=1,
-        bg=Variables.light_gray_color,
+        bg=Variables.book_color,
     )
     parameters.pack(fill="both", expand=True)
     parameters.grid_columnconfigure(0, weight=1)

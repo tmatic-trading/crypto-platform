@@ -1903,7 +1903,7 @@ def update_order_form():
             label=option,
             command=lambda v=form.emi_number, optn=option: v.set(optn),
         )
-    form.emi_number.set("")
+    form.emi_number.set(None)
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(
         0,
