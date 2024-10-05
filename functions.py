@@ -2271,9 +2271,17 @@ def clear_tables():
         ws = Markets[market]
         var.current_market = market
         Function.display_instruments(ws, "end")
-    var.current_market = var.market_list[0]
-    ws = Markets[var.current_market]
-    var.symbol = ws.symbol_list[0]
+    if current_market in var.market_list:
+        var.current_market = current_market
+        ws = Markets[var.current_market]
+        if symbol in ws.symbol_list:
+            var.symbol = symbol
+        else:
+            var.symbol = ws.symbol_list[0]
+    else:
+        var.current_market = var.market_list[0]
+        ws = Markets[var.current_market]
+        var.symbol = ws.symbol_list[0]
     TreeTable.instrument.set_selection(index=f"{var.current_market}!{var.symbol[0]}")
     TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
     update_order_form()
