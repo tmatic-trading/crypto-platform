@@ -1922,6 +1922,7 @@ def update_order_form():
         title = var.symbol[0]
         form.label_title.config(justify=tk.CENTER)
     form.label_title["text"] = title
+    form.market.value["text"] = form.instrument.market
     form.category.value["text"] = form.instrument.category
     form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
     form.expiry.value["text"] = str(form.instrument.expire).split("+")[0]
