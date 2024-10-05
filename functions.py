@@ -2262,6 +2262,8 @@ def init_bot_treetable_trades():
 
 
 def clear_tables():
+    current_market = var.current_market
+    symbol = var.symbol
     var.lock_display.acquire(True)
     TreeTable.instrument.init()
     TreeTable.orderbook.init()
@@ -2274,6 +2276,7 @@ def clear_tables():
     var.symbol = ws.symbol_list[0]
     TreeTable.instrument.set_selection(index=f"{var.current_market}!{var.symbol[0]}")
     TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
+    update_order_form()
     var.lock_display.release()
 
 
