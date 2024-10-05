@@ -1646,7 +1646,7 @@ def handler_order(event) -> None:
         indx = TreeTable.orders.title.index("MARKET")
         ws = Markets[TreeTable.orders.tree.item(clOrdID)["values"][indx]]
         indx = TreeTable.orders.title.index("EMI")
-        emi = TreeTable.orders.tree.item(clOrdID)["values"][indx]
+        emi = str(TreeTable.orders.tree.item(clOrdID)["values"][indx])
 
         def on_closing() -> None:
             disp.order_window_trigger = "off"
@@ -1827,7 +1827,8 @@ def check_order_warning():
 
 def callback_sell_limit() -> None:
     if check_order_warning():
-        if form.quantity.get() and form.price.get() and form.emi_number.get():
+        emi = form.emi_number.get()
+        if form.quantity.get() and form.price.get() and emi and emi != "Select Bot":
             try:
                 qnt = abs(float(form.quantity.get()))
                 price = float(form.price.get())
@@ -1848,7 +1849,7 @@ def callback_sell_limit() -> None:
                     form.ws,
                     name=form.ws.name,
                     symbol=var.symbol,
-                    emi=form.emi_number.get(),
+                    emi=emi,
                     side="Sell",
                     price=price,
                     qty=qnt,
@@ -1859,7 +1860,8 @@ def callback_sell_limit() -> None:
 
 def callback_buy_limit() -> None:
     if check_order_warning():
-        if form.quantity.get() and form.price.get() and form.emi_number.get():
+        emi = form.emi_number.get()
+        if form.quantity.get() and form.price.get() and emi and emi != "Select Bot":
             try:
                 qnt = abs(float(form.quantity.get()))
                 price = float(form.price.get())
@@ -1880,7 +1882,7 @@ def callback_buy_limit() -> None:
                     form.ws,
                     name=form.ws.name,
                     symbol=var.symbol,
-                    emi=form.emi_number.get(),
+                    emi=emi,
                     side="Buy",
                     price=price,
                     qty=qnt,
@@ -1903,7 +1905,7 @@ def update_order_form():
             label=option,
             command=lambda v=form.emi_number, optn=option: v.set(optn),
         )
-    form.emi_number.set(None)
+    form.emi_number.set("Select Bot")
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(
         0,
