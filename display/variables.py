@@ -376,7 +376,7 @@ class Variables:
     else:
         style.theme_use("default")
         frame_state.configure(bg="grey82")
-        bg_color = tk.Text()["background"]
+        bg_color = "white"
         book_color = light_gray_color
         # if platform.system() == "Windows":
         #     ostype = "Windows"
@@ -517,7 +517,7 @@ class Variables:
     else:
         text_info = tk.Text(
             frame_info,
-            bg="gray98",
+            bg=bg_color,
             highlightthickness=0,
             wrap=tk.WORD,
         )
@@ -718,7 +718,7 @@ class Variables:
     else:
         text_bot_log = tk.Text(
             bot_log,
-            bg="gray98",
+            bg=bg_color,
             highlightthickness=0,
             wrap=tk.WORD,
         )

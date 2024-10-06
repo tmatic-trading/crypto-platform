@@ -1199,7 +1199,7 @@ class Function(WS, Variables):
 
         # Refresh bots table
 
-        elif current_notebook_tab == "Robots":
+        elif current_notebook_tab == "Bots":
             Function.display_robots(self)
 
         # Refresh bottom table
@@ -2912,13 +2912,13 @@ disp.notebook_frames["Results"] = {
     "frame": disp.frame_results,
     "method": Function.display_results,
 }
-disp.notebook_frames["Robots"] = {
+disp.notebook_frames["Bots"] = {
     "frame": disp.frame_bots,
     "method": Function.display_robots,
 }
 
 for name, values in disp.notebook_frames.items():
-    if name != "Robots":
+    if name != "Bots":
         disp.notebook.add(values["frame"], text=name)
     else:
         var.display_bottom = values["method"]

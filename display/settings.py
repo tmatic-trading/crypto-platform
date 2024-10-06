@@ -31,7 +31,7 @@ class SettingsApp:
         self.common_settings["MARKET_LIST"] = "Bitmex,Bybit,Deribit"
         self.common_settings["SQLITE_DATABASE"] = "tmatic.db"
         self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook 7"
-        self.common_settings["BOTTOM_FRAME"] = "Robots"
+        self.common_settings["BOTTOM_FRAME"] = "Bots"
         self.common_settings["REFRESH_RATE"] = "5"
 
         self.default_subscriptions = OrderedDict()
