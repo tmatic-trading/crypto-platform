@@ -1828,7 +1828,7 @@ def check_order_warning():
 def callback_sell_limit() -> None:
     if check_order_warning():
         emi = form.emi_number.get()
-        if form.quantity.get() and form.price.get() and emi and emi != "Select Bot":
+        if form.quantity.get() and form.price.get() and emi and emi != "Select":
             try:
                 qnt = abs(float(form.quantity.get()))
                 price = float(form.price.get())
@@ -1861,7 +1861,7 @@ def callback_sell_limit() -> None:
 def callback_buy_limit() -> None:
     if check_order_warning():
         emi = form.emi_number.get()
-        if form.quantity.get() and form.price.get() and emi and emi != "Select Bot":
+        if form.quantity.get() and form.price.get() and emi and emi != "Select":
             try:
                 qnt = abs(float(form.quantity.get()))
                 price = float(form.price.get())
@@ -1905,7 +1905,8 @@ def update_order_form():
             label=option,
             command=lambda v=form.emi_number, optn=option: v.set(optn),
         )
-    form.emi_number.set("Select Bot")
+    form.option_emi['menu'].insert_separator(len(options) - 1)
+    form.emi_number.set("Select")
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(
         0,
