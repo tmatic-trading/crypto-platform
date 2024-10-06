@@ -1917,11 +1917,11 @@ def update_order_form():
         if len(splt[indx:]) < 5 and len(splt) > 2:
             indx -= 1
         title = "-".join(splt[:indx]) + "-\n" + "       " + "-".join(splt[indx:])
-        form.label_title.config(justify=tk.LEFT)
+        form.title.config(justify=tk.LEFT)
     else:
         title = var.symbol[0]
-        form.label_title.config(justify=tk.CENTER)
-    form.label_title["text"] = title
+        form.title.config(justify=tk.CENTER)
+    form.title["text"] = title
     form.market.value["text"] = form.instrument.market
     form.category.value["text"] = form.instrument.category
     form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
@@ -1944,7 +1944,7 @@ def update_order_form():
 
 def handler_orderbook(event) -> None:
     tree = event.widget
-    items = tree.selection()    
+    items = tree.selection()
     if items:
         tree.update()
         tree.selection_remove(items[0])
@@ -1961,7 +1961,6 @@ def handler_orderbook(event) -> None:
             )
         except Exception:
             pass
-
 
 
 def format_number(number: Union[float, str]) -> str:

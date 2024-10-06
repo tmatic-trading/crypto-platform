@@ -367,7 +367,7 @@ class Variables:
 
     if platform.system() == "Darwin":
         # ostype = "Mac"
-        bg_color = frame_state["background"] 
+        bg_color = frame_state["background"]
         title_color = bg_color
         light_gray_color = tk.Text()["background"]
         book_color = title_color
@@ -1558,20 +1558,21 @@ def hide_columns(event):
         Variables.all_width = now_width
 
 
-class CustomLabel(tk.Label):
-    def __init__(self, master=None, **kwargs):
+class FormLabel(tk.Label):
+    def __init__(
+        self, master=None, row=0, column=0, colspan=None, sticky="NEWS", **kwargs
+    ):
         super().__init__(master, **kwargs)
         self.configure(bg=Variables.book_color)
+        self.grid(row=row, column=column, sticky=sticky, columnspan=colspan)
 
 
 class ParametersFrame(tk.Label):
     def __init__(self, frame, row, name):
         sub = tk.Frame(frame, bg=Variables.book_color)
         sub.grid(row=row, column=0, sticky="NEWS")
-        self.name = CustomLabel(sub, text=name)
-        self.value = CustomLabel(sub, text="-")
-        self.name.grid(row=0, column=0, sticky="W")
-        self.value.grid(row=0, column=1, sticky="E")
+        self.name = FormLabel(sub, text=name, row=0, column=0, sticky="W")
+        self.value = FormLabel(sub, text="-", row=0, column=1, sticky="E")
         sub.grid_columnconfigure(0, weight=1)
         sub.grid_columnconfigure(1, weight=1)
 
@@ -1600,19 +1601,17 @@ class OrderForm:
     entry_quantity = tk.Entry(
         main, width=9, bg=Variables.bg_color, textvariable=quantity
     )
-    label_title = CustomLabel(main, text="-", font=Variables.bold_font)
-    label_price = CustomLabel(main, text="Price:")
-    label_quantity = CustomLabel(main, text="Qty:")
-    label_emi = CustomLabel(main, text="EMI:")
+    title = FormLabel(
+        main, text="-", font=Variables.bold_font, row=0, column=0, colspan=2
+    )
+    emi = FormLabel(main, text="EMI", row=1, column=0, sticky="W")
+    quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
+    price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
     emi_number = tk.StringVar()
     options = ["-"]
     option_emi = tk.OptionMenu(main, emi_number, *options)
-    label_title.grid(row=0, column=0, sticky="NEWS", columnspan=2)
-    label_emi.grid(row=1, column=0, sticky="NEWS")
     option_emi.grid(row=1, column=1, sticky="W")
-    label_quantity.grid(row=2, column=0, sticky="NEWS")
     entry_quantity.grid(row=2, column=1, sticky="NEWS")
-    label_price.grid(row=3, column=0, sticky="NEWS")
     entry_price.grid(row=3, column=1, sticky="NEWS")
     sell_limit.grid(row=0, column=0, sticky="NEWS")
     buy_limit.grid(row=0, column=1, sticky="NEWS")
