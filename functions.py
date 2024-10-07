@@ -1827,11 +1827,11 @@ def check_order_warning():
 
 def callback_sell_limit() -> None:
     if check_order_warning():
-        emi = form.emi_number.get()
-        if form.quantity.get() and form.price.get() and emi and emi != "Select":
+        emi = form.emi_var.get()
+        if form.qty_var.get() and form.price_var.get() and emi and emi != "Select":
             try:
-                qnt = abs(float(form.quantity.get()))
-                price = float(form.price.get())
+                qnt = abs(float(form.qty_var.get()))
+                price = float(form.price_var.get())
                 res = "yes"
             except Exception:
                 warning_window("Fields must be numbers!")
@@ -1860,11 +1860,11 @@ def callback_sell_limit() -> None:
 
 def callback_buy_limit() -> None:
     if check_order_warning():
-        emi = form.emi_number.get()
-        if form.quantity.get() and form.price.get() and emi and emi != "Select":
+        emi = form.emi_var.get()
+        if form.qty_var.get() and form.price_var.get() and emi and emi != "Select":
             try:
-                qnt = abs(float(form.quantity.get()))
-                price = float(form.price.get())
+                qnt = abs(float(form.qty_var.get()))
+                price = float(form.price_var.get())
                 res = "yes"
             except Exception:
                 warning_window("Fields must be numbers!")
@@ -1903,10 +1903,10 @@ def update_order_form():
     for option in options:
         form.option_emi["menu"].add_command(
             label=option,
-            command=lambda v=form.emi_number, optn=option: v.set(optn),
+            command=lambda v=form.emi_var, optn=option: v.set(optn),
         )
     form.option_emi['menu'].insert_separator(len(options) - 1)
-    form.emi_number.set("Select")
+    form.emi_var.set("Select")
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(
         0,
