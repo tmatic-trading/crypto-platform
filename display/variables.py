@@ -1595,11 +1595,11 @@ class OrderForm:
     sell_limit = tk.Button(buttons, text="Sell Limit")
     buy_limit = tk.Button(buttons, text="Buy Limit")
     buttons.grid(row=4, column=0, columnspan=2, sticky="NEWS")
-    quantity = tk.StringVar()
-    price = tk.StringVar()
-    entry_price = tk.Entry(main, width=10, bg=Variables.bg_color, textvariable=price)
+    qty_var = tk.StringVar()
+    price_var = tk.StringVar()
+    entry_price = tk.Entry(main, width=10, bg=Variables.bg_color, textvariable=price_var)
     entry_quantity = tk.Entry(
-        main, width=9, bg=Variables.bg_color, textvariable=quantity
+        main, width=9, bg=Variables.bg_color, textvariable=qty_var
     )
     title = FormLabel(
         main, text="-", font=Variables.bold_font, row=0, column=0, colspan=2
@@ -1607,14 +1607,14 @@ class OrderForm:
     emi = FormLabel(main, text="EMI", row=1, column=0, sticky="W")
     quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
     price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
-    emi_number = tk.StringVar()
+    emi_var = tk.StringVar()
     options = ["-"]
-    option_emi = tk.OptionMenu(main, emi_number, *options)
+    option_emi = tk.OptionMenu(main, emi_var, *options)
     option_emi.grid(row=1, column=1, sticky="W")
     entry_quantity.grid(row=2, column=1, sticky="NEWS")
     entry_price.grid(row=3, column=1, sticky="NEWS")
-    sell_limit.grid(row=0, column=0, sticky="NEWS")
-    buy_limit.grid(row=0, column=1, sticky="NEWS")
+    buy_limit.grid(row=0, column=0, sticky="NEWS")
+    sell_limit.grid(row=0, column=1, sticky="NEWS")
 
     # Instrument parameters
 
