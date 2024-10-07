@@ -16,17 +16,17 @@ class Header:
     name_account = [
         "MARKET",
         "CURRENCY",
-        "WALLET_BAL",
-        "UNRLZD_PNL",
-        "MARGIN_BAL",
-        "ORDER_MARG",
-        "POS_MARG",
+        "WALLET BAL",
+        "UNRLZD PNL",
+        "MARGIN BAL",
+        "ORDER MARG",
+        "POS MARG",
         "AVAILABLE",
     ]
     name_trade = [
         "TIME",
         "SYMBOL",
-        "CAT",
+        "CATEGORY",
         "MARKET",
         "SIDE",
         "PRICE",
