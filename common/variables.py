@@ -48,6 +48,7 @@ class Variables:
     db_sqlite = "tmatic.db"
     settings = ".env.Settings"
     subscriptions = ".env.Subscriptions"
+    preferences = ".env.Preferences"
     logger: logging = setup_logger()
     connect_sqlite = None
     cursor_sqlite = None
