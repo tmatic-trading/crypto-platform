@@ -1368,6 +1368,8 @@ class Function(WS, Variables):
         )
         compare[4] = format_number(number=instrument.unrealisedPnl)
         compare[7] = Function.humanFormat(self, instrument.volume24h, symbol)
+        if compare[8] != "Perpetual":
+            compare[8] = instrument.expire.strftime("%d%b%y %H:%M")
 
         return compare
 
@@ -1893,7 +1895,7 @@ def callback_buy_limit() -> None:
 
 def update_order_form():
     form.ws = Markets[var.current_market]
-    form.instrument = form.ws.Instrument[var.symbol]
+    instrument = form.ws.Instrument[var.symbol]
     form.option_emi["menu"].delete(0, "end")
     form.entry_price.delete(0, "end")
     options = list()
@@ -1910,7 +1912,7 @@ def update_order_form():
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(
         0,
-        Function.volume(form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol),
+        Function.volume(form.ws, qty=instrument.minOrderQty, symbol=var.symbol),
     )
     if len(var.symbol[0]) > 22:
         splt = var.symbol[0].split("-")
@@ -1923,19 +1925,20 @@ def update_order_form():
         title = var.symbol[0]
         form.title.config(justify=tk.CENTER)
     form.title["text"] = title
-    form.market.value["text"] = form.instrument.market
-    form.category.value["text"] = form.instrument.category
-    form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
-    form.expiry.value["text"] = str(form.instrument.expire).split("+")[0]
-    form.ticksize.value["text"] = form.instrument.tickSize
-    form.minOrderQty.value["text"] = form.instrument.minOrderQty
-    if form.instrument.makerFee != None:
+    form.market.value["text"] = instrument.market
+    form.category.value["text"] = instrument.category
+    form.settlcurrency.value["text"] = instrument.settlCurrency[0]
+    if instrument.expire != "Perpetual":
+        form.expiry.value["text"] = instrument.expire.strftime("%d%b%y %H:%M")
+    form.ticksize.value["text"] = instrument.tickSize
+    form.minOrderQty.value["text"] = instrument.minOrderQty
+    if instrument.makerFee != None:
         form.takerfee.name.grid(row=0, column=0, sticky="W")
         form.takerfee.value.grid(row=0, column=1, sticky="E")
         form.makerfee.name.grid(row=0, column=0, sticky="W")
         form.makerfee.value.grid(row=0, column=1, sticky="E")
-        form.takerfee.value["text"] = f"{form.instrument.takerFee*100}%"
-        form.makerfee.value["text"] = f"{form.instrument.makerFee*100}%"
+        form.takerfee.value["text"] = f"{instrument.takerFee*100}%"
+        form.makerfee.value["text"] = f"{instrument.makerFee*100}%"
     else:
         form.takerfee.name.grid_forget()
         form.takerfee.value.grid_forget()

@@ -1635,7 +1635,6 @@ class OrderForm:
         bg=Variables.book_color,
     )
     ws = None
-    instrument: Instrument
     main.pack(fill="both")
     main.grid_columnconfigure(0, weight=0)
     main.grid_columnconfigure(1, weight=1)
