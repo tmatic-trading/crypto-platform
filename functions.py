@@ -1932,7 +1932,9 @@ def update_order_form():
         form.expiry.value["text"] = instrument.expire.strftime("%d%b%y %H:%M")
     else:
         form.expiry.value["text"] = "Perpetual"
-    form.ticksize.value["text"] = instrument.tickSize
+    form.ticksize.value["text"] = Function.format_price(
+        form.ws, number=instrument.tickSize, symbol=var.symbol
+    )
     form.minOrderQty.value["text"] = instrument.minOrderQty
     if instrument.makerFee != None:
         form.takerfee.name.grid(row=0, column=0, sticky="W")
