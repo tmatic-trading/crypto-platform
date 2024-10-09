@@ -150,19 +150,19 @@ class Instrument:
     volume24h: float = 0
     valueOfOneContract: float
 
-    openInterest: float
-    bidPrice: float
-    bidSize: float
-    bidIv: float
-    askPrice: float
-    askSize: float
-    askIv: float
-    markPrice: float
-    delta: float
-    vega: float
-    theta: float
-    gamma: float
-    change24h: float
+    openInterest: float = "-"
+    bidPrice: float = "-"
+    bidSize: float = "-"
+    bidIv: float = "-"
+    askPrice: float = "-"
+    askSize: float = "-"
+    askIv: float = "-"
+    markPrice: float = "-"
+    delta: float = "-"
+    vega: float = "-"
+    theta: float = "-"
+    gamma: float = "-"
+    change24h: float = "-"
 
     def __iter__(self):
         return Ret.iter(self)
