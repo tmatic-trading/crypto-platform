@@ -1905,7 +1905,7 @@ def update_order_form():
             label=option,
             command=lambda v=form.emi_var, optn=option: v.set(optn),
         )
-    form.option_emi['menu'].insert_separator(len(options) - 1)
+    form.option_emi["menu"].insert_separator(len(options) - 1)
     form.emi_var.set("Select")
     form.entry_quantity.delete(0, "end")
     form.entry_quantity.insert(

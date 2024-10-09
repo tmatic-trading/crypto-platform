@@ -7,7 +7,7 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Union
 
-from dotenv import set_key
+from dotenv import dotenv_values, set_key
 
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
@@ -653,3 +653,31 @@ def select_option_strikes(index: dict, instrument: Instrument) -> list:
     series = index[instrument.category][instrument.settlCurrency[0]][instrument.symbol]
 
     return series["CALLS"] + series["PUTS"]
+
+
+def load_preferences(root, width, height):
+    """
+    Load the last remembered params to be used for the terminal appearance
+    """
+    if not os.path.isfile(var.preferences):
+        set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_WIDTH",
+            value=str(width),
+        )
+        set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_HEIGHT",
+            value=str(height),
+        )
+        set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_X_POS",
+            value=str(root.winfo_x()),
+        )
+        set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_Y_POS",
+            value=str(root.winfo_y()),
+        )
+    return dotenv_values(var.preferences)

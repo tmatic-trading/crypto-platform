@@ -241,9 +241,8 @@ class Variables:
         window_ratio = 1
         adaptive_ratio = 1
     window_width = int(screen_width * window_ratio)
-    window_height = int(screen_height)
-    root.geometry("{}x{}".format(window_width, int(window_height * 0.7)))
-    all_width = window_width
+    window_height = int(screen_height * 0.8)
+    root.geometry("{}x{}".format(window_width, window_height))
     left_width = window_width
     last_market = ""
     pw_ratios = {}
@@ -271,7 +270,7 @@ class Variables:
     # Adaptive frame to the left, always visible
     frame_left = tk.Frame()
     frame_left.pack(fill="both", expand="yes")
-    frame_left.bind("<Configure>", lambda event: hide_columns(event))
+    root.bind("<Configure>", lambda event: root_dimensions(event))
 
     # Frame to the right, always blank
     frame_right = tk.Frame()
@@ -553,9 +552,9 @@ class Variables:
 
     notebook_frames = {}
 
-    pw_ratios[pw_info_rest] = 9
-    pw_ratios[pw_rest3] = 4
-    pw_ratios[pw_rest4] = 2
+    pw_ratios[pw_info_rest] = {"ratio": 9, "name": "INFO_FRAME_RATIO"}
+    pw_ratios[pw_rest3] = {"ratio": 4, "name": "SYMBOL_FRAME_RATIO"}
+    pw_ratios[pw_rest4] = {"ratio": 2, "name": "NOTE_FRAME_RATIO"}
 
     # Frame for active orders
     frame_orders = tk.Frame()
@@ -589,7 +588,7 @@ class Variables:
     pw_rest4.bind(
         "<Configure>",
         lambda event: Variables.resize_height(
-            event, Variables.pw_rest4, Variables.pw_ratios[Variables.pw_rest4]
+            event, Variables.pw_rest4, Variables.pw_ratios[Variables.pw_rest4]["ratio"]
         ),
     )
     pw_rest4.bind(
@@ -602,7 +601,7 @@ class Variables:
     pw_rest3.bind(
         "<Configure>",
         lambda event: Variables.resize_height(
-            event, Variables.pw_rest3, Variables.pw_ratios[Variables.pw_rest3]
+            event, Variables.pw_rest3, Variables.pw_ratios[Variables.pw_rest3]["ratio"]
         ),
     )
     pw_rest3.bind(
@@ -633,7 +632,9 @@ class Variables:
     pw_info_rest.bind(
         "<Configure>",
         lambda event: Variables.resize_height(
-            event, Variables.pw_info_rest, Variables.pw_ratios[Variables.pw_info_rest]
+            event,
+            Variables.pw_info_rest,
+            Variables.pw_ratios[Variables.pw_info_rest]["ratio"],
         ),
     )
     pw_info_rest.bind(
@@ -691,12 +692,13 @@ class Variables:
         sashrelief="raised",
         bd=0,
     )
-    frame_strategy = tk.Frame(pw_bot_info)
-    frame_strategy.pack(fill="both", expand="yes")
+    pw_ratios[pw_bot_info] = {"ratio": 3, "name": "BOT_MENU_RATIO"}
     if ostype == "Mac":
         bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
     else:
         bot_note = ttk.Notebook(pw_bot_info, padding=0)
+    frame_strategy = tk.Frame(pw_bot_info)
+    frame_strategy.pack(fill="both", expand="yes")
     bot_positions = tk.Frame(bot_note, bg=bg_color)
     bot_orders = tk.Frame(bot_note, bg=bg_color)
     bot_trades = tk.Frame(bot_note, bg=bg_color)
@@ -816,7 +818,14 @@ class Variables:
 
     def on_sash_move(event, pw):
         panes = pw.winfo_children()
-        Variables.pw_ratios[pw] = pw.winfo_height() / panes[0].winfo_height()
+        Variables.pw_ratios[pw]["ratio"] = pw.winfo_height() / panes[0].winfo_height()
+        if Variables.pw_ratios[pw]["ratio"] < 1.02:
+            Variables.pw_ratios[pw]["ratio"] = 1.02
+        service.set_dotenv(
+            dotenv_path=var.preferences,
+            key=Variables.pw_ratios[pw]["name"],
+            value=str(round(Variables.pw_ratios[pw]["ratio"], 2)),
+        )
 
     def on_bot_menu(event) -> None:
         Variables.pw_rest1.pack_forget()
@@ -832,6 +841,20 @@ class Variables:
         Variables.settings.pack_forget()
         Variables.menu_robots.pack_forget()
         Variables.pw_rest1.pack(fill="both", expand="yes")
+
+    # Change appearance according the last remembered parameters
+    pref_params = service.load_preferences(root, window_width, window_height)
+    root.geometry(
+        "{}x{}+{}+{}".format(
+            pref_params["ROOT_WIDTH"],
+            pref_params["ROOT_HEIGHT"],
+            pref_params["ROOT_X_POS"],
+            pref_params["ROOT_Y_POS"],
+        )
+    )
+    for pw, value in pw_ratios.items():
+        if value["name"] in pref_params:
+            pw_ratios[pw]["ratio"] = float(pref_params[value["name"]])
 
 
 def on_trade_state(event) -> None:
@@ -1397,8 +1420,10 @@ def trim_col_width(tview: TreeviewTable, cols: list):
             tview.tree.column(col, width=width)
 
 
-# Hide / show adaptive columns in order to save space in the tables
-def hide_columns(event):
+def root_dimensions(event):
+    """
+    Hide / show adaptive columns in order to save space in the tables
+    """
     if hasattr(TreeTable, "instrument"):
         ratio = (
             Variables.frame_left.winfo_width() / Variables.left_width
@@ -1548,14 +1573,39 @@ def hide_columns(event):
                 trim_col_width(TreeTable.account, TreeTable.account.column_hide[0])
         Variables.last_market = var.current_market
 
+    # Save the root window dimensions and position
     now_width = Variables.root.winfo_width()
-    if now_width != Variables.all_width or var.current_market != Variables.last_market:
-        if now_width > Variables.window_width:
-            t = Variables.platform_name.ljust((now_width - Variables.window_width) // 4)
-            Variables.root.title(t)
-        else:
-            Variables.root.title(Variables.platform_name)
-        Variables.all_width = now_width
+    now_height = Variables.root.winfo_height()
+    now_x = Variables.root.winfo_x()
+    now_y = Variables.root.winfo_y()
+    if now_width != Variables.pref_params["ROOT_WIDTH"]:
+        service.set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_WIDTH",
+            value=str(now_width),
+        )
+        Variables.pref_params["ROOT_WIDTH"] = now_width
+    if now_height != Variables.pref_params["ROOT_HEIGHT"]:
+        service.set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_HEIGHT",
+            value=str(now_height),
+        )
+        Variables.pref_params["ROOT_HEIGHT"] = now_height
+    if now_x != Variables.pref_params["ROOT_X_POS"]:
+        service.set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_X_POS",
+            value=str(now_x),
+        )
+        Variables.pref_params["ROOT_X_POS"] = now_x
+    if now_y != Variables.pref_params["ROOT_Y_POS"]:
+        service.set_dotenv(
+            dotenv_path=var.preferences,
+            key="ROOT_Y_POS",
+            value=str(now_y),
+        )
+        Variables.pref_params["ROOT_Y_POS"] = now_y
 
 
 class FormLabel(tk.Label):
@@ -1597,7 +1647,9 @@ class OrderForm:
     buttons.grid(row=4, column=0, columnspan=2, sticky="NEWS")
     qty_var = tk.StringVar()
     price_var = tk.StringVar()
-    entry_price = tk.Entry(main, width=10, bg=Variables.bg_color, textvariable=price_var)
+    entry_price = tk.Entry(
+        main, width=10, bg=Variables.bg_color, textvariable=price_var
+    )
     entry_quantity = tk.Entry(
         main, width=9, bg=Variables.bg_color, textvariable=qty_var
     )

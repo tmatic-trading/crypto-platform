@@ -1239,11 +1239,10 @@ info_left.pack(fill="both", side="left")
 info_right.pack(fill="both", expand=True, side="left")
 disp.pw_bot_info.add(disp.bot_note)
 disp.pw_bot_info.add(disp.frame_strategy)
-disp.pw_ratios[disp.pw_bot_info] = 3
 disp.pw_bot_info.bind(
     "<Configure>",
     lambda event: disp.resize_height(
-        event, disp.pw_bot_info, disp.pw_ratios[disp.pw_bot_info]
+        event, disp.pw_bot_info, disp.pw_ratios[disp.pw_bot_info]["ratio"]
     ),
 )
 disp.pw_bot_info.bind(
