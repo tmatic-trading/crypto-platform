@@ -169,11 +169,11 @@ class Agent(Bitmex):
         self.Instrument[symbol].myMultiplier = myMultiplier
         self.Instrument[symbol].multiplier = instrument["multiplier"]
         if category == "spot":
-            self.Instrument[symbol].fundingRate = "None"
-            self.Instrument[symbol].avgEntryPrice = "None"
-            self.Instrument[symbol].marginCallPrice = "None"
-            self.Instrument[symbol].currentQty = "None"
-            self.Instrument[symbol].unrealisedPnl = "None"
+            self.Instrument[symbol].fundingRate = "-"
+            self.Instrument[symbol].avgEntryPrice = "-"
+            self.Instrument[symbol].marginCallPrice = "-"
+            self.Instrument[symbol].currentQty = "-"
+            self.Instrument[symbol].unrealisedPnl = "-"
         if "settlCurrency" in instrument:
             self.Instrument[symbol].settlCurrency = (
                 instrument["settlCurrency"],

@@ -676,7 +676,7 @@ class Agent(Bybit):
             else:
                 self.Instrument[symbol].expire = "Perpetual"
         else:
-            self.Instrument[symbol].expire = "None"
+            self.Instrument[symbol].expire = "Perpetual"
         self.Instrument[symbol].tickSize = float(instrument["priceFilter"]["tickSize"])
         self.Instrument[symbol].price_precision = service.precision(
             number=self.Instrument[symbol].tickSize
@@ -702,13 +702,13 @@ class Agent(Bybit):
         self.Instrument[symbol].multiplier = 1
         self.Instrument[symbol].myMultiplier = 1
         if category == "spot":
-            self.Instrument[symbol].fundingRate = "None"
-            self.Instrument[symbol].avgEntryPrice = "None"
-            self.Instrument[symbol].marginCallPrice = "None"
-            self.Instrument[symbol].currentQty = "None"
-            self.Instrument[symbol].unrealisedPnl = "None"
+            self.Instrument[symbol].fundingRate = "-"
+            self.Instrument[symbol].avgEntryPrice = "-"
+            self.Instrument[symbol].marginCallPrice = "-"
+            self.Instrument[symbol].currentQty = "-"
+            self.Instrument[symbol].unrealisedPnl = "-"
         if category == "option":
-            self.Instrument[symbol].fundingRate = "None"
+            self.Instrument[symbol].fundingRate = "-"
         self.Instrument[symbol].asks = [[0, 0]]
         self.Instrument[symbol].bids = [[0, 0]]
         self.Instrument[symbol].valueOfOneContract = 1

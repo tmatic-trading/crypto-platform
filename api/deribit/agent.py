@@ -129,13 +129,13 @@ class Agent(Deribit):
         instrument.multiplier = 1
         instrument.myMultiplier = 1
         if category == "spot":
-            instrument.fundingRate = "None"
-            instrument.avgEntryPrice = "None"
-            instrument.marginCallPrice = "None"
-            instrument.currentQty = "None"
-            instrument.unrealisedPnl = "None"
+            instrument.fundingRate = "-"
+            instrument.avgEntryPrice = "-"
+            instrument.marginCallPrice = "-"
+            instrument.currentQty = "-"
+            instrument.unrealisedPnl = "-"
         if category == "option":
-            instrument.fundingRate = "None"
+            instrument.fundingRate = "-"
         instrument.asks = [[0, 0]]
         instrument.bids = [[0, 0]]
         instrument.valueOfOneContract = 1
@@ -275,7 +275,7 @@ class Agent(Deribit):
                 if "estimated_liquidation_price" in values:
                     instrument.marginCallPrice = values["estimated_liquidation_price"]
                 else:
-                    instrument.marginCallPrice = "None"
+                    instrument.marginCallPrice = "-"
         else:
             self.logger.error(
                 "The dict was expected when the positions were loaded, but "

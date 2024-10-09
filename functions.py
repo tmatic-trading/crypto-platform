@@ -1930,6 +1930,8 @@ def update_order_form():
     form.settlcurrency.value["text"] = instrument.settlCurrency[0]
     if instrument.expire != "Perpetual":
         form.expiry.value["text"] = instrument.expire.strftime("%d%b%y %H:%M")
+    else:
+        form.expiry.value["text"] = "Perpetual"
     form.ticksize.value["text"] = instrument.tickSize
     form.minOrderQty.value["text"] = instrument.minOrderQty
     if instrument.makerFee != None:
