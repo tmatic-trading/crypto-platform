@@ -1283,16 +1283,16 @@ class SubTreeviewTable(TreeviewTable):
         for item in reversed(lst):
             self.subtable.insert(values=[item], iid=item)
         self.subtable.tree.column("1", width=200)
-        height = len(self.subtable.tree.get_children())
-        if height > 20:
-            height = 20
+        rows = len(self.subtable.tree.get_children())
+        if rows > 20:
+            rows = 20
             self.subtable.scroll.grid(row=0, column=1, sticky="NS")
         else:
             self.subtable.scroll.grid_forget()
-        y_pos -= self.tree.bbox(self.tree.get_children()[0])[1] * (height + 1) // 2
-        if y_pos < 0:
-            y_pos = 0
-        self.subtable.tree.config(height=height)
+        height = TreeTable.market.tree.bbox(TreeTable.market.tree.get_children()[0])[1]
+        y_pos -= height * (rows + 1) // 2
+        y_pos = max(y_pos, 0)
+        self.subtable.tree.config(height=rows)
         self.subtable.frame.place(x=x_pos, y=y_pos)
 
     def on_leave(self, event):
