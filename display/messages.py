@@ -13,8 +13,8 @@ class Message(str, Enum):
     DEFAULT_SYMBOL_ADDED = (
         "{MARKET} symbol list is empty. Added default symbol {SYMBOL}."
     )
-    WEBSOCKET_SUBSCRIPTION = "ws subscription - {NAME} - channel - {CHANNEL}"
-    WEBSOCKET_UNSUBSCRIBE = "ws unsubscribe - {NAME} - channel - {CHANNEL}"
+    WEBSOCKET_SUBSCRIPTION = "sending ws subscription - {NAME} - channel - {CHANNEL}"
+    WEBSOCKET_UNSUBSCRIBE = "sending ws unsubscribe - {NAME} - channel - {CHANNEL}"
 
     def __str__(self) -> str:
         return self.value

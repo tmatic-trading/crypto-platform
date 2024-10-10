@@ -1895,7 +1895,11 @@ def callback_buy_limit() -> None:
 
 def update_order_form():
     form.ws = Markets[var.current_market]
-    instrument = form.ws.Instrument[var.symbol]
+    instrument = form.ws.Instrument[var.symbol]    
+    if instrument.ticker == "option!":
+        symb = set_option(ws=form.ws, instrument=instrument, symbol=var.symbol)
+        var.symbol = (symb, form.ws.name)
+        instrument = form.ws.Instrument[var.symbol]    
     form.option_emi["menu"].delete(0, "end")
     form.entry_price.delete(0, "end")
     options = list()
@@ -1983,6 +1987,18 @@ def format_number(number: Union[float, str]) -> str:
 
     return number
 
+def set_option(ws: Markets, instrument: Instrument, symbol: tuple):
+    series = ws.instrument_index[instrument.category][
+        instrument.settlCurrency[0]
+    ][symbol[0]]
+    if series["CALLS"]:
+        symb = series["CALLS"][0]
+    elif series["PUTS"]:
+        symb = series["PUTS"][0]
+    var.selected_option[symbol] = (symb, ws.name)
+
+    return symb
+
 
 def handler_instrument(event) -> None:
     tree = event.widget
@@ -2010,14 +2026,15 @@ def handler_instrument(event) -> None:
                                 create = False
                             var.symbol = symbol
                         else:
-                            series = ws.instrument_index[instrument.category][
+                            '''series = ws.instrument_index[instrument.category][
                                 instrument.settlCurrency[0]
                             ][symbol[0]]
                             if series["CALLS"]:
                                 symb = series["CALLS"][0]
                             elif series["PUTS"]:
                                 symb = series["PUTS"][0]
-                            var.selected_option[symbol] = (symb, market)
+                            var.selected_option[symbol] = (symb, market)'''
+                            symb = set_option(ws=ws, instrument=instrument, symbol=symbol)
                             symbol = (symb, market)
                             var.symbol = symbol
                     else:

@@ -62,7 +62,7 @@ class Bybit(Variables):
         self.ticker = dict()
         self.instrument_index = OrderedDict()
         var.market_object[self.name] = self
-        self.unsubscriptions = list()
+        self.unsubscriptions = set()
 
     def setup_session(self):
         self.session: HTTP = HTTP(
@@ -674,13 +674,17 @@ class Bybit(Variables):
         unsubscription_args = self._subscribe_args_list(symbol=symbol)
         instrument = self.Instrument[symbol]
         category = instrument.category
-        instrument.confirm_subscription = set()
         req_id = symbol[0]
         message = Message.WEBSOCKET_UNSUBSCRIBE.format(
             NAME="Orderbook, Ticker", CHANNEL=unsubscription_args
         )
         self.logger.info(message)
-        self.unsubscriptions.append(req_id)
+        if instrument.ticker == "option!":
+            topic = str(sorted(unsubscription_args))
+            self.unsubscriptions.add(topic)            
+        else:
+            self.unsubscriptions.add(req_id)
+            topic = req_id
         unsubscription_message = json.dumps(
             {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
         )
@@ -690,10 +694,11 @@ class Bybit(Variables):
 
         count = 0
         slp = 0.1
-        while req_id in self.unsubscriptions:
+        while topic in self.unsubscriptions:
             count += slp
-            if count > 1000 or not self.api_is_active:
-                return "error"
+            if count > var.timeout or not self.api_is_active:
+                self.unsubscriptions.remove(topic)
+                return "timeout"
             time.sleep(slp)
         for arg in unsubscription_args:
             if arg in self.ws[category].callback_directory:
@@ -711,8 +716,8 @@ class Bybit(Variables):
     def _process_unsubscription_options(message):
         ws = var.market_object["Bybit"]
         if message["success"]:
-            topic = message["data"]["successTopics"]
-            if topic in ws.unsubscriptions:
+            topic = str(sorted(message["data"]["successTopics"]))
+            if topic in ws.unsubscriptions:                
                 ws.unsubscriptions.remove(topic)
                 return True
 
@@ -724,7 +729,8 @@ class Bybit(Variables):
         elif message.get("op") == "subscribe":
             self._process_subscription_message(message)
         elif message.get("type") == "COMMAND_RESP":
-            self._process_subscription_message(message)
+            if not Bybit._process_unsubscription_options(message):
+                self._process_subscription_message(message)
         elif message.get("op") == "unsubscribe":
             Bybit._process_unsubscription_message(message)
         else:
