@@ -2279,8 +2279,6 @@ def clear_tables():
     current_market = var.current_market
     symbol = var.symbol
     var.lock_display.acquire(True)
-    TreeTable.instrument.init()
-    TreeTable.orderbook.init()
     TreeTable.instrument.lines = var.market_list
     TreeTable.instrument.init()
     TreeTable.market.lst = var.market_list
@@ -2291,6 +2289,8 @@ def clear_tables():
     TreeTable.results.init()
     TreeTable.position.lines = var.market_list
     TreeTable.position.init()
+    TreeTable.orderbook.set_size(disp.num_book)
+    TreeTable.orderbook.init()
     TreeTable.bot_menu.init()
     for market in var.market_list:
         ws = Markets[market]

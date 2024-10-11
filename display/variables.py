@@ -911,17 +911,14 @@ class TreeviewTable(Variables):
         self.title = title
         self.cache = list()
         self.bind = bind
-        if isinstance(size, int):
-            self.lst = [num for num in range(size)]
-            self.size = size
-        else:
-            self.lst = size
-            self.size = len(size)
+        self.set_size(size)
         self.count = 0
         self.hierarchy = hierarchy
         self.lines = lines
         self.rollup = rollup
         self.active_row = 0
+        self.hide = hide
+        self.multicolor = multicolor
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)
         if hierarchy:
@@ -985,37 +982,46 @@ class TreeviewTable(Variables):
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.iid_count = 0
         self.init()
-        if hide:
-            self.column_hide = []
-            self.hide_num = 0
-            hide_begin = list(self.tree["columns"])
-            self.column_hide.append(tuple(hide_begin))
-            for num, id_col in enumerate(hide, start=1):
-                self.column_hide.append(hide_begin)
-                self.column_hide[num].remove(id_col)
-                hide_begin = list(self.column_hide[num])
-                self.column_hide[num] = tuple(hide_begin)
-        if multicolor:
+        if self.multicolor:
             self.setup_color_cell()
             self.tree.bind("<Configure>", self.on_window_resize)
             self.scroll.resize_init(self.on_scroll_resize)
             self.tree.bind("<B1-Motion>", self.on_window_resize)
             # self.tree.update()
 
+    def set_size(self, size):
+        if isinstance(size, int):
+            self.lst = [num for num in range(size)]
+            self.size = size
+        else:
+            self.lst = size
+            self.size = len(size)
+
     def init(self):
         self.clear_all()
         self.cache = dict()
         if self.hierarchy:
             self.init_hierarchical()
-            return
-        blank = ["" for _ in self.title]
-        for item in self.lst:
-            if self.bold:
-                self.tree.insert("", tk.END, iid=item, values=blank, tags="Bold")
-            else:
-                self.tree.insert("", tk.END, iid=item, values=blank)
-            self.cache[item] = blank
-        self.children = self.tree.get_children()
+        else:
+            blank = ["" for _ in self.title]
+            self.tree.config(height=len(self.lst))
+            for item in self.lst:
+                if self.bold:
+                    self.tree.insert("", tk.END, iid=item, values=blank, tags="Bold")
+                else:
+                    self.tree.insert("", tk.END, iid=item, values=blank)
+                self.cache[item] = blank            
+            self.children = self.tree.get_children()
+        if self.hide:
+            self.column_hide = []
+            self.hide_num = 0
+            hide_begin = list(self.tree["columns"])
+            self.column_hide.append(tuple(hide_begin))
+            for num, id_col in enumerate(self.hide, start=1):
+                self.column_hide.append(hide_begin)
+                self.column_hide[num].remove(id_col)
+                hide_begin = list(self.column_hide[num])
+                self.column_hide[num] = tuple(hide_begin)
 
     def init_hierarchical(self):
         self.tree.column("#0", anchor=tk.W)
@@ -1134,7 +1140,7 @@ class TreeviewTable(Variables):
 
     def setup_color_cell(self):
         self._canvas = list()
-        for _ in range(self.size):
+        for _ in range(20):
             lst = list()
             for num in range(len(self.title)):
                 lst.append(tk.Canvas(self.tree, borderwidth=0, highlightthickness=0))
@@ -1187,26 +1193,28 @@ class TreeviewTable(Variables):
                 self.hide_color_cell(row, column)
 
     def on_window_resize(self, event):
-        for row, canvas_list in enumerate(self._canvas):
-            self.count += 1
-            for column, canvas in enumerate(canvas_list):
-                bbox = self.tree.bbox(self.children[row], column + 1)
-                if bbox:
-                    if canvas.up is True:
-                        self.resize_color_cell(bbox, row, column)
-                    elif canvas.up == "hidden":
-                        x, y, width, height = bbox
-                        canvas.configure(width=width, height=height)
-                        s_length = self.symbol_width * len(canvas.txt)
-                        canvas.coords(
-                            canvas.text, (max(0, (width - s_length)) / 2, height / 2)
-                        )
-                        canvas.place(x=x, y=y)
-                        canvas.up = True
-                else:
-                    if canvas.up is True:
-                        self.hide_color_cell(row=row, column=column)
-                        canvas.up = "hidden"
+        if self.children:
+            for row in range(self.size):
+                canvas_list = self._canvas[row]
+                self.count += 1
+                for column, canvas in enumerate(canvas_list):
+                    bbox = self.tree.bbox(self.children[row], column + 1)
+                    if bbox:
+                        if canvas.up is True:
+                            self.resize_color_cell(bbox, row, column)
+                        elif canvas.up == "hidden":
+                            x, y, width, height = bbox
+                            canvas.configure(width=width, height=height)
+                            s_length = self.symbol_width * len(canvas.txt)
+                            canvas.coords(
+                                canvas.text, (max(0, (width - s_length)) / 2, height / 2)
+                            )
+                            canvas.place(x=x, y=y)
+                            canvas.up = True
+                    else:
+                        if canvas.up is True:
+                            self.hide_color_cell(row=row, column=column)
+                            canvas.up = "hidden"
 
     def on_scroll_resize(self):
         self.on_window_resize("scroll")
