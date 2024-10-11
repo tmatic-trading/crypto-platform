@@ -101,3 +101,4 @@ class Variables:
     display_bottom: callable
     _series = "_series"
     selected_option = dict()
+    rollup_symbol = ""

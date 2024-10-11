@@ -783,7 +783,6 @@ class Function(WS, Variables):
         Function.refresh_tables(self)
 
     def display_instruments(self: Markets, indx=0):
-        # print("_______lock 5")
         tree = TreeTable.instrument
         # d tm = datetime.now()
         for market in var.market_list:
@@ -830,7 +829,9 @@ class Function(WS, Variables):
                             indx=indx,
                             image=disp.image_cancel,
                         )
-        # print("_______lock 6")
+        if var.rollup_symbol:
+            TreeTable.instrument.on_rollup(iid=var.rollup_symbol, setup="child")
+            var.rollup_symbol = ""
         # d print("___instrument", datetime.now() - tm)
 
     def display_account(self: Markets):
@@ -2125,13 +2126,7 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
                 value=value,
             )
             var.current_market = ws.name
-            # var.symbol = symbol
-            var.lock_display.acquire(True)
-            # print("_______lock 1")
-            Function.display_instruments(ws)
-            # print("_______lock 2")
-            var.lock_display.release()
-            TreeTable.instrument.on_rollup(iid=f"{ws.name}!{symb}", setup="child")
+            var.rollup_symbol = f"{ws.name}!{symb}"
     else:
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")

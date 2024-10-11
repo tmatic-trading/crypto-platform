@@ -305,9 +305,7 @@ def refresh() -> None:
                     # if ws.api_is_active:
                     t = threading.Thread(target=reload_market, args=(ws,))
                     t.start()
-        # print("_______lock 3")
         var.lock_display.acquire(True)
-        # print("_______lock 4")
         ws = Markets[var.current_market]
         if ws.api_is_active:
             Function.refresh_on_screen(ws, utc=utc)
