@@ -1897,62 +1897,63 @@ def callback_buy_limit() -> None:
 def update_order_form():
     form.ws = Markets[var.current_market]
     instrument = form.ws.Instrument[var.symbol]
-    if instrument.ticker == "option!":
-        symb = set_option(ws=form.ws, instrument=instrument, symbol=var.symbol)
-        var.symbol = (symb, form.ws.name)
-        instrument = form.ws.Instrument[var.symbol]
-    form.option_emi["menu"].delete(0, "end")
-    form.entry_price.delete(0, "end")
-    options = list()
-    for name in Bots.keys():
-        options.append(name)
-    options.append(var.symbol[0])
-    for option in options:
-        form.option_emi["menu"].add_command(
-            label=option,
-            command=lambda v=form.emi_var, optn=option: v.set(optn),
+    if form.ws.name != "Fake":
+        if instrument.ticker == "option!":
+            symb = set_option(ws=form.ws, instrument=instrument, symbol=var.symbol)
+            var.symbol = (symb, form.ws.name)
+            instrument = form.ws.Instrument[var.symbol]
+        form.option_emi["menu"].delete(0, "end")
+        form.entry_price.delete(0, "end")
+        options = list()
+        for name in Bots.keys():
+            options.append(name)
+        options.append(var.symbol[0])
+        for option in options:
+            form.option_emi["menu"].add_command(
+                label=option,
+                command=lambda v=form.emi_var, optn=option: v.set(optn),
+            )
+        form.option_emi["menu"].insert_separator(len(options) - 1)
+        form.emi_var.set("Select")
+        form.entry_quantity.delete(0, "end")
+        form.entry_quantity.insert(
+            0,
+            Function.volume(form.ws, qty=instrument.minOrderQty, symbol=var.symbol),
         )
-    form.option_emi["menu"].insert_separator(len(options) - 1)
-    form.emi_var.set("Select")
-    form.entry_quantity.delete(0, "end")
-    form.entry_quantity.insert(
-        0,
-        Function.volume(form.ws, qty=instrument.minOrderQty, symbol=var.symbol),
-    )
-    if len(var.symbol[0]) > 22:
-        splt = var.symbol[0].split("-")
-        indx = len(splt) - 1
-        if len(splt[indx:]) < 5 and len(splt) > 2:
-            indx -= 1
-        title = "-".join(splt[:indx]) + "-\n" + "       " + "-".join(splt[indx:])
-        form.title.config(justify=tk.LEFT)
-    else:
-        title = var.symbol[0]
-        form.title.config(justify=tk.CENTER)
-    form.title["text"] = title
-    form.market.value["text"] = instrument.market
-    form.category.value["text"] = instrument.category
-    form.settlcurrency.value["text"] = instrument.settlCurrency[0]
-    if instrument.expire != "Perpetual":
-        form.expiry.value["text"] = instrument.expire.strftime("%d%b%y %H:%M")
-    else:
-        form.expiry.value["text"] = "Perpetual"
-    form.ticksize.value["text"] = Function.format_price(
-        form.ws, number=instrument.tickSize, symbol=var.symbol
-    )
-    form.minOrderQty.value["text"] = instrument.minOrderQty
-    if instrument.makerFee != None:
-        form.takerfee.name.grid(row=0, column=0, sticky="W")
-        form.takerfee.value.grid(row=0, column=1, sticky="E")
-        form.makerfee.name.grid(row=0, column=0, sticky="W")
-        form.makerfee.value.grid(row=0, column=1, sticky="E")
-        form.takerfee.value["text"] = f"{instrument.takerFee*100}%"
-        form.makerfee.value["text"] = f"{instrument.makerFee*100}%"
-    else:
-        form.takerfee.name.grid_forget()
-        form.takerfee.value.grid_forget()
-        form.makerfee.name.grid_forget()
-        form.makerfee.value.grid_forget()
+        if len(var.symbol[0]) > 22:
+            splt = var.symbol[0].split("-")
+            indx = len(splt) - 1
+            if len(splt[indx:]) < 5 and len(splt) > 2:
+                indx -= 1
+            title = "-".join(splt[:indx]) + "-\n" + "       " + "-".join(splt[indx:])
+            form.title.config(justify=tk.LEFT)
+        else:
+            title = var.symbol[0]
+            form.title.config(justify=tk.CENTER)
+        form.title["text"] = title
+        form.market.value["text"] = instrument.market
+        form.category.value["text"] = instrument.category
+        form.settlcurrency.value["text"] = instrument.settlCurrency[0]
+        if instrument.expire != "Perpetual":
+            form.expiry.value["text"] = instrument.expire.strftime("%d%b%y %H:%M")
+        else:
+            form.expiry.value["text"] = "Perpetual"
+        form.ticksize.value["text"] = Function.format_price(
+            form.ws, number=instrument.tickSize, symbol=var.symbol
+        )
+        form.minOrderQty.value["text"] = instrument.minOrderQty
+        if instrument.makerFee != None:
+            form.takerfee.name.grid(row=0, column=0, sticky="W")
+            form.takerfee.value.grid(row=0, column=1, sticky="E")
+            form.makerfee.name.grid(row=0, column=0, sticky="W")
+            form.makerfee.value.grid(row=0, column=1, sticky="E")
+            form.takerfee.value["text"] = f"{instrument.takerFee*100}%"
+            form.makerfee.value["text"] = f"{instrument.makerFee*100}%"
+        else:
+            form.takerfee.name.grid_forget()
+            form.takerfee.value.grid_forget()
+            form.makerfee.name.grid_forget()
+            form.makerfee.value.grid_forget()
 
 
 def handler_orderbook(event) -> None:
