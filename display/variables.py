@@ -244,7 +244,7 @@ class Variables:
     window_height = int(screen_height * 0.8)
     root.geometry("{}x{}".format(window_width, window_height))
     left_width = window_width
-    #last_market = ""
+    # last_market = ""
     pw_ratios = {}
     text_line_limit = 300
 
@@ -1000,7 +1000,7 @@ class TreeviewTable(Variables):
             self.tree.bind("<Configure>", self.on_window_resize)
             self.scroll.resize_init(self.on_scroll_resize)
             self.tree.bind("<B1-Motion>", self.on_window_resize)
-            self.tree.update()
+            # self.tree.update()
 
     def init(self):
         self.clear_all()
@@ -1100,6 +1100,10 @@ class TreeviewTable(Variables):
 
     def clear_all(self, market=None):
         if not market:
+            if self.hierarchy:
+                for line in self.lst:
+                    self.tree.delete(*self.children_hierarchical[line])
+                    self.children_hierarchical[line] = self.tree.get_children(line)
             self.tree.delete(*self.children)
         else:
             for child in self.children:
@@ -1424,7 +1428,8 @@ def root_dimensions(event):
     """
     Hide / show adaptive columns in order to save space in the tables
     """
-    if hasattr(TreeTable, "instrument"):
+    if var.market_list:
+        # if hasattr(TreeTable, "instrument"):
         ratio = (
             Variables.frame_left.winfo_width() / Variables.left_width
             if Variables.left_width > 1
@@ -1432,8 +1437,9 @@ def root_dimensions(event):
         )
         if ratio < Variables.adaptive_ratio - 0.2:
             if (
-                TreeTable.instrument.hide_num != 3
-                #or var.current_market != Variables.last_market
+                TreeTable.instrument.hide_num
+                != 3
+                # or var.current_market != Variables.last_market
             ):
                 TreeTable.instrument.tree.config(
                     displaycolumns=TreeTable.instrument.column_hide[3]
@@ -1468,8 +1474,9 @@ def root_dimensions(event):
                 trim_col_width(TreeTable.account, TreeTable.account.column_hide[3])
         elif ratio < Variables.adaptive_ratio - 0.1:
             if (
-                TreeTable.instrument.hide_num != 2
-                #or var.current_market != Variables.last_market
+                TreeTable.instrument.hide_num
+                != 2
+                # or var.current_market != Variables.last_market
             ):
                 TreeTable.instrument.tree.config(
                     displaycolumns=TreeTable.instrument.column_hide[2]
@@ -1504,8 +1511,9 @@ def root_dimensions(event):
                 trim_col_width(TreeTable.account, TreeTable.account.column_hide[2])
         elif ratio < Variables.adaptive_ratio:
             if (
-                TreeTable.instrument.hide_num != 1
-                #or var.current_market != Variables.last_market
+                TreeTable.instrument.hide_num
+                != 1
+                # or var.current_market != Variables.last_market
             ):
                 TreeTable.instrument.tree.config(
                     displaycolumns=TreeTable.instrument.column_hide[1]
@@ -1571,7 +1579,7 @@ def root_dimensions(event):
                 )
                 TreeTable.account.hide_num = 0
                 trim_col_width(TreeTable.account, TreeTable.account.column_hide[0])
-        #Variables.last_market = var.current_market
+        # Variables.last_market = var.current_market
 
     # Save the root window dimensions and position
     now_width = Variables.root.winfo_width()

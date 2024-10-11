@@ -681,7 +681,7 @@ class Bybit(Variables):
         self.logger.info(message)
         if instrument.ticker == "option!":
             topic = str(sorted(unsubscription_args))
-            self.unsubscriptions.add(topic)            
+            self.unsubscriptions.add(topic)
         else:
             self.unsubscriptions.add(req_id)
             topic = req_id
@@ -717,7 +717,7 @@ class Bybit(Variables):
         ws = var.market_object["Bybit"]
         if message["success"]:
             topic = str(sorted(message["data"]["successTopics"]))
-            if topic in ws.unsubscriptions:                
+            if topic in ws.unsubscriptions:
                 ws.unsubscriptions.remove(topic)
                 return True
 

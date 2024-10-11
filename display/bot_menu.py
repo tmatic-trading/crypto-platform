@@ -1002,13 +1002,14 @@ def init_bot_trades(bot_name: str) -> None:
         Name of the bot.
     """
     if bot_name not in trade_treeTable:
-        bot_trades_sub[bot_name] = tk.Frame(disp.bot_trades)
-        trade_treeTable[bot_name] = TreeviewTable(
-            frame=bot_trades_sub[bot_name],
-            name="bot trades",
-            size=0,
-            title=Header.name_bot_trade,
-        )
+        if bot_name not in bot_trades_sub:
+            bot_trades_sub[bot_name] = tk.Frame(disp.bot_trades)
+            trade_treeTable[bot_name] = TreeviewTable(
+                frame=bot_trades_sub[bot_name],
+                name="bot trades",
+                size=0,
+                title=Header.name_bot_trade,
+            )
         sql = (
             "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, ABS(QTY) "
             + "as QTY, TRADE_PRICE, TTIME from coins where EMI == '"

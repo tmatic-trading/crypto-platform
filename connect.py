@@ -61,8 +61,7 @@ def setup(reload=False):
         var.market_list = ["Fake"]
         var.current_market = "Fake"
         var.symbol = "Fake"
-    functions.init_tables()
-    bot_manager.create_bots_menu()
+    functions.init_bot_treetable_trades()
     bot_threads()
     settings.init()
     if "Fake" in var.market_list:
@@ -73,6 +72,7 @@ def setup(reload=False):
         functions.clear_tables()
         TreeTable.instrument.tree.update_idletasks()
         trim_col_width(TreeTable.instrument, TreeTable.instrument.column_hide[0])
+    bot_manager.create_bots_menu()
 
     frame = disp.notebook_frames[var.env["BOTTOM_FRAME"]]
     check_frame = frame["frame"]

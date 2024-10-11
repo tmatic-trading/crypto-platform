@@ -1895,11 +1895,11 @@ def callback_buy_limit() -> None:
 
 def update_order_form():
     form.ws = Markets[var.current_market]
-    instrument = form.ws.Instrument[var.symbol]    
+    instrument = form.ws.Instrument[var.symbol]
     if instrument.ticker == "option!":
         symb = set_option(ws=form.ws, instrument=instrument, symbol=var.symbol)
         var.symbol = (symb, form.ws.name)
-        instrument = form.ws.Instrument[var.symbol]    
+        instrument = form.ws.Instrument[var.symbol]
     form.option_emi["menu"].delete(0, "end")
     form.entry_price.delete(0, "end")
     options = list()
@@ -1987,10 +1987,11 @@ def format_number(number: Union[float, str]) -> str:
 
     return number
 
+
 def set_option(ws: Markets, instrument: Instrument, symbol: tuple):
-    series = ws.instrument_index[instrument.category][
-        instrument.settlCurrency[0]
-    ][symbol[0]]
+    series = ws.instrument_index[instrument.category][instrument.settlCurrency[0]][
+        symbol[0]
+    ]
     if series["CALLS"]:
         symb = series["CALLS"][0]
     elif series["PUTS"]:
@@ -2026,15 +2027,9 @@ def handler_instrument(event) -> None:
                                 create = False
                             var.symbol = symbol
                         else:
-                            '''series = ws.instrument_index[instrument.category][
-                                instrument.settlCurrency[0]
-                            ][symbol[0]]
-                            if series["CALLS"]:
-                                symb = series["CALLS"][0]
-                            elif series["PUTS"]:
-                                symb = series["PUTS"][0]
-                            var.selected_option[symbol] = (symb, market)'''
-                            symb = set_option(ws=ws, instrument=instrument, symbol=symbol)
+                            symb = set_option(
+                                ws=ws, instrument=instrument, symbol=symbol
+                            )
                             symbol = (symb, market)
                             var.symbol = symbol
                     else:
@@ -2291,6 +2286,17 @@ def clear_tables():
     var.lock_display.acquire(True)
     TreeTable.instrument.init()
     TreeTable.orderbook.init()
+    TreeTable.instrument.lines = var.market_list
+    TreeTable.instrument.init()
+    TreeTable.market.lst = var.market_list
+    TreeTable.market.init()
+    TreeTable.bot_menu.init()
+    TreeTable.account.lines = var.market_list
+    TreeTable.account.init()
+    TreeTable.results.lines = var.market_list
+    TreeTable.results.init()
+    TreeTable.position.lines = var.market_list
+    TreeTable.position.init()
     for market in var.market_list:
         ws = Markets[market]
         var.current_market = market
@@ -2764,101 +2770,122 @@ def clear_klines():
         Markets[market].klines = dict()
 
 
-def init_tables() -> None:
-    TreeTable.orderbook = TreeviewTable(
-        frame=disp.frame_orderbook,
-        name="orderbook",
-        title=Header.name_book,
-        size=disp.num_book,
-        style="orderbook.Treeview",
-        bind=handler_orderbook,
-        multicolor=True,
-        autoscroll=True,
-    )
-    TreeTable.instrument = TreeviewTable(
-        frame=disp.frame_instrument,
-        name="instrument",
-        title=Header.name_instrument,
-        bind=handler_instrument,
-        hierarchy=True,
-        lines=var.market_list,
-        hide=["7", "8", "9"],
-    )
-    TreeTable.account = TreeviewTable(
-        frame=disp.frame_account,
-        name="account",
-        title=Header.name_account,
-        bind=handler_account,
-        hierarchy=True,
-        lines=var.market_list,
-        hide=["3", "5", "6"],
-    )
-    TreeTable.market = SubTreeviewTable(
-        frame=disp.frame_market,
-        name="market",
-        title=Header.name_market,
-        size=var.market_list,
-        style="market.Treeview",
-        autoscroll=True,
-        subtable=TreeTable.i_category,
-        selectmode="none",
-    )
-    TreeTable.results = TreeviewTable(
-        frame=disp.frame_results,
-        name="results",
-        title=Header.name_results,
-        hierarchy=True,
-        lines=var.market_list,
-    )
-    TreeTable.position = TreeviewTable(
-        frame=disp.frame_positions,
-        name="position",
-        title=Header.name_position,
-        hierarchy=True,
-        lines=var.market_list,
-    )
-    TreeTable.bots = TreeviewTable(
-        frame=disp.frame_bots,
-        name="bots",
-        title=Header.name_bots,
-        bind=handler_bot,
-        hierarchy=False,
-    )
-    TreeTable.bot_menu = TreeviewTable(
-        frame=bot_menu.menu_frame,
-        name="bot_menu",
-        title=Header.name_bot_menu,
-        style="bots.Treeview",
-        bind=bot_menu.handler_bot_menu,
-        autoscroll=True,
-        hierarchy=True,
-        rollup=True,
-    )
-    TreeTable.bot_info = TreeviewTable(
-        frame=disp.frame_bot_parameters,
-        name="bot_info",
-        title=Header.name_bot,
-        bind=bot_menu.handler_bot_info,
-        size=1,
-        autoscroll=True,
-    )
-    TreeTable.bot_position = TreeviewTable(
-        frame=disp.bot_positions,
-        name="bot_position",
-        title=Header.name_bot_position,
-        autoscroll=True,
-        hierarchy=True,
-        lines=var.market_list,
-    )
-    TreeTable.bot_results = TreeviewTable(
-        frame=disp.bot_results,
-        name="bot_results",
-        title=Header.name_bot_results,
-        autoscroll=True,
-        hierarchy=True,
-    )
-    init_bot_treetable_trades()
-
+TreeTable.orderbook = TreeviewTable(
+    frame=disp.frame_orderbook,
+    name="orderbook",
+    title=Header.name_book,
+    size=disp.num_book,
+    style="orderbook.Treeview",
+    bind=handler_orderbook,
+    multicolor=True,
+    autoscroll=True,
+)
+TreeTable.instrument = TreeviewTable(
+    frame=disp.frame_instrument,
+    name="instrument",
+    title=Header.name_instrument,
+    bind=handler_instrument,
+    hierarchy=True,
+    lines=var.market_list,
+    hide=["7", "8", "9"],
+)
+TreeTable.account = TreeviewTable(
+    frame=disp.frame_account,
+    name="account",
+    title=Header.name_account,
+    bind=handler_account,
+    hierarchy=True,
+    lines=var.market_list,
+    hide=["3", "5", "6"],
+)
+TreeTable.i_list = SubTreeviewTable(
+    frame=disp.frame_i_list,
+    name="list",
+    size=0,
+    style="menu.Treeview",
+    title=["Instrument"],
+    bind=handler_subscription,
+)
+TreeTable.i_currency = SubTreeviewTable(
+    frame=disp.frame_i_currency,
+    name="currency",
+    size=0,
+    style="menu.Treeview",
+    title=["Currency"],
+    subtable=TreeTable.i_list,
+)
+TreeTable.i_category = SubTreeviewTable(
+    frame=disp.frame_i_category,
+    name="category",
+    size=0,
+    style="menu.Treeview",
+    title=["Category"],
+    subtable=TreeTable.i_currency,
+)
+TreeTable.market = SubTreeviewTable(
+    frame=disp.frame_market,
+    name="market",
+    title=Header.name_market,
+    size=var.market_list,
+    style="market.Treeview",
+    autoscroll=True,
+    subtable=TreeTable.i_category,
+    selectmode="none",
+)
+TreeTable.results = TreeviewTable(
+    frame=disp.frame_results,
+    name="results",
+    title=Header.name_results,
+    hierarchy=True,
+    lines=var.market_list,
+)
+TreeTable.position = TreeviewTable(
+    frame=disp.frame_positions,
+    name="position",
+    title=Header.name_position,
+    hierarchy=True,
+    lines=var.market_list,
+)
+TreeTable.bots = TreeviewTable(
+    frame=disp.frame_bots,
+    name="bots",
+    title=Header.name_bots,
+    bind=handler_bot,
+    hierarchy=False,
+)
+TreeTable.bot_menu = TreeviewTable(
+    frame=bot_menu.menu_frame,
+    name="bot_menu",
+    title=Header.name_bot_menu,
+    style="bots.Treeview",
+    bind=bot_menu.handler_bot_menu,
+    autoscroll=True,
+    hierarchy=True,
+    rollup=True,
+)
+TreeTable.bot_info = TreeviewTable(
+    frame=disp.frame_bot_parameters,
+    name="bot_info",
+    title=Header.name_bot,
+    bind=bot_menu.handler_bot_info,
+    size=1,
+    autoscroll=True,
+)
+TreeTable.bot_position = TreeviewTable(
+    frame=disp.bot_positions,
+    name="bot_position",
+    title=Header.name_bot_position,
+    autoscroll=True,
+    hierarchy=True,
+    lines=var.market_list,
+)
+TreeTable.bot_results = TreeviewTable(
+    frame=disp.bot_results,
+    name="bot_results",
+    title=Header.name_bot_results,
+    autoscroll=True,
+    hierarchy=True,
+)
 
 TreeTable.orders = TreeviewTable(
     frame=disp.frame_orders,
@@ -2891,30 +2918,6 @@ TreeTable.bot_orders = TreeviewTable(
     title=Header.name_bot_order,
     bind=handler_order,
     hide=["8", "3", "5"],
-)
-TreeTable.i_list = SubTreeviewTable(
-    frame=disp.frame_i_list,
-    name="list",
-    size=0,
-    style="menu.Treeview",
-    title=["Instrument"],
-    bind=handler_subscription,
-)
-TreeTable.i_currency = SubTreeviewTable(
-    frame=disp.frame_i_currency,
-    name="currency",
-    size=0,
-    style="menu.Treeview",
-    title=["Currency"],
-    subtable=TreeTable.i_list,
-)
-TreeTable.i_category = SubTreeviewTable(
-    frame=disp.frame_i_category,
-    name="category",
-    size=0,
-    style="menu.Treeview",
-    title=["Category"],
-    subtable=TreeTable.i_currency,
 )
 
 
