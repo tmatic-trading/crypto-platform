@@ -2290,13 +2290,13 @@ def clear_tables():
     TreeTable.instrument.init()
     TreeTable.market.lst = var.market_list
     TreeTable.market.init()
-    TreeTable.bot_menu.init()
     TreeTable.account.lines = var.market_list
     TreeTable.account.init()
     TreeTable.results.lines = var.market_list
     TreeTable.results.init()
     TreeTable.position.lines = var.market_list
     TreeTable.position.init()
+    TreeTable.bot_menu.init()
     for market in var.market_list:
         ws = Markets[market]
         var.current_market = market

@@ -85,6 +85,7 @@ class SettingsApp:
 
         self.brief_frame = ScrollFrame(info_right, bg=disp.bg_color, bd=5)
         self.modules = dict()
+        self.create_strategy_widget()
 
     def onFrameConfigure(self, event):
         """
@@ -255,7 +256,6 @@ class SettingsApp:
             self.insert_bot_menu(name)
         tree.insert_hierarchical(parent="", iid="New_bot!", text="Add new bot")
         tree.insert_hierarchical(parent="", iid="Back!", text="Back")
-        self.create_strategy_widget()
 
     def create_strategy_widget(self) -> None:
         def update_strategy() -> None:
@@ -336,8 +336,6 @@ class SettingsApp:
         self.strategy_text = tk.Text(
             disp.frame_strategy,
             highlightthickness=0,
-            # highlightbackground=disp.title_color,
-            # highlightcolor=disp.title_color,
             bg=disp.text_info["background"],
             yscrollcommand=self.strategy_scroll.set,
         )

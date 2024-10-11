@@ -1,5 +1,4 @@
 import threading
-import tkinter as tk
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
@@ -29,7 +28,6 @@ Bybit.transaction = Function.transaction
 Deribit.transaction = Function.transaction
 thread = threading.Thread(target=functions.kline_update)
 thread.start()
-# settings.load()
 
 
 def setup(reload=False):
