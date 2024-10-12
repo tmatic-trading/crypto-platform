@@ -1920,16 +1920,7 @@ def update_order_form():
             0,
             Function.volume(form.ws, qty=instrument.minOrderQty, symbol=var.symbol),
         )
-        if len(var.symbol[0]) > 22:
-            splt = var.symbol[0].split("-")
-            indx = len(splt) - 1
-            if len(splt[indx:]) < 5 and len(splt) > 2:
-                indx -= 1
-            title = "-".join(splt[:indx]) + "-\n" + "       " + "-".join(splt[indx:])
-            form.title.config(justify=tk.LEFT)
-        else:
-            title = var.symbol[0]
-            form.title.config(justify=tk.CENTER)
+        title = service.order_form_title()
         form.title["text"] = title
         form.market.value["text"] = instrument.market
         form.category.value["text"] = instrument.category

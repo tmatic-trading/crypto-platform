@@ -681,3 +681,10 @@ def load_preferences(root, width, height):
             value=str(root.winfo_y()),
         )
     return dotenv_values(var.preferences)
+
+
+def order_form_title():
+    if len(var.symbol[0]) > 22:
+        return var.symbol[0][:22] + "\n" + var.symbol[0][22:]
+    else:
+        return var.symbol[0]

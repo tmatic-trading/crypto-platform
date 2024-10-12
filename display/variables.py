@@ -1645,6 +1645,23 @@ class ParametersFrame(tk.Label):
         sub.grid_columnconfigure(1, weight=1)
 
 
+def title_on_hover(event):
+    if "option" in OrderForm.ws.Instrument[var.symbol].category:
+        OrderForm.title.config(bg=Variables.bg_select_color, text="Options\ndesk")
+
+
+def title_on_leave(event):
+    title = service.order_form_title()
+    OrderForm.title.config(bg=Variables.light_gray_color, text=title)
+
+
+def title_on_select(event):
+    if "option" in OrderForm.ws.Instrument[var.symbol].category:        
+        items = TreeTable.instrument.tree.selection()
+        if items:
+            TreeTable.instrument.set_selection(items[0])
+
+
 class OrderForm:
     main = tk.Frame(
         Variables.frame_order_form,
@@ -1673,6 +1690,9 @@ class OrderForm:
     title = FormLabel(
         main, text="-", font=Variables.bold_font, row=0, column=0, colspan=2
     )
+    title.bind("<Motion>", title_on_hover)
+    title.bind("<Leave>", title_on_leave)
+    title.bind("<ButtonRelease-1>", title_on_select)
     emi = FormLabel(main, text="EMI", row=1, column=0, sticky="W")
     quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
     price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
@@ -1703,3 +1723,4 @@ class OrderForm:
     minOrderQty = ParametersFrame(parameters, 5, "Min Order Size")
     takerfee = ParametersFrame(parameters, 6, "Taker's fee")
     makerfee = ParametersFrame(parameters, 7, "Maker's fee")
+
