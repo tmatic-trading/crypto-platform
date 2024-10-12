@@ -8,7 +8,7 @@ from typing import Callable, Union
 
 import services as service
 from api.api import Markets
-from common.data import Instrument
+#from common.data import Instrument
 from common.variables import Variables as var
 
 if platform.system() == "Windows":
@@ -245,7 +245,6 @@ class Variables:
     root.geometry("{}x{}".format(window_width, window_height))
     all_width = window_width
     left_width = window_width
-    last_market = ""
     pw_ratios = {}
     text_line_limit = 300
 
@@ -1447,11 +1446,7 @@ def root_dimensions(event):
             else 1.0
         )
         if ratio < Variables.adaptive_ratio - 0.2:
-            if (
-                TreeTable.instrument.hide_num
-                != 3
-                # or var.current_market != Variables.last_market
-            ):
+            if TreeTable.instrument.hide_num != 3:
                 TreeTable.instrument.tree.config(
                     displaycolumns=TreeTable.instrument.column_hide[3]
                 )
@@ -1484,11 +1479,7 @@ def root_dimensions(event):
                 TreeTable.account.hide_num = 3
                 trim_col_width(TreeTable.account, TreeTable.account.column_hide[3])
         elif ratio < Variables.adaptive_ratio - 0.1:
-            if (
-                TreeTable.instrument.hide_num
-                != 2
-                # or var.current_market != Variables.last_market
-            ):
+            if TreeTable.instrument.hide_num != 2:
                 TreeTable.instrument.tree.config(
                     displaycolumns=TreeTable.instrument.column_hide[2]
                 )
@@ -1521,11 +1512,7 @@ def root_dimensions(event):
                 TreeTable.account.hide_num = 2
                 trim_col_width(TreeTable.account, TreeTable.account.column_hide[2])
         elif ratio < Variables.adaptive_ratio:
-            if (
-                TreeTable.instrument.hide_num
-                != 1
-                # or var.current_market != Variables.last_market
-            ):
+            if TreeTable.instrument.hide_num != 1:
                 TreeTable.instrument.tree.config(
                     displaycolumns=TreeTable.instrument.column_hide[1]
                 )
@@ -1590,49 +1577,48 @@ def root_dimensions(event):
                 )
                 TreeTable.account.hide_num = 0
                 trim_col_width(TreeTable.account, TreeTable.account.column_hide[0])
-        # Variables.last_market = var.current_market
 
-    # Save the root window dimensions and position
-    now_width = Variables.root.winfo_width()
-    now_height = Variables.root.winfo_height()
-    now_x = Variables.root.winfo_x()
-    now_y = Variables.root.winfo_y()
-    if now_width != Variables.pref_params["ROOT_WIDTH"]:
-        service.set_dotenv(
-            dotenv_path=var.preferences,
-            key="ROOT_WIDTH",
-            value=str(now_width),
-        )
-        Variables.pref_params["ROOT_WIDTH"] = now_width
-    if now_height != Variables.pref_params["ROOT_HEIGHT"]:
-        service.set_dotenv(
-            dotenv_path=var.preferences,
-            key="ROOT_HEIGHT",
-            value=str(now_height),
-        )
-        Variables.pref_params["ROOT_HEIGHT"] = now_height
-    if now_x != Variables.pref_params["ROOT_X_POS"]:
-        service.set_dotenv(
-            dotenv_path=var.preferences,
-            key="ROOT_X_POS",
-            value=str(now_x),
-        )
-        Variables.pref_params["ROOT_X_POS"] = now_x
-    if now_y != Variables.pref_params["ROOT_Y_POS"]:
-        service.set_dotenv(
-            dotenv_path=var.preferences,
-            key="ROOT_Y_POS",
-            value=str(now_y),
-        )
-        Variables.pref_params["ROOT_Y_POS"] = now_y
+        # Save the root window dimensions and position
+        now_width = Variables.root.winfo_width()
+        now_height = Variables.root.winfo_height()
+        now_x = Variables.root.winfo_x()
+        now_y = Variables.root.winfo_y()
+        if now_width != Variables.pref_params["ROOT_WIDTH"]:
+            service.set_dotenv(
+                dotenv_path=var.preferences,
+                key="ROOT_WIDTH",
+                value=str(now_width),
+            )
+            Variables.pref_params["ROOT_WIDTH"] = now_width
+        if now_height != Variables.pref_params["ROOT_HEIGHT"]:
+            service.set_dotenv(
+                dotenv_path=var.preferences,
+                key="ROOT_HEIGHT",
+                value=str(now_height),
+            )
+            Variables.pref_params["ROOT_HEIGHT"] = now_height
+        if now_x != Variables.pref_params["ROOT_X_POS"]:
+            service.set_dotenv(
+                dotenv_path=var.preferences,
+                key="ROOT_X_POS",
+                value=str(now_x),
+            )
+            Variables.pref_params["ROOT_X_POS"] = now_x
+        if now_y != Variables.pref_params["ROOT_Y_POS"]:
+            service.set_dotenv(
+                dotenv_path=var.preferences,
+                key="ROOT_Y_POS",
+                value=str(now_y),
+            )
+            Variables.pref_params["ROOT_Y_POS"] = now_y
 
-    if now_width != Variables.all_width or var.current_market != Variables.last_market:
-        if now_width > Variables.window_width:
-            t = Variables.platform_name.ljust((now_width - Variables.window_width) // 4)
-            Variables.root.title(t)
-        else:
-            Variables.root.title(Variables.platform_name)
-        Variables.all_width = now_width
+        if now_width != Variables.all_width:
+            if now_width > Variables.window_width:
+                t = Variables.platform_name.ljust((now_width - Variables.window_width) // 4)
+                Variables.root.title(t)
+            else:
+                Variables.root.title(Variables.platform_name)
+            Variables.all_width = now_width
 
 
 class FormLabel(tk.Label):
