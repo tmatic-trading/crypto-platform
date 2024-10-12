@@ -62,12 +62,12 @@ def setup(reload=False):
     functions.init_bot_treetable_trades()
     bot_threads()
     settings.init()
+    functions.clear_tables()
     if "Fake" in var.market_list:
         disp.on_settings()
         settings.return_main_page()
     else:
         disp.on_main()
-        functions.clear_tables()
         TreeTable.instrument.tree.update_idletasks()
         trim_col_width(TreeTable.instrument, TreeTable.instrument.column_hide[0])
     bot_manager.create_bots_menu()
