@@ -243,8 +243,9 @@ class Variables:
     window_width = int(screen_width * window_ratio)
     window_height = int(screen_height * 0.8)
     root.geometry("{}x{}".format(window_width, window_height))
+    all_width = window_width
     left_width = window_width
-    # last_market = ""
+    last_market = ""
     pw_ratios = {}
     text_line_limit = 300
 
@@ -1624,6 +1625,14 @@ def root_dimensions(event):
             value=str(now_y),
         )
         Variables.pref_params["ROOT_Y_POS"] = now_y
+
+    if now_width != Variables.all_width or var.current_market != Variables.last_market:
+        if now_width > Variables.window_width:
+            t = Variables.platform_name.ljust((now_width - Variables.window_width) // 4)
+            Variables.root.title(t)
+        else:
+            Variables.root.title(Variables.platform_name)
+        Variables.all_width = now_width
 
 
 class FormLabel(tk.Label):
