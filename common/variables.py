@@ -102,3 +102,4 @@ class Variables:
     _series = "_series"
     selected_option = dict()
     rollup_symbol = ""
+    selected_iid = dict()

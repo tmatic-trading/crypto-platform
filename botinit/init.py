@@ -132,11 +132,11 @@ def load_bots() -> None:
         "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
         + "EMI, SYMBOL, TICKER, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
         + "TTIME from coins where SIDE <> 'Fund' group by EMI, SYMBOL, "
-        + "MARKET) res where POS <> 0;"
+        + "MARKET) res where POS <> 0 order by SYMBOL desc;"
     )
     var.lock.acquire(True)
     data = service.select_database(qwr)
-    subscriptions = set()
+    subscriptions = list()
     for value in data:
         if value["MARKET"] in var.market_list:
             ws = Markets[value["MARKET"]]
@@ -149,7 +149,7 @@ def load_bots() -> None:
             symbol = (value["SYMBOL"], ws.name)
             if symbol not in ws.symbol_list:
                 if ws.Instrument[symbol].state == "Open":
-                    subscriptions.add(symbol)
+                    subscriptions.append(symbol)
                     message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
                     var.logger.info(message)
                 else:
@@ -214,8 +214,8 @@ def load_bots() -> None:
                     "limits": instrument.minOrderQty,
                 }
                 if instrument.category == "spot":
-                    bot.bot_positions[symbol]["pnl"] = "None"
-                    bot.bot_positions[symbol]["position"] = "None"
+                    bot.bot_positions[symbol]["pnl"] = "-"
+                    bot.bot_positions[symbol]["position"] = "-"
             elif value["POS"] != 0:
                 message = (
                     name

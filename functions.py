@@ -2074,9 +2074,15 @@ def handler_instrument(event) -> None:
                         options_desk.desk.geometry(
                             "{}x{}".format(disp.window_width, height)
                         )
+            var.selected_iid[market] = items[0]
         else:
-            var.current_market = items[0]
-            TreeTable.instrument.on_rollup(iid=items[0], setup="child")
+            market = items[0]
+            var.current_market = market
+            if market in var.selected_iid:
+                iid = var.selected_iid[market]
+            else:
+                iid = market
+            TreeTable.instrument.on_rollup(iid=iid, setup="child")
 
 
 def handler_account(event) -> None:
@@ -2310,7 +2316,11 @@ def clear_tables():
             ws = Markets[var.current_market]
             var.symbol = ws.symbol_list[0]
         TreeTable.instrument.set_selection(index=f"{var.current_market}!{var.symbol[0]}")
-        TreeTable.instrument.on_rollup(iid=ws.name, setup="child")
+        if ws.name in var.selected_iid:
+            iid = var.selected_iid[ws.name]
+        else:
+            iid = ws.name
+        TreeTable.instrument.on_rollup(iid=iid, setup="child")
         update_order_form()
     var.lock_display.release()
 

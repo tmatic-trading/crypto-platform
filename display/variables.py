@@ -1232,6 +1232,8 @@ class TreeviewTable(Variables):
             if self.children_hierarchical:
                 if iid == parent:
                     iid = self.children_hierarchical[parent][0]
+                elif iid not in self.children_hierarchical[parent]:
+                    iid = self.children_hierarchical[parent][0]
                 self.tree.selection_set(iid)
 
     def on_hover(self, event):
