@@ -831,6 +831,7 @@ class Function(WS, Variables):
                         )
         if var.rollup_symbol:
             TreeTable.instrument.on_rollup(iid=var.rollup_symbol, setup="child")
+            TreeTable.instrument.set_selection(var.rollup_symbol)
             var.rollup_symbol = ""
         # d print("___instrument", datetime.now() - tm)
 
@@ -2025,6 +2026,7 @@ def handler_instrument(event) -> None:
                             )
                             symbol = (symb, market)
                             var.symbol = symbol
+                            create = False
                     else:
                         var.symbol = symbol
                     update_order_form()
