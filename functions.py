@@ -2193,9 +2193,8 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{var.symbol[0]}"
         )
-        time.sleep(0.1)
-        update_order_form()
-        var.current_market = market        
+        var.current_market = market
+        update_order_form()              
     else:
         message = ErrorMessage.FAILED_UNSUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")
