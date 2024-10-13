@@ -2049,6 +2049,8 @@ def handler_instrument(event) -> None:
                         var.symbol = symbol
                     update_order_form()
                     TreeTable.orderbook.clear_color_cell()
+                else:
+                    var.rollup_symbol = ""
                 if time.time() - var.select_time > 0.2:
                     if symbol not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
@@ -2187,12 +2189,13 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
         tree = TreeTable.instrument
         tree.delete_hierarchical(parent=market, iid=f"{market}!{symb}")
         var.select_time = time.time()
-        var.rollup_symbol = "cancel"
+        var.rollup_symbol = "cancel"        
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{var.symbol[0]}"
         )
-        var.current_market = market
+        time.sleep(0.1)
         update_order_form()
+        var.current_market = market        
     else:
         message = ErrorMessage.FAILED_UNSUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")
