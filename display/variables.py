@@ -1644,9 +1644,16 @@ class ParametersFrame(tk.Label):
         sub.grid_columnconfigure(1, weight=1)
 
 
+def only_for_options(category):
+    if "option" in category and "option_combo_" not in category:
+        return True
+    else:
+        return False
+
+
 class OrderForm:
     def title_on_hover(event):
-        if "option" in OrderForm.ws.Instrument[var.symbol].category:
+        if only_for_options(OrderForm.ws.Instrument[var.symbol].category) is True:
             if "\n" in OrderForm.title["text"]:
                 text = "Option\nchain"
             else:
@@ -1658,7 +1665,7 @@ class OrderForm:
         OrderForm.title.config(bg=Variables.light_gray_color, text=title)
 
     def title_on_select(event):
-        if "option" in OrderForm.ws.Instrument[var.symbol].category:
+        if only_for_options(OrderForm.ws.Instrument[var.symbol].category) is True:
             items = TreeTable.instrument.tree.selection()
             if items:
                 TreeTable.instrument.set_selection(items[0])
