@@ -1655,7 +1655,7 @@ class OrderForm:
     def title_on_hover(event):
         if only_for_options(OrderForm.ws.Instrument[var.symbol].category) is True:
             if "\n" in OrderForm.title["text"]:
-                text = "Option\nchain"
+                text = "Option\nChain"
             else:
                 text = "Option Chain"
             OrderForm.title.config(bg=Variables.bg_select_color, text=text)

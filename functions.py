@@ -2029,6 +2029,7 @@ def handler_instrument(event) -> None:
                         "option" in instrument.category
                         and "combo" not in instrument.category
                     ):
+                        print("____________________", var.selected_option)
                         if symbol in var.selected_option:
                             symbol = var.selected_option[symbol]
                             if var.symbol != symbol:  # Opens the options

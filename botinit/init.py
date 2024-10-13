@@ -136,7 +136,7 @@ def load_bots() -> None:
     )
     var.lock.acquire(True)
     data = service.select_database(qwr)
-    subscriptions = list()
+    subscriptions = set()
     for value in data:
         if value["MARKET"] in var.market_list:
             ws = Markets[value["MARKET"]]
@@ -149,7 +149,7 @@ def load_bots() -> None:
             symbol = (value["SYMBOL"], ws.name)
             if symbol not in ws.symbol_list:
                 if ws.Instrument[symbol].state == "Open":
-                    subscriptions.append(symbol)
+                    subscriptions.add(symbol)
                     message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
                     var.logger.info(message)
                 else:
