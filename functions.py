@@ -2313,7 +2313,6 @@ def clear_tables():
             var.current_market = var.market_list[0]
             ws = Markets[var.current_market]
             var.symbol = ws.symbol_list[0]
-        TreeTable.instrument.set_selection(index=f"{var.current_market}!{var.symbol[0]}")
         if ws.name in var.selected_iid:
             iid = var.selected_iid[ws.name]
         else:
