@@ -78,7 +78,6 @@ class Agent(Bybit):
         self.instrument_index = service.sort_instrument_index(
             index=self.instrument_index
         )
-
         return ""
 
     def get_user(self) -> str:

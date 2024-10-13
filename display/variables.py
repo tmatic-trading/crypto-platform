@@ -8,7 +8,8 @@ from typing import Callable, Union
 
 import services as service
 from api.api import Markets
-#from common.data import Instrument
+
+# from common.data import Instrument
 from common.variables import Variables as var
 
 if platform.system() == "Windows":
@@ -1010,7 +1011,7 @@ class TreeviewTable(Variables):
                     self.tree.insert("", tk.END, iid=item, values=blank, tags="Bold")
                 else:
                     self.tree.insert("", tk.END, iid=item, values=blank)
-                self.cache[item] = blank            
+                self.cache[item] = blank
             self.children = self.tree.get_children()
         if self.hide:
             self.column_hide = []
@@ -1207,7 +1208,8 @@ class TreeviewTable(Variables):
                             canvas.configure(width=width, height=height)
                             s_length = self.symbol_width * len(canvas.txt)
                             canvas.coords(
-                                canvas.text, (max(0, (width - s_length)) / 2, height / 2)
+                                canvas.text,
+                                (max(0, (width - s_length)) / 2, height / 2),
                             )
                             canvas.place(x=x, y=y)
                             canvas.up = True
@@ -1614,7 +1616,9 @@ def root_dimensions(event):
 
         if now_width != Variables.all_width:
             if now_width > Variables.window_width:
-                t = Variables.platform_name.ljust((now_width - Variables.window_width) // 4)
+                t = Variables.platform_name.ljust(
+                    (now_width - Variables.window_width) // 4
+                )
                 Variables.root.title(t)
             else:
                 Variables.root.title(Variables.platform_name)
@@ -1654,7 +1658,7 @@ class OrderForm:
         OrderForm.title.config(bg=Variables.light_gray_color, text=title)
 
     def title_on_select(event):
-        if "option" in OrderForm.ws.Instrument[var.symbol].category:        
+        if "option" in OrderForm.ws.Instrument[var.symbol].category:
             items = TreeTable.instrument.tree.selection()
             if items:
                 TreeTable.instrument.set_selection(items[0])
@@ -1669,12 +1673,13 @@ class OrderForm:
     main.pack(fill="both")
     main.grid_columnconfigure(0, weight=0)
     main.grid_columnconfigure(1, weight=1)
+    main.grid_columnconfigure(2, weight=0)
     buttons = tk.Frame(main)
     buttons.grid_columnconfigure(0, weight=1)
     buttons.grid_columnconfigure(1, weight=1)
     sell_limit = tk.Button(buttons, text="Sell Limit")
     buy_limit = tk.Button(buttons, text="Buy Limit")
-    buttons.grid(row=4, column=0, columnspan=2, sticky="NEWS")
+    buttons.grid(row=4, column=0, columnspan=3, sticky="NEWS")
     qty_var = tk.StringVar()
     price_var = tk.StringVar()
     entry_price = tk.Entry(
@@ -1684,7 +1689,7 @@ class OrderForm:
         main, width=9, bg=Variables.bg_color, textvariable=qty_var
     )
     title = FormLabel(
-        main, text="-", font=Variables.bold_font, row=0, column=0, colspan=2
+        main, text="-", font=Variables.bold_font, row=0, column=0, colspan=3
     )
     title.bind("<Motion>", title_on_hover)
     title.bind("<Leave>", title_on_leave)
@@ -1694,8 +1699,10 @@ class OrderForm:
     price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
     emi_var = tk.StringVar()
     options = ["-"]
+    qty_currency = FormLabel(main, text="    ", row=2, column=2, sticky="W")
+    price_currency = FormLabel(main, text="    ", row=3, column=2, sticky="W")
     option_emi = tk.OptionMenu(main, emi_var, *options)
-    option_emi.grid(row=1, column=1, sticky="W")
+    option_emi.grid(row=1, column=1, columnspan=2, sticky="W")
     entry_quantity.grid(row=2, column=1, sticky="NEWS")
     entry_price.grid(row=3, column=1, sticky="NEWS")
     buy_limit.grid(row=0, column=0, sticky="NEWS")
@@ -1719,5 +1726,3 @@ class OrderForm:
     minOrderQty = ParametersFrame(parameters, 5, "Min Order Size")
     takerfee = ParametersFrame(parameters, 6, "Taker's fee")
     makerfee = ParametersFrame(parameters, 7, "Maker's fee")
-
-

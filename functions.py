@@ -1935,6 +1935,17 @@ def update_order_form():
             form.ws, number=instrument.tickSize, symbol=var.symbol
         )
         form.minOrderQty.value["text"] = instrument.minOrderQty
+        if "quanto" in instrument.category:
+            form.qty_currency["text"] = "Cont"
+        elif (
+            "inverse" in instrument.category
+            or "reversed" in instrument.category
+            or "_rev" in instrument.category
+        ):
+            form.qty_currency["text"] = instrument.quoteCoin
+        else:
+            form.qty_currency["text"] = instrument.baseCoin
+        form.price_currency["text"] = instrument.quoteCoin
         if instrument.makerFee != None:
             form.takerfee.name.grid(row=0, column=0, sticky="W")
             form.takerfee.value.grid(row=0, column=1, sticky="E")
