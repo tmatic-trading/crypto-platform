@@ -2019,7 +2019,7 @@ def handler_instrument(event) -> None:
         if len(lst) > 1:
             symb = lst[1]
             if market:
-                create = True
+                create = False
                 symbol = (symb, market)
                 _symb = symb
                 ws = Markets[market]
@@ -2029,12 +2029,11 @@ def handler_instrument(event) -> None:
                         "option" in instrument.category
                         and "combo" not in instrument.category
                     ):
-                        print("____________________", var.selected_option)
                         if symbol in var.selected_option:
                             symbol = var.selected_option[symbol]
-                            if var.symbol != symbol:  # Opens the options
+                            if var.symbol == symbol:  # Opens the options
                                 # desk only on the second click
-                                create = False
+                                create = True
                             if var.rollup_symbol == "cancel":
                                 create = False
                                 var.rollup_symbol = ""
@@ -2045,7 +2044,7 @@ def handler_instrument(event) -> None:
                             )
                             symbol = (symb, market)
                             var.symbol = symbol
-                            create = False
+                            # create = False
                     else:
                         var.symbol = symbol
                     update_order_form()
@@ -2059,7 +2058,7 @@ def handler_instrument(event) -> None:
                             y_pos = tree.winfo_pointery() - tree.winfo_rooty()
                             if 1 < x_pos - width < 13:
                                 if 5 < y_pos - y < 16:
-                                    create = False
+                                    # create = False
                                     t = threading.Thread(
                                         target=confirm_unsubscribe, args=(market, _symb)
                                     )
