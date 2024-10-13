@@ -830,9 +830,10 @@ class Function(WS, Variables):
                             image=disp.image_cancel,
                         )
         if var.rollup_symbol:
-            TreeTable.instrument.on_rollup(iid=var.rollup_symbol, setup="child")
-            TreeTable.instrument.set_selection(var.rollup_symbol)
-            var.rollup_symbol = ""
+            if var.rollup_symbol != "cancel":
+                TreeTable.instrument.on_rollup(iid=var.rollup_symbol, setup="child")
+                TreeTable.instrument.set_selection(var.rollup_symbol)
+                var.rollup_symbol = ""
         # d print("___instrument", datetime.now() - tm)
 
     def display_account(self: Markets):
@@ -2019,6 +2020,9 @@ def handler_instrument(event) -> None:
                             if var.symbol != symbol:  # Opens the options
                                 # desk only on the second click
                                 create = False
+                            if var.rollup_symbol == "cancel":
+                                create = False
+                                var.rollup_symbol = ""
                             var.symbol = symbol
                         else:
                             symb = set_option(
@@ -2169,6 +2173,7 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
         tree = TreeTable.instrument
         tree.delete_hierarchical(parent=market, iid=f"{market}!{symb}")
         var.select_time = time.time()
+        var.rollup_symbol = "cancel"
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{var.symbol[0]}"
         )
