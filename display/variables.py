@@ -1657,7 +1657,7 @@ class OrderForm:
             if "\n" in OrderForm.title["text"]:
                 text = "Option\nchain"
             else:
-                text = "Option chain"
+                text = "Option Chain"
             OrderForm.title.config(bg=Variables.bg_select_color, text=text)
 
     def title_on_leave(event):

@@ -1901,8 +1901,11 @@ def update_order_form():
     instrument = form.ws.Instrument[var.symbol]
     if form.ws.name != "Fake":
         if instrument.ticker == "option!":
-            symb = set_option(ws=form.ws, instrument=instrument, symbol=var.symbol)
-            var.symbol = (symb, form.ws.name)
+            if var.symbol not in var.selected_option:
+                symb = set_option(ws=form.ws, instrument=instrument, symbol=var.symbol)
+                var.symbol = (symb, form.ws.name)
+            else:
+                var.symbol = var.selected_option[var.symbol]
             instrument = form.ws.Instrument[var.symbol]
         form.option_emi["menu"].delete(0, "end")
         form.entry_price.delete(0, "end")
