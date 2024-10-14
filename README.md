@@ -265,13 +265,16 @@ What happens if you place an order from the standard exchange trading web interf
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/scr/control.png)
 
-1. Use the Menu to activate the auto trading mode, or go to the Bot menu, or restart the program.
+1. Use the Menu to activate the auto trading mode, or go to the Bot menu, or the Settings menu, or restart the program.
 
 2. The information widget displays all trading operations and various useful information during the program operation, including errors if they occur.
 
-3. The Market menu switches between exchanges, displays the connection status, account number and the number of exchange reloads due to poor connection or other reasons.
+3. The Instruments menu allows you to subscribe to available instruments to receive live market data. The menu separates instruments by category and currency. It also displays the connection status, account number, and the number of times the exchange has been rebooted due to poor connection or other reasons. Once you subscribe to an instrument, it appears in section 5.
 
-4. You can click on the order book area to place a new order. You can place an order for all available bots. Moreover, an order can be placed for a specific instrument that does not belong to any bot.
+> [!NOTE]
+> Options are subscribed to in series for all available call and put strikes. For each option, a subscription is made to the orderbook and ticker websocket streams. Therefore, it should be noted that subscribing to only one option series can cause a hundred or more streams at the same time, which in turn will cause a large network load. After subscribing to an option series, the option selection is made through the Option Chain.
+
+4. You can use the order book area to place a new order. You can place an order for all available bots. Moreover, an order can be placed for a specific instrument that does not belong to any bot.
 
 5. Click on the instrument area to switch the order book to another instrument.
 
