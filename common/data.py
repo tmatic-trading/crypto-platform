@@ -162,6 +162,7 @@ class Instrument:
     vega: float = "-"
     theta: float = "-"
     gamma: float = "-"
+    rho: float = "-"
     change24h: float = "-"
     markPrice: float = "-"
 

@@ -1085,6 +1085,32 @@ class Function(WS, Variables):
             else:
                 form.state.value["text"] = instrument.state
             form.cache["state"] = instrument.state
+        if "option" in instrument.category:
+            if instrument.delta != form.cache["delta"]:
+                form.delta.value["text"] = service.number_rounding(
+                    number=instrument.delta, precision=6
+                )
+                form.cache["delta"] = instrument.delta
+            if instrument.gamma != form.cache["gamma"]:
+                form.gamma.value["text"] = service.number_rounding(
+                    number=instrument.gamma, precision=6
+                )
+                form.cache["delta"] = instrument.gamma
+            if instrument.vega != form.cache["vega"]:
+                form.vega.value["text"] = service.number_rounding(
+                    number=instrument.vega, precision=6
+                )
+                form.cache["vega"] = instrument.vega
+            if instrument.theta != form.cache["theta"]:
+                form.theta.value["text"] = service.number_rounding(
+                    number=instrument.theta, precision=6
+                )
+                form.cache["theta"] = instrument.theta
+            if instrument.rho != form.cache["rho"]:
+                form.rho.value["text"] = service.number_rounding(
+                    number=instrument.rho, precision=6
+                )
+                form.cache["rho"] = instrument.rho
 
     def refresh_tables(self: Markets) -> None:
         current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
@@ -1979,17 +2005,30 @@ def update_order_form():
             form.state.value["text"] = instrument.state
         form.cache["state"] = instrument.state
         if instrument.makerFee != None:
-            form.takerfee.name.grid(row=0, column=0, sticky="W")
-            form.takerfee.value.grid(row=0, column=1, sticky="E")
-            form.makerfee.name.grid(row=0, column=0, sticky="W")
-            form.makerfee.value.grid(row=0, column=1, sticky="E")
+            form.takerfee.sub.grid(row=8, column=0, sticky="NEWS")
+            form.makerfee.sub.grid(row=9, column=0, sticky="NEWS")
             form.takerfee.value["text"] = f"{instrument.takerFee*100}%"
             form.makerfee.value["text"] = f"{instrument.makerFee*100}%"
         else:
-            form.takerfee.name.grid_forget()
-            form.takerfee.value.grid_forget()
-            form.makerfee.name.grid_forget()
-            form.makerfee.value.grid_forget()
+            form.takerfee.sub.grid_forget()
+            form.makerfee.sub.grid_forget()
+        if "option" in instrument.category:
+            form.delta.sub.grid(row=10, column=0, sticky="NEWS")
+            form.gamma.sub.grid(row=11, column=0, sticky="NEWS")
+            form.vega.sub.grid(row=12, column=0, sticky="NEWS")
+            form.theta.sub.grid(row=13, column=0, sticky="NEWS")
+            form.rho.sub.grid(row=14, column=0, sticky="NEWS")
+            form.delta.value["text"] = instrument.delta
+            form.gamma.value["text"] = instrument.gamma
+            form.vega.value["text"] = instrument.vega
+            form.theta.value["text"] = instrument.theta
+            form.rho.value["text"] = instrument.rho
+        else:
+            form.delta.sub.grid_forget()
+            form.gamma.sub.grid_forget()
+            form.vega.sub.grid_forget()
+            form.theta.sub.grid_forget()
+            form.rho.sub.grid_forget()
 
 
 def handler_orderbook(event) -> None:

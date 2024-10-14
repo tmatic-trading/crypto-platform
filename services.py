@@ -102,12 +102,29 @@ def get_usage():
 
 def ticksize_rounding(price: float, ticksize: float) -> float:
     """
-    Rounds the price depending on the tickSize value
+    Rounds the price depending on the tickSize value.
     """
     arg = 1 / ticksize
     res = round(price * arg, 0) / arg
 
     return res
+
+
+def number_rounding(number: float, precision: int) -> str:
+    """
+    Rounds a number to the specified precision.
+    """
+    if not isinstance(number, float):
+        return number
+    number = "{:.{precision}f}".format(number, precision=precision)
+    for num, char in enumerate(reversed(number)):
+        if char != "0":
+            break
+    number = number[: len(number) - num]
+    if number[-1] == ".":
+        number = number[:-1]
+
+    return number
 
 
 def time_converter(

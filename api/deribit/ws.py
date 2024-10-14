@@ -407,15 +407,14 @@ class Deribit(Variables):
         instrument.volume24h = values["stats"]["volume"]
         if "funding_8h" in values:
             instrument.fundingRate = values["funding_8h"] * 100
-        try:
+        if "open_interest" in values:
             instrument.openInterest = values["open_interest"]
-        except Exception:
-            pass
         if "option" in instrument.category:
             instrument.delta = values["greeks"]["delta"]
             instrument.vega = values["greeks"]["vega"]
             instrument.theta = values["greeks"]["theta"]
             instrument.gamma = values["greeks"]["gamma"]
+            instrument.rho = values["greeks"]["rho"]
             instrument.bidIv = values["bid_iv"]
             instrument.askIv = values["ask_iv"]
         instrument.bidPrice = values["best_bid_price"]

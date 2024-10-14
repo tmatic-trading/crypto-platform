@@ -548,7 +548,7 @@ class Variables:
     frame_orderbook.pack(fill="both")
 
     # Frame for the new order form
-    frame_order_form = tk.Frame(frame_symbol)
+    frame_order_form = tk.Frame(frame_symbol, bg=book_color)
     frame_order_form.pack(fill="both", expand=True)
 
     notebook_frames = {}
@@ -1636,12 +1636,12 @@ class FormLabel(tk.Label):
 
 class ParametersFrame(tk.Label):
     def __init__(self, frame, row, name):
-        sub = tk.Frame(frame, bg=Variables.book_color)
-        sub.grid(row=row, column=0, sticky="NEWS")
-        self.name = FormLabel(sub, text=name, row=0, column=0, sticky="W")
-        self.value = FormLabel(sub, text="-", row=0, column=1, sticky="E")
-        sub.grid_columnconfigure(0, weight=1)
-        sub.grid_columnconfigure(1, weight=1)
+        self.sub = tk.Frame(frame, bg=Variables.book_color)
+        self.sub.grid(row=row, column=0, sticky="NEWS")
+        self.name = FormLabel(self.sub, text=name, row=0, column=0, sticky="W")
+        self.value = FormLabel(self.sub, text="-", row=0, column=1, sticky="E")
+        self.sub.grid_columnconfigure(0, weight=1)
+        self.sub.grid_columnconfigure(1, weight=1)
 
 
 def only_for_options(category):
@@ -1723,7 +1723,7 @@ class OrderForm:
         borderwidth=1,
         bg=Variables.book_color,
     )
-    parameters.pack(fill="both", expand=True)
+    parameters.pack(fill="both")
     parameters.grid_columnconfigure(0, weight=1)
     market = ParametersFrame(parameters, 0, "Market")
     category = ParametersFrame(parameters, 1, "Category")
@@ -1735,7 +1735,25 @@ class OrderForm:
     minOrderQty = ParametersFrame(parameters, 7, "Min Order Size")
     takerfee = ParametersFrame(parameters, 8, "Taker's fee")
     makerfee = ParametersFrame(parameters, 9, "Maker's fee")
+    delta = ParametersFrame(parameters, 10, "Delta")
+    gamma = ParametersFrame(parameters, 11, "Gamma")
+    vega = ParametersFrame(parameters, 12, "Vega")
+    theta = ParametersFrame(parameters, 13, "Theta")
+    rho = ParametersFrame(parameters, 14, "Rho")
+
+    blank = tk.Frame(
+        Variables.frame_order_form,
+        relief="sunken",
+        borderwidth=1,
+        bg=Variables.book_color,
+    )
+    blank.pack(fill="both", expand=True)
 
     cache = dict()
     cache["markprice"] = "-"
     cache["state"] = "-"
+    cache["delta"] = "-"
+    cache["gamma"] = "-"
+    cache["vega"] = "-"
+    cache["theta"] = "-"
+    cache["rho"] = "-"
