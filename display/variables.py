@@ -431,8 +431,10 @@ class Variables:
     )
     style.configure(
         "orderbook.Treeview",
-        fieldbackground=book_color,
+        fieldbackground="red",
         background=book_color,
+        # highlightthickness=0,
+        borderwidth=0,
     )
     style.configure(
         "menu.Treeview",
@@ -541,14 +543,16 @@ class Variables:
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
 
-    frame_symbol = tk.Frame(pw_rest2, bg=book_color)
+    frame_symbol = tk.Frame(pw_rest2, bg=book_color, border=1, relief="sunken")
+
+    frame_symbol_nested = ScrollFrame(frame_symbol, bg=book_color, bd=0)
 
     # Frame for the order book
-    frame_orderbook = tk.Frame(frame_symbol)
+    frame_orderbook = tk.Frame(frame_symbol_nested)
     frame_orderbook.pack(fill="both")
 
     # Frame for the new order form
-    frame_order_form = tk.Frame(frame_symbol, bg=book_color)
+    frame_order_form = tk.Frame(frame_symbol_nested, bg=book_color)
     frame_order_form.pack(fill="both", expand=True)
 
     notebook_frames = {}
@@ -1670,12 +1674,9 @@ class OrderForm:
             if items:
                 TreeTable.instrument.set_selection(items[0])
 
-    main = tk.Frame(
-        Variables.frame_order_form,
-        relief="sunken",
-        borderwidth=1,
-        bg=Variables.book_color,
-    )
+    ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
+
+    main = tk.Frame(Variables.frame_order_form, bg=Variables.book_color)
     ws = None
     main.pack(fill="both")
     main.grid_columnconfigure(0, weight=0)
@@ -1715,14 +1716,11 @@ class OrderForm:
     buy_limit.grid(row=0, column=0, sticky="NEWS")
     sell_limit.grid(row=0, column=1, sticky="NEWS")
 
+    ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
+
     # Instrument parameters
 
-    parameters = tk.Frame(
-        Variables.frame_order_form,
-        relief="sunken",
-        borderwidth=1,
-        bg=Variables.book_color,
-    )
+    parameters = tk.Frame(Variables.frame_order_form, bg=Variables.book_color)
     parameters.pack(fill="both")
     parameters.grid_columnconfigure(0, weight=1)
     market = ParametersFrame(parameters, 0, "Market")
@@ -1741,13 +1739,7 @@ class OrderForm:
     theta = ParametersFrame(parameters, 13, "Theta")
     rho = ParametersFrame(parameters, 14, "Rho")
 
-    blank = tk.Frame(
-        Variables.frame_order_form,
-        relief="sunken",
-        borderwidth=1,
-        bg=Variables.book_color,
-    )
-    blank.pack(fill="both", expand=True)
+    ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
 
     cache = dict()
     cache["markprice"] = "-"
