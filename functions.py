@@ -2128,7 +2128,7 @@ def handler_instrument(event) -> None:
                             y_pos = tree.winfo_pointery() - tree.winfo_rooty()
                             if 1 < x_pos - width < 13:
                                 if 5 < y_pos - y < 16:
-                                    # create = False
+                                    create = False
                                     t = threading.Thread(
                                         target=confirm_unsubscribe, args=(market, _symb)
                                     )

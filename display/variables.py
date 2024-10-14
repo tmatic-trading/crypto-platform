@@ -431,7 +431,7 @@ class Variables:
     )
     style.configure(
         "orderbook.Treeview",
-        fieldbackground="red",
+        fieldbackground=book_color,
         background=book_color,
         # highlightthickness=0,
         borderwidth=0,
