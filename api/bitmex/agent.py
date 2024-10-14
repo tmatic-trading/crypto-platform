@@ -216,6 +216,8 @@ class Agent(Bitmex):
                     instrument=self.Instrument[symbol],
                     ws=self,
                 )
+        self.Instrument[symbol].makerFee = instrument["makerFee"]
+        self.Instrument[symbol].takerFee = instrument["takerFee"]
 
         return category
 
