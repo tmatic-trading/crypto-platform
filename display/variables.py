@@ -9,7 +9,7 @@ from typing import Callable, Union
 import services as service
 from api.api import Markets
 
-# from common.data import Instrument
+from common.data import Instrument
 from common.variables import Variables as var
 
 if platform.system() == "Windows":
@@ -1678,6 +1678,7 @@ class OrderForm:
 
     main = tk.Frame(Variables.frame_order_form, bg=Variables.book_color)
     ws = None
+    instrument: Instrument
     main.pack(fill="both")
     main.grid_columnconfigure(0, weight=0)
     main.grid_columnconfigure(1, weight=1)

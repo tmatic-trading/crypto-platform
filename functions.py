@@ -1938,15 +1938,15 @@ def callback_buy_limit() -> None:
 
 def update_order_form():
     form.ws = Markets[var.current_market]
-    instrument = form.ws.Instrument[var.symbol]
+    form.instrument = form.ws.Instrument[var.symbol]
     if form.ws.name != "Fake":
-        if instrument.ticker == "option!":
+        if form.instrument.ticker == "option!":
             if var.symbol not in var.selected_option:
-                symb = set_option(ws=form.ws, instrument=instrument, symbol=var.symbol)
+                symb = set_option(ws=form.ws, instrument=form.instrument, symbol=var.symbol)
                 var.symbol = (symb, form.ws.name)
             else:
                 var.symbol = var.selected_option[var.symbol]
-            instrument = form.ws.Instrument[var.symbol]
+            form.instrument = form.ws.Instrument[var.symbol]
         form.option_emi["menu"].delete(0, "end")
         form.entry_price.delete(0, "end")
         options = list()
@@ -1963,30 +1963,30 @@ def update_order_form():
         form.entry_quantity.delete(0, "end")
         form.entry_quantity.insert(
             0,
-            Function.volume(form.ws, qty=instrument.minOrderQty, symbol=var.symbol),
+            Function.volume(form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol),
         )
         title = service.order_form_title()
         form.title["text"] = title
-        form.market.value["text"] = instrument.market
-        form.category.value["text"] = instrument.category
-        form.settlcurrency.value["text"] = instrument.settlCurrency[0]
-        if instrument.expire != "Perpetual":
-            form.expiry.value["text"] = instrument.expire.strftime("%d%b%y %H:%M")
+        form.market.value["text"] = form.instrument.market
+        form.category.value["text"] = form.instrument.category
+        form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
+        if form.instrument.expire != "Perpetual":
+            form.expiry.value["text"] = form.instrument.expire.strftime("%d%b%y %H:%M")
         else:
             form.expiry.value["text"] = "Perpetual"
         form.ticksize.value["text"] = Function.format_price(
-            form.ws, number=instrument.tickSize, symbol=var.symbol
+            form.ws, number=form.instrument.tickSize, symbol=var.symbol
         )
-        if "quanto" in instrument.category:
+        if "quanto" in form.instrument.category:
             quote_currency = "Contracts"
         elif (
-            "inverse" in instrument.category
-            or "reversed" in instrument.category
-            or "_rev" in instrument.category
+            "inverse" in form.instrument.category
+            or "reversed" in form.instrument.category
+            or "_rev" in form.instrument.category
         ):
-            quote_currency = instrument.quoteCoin
+            quote_currency = form.instrument.quoteCoin
         else:
-            quote_currency = instrument.baseCoin
+            quote_currency = form.instrument.baseCoin
         if quote_currency == "Contracts":
             form.qty_currency["text"] = "Cont"
         else:
@@ -1994,35 +1994,35 @@ def update_order_form():
         form.minOrderQty.value["text"] = (
             quote_currency
             + " "
-            + Function.volume(form.ws, qty=instrument.minOrderQty, symbol=var.symbol)
+            + Function.volume(form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol)
         )
-        form.price_currency["text"] = instrument.quoteCoin
-        form.markprice.value["text"] = instrument.markPrice
-        form.cache["markprice"] = instrument.markPrice
-        if instrument.state == "open":
+        form.price_currency["text"] = form.instrument.quoteCoin
+        form.markprice.value["text"] = form.instrument.markPrice
+        form.cache["markprice"] = form.instrument.markPrice
+        if form.instrument.state == "open":
             form.state.value["text"] = "Open"
         else:
-            form.state.value["text"] = instrument.state
-        form.cache["state"] = instrument.state
-        if instrument.makerFee != None:
+            form.state.value["text"] = form.instrument.state
+        form.cache["state"] = form.instrument.state
+        if form.instrument.makerFee != None:
             form.takerfee.sub.grid(row=8, column=0, sticky="NEWS")
             form.makerfee.sub.grid(row=9, column=0, sticky="NEWS")
-            form.takerfee.value["text"] = f"{instrument.takerFee*100}%"
-            form.makerfee.value["text"] = f"{instrument.makerFee*100}%"
+            form.takerfee.value["text"] = f"{form.instrument.takerFee*100}%"
+            form.makerfee.value["text"] = f"{form.instrument.makerFee*100}%"
         else:
             form.takerfee.sub.grid_forget()
             form.makerfee.sub.grid_forget()
-        if "option" in instrument.category:
+        if "option" in form.instrument.category:
             form.delta.sub.grid(row=10, column=0, sticky="NEWS")
             form.gamma.sub.grid(row=11, column=0, sticky="NEWS")
             form.vega.sub.grid(row=12, column=0, sticky="NEWS")
             form.theta.sub.grid(row=13, column=0, sticky="NEWS")
             form.rho.sub.grid(row=14, column=0, sticky="NEWS")
-            form.delta.value["text"] = instrument.delta
-            form.gamma.value["text"] = instrument.gamma
-            form.vega.value["text"] = instrument.vega
-            form.theta.value["text"] = instrument.theta
-            form.rho.value["text"] = instrument.rho
+            form.delta.value["text"] = form.instrument.delta
+            form.gamma.value["text"] = form.instrument.gamma
+            form.vega.value["text"] = form.instrument.vega
+            form.theta.value["text"] = form.instrument.theta
+            form.rho.value["text"] = form.instrument.rho
         else:
             form.delta.sub.grid_forget()
             form.gamma.sub.grid_forget()
