@@ -163,6 +163,7 @@ class Instrument:
     theta: float = "-"
     gamma: float = "-"
     change24h: float = "-"
+    markPrice: float = "-"
 
     def __iter__(self):
         return Ret.iter(self)

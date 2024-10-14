@@ -8,7 +8,6 @@ class Header:
         "ENTRY",
         "PNL",
         "MCALL",
-        "STATE",
         "VOL24h",
         "EXPIRY",
         "FUND",

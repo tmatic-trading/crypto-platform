@@ -207,6 +207,7 @@ class Bybit(Variables):
                 instrument.gamma = values["gamma"]
                 instrument.bidIv = values["bidIv"]
                 instrument.askIv = values["askIv"]
+            instrument.markPrice = values["markPrice"]
         instrument.confirm_subscription.add("ticker")
 
     def __update_account(self, values: dict) -> None:

@@ -109,7 +109,7 @@ class Agent(Deribit):
             instrument.settlCurrency = (values["settlement_currency"], self.name)
         else:
             instrument.settlCurrency = (
-                "None",
+                "-",
                 self.name,
             )
         instrument.expire = service.time_converter(

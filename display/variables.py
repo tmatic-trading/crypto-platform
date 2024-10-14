@@ -1727,9 +1727,15 @@ class OrderForm:
     parameters.grid_columnconfigure(0, weight=1)
     market = ParametersFrame(parameters, 0, "Market")
     category = ParametersFrame(parameters, 1, "Category")
-    settlcurrency = ParametersFrame(parameters, 2, "Settlement Currency")
-    expiry = ParametersFrame(parameters, 3, "Expiry")
-    ticksize = ParametersFrame(parameters, 4, "Tick Size")
-    minOrderQty = ParametersFrame(parameters, 5, "Min Order Size")
-    takerfee = ParametersFrame(parameters, 6, "Taker's fee")
-    makerfee = ParametersFrame(parameters, 7, "Maker's fee")
+    markprice = ParametersFrame(parameters, 2, "Mark Price")
+    settlcurrency = ParametersFrame(parameters, 3, "Settlement Currency")
+    expiry = ParametersFrame(parameters, 4, "Expiry")
+    state = ParametersFrame(parameters, 5, "State")
+    ticksize = ParametersFrame(parameters, 6, "Tick Size")
+    minOrderQty = ParametersFrame(parameters, 7, "Min Order Size")
+    takerfee = ParametersFrame(parameters, 8, "Taker's fee")
+    makerfee = ParametersFrame(parameters, 9, "Maker's fee")
+
+    cache = dict()
+    cache["markprice"] = "-"
+    cache["state"] = "-"

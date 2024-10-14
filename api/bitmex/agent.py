@@ -181,7 +181,7 @@ class Agent(Bitmex):
             )
         else:
             self.Instrument[symbol].settlCurrency = (
-                "None",
+                "-",
                 self.name,
             )
         self.Instrument[symbol].tickSize = instrument["tickSize"]

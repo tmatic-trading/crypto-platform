@@ -423,6 +423,7 @@ class Deribit(Variables):
         instrument.bidSize = values["best_bid_amount"]
         instrument.askSize = values["best_ask_amount"]
         instrument.markPrice = values["mark_price"]
+        instrument.state = values["state"]
 
     def __update_portfolio(self, values: dict) -> None:
         currency = (values["currency"], self.name)

@@ -797,7 +797,6 @@ class Function(WS, Variables):
                         instrument.avgEntryPrice,
                         instrument.unrealisedPnl,
                         instrument.marginCallPrice,
-                        instrument.state,
                         instrument.volume24h,
                         instrument.expire,
                         instrument.fundingRate,
@@ -1076,8 +1075,20 @@ class Function(WS, Variables):
                 tree.update(row=num, values=compare)
                 tree.cache[num] = compare
 
+    def display_parameters(self, instrument: Instrument):
+        if instrument.markPrice != form.cache["markprice"]:
+            form.markprice.value["text"] = instrument.markPrice
+            form.cache["markprice"] = instrument.markPrice
+        if instrument.state != form.cache["state"]:
+            if instrument.state == "open":
+                form.state.value["text"] = "Open"
+            else:
+                form.state.value["text"] = instrument.state
+            form.cache["state"] = instrument.state
+
     def refresh_tables(self: Markets) -> None:
         current_notebook_tab = disp.notebook.tab(disp.notebook.select(), "text")
+        instrument = self.Instrument[var.symbol]
 
         # service.count_orders()
 
@@ -1168,7 +1179,6 @@ class Function(WS, Variables):
                 count += 1
 
         num = int(disp.num_book / 2)
-        instrument = self.Instrument[var.symbol]
         display_order_book_values(
             val=instrument.bids,
             start=num,
@@ -1204,6 +1214,10 @@ class Function(WS, Variables):
 
         elif current_notebook_tab == "Bots":
             Function.display_robots(self)
+
+        # Refresh instrument parameters
+
+        Function.display_parameters(self, instrument)
 
         # Refresh bottom table
 
@@ -1370,9 +1384,9 @@ class Function(WS, Variables):
             self, number=instrument.avgEntryPrice, symbol=symbol
         )
         compare[4] = format_number(number=instrument.unrealisedPnl)
-        compare[7] = Function.humanFormat(self, instrument.volume24h, symbol)
-        if compare[8] != "Perpetual":
-            compare[8] = instrument.expire.strftime("%d%b%y %H:%M")
+        compare[6] = Function.humanFormat(self, instrument.volume24h, symbol)
+        if compare[7] != "Perpetual":
+            compare[7] = instrument.expire.strftime("%d%b%y %H:%M")
 
         return compare
 
@@ -1937,18 +1951,33 @@ def update_order_form():
         form.ticksize.value["text"] = Function.format_price(
             form.ws, number=instrument.tickSize, symbol=var.symbol
         )
-        form.minOrderQty.value["text"] = instrument.minOrderQty
         if "quanto" in instrument.category:
-            form.qty_currency["text"] = "Cont"
+            quote_currency = "Contracts"
         elif (
             "inverse" in instrument.category
             or "reversed" in instrument.category
             or "_rev" in instrument.category
         ):
-            form.qty_currency["text"] = instrument.quoteCoin
+            quote_currency = instrument.quoteCoin
         else:
-            form.qty_currency["text"] = instrument.baseCoin
+            quote_currency = instrument.baseCoin
+        if quote_currency == "Contracts":
+            form.qty_currency["text"] = "Cont"
+        else:
+            form.qty_currency["text"] = quote_currency
+        form.minOrderQty.value["text"] = (
+            quote_currency
+            + " "
+            + Function.volume(form.ws, qty=instrument.minOrderQty, symbol=var.symbol)
+        )
         form.price_currency["text"] = instrument.quoteCoin
+        form.markprice.value["text"] = instrument.markPrice
+        form.cache["markprice"] = instrument.markPrice
+        if instrument.state == "open":
+            form.state.value["text"] = "Open"
+        else:
+            form.state.value["text"] = instrument.state
+        form.cache["state"] = instrument.state
         if instrument.makerFee != None:
             form.takerfee.name.grid(row=0, column=0, sticky="W")
             form.takerfee.value.grid(row=0, column=1, sticky="E")
@@ -2189,12 +2218,12 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
         tree = TreeTable.instrument
         tree.delete_hierarchical(parent=market, iid=f"{market}!{symb}")
         var.select_time = time.time()
-        var.rollup_symbol = "cancel"        
+        var.rollup_symbol = "cancel"
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{var.symbol[0]}"
         )
         var.current_market = market
-        update_order_form()              
+        update_order_form()
     else:
         message = ErrorMessage.FAILED_UNSUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")

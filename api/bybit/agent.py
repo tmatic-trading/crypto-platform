@@ -664,7 +664,7 @@ class Agent(Bybit):
                 self.settleCoin_list.append(instrument["settleCoin"])
         else:
             self.Instrument[symbol].settlCurrency = (
-                "None",
+                "-",
                 self.name,
             )
         if "deliveryTime" in instrument:

@@ -490,6 +490,8 @@ class Bitmex(Variables):
             instrument.volume24h = values["volume24h"]
         if "state" in values:
             instrument.state = values["state"]
+        if "markPrice" in values:
+            instrument.markPrice = values["markPrice"]
         instrument.openInterest = 0
 
     def __update_account(self, settlCurrency: tuple, values: dict):
