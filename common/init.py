@@ -440,7 +440,7 @@ def setup_database_connecion() -> None:
         )
         var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS SIDE_ix ON coins (SIDE)")
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON symbols (SYMBOL, MARKET)"
+            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON symbols (MARKET, SYMBOL)"
         )
         var.connect_sqlite.commit()
 

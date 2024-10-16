@@ -204,7 +204,7 @@ class Function(WS, Variables):
                 fund=1,
                 execFee=row["execFee"],
             )
-            if refer == "Delivery":
+            if clientID == "Delivery":
                 calc["commiss"] = 0
             instrument = self.Instrument[row["symbol"]]
             instrument.volume += abs(lastQty)
@@ -343,7 +343,7 @@ class Function(WS, Variables):
                             row["side"] = "Buy"
                             pos += qty
                         row["lastQty"] = abs(qty)
-                        handle_trade_or_delivery(row, emi, "Delivery", 0)
+                        handle_trade_or_delivery(row, emi, "", "Delivery")
                         bot_list.append(emi)
                 diff = -(lastQty + pos)
                 if diff != 0:
