@@ -252,6 +252,15 @@ def insert_database(values: list, table: str) -> None:
                     "insert into robots (EMI,STATE,TIMEFR) VALUES (?,?,?)",
                     values,
                 )
+            elif table == "symbols":
+                var.cursor_sqlite.execute(
+                    "insert into symbols (SYMBOL,MARKET,CATEGORY,CURRENCY,"
+                    + "TICKER,MYMULTIPLIER,MULTIPLIER,TICKSIZE,"
+                    + "PRICE_PRECISION,MINORDERQTY,QTYSTEP,PRECISION,EXPIRE,"
+                    + "BASECOIN,QUOTECOIN,VALUEOFONECONTRACT) VALUES (?,?,?,"
+                    + "?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    values,
+                )                
             else:
                 return "Sqlite Error: Unknown database table."
             var.connect_sqlite.commit()

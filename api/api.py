@@ -57,11 +57,11 @@ class WS(Variables):
             On success, "" is returned, otherwise an error type or error message.
         """
 
-        '''def start_ws_in_thread():
+        """def start_ws_in_thread():
             try:
                 Markets[self.name].start()
             except Exception as exception:
-                service.display_exception(exception)'''
+                service.display_exception(exception)"""
 
         def get_in_thread(method):
             method_name = method.__name__
@@ -88,7 +88,6 @@ class WS(Variables):
                 error = service.unexpected_error(self)
                 success[_thread] = error
 
-
         def start_ws_in_thread(_thread):
             try:
                 error = Markets[self.name].start_ws()
@@ -103,10 +102,8 @@ class WS(Variables):
             if not error:
                 success[_thread] = error
 
-
-
         # It starts here.
-        
+
         threads = []
         success = {}
         success["get_active_instruments"] = ""
@@ -126,17 +123,6 @@ class WS(Variables):
                     self.name + ": error occurred while loading " + method_name
                 )
                 return error
-
-
-        '''try:
-            error = WS.get_active_instruments(self)
-            if error:
-                return error
-        except Exception as exception:
-            service.display_exception(exception)
-            message = self.name + " Instruments not loaded."
-            self.logger.error(message)
-            return service.unexpected_error(self)'''
         try:
             Agents[self.name].value.activate_funding_thread(self)
         except:

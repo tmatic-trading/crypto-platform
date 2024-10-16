@@ -3,6 +3,7 @@ import threading
 import time
 import traceback
 from collections import OrderedDict
+from datetime import datetime
 from time import sleep
 
 import requests
@@ -17,10 +18,6 @@ from common.variables import Variables as var
 from services import display_exception
 
 from .api_auth import API_auth
-
-
-from datetime import datetime
-
 
 
 class Bitmex(Variables):
@@ -108,7 +105,7 @@ class Bitmex(Variables):
                 self.logNumFatal = "FATAL"
                 return self.logNumFatal
             self.logger.info("Connected to websocket.")
-            
+
             return ""
 
     def setup_streams(self) -> str:
@@ -122,13 +119,9 @@ class Bitmex(Variables):
                 for symbol in self.symbol_list:
                     subscriptions = []
                     for sub in self.table_subscription:
-                        subscriptions += [
-                            sub + ":" + self.Instrument[symbol].ticker
-                        ]
+                        subscriptions += [sub + ":" + self.Instrument[symbol].ticker]
                     self.logger.info("ws subscribe - " + str(subscriptions))
-                    self.ws.send(
-                        json.dumps({"op": "subscribe", "args": subscriptions})
-                    )
+                    self.ws.send(json.dumps({"op": "subscribe", "args": subscriptions}))
         except Exception as exception:
             display_exception(exception)
             message = "Exception while connecting to websocket."
@@ -142,7 +135,7 @@ class Bitmex(Variables):
             if not self.logNumFatal:
                 self.logger.info("Data received. Continuing.")
                 self.pinging = "pong"
-        
+
         return ""
 
     def subscribe_symbol(self, symbol: tuple, timeout=None) -> None:

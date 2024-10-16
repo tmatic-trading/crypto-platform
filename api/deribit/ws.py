@@ -156,7 +156,7 @@ class Deribit(Variables):
                 self.logger.info("All subscriptions are successful. Continuing.")
         else:
             return self.logNumFatal
-        
+
         return ""
 
     def __subscribe(self):

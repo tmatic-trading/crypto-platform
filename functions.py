@@ -99,9 +99,58 @@ class Function(WS, Variables):
             "funding": funding * coef,
         }
 
-    def add_symbol(self: Markets, symbol: str, ticker: str, category: str) -> None:
-        if (symbol, self.name) not in self.Instrument.get_keys():
-            WS.get_instrument(self, ticker=ticker, category=category)
+    def add_symbol(self: Markets, symb: str, ticker: str, category: str) -> None:
+        symbol = (symb, self.name)
+        if symbol not in self.Instrument.get_keys():
+            qwr = (
+                "select * from symbols where SYMBOL ='"
+                + symb
+                + "' and MARKET = '"
+                + self.name
+                + "';"
+            )
+            data = service.select_database(qwr)
+            if not data:
+                WS.get_instrument(self, ticker=ticker, category=category)
+                instrument = self.Instrument[symbol]
+                values = [
+                    instrument.symbol,
+                    instrument.market,
+                    instrument.category,
+                    instrument.settlCurrency[0],
+                    instrument.ticker,
+                    instrument.myMultiplier, 
+                    instrument.multiplier, 
+                    instrument.tickSize, 
+                    instrument.price_precision, 
+                    instrument.minOrderQty, 
+                    instrument.qtyStep, 
+                    instrument.precision, 
+                    instrument.expire, 
+                    instrument.baseCoin, 
+                    instrument.quoteCoin, 
+                    instrument.valueOfOneContract, 
+                ]
+                service.insert_database(values=values, table="symbols")
+            else:
+                data = data[0]
+                instrument = self.Instrument[symbol]
+                instrument.symbol = symb
+                instrument.market = self.name
+                instrument.category = category
+                instrument.settlCurrency = (data["CURRENCY"], self.name)
+                instrument.ticker = ticker
+                instrument.myMultiplier = data["MYMULTIPLIER"]
+                instrument.multiplier = data["MULTIPLIER"]
+                instrument.tickSize = data["TICKSIZE"]
+                instrument.price_precision = data["PRICE_PRECISION"]
+                instrument.minOrderQty = data["MINORDERQTY"]
+                instrument.qtyStep = data["QTYSTEP"]
+                instrument.precision = data["PRECISION"]
+                instrument.expire = service.time_converter(time=data["EXPIRE"])
+                instrument.baseCoin = data["BASECOIN"]
+                instrument.quoteCoin = data["QUOTECOIN"]
+                instrument.valueOfOneContract = data["VALUEOFONECONTRACT"]
 
     def kline_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
         return "data/" + symbol[0] + "_" + self.name + "_" + str(timefr) + ".txt"
@@ -225,7 +274,7 @@ class Function(WS, Variables):
         try:
             Function.add_symbol(
                 self,
-                symbol=row["symbol"][0],
+                symb=row["symbol"][0],
                 ticker=row["ticker"],
                 category=row["category"],
             )
@@ -612,7 +661,7 @@ class Function(WS, Variables):
         """
         Function.add_symbol(
             self,
-            symbol=val["SYMBOL"][0],
+            symb=val["SYMBOL"][0],
             ticker=val["TICKER"],
             category=val["CATEGORY"],
         )
@@ -645,7 +694,7 @@ class Function(WS, Variables):
         """
         Function.add_symbol(
             self,
-            symbol=val["SYMBOL"][0],
+            symb=val["SYMBOL"][0],
             ticker=val["TICKER"],
             category=val["CATEGORY"],
         )
@@ -1942,7 +1991,9 @@ def update_order_form():
     if form.ws.name != "Fake":
         if form.instrument.ticker == "option!":
             if var.symbol not in var.selected_option:
-                symb = set_option(ws=form.ws, instrument=form.instrument, symbol=var.symbol)
+                symb = set_option(
+                    ws=form.ws, instrument=form.instrument, symbol=var.symbol
+                )
                 var.symbol = (symb, form.ws.name)
             else:
                 var.symbol = var.selected_option[var.symbol]
@@ -1963,7 +2014,9 @@ def update_order_form():
         form.entry_quantity.delete(0, "end")
         form.entry_quantity.insert(
             0,
-            Function.volume(form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol),
+            Function.volume(
+                form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol
+            ),
         )
         title = service.order_form_title()
         form.title["text"] = title
@@ -1994,7 +2047,9 @@ def update_order_form():
         form.minOrderQty.value["text"] = (
             quote_currency
             + " "
-            + Function.volume(form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol)
+            + Function.volume(
+                form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol
+            )
         )
         form.price_currency["text"] = form.instrument.quoteCoin
         form.markprice.value["text"] = form.instrument.markPrice

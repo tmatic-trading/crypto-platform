@@ -186,7 +186,7 @@ class Init(WS, Variables):
             for row in data:
                 Function.add_symbol(
                     self,
-                    symbol=row["SYMBOL"],
+                    symb=row["SYMBOL"],
                     ticker=row["TICKER"],
                     category=row["CATEGORY"],
                 )
@@ -389,9 +389,9 @@ def setup_database_connecion() -> None:
         REFER varchar(20) DEFAULT NULL,
         MARKET varchar(20) DEFAULT NULL,
         CURRENCY varchar(10) DEFAULT NULL,
-        SYMBOL varchar(20) DEFAULT NULL,
-        TICKER varchar(20) DEFAULT NULL,
-        CATEGORY varchar(10) DEFAULT NULL,
+        SYMBOL varchar(40) DEFAULT NULL,
+        TICKER varchar(40) DEFAULT NULL,
+        CATEGORY varchar(20) DEFAULT NULL,
         SIDE varchar(4) DEFAULT NULL,
         QTY decimal(20,8) DEFAULT NULL,
         QTY_REST decimal(20,8) DEFAULT NULL,
@@ -405,8 +405,30 @@ def setup_database_connecion() -> None:
         CLORDID int DEFAULT 0,
         ACCOUNT int DEFAULT 0)"""
 
+        sql_create_symbols = """
+        CREATE TABLE IF NOT EXISTS symbols (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,        
+        SYMBOL varchar(40) DEFAULT NULL,
+        MARKET varchar(20) DEFAULT NULL,
+        CURRENCY varchar(10) DEFAULT NULL,
+        TICKER varchar(40) DEFAULT NULL,
+        CATEGORY varchar(20) DEFAULT NULL,
+        MYMULTIPLIER int DEFAULT 1,
+        MULTIPLIER int DEFAULT 1,
+        TICKSIZE decimal(10,12) DEFAULT NULL,
+        PRICE_PRECISION int DEFAULT NULL,
+        MINORDERQTY decimal(10,12) DEFAULT NULL,
+        QTYSTEP decimal(10,12) DEFAULT NULL,
+        PRECISION int  DEFAULT NULL,
+        EXPIRE datetime DEFAULT NULL,
+        BASECOIN varchar(10) DEFAULT NULL,
+        QUOTECOIN varchar(10) DEFAULT NULL,
+        VALUEOFONECONTRACT decimal(10,12) DEFAULT NULL,
+        DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
+
         var.cursor_sqlite.execute(sql_create_robots)
         var.cursor_sqlite.execute(sql_create_coins)
+        var.cursor_sqlite.execute(sql_create_symbols)
         var.cursor_sqlite.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON coins (ID)"
         )
@@ -417,6 +439,9 @@ def setup_database_connecion() -> None:
             "CREATE INDEX IF NOT EXISTS EMI_QTY_ix ON coins (EMI, QTY)"
         )
         var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS SIDE_ix ON coins (SIDE)")
+        var.cursor_sqlite.execute(
+            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON symbols (SYMBOL, MARKET)"
+        )
         var.connect_sqlite.commit()
 
     except Exception as error:

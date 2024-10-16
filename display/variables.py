@@ -8,7 +8,6 @@ from typing import Callable, Union
 
 import services as service
 from api.api import Markets
-
 from common.data import Instrument
 from common.variables import Variables as var
 

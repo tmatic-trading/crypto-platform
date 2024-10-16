@@ -127,7 +127,6 @@ def load_bots() -> None:
     # that is not in the "robots" table, EMI becomes the default SYMBOL name.
     # If the SYMBOL of the unclosed position is not subscribed, it is added
     # to the subscription.
-
     qwr = (
         "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
         + "EMI, SYMBOL, TICKER, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
@@ -142,7 +141,7 @@ def load_bots() -> None:
             ws = Markets[value["MARKET"]]
             functions.Function.add_symbol(
                 ws,
-                symbol=value["SYMBOL"],
+                symb=value["SYMBOL"],
                 ticker=value["TICKER"],
                 category=value["CATEGORY"],
             )
