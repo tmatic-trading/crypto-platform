@@ -98,35 +98,7 @@ class Deribit(Variables):
         """
         pass
 
-    def start(self):
-        if var.order_book_depth == "quote":
-            self.orderbook_depth = 1
-        else:
-            self.orderbook_depth = 10
-        for symbol in self.symbol_list:
-            instrument = self.Instrument[symbol]
-            if "linear" in instrument.category:
-                self.Result[(instrument.quoteCoin, self.name)]
-            elif "reversed" in instrument.category:
-                self.Result[(instrument.baseCoin, self.name)]
-            elif "spot" in instrument.category:
-                self.Result[(instrument.baseCoin, self.name)]
-                self.Result[(instrument.quoteCoin, self.name)]
-            elif "option" in instrument.category:
-                self.Result[(instrument.baseCoin, self.name)]
-        self.__connect()
-        if not self.logNumFatal:
-            self.logger.info("Connected to websocket.")
-            self.__establish_heartbeat()
-            self.__subscribe()
-            res = self._confirm_subscription()
-            if not res:
-                self.logger.info("All subscriptions are successful. Continuing.")
-
-    def __connect(self) -> None:
-        """
-        Connecting to websocket.
-        """
+    def start_ws(self):
         self.logger.info("Connecting to websocket")
         self.ws = websocket.WebSocketApp(
             self.ws_url + self.api_version,
@@ -146,15 +118,46 @@ class Deribit(Variables):
         if time_out <= 0:
             self.logger.error("Couldn't connect to websocket!")
             self.logNumFatal = "FATAL"
+            return self.logNumFatal
+        self.logger.info("Connected to websocket.")
         time_out, slp = 3, 0.05
         while not self.access_token:
             time_out -= slp
             if time_out <= 0:
                 self.logger.error("Access_token not received. Reboot.")
                 self.logNumFatal = "FATAL"
-                return
+                return self.logNumFatal
             time.sleep(slp)
         self.logger.info("access_token received")
+
+        return ""
+
+    def setup_streams(self) -> str:
+        if var.order_book_depth == "quote":
+            self.orderbook_depth = 1
+        else:
+            self.orderbook_depth = 10
+        for symbol in self.symbol_list:
+            instrument = self.Instrument[symbol]
+            if "linear" in instrument.category:
+                self.Result[(instrument.quoteCoin, self.name)]
+            elif "reversed" in instrument.category:
+                self.Result[(instrument.baseCoin, self.name)]
+            elif "spot" in instrument.category:
+                self.Result[(instrument.baseCoin, self.name)]
+                self.Result[(instrument.quoteCoin, self.name)]
+            elif "option" in instrument.category:
+                self.Result[(instrument.baseCoin, self.name)]
+        if not self.logNumFatal:
+            self.__establish_heartbeat()
+            self.__subscribe()
+            res = self._confirm_subscription()
+            if not res:
+                self.logger.info("All subscriptions are successful. Continuing.")
+        else:
+            return self.logNumFatal
+        
+        return ""
 
     def __subscribe(self):
         self.subscriptions = list()

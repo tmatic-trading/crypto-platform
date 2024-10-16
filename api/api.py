@@ -57,11 +57,11 @@ class WS(Variables):
             On success, "" is returned, otherwise an error type or error message.
         """
 
-        def start_ws_in_thread():
+        '''def start_ws_in_thread():
             try:
                 Markets[self.name].start()
             except Exception as exception:
-                service.display_exception(exception)
+                service.display_exception(exception)'''
 
         def get_in_thread(method):
             method_name = method.__name__
@@ -75,9 +75,60 @@ class WS(Variables):
             except Exception as exception:
                 service.display_exception(exception)
 
-        # It starts here.
+        def get_instruments(_thread):
+            try:
+                error = WS.get_active_instruments(self)
+                if error:
+                    success[_thread] = error
+                    return
+            except Exception as exception:
+                service.display_exception(exception)
+                message = self.name + " Instruments not loaded."
+                self.logger.error(message)
+                error = service.unexpected_error(self)
+                success[_thread] = error
 
-        try:
+
+        def start_ws_in_thread(_thread):
+            try:
+                error = Markets[self.name].start_ws()
+                if error:
+                    success[_thread] = error
+            except Exception as exception:
+                service.display_exception(exception)
+                success[_thread] = "FATAL"
+
+        def setup_streams(_thread):
+            error = Markets[self.name].setup_streams()
+            if not error:
+                success[_thread] = error
+
+
+
+        # It starts here.
+        
+        threads = []
+        success = {}
+        success["get_active_instruments"] = ""
+        t = threading.Thread(target=get_instruments, args=("get_active_instruments",))
+        threads.append(t)
+        t.start()
+        success["start_ws"] = ""
+        t = threading.Thread(target=start_ws_in_thread, args=("start_ws",))
+        threads.append(t)
+        t.start()
+
+        [thread.join() for thread in threads]
+
+        for method_name, error in success.items():
+            if error:
+                self.logger.error(
+                    self.name + ": error occurred while loading " + method_name
+                )
+                return error
+
+
+        '''try:
             error = WS.get_active_instruments(self)
             if error:
                 return error
@@ -85,7 +136,7 @@ class WS(Variables):
             service.display_exception(exception)
             message = self.name + " Instruments not loaded."
             self.logger.error(message)
-            return service.unexpected_error(self)
+            return service.unexpected_error(self)'''
         try:
             Agents[self.name].value.activate_funding_thread(self)
         except:
@@ -104,7 +155,8 @@ class WS(Variables):
         threads = []
         success = {}
         try:
-            t = threading.Thread(target=start_ws_in_thread)
+            success["setup_streams"] = "FATAL"
+            t = threading.Thread(target=setup_streams, args=("setup_streams",))
             threads.append(t)
             t.start()
             success["get_user"] = "FATAL"

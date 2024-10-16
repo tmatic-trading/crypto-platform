@@ -1740,8 +1740,6 @@ class OrderForm:
     theta = ParametersFrame(parameters, 13, "Theta")
     rho = ParametersFrame(parameters, 14, "Rho")
 
-    ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
-
     cache = dict()
     cache["markprice"] = "-"
     cache["state"] = "-"

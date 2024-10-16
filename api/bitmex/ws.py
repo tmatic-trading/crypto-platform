@@ -19,6 +19,10 @@ from services import display_exception
 from .api_auth import API_auth
 
 
+from datetime import datetime
+
+
+
 class Bitmex(Variables):
     class Account(metaclass=MetaAccount):
         pass
@@ -61,7 +65,7 @@ class Bitmex(Variables):
         """
         pass
 
-    def start(self):
+    def start_ws(self) -> str:
         if var.order_book_depth != "quote":
             self.depth = "orderBook10"
         else:
@@ -76,28 +80,11 @@ class Bitmex(Variables):
             # "trade",
         }
         if not self.logNumFatal:
-            for symbol in self.symbol_list:
-                instrument = self.Instrument[symbol]
-                if instrument.settlCurrency:
-                    self.Result[(instrument.settlCurrency[0], self.name)]
             self.__reset()
-            self.__connect(self.__get_url())
-            if not self.logNumFatal:
-                self.logger.info("Connected to websocket.")
-                self.__wait_for_tables(self.symbol_list)
-                if not self.logNumFatal:
-                    self.logger.info("Data received. Continuing.")
-                    self.pinging = "pong"
-
-    def __connect(self, url: str) -> None:
-        try:
-            """
-            Connects to websocket in a thread.
-            """
             self.logger.info("Connecting to websocket")
             self.logger.debug("Starting a new thread")
             self.ws = websocket.WebSocketApp(
-                url,
+                self.__get_url(),
                 on_open=self.__on_open,
                 on_close=self.__on_close,
                 header=self.__get_auth(),
@@ -116,23 +103,32 @@ class Bitmex(Variables):
             ):
                 sleep(0.1)
                 time_out -= 0.1
-
             if time_out <= 0:
                 self.logger.error("Couldn't connect to websocket!")
                 self.logNumFatal = "FATAL"
-            else:
-                if not self.logNumFatal:
-                    # Subscribes symbol by symbol to all tables given
-                    for symbol in self.symbol_list:
-                        subscriptions = []
-                        for sub in self.table_subscription:
-                            subscriptions += [
-                                sub + ":" + self.Instrument[symbol].ticker
-                            ]
-                        self.logger.info("ws subscribe - " + str(subscriptions))
-                        self.ws.send(
-                            json.dumps({"op": "subscribe", "args": subscriptions})
-                        )
+                return self.logNumFatal
+            self.logger.info("Connected to websocket.")
+            
+            return ""
+
+    def setup_streams(self) -> str:
+        for symbol in self.symbol_list:
+            instrument = self.Instrument[symbol]
+            if instrument.settlCurrency:
+                self.Result[(instrument.settlCurrency[0], self.name)]
+        try:
+            if not self.logNumFatal:
+                # Subscribes symbol by symbol to all tables given
+                for symbol in self.symbol_list:
+                    subscriptions = []
+                    for sub in self.table_subscription:
+                        subscriptions += [
+                            sub + ":" + self.Instrument[symbol].ticker
+                        ]
+                    self.logger.info("ws subscribe - " + str(subscriptions))
+                    self.ws.send(
+                        json.dumps({"op": "subscribe", "args": subscriptions})
+                    )
         except Exception as exception:
             display_exception(exception)
             message = "Exception while connecting to websocket."
@@ -140,6 +136,14 @@ class Bitmex(Variables):
                 message += " Reboot."
                 self.logNumFatal = "FATAL"
             self.logger.error(message)
+            return self.logNumFatal
+        if not self.logNumFatal:
+            self.__wait_for_tables(self.symbol_list)
+            if not self.logNumFatal:
+                self.logger.info("Data received. Continuing.")
+                self.pinging = "pong"
+        
+        return ""
 
     def subscribe_symbol(self, symbol: tuple, timeout=None) -> None:
         subscriptions = []

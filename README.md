@@ -2,7 +2,7 @@
 
 # Cryptocurrency platform designed for automated trading on the Bitmex, Bybit and Deribit crypto exchanges
 
-![Image](https://github.com/evgrmn/tmatic/blob/main/scr/tmatic1.png)
+![Image](https://github.com/evgrmn/tmatic/blob/main/scr/tmatic.png)
 
 Working condition tested on Linux, Windows and macOS, Python 3.9+
 
@@ -284,7 +284,7 @@ What happens if you place an order from the standard exchange trading web interf
 
 - To cancel or move an order, click on the desired order in the Orders table.
 
-7. The bots available to you are displayed in section 7. Click on a specific bot to go to the bots menu.
+7. Any information block (Orders, Positions, Trades, Account, Results, Bots) from sector 6 can be placed in sector 7 and made always visible. To do this, configure the menu Settings >> BOTTOM_FRAME.
 
 ## Bot menu
 

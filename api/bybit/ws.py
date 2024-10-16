@@ -71,7 +71,12 @@ class Bybit(Variables):
             testnet=self.testnet,
         )
 
-    def start(self):
+    def start_ws(self):
+        """
+        Not used in Bybit.
+        """
+
+    def setup_streams(self):
         if var.order_book_depth == "quote":
             self.orderbook_depth = 1
         else:
