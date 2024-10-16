@@ -324,7 +324,6 @@ class Function(WS, Variables):
             elif row["execType"] == "Delivery":
                 results = self.Result[row["settlCurrency"]]
                 pos = 0
-                bot_list = []
                 if row["side"] == "Sell":
                     lastQty = -row["lastQty"]
                 else:
@@ -344,7 +343,6 @@ class Function(WS, Variables):
                             pos += qty
                         row["lastQty"] = abs(qty)
                         handle_trade_or_delivery(row, emi, "", "Delivery")
-                        bot_list.append(emi)
                 diff = -(lastQty + pos)
                 if diff != 0:
                     qwr = (
@@ -373,7 +371,7 @@ class Function(WS, Variables):
                         else:
                             row["side"] = "Buy"
                         row["lastQty"] = abs(diff)
-                        handle_trade_or_delivery(row, emi, "Delivery", 0)
+                        handle_trade_or_delivery(row, emi, "", "Delivery")
 
             # Funding
 
