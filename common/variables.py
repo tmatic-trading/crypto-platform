@@ -41,8 +41,8 @@ def setup_logger():
 class Variables:
     env = OrderedDict()
     market_list = list()
-    current_market = ""
-    symbol = ""
+    current_market: str
+    symbol: tuple
     refresh_rate = 5
     order_book_depth = "orderBook 7"
     db_sqlite = "tmatic.db"

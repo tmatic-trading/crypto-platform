@@ -1682,8 +1682,11 @@ class OrderForm:
     sell_limit = tk.Button(buttons, text="Sell Limit")
     buy_limit = tk.Button(buttons, text="Buy Limit")
     buttons.grid(row=4, column=0, columnspan=3, sticky="NEWS")
-    qty_var = tk.StringVar()
-    price_var = tk.StringVar()
+    price_name = "price"
+    qty_name = "quantity"
+    price_var = tk.StringVar(name=price_name)
+    qty_var = tk.StringVar(name=qty_name)
+    warning = dict()
     entry_price = tk.Entry(
         main, width=10, bg=Variables.bg_color, textvariable=price_var
     )

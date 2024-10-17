@@ -1,3 +1,4 @@
+import re
 import threading
 import time
 import tkinter as tk
@@ -259,7 +260,7 @@ class Function(WS, Variables):
                 "SIDE": row["side"],
                 "TRADE_PRICE": row["lastPx"],
                 "QTY": abs(lastQty),
-                "BOT": emi,
+                "EMI": emi,
                 "TICKER": instrument.ticker,
                 "CATEGORY": instrument.category,
             }
@@ -1932,9 +1933,13 @@ def check_order_warning():
 
 
 def callback_sell_limit() -> None:
+    for warning in form.warning.values():
+        if warning != "":
+            warning_window(warning)
+            return
     if check_order_warning():
         emi = form.emi_var.get()
-        if form.qty_var.get() and form.price_var.get() and emi and emi != "Select":
+        if emi != "Select":
             try:
                 qnt = abs(float(form.qty_var.get()))
                 price = float(form.price_var.get())
@@ -1946,9 +1951,6 @@ def callback_sell_limit() -> None:
                 price = Function.round_price(
                     form.ws, symbol=var.symbol, price=price, rside=-qnt
                 )
-                if price <= 0:
-                    warning_window("The price must be above zero.")
-                    return
                 if minimum_qty(qnt):
                     return
                 Function.post_order(
@@ -1961,10 +1963,14 @@ def callback_sell_limit() -> None:
                     qty=qnt,
                 )
         else:
-            warning_window("Some of the fields are empty!")
+            warning_window("The selection is empty.")
 
 
 def callback_buy_limit() -> None:
+    for warning in form.warning.values():
+        if warning != "":
+            warning_window(warning)
+            return
     if check_order_warning():
         emi = form.emi_var.get()
         if form.qty_var.get() and form.price_var.get() and emi and emi != "Select":
@@ -1979,9 +1985,6 @@ def callback_buy_limit() -> None:
                 price = Function.round_price(
                     form.ws, symbol=var.symbol, price=price, rside=qnt
                 )
-                if price <= 0:
-                    warning_window("The price must be above zero.")
-                    return
                 if minimum_qty(qnt):
                     return
                 Function.post_order(
@@ -2012,6 +2015,7 @@ def update_order_form():
             form.instrument = form.ws.Instrument[var.symbol]
         form.option_emi["menu"].delete(0, "end")
         form.entry_price.delete(0, "end")
+        form.warning[form.price_name] = "The price entry field is empty."
         options = list()
         for name in Bots.keys():
             options.append(name)
@@ -3106,7 +3110,52 @@ for name, values in disp.notebook_frames.items():
     else:
         var.display_bottom = values["method"]
 
+
+def form_trace(item, index, mode, str_var: tk.StringVar, widget: tk.Entry) -> None:
+    """
+    Formats the price and quantity on an order form according to the 
+    precision of the values ​​in the specified instrument.
+    """
+    ws = Markets[var.current_market]
+    instrument = ws.Instrument[var.symbol]
+    if item == form.price_name:
+        precision = instrument.price_precision
+        step = instrument.tickSize
+    elif item == form.qty_name:
+        precision = instrument.precision
+        step = instrument.qtyStep
+    number = re.sub("[^\d\.]", "", str_var.get())
+    number = number.split(".")
+    if len(number) > 1:
+        number[1] = number[1][:precision]
+    number = ".".join(number[:2])
+    if len(number) > 1 and number[0] == ".":
+        number = "0" + number
+    if number != "":
+        num = Decimal(str(number)) / Decimal(str(step))
+        if int(num) != float(num) or float(num) == 0:            
+            widget.config(foreground=disp.red_color)
+            form.warning[item] = f"Incorrect {item}."
+        else:
+            widget.config(foreground=disp.fg_color)
+            form.warning[item] = ""
+    else:
+        form.warning[item] = f"The {item} entry field is empty."
+    cursor = widget.index(tk.INSERT)
+    widget.delete(0, tk.END)
+    widget.insert(0, number)
+    widget.icursor(cursor)
+
+
 form.sell_limit.configure(command=callback_sell_limit)
 form.buy_limit.configure(command=callback_buy_limit)
+form.price_var.trace_add(
+    "write",
+    lambda *trace: form_trace(*trace, form.price_var, form.entry_price),
+)
+form.qty_var.trace_add(
+    "write",
+    lambda *trace: form_trace(*trace, form.qty_var, form.entry_quantity),
+)
 
 # change_color(color=disp.title_color, container=disp.root)

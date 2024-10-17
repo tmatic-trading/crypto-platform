@@ -659,8 +659,14 @@ class SettingsApp:
                     else:
                         s = ""
                     message = (
-                        "The `" + bot_name + "` has " + str(num) + " open "
-                        + "order" + s + ". Before deleting the bot, you "
+                        "The `"
+                        + bot_name
+                        + "` has "
+                        + str(num)
+                        + " open "
+                        + "order"
+                        + s
+                        + ". Before deleting the bot, you "
                         + "need to cancel the orders."
                     )
                     functions.warning_window(message=message)
