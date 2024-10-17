@@ -714,6 +714,7 @@ class SettingsApp:
             if res:
                 TreeTable.bot_menu.set_selection(index=bot_name)
                 self.show(bot_name)
+                functions.update_order_form()
 
         self.switch(option="option")
         values = ["" for _ in Header.name_bot]
@@ -839,13 +840,15 @@ class SettingsApp:
             bot_path = self.get_bot_path(bot_name)
             shutil.rmtree(str(bot_path))
             message += f"\nThe ``/{bot_name}/`` subdirectory erased."
-            TreeTable.bots.delete(iid=bot_name)
+            if bot_name in TreeTable.bots.children:
+                TreeTable.bots.delete(iid=bot_name)
             disp.bot_event_prev = ""
             var.bot_thread_active[bot_name] = False
             del robo.run[bot_name]
             del self.modules[bot_name]
             del var.orders[bot_name]
             functions.remove_bot_klines(bot_name)
+            functions.update_order_form()
         except Exception as e:
             if err is None:
                 err = str(e)
