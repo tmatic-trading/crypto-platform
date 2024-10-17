@@ -651,6 +651,20 @@ class SettingsApp:
 
     def delete(self, bot_name: str):
         def delete_bot(bot_name: str) -> None:
+            if bot_name in var.orders:
+                num = len(var.orders[bot_name])
+                if num > 0:
+                    if num > 1:
+                        s = "s"
+                    else:
+                        s = ""
+                    message = (
+                        "The `" + bot_name + "` has " + str(num) + " open "
+                        + "order" + s + ". Before deleting the bot, you "
+                        + "need to cancel the orders."
+                    )
+                    functions.warning_window(message=message)
+                    return
             query = f"UPDATE coins SET EMI = '' WHERE EMI = '{bot_name}'"
             message = self.delete_all_bot_info(bot_name, query, "Delete")
             if message[0] is None:
@@ -675,11 +689,11 @@ class SettingsApp:
         tk.Label(
             self.brief_frame,
             text=(
-                "After you press the ``Delete bot`` button, the "
-                + f"``/{bot_name}/`` subdirectory will be "
-                + "erased and this bot will no longer exist. Each database "
-                + f"record belonging to the ``{bot_name}`` will change its ``EMI`` "
-                + "field value to the default one taken from the field ``SYMBOL``."
+                "After you press the `Delete bot` button, the "
+                + f"`/{bot_name}/` subdirectory will be "
+                + "erased and this bot will no longer exist. Every database "
+                + f"record belonging to the `{bot_name}` will change the "
+                + "value of the `EMI` column to empty"
             ),
             bg=disp.bg_color,
             justify=tk.LEFT,
