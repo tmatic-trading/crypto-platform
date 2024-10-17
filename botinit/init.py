@@ -124,9 +124,8 @@ def load_bots() -> None:
         var.lock.release()
 
     # Search for unclosed positions. If an unclosed position belongs to a bot
-    # that is not in the "robots" table, EMI becomes the default SYMBOL name.
-    # If the SYMBOL of the unclosed position is not subscribed, it is added
-    # to the subscription.
+    # that is not in the "robots" table, EMI becomes "". If the SYMBOL of the 
+    # unclosed position is not subscribed, it is added to the subscription.
     qwr = (
         "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
         + "EMI, SYMBOL, TICKER, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
@@ -158,15 +157,17 @@ def load_bots() -> None:
                     _put_message(market="", message=message, warning="error")
             name = value["EMI"]
             if name not in Bots.keys():
-                if value["SYMBOL"] != name:
+                if value["SYMBOL"] != name and name != "":
                     qwr = (
                         "select ID, EMI, SYMBOL from coins where side <> 'Fund' and EMI = '%s'"
                         % (name)
                     )
                     data = service.select_database(qwr)
+                    print("    ")
+                    print(data)
                     for row in data:
                         qwr = "update coins set EMI = '%s' where ID = %s;" % (
-                            row["SYMBOL"],
+                            "",
                             row["ID"],
                         )
                         service.update_database(query=qwr)

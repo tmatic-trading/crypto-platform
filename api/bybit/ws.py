@@ -194,7 +194,6 @@ class Bybit(Variables):
         instrument.bids = bids
         if symbol in self.klines:
             service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
-        # d instrument.confirm_subscription.add("orderbook")
 
     def __update_ticker(self, values: dict, category: str) -> None:
         symb = self.ticker[(values["symbol"], category)]

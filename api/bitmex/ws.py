@@ -454,9 +454,8 @@ class Bitmex(Variables):
         symbol = (self.ticker[values["symbol"]], self.name)
         instrument = self.Instrument[symbol]
         if "currentQty" in values:
-            if values["currentQty"]:
+            if values["currentQty"] or values["currentQty"] == 0:
                 instrument.currentQty = (
-                    # values["currentQty"] * instrument.valueOfOneContract
                     values["currentQty"]
                     / instrument.myMultiplier
                 )
@@ -467,6 +466,8 @@ class Bitmex(Variables):
         else:
             if "avgEntryPrice" in values:
                 instrument.avgEntryPrice = values["avgEntryPrice"]
+                if instrument.avgEntryPrice == None:
+                    instrument.avgEntryPrice = 0
             if "unrealisedPnl" in values:
                 instrument.unrealisedPnl = (
                     values["unrealisedPnl"]

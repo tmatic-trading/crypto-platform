@@ -259,7 +259,7 @@ class Function(WS, Variables):
                 "SIDE": row["side"],
                 "TRADE_PRICE": row["lastPx"],
                 "QTY": abs(lastQty),
-                "EMI": emi,
+                "BOT": emi,
                 "TICKER": instrument.ticker,
                 "CATEGORY": instrument.category,
             }
@@ -292,7 +292,7 @@ class Function(WS, Variables):
                         dot == -1
                     ):  # The transaction was done from the exchange web interface,
                         # the clOrdID field is missing or clOrdID does not have EMI number
-                        emi = row["symbol"][0]
+                        emi = ""
                         refer = ""
                         if row["clOrdID"] == "":
                             clientID = 0
@@ -305,12 +305,15 @@ class Function(WS, Variables):
                         emi = row["clOrdID"][dot + 1 :]
                         clientID = row["clOrdID"][:dot]
                         refer = emi
+                        symb = emi.split(".")[0]
+                        if symb == row["symbol"][0]:
+                            refer = ""
                 else:
-                    emi = row["symbol"][0]
+                    emi = ""
                     clientID = 0
                     refer = ""
                 if emi not in Bots.keys():
-                    emi = row["symbol"][0]
+                    emi = ""
                 data = service.select_database(  # read_database
                     "select EXECID from coins where EXECID='%s' and account=%s"
                     % (row["execID"], self.user_id),
@@ -342,11 +345,11 @@ class Function(WS, Variables):
                             row["side"] = "Buy"
                             pos += qty
                         row["lastQty"] = abs(qty)
-                        handle_trade_or_delivery(row, emi, "", "Delivery")
+                        handle_trade_or_delivery(row, name, "", "Delivery")
                 diff = -(lastQty + pos)
                 if diff != 0:
                     qwr = (
-                        "select sum(QTY) as sum from coins where emi = '"
+                        "select sum(QTY) as sum from coins where SYMBOL = '"  # d emi
                         + row["symbol"][0]
                         + "' and MARKET = '"
                         + self.name
@@ -365,7 +368,7 @@ class Function(WS, Variables):
                         )
                         _put_message(market=self.name, message=message, warning="error")
                     else:
-                        emi = row["symbol"][0]
+                        emi = ""
                         if diff > 0:
                             row["side"] = "Sell"
                         else:
@@ -393,16 +396,14 @@ class Function(WS, Variables):
                     fund=0,
                     execFee=row["execFee"],
                 )
-                emi = row["symbol"][0]
                 message["CATEGORY"] = row["category"]
                 message["MARKET"] = self.name
-                message["EMI"] = emi
                 message["QTY"] = row["lastQty"]
                 message["COMMISS"] = calc["funding"]
                 message["TICKER"] = instrument.ticker
                 values = [
                     row["execID"],
-                    emi,
+                    "",
                     "",
                     row["settlCurrency"][0],
                     row["symbol"][0],
@@ -711,7 +712,6 @@ class Function(WS, Variables):
             ),
             "{:.7f}".format(-val["COMMISS"]),
             Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
-            val["EMI"],
         ]
         if init:
             return row
@@ -3050,7 +3050,7 @@ TreeTable.funding = TreeviewTable(
     size=0,
     title=Header.name_funding,
     bind=handler_account,
-    hide=["8", "3", "5"],
+    hide=["3", "5"],
 )
 TreeTable.bot_orders = TreeviewTable(
     frame=disp.bot_orders,

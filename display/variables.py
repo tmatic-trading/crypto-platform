@@ -1471,12 +1471,6 @@ def root_dimensions(event):
                 )
                 TreeTable.trades.hide_num = 3
                 trim_col_width(TreeTable.trades, TreeTable.trades.column_hide[3])
-            if TreeTable.funding.hide_num != 3:
-                TreeTable.funding.tree.config(
-                    displaycolumns=TreeTable.funding.column_hide[3]
-                )
-                TreeTable.funding.hide_num = 3
-                trim_col_width(TreeTable.funding, TreeTable.funding.column_hide[3])
             if TreeTable.account.hide_num != 3:
                 TreeTable.account.tree.config(
                     displaycolumns=TreeTable.account.column_hide[3]
@@ -1702,7 +1696,7 @@ class OrderForm:
     title.bind("<Motion>", title_on_hover)
     title.bind("<Leave>", title_on_leave)
     title.bind("<ButtonRelease-1>", title_on_select)
-    emi = FormLabel(main, text="EMI", row=1, column=0, sticky="W")
+    emi = FormLabel(main, text="Bot", row=1, column=0, sticky="W")
     quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
     price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
     emi_var = tk.StringVar()

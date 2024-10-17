@@ -30,7 +30,7 @@ class Header:
         "SIDE",
         "PRICE",
         "QTY",
-        "EMI",
+        "BOT",
     ]
     name_order = [
         "TIME",
@@ -40,7 +40,7 @@ class Header:
         "SIDE",
         "PRICE",
         "QTY",
-        "EMI",
+        "BOT",
     ]
     name_funding = [
         "TIME",
@@ -50,7 +50,6 @@ class Header:
         "PRICE",
         "PNL",
         "QTY",
-        "EMI",
     ]
     name_market = [
         "MARKET",

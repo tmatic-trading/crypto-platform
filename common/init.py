@@ -271,7 +271,6 @@ class Init(WS, Variables):
         myOrders.sort(key=lambda x: x["transactTime"], reverse=True)
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
-                # d emi = val["symbol"][0]
                 emi = ".".join(val["symbol"])
                 if "clOrdID" in val:
                     if "." not in val["clOrdID"]:
@@ -385,7 +384,7 @@ def setup_database_connecion() -> None:
         CREATE TABLE IF NOT EXISTS coins (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         EXECID varchar(45) DEFAULT NULL,
-        EMI varchar(25) DEFAULT NULL,
+        EMI varchar(20) DEFAULT NULL,
         REFER varchar(20) DEFAULT NULL,
         MARKET varchar(20) DEFAULT NULL,
         CURRENCY varchar(10) DEFAULT NULL,

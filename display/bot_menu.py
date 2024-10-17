@@ -651,7 +651,7 @@ class SettingsApp:
 
     def delete(self, bot_name: str):
         def delete_bot(bot_name: str) -> None:
-            query = f"UPDATE coins SET EMI = SYMBOL WHERE EMI = '{bot_name}'"
+            query = f"UPDATE coins SET EMI = '' WHERE EMI = '{bot_name}'"
             message = self.delete_all_bot_info(bot_name, query, "Delete")
             if message[0] is None:
                 message[1] = "The delete operation completed successfully."
@@ -960,7 +960,6 @@ def handler_bot_info(event) -> None:
                     )
                     robot_window.title(bot_name)
                     robot_window.protocol("WM_DELETE_WINDOW", on_closing)
-                    # d robot_window.attributes("-topmost", 1)
                     robot_window.bind("<FocusOut>", leave)
                     robot_window.focus()
                     text = "Suspend"
