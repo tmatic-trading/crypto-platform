@@ -119,17 +119,17 @@ class Function(WS, Variables):
                     instrument.category,
                     instrument.settlCurrency[0],
                     instrument.ticker,
-                    instrument.myMultiplier, 
-                    instrument.multiplier, 
-                    instrument.tickSize, 
-                    instrument.price_precision, 
-                    instrument.minOrderQty, 
-                    instrument.qtyStep, 
-                    instrument.precision, 
-                    instrument.expire, 
-                    instrument.baseCoin, 
-                    instrument.quoteCoin, 
-                    instrument.valueOfOneContract, 
+                    instrument.myMultiplier,
+                    instrument.multiplier,
+                    instrument.tickSize,
+                    instrument.price_precision,
+                    instrument.minOrderQty,
+                    instrument.qtyStep,
+                    instrument.precision,
+                    instrument.expire,
+                    instrument.baseCoin,
+                    instrument.quoteCoin,
+                    instrument.valueOfOneContract,
                 ]
                 service.insert_database(values=values, table="symbols")
             else:
@@ -433,7 +433,7 @@ class Function(WS, Variables):
                 if (
                     "clOrdID" not in row
                 ):  # The order was placed from the exchange web interface
-                    emi = ".".join(row["symbol"])
+                    emi = service.set_emi(symbol=row["symbol"])
                     clOrdID = service.set_clOrdID(emi=emi)
                     service.fill_order(
                         emi=emi, clOrdID=clOrdID, category=row["category"], value=row
@@ -524,7 +524,7 @@ class Function(WS, Variables):
                 clOrdID = row["clOrdID"]
                 dot = row["clOrdID"].find(".")
                 if dot == -1:
-                    emi = ".".join(row["symbol"])
+                    emi = service.set_emi(symbol=row["symbol"])
                 else:
                     emi = row["clOrdID"][dot + 1 :]
             else:
@@ -605,7 +605,7 @@ class Function(WS, Variables):
         try:
             t = clOrdID.split(".")
             int(t[0])
-            emi = ".".join(t[1:3])
+            emi = service.set_emi(symbol=t[1:3])
         except ValueError:
             emi = clOrdID
         if info_q:
@@ -667,6 +667,9 @@ class Function(WS, Variables):
         tm = str(val["TTIME"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
+        emi = val["EMI"]
+        if emi == "":
+            emi = var.dash
         row = [
             tm,
             val["SYMBOL"][0],
@@ -679,7 +682,7 @@ class Function(WS, Variables):
                 symbol=val["SYMBOL"],
             ),
             Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
-            val["EMI"],
+            emi,
         ]
         if init:
             return row
@@ -722,7 +725,11 @@ class Function(WS, Variables):
         """
         Update Orders widget
         """
-        emi = val["emi"]
+        symb = val["emi"].split(".")[0]
+        if symb == val["symbol"][0]:
+            emi = var.dash
+        else:
+            emi = val["emi"]
         tm = str(val["transactTime"])[2:]
         tm = tm.replace("-", "")
         tm = tm.replace("T", " ")[:15]
@@ -1030,7 +1037,7 @@ class Function(WS, Variables):
                         else:
                             notificate = False
                             compare = [
-                                "----",
+                                var.dash,
                                 instrument.symbol,
                                 instrument.category,
                                 position,
@@ -1563,7 +1570,7 @@ class Function(WS, Variables):
         if side == "Sell":
             qty = -qty
         if emi not in Bots.keys():
-            emi = ".".join(symbol)
+            emi = service.set_emi(symbol=symbol)
         clOrdID = service.set_clOrdID(emi=emi)
         var.logger.info(
             "Posting symbol="
@@ -1735,10 +1742,17 @@ def handler_order(event) -> None:
     if items:
         tree.update()
         clOrdID = items[0]
+        values = TreeTable.orders.tree.item(clOrdID)["values"]
         indx = TreeTable.orders.title.index("MARKET")
-        ws = Markets[TreeTable.orders.tree.item(clOrdID)["values"][indx]]
-        indx = TreeTable.orders.title.index("EMI")
-        emi = str(TreeTable.orders.tree.item(clOrdID)["values"][indx])
+        ws = Markets[values[indx]]
+        indx = TreeTable.orders.title.index("BOT")
+        emi = str(values[indx])
+        if emi == var.dash:
+            symbol = (
+                values[TreeTable.orders.title.index("SYMBOL")],
+                values[TreeTable.orders.title.index("MARKET")],
+            )
+            emi = service.set_emi(symbol=symbol)
 
         def on_closing() -> None:
             disp.order_window_trigger = "off"

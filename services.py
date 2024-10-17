@@ -260,7 +260,7 @@ def insert_database(values: list, table: str) -> None:
                     + "BASECOIN,QUOTECOIN,VALUEOFONECONTRACT) VALUES (?,?,?,"
                     + "?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     values,
-                )                
+                )
             else:
                 return "Sqlite Error: Unknown database table."
             var.connect_sqlite.commit()
@@ -714,3 +714,7 @@ def order_form_title():
         return var.symbol[0][:22] + "\n" + var.symbol[0][22:]
     else:
         return var.symbol[0]
+
+
+def set_emi(symbol: tuple) -> str:
+    return ".".join(symbol)

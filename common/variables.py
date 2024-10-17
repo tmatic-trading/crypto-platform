@@ -103,3 +103,4 @@ class Variables:
     selected_option = dict()
     rollup_symbol = ""
     selected_iid = dict()
+    dash = "---"

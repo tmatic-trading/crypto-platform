@@ -455,10 +455,7 @@ class Bitmex(Variables):
         instrument = self.Instrument[symbol]
         if "currentQty" in values:
             if values["currentQty"] or values["currentQty"] == 0:
-                instrument.currentQty = (
-                    values["currentQty"]
-                    / instrument.myMultiplier
-                )
+                instrument.currentQty = values["currentQty"] / instrument.myMultiplier
         if instrument.currentQty == 0:
             instrument.avgEntryPrice = 0
             instrument.marginCallPrice = 0

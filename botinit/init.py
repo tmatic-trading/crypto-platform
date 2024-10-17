@@ -124,7 +124,7 @@ def load_bots() -> None:
         var.lock.release()
 
     # Search for unclosed positions. If an unclosed position belongs to a bot
-    # that is not in the "robots" table, EMI becomes "". If the SYMBOL of the 
+    # that is not in the "robots" table, EMI becomes "". If the SYMBOL of the
     # unclosed position is not subscribed, it is added to the subscription.
     qwr = (
         "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "

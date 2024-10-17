@@ -271,7 +271,7 @@ class Init(WS, Variables):
         myOrders.sort(key=lambda x: x["transactTime"], reverse=True)
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
-                emi = ".".join(val["symbol"])
+                emi = service.set_emi(symbol=val["symbol"])
                 if "clOrdID" in val:
                     if "." not in val["clOrdID"]:
                         del val["clOrdID"]
@@ -291,7 +291,7 @@ class Init(WS, Variables):
                     clOrdID = val["clOrdID"]
                     res = clOrdID.split(".")
                     if len(res) > 1:
-                        emi = ".".join(res[1:])
+                        emi = service.set_emi(symbol=res[1:])
                     else:
                         emi = res[1]
                 category = self.Instrument[val["symbol"]].category
@@ -406,7 +406,7 @@ def setup_database_connecion() -> None:
 
         sql_create_symbols = """
         CREATE TABLE IF NOT EXISTS symbols (
-        ID INTEGER PRIMARY KEY AUTOINCREMENT,        
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
         SYMBOL varchar(40) DEFAULT NULL,
         MARKET varchar(20) DEFAULT NULL,
         CURRENCY varchar(10) DEFAULT NULL,
