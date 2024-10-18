@@ -38,11 +38,15 @@ class Agent(Deribit):
                             self,
                             values=values,
                         )
+                    if ('BTC-26JUL24', 'Deribit') in self.Instrument.get_keys():
+                        print("_________yes 1")
+
                     self.symbol_list = service.check_symbol_list(
                         symbols=self.Instrument.get_keys(),
                         market=self.name,
                         symbol_list=self.symbol_list,
                     )
+                    print("++++++++", self.symbol_list, var.env)
                     self.instrument_index = service.sort_instrument_index(
                         index=self.instrument_index
                     )
@@ -98,7 +102,7 @@ class Agent(Deribit):
             symb = values["instrument_name"]
         symbol = (symb, self.name)
         self.ticker[values["instrument_name"]] = symb
-        instrument = self.Instrument[symbol]
+        instrument = self.Instrument.add(symbol)
         instrument.market = self.name
         instrument.symbol = symb
         instrument.ticker = values["instrument_name"]

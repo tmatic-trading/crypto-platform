@@ -47,9 +47,9 @@ class Agent(Bybit):
                     cursor = result["result"]["nextPageCursor"]
                 else:
                     cursor = ""
-                for instrument in result["result"]["list"]:
+                for values in result["result"]["list"]:
                     Agent.fill_instrument(
-                        self, instrument=instrument, category=category
+                        self, values=values, category=category
                     )
                 if isinstance(result["result"]["list"], list):
                     success[num] = ""  # success
@@ -143,7 +143,7 @@ class Agent(Bybit):
 
         if instrument["result"]["list"]:
             Agent.fill_instrument(
-                self, instrument=instrument["result"]["list"][0], category=category
+                self, values=instrument["result"]["list"][0], category=category
             )
 
             return ""
@@ -633,7 +633,7 @@ class Agent(Bybit):
                 )
                 return error
 
-    def fill_instrument(self, instrument: dict, category: str):
+    def fill_instrument(self, values: dict, category: str):
         """
         Filling the instruments data.
 
@@ -642,79 +642,80 @@ class Agent(Bybit):
         Instrument class. See detailed description of the fields there.
         """
         if category == "spot":
-            symb = instrument["baseCoin"] + "/" + instrument["quoteCoin"]
+            symb = values["baseCoin"] + "/" + values["quoteCoin"]
         else:
-            symb = instrument["symbol"]
+            symb = values["symbol"]
         symbol = (symb, self.name)
-        self.ticker[(instrument["symbol"], category)] = symb
-        self.Instrument[symbol].market = self.name
-        self.Instrument[symbol].category = category
-        self.Instrument[symbol].symbol = symb
-        self.Instrument[symbol].ticker = instrument["symbol"]
-        self.Instrument[symbol].baseCoin = instrument["baseCoin"]
-        self.Instrument[symbol].quoteCoin = instrument["quoteCoin"]
-        if "settleCoin" in instrument:
-            self.Instrument[symbol].settlCurrency = (
-                instrument["settleCoin"],
+        self.ticker[(values["symbol"], category)] = symb
+        instrument = self.Instrument.add(symbol)
+        instrument.market = self.name
+        instrument.category = category
+        instrument.symbol = symb
+        instrument.ticker = values["symbol"]
+        instrument.baseCoin = values["baseCoin"]
+        instrument.quoteCoin = values["quoteCoin"]
+        if "settleCoin" in values:
+            instrument.settlCurrency = (
+                values["settleCoin"],
                 self.name,
             )
-            if instrument["settleCoin"] not in self.settlCurrency_list[category]:
-                self.settlCurrency_list[category].append(instrument["settleCoin"])
-            if instrument["settleCoin"] not in self.settleCoin_list:
-                self.settleCoin_list.append(instrument["settleCoin"])
+            if values["settleCoin"] not in self.settlCurrency_list[category]:
+                self.settlCurrency_list[category].append(values["settleCoin"])
+            if values["settleCoin"] not in self.settleCoin_list:
+                self.settleCoin_list.append(values["settleCoin"])
         else:
-            self.Instrument[symbol].settlCurrency = (
+            instrument.settlCurrency = (
                 "-",
                 self.name,
             )
-        if "deliveryTime" in instrument:
-            if int(instrument["deliveryTime"]):
-                self.Instrument[symbol].expire = service.time_converter(
-                    int(instrument["deliveryTime"]) / 1000
+        if "deliveryTime" in values:
+            if int(values["deliveryTime"]):
+                instrument.expire = service.time_converter(
+                    int(values["deliveryTime"]) / 1000
                 )
             else:
-                self.Instrument[symbol].expire = "Perpetual"
+                instrument.expire = "Perpetual"
         else:
-            self.Instrument[symbol].expire = "Perpetual"
-        self.Instrument[symbol].tickSize = float(instrument["priceFilter"]["tickSize"])
-        self.Instrument[symbol].price_precision = service.precision(
-            number=self.Instrument[symbol].tickSize
+            instrument.expire = "Perpetual"
+        instrument.tickSize = float(values["priceFilter"]["tickSize"])
+        instrument.price_precision = service.precision(
+            number=instrument.tickSize
         )
-        self.Instrument[symbol].minOrderQty = float(
-            instrument["lotSizeFilter"]["minOrderQty"]
+        instrument.minOrderQty = float(
+            values["lotSizeFilter"]["minOrderQty"]
         )
         if category == "spot":
-            self.Instrument[symbol].qtyStep = float(
-                instrument["lotSizeFilter"]["basePrecision"]
+            instrument.qtyStep = float(
+                values["lotSizeFilter"]["basePrecision"]
             )
         else:
-            self.Instrument[symbol].qtyStep = float(
-                instrument["lotSizeFilter"]["qtyStep"]
+            instrument.qtyStep = float(
+                values["lotSizeFilter"]["qtyStep"]
             )
-        self.Instrument[symbol].precision = service.precision(
-            number=self.Instrument[symbol].qtyStep
+        instrument.precision = service.precision(
+            number=instrument.qtyStep
         )
-        if instrument["status"] == "Trading":
-            self.Instrument[symbol].state = "Open"
+        if values["status"] == "Trading":
+            instrument.state = "Open"
         else:
-            self.Instrument[symbol].state = instrument["status"]
-        self.Instrument[symbol].multiplier = 1
-        self.Instrument[symbol].myMultiplier = 1
+            instrument.state = values["status"]
+        instrument.multiplier = 1
+        instrument.myMultiplier = 1
         if category == "spot":
-            self.Instrument[symbol].fundingRate = "-"
-            self.Instrument[symbol].avgEntryPrice = "-"
-            self.Instrument[symbol].marginCallPrice = "-"
-            self.Instrument[symbol].currentQty = "-"
-            self.Instrument[symbol].unrealisedPnl = "-"
+            instrument.fundingRate = "-"
+            instrument.avgEntryPrice = "-"
+            instrument.marginCallPrice = "-"
+            instrument.currentQty = "-"
+            instrument.unrealisedPnl = "-"
         if category == "option":
-            self.Instrument[symbol].fundingRate = "-"
-        self.Instrument[symbol].asks = [[0, 0]]
-        self.Instrument[symbol].bids = [[0, 0]]
-        self.Instrument[symbol].valueOfOneContract = 1
-        if self.Instrument[symbol].state == "Open":
+            instrument.fundingRate = "-"
+        instrument.asks = [[0, 0]]
+        instrument.bids = [[0, 0]]
+        instrument.valueOfOneContract = 1
+        if instrument.state == "Open":
             self.instrument_index = service.fill_instrument_index(
                 index=self.instrument_index,
-                instrument=self.Instrument[symbol],
+                instrument=instrument,
                 ws=self,
             )
 

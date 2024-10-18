@@ -465,7 +465,7 @@ class Deribit(Variables):
                         response_id = (
                             "private/" + value["direction"] + "_" + value["label"]
                         )
-                        value["filled_amount"] = 0
+                        # value["filled_amount"] = 0
                 if order_state == "New" and value["replaced"]:
                     order_state = "Replaced"
                     response_id = "private/edit_" + value["order_id"]
@@ -475,7 +475,7 @@ class Deribit(Variables):
                     row = {
                         "ticker": value["instrument_name"],
                         "category": instrument.category,
-                        "leavesQty": value["amount"] - value["filled_amount"],
+                        "leavesQty": value["amount"],  # - value["filled_amount"],
                         "price": float(value["price"]),
                         "symbol": symbol,
                         "transactTime": service.time_converter(

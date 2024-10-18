@@ -502,6 +502,8 @@ class SettingsApp:
             return bots
 
         def merge_bot(bot_name: str, bot_to_delete: str) -> None:
+            if self.delete_warning(bot_name=bot_to_delete):
+                return
             query = f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
             message = self.delete_all_bot_info(bot_to_delete, query, "Merge")
             if message[0] is None:
@@ -651,26 +653,8 @@ class SettingsApp:
 
     def delete(self, bot_name: str):
         def delete_bot(bot_name: str) -> None:
-            if bot_name in var.orders:
-                num = len(var.orders[bot_name])
-                if num > 0:
-                    if num > 1:
-                        s = "s"
-                    else:
-                        s = ""
-                    message = (
-                        "The `"
-                        + bot_name
-                        + "` has "
-                        + str(num)
-                        + " open "
-                        + "order"
-                        + s
-                        + ". Before deleting the bot, you "
-                        + "need to cancel the orders."
-                    )
-                    functions.warning_window(message=message)
-                    return
+            if self.delete_warning(bot_name=bot_name):
+                return
             query = f"UPDATE coins SET EMI = '' WHERE EMI = '{bot_name}'"
             message = self.delete_all_bot_info(bot_name, query, "Delete")
             if message[0] is None:
@@ -875,6 +859,30 @@ class SettingsApp:
             else:
                 err += f"\n{str(e)}"
         return [err, message]
+    
+    def delete_warning(self, bot_name: str) -> bool:
+        if bot_name in var.orders:
+            num = len(var.orders[bot_name])
+            if num > 0:
+                if num > 1:
+                    s = "s"
+                else:
+                    s = ""
+                message = (
+                    "The `"
+                    + bot_name
+                    + "` has "
+                    + str(num)
+                    + " open "
+                    + "order"
+                    + s
+                    + ". Before deleting the bot, you "
+                    + "need to cancel the orders."
+                )
+                functions.warning_window(message=message)
+                return True
+        
+        return False
 
     def display_error_message(self, bot_name: str) -> None:
         self.switch(option="option")

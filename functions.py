@@ -135,7 +135,7 @@ class Function(WS, Variables):
                 service.insert_database(values=values, table="symbols")
             else:
                 data = data[0]
-                instrument = self.Instrument[symbol]
+                instrument = self.Instrument.add(symbol)
                 instrument.symbol = symb
                 instrument.market = self.name
                 instrument.category = category
@@ -1720,7 +1720,7 @@ class Function(WS, Variables):
         else:
             # symbol is not signed, so there is no order book and therefore
             # no position closing price. PNL cannot be calculated.
-            pnl = "-"
+            pnl = 0
 
         return pnl
 

@@ -307,6 +307,8 @@ def refresh() -> None:
                     t.start()
         var.lock_display.acquire(True)
         ws = Markets[var.current_market]
+        if ('BTC-26JUL24', 'Deribit') in ws.Instrument.get_keys():
+            print("_________yes 2")
         if ws.api_is_active:
             Function.refresh_on_screen(ws, utc=utc)
         var.lock_display.release()

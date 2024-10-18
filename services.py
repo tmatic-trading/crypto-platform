@@ -520,6 +520,7 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
 
     if symbols:
         for symbol in symbol_list.copy():
+            print("______________", symbol, symbol_list)
             if symbol not in symbols:
                 message = ErrorMessage.UNKNOWN_SYMBOL.format(
                     SYMBOL=symbol[0], MARKET=market
@@ -599,7 +600,7 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
         # Add a series of options.
 
         symbol = (option_series, instrument.market)
-        series: Instrument = ws.Instrument[symbol]
+        series: Instrument = ws.Instrument.add(symbol)
         series.market = instrument.market
         series.symbol = option_series
         series.ticker = "option!"

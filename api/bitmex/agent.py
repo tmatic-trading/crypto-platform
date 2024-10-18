@@ -20,10 +20,10 @@ class Agent(Bitmex):
                 "A list was expected when loading instruments, but was not received."
             )
             return service.unexpected_error(self)
-        for instrument in data:
+        for values in data:
             Agent.fill_instrument(
                 self,
-                instrument=instrument,
+                values=values,
             )
         self.symbol_list = service.check_symbol_list(
             symbols=self.Instrument.get_keys(),
@@ -75,8 +75,8 @@ class Agent(Bitmex):
         res = Send.request(self, path=path, verb="GET")
         if self.logNumFatal == "":
             if res:
-                instrument = res[0]
-                Agent.fill_instrument(self, instrument=instrument)
+                values = res[0]
+                Agent.fill_instrument(self, values=values)
 
                 return ""
 
@@ -90,7 +90,7 @@ class Agent(Bitmex):
 
                 return message
 
-    def fill_instrument(self, instrument: dict) -> Union[str, None]:
+    def fill_instrument(self, values: dict) -> Union[str, None]:
         """
         Filling the instruments data.
 
@@ -107,12 +107,12 @@ class Agent(Bitmex):
             P_GENSLERM26
             P_FTXZ26
         """
-        if "settlCurrency" in instrument:
+        if "settlCurrency" in values:
             try:
-                self.currency_divisor[instrument["settlCurrency"]]
+                self.currency_divisor[values["settlCurrency"]]
             except KeyError:
                 message = ErrorMessage.NO_CURRENCY.format(
-                    TICKER=instrument["symbol"], CURRENCY=instrument["settlCurrency"]
+                    TICKER=values["symbol"], CURRENCY=values["settlCurrency"]
                 )
                 var.logger.warning(message)
                 var.queue_info.put(
@@ -126,98 +126,99 @@ class Agent(Bitmex):
                 return
         # myMultiplier
 
-        if instrument["isInverse"]:  # Inverse
-            valueOfOneContract = Decimal(instrument["multiplier"]) / Decimal(
-                instrument["underlyingToSettleMultiplier"]
+        if values["isInverse"]:  # Inverse
+            valueOfOneContract = Decimal(values["multiplier"]) / Decimal(
+                values["underlyingToSettleMultiplier"]
             )
-            minimumTradeAmount = valueOfOneContract * Decimal(instrument["lotSize"])
+            minimumTradeAmount = valueOfOneContract * Decimal(values["lotSize"])
             category = "inverse"
-        elif instrument["isQuanto"]:  # Quanto
-            valueOfOneContract = Decimal(instrument["multiplier"]) / Decimal(
-                self.currency_divisor[instrument["settlCurrency"]]
+        elif values["isQuanto"]:  # Quanto
+            valueOfOneContract = Decimal(values["multiplier"]) / Decimal(
+                self.currency_divisor[values["settlCurrency"]]
             )
-            minimumTradeAmount = instrument["lotSize"]
+            minimumTradeAmount = values["lotSize"]
             category = "quanto"
         else:  # Linear / "Spot"
-            if "underlyingToPositionMultiplier" in instrument:
+            if "underlyingToPositionMultiplier" in values:
                 valueOfOneContract = Decimal(1) / Decimal(
-                    instrument["underlyingToPositionMultiplier"]
+                    values["underlyingToPositionMultiplier"]
                 )
-            elif instrument["underlyingToSettleMultiplier"]:
-                valueOfOneContract = Decimal(instrument["multiplier"]) / Decimal(
-                    instrument["underlyingToSettleMultiplier"]
+            elif values["underlyingToSettleMultiplier"]:
+                valueOfOneContract = Decimal(values["multiplier"]) / Decimal(
+                    values["underlyingToSettleMultiplier"]
                 )
-            minimumTradeAmount = valueOfOneContract * Decimal(instrument["lotSize"])
-            if "settlCurrency" not in instrument:
+            minimumTradeAmount = valueOfOneContract * Decimal(values["lotSize"])
+            if "settlCurrency" not in values:
                 category = "spot"
             else:
                 category = "linear"
-        myMultiplier = Decimal(instrument["lotSize"]) / minimumTradeAmount
+        myMultiplier = Decimal(values["lotSize"]) / minimumTradeAmount
         if category == "spot":
-            symb = instrument["underlying"] + "/" + instrument["quoteCurrency"]
+            symb = values["underlying"] + "/" + values["quoteCurrency"]
         else:
-            symb = instrument["symbol"]
+            symb = values["symbol"]
         valueOfOneContract = float(valueOfOneContract)
         minimumTradeAmount = float(minimumTradeAmount)
         myMultiplier = int(myMultiplier)
         symbol = (symb, self.name)
-        self.ticker[instrument["symbol"]] = symb
-        self.Instrument[symbol].market = self.name
-        self.Instrument[symbol].category = category
-        self.Instrument[symbol].symbol = symb
-        self.Instrument[symbol].ticker = instrument["symbol"]
-        self.Instrument[symbol].myMultiplier = myMultiplier
-        self.Instrument[symbol].multiplier = instrument["multiplier"]
+        self.ticker[values["symbol"]] = symb
+        instrument = self.Instrument.add(symbol)
+        instrument.market = self.name
+        instrument.category = category
+        instrument.symbol = symb
+        instrument.ticker = values["symbol"]
+        instrument.myMultiplier = myMultiplier
+        instrument.multiplier = values["multiplier"]
         if category == "spot":
-            self.Instrument[symbol].fundingRate = "-"
-            self.Instrument[symbol].avgEntryPrice = "-"
-            self.Instrument[symbol].marginCallPrice = "-"
-            self.Instrument[symbol].currentQty = "-"
-            self.Instrument[symbol].unrealisedPnl = "-"
-        if "settlCurrency" in instrument:
-            self.Instrument[symbol].settlCurrency = (
-                instrument["settlCurrency"],
+            instrument.fundingRate = "-"
+            instrument.avgEntryPrice = "-"
+            instrument.marginCallPrice = "-"
+            instrument.currentQty = "-"
+            instrument.unrealisedPnl = "-"
+        if "settlCurrency" in values:
+            instrument.settlCurrency = (
+                values["settlCurrency"],
                 self.name,
             )
         else:
-            self.Instrument[symbol].settlCurrency = (
+            instrument.settlCurrency = (
                 "-",
                 self.name,
             )
-        self.Instrument[symbol].tickSize = instrument["tickSize"]
-        self.Instrument[symbol].price_precision = service.precision(
-            number=instrument["tickSize"]
+        instrument.tickSize = values["tickSize"]
+        instrument.price_precision = service.precision(
+            number=values["tickSize"]
         )
-        self.Instrument[symbol].minOrderQty = minimumTradeAmount
-        self.Instrument[symbol].qtyStep = minimumTradeAmount
-        self.Instrument[symbol].precision = service.precision(minimumTradeAmount)
-        self.Instrument[symbol].state = instrument["state"]
-        self.Instrument[symbol].volume24h = instrument["volume24h"]
-        if "expiry" in instrument:
-            if instrument["expiry"]:
-                self.Instrument[symbol].expire = service.time_converter(
-                    time=instrument["expiry"]
+        instrument.minOrderQty = minimumTradeAmount
+        instrument.qtyStep = minimumTradeAmount
+        instrument.precision = service.precision(minimumTradeAmount)
+        instrument.state = values["state"]
+        instrument.volume24h = values["volume24h"]
+        if "expiry" in values:
+            if values["expiry"]:
+                instrument.expire = service.time_converter(
+                    time=values["expiry"]
                 )
             else:
-                self.Instrument[symbol].expire = "Perpetual"
+                instrument.expire = "Perpetual"
         else:
-            self.Instrument[symbol].expire = "Perpetual"
-        if "fundingRate" in instrument:
-            self.Instrument[symbol].fundingRate = instrument["fundingRate"] * 100
-        self.Instrument[symbol].asks = [[0, 0]]
-        self.Instrument[symbol].bids = [[0, 0]]
-        self.Instrument[symbol].baseCoin = instrument["underlying"]
-        self.Instrument[symbol].quoteCoin = instrument["quoteCurrency"]
-        self.Instrument[symbol].valueOfOneContract = valueOfOneContract
-        if instrument["state"] == "Open":
+            instrument.expire = "Perpetual"
+        if "fundingRate" in values:
+            instrument.fundingRate = values["fundingRate"] * 100
+        instrument.asks = [[0, 0]]
+        instrument.bids = [[0, 0]]
+        instrument.baseCoin = values["underlying"]
+        instrument.quoteCoin = values["quoteCurrency"]
+        instrument.valueOfOneContract = valueOfOneContract
+        if values["state"] == "Open":
             if category != "spot":
                 self.instrument_index = service.fill_instrument_index(
                     index=self.instrument_index,
                     instrument=self.Instrument[symbol],
                     ws=self,
                 )
-        self.Instrument[symbol].makerFee = instrument["makerFee"]
-        self.Instrument[symbol].takerFee = instrument["takerFee"]
+        instrument.makerFee = values["makerFee"]
+        instrument.takerFee = values["takerFee"]
 
         return category
 
