@@ -50,8 +50,10 @@ def setup(reload=False):
             threads.append(t)
             t.start()
     [thread.join() for thread in threads]
+    disp.pw_rest1.pack_forget()
     for name in var.market_list:
         finish_setup(Markets[name])
+    disp.pw_rest1.pack(fill="both", expand="yes")
     merge_orders()
     functions.clear_klines()
     botinit.load_bots()
@@ -72,7 +74,6 @@ def setup(reload=False):
         TreeTable.instrument.tree.update_idletasks()
         trim_col_width(TreeTable.instrument, TreeTable.instrument.column_hide[0])
     bot_manager.create_bots_menu()
-
     frame = disp.notebook_frames[var.env["BOTTOM_FRAME"]]
     check_frame = frame["frame"]
     if str(check_frame) in disp.notebook.tabs():
@@ -84,6 +85,8 @@ def setup(reload=False):
                 disp.pw_rest4.forget(values["frame"])
                 disp.pw_rest4.add(check_frame)
                 break
+        else:
+            disp.pw_rest4.add(check_frame)
     var.display_bottom = frame["method"]
     functions.update_order_form()
 
