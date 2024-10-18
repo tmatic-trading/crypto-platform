@@ -38,15 +38,11 @@ class Agent(Deribit):
                             self,
                             values=values,
                         )
-                    if ('BTC-26JUL24', 'Deribit') in self.Instrument.get_keys():
-                        print("_________yes 1")
-
                     self.symbol_list = service.check_symbol_list(
                         symbols=self.Instrument.get_keys(),
                         market=self.name,
                         symbol_list=self.symbol_list,
                     )
-                    print("++++++++", self.symbol_list, var.env)
                     self.instrument_index = service.sort_instrument_index(
                         index=self.instrument_index
                     )

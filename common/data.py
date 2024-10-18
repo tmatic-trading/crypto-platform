@@ -214,36 +214,12 @@ class BotData:
 
 
 class MetaInstrument(type):
-    # all = dict()
     market = dict()
 
     def __getitem__(self, item) -> Instrument:
         name = item[1]
-        '''if name not in self.market:
-            self.market[name] = OrderedDict()
-        if item not in self.market[name]:
-            self.market[name][item] = Instrument()'''
+
         return self.market[name][item]
-
-
-
-
-        '''if item not in self.all:
-            self.all[item] = Instrument()
-            name = item[1]          
-            if name not in self.market:
-                self.market[name] = OrderedDict()
-            self.market[name][item] = self.all[item]
-        return self.all[item]'''
-
-    '''def __getitem__(self, item) -> Instrument:
-        if item not in self.all:
-            self.all[item] = Instrument()
-            name = item[1]
-            if name not in self.market:
-                self.market[name] = OrderedDict()
-            self.market[name][item] = self.all[item]
-        return self.all[item]'''
     
     def add(self, item) -> Instrument:
         name = item[1]

@@ -520,7 +520,6 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
 
     if symbols:
         for symbol in symbol_list.copy():
-            print("______________", symbol, symbol_list)
             if symbol not in symbols:
                 message = ErrorMessage.UNKNOWN_SYMBOL.format(
                     SYMBOL=symbol[0], MARKET=market

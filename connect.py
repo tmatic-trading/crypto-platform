@@ -11,7 +11,7 @@ from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
 from api.init import Setup
-from common.data import Bots
+from common.data import Bots, MetaInstrument
 from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log
 from display.functions import info_display
@@ -20,6 +20,7 @@ from display.variables import TreeTable
 from display.variables import Variables as disp
 from display.variables import trim_col_width
 from functions import Function
+
 
 settings = SettingsApp(disp.settings_page)
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
@@ -212,6 +213,7 @@ def reload_market(ws: Markets):
         ws, status="RELOADING...", message="Reloading...", error=True
     )
     TreeTable.market.tree.update()
+    MetaInstrument.market[ws.name] = dict()
     setup_market(ws=ws, reload=True)
     var.queue_reload.put(ws)
     functions.update_order_form()
@@ -307,8 +309,6 @@ def refresh() -> None:
                     t.start()
         var.lock_display.acquire(True)
         ws = Markets[var.current_market]
-        if ('BTC-26JUL24', 'Deribit') in ws.Instrument.get_keys():
-            print("_________yes 2")
         if ws.api_is_active:
             Function.refresh_on_screen(ws, utc=utc)
         var.lock_display.release()
@@ -319,6 +319,7 @@ def refresh() -> None:
 def clear_params():
     var.market_list = []
     var.orders = dict()
+    MetaInstrument.market = dict()
 
 
 def bot_threads() -> None:
