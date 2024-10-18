@@ -639,8 +639,6 @@ class Agent(Deribit):
             )
         print("___________________________FINISH", len(trade_history))"""
 
-        # os.abort()
-
         return {"data": trade_history, "length": len(trade_history)}
 
     def trade_bucketed(
@@ -736,6 +734,7 @@ class Agent(Deribit):
             "type": "limit",
             "label": clOrdID,
         }
+
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
     def replace_limit(

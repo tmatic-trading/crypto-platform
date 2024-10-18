@@ -443,88 +443,103 @@ class Deribit(Variables):
         print("_________________________handle order", values)
 
     def __update_user_changes(self, values: dict) -> None:
-        for key, data in values.items():
-            if key == "orders":
-                for value in data:
-                    symbol = (self.ticker[value["instrument_name"]], self.name)
-                    side = "Sell" if value["direction"] == "sell" else "Buy"
-                    order_state = ""
-                    instrument = self.Instrument[symbol]
-                    if value["order_state"] == "open":
-                        order_state = "New"
-                    elif value["order_state"] == "cancelled":
-                        order_state = "Canceled"
-                    if order_state == "New" and value["replaced"]:
+        if "orders" in values:
+            for value in values["orders"]:
+                symbol = (self.ticker[value["instrument_name"]], self.name)
+                side = "Sell" if value["direction"] == "sell" else "Buy"
+                order_state = ""
+                instrument = self.Instrument[symbol]
+                response_id = ""
+                if value["order_state"] == "open":
+                    order_state = "New"
+                    response_id = "private/" + value["direction"] + "_" + value["label"]
+                elif value["order_state"] == "cancelled":
+                    order_state = "Canceled"
+                    response_id = "private/cancel_" + value["order_id"]
+                elif value["order_state"] == "filled":
+                    if value["replaced"]:
                         order_state = "Replaced"
-                    if order_state:
-                        row = {
-                            "ticker": value["instrument_name"],
-                            "category": instrument.category,
-                            "leavesQty": value["amount"] - value["filled_amount"],
-                            "price": float(value["price"]),
-                            "symbol": symbol,
-                            "transactTime": service.time_converter(
-                                int(value["last_update_timestamp"]) / 1000, usec=True
-                            ),
-                            "side": side,
-                            "orderID": value["order_id"],
-                            "execType": order_state,
-                            "settlCurrency": instrument.settlCurrency,
-                            "orderQty": float(value["amount"]),
-                            "cumQty": float(value["filled_amount"]),
-                        }
-                        if value["label"]:
-                            row["clOrdID"] = value["label"]
-                        self.transaction(row=row)
-            elif key == "positions":
-                for value in data:
-                    symbol = (
-                        self.ticker[value["instrument_name"]],
-                        self.name,
-                    )
-                    instrument = self.Instrument[symbol]
-                    if symbol in self.symbol_list:
-                        instrument.currentQty = value["size"]
-                        instrument.avgEntryPrice = value["average_price"]
-                        instrument.unrealisedPnl = value["total_profit_loss"]
-                        # instrument.marginCallPrice is not provided
-            elif key == "trades":
-                for row in data:
-                    row["execType"] = "Trade"
-                    row["ticker"] = row["instrument_name"]
-                    row["symbol"] = (
-                        self.ticker[row["instrument_name"]],
-                        self.name,
-                    )
-                    instrument = self.Instrument[row["symbol"]]
-                    if instrument.category == "spot":
-                        row["settlCurrency"] = (
-                            row["fee_currency"],
-                            self.name,
+                        response_id = "private/edit_" + value["order_id"]
+                    else:
+                        order_state = "New"
+                        response_id = (
+                            "private/" + value["direction"] + "_" + value["label"]
                         )
-                    else:
-                        row["settlCurrency"] = instrument.settlCurrency
-                    row["execID"] = str(row["trade_id"]) + "_" + row["settlCurrency"][0]
-                    row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
-                    row[
-                        "leavesQty"
-                    ] = 9999999999999  # leavesQty is not supported by Deribit
-                    row["execFee"] = row["fee"]
-                    if row["direction"] == "sell":
-                        row["side"] = "Sell"
-                    else:
-                        row["side"] = "Buy"
-                    if "label" in row:
-                        row["clOrdID"] = row["label"]
-                    row["category"] = instrument.category
-                    row["lastPx"] = row["price"]
-                    row["transactTime"] = service.time_converter(
-                        time=row["timestamp"] / 1000, usec=True
-                    )
-                    row["lastQty"] = row["amount"]
-                    row["market"] = self.name
-                    row["commission"] = "Not supported"
+                        value["filled_amount"] = 0
+                if order_state == "New" and value["replaced"]:
+                    order_state = "Replaced"
+                    response_id = "private/edit_" + value["order_id"]
+                if response_id in self.response:
+                    self.response[response_id]["result"] = value
+                if order_state:
+                    row = {
+                        "ticker": value["instrument_name"],
+                        "category": instrument.category,
+                        "leavesQty": value["amount"] - value["filled_amount"],
+                        "price": float(value["price"]),
+                        "symbol": symbol,
+                        "transactTime": service.time_converter(
+                            int(value["last_update_timestamp"]) / 1000, usec=True
+                        ),
+                        "side": side,
+                        "orderID": value["order_id"],
+                        "execType": order_state,
+                        "settlCurrency": instrument.settlCurrency,
+                        "orderQty": float(value["amount"]),
+                        "cumQty": float(value["filled_amount"]),
+                    }
+                    if value["label"]:
+                        row["clOrdID"] = value["label"]
                     self.transaction(row=row)
+        if "trades" in values:
+            for row in values["trades"]:
+                row["execType"] = "Trade"
+                row["ticker"] = row["instrument_name"]
+                row["symbol"] = (
+                    self.ticker[row["instrument_name"]],
+                    self.name,
+                )
+                instrument = self.Instrument[row["symbol"]]
+                if instrument.category == "spot":
+                    row["settlCurrency"] = (
+                        row["fee_currency"],
+                        self.name,
+                    )
+                else:
+                    row["settlCurrency"] = instrument.settlCurrency
+                row["execID"] = str(row["trade_id"]) + "_" + row["settlCurrency"][0]
+                row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
+                row[
+                    "leavesQty"
+                ] = 9999999999999  # leavesQty is not supported by Deribit
+                row["execFee"] = row["fee"]
+                if row["direction"] == "sell":
+                    row["side"] = "Sell"
+                else:
+                    row["side"] = "Buy"
+                if "label" in row:
+                    row["clOrdID"] = row["label"]
+                row["category"] = instrument.category
+                row["lastPx"] = row["price"]
+                row["transactTime"] = service.time_converter(
+                    time=row["timestamp"] / 1000, usec=True
+                )
+                row["lastQty"] = row["amount"]
+                row["market"] = self.name
+                row["commission"] = "Not supported"
+                self.transaction(row=row)
+        if "positions" in values:
+            for value in values["positions"]:
+                symbol = (
+                    self.ticker[value["instrument_name"]],
+                    self.name,
+                )
+                instrument = self.Instrument[symbol]
+                if symbol in self.symbol_list:
+                    instrument.currentQty = value["size"]
+                    instrument.avgEntryPrice = value["average_price"]
+                    instrument.unrealisedPnl = value["total_profit_loss"]
+                    # instrument.marginCallPrice is not provided
 
     def ping_pong(self):
         if datetime.now(tz=timezone.utc) - self.pinging > timedelta(

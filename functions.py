@@ -511,8 +511,7 @@ class Function(WS, Variables):
 
         def order_not_found(clOrdID: str) -> None:
             message = (
-                self.name
-                + ": execType "
+                "execType "
                 + row["execType"]
                 + " - order with clOrdID "
                 + clOrdID
@@ -1997,7 +1996,7 @@ def callback_buy_limit() -> None:
                     qty=qnt,
                 )
         else:
-            warning_window("Some of the fields are empty!")
+            warning_window("The selection is empty.")
 
 
 def update_order_form():
@@ -3113,7 +3112,7 @@ for name, values in disp.notebook_frames.items():
 
 def form_trace(item, index, mode, str_var: tk.StringVar, widget: tk.Entry) -> None:
     """
-    Formats the price and quantity on an order form according to the 
+    Formats the price and quantity on an order form according to the
     precision of the values ​​in the specified instrument.
     """
     ws = Markets[var.current_market]
@@ -3133,7 +3132,7 @@ def form_trace(item, index, mode, str_var: tk.StringVar, widget: tk.Entry) -> No
         number = "0" + number
     if number != "":
         num = Decimal(str(number)) / Decimal(str(step))
-        if int(num) != float(num) or float(num) == 0:            
+        if int(num) != float(num) or float(num) == 0:
             widget.config(foreground=disp.red_color)
             form.warning[item] = f"Incorrect {item}."
         else:
