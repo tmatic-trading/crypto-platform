@@ -1163,9 +1163,8 @@ def import_bot_module(bot_name: str, update=False) -> None:
             "message": message,
         }
     except Exception as exception:
-        # service.display_exception(exception=exception)
         message = ErrorMessage.BOT_LOADING_ERROR.format(
-            MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
+            MODULE=module, CLASS=exception.__class__.__name__, EXCEPTION=exception, BOT_NAME=bot_name
         )
         var.logger.warning(message)
         var.queue_info.put(

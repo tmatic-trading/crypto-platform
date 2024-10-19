@@ -618,10 +618,10 @@ class MetaTool(type):
     def __getitem__(self, item) -> Tool:
         market = self.__qualname__
         instrument = (item, market)
-        if instrument not in MetaInstrument.all:
+        if instrument not in MetaInstrument.market[market]:
             raise ValueError(f"The instrument {instrument} not found.")
         if instrument not in self.objects:
-            self.objects[instrument] = Tool(MetaInstrument.all[instrument])
+            self.objects[instrument] = Tool(MetaInstrument.market[market][instrument])
 
         return self.objects[instrument]
 
