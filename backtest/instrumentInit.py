@@ -10,8 +10,44 @@ def get_instrument(ws: Markets, symbol: tuple):
     once, since the received information is saved in the database in the 
     `backtest` table to speed up the program.
     """
+    qwr = (
+        "select * from backtest where SYMBOL ='"
+        + symbol[0]
+        + "' and MARKET = '"
+        + ws.name
+        + "';"
+    )
+    data = service.select_database(qwr)
+    if not data:
+        symbols = ws.Instrument.get_keys()
+        if symbols == None or symbol not in symbols:
+            WS.get_active_instruments(ws)
+        service.add_symbol_database(
+            instrument=ws.Instrument[symbol], table="backtest"
+        )
+    else:
+        data = data[0]
+        instrument = ws.Instrument.add(symbol)
+        service.set_symbol(instrument=instrument, data=data)
+
+
+
+
+
+
+
+
+
+
+
     if ws.Instrument.get_keys() == None:
         WS.get_active_instruments(ws)
+
+
+
+
+
+        save_to_database(ws, symbol)
     elif symbol not in ws.Instrument.get_keys():
         qwr = (
             "select * from backtest where SYMBOL ='"
@@ -22,10 +58,7 @@ def get_instrument(ws: Markets, symbol: tuple):
         )
         data = service.select_database(qwr)
         if not data:
-            WS.get_active_instruments(ws)
-            service.add_symbol_database(
-                    instrument=ws.Instrument[symbol], table="backtest"
-                )
+            save_to_database(ws, symbol)
         else:
             data = data[0]
             instrument = ws.Instrument.add(symbol)

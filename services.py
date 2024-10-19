@@ -252,15 +252,13 @@ def insert_database(values: list, table: str) -> None:
                     "insert into robots (EMI,STATE,TIMEFR) VALUES (?,?,?)",
                     values,
                 )
-            elif table == "symbols":
-                var.cursor_sqlite.execute(
-                    "insert into symbols (SYMBOL,MARKET,CATEGORY,CURRENCY,"
-                    + "TICKER,MYMULTIPLIER,MULTIPLIER,TICKSIZE,"
-                    + "PRICE_PRECISION,MINORDERQTY,QTYSTEP,PRECISION,EXPIRE,"
-                    + "BASECOIN,QUOTECOIN,VALUEOFONECONTRACT) VALUES (?,?,?,"
-                    + "?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    values,
-                )
+            elif table in ["symbols", "backtest"]:
+                qwr = """insert into %s (SYMBOL,MARKET,CATEGORY,CURRENCY,
+                    TICKER,MYMULTIPLIER,MULTIPLIER,TICKSIZE,
+                    PRICE_PRECISION,MINORDERQTY,QTYSTEP,PRECISION,EXPIRE,
+                    BASECOIN,QUOTECOIN,VALUEOFONECONTRACT) VALUES (?,?,?,
+                    ?,?,?,?,?,?,?,?,?,?,?,?,?)""" % table
+                var.cursor_sqlite.execute(qwr,values)
             else:
                 return "Sqlite Error: Unknown database table."
             var.connect_sqlite.commit()
@@ -740,7 +738,8 @@ def add_symbol_database(instrument: Instrument, table: str) -> None:
         instrument.quoteCoin,
         instrument.valueOfOneContract,
     ]
-    insert_database(values=values, table=table)
+    res = insert_database(values=values, table=table)
+    print("____", res)
 
 
 def set_symbol(instrument: Instrument, data: dict) -> None:
