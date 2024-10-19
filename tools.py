@@ -7,6 +7,7 @@ from typing import Callable, Union
 import functions
 import services as service
 from api.api import WS, Markets
+from backtest import instrumentInit
 from common.data import BotData, Bots, Instrument, MetaInstrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage
@@ -617,13 +618,19 @@ class MetaTool(type):
 
     def __getitem__(self, item) -> Tool:
         market = self.__qualname__
-        instrument = (item, market)
-        if instrument not in MetaInstrument.market[market]:
-            raise ValueError(f"The instrument {instrument} not found.")
-        if instrument not in self.objects:
-            self.objects[instrument] = Tool(MetaInstrument.market[market][instrument])
+        symbol = (item, market)
+        ws = Markets[market]
+        if var.backtest:  # backtest is runnig
+            if Markets[market].Instrument.get_keys() == None:
+                instrumentInit.get_instrument(ws, symbol)
+            if symbol not in MetaInstrument.market[market]:
+                instrumentInit.get_instrument(ws, symbol)
+        if symbol not in MetaInstrument.market[market]:
+            raise ValueError(f"The instrument {symbol} not found.")
+        if symbol not in self.objects:
+            self.objects[symbol] = Tool(MetaInstrument.market[market][symbol])
 
-        return self.objects[instrument]
+        return self.objects[symbol]
 
 
 if platform.system() == "Windows":

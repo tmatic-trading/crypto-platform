@@ -186,9 +186,7 @@ class Agent(Bitmex):
                 self.name,
             )
         instrument.tickSize = values["tickSize"]
-        instrument.price_precision = service.precision(
-            number=values["tickSize"]
-        )
+        instrument.price_precision = service.precision(number=values["tickSize"])
         instrument.minOrderQty = minimumTradeAmount
         instrument.qtyStep = minimumTradeAmount
         instrument.precision = service.precision(minimumTradeAmount)
@@ -196,9 +194,7 @@ class Agent(Bitmex):
         instrument.volume24h = values["volume24h"]
         if "expiry" in values:
             if values["expiry"]:
-                instrument.expire = service.time_converter(
-                    time=values["expiry"]
-                )
+                instrument.expire = service.time_converter(time=values["expiry"])
             else:
                 instrument.expire = "Perpetual"
         else:

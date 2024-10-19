@@ -220,7 +220,7 @@ class MetaInstrument(type):
         name = item[1]
 
         return self.market[name][item]
-    
+
     def add(self, item) -> Instrument:
         name = item[1]
         if name not in self.market:

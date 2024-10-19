@@ -404,8 +404,8 @@ def setup_database_connecion() -> None:
         CLORDID int DEFAULT 0,
         ACCOUNT int DEFAULT 0)"""
 
-        sql_create_symbols = """
-        CREATE TABLE IF NOT EXISTS symbols (
+        sql_create = """
+        CREATE TABLE IF NOT EXISTS %s (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         SYMBOL varchar(40) DEFAULT NULL,
         MARKET varchar(20) DEFAULT NULL,
@@ -425,9 +425,13 @@ def setup_database_connecion() -> None:
         VALUEOFONECONTRACT decimal(10,12) DEFAULT NULL,
         DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
 
+        sql_create_symbols = sql_create % "symbols"
+        sql_create_backtest = sql_create % "backtest"
+
         var.cursor_sqlite.execute(sql_create_robots)
         var.cursor_sqlite.execute(sql_create_coins)
         var.cursor_sqlite.execute(sql_create_symbols)
+        var.cursor_sqlite.execute(sql_create_backtest)
         var.cursor_sqlite.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON coins (ID)"
         )
@@ -440,6 +444,9 @@ def setup_database_connecion() -> None:
         var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS SIDE_ix ON coins (SIDE)")
         var.cursor_sqlite.execute(
             "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON symbols (MARKET, SYMBOL)"
+        )
+        var.cursor_sqlite.execute(
+            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON backtest (MARKET, SYMBOL)"
         )
         var.connect_sqlite.commit()
 

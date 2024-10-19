@@ -104,3 +104,4 @@ class Variables:
     rollup_symbol = ""
     selected_iid = dict()
     dash = "---"
+    backtest = False

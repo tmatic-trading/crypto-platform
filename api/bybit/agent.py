@@ -48,9 +48,7 @@ class Agent(Bybit):
                 else:
                     cursor = ""
                 for values in result["result"]["list"]:
-                    Agent.fill_instrument(
-                        self, values=values, category=category
-                    )
+                    Agent.fill_instrument(self, values=values, category=category)
                 if isinstance(result["result"]["list"], list):
                     success[num] = ""  # success
 
@@ -678,23 +676,13 @@ class Agent(Bybit):
         else:
             instrument.expire = "Perpetual"
         instrument.tickSize = float(values["priceFilter"]["tickSize"])
-        instrument.price_precision = service.precision(
-            number=instrument.tickSize
-        )
-        instrument.minOrderQty = float(
-            values["lotSizeFilter"]["minOrderQty"]
-        )
+        instrument.price_precision = service.precision(number=instrument.tickSize)
+        instrument.minOrderQty = float(values["lotSizeFilter"]["minOrderQty"])
         if category == "spot":
-            instrument.qtyStep = float(
-                values["lotSizeFilter"]["basePrecision"]
-            )
+            instrument.qtyStep = float(values["lotSizeFilter"]["basePrecision"])
         else:
-            instrument.qtyStep = float(
-                values["lotSizeFilter"]["qtyStep"]
-            )
-        instrument.precision = service.precision(
-            number=instrument.qtyStep
-        )
+            instrument.qtyStep = float(values["lotSizeFilter"]["qtyStep"])
+        instrument.precision = service.precision(number=instrument.qtyStep)
         if values["status"] == "Trading":
             instrument.state = "Open"
         else:

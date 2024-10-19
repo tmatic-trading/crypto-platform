@@ -859,7 +859,7 @@ class SettingsApp:
             else:
                 err += f"\n{str(e)}"
         return [err, message]
-    
+
     def delete_warning(self, bot_name: str) -> bool:
         if bot_name in var.orders:
             num = len(var.orders[bot_name])
@@ -881,7 +881,7 @@ class SettingsApp:
                 )
                 functions.warning_window(message=message)
                 return True
-        
+
         return False
 
     def display_error_message(self, bot_name: str) -> None:
@@ -1164,7 +1164,10 @@ def import_bot_module(bot_name: str, update=False) -> None:
         }
     except Exception as exception:
         message = ErrorMessage.BOT_LOADING_ERROR.format(
-            MODULE=module, CLASS=exception.__class__.__name__, EXCEPTION=exception, BOT_NAME=bot_name
+            MODULE=module,
+            CLASS=exception.__class__.__name__,
+            EXCEPTION=exception,
+            BOT_NAME=bot_name,
         )
         var.logger.warning(message)
         var.queue_info.put(

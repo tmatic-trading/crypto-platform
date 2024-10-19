@@ -21,7 +21,6 @@ from display.variables import Variables as disp
 from display.variables import trim_col_width
 from functions import Function
 
-
 settings = SettingsApp(disp.settings_page)
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction

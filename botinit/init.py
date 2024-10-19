@@ -55,11 +55,7 @@ def add_subscription(subscriptions: set) -> None:
             ws.Instrument[symbol].volume = data[0]["SUM_QTY"]
 
 
-def load_bots() -> None:
-    """
-    Loading bots into the Bots class.
-    """
-
+def load_bot_parameters():
     qwr = "select * from robots order by DAT;"
 
     data = service.select_database(qwr)
@@ -80,6 +76,13 @@ def load_bots() -> None:
         bot.bot_positions = dict()
         bot.bot_orders = var.orders[value["EMI"]]
         bot.log = list()
+
+
+def load_bots() -> None:
+    """
+    Loading bots into the Bots class.
+    """
+    load_bot_parameters()
 
     # Loading volumes for subscribed instruments
 

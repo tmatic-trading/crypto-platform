@@ -113,45 +113,13 @@ class Function(WS, Variables):
             data = service.select_database(qwr)
             if not data:
                 WS.get_instrument(self, ticker=ticker, category=category)
-                instrument = self.Instrument[symbol]
-                values = [
-                    instrument.symbol,
-                    instrument.market,
-                    instrument.category,
-                    instrument.settlCurrency[0],
-                    instrument.ticker,
-                    instrument.myMultiplier,
-                    instrument.multiplier,
-                    instrument.tickSize,
-                    instrument.price_precision,
-                    instrument.minOrderQty,
-                    instrument.qtyStep,
-                    instrument.precision,
-                    instrument.expire,
-                    instrument.baseCoin,
-                    instrument.quoteCoin,
-                    instrument.valueOfOneContract,
-                ]
-                service.insert_database(values=values, table="symbols")
+                service.add_symbol_database(
+                    instrument=self.Instrument[symbol], table="symbols"
+                )
             else:
                 data = data[0]
                 instrument = self.Instrument.add(symbol)
-                instrument.symbol = symb
-                instrument.market = self.name
-                instrument.category = category
-                instrument.settlCurrency = (data["CURRENCY"], self.name)
-                instrument.ticker = ticker
-                instrument.myMultiplier = data["MYMULTIPLIER"]
-                instrument.multiplier = data["MULTIPLIER"]
-                instrument.tickSize = data["TICKSIZE"]
-                instrument.price_precision = data["PRICE_PRECISION"]
-                instrument.minOrderQty = data["MINORDERQTY"]
-                instrument.qtyStep = data["QTYSTEP"]
-                instrument.precision = data["PRECISION"]
-                instrument.expire = service.time_converter(time=data["EXPIRE"])
-                instrument.baseCoin = data["BASECOIN"]
-                instrument.quoteCoin = data["QUOTECOIN"]
-                instrument.valueOfOneContract = data["VALUEOFONECONTRACT"]
+                service.set_symbol(instrument=instrument, data=data)
 
     def kline_data_filename(self: Markets, symbol: tuple, timefr: str) -> str:
         return "data/" + symbol[0] + "_" + self.name + "_" + str(timefr) + ".txt"

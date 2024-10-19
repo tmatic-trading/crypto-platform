@@ -353,24 +353,25 @@ def fill_bot_position(
         "limits": instrument.minOrderQty,
     }
     # Checks if this bot has any records in the database on this instrument.
-    qwr = (
-        "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
-        + "sum(SUMREAL) as SUM_SUMREAL, sum(COMMISS) as "
-        + "SUM_COMMISS, TTIME from (select * from coins where EMI = '"
-        + bot_name
-        + "' and SYMBOL = '"
-        + instrument.symbol
-        + "' and MARKET = '"
-        + instrument.market
-        + "' and ACCOUNT = "
-        + str(user_id)
-        + " and SIDE <> 'Fund' order by ID desc) T;"
-    )
-    data = select_database(qwr)[0]
-    if data and data["SUM_QTY"]:
-        bot.bot_positions[symbol]["volume"] = float(data["SUM_QTY"])
-        bot.bot_positions[symbol]["sumreal"] = float(data["SUM_SUMREAL"])
-        bot.bot_positions[symbol]["commiss"] = float(data["SUM_COMMISS"])
+    if not var.backtest:
+        qwr = (
+            "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
+            + "sum(SUMREAL) as SUM_SUMREAL, sum(COMMISS) as "
+            + "SUM_COMMISS, TTIME from (select * from coins where EMI = '"
+            + bot_name
+            + "' and SYMBOL = '"
+            + instrument.symbol
+            + "' and MARKET = '"
+            + instrument.market
+            + "' and ACCOUNT = "
+            + str(user_id)
+            + " and SIDE <> 'Fund' order by ID desc) T;"
+        )
+        data = select_database(qwr)[0]
+        if data and data["SUM_QTY"]:
+            bot.bot_positions[symbol]["volume"] = float(data["SUM_QTY"])
+            bot.bot_positions[symbol]["sumreal"] = float(data["SUM_SUMREAL"])
+            bot.bot_positions[symbol]["commiss"] = float(data["SUM_COMMISS"])
 
 
 def timeframe_seconds(timefr: str) -> int:
@@ -718,3 +719,44 @@ def order_form_title():
 
 def set_emi(symbol: tuple) -> str:
     return ".".join(symbol)
+
+
+def add_symbol_database(instrument: Instrument, table: str) -> None:
+    values = [
+        instrument.symbol,
+        instrument.market,
+        instrument.category,
+        instrument.settlCurrency[0],
+        instrument.ticker,
+        instrument.myMultiplier,
+        instrument.multiplier,
+        instrument.tickSize,
+        instrument.price_precision,
+        instrument.minOrderQty,
+        instrument.qtyStep,
+        instrument.precision,
+        instrument.expire,
+        instrument.baseCoin,
+        instrument.quoteCoin,
+        instrument.valueOfOneContract,
+    ]
+    insert_database(values=values, table=table)
+
+
+def set_symbol(instrument: Instrument, data: dict) -> None:
+    instrument.symbol = data["SYMBOL"]
+    instrument.market = data["MARKET"]
+    instrument.category = data["CATEGORY"]
+    instrument.settlCurrency = (data["CURRENCY"], data["MARKET"])
+    instrument.ticker = data["TICKER"]
+    instrument.myMultiplier = data["MYMULTIPLIER"]
+    instrument.multiplier = data["MULTIPLIER"]
+    instrument.tickSize = data["TICKSIZE"]
+    instrument.price_precision = data["PRICE_PRECISION"]
+    instrument.minOrderQty = data["MINORDERQTY"]
+    instrument.qtyStep = data["QTYSTEP"]
+    instrument.precision = data["PRECISION"]
+    instrument.expire = time_converter(time=data["EXPIRE"])
+    instrument.baseCoin = data["BASECOIN"]
+    instrument.quoteCoin = data["QUOTECOIN"]
+    instrument.valueOfOneContract = data["VALUEOFONECONTRACT"]
