@@ -30,38 +30,4 @@ def get_instrument(ws: Markets, symbol: tuple):
         instrument = ws.Instrument.add(symbol)
         service.set_symbol(instrument=instrument, data=data)
 
-
-
-
-
-
-
-
-
-
-
-    if ws.Instrument.get_keys() == None:
-        WS.get_active_instruments(ws)
-
-
-
-
-
-        save_to_database(ws, symbol)
-    elif symbol not in ws.Instrument.get_keys():
-        qwr = (
-            "select * from backtest where SYMBOL ='"
-            + symbol[0]
-            + "' and MARKET = '"
-            + ws.name
-            + "';"
-        )
-        data = service.select_database(qwr)
-        if not data:
-            save_to_database(ws, symbol)
-        else:
-            data = data[0]
-            instrument = ws.Instrument.add(symbol)
-            service.set_symbol(instrument=instrument, data=data)
-
     
