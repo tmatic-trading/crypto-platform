@@ -755,7 +755,10 @@ def set_symbol(instrument: Instrument, data: dict) -> None:
     instrument.minOrderQty = data["MINORDERQTY"]
     instrument.qtyStep = data["QTYSTEP"]
     instrument.precision = data["PRECISION"]
-    instrument.expire = time_converter(time=data["EXPIRE"])
+    if data["EXPIRE"] == "Perpetual":
+        instrument.expire = data["EXPIRE"]
+    else:
+        instrument.expire = time_converter(time=data["EXPIRE"])
     instrument.baseCoin = data["BASECOIN"]
     instrument.quoteCoin = data["QUOTECOIN"]
     instrument.valueOfOneContract = data["VALUEOFONECONTRACT"]
