@@ -76,6 +76,8 @@ def load_bot_parameters():
         bot.bot_positions = dict()
         bot.bot_orders = var.orders[value["EMI"]]
         bot.log = list()
+        bot.backtest_data = dict()
+        bot.iter = 0
 
 
 def load_bots() -> None:

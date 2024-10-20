@@ -104,7 +104,7 @@ class Function(WS, Variables):
         symbol = (symb, self.name)
         if symbol not in self.Instrument.get_keys():
             qwr = (
-                "select * from symbols where SYMBOL ='"
+                "select * from obsolete where SYMBOL ='"
                 + symb
                 + "' and MARKET = '"
                 + self.name
@@ -114,7 +114,7 @@ class Function(WS, Variables):
             if not data:
                 WS.get_instrument(self, ticker=ticker, category=category)
                 service.add_symbol_database(
-                    instrument=self.Instrument[symbol], table="symbols"
+                    instrument=self.Instrument[symbol], table="obsolete"
                 )
             else:
                 data = data[0]
@@ -2590,7 +2590,7 @@ def load_klines(
     """
     filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
     with open(filename, "w") as f:
-        f.write("date;time;open bid;open ask;hi;lo;" + "\n")
+        f.write("date;time;open_bid;open_ask;hi;lo;" + "\n")
     target = datetime.now(tz=timezone.utc)
     target = target.replace(second=0, microsecond=0)
     timefr_minutes = var.timeframe_human_format[timefr]

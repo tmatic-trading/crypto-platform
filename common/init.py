@@ -425,7 +425,7 @@ def setup_database_connecion() -> None:
         VALUEOFONECONTRACT decimal(10,12) DEFAULT NULL,
         DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
 
-        sql_create_symbols = sql_create % "symbols"
+        sql_create_symbols = sql_create % "obsolete"
         sql_create_backtest = sql_create % "backtest"
 
         var.cursor_sqlite.execute(sql_create_robots)
@@ -443,7 +443,7 @@ def setup_database_connecion() -> None:
         )
         var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS SIDE_ix ON coins (SIDE)")
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON symbols (MARKET, SYMBOL)"
+            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON obsolete (MARKET, SYMBOL)"
         )
         var.cursor_sqlite.execute(
             "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON backtest (MARKET, SYMBOL)"

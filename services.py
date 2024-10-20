@@ -252,13 +252,16 @@ def insert_database(values: list, table: str) -> None:
                     "insert into robots (EMI,STATE,TIMEFR) VALUES (?,?,?)",
                     values,
                 )
-            elif table in ["symbols", "backtest"]:
-                qwr = """insert into %s (SYMBOL,MARKET,CATEGORY,CURRENCY,
+            elif table in ["obsolete", "backtest"]:
+                qwr = (
+                    """insert into %s (SYMBOL,MARKET,CATEGORY,CURRENCY,
                     TICKER,MYMULTIPLIER,MULTIPLIER,TICKSIZE,
                     PRICE_PRECISION,MINORDERQTY,QTYSTEP,PRECISION,EXPIRE,
                     BASECOIN,QUOTECOIN,VALUEOFONECONTRACT) VALUES (?,?,?,
-                    ?,?,?,?,?,?,?,?,?,?,?,?,?)""" % table
-                var.cursor_sqlite.execute(qwr,values)
+                    ?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+                    % table
+                )
+                var.cursor_sqlite.execute(qwr, values)
             else:
                 return "Sqlite Error: Unknown database table."
             var.connect_sqlite.commit()
@@ -762,3 +765,18 @@ def set_symbol(instrument: Instrument, data: dict) -> None:
     instrument.baseCoin = data["BASECOIN"]
     instrument.quoteCoin = data["QUOTECOIN"]
     instrument.valueOfOneContract = data["VALUEOFONECONTRACT"]
+
+
+def display_backtest_parameters(bot: BotData):
+    symbols = ""
+    for symbol in var.backtest_symbols:
+        symbols += "\n    " + str(symbol)
+    text = (
+        "Backtesting\n\nBot parameters:\n- name: "
+        + bot.name
+        + "\n- timeframe: "
+        + bot.timefr
+        + "\n- used instruments: "
+        + symbols
+    )
+    print(text)

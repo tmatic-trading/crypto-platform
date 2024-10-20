@@ -208,6 +208,8 @@ class BotData:
     updated: str
     error_message: str = ""
     log: list
+    backtest_data: dict
+    iter: int = 0
 
     def __iter__(self):
         return Ret.iter(self)

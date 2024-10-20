@@ -1,5 +1,9 @@
 from api.api import WS, Markets
 import services as service
+from datetime import datetime
+import os
+from common.data import Bots
+from common.variables import Variables as var
 
 
 def get_instrument(ws: Markets, symbol: tuple):
@@ -30,4 +34,24 @@ def get_instrument(ws: Markets, symbol: tuple):
         instrument = ws.Instrument.add(symbol)
         service.set_symbol(instrument=instrument, data=data)
 
+
+def load_backtest_data(market: str, symb: str, timefr: str, bot_name: str):
+    def fill(header, record, num, line):
+        if header in ["dt", "tm"]:
+            record[header] = int(line[num])
+        else:
+            record[header] = float(line[num])
     
+    for symbol in var.backtest_symbols:
+        Bots[bot_name].backtest_data[symbol] = list()
+        b_data: list = Bots[bot_name].backtest_data[symbol]
+        filename = os.getcwd() + f"/backtest/data/{market}/{symb}/{timefr}.csv"
+        print("\nLoading backtest data from", filename )
+        with open(filename, "r") as file:
+            headers = next(file).strip("\n").split(";")      
+            for line in file:
+                line = line.strip("\n").split(";")
+                record = dict()
+                for num, header in enumerate(headers):
+                    fill(header, record, num, line)
+                b_data.append(record)

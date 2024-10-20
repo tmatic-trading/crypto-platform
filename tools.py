@@ -7,7 +7,7 @@ from typing import Callable, Union
 import functions
 import services as service
 from api.api import WS, Markets
-from backtest import instrumentInit
+from backtest import functions as backtest
 from common.data import BotData, Bots, Instrument, MetaInstrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage
@@ -105,6 +105,8 @@ class Tool(Instrument):
         self.__dict__ = instrument.__dict__
         self.symbol_tuple = (self.symbol, self.market)
         self.instrument = instrument
+        if var.backtest:
+            var.backtest_symbols.append(self.symbol_tuple)
 
     def close_all(
         self,
@@ -334,7 +336,7 @@ class Tool(Instrument):
             ws, symbol=self.symbol_tuple, bot_name=bot_name, timefr=timefr
         )
 
-        return lambda *args: self._kline(timefr, *args)
+        return lambda *args: self._kline(timefr, bot_name, *args)
 
     def set_limit(self, bot: Bot, limit: float) -> None:
         """
@@ -418,31 +420,27 @@ class Tool(Instrument):
 
         return filtered
 
-    def _kline(self, timefr, *args) -> Union[dict, list, float]:
+    def _kline(self, timefr, bot_name, *args) -> Union[dict, list, float]:
         """
         Returns kline (candlestick) data.
 
         Parameters
         ----------
-        First parameter: str
-            Can take values: "date", "time", "bid", "ask", "hi", "lo",
-            "funding", "datetime"
-        Second parameter: int
+        args parameter: int
             The line with the latest date is designated as -1, the
             line before the latest is designated -2, and so on.
 
         Returns
         -------
-        dict | list | float
+        dict
             Kline data. For more information, see add_kline().
         """
-        ws = Markets[self.market]
-        if not args:
-            return ws.klines[self.symbol_tuple][timefr]["data"]
-        elif isinstance(args[0], int):
+        if not var.backtest:
+            ws = Markets[self.market]
             return ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
         else:
-            return ws.klines[self.symbol_tuple][timefr]["data"][args[1]][args[0]]
+            bot = Bots[bot_name]
+            return bot.backtest_data[self.symbol_tuple][bot.iter + args[0]]
 
     def _control_limits(self, side: str, qty: float, bot_name: str) -> float:
         """
@@ -622,9 +620,9 @@ class MetaTool(type):
         ws = Markets[market]
         if var.backtest:  # backtest is runnig
             if Markets[market].Instrument.get_keys() == None:
-                instrumentInit.get_instrument(ws, symbol)
+                backtest.get_instrument(ws, symbol)
             if symbol not in MetaInstrument.market[market]:
-                instrumentInit.get_instrument(ws, symbol)
+                backtest.get_instrument(ws, symbol)
         if symbol not in MetaInstrument.market[market]:
             raise ValueError(f"The instrument {symbol} not found.")
         if symbol not in self.objects:

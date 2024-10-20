@@ -105,3 +105,4 @@ class Variables:
     selected_iid = dict()
     dash = "---"
     backtest = False
+    backtest_symbols = list()

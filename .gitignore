@@ -1,4 +1,5 @@
 **/__pycache__
+backtest/data/
 debug/
 old/
 venv/
