@@ -296,10 +296,14 @@ class Tool(Instrument):
                     date yymmdd, example 240814
                 "time": int
                     time hhmmss, example 143200
-                "bid": float
+                "open_bid": float
                     first bid price at the beginning of the period
-                "ask": float
+                "open_ask": float
                     first ask price at the beginning of the period
+                "bid": float
+                    current first bid price
+                "ask": float
+                    current first ask price
                 "hi": float
                     highest price of the period
                 "lo": float
@@ -313,19 +317,9 @@ class Tool(Instrument):
         --------
         kl = Bybit["BTCUSD"].add_kline()
 
-        1. kl()
-        Return type: list
-            Returns all klines.
-
-        2. kl(-1)
+        kl(-1)
         Return type: dict
             Returns latest kline data.
-
-        3. kl("bid", -1)
-        Return type: float
-            Returns open first bid price of the latest period. Possible
-            values of the first argument: "date", "time", "bid", "ask", "hi",
-            "lo", "funding", "datetime".
 
         The time frame (timefr) is specified in the bot parameters.
         """
@@ -420,7 +414,7 @@ class Tool(Instrument):
 
         return filtered
 
-    def _kline(self, timefr, bot_name, *args) -> Union[dict, list, float]:
+    def _kline(self, timefr, bot_name, *args) -> dict:
         """
         Returns kline (candlestick) data.
 
@@ -437,10 +431,16 @@ class Tool(Instrument):
         """
         if not var.backtest:
             ws = Markets[self.market]
-            return ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
+            values = ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
+            values["bid"] = self.instrument.bids[0][0]
+            values["ask"] = self.instrument.asks[0][0]
+            return values
         else:
             bot = Bots[bot_name]
-            return bot.backtest_data[self.symbol_tuple][bot.iter + args[0]]
+            values = bot.backtest_data[self.symbol_tuple][bot.iter + args[0]]
+            values["bid"] =  bot.backtest_data[self.symbol_tuple][bot.iter + args[0] + 1]["open_bid"]
+            values["ask"] =  bot.backtest_data[self.symbol_tuple][bot.iter + args[0] + 1]["open_ask"]
+            return values
 
     def _control_limits(self, side: str, qty: float, bot_name: str) -> float:
         """

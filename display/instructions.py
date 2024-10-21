@@ -66,8 +66,8 @@
 # data(-1)             data set for the latest period (dict)
 # data("date", -1)     date of the last period in yymmdd format (int)
 # data["time", -1)     time of the last period in hhmmss format (int)
-# data("bid", -1)      first bid price at the beginning of the period (float)
-# data("ask", -1)      first ask price at the beginning of the period (float)
+# data("open_bid", -1)      first bid price at the beginning of the period (float)
+# data("open_ask", -1)      first ask price at the beginning of the period (float)
 # data("hi", -1)       highest price of the period (float)
 # data("lo", -1)       lowest price of the period (float)
 # data("funding", -1)  funding rate for perpetual instruments (float)
@@ -276,7 +276,7 @@
 # kline = instrument.add_kline()
 #
 # def strategy():
-#   if kline("bid", -1) > kline("bid", -10):
+#   if kline("bid", -1) > kline("open_bid", -10):
 #       instrument.buy(bot=bot, move=True, cancel=True)
 #   else:
 #       instrument.sell(bot=bot, move=True, cancel=True)

@@ -464,9 +464,9 @@ Each line of kline data is a dictionary:
     date yymmdd, example 240814
 "time": int
     time hhmmss, example 143200
-"bid": float
+"open_bid": float
     first bid price at the beginning of the period
-"ask": float
+"open_ask": float
     first ask price at the beginning of the period
 "hi": float
     highest price of the period
@@ -494,8 +494,8 @@ A value of -1 returns data for the most recent period, -2 for the period before 
 {
     "date": 240820,
     "time": 134500,
-    "bid": 63259.5,
-    "ask": 63260.0,
+    "open_bid": 63259.5,
+    "open_ask": 63260.0,
     "hi": 63260.0,
     "lo": 63259.5,
     "funding": -0.11806,
@@ -869,7 +869,7 @@ instrument = Bybit["BTCUSDT"]
 kline = instrument.add_kline()
 
 def strategy():
-    if kline("bid", -1) > kline("bid", -10):
+    if kline("bid", -1) > kline("open_bid", -10):
         instrument.buy(bot=bot, move=True, cancel=True)
     else:
         instrument.sell(bot=bot, move=True, cancel=True)

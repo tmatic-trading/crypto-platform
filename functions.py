@@ -133,9 +133,9 @@ class Function(WS, Variables):
             + str(zero)
             + str(row["time"])
             + ";"
-            + str(row["bid"])
+            + str(row["open_bid"])
             + ";"
-            + str(row["ask"])
+            + str(row["open_ask"])
             + ";"
             + str(row["hi"])
             + ";"
@@ -778,8 +778,8 @@ class Function(WS, Variables):
                             + utcnow.month * 100
                             + utcnow.day,
                             "time": utcnow.hour * 10000 + utcnow.minute * 100,
-                            "bid": instrument.bids[0][0],
-                            "ask": instrument.asks[0][0],
+                            "open_bid": instrument.bids[0][0],
+                            "open_ask": instrument.asks[0][0],
                             "hi": instrument.asks[0][0],
                             "lo": instrument.bids[0][0],
                             "funding": instrument.fundingRate,
@@ -2672,8 +2672,8 @@ def load_klines(
             {
                 "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
                 "time": tm.hour * 10000 + tm.minute * 100,
-                "bid": float(row["open"]),
-                "ask": float(row["open"]),
+                "open_bid": float(row["open"]),
+                "open_ask": float(row["open"]),
                 "hi": float(row["high"]),
                 "lo": float(row["low"]),
                 "datetime": tm,
