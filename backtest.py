@@ -9,11 +9,4 @@ backtest.load_backtest_data(
     market="Bitmex", symb="XBTUSD", timefr="1min", bot_name=bot.name
 )
 
-# data = strategy.bot.backtest_data
-# print(data)
-
-"""for bot.iter in range(len(data)):
-    print(data[bot.iter])"""
-
-
-# strategy.strategy()
+backtest.run(bot=bot, strategy=strategy.strategy)

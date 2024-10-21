@@ -80,6 +80,11 @@ class ErrorMessage(str, Enum):
         + "the list."
     )
     SUBSCRIPTION_WARNING = "The {SYMBOL} instrument is already subscribed."
+    CHECK_BACKTEST_DATA_SIZE = (
+        "Backtest data error. The {REFERENCE} has {REFERENCE_NUMBER} records "
+        + "and the {SYMBOL} has {NUMBER} records. The numbers should be "
+        + "equal. Check the backtest data files. Exiting."
+    )
 
     def __str__(self) -> str:
         return self.value

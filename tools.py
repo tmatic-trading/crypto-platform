@@ -11,6 +11,7 @@ from backtest import functions as backtest
 from common.data import BotData, Bots, Instrument, MetaInstrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage
+from functions import Function
 
 
 def name(stack) -> str:
@@ -115,6 +116,53 @@ class Tool(Instrument):
     ) -> None:
         pass
 
+    def _place(
+        self,
+        price: float,
+        qty: float,
+        side: str,
+        move: bool,
+        bot: BotData,
+        cancel: bool,
+    ):
+        res = None
+        if price:
+            qty = self._control_limits(side=side, qty=qty, bot_name=bot.name)
+            if qty != 0:
+                ws = Markets[self.market]
+                clOrdID = None
+                if move is True:
+                    clOrdID = self._get_latest_order(orders=bot.bot_orders, side=side)
+                if clOrdID is None:
+                    clOrdID = service.set_clOrdID(emi=bot.name)
+                    res = WS.place_limit(
+                        ws,
+                        quantity=qty,
+                        price=price,
+                        clOrdID=clOrdID,
+                        symbol=self.symbol_tuple,
+                    )
+                else:
+                    order = bot.bot_orders[clOrdID]
+                    if order["price"] != price:
+                        res = WS.replace_limit(
+                            ws,
+                            quantity=order["leavesQty"],
+                            price=price,
+                            orderID=order["orderID"],
+                            symbol=order["symbol"],
+                        )
+        else:
+            self._empty_orderbook(qty=qty, price=price)
+        if cancel is not None:
+            if side == "Sell":
+                self._remove_orders(orders=bot.bot_orders, side="Buy")
+            elif side == "Buy":
+                self._remove_orders(orders=bot.bot_orders, side="Sell")
+
+        if isinstance(res, dict):
+            return clOrdID
+
     def sell(
         self,
         bot: Bot,
@@ -150,44 +198,20 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise
             None.
         """
-        ws = Markets[self.market]
-        res = None
         if not qty:
             qty = self.minOrderQty
+
+        if var.backtest:
+            return self._backtest_place(
+                bot=bot, qty=qty, side="Sell", price=price, move=move, cancel=cancel
+            )
+
         if not price:
             price = self.asks[0][0]
-        if price:
-            qty = self._control_limits(side="Sell", qty=qty, bot_name=bot.name)
-            if qty:
-                clOrdID = None
-                if move is True:
-                    clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Sell")
-                if clOrdID is None:
-                    clOrdID = service.set_clOrdID(emi=bot.name)
-                    res = WS.place_limit(
-                        ws,
-                        quantity=-abs(qty),
-                        price=price,
-                        clOrdID=clOrdID,
-                        symbol=self.symbol_tuple,
-                    )
-                else:
-                    order = bot.bot_orders[clOrdID]
-                    if order["price"] != price:
-                        res = WS.replace_limit(
-                            ws,
-                            quantity=order["leavesQty"],
-                            price=price,
-                            orderID=order["orderID"],
-                            symbol=order["symbol"],
-                        )
-        else:
-            self._empty_orderbook(qty=qty, price=price)
-        if cancel is not None:
-            self._remove_orders(orders=bot.bot_orders, side="Buy")
 
-        if isinstance(res, dict):
-            return clOrdID
+        return self._place(
+            price=price, qty=-abs(qty), side="Sell", move=move, bot=bot, cancel=cancel
+        )
 
     def buy(
         self,
@@ -224,44 +248,20 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise
             None.
         """
-        ws = Markets[self.market]
-        res = None
         if not qty:
             qty = self.minOrderQty
+
+        if var.backtest:
+            return self._backtest_buy(
+                bot=bot, qty=qty, side="Sell", price=price, move=move, cancel=cancel
+            )
+
         if not price:
             price = self.bids[0][0]
-        if price:
-            qty = self._control_limits(side="Buy", qty=qty, bot_name=bot.name)
-            if qty:
-                clOrdID = None
-                if move is True:
-                    clOrdID = self._get_latest_order(orders=bot.bot_orders, side="Buy")
-                if clOrdID is None:
-                    clOrdID = service.set_clOrdID(emi=bot.name)
-                    res = WS.place_limit(
-                        ws,
-                        quantity=qty,
-                        price=price,
-                        clOrdID=clOrdID,
-                        symbol=self.symbol_tuple,
-                    )
-                else:
-                    order = bot.bot_orders[clOrdID]
-                    if order["price"] != price:
-                        res = WS.replace_limit(
-                            ws,
-                            quantity=order["leavesQty"],
-                            price=price,
-                            orderID=order["orderID"],
-                            symbol=order["symbol"],
-                        )
-        else:
-            self._empty_orderbook(qty=qty, price=price)
-        if cancel is not None:
-            self._remove_orders(orders=bot.bot_orders, side="Sell")
 
-        if isinstance(res, dict):
-            return clOrdID
+        return self._place(
+            price=price, qty=qty, side="Sell", move=move, bot=bot, cancel=cancel
+        )
 
     def EMA(self, period: int) -> float:
         pass
@@ -438,8 +438,12 @@ class Tool(Instrument):
         else:
             bot = Bots[bot_name]
             values = bot.backtest_data[self.symbol_tuple][bot.iter + args[0]]
-            values["bid"] =  bot.backtest_data[self.symbol_tuple][bot.iter + args[0] + 1]["open_bid"]
-            values["ask"] =  bot.backtest_data[self.symbol_tuple][bot.iter + args[0] + 1]["open_ask"]
+            values["bid"] = bot.backtest_data[self.symbol_tuple][
+                bot.iter + args[0] + 1
+            ]["open_bid"]
+            values["ask"] = bot.backtest_data[self.symbol_tuple][
+                bot.iter + args[0] + 1
+            ]["open_ask"]
             return values
 
     def _control_limits(self, side: str, qty: float, bot_name: str) -> float:
@@ -466,7 +470,7 @@ class Tool(Instrument):
         else:
             qty = min(max(0, position["limits"] - position["position"]), abs(qty))
         qty = round(qty, self.precision)
-        if qty == 0:
+        if not var.backtest and qty == 0:
             message = (
                 "Position has reached the limit for ("
                 + position["symbol"]
@@ -609,6 +613,83 @@ class Tool(Instrument):
             )
 
         return bot.bot_positions[self.symbol_tuple]
+
+    def _backtest_place(
+        self,
+        bot: Bot,
+        qty: float,
+        side: str,
+        price: Union[float, None],
+        move: bool,
+        cancel: bool,
+    ) -> Union[str, None]:
+        
+        qty = self._control_limits(side=side, qty=qty, bot_name=bot.name)
+        clOrdID = None
+        if qty != 0:
+            if move is True:
+                clOrdID = self._get_latest_order(orders=bot.bot_orders, side=side)
+            data = bot.backtest_data[self.symbol_tuple]
+            if not price:
+                if side == "Sell":
+                    price = data[bot.iter + 1]["open_ask"]
+                    compare_1 = price
+                    compare_2 = data[bot.iter + 1]["open_bid"]
+                else:
+                    price = data[bot.iter + 1]["open_bid"]
+                    compare_2 = price
+                    compare_1 = data[bot.iter + 1]["open_ask"]
+            if compare_1 <= compare_2:
+                ws = Markets[self.market]
+                if side == "Sell":
+                    quantity = -qty
+                calc = Function.calculate(
+                    ws,
+                    symbol=self.symbol_tuple,
+                    price=compare_2,
+                    qty=-quantity,
+                    rate=0,
+                    fund=1,
+                )
+                service.process_position(
+                    bot=bot,
+                    symbol=self.symbol_tuple,
+                    instrument=self.instrument,
+                    user_id=0,
+                    qty=-quantity,
+                    calc=calc,
+                    ttime="Not used",
+                )
+                if clOrdID:
+                    del var.orders[bot.name][clOrdID]
+                else:
+                    clOrdID = service.set_clOrdID(emi=bot.name)
+            else:
+                if not clOrdID:
+                    clOrdID = service.set_clOrdID(emi=bot.name)
+                    value = {
+                        "leavesQty": qty,
+                        "transactTime": "Not used",
+                        "price": price,
+                        "symbol": self.symbol_tuple,
+                        "side": "Sell",
+                        "orderID": "Not used",
+                    }
+                    service.fill_order(
+                        emi=bot.name,
+                        clOrdID=clOrdID,
+                        category=self.instrument.category,
+                        value=value,
+                    )
+                else:
+                    var.orders[bot.name][clOrdID]["price"] = price
+        if cancel is not None:
+            if side == "Sell":
+                self._remove_orders(orders=bot.bot_orders, side="Buy")
+            elif side == "Buy":
+                self._remove_orders(orders=bot.bot_orders, side="Sell")
+
+        return clOrdID
 
 
 class MetaTool(type):

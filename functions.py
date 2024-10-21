@@ -179,24 +179,15 @@ class Function(WS, Variables):
             instrument.volume += abs(lastQty)
             instrument.sumreal += calc["sumreal"]
             if emi in Bots.keys():
-                if row["symbol"] not in Bots[emi].bot_positions:
-                    service.fill_bot_position(
-                        bot_name=emi,
-                        symbol=row["symbol"],
-                        instrument=instrument,
-                        user_id=Markets[instrument.market].user_id,
-                    )
-                position = Bots[emi].bot_positions[row["symbol"]]
-                if row["category"] != "spot":
-                    position["position"] += lastQty
-                    position["position"] = round(
-                        position["position"],
-                        instrument.precision,
-                    )
-                position["volume"] += abs(lastQty)
-                position["commiss"] += calc["commiss"]
-                position["sumreal"] += calc["sumreal"]
-                position["ltime"] = row["transactTime"]
+                service.process_position(
+                    bot=Bots[emi],
+                    symbol=row["symbol"],
+                    instrument=instrument,
+                    user_id=Markets[instrument.market].user_id,
+                    qty=lastQty,
+                    calc=calc,
+                    ttime=row["transactTime"],
+                )
             results.commission += calc["commiss"]
             results.sumreal += calc["sumreal"]
             values = [
@@ -2456,6 +2447,7 @@ def run_bot_thread(bot_name):
     if callable(robo.run[bot_name]):
         # Calls strategy function in the strategy.py file
         robo.run[bot_name]()
+
 
 def run_bots(bot_list: list) -> None:
     for bot_name in bot_list:

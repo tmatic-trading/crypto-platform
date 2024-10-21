@@ -770,7 +770,7 @@ def set_symbol(instrument: Instrument, data: dict) -> None:
 def display_backtest_parameters(bot: BotData):
     symbols = ""
     for symbol in var.backtest_symbols:
-        symbols += "\n    " + str(symbol)
+        symbols += "\n" + str(symbol)
     text = (
         "Backtesting\n\nBot parameters:\n- name: "
         + bot.name
@@ -780,3 +780,32 @@ def display_backtest_parameters(bot: BotData):
         + symbols
     )
     print(text)
+
+
+def process_position(
+    bot: BotData,
+    symbol: tuple,
+    instrument: Instrument,
+    user_id: int,
+    qty: float,
+    calc: dict,
+    ttime: Union[datetime, str],
+):
+    if symbol not in bot.bot_positions:
+        fill_bot_position(
+            bot_name=bot.name,
+            symbol=symbol,
+            instrument=instrument,
+            user_id=user_id,
+        )
+    position = bot.bot_positions[symbol]
+    if "spot" not in instrument.category:
+        position["position"] += qty
+        position["position"] = round(
+            position["position"],
+            instrument.precision,
+        )
+    position["volume"] += abs(qty)
+    position["commiss"] += calc["commiss"]
+    position["sumreal"] += calc["sumreal"]
+    position["ltime"] = ttime
