@@ -756,6 +756,14 @@ class Function(WS, Variables):
             for timefr, values in kline.items():
                 timefr_minutes = var.timeframe_human_format[timefr]
                 if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
+                    bot_list = list()
+                    if disp.f9 == "ON":
+                        for bot_name in values["robots"]:
+                            bot = Bots[bot_name]
+                            if bot.state == "Active":
+                                if not bot.error_message:
+                                    bot_list.append(bot_name)
+                        run_bots(bot_list=bot_list)
                     Function.save_kline_data(
                         self,
                         row=values["data"][-1],
@@ -2444,7 +2452,21 @@ def clear_tables():
     var.lock_display.release()
 
 
-def target_time(timeframe_sec):
+def run_bot_thread(bot_name):
+    if callable(robo.run[bot_name]):
+        # Calls strategy function in the strategy.py file
+        robo.run[bot_name]()
+
+def run_bots(bot_list: list) -> None:
+    for bot_name in bot_list:
+        t = threading.Thread(
+            target=run_bot_thread,
+            args=(bot_name,),
+        )
+        t.start()
+
+
+'''def target_time(timeframe_sec):
     now = datetime.now(tz=timezone.utc).timestamp()
     target_tm = now + (timeframe_sec - now % timeframe_sec)
 
@@ -2465,6 +2487,7 @@ def bot_in_thread(bot_name: str, target_tm: float, bot: BotData):
                     if not bot.error_message:
                         if callable(robo.run[bot_name]):
                             # Calls strategy function in the strategy.py file
+                            print("____________call strategy")
                             robo.run[bot_name]()
         time.sleep(1 - time.time() % 1)
 
@@ -2481,7 +2504,7 @@ def activate_bot_thread(bot_name: str) -> None:
             bot,
         ),
     )
-    t.start()
+    t.start()'''
 
 
 def download_kline_data(

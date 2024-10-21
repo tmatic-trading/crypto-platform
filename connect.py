@@ -62,7 +62,7 @@ def setup(reload=False):
         var.current_market = "Fake"
         var.symbol = "Fake"
     functions.init_bot_treetable_trades()
-    bot_threads()
+    #bot_threads()
     settings.init()
     functions.clear_tables()
     if "Fake" in var.market_list:
