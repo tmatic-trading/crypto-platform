@@ -266,7 +266,7 @@ class Agent(Deribit):
             for values in data["result"]:
                 symbol = (self.ticker[values["instrument_name"]], self.name)
                 instrument = self.Instrument[symbol]
-                if instrument.category == "future linear":
+                if instrument.category == "future_linear":
                     instrument.currentQty = values["size_currency"]
                 else:
                     instrument.currentQty = values["size"]
