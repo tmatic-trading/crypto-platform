@@ -1,9 +1,11 @@
 import os
+from collections import OrderedDict
 from datetime import datetime
+from typing import Union
 
 import services as service
 from api.api import WS, Markets
-from common.data import BotData, Bots
+from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 from functions import Function
@@ -75,10 +77,67 @@ def load_backtest_data(market: str, symb: str, timefr: str, bot_name: str):
                 exit(1)
 
 
+def _trade(
+    instrument: Instrument,
+    bot: BotData,
+    side: str,
+    qty: float,
+    price: float,
+    clOrdID: Union[str, None],
+) -> str:
+    ws = Markets[instrument.market]
+    if side == "Sell":
+        quantity = -qty
+    calc = Function.calculate(
+        ws,
+        symbol=(instrument.symbol, instrument.market),
+        price=price,
+        qty=quantity,
+        rate=instrument.makerFee,
+        fund=1,
+    )
+    service.process_position(
+        bot=bot,
+        symbol=(instrument.symbol, instrument.market),
+        instrument=instrument,
+        user_id=0,
+        qty=quantity,
+        calc=calc,
+        ttime="Not used",
+    )
+    if clOrdID:
+        del var.orders[bot.name][clOrdID]
+    else:
+        clOrdID = service.set_clOrdID(emi=bot.name)
+
+    return clOrdID
+
+
+def _check_trades(bot: BotData):
+    orders: OrderedDict = var.orders[bot.name]
+    orders_copy = orders.copy()
+    for clOrdID, order in orders_copy.items():
+        data = bot.backtest_data[order["symbol"]][bot.iter]
+        if (order["side"] == "Sell" and data["hi"] > order["price"]) or (
+            order["side"] == "Buy" and data["lo"] < order["price"]
+        ):
+            ws = Markets[order["market"]]
+            instrument = ws.Instrument[order["symbol"]]
+            _trade(
+                instrument=instrument,
+                bot=bot,
+                side=order["side"],
+                qty=order["leavesQty"],
+                price=order["price"],
+                clOrdID=clOrdID,
+            )
+
+
 def run(bot: BotData, strategy: callable):
     symbols = list(bot.backtest_data.keys())
     size = len(bot.backtest_data[symbols[0]]) - 1
     for bot.iter in range(size):
+        _check_trades(bot=bot)
         strategy()
 
 
@@ -103,9 +162,9 @@ def results(bot: BotData):
             "volume": round(
                 position["volume"] + position["position"], instrument.precision
             ),
-            "currency": instrument.settlCurrency, 
-            "volume_currency": instrument.quoteCoin, 
-            "max_position": position["max_position"], 
+            "currency": instrument.settlCurrency,
+            "volume_currency": instrument.quoteCoin,
+            "max_position": position["max_position"],
         }
 
     return values

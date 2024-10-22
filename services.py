@@ -340,7 +340,7 @@ def fill_bot_position(
     bot.bot_positions[symbol] = {
         "emi": bot_name,
         "symbol": instrument.symbol,
-        "category": instrument.market,
+        "category": instrument.category,
         "market": instrument.market,
         "ticker": instrument.ticker,
         "position": 0,
@@ -352,7 +352,7 @@ def fill_bot_position(
         "lotSize": instrument.minOrderQty,
         "currency": instrument.settlCurrency[0],
         "limits": instrument.minOrderQty,
-        "max_position": 0
+        "max_position": 0,
     }
     # Checks if this bot has any records in the database on this instrument.
     if not var.backtest:

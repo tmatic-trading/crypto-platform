@@ -629,40 +629,28 @@ class Tool(Instrument):
             if move is True:
                 clOrdID = self._get_latest_order(orders=bot.bot_orders, side=side)
             data = bot.backtest_data[self.symbol_tuple]
-            if not price:
-                if side == "Sell":
+            if side == "Sell":
+                if not price:
                     price = data[bot.iter + 1]["open_ask"]
                     compare_1 = price
-                    compare_2 = data[bot.iter + 1]["open_bid"]
                 else:
+                    compare_1 = price
+                compare_2 = data[bot.iter + 1]["open_bid"]
+            else:
+                if not price:
                     price = data[bot.iter + 1]["open_bid"]
                     compare_2 = price
-                    compare_1 = data[bot.iter + 1]["open_ask"]
+                compare_2 = price
+                compare_1 = data[bot.iter + 1]["open_ask"]
             if compare_1 <= compare_2:
-                ws = Markets[self.market]
-                if side == "Sell":
-                    quantity = -qty
-                calc = Function.calculate(
-                    ws,
-                    symbol=self.symbol_tuple,
-                    price=compare_2,
-                    qty=-quantity,
-                    rate=self.instrument.makerFee,
-                    fund=1,
-                )
-                service.process_position(
+                clOrdID = backtest._trade(
+                    instrument=self,
                     bot=bot,
-                    symbol=self.symbol_tuple,
-                    instrument=self.instrument,
-                    user_id=0,
-                    qty=-quantity,
-                    calc=calc,
-                    ttime="Not used",
+                    side=side,
+                    qty=qty,
+                    price=compare_2,
+                    clOrdID=clOrdID,
                 )
-                if clOrdID:
-                    del var.orders[bot.name][clOrdID]
-                else:
-                    clOrdID = service.set_clOrdID(emi=bot.name)
             else:
                 if not clOrdID:
                     clOrdID = service.set_clOrdID(emi=bot.name)
