@@ -43,14 +43,18 @@ def load_backtest_data(market: str, symb: str, timefr: str, bot_name: str):
         if header in ["dt", "tm"]:
             record[header] = int(line[num])
         else:
-            record[header] = float(line[num])
+            try:
+                record[header] = float(line[num])
+            except:
+                record[header] = 0
 
     bot = Bots[bot_name]
+    print(" ")
     for symbol in var.backtest_symbols:
         bot.backtest_data[symbol] = list()
         b_data: list = bot.backtest_data[symbol]
         filename = os.getcwd() + f"/backtest/data/{market}/{symbol[0]}/{timefr}.csv"
-        print("\nLoading backtest data from", filename)
+        print("Loading backtest data from", filename)
         with open(filename, "r") as file:
             headers = next(file).strip("\n").split(";")
             for line in file:
@@ -87,12 +91,12 @@ def _trade(
 ) -> str:
     ws = Markets[instrument.market]
     if side == "Sell":
-        quantity = -qty
+        qty = -qty
     calc = Function.calculate(
         ws,
         symbol=(instrument.symbol, instrument.market),
         price=price,
-        qty=quantity,
+        qty=qty,
         rate=instrument.makerFee,
         fund=1,
     )
@@ -101,7 +105,7 @@ def _trade(
         symbol=(instrument.symbol, instrument.market),
         instrument=instrument,
         user_id=0,
-        qty=quantity,
+        qty=qty,
         calc=calc,
         ttime="Not used",
     )

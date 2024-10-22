@@ -252,8 +252,8 @@ class Tool(Instrument):
             qty = self.minOrderQty
 
         if var.backtest:
-            return self._backtest_buy(
-                bot=bot, qty=qty, side="Sell", price=price, move=move, cancel=cancel
+            return self._backtest_place(
+                bot=bot, qty=qty, side="Buy", price=price, move=move, cancel=cancel
             )
 
         if not price:
@@ -630,25 +630,28 @@ class Tool(Instrument):
                 clOrdID = self._get_latest_order(orders=bot.bot_orders, side=side)
             data = bot.backtest_data[self.symbol_tuple]
             if side == "Sell":
+                compare_2 = data[bot.iter + 1]["open_bid"]
                 if not price:
                     price = data[bot.iter + 1]["open_ask"]
-                    compare_1 = price
                 else:
-                    compare_1 = price
-                compare_2 = data[bot.iter + 1]["open_bid"]
+                    if price < compare_2:
+                        price = compare_2
+                compare_1 = price                
             else:
+                compare_1 = data[bot.iter + 1]["open_ask"]
                 if not price:
                     price = data[bot.iter + 1]["open_bid"]
-                    compare_2 = price
-                compare_2 = price
-                compare_1 = data[bot.iter + 1]["open_ask"]
+                else:
+                    if price > compare_1:
+                        price = compare_1
+                compare_2 = price                
             if compare_1 <= compare_2:
                 clOrdID = backtest._trade(
                     instrument=self,
                     bot=bot,
                     side=side,
                     qty=qty,
-                    price=compare_2,
+                    price=price,
                     clOrdID=clOrdID,
                 )
             else:
