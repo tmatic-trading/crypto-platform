@@ -439,10 +439,10 @@ class Tool(Instrument):
             bot = Bots[bot_name]
             values = bot.backtest_data[self.symbol_tuple][bot.iter + args[0]]
             values["bid"] = bot.backtest_data[self.symbol_tuple][
-                bot.iter + args[0] + 1
+                bot.iter + args[0] + 2
             ]["open_bid"]
             values["ask"] = bot.backtest_data[self.symbol_tuple][
-                bot.iter + args[0] + 1
+                bot.iter + args[0] + 2
             ]["open_ask"]
             return values
 
@@ -623,7 +623,6 @@ class Tool(Instrument):
         move: bool,
         cancel: bool,
     ) -> Union[str, None]:
-        
         qty = self._control_limits(side=side, qty=qty, bot_name=bot.name)
         clOrdID = None
         if qty != 0:
@@ -648,7 +647,7 @@ class Tool(Instrument):
                     symbol=self.symbol_tuple,
                     price=compare_2,
                     qty=-quantity,
-                    rate=0,
+                    rate=self.instrument.makerFee,
                     fund=1,
                 )
                 service.process_position(

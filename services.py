@@ -257,8 +257,8 @@ def insert_database(values: list, table: str) -> None:
                     """insert into %s (SYMBOL,MARKET,CATEGORY,CURRENCY,
                     TICKER,MYMULTIPLIER,MULTIPLIER,TICKSIZE,
                     PRICE_PRECISION,MINORDERQTY,QTYSTEP,PRECISION,EXPIRE,
-                    BASECOIN,QUOTECOIN,VALUEOFONECONTRACT) VALUES (?,?,?,
-                    ?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+                    BASECOIN,QUOTECOIN,VALUEOFONECONTRACT,TAKERFEE,MAKERFEE)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
                     % table
                 )
                 var.cursor_sqlite.execute(qwr, values)
@@ -352,6 +352,7 @@ def fill_bot_position(
         "lotSize": instrument.minOrderQty,
         "currency": instrument.settlCurrency[0],
         "limits": instrument.minOrderQty,
+        "max_position": 0
     }
     # Checks if this bot has any records in the database on this instrument.
     if not var.backtest:
@@ -740,6 +741,8 @@ def add_symbol_database(instrument: Instrument, table: str) -> None:
         instrument.baseCoin,
         instrument.quoteCoin,
         instrument.valueOfOneContract,
+        instrument.takerFee,
+        instrument.makerFee,
     ]
     res = insert_database(values=values, table=table)
     print("____", res)
@@ -765,12 +768,14 @@ def set_symbol(instrument: Instrument, data: dict) -> None:
     instrument.baseCoin = data["BASECOIN"]
     instrument.quoteCoin = data["QUOTECOIN"]
     instrument.valueOfOneContract = data["VALUEOFONECONTRACT"]
+    instrument.takerFee = data["TAKERFEE"]
+    instrument.makerFee = data["MAKERFEE"]
 
 
 def display_backtest_parameters(bot: BotData):
     symbols = ""
     for symbol in var.backtest_symbols:
-        symbols += "\n" + str(symbol)
+        symbols += "\n   " + str(symbol)
     text = (
         "Backtesting\n\nBot parameters:\n- name: "
         + bot.name
@@ -809,3 +814,5 @@ def process_position(
     position["commiss"] += calc["commiss"]
     position["sumreal"] += calc["sumreal"]
     position["ltime"] = ttime
+    if abs(position["position"]) > position["max_position"]:
+        position["max_position"] = abs(position["position"])

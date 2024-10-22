@@ -217,6 +217,7 @@ def load_bots() -> None:
                     "lotSize": instrument.minOrderQty,
                     "currency": instrument.settlCurrency[0],
                     "limits": instrument.minOrderQty,
+                    "max_position": 0,
                 }
                 if instrument.category == "spot":
                     bot.bot_positions[symbol]["pnl"] = "-"

@@ -6,6 +6,7 @@ from api.api import WS, Markets
 from common.data import BotData, Bots
 from common.variables import Variables as var
 from display.messages import ErrorMessage
+from functions import Function
 
 
 def get_instrument(ws: Markets, symbol: tuple):
@@ -46,8 +47,8 @@ def load_backtest_data(market: str, symb: str, timefr: str, bot_name: str):
     for symbol in var.backtest_symbols:
         bot.backtest_data[symbol] = list()
         b_data: list = bot.backtest_data[symbol]
-        filename = os.getcwd() + f"/backtest/data/{market}/{symb}/{timefr}.csv"
-        print("\nLoading backtest data from", filename, "\n")
+        filename = os.getcwd() + f"/backtest/data/{market}/{symbol[0]}/{timefr}.csv"
+        print("\nLoading backtest data from", filename)
         with open(filename, "r") as file:
             headers = next(file).strip("\n").split(";")
             for line in file:
@@ -78,5 +79,33 @@ def run(bot: BotData, strategy: callable):
     symbols = list(bot.backtest_data.keys())
     size = len(bot.backtest_data[symbols[0]]) - 1
     for bot.iter in range(size):
-        print(bot.iter)
         strategy()
+
+
+def results(bot: BotData):
+    symbols = list(bot.backtest_data.keys())
+    values = dict()
+    for symbol in symbols:
+        ws = Markets[symbol[1]]
+        instrument = ws.Instrument[symbol]
+        position = bot.bot_positions[symbol]
+        calc = Function.calculate(
+            ws,
+            symbol=symbol,
+            price=bot.backtest_data[symbol][-1]["open_bid"],
+            qty=position["position"],
+            rate=instrument.makerFee,
+            fund=1,
+        )
+        values[symbol] = {
+            "result": position["sumreal"] - calc["sumreal"],
+            "commission": position["commiss"] + calc["commiss"],
+            "volume": round(
+                position["volume"] + position["position"], instrument.precision
+            ),
+            "currency": instrument.settlCurrency, 
+            "volume_currency": instrument.quoteCoin, 
+            "max_position": position["max_position"], 
+        }
+
+    return values

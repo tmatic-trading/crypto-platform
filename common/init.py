@@ -423,14 +423,16 @@ def setup_database_connecion() -> None:
         BASECOIN varchar(10) DEFAULT NULL,
         QUOTECOIN varchar(10) DEFAULT NULL,
         VALUEOFONECONTRACT decimal(10,12) DEFAULT NULL,
+        TAKERFEE decimal(1,12) DEFAULT 0.000000000000,
+        MAKERFEE decimal(1,12) DEFAULT 0.000000000000,
         DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
 
-        sql_create_symbols = sql_create % "obsolete"
+        sql_create_obsolete = sql_create % "obsolete"
         sql_create_backtest = sql_create % "backtest"
 
         var.cursor_sqlite.execute(sql_create_robots)
         var.cursor_sqlite.execute(sql_create_coins)
-        var.cursor_sqlite.execute(sql_create_symbols)
+        var.cursor_sqlite.execute(sql_create_obsolete)
         var.cursor_sqlite.execute(sql_create_backtest)
         var.cursor_sqlite.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON coins (ID)"
