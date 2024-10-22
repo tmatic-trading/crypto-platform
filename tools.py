@@ -154,7 +154,7 @@ class Tool(Instrument):
                         )
         else:
             self._empty_orderbook(qty=qty, price=price)
-        if cancel is not None:
+        if cancel:
             if side == "Sell":
                 self._remove_orders(orders=bot.bot_orders, side="Buy")
             elif side == "Buy":
@@ -644,7 +644,7 @@ class Tool(Instrument):
                 else:
                     if price > compare_1:
                         price = compare_1
-                compare_2 = price                
+                compare_2 = price        
             if compare_1 <= compare_2:
                 clOrdID = backtest._trade(
                     instrument=self,
@@ -653,7 +653,7 @@ class Tool(Instrument):
                     qty=qty,
                     price=price,
                     clOrdID=clOrdID,
-                )
+                )  
             else:
                 if not clOrdID:
                     clOrdID = service.set_clOrdID(emi=bot.name)
@@ -662,7 +662,7 @@ class Tool(Instrument):
                         "transactTime": "Not used",
                         "price": price,
                         "symbol": self.symbol_tuple,
-                        "side": "Sell",
+                        "side": side,
                         "orderID": "Not used",
                     }
                     service.fill_order(
@@ -673,7 +673,7 @@ class Tool(Instrument):
                     )
                 else:
                     var.orders[bot.name][clOrdID]["price"] = price
-        if cancel is not None:
+        if cancel:
             if side == "Sell":
                 self._remove_orders(orders=bot.bot_orders, side="Buy")
             elif side == "Buy":
