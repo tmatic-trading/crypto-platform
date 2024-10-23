@@ -124,26 +124,27 @@ class Bot(BotData):
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
+        ord = self.bot_orders.values()
         if not in_list:
-            filtered = OrderedDict(
-                filter(lambda x: x[1]["side"] == side, self.bot_orders.items())
-            )
+            filtered = OrderedDict()
             if descend:
-                filtered = OrderedDict(
-                    sorted(
-                        filtered.items(),
-                        key=lambda x: x[1]["transactTime"],
-                        reverse=True,
-                    )
-                )
+                ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
+            for value in ord:
+                if side:
+                    if value["side"] == side:
+                        filtered[value["clOrdID"]] = value
+                else:
+                    filtered[value["clOrdID"]] = value
         else:
-            filtered = list(
-                filter(lambda x: x["side"] == "Buy", self.bot_orders.values())
-            )
+            filtered = list()
             if descend:
-                filtered = sorted(
-                    filtered, key=lambda x: x["transactTime"], reverse=True
-                )
+                ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
+            for value in ord:
+                if side:
+                    if value["side"] == side:
+                        filtered.append(value)
+                else:
+                    filtered.append(value)
 
         return filtered
 
@@ -433,7 +434,9 @@ class Tool(Instrument):
 
         return position["position"]
 
-    def orders(self, bot: Bot, side: str = None, descend: bool = False) -> OrderedDict:
+    def orders(
+        self, bot: Bot, side: str = None, descend: bool = False, in_list=True
+    ) -> Union[OrderedDict, list]:
         """
         Get the bot orders for the given instrument filtered by instrument
         and side.
@@ -448,15 +451,18 @@ class Tool(Instrument):
         descend: bool
             If omitted, the data is sorted in ascending order by the value of
             ``transactTime``. If True, descending order is returned.
+        in_list: bool
+            If True, the data is returned in a list, otherwise an OrderedDict
+            is returned where the key is clOrdID.
 
         Returns
         -------
-        OrderedDict
+        OrderedDict | list
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
         filtered = self._filter_by_side(
-            orders=bot.bot_orders, side=side, descend=descend
+            orders=bot.bot_orders, side=side, descend=descend, in_list=in_list
         )
 
         return filtered
@@ -561,8 +567,12 @@ class Tool(Instrument):
         )
 
     def _filter_by_side(
-        self, orders: OrderedDict, side: str = None, descend: bool = False
-    ) -> OrderedDict:
+        self,
+        orders: OrderedDict,
+        side: str = None,
+        descend: bool = False,
+        in_list: bool = True,
+    ) -> Union[OrderedDict, list]:
         """
         Finds all bot orders on the sell or buy side for a specific instrument.
 
@@ -575,24 +585,39 @@ class Tool(Instrument):
         descend: bool
             If omitted, the data is sorted in ascending order by the value of
             ``transactTime``. If True, descending order is returned.
+        in_list: bool
+            If True, the data is returned in a list, otherwise an OrderedDict
+            is returned where the key is clOrdID.
 
         Returns
         -------
-        OrderedDict
+        OrderedDict | list
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
-        filtered = OrderedDict()
         ord = orders.values()
-        if descend:
-            ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
-        for value in ord:
-            if value["symbol"] == self.symbol_tuple:
-                if side:
-                    if value["side"] == side:
+        if not in_list:
+            filtered = OrderedDict()
+            if descend:
+                ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
+            for value in ord:
+                if value["symbol"] == self.symbol_tuple:
+                    if side:
+                        if value["side"] == side:
+                            filtered[value["clOrdID"]] = value
+                    else:
                         filtered[value["clOrdID"]] = value
-                else:
-                    filtered[value["clOrdID"]] = value
+        else:
+            filtered = list()
+            if descend:
+                ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
+            for value in ord:
+                if value["symbol"] == self.symbol_tuple:
+                    if side:
+                        if value["side"] == side:
+                            filtered.append(value)
+                    else:
+                        filtered.append(value)
 
         return filtered
 
@@ -630,9 +655,8 @@ class Tool(Instrument):
         """
         orders = self._filter_by_side(orders=orders, side=side)
         if orders:
-            clOrdID = list(orders)[-1]
 
-            return clOrdID
+            return orders[0]["clOrdID"]
 
     def _get_position(self, bot_name: str) -> dict:
         """
@@ -700,7 +724,7 @@ class Tool(Instrument):
                     side=side,
                     qty=qty,
                     price=price,
-                    ttime=ttime, 
+                    ttime=ttime,
                     clOrdID=clOrdID,
                 )
             else:
@@ -724,9 +748,13 @@ class Tool(Instrument):
                     bot.bot_orders[clOrdID]["price"] = price
         if cancel:
             if side == "Sell":
-                orders = self._filter_by_side(orders=bot.bot_orders, side="Buy")
+                orders = self._filter_by_side(
+                    orders=bot.bot_orders, side="Buy", in_list=False
+                )
             else:
-                orders = self._filter_by_side(orders=bot.bot_orders, side="Sell")
+                orders = self._filter_by_side(
+                    orders=bot.bot_orders, side="Sell", in_list=False
+                )
             for clOrdID in orders:
                 del bot.bot_orders[clOrdID]
 
