@@ -5,6 +5,7 @@ from backtest import functions as backtest
 
 bot = strategy.bot
 service.display_backtest_parameters(bot=bot)
+backtest.create_results_file(bot=bot)
 backtest.load_backtest_data(bot=bot)
 backtest.run(bot=bot, strategy=strategy.strategy)
 res = backtest.results(bot=bot)

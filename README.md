@@ -704,7 +704,7 @@ Result:
 0.001
 ```
 
-### Get bot orders for the instrument
+### Get bot's orders for the instrument
 
 Use the ```orders()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in descending order. Set the `in_list` parameter to return the result in a list or OrderedDict format.
 

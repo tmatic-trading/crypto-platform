@@ -11,6 +11,10 @@ from display.messages import ErrorMessage
 from functions import Function
 
 
+class Backtest:
+    filename = ""
+
+
 def get_instrument(ws: Markets, symbol: tuple):
     """
     When running backtesting outside main.py there is no connection to any
@@ -141,25 +145,19 @@ def _check_trades(bot: BotData):
             )
 
 
-def run(bot: BotData, strategy: callable):
-    symbols = list(bot.backtest_data.keys())
-    size = len(bot.backtest_data[symbols[0]]) - 1
-    for bot.iter in range(size):
-        _check_trades(bot=bot)
-        strategy()
-
-
-def results(bot: BotData):
+def results(bot: BotData, price=None):
     symbols = list(bot.backtest_data.keys())
     values = dict()
     for symbol in symbols:
         ws = Markets[symbol[1]]
         instrument = ws.Instrument[symbol]
         position = bot.bot_positions[symbol]
+        if not price:
+            price = bot.backtest_data[symbol][-1]["open_bid"]
         calc = Function.calculate(
             ws,
             symbol=symbol,
-            price=bot.backtest_data[symbol][-1]["open_bid"],
+            price=price,
             qty=position["position"],
             rate=instrument.makerFee,
             fund=1,
@@ -176,3 +174,42 @@ def results(bot: BotData):
         }
 
     return values
+
+
+def _save_results_by_day(bot: BotData):
+    symbol = list(bot.bot_positions.keys())[0]
+    data = bot.backtest_data[symbol]
+    if data[bot.iter]["date"] != data[bot.iter + 1]["date"]:
+        values = results(bot=bot, price=data[bot.iter + 1]["open_bid"])
+        data = str(data[bot.iter]["date"])
+        for symbol, value in values.items():
+            data += (
+                ";"
+                + symbol[0]
+                + ";"
+                + str(value["result"])
+                + ";"
+                + str(value["max_position"])
+            )
+        with open(Backtest.filename, "a") as f:
+            f.write(data + "\n")
+
+
+def run(bot: BotData, strategy: callable):
+    symbols = list(bot.backtest_data.keys())
+    size = len(bot.backtest_data[symbols[0]]) - 1
+    for bot.iter in range(size):
+        _check_trades(bot=bot)
+        _save_results_by_day(bot=bot)
+        strategy()
+
+
+def create_results_file(bot: BotData):
+    Backtest.filename = os.getcwd() + "/backtest/results.txt"
+    f = open(Backtest.filename, "w")
+    row = "date"
+    for symbol in bot.bot_positions.keys():
+        row += ";symbol;result;max"
+    row += "\n"
+    f.write(row)
+    f.close

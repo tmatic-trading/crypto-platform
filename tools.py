@@ -41,9 +41,9 @@ class Bot(BotData):
             Order ID. Example: "1348642035.Super"
         """
         if var.backtest:
-            self._backtest_remove(clOrdID=clOrdID)            
+            self._backtest_remove(clOrdID=clOrdID)
             return
-        
+
         if clOrdID in self.bot_orders:
             order = self.bot_orders[clOrdID]
             ws = Markets[order["market"]]
@@ -154,7 +154,7 @@ class Bot(BotData):
                     filtered.append(value)
 
         return filtered
-    
+
     def _backtest_remove(self, clOrdID: str) -> None:
         del self.bot_orders[clOrdID]
 
@@ -668,7 +668,6 @@ class Tool(Instrument):
         """
         orders = self._filter_by_side(orders=orders, side=side)
         if orders:
-
             return orders[0]["clOrdID"]
 
     def _get_position(self, bot_name: str) -> dict:
