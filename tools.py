@@ -79,6 +79,10 @@ class Bot(BotData):
         str | None
             On success, clOrdID is returned, otherwise an error type.
         """
+        if var.backtest:
+            self._backtest_replace(clOrdID=clOrdID, price=price)
+            return clOrdID
+
         if clOrdID in self.bot_orders:
             order = self.bot_orders[clOrdID]
             ws = Markets[order["market"]]
@@ -152,8 +156,10 @@ class Bot(BotData):
         return filtered
     
     def _backtest_remove(self, clOrdID: str) -> None:
-        if clOrdID in self.bot_orders:
-            del self.bot_orders[clOrdID]
+        del self.bot_orders[clOrdID]
+
+    def _backtest_replace(self, clOrdID: str, price: float) -> None:
+        self.bot_orders[clOrdID]["price"] = price
 
 
 class Tool(Instrument):
