@@ -38,7 +38,7 @@ def get_instrument(ws: Markets, symbol: tuple):
         service.set_symbol(instrument=instrument, data=data)
 
 
-def load_backtest_data(market: str, symb: str, timefr: str, bot_name: str):
+def load_backtest_data(bot: BotData):
     def fill(header, record, num, line):
         if header in ["dt", "tm"]:
             record[header] = int(line[num])
@@ -48,12 +48,11 @@ def load_backtest_data(market: str, symb: str, timefr: str, bot_name: str):
             except:
                 record[header] = 0
 
-    bot = Bots[bot_name]
     print(" ")
     for symbol in var.backtest_symbols:
         bot.backtest_data[symbol] = list()
         b_data: list = bot.backtest_data[symbol]
-        filename = os.getcwd() + f"/backtest/data/{market}/{symbol[0]}/{timefr}.csv"
+        filename = os.getcwd() + f"/backtest/data/{symbol[1]}/{symbol[0]}/{bot.timefr}.csv"
         print("Loading backtest data from", filename)
         with open(filename, "r") as file:
             headers = next(file).strip("\n").split(";")
