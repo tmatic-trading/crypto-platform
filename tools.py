@@ -109,8 +109,7 @@ class Bot(BotData):
         Parameters
         ----------
         side: str
-            The Sell or Buy side of the order. If the parameter is omitted,
-            both sides are returned.
+            The Sell or Buy side of the order.
         descend: bool
             If omitted, the data is sorted in ascending order by the value of
             ``transactTime``. If True, descending order is returned.

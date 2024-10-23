@@ -704,9 +704,9 @@ Result:
 0.001
 ```
 
-### Get orders
+### Get bot orders for the instrument
 
-Use the ```orders()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in descending order.
+Use the ```orders()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in descending order. Set the `in_list` parameter to return the result in a list or OrderedDict format.
 
 ```Python
 """
@@ -715,17 +715,20 @@ Parameters
 bot: Bot
     An instance of a bot in the Bot class.
 side: str
-    The Sell or Buy side of the order. If the parameter is omitted, both
-    sides are returned.
+    The Sell or Buy side of the order. If the parameter is omitted,
+    both sides are returned.
 descend: bool
     If omitted, the data is sorted in ascending order by the value of
     ``transactTime``. If True, descending order is returned.
+in_list: bool
+    If True, the data is returned in a list, otherwise an OrderedDict
+    is returned where the key is clOrdID.
 
 Returns
 -------
-OrderedDict
-    Orders are sorted by ``transactTime`` in the order specified in the
-    ``descend`` parameter. The OrderedDict key is the clOrdID value.
+OrderedDict | list
+    Orders are sorted by ``transactTime`` in the order specified in
+    the descend parameter. The OrderedDict key is the clOrdID value.
 """
 ```
 
@@ -735,7 +738,7 @@ Example:
 import Bitmex, Bot
 bot = Bot()
 
-print(Bitmex["XBTUSDT"].orders(bot=bot, side="Buy"))
+print(Bitmex["XBTUSDT"].orders(bot=bot, side="Buy", in_list=False))
 ```
 
 Result:
@@ -781,6 +784,78 @@ OrderedDict(
         ),
     ]
 )
+```
+
+### Get bot's orders
+
+Use the ```orders()``` method of the the Bot class to get the bot's current open orders on the sell or buy side, optionally sorted in descending order. Set the `in_list` parameter to return the result in a list or OrderedDict format.
+
+```Python
+"""
+Parameters
+----------
+side: str
+    The Sell or Buy side of the order.
+descend: bool
+    If omitted, the data is sorted in ascending order by the value of
+    ``transactTime``. If True, descending order is returned.
+in_list: bool
+    If True, the data is returned in a list, otherwise an OrderedDict
+    is returned where the key is clOrdID.
+
+Returns
+-------
+OrderedDict | list
+    Orders are sorted by ``transactTime`` in the order specified in
+    the descend parameter. The OrderedDict key is the clOrdID value.
+"""
+```
+
+Example:
+
+```Python
+import Bot
+
+bot = Bot()
+
+bot.orders(side="Buy")
+```
+
+Result:
+
+```Python
+[
+    {
+        "emi": "Mybot",
+        "leavesQty": 0.001,
+        "transactTime": datetime.datetime(
+            2024, 8, 21, 14, 7, 49, 485000,
+                        tzinfo=datetime.timezone.utc
+        ),
+        "price": 40000,
+        "symbol": ("XBTUSDT", "Bitmex"),
+        "category": "linear",
+        "market": "Bitmex",
+        "side": "Buy",
+        "orderID": "2f27fd1f-5d45-4169-a1de-c7e2c628ce7e",
+        "clOrdID": "1332492130.Mybot",
+    },
+    {
+        "emi": "Mybot",
+        "leavesQty": 0.001,
+        "transactTime": datetime.datetime(
+            2024, 8, 21, 14, 49, 38, 132000,
+                        tzinfo=datetime.timezone.utc
+        ),
+        "price": 43000,
+        "symbol": ("XBTUSDT", "Bitmex"),
+        "category": "linear",
+        "market": "Bitmex",
+        "side": "Buy",
+        "orderID": "05108401-dba7-443c-8216-d034ac25226d",
+        "clOrdID": "1332516744.Mybot",
+    },
+]
 ```
 
 ### Remove order
