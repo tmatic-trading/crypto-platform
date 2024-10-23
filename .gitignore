@@ -1,6 +1,7 @@
 **/__pycache__
 backtest/data/
 backtest/results.txt
+btest.py
 debug/
 old/
 venv/

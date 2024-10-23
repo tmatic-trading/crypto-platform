@@ -13,6 +13,7 @@ from functions import Function
 
 class Backtest:
     filename = ""
+    trades = 0
 
 
 def get_instrument(ws: Markets, symbol: tuple):
@@ -116,9 +117,10 @@ def _trade(
         ttime=ttime,
     )
     if clOrdID:
-        del var.orders[bot.name][clOrdID]
+        del bot.bot_orders[clOrdID]
     else:
         clOrdID = service.set_clOrdID(emi=bot.name)
+    Backtest.trades += 1
 
     return clOrdID
 
