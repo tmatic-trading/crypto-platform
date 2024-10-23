@@ -197,11 +197,12 @@ def close(markets):
         ws.exit()
 
 
-def display_exception(exception) -> str:
+def display_exception(exception, display=True) -> str:
     formated = "".join(
         traceback.format_exception(type(exception), exception, exception.__traceback__)
     )
-    print(formated)
+    if display == True:
+        print(formated)
 
     return formated
 

@@ -170,7 +170,7 @@ class SettingsApp:
         Bots[bot_name].bot_positions = dict()
         Bots[bot_name].bot_orders = var.orders[bot_name]
         import_bot_module(bot_name)
-        functions.activate_bot_thread(bot_name=bot_name)
+        # d functions.activate_bot_thread(bot_name=bot_name)
         self.insert_bot_menu(name=bot_name, new=True)
         Bots[bot_name].log = list()
 
@@ -600,7 +600,8 @@ class SettingsApp:
                     }
 
             except Exception as e:
-                err = str(e)
+                res = service.display_exception(e, display=False)
+                err = "\n" + str(e) + "\n\n" + res
                 if message == "":
                     message = f"{err}\n\nThe duplicate operation failed."
                 else:
