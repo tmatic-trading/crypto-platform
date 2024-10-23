@@ -324,9 +324,9 @@ def clear_params():
     MetaInstrument.market = dict()
 
 
-'''def bot_threads() -> None:
+"""def bot_threads() -> None:
     for bot_name in Bots.keys():
-        functions.activate_bot_thread(bot_name=bot_name)'''
+        functions.activate_bot_thread(bot_name=bot_name)"""
 
 
 def terminal_reload_thread() -> None:

@@ -1,8 +1,7 @@
 import backtest.init
 import services as service
-from algo.a3 import strategy
+from algo.a5 import strategy
 from backtest import functions as backtest
-
 
 bot = strategy.bot
 service.display_backtest_parameters(bot=bot)

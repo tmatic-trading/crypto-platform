@@ -40,7 +40,7 @@ def get_instrument(ws: Markets, symbol: tuple):
 
 def load_backtest_data(bot: BotData):
     def fill(header, record, num, line):
-        if header in ["dt", "tm"]:
+        if header in ["date", "time"]:
             record[header] = int(line[num])
         else:
             try:
@@ -52,7 +52,9 @@ def load_backtest_data(bot: BotData):
     for symbol in var.backtest_symbols:
         bot.backtest_data[symbol] = list()
         b_data: list = bot.backtest_data[symbol]
-        filename = os.getcwd() + f"/backtest/data/{symbol[1]}/{symbol[0]}/{bot.timefr}.csv"
+        filename = (
+            os.getcwd() + f"/backtest/data/{symbol[1]}/{symbol[0]}/{bot.timefr}.csv"
+        )
         print("Loading backtest data from", filename)
         with open(filename, "r") as file:
             headers = next(file).strip("\n").split(";")
@@ -86,6 +88,7 @@ def _trade(
     side: str,
     qty: float,
     price: float,
+    ttime: str,
     clOrdID: Union[str, None],
 ) -> str:
     ws = Markets[instrument.market]
@@ -106,7 +109,7 @@ def _trade(
         user_id=0,
         qty=qty,
         calc=calc,
-        ttime="Not used",
+        ttime=ttime,
     )
     if clOrdID:
         del var.orders[bot.name][clOrdID]
@@ -126,12 +129,14 @@ def _check_trades(bot: BotData):
         ):
             ws = Markets[order["market"]]
             instrument = ws.Instrument[order["symbol"]]
+            ttime = str(data["date"]) + str(data["time"])
             _trade(
                 instrument=instrument,
                 bot=bot,
                 side=order["side"],
                 qty=order["leavesQty"],
                 price=order["price"],
+                ttime=ttime,
                 clOrdID=clOrdID,
             )
 

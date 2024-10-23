@@ -100,6 +100,53 @@ class Bot(BotData):
                 }
             )
 
+    def orders(
+        self, side: str, descend=False, in_list=True
+    ) -> Union[OrderedDict, list]:
+        """
+        Get the bot orders filtered by side.
+
+        Parameters
+        ----------
+        side: str
+            The Sell or Buy side of the order. If the parameter is omitted,
+            both sides are returned.
+        descend: bool
+            If omitted, the data is sorted in ascending order by the value of
+            ``transactTime``. If True, descending order is returned.
+        in_list: bool
+            If True, the data is returned in a list, otherwise an OrderedDict
+            is returned where the key is clOrdID.
+
+        Returns
+        -------
+        OrderedDict | list
+            Orders are sorted by ``transactTime`` in the order specified in
+            the descend parameter. The OrderedDict key is the clOrdID value.
+        """
+        if not in_list:
+            filtered = OrderedDict(
+                filter(lambda x: x[1]["side"] == side, self.bot_orders.items())
+            )
+            if descend:
+                filtered = OrderedDict(
+                    sorted(
+                        filtered.items(),
+                        key=lambda x: x[1]["transactTime"],
+                        reverse=True,
+                    )
+                )
+        else:
+            filtered = list(
+                filter(lambda x: x["side"] == "Buy", self.bot_orders.values())
+            )
+            if descend:
+                filtered = sorted(
+                    filtered, key=lambda x: x["transactTime"], reverse=True
+                )
+
+        return filtered
+
 
 class Tool(Instrument):
     def __init__(self, instrument: Instrument) -> None:
@@ -636,7 +683,7 @@ class Tool(Instrument):
                 else:
                     if price < compare_2:
                         price = compare_2
-                compare_1 = price                
+                compare_1 = price
             else:
                 compare_1 = data[bot.iter + 1]["open_ask"]
                 if not price:
@@ -644,7 +691,8 @@ class Tool(Instrument):
                 else:
                     if price > compare_1:
                         price = compare_1
-                compare_2 = price        
+                compare_2 = price
+            ttime = int(str(data[bot.iter]["date"]) + str(data[bot.iter]["time"]))
             if compare_1 <= compare_2:
                 clOrdID = backtest._trade(
                     instrument=self,
@@ -652,14 +700,15 @@ class Tool(Instrument):
                     side=side,
                     qty=qty,
                     price=price,
+                    ttime=ttime, 
                     clOrdID=clOrdID,
-                )  
+                )
             else:
                 if not clOrdID:
                     clOrdID = service.set_clOrdID(emi=bot.name)
                     value = {
                         "leavesQty": qty,
-                        "transactTime": "Not used",
+                        "transactTime": ttime,
                         "price": price,
                         "symbol": self.symbol_tuple,
                         "side": side,
@@ -672,12 +721,14 @@ class Tool(Instrument):
                         value=value,
                     )
                 else:
-                    var.orders[bot.name][clOrdID]["price"] = price
+                    bot.bot_orders[clOrdID]["price"] = price
         if cancel:
             if side == "Sell":
-                self._remove_orders(orders=bot.bot_orders, side="Buy")
-            elif side == "Buy":
-                self._remove_orders(orders=bot.bot_orders, side="Sell")
+                orders = self._filter_by_side(orders=bot.bot_orders, side="Buy")
+            else:
+                orders = self._filter_by_side(orders=bot.bot_orders, side="Sell")
+            for clOrdID in orders:
+                del bot.bot_orders[clOrdID]
 
         return clOrdID
 
