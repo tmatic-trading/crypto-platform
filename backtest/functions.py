@@ -13,6 +13,7 @@ from functions import Function
 
 class Backtest:
     filename = ""
+    filename_trade = ""
     trades = 0
 
 
@@ -86,6 +87,19 @@ def load_backtest_data(bot: BotData):
                 print(message)
                 exit(1)
 
+def _save_trades(side: str, qty: float, price: float, time):
+    data = (
+        str(time)
+        + ";"
+        + side
+        + ";"
+        + str(price)
+        + ";"
+        + str(qty)
+    )
+    with open(Backtest.filename_trade, "a") as f:
+        f.write(data + "\n")
+
 
 def _trade(
     instrument: Instrument,
@@ -121,6 +135,7 @@ def _trade(
     else:
         clOrdID = service.set_clOrdID(emi=bot.name)
     Backtest.trades += 1
+    _save_trades(side=side, qty=qty, price=price, time=ttime)
 
     return clOrdID
 
@@ -192,6 +207,8 @@ def _save_results_by_day(bot: BotData):
                 + str(value["result"])
                 + ";"
                 + str(value["max_position"])
+                + ";"
+                + str(bot.bot_positions[symbol]["position"])
             )
         with open(Backtest.filename, "a") as f:
             f.write(data + "\n")
@@ -200,7 +217,7 @@ def _save_results_by_day(bot: BotData):
 def run(bot: BotData, strategy: callable):
     symbols = list(bot.backtest_data.keys())
     size = len(bot.backtest_data[symbols[0]]) - 1
-    for bot.iter in range(size):
+    for bot.iter in range(1, size):
         _check_trades(bot=bot)
         _save_results_by_day(bot=bot)
         strategy()
@@ -210,8 +227,15 @@ def create_results_file(bot: BotData):
     Backtest.filename = os.getcwd() + "/backtest/results.txt"
     f = open(Backtest.filename, "w")
     row = "date"
-    for symbol in bot.bot_positions.keys():
+    for _ in bot.bot_positions.keys():
         row += ";symbol;result;max"
     row += "\n"
     f.write(row)
     f.close
+
+    Backtest.filename_trade = os.getcwd() + "/backtest/trades.txt"
+    f = open(Backtest.filename_trade, "w")
+    row = "time;side;price;qty\n"
+    f.write(row)
+    f.close
+

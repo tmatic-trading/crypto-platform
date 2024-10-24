@@ -1,6 +1,7 @@
 **/__pycache__
 backtest/data/
 backtest/results.txt
+backtest/trades.txt
 btest.py
 debug/
 old/
