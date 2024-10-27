@@ -136,6 +136,8 @@ def setup_market(ws: Markets, reload=False):
 
     ws.logNumFatal = "SETUP"
     ws.api_is_active = False
+    MetaInstrument.market[ws.name] = dict()
+    ws.ticker = dict()
     if reload:
         WS.exit(ws)
         sleep(3)
@@ -215,7 +217,6 @@ def reload_market(ws: Markets):
         ws, status="RELOADING...", message="Reloading...", error=True
     )
     TreeTable.market.tree.update()
-    MetaInstrument.market[ws.name] = dict()
     setup_market(ws=ws, reload=True)
     var.queue_reload.put(ws)
     functions.update_order_form()
