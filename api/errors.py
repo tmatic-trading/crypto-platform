@@ -116,9 +116,7 @@ class Error(Variables):
             status = "CANCEL"
             error_message = (
                 prefix
-                + "Probably the URL is incorrect. "
-                + self.name
-                + " loading cancelled."
+                + "Probably the URL is incorrect or bad internet connection."
             )
         else:
             status = "FATAL"

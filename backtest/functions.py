@@ -87,16 +87,9 @@ def load_backtest_data(bot: BotData):
                 print(message)
                 exit(1)
 
+
 def _save_trades(side: str, qty: float, price: float, time):
-    data = (
-        str(time)
-        + ";"
-        + side
-        + ";"
-        + str(price)
-        + ";"
-        + str(qty)
-    )
+    data = str(time) + ";" + side + ";" + str(price) + ";" + str(qty)
     with open(Backtest.filename_trade, "a") as f:
         f.write(data + "\n")
 
@@ -238,4 +231,3 @@ def create_results_file(bot: BotData):
     row = "time;side;price;qty\n"
     f.write(row)
     f.close
-

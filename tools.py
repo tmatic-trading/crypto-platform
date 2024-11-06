@@ -771,7 +771,7 @@ class Tool(Instrument):
                 del bot.bot_orders[clOrdID]
 
         return clOrdID
-
+    
 
 class MetaTool(type):
     objects = dict()

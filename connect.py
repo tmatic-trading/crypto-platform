@@ -72,6 +72,7 @@ def setup(reload=False):
         disp.on_main()
         TreeTable.instrument.tree.update_idletasks()
         trim_col_width(TreeTable.instrument, TreeTable.instrument.column_hide[0])
+        functions.update_order_form()
     bot_manager.create_bots_menu()
     frame = disp.notebook_frames[var.env["BOTTOM_FRAME"]]
     check_frame = frame["frame"]
@@ -86,8 +87,7 @@ def setup(reload=False):
                 break
         else:
             disp.pw_rest4.add(check_frame)
-    var.display_bottom = frame["method"]
-    functions.update_order_form()
+    var.display_bottom = frame["method"]    
 
 
 def setup_market(ws: Markets, reload=False):
