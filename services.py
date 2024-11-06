@@ -771,6 +771,7 @@ def set_symbol(instrument: Instrument, data: dict) -> None:
     instrument.valueOfOneContract = data["VALUEOFONECONTRACT"]
     instrument.takerFee = data["TAKERFEE"]
     instrument.makerFee = data["MAKERFEE"]
+    instrument.state = "Expired"
 
 
 def display_backtest_parameters(bot: BotData):
