@@ -57,6 +57,7 @@ def setup(reload=False):
     functions.clear_klines()
     botinit.load_bots()
     functions.setup_klines()
+    botinit.setup_bots()
     if not var.market_list:
         var.market_list = ["Fake"]
         var.current_market = "Fake"

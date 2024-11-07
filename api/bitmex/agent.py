@@ -258,12 +258,18 @@ class Agent(Bitmex):
             TIME=str(start_time)[:19],
         )
         res = Send.request(self, path=path, verb="GET")
+        instrument = self.Instrument[symbol]
+        precision = instrument.price_precision
         if isinstance(res, list):
             if res:
                 filtered = []
                 count = 0
                 last_time = ""
                 for values in res:
+                    values["open"] = round(values["open"], precision)
+                    values["close"] = round(values["close"], precision)
+                    values["high"] = round(values["high"], precision)
+                    values["low"] = round(values["low"], precision)
                     values["symbol"] = symbol
                     values["timestamp"] = service.time_converter(
                         time=values["timestamp"]

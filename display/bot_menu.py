@@ -1197,6 +1197,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
             )
     try:
         robo.run[bot_name] = bot_manager.modules[bot_name].strategy
+        robo.setup_bot[bot_name] = bot_manager.modules[bot_name].setup
     except Exception:
         robo.run[bot_name] = "No strategy"
     if update:

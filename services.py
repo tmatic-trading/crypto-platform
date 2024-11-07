@@ -12,6 +12,8 @@ from dotenv import dotenv_values, set_key
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
+from indicators import BreakDown
+
 
 if platform.system() == "Windows":
     import ctypes
@@ -411,14 +413,18 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
         The Instrument instance for this symbol.
     """
     if symbol in ws.klines:
-        for timeframe in ws.klines[symbol].values():
-            if timeframe["data"]:
+        for timefr, values in ws.klines[symbol].items():
+            if values["data"]:
                 ask = instrument.asks[0][0]
                 bid = instrument.bids[0][0]
-                if ask > timeframe["data"][-1]["hi"]:
-                    timeframe["data"][-1]["hi"] = ask
-                if bid < timeframe["data"][-1]["lo"]:
-                    timeframe["data"][-1]["lo"] = bid
+                if ask > values["data"][-1]["hi"]:
+                    values["data"][-1]["hi"] = ask
+                if bid < values["data"][-1]["lo"]:
+                    values["data"][-1]["lo"] = bid
+            if symbol in BreakDown.symbols:
+                if timefr in BreakDown.symbols[symbol]:
+                    for bot, parameters in BreakDown.symbols[symbol][timefr].items():
+                        print("____service", parameters)
 
 
 def count_orders():

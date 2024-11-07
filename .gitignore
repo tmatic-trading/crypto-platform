@@ -16,7 +16,6 @@ venv/
 5.py
 check.py
 description.md
-indicators.py
 log.md
 logfile.log
 error.log

@@ -9,6 +9,7 @@ from common.data import Bots
 from common.variables import Variables as var
 from display.bot_menu import import_bot_module
 from display.messages import ErrorMessage, Message
+from botinit.variables import Variables as robo
 
 
 def add_subscription(subscriptions: set) -> None:
@@ -262,3 +263,15 @@ def _put_message(market: str, message: str, warning=None) -> None:
         var.logger.warning(market + " - " + message)
     else:
         var.logger.error(market + " - " + message)
+
+
+def setup_bots():
+    for bot_name in Bots.keys():
+        try:
+            robo.setup_bot[bot_name]()
+        except KeyError:
+            """
+            There is no setup function for this bot.
+            """
+
+

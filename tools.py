@@ -488,7 +488,8 @@ class Tool(Instrument):
         ----------
         args parameter: int
             The line with the latest date is designated as -1, the
-            line before the latest is designated -2, and so on.
+            line before the latest is designated -2, and so on. If args is 
+            empty, all kline are returned in the "data" key.
 
         Returns
         -------
@@ -497,19 +498,28 @@ class Tool(Instrument):
         """
         if not var.backtest:
             ws = Markets[self.market]
-            values = ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
+            if not args:
+                values = {"data": ws.klines[self.symbol_tuple][timefr]["data"]}
+            else:
+                values = ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
             values["bid"] = self.instrument.bids[0][0]
             values["ask"] = self.instrument.asks[0][0]
+
             return values
+        
         else:
             bot = Bots[bot_name]
-            values = bot.backtest_data[self.symbol_tuple][bot.iter + args[0]]
+            if not args:
+                values = bot.backtest_data[self.symbol_tuple]
+            else:
+                values = bot.backtest_data[self.symbol_tuple][bot.iter + args[0]]
             values["bid"] = bot.backtest_data[self.symbol_tuple][
                 bot.iter + args[0] + 2
             ]["open_bid"]
             values["ask"] = bot.backtest_data[self.symbol_tuple][
                 bot.iter + args[0] + 2
             ]["open_ask"]
+
             return values
 
     def _control_limits(self, side: str, qty: float, bot_name: str) -> float:
