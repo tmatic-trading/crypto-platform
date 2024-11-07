@@ -2543,7 +2543,7 @@ def merge_klines(data: list, timefr_minutes: int, prev: int):
     cl = 0
     res = list()
     prev, fl = None, "append"
-    for el in data:
+    for num, el in enumerate(data, 1):
         m = el["timestamp"]
         delta = timedelta(
             minutes=timefr_minutes
@@ -2578,7 +2578,7 @@ def merge_klines(data: list, timefr_minutes: int, prev: int):
             cl = el["close"]
             fl = ""
         prev = next_t
-    if fl == "":
+    if fl == "" or num == len(data):
         res.append(
             {
                 "timestamp": timestamp,
@@ -2639,7 +2639,6 @@ def load_klines(
         symbol=symbol,
         timeframe=timefr_minutes,
     )
-
     if not res:
         message = str(symbol) + " " + str(timefr) + " kline data was not loaded!"
         var.logger.error(message)
