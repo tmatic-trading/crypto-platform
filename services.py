@@ -14,7 +14,6 @@ from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
 from indicators import BreakDown
 
-
 if platform.system() == "Windows":
     import ctypes
     import ctypes.wintypes
@@ -424,7 +423,8 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
             if symbol in BreakDown.symbols:
                 if timefr in BreakDown.symbols[symbol]:
                     for bot, parameters in BreakDown.symbols[symbol][timefr].items():
-                        print("____service", parameters)
+                        pass
+                        #print("____service", parameters)
 
 
 def count_orders():

@@ -5,11 +5,11 @@ from datetime import datetime, timezone
 import functions
 import services as service
 from api.api import Markets
+from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
-from display.bot_menu import import_bot_module
+from display.bot_menu import bot_manager, import_bot_module
 from display.messages import ErrorMessage, Message
-from botinit.variables import Variables as robo
 
 
 def add_subscription(subscriptions: set) -> None:
@@ -79,6 +79,7 @@ def load_bot_parameters():
         bot.log = list()
         bot.backtest_data = dict()
         bot.iter = 0
+        bot.strategy_log = bot_manager.algo_dir + "/" + bot.name + "/strategy.log"
 
 
 def load_bots() -> None:
@@ -266,12 +267,16 @@ def _put_message(market: str, message: str, warning=None) -> None:
 
 
 def setup_bots():
+    """
+    Checks if there is a setup function for a particular bot. If so, runs the
+    setup function.
+    """
     for bot_name in Bots.keys():
         try:
             robo.setup_bot[bot_name]()
-        except KeyError:
+        except Exception as exception:
             """
-            There is no setup function for this bot.
+            There is no setup function for this bot or some error has
+            occurred.
             """
-
-
+            service.display_exception(exception)

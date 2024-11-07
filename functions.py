@@ -768,7 +768,7 @@ class Function(WS, Variables):
                             "date": (utcnow.year - 2000) * 10000
                             + utcnow.month * 100
                             + utcnow.day,
-                            "time": utcnow.hour * 10000 + utcnow.minute * 100,
+                            "time": utcnow.hour * 100 + utcnow.minute,
                             "open_bid": instrument.bids[0][0],
                             "open_ask": instrument.asks[0][0],
                             "hi": instrument.asks[0][0],
@@ -2663,7 +2663,7 @@ def load_klines(
         klines[symbol][timefr]["data"].append(
             {
                 "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,
-                "time": tm.hour * 10000 + tm.minute * 100,
+                "time": tm.hour * 100 + tm.minute,
                 "open_bid": float(row["open"]),
                 "open_ask": float(row["open"]),
                 "hi": float(row["high"]),

@@ -88,7 +88,7 @@ def setup(reload=False):
                 break
         else:
             disp.pw_rest4.add(check_frame)
-    var.display_bottom = frame["method"]    
+    var.display_bottom = frame["method"]
 
 
 def setup_market(ws: Markets, reload=False):

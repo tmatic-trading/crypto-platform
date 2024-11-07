@@ -488,7 +488,7 @@ class Tool(Instrument):
         ----------
         args parameter: int
             The line with the latest date is designated as -1, the
-            line before the latest is designated -2, and so on. If args is 
+            line before the latest is designated -2, and so on. If args is
             empty, all kline are returned in the "data" key.
 
         Returns
@@ -506,7 +506,7 @@ class Tool(Instrument):
             values["ask"] = self.instrument.asks[0][0]
 
             return values
-        
+
         else:
             bot = Bots[bot_name]
             if not args:
@@ -781,7 +781,7 @@ class Tool(Instrument):
                 del bot.bot_orders[clOrdID]
 
         return clOrdID
-    
+
 
 class MetaTool(type):
     objects = dict()
