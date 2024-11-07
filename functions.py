@@ -746,6 +746,7 @@ class Function(WS, Variables):
             instrument = self.Instrument[symbol]
             for timefr, values in kline.items():
                 timefr_minutes = var.timeframe_human_format[timefr]
+                print("______min 1", timefr_minutes)
                 if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
                     bot_list = list()
                     if disp.f9 == "ON":
@@ -2609,6 +2610,7 @@ def load_klines(
     target = datetime.now(tz=timezone.utc)
     target = target.replace(second=0, microsecond=0)
     timefr_minutes = var.timeframe_human_format[timefr]
+    original = timefr_minutes
     prev = 1
     for tf_min in reversed(self.timefrs.keys()):
         if tf_min == timefr_minutes:
@@ -2653,13 +2655,11 @@ def load_klines(
     # The 'klines' array is filled with timeframe data.
     if res[0]["timestamp"] > res[-1]["timestamp"]:
         res.reverse()
-
     if factor > 1:
-        res = merge_klines(data=res, timefr_minutes=timefr_minutes, prev=prev)
-
+        res = merge_klines(data=res, timefr_minutes=original, prev=prev)
     klines[symbol][timefr]["data"] = []
     for num, row in enumerate(res):
-        tm = row["timestamp"] - timedelta(minutes=timefr_minutes)
+        tm = row["timestamp"] # - timedelta(minutes=timefr_minutes)
         klines[symbol][timefr]["data"].append(
             {
                 "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,

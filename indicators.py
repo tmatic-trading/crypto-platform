@@ -8,6 +8,7 @@ class BreakDown:
         self.symbol = (instrument.symbol, instrument.market)
         self.bot = bot
         self.parameters = dict()
+        self.name = "BreakDown"
         if self.symbol not in BreakDown.symbols:
             BreakDown.symbols[self.symbol] = dict()
         if bot.timefr not in BreakDown.symbols[self.symbol]:
