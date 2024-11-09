@@ -1650,7 +1650,11 @@ def only_for_options(category):
 
 class OrderForm:
     def title_on_hover(event):
-        if only_for_options(OrderForm.ws.Instrument[var.symbol].category) is True:
+        try:
+            category = OrderForm.ws.Instrument[var.symbol]
+        except KeyError:
+            return
+        if only_for_options(category) is True:
             if "\n" in OrderForm.title["text"]:
                 text = "Option\nChain"
             else:
