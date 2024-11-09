@@ -746,7 +746,6 @@ class Function(WS, Variables):
             instrument = self.Instrument[symbol]
             for timefr, values in kline.items():
                 timefr_minutes = var.timeframe_human_format[timefr]
-                print("______min 1", timefr_minutes)
                 if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
                     bot_list = list()
                     if disp.f9 == "ON":

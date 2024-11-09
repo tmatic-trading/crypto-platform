@@ -338,7 +338,7 @@ class Deribit(Variables):
         timeout, slp = var.timeout, 0.05
         while self.subscriptions:
             timeout -= slp
-            if timeout <= 0 or not self.api_is_active:
+            if timeout <= 0: # or not self.api_is_active:
                 for sub in self.subscriptions:
                     self.logger.error("Failed to " + action + " " + str(sub))
                 return "timeout"
