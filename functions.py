@@ -126,7 +126,7 @@ class Function(WS, Variables):
 
     def save_kline_data(self: Markets, row: dict, symbol: tuple, timefr: int) -> None:
         filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
-        zero = (6 - len(str(row["time"]))) * "0"
+        zero = (4 - len(str(row["time"]))) * "0"
         data = (
             str(row["date"])
             + ";"
@@ -141,6 +141,7 @@ class Function(WS, Variables):
             + ";"
             + str(row["lo"])
             + ";"
+            + str(round(self.Instrument[symbol].fundingRate, 6))
         )
         with open(filename, "a") as f:
             f.write(data + "\n")
@@ -2605,7 +2606,7 @@ def load_klines(
     """
     filename = Function.kline_data_filename(self, symbol=symbol, timefr=timefr)
     with open(filename, "w") as f:
-        f.write("date;time;open_bid;open_ask;hi;lo;" + "\n")
+        f.write("date;time;open_bid;open_ask;hi;lo;fund" + "\n")
     target = datetime.now(tz=timezone.utc)
     target = target.replace(second=0, microsecond=0)
     timefr_minutes = var.timeframe_human_format[timefr]

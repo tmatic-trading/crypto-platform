@@ -411,20 +411,30 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
     instrument: Instrument
         The Instrument instance for this symbol.
     """
+
     if symbol in ws.klines:
+        ask = instrument.asks[0][0]
+        bid = instrument.bids[0][0]
         for timefr, values in ws.klines[symbol].items():
             if values["data"]:
-                ask = instrument.asks[0][0]
-                bid = instrument.bids[0][0]
                 if ask > values["data"][-1]["hi"]:
                     values["data"][-1]["hi"] = ask
                 if bid < values["data"][-1]["lo"]:
                     values["data"][-1]["lo"] = bid
-            if symbol in BreakDown.symbols:
-                if timefr in BreakDown.symbols[symbol]:
-                    for bot, parameters in BreakDown.symbols[symbol][timefr].items():
-                        pass
-                        #print("____service", parameters)
+        if symbol in BreakDown.symbols:
+            if timefr in BreakDown.symbols[symbol]:
+                for parameters in BreakDown.symbols[symbol][timefr].values():                    
+                    direct = parameters["first"] * (parameters["number"] % 2 * 2 - 1)
+                    # print("____service", parameters, direct)
+                    if direct >= 0 and ask > parameters["up"]:
+                        parameters["number"] += 1
+                        if parameters["first"] == 0:
+                            parameters["first"] = -1
+                    if direct <= 0 and bid < parameters["dn"]:
+                        parameters["number"] += 1
+                        if parameters["first"] == 0:
+                            parameters["first"] = 1
+
 
 
 def count_orders():
