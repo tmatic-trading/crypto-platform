@@ -31,6 +31,7 @@ from pygments.lexers import PythonLexer
 from pygments.styles import get_style_by_name
 
 import functions
+import indicators
 import services as service
 from api.api import Markets
 from botinit.variables import Variables as robo
@@ -169,6 +170,9 @@ class SettingsApp:
         Bots[bot_name].updated = time_now
         Bots[bot_name].bot_positions = dict()
         Bots[bot_name].bot_orders = var.orders[bot_name]
+        Bots[bot_name].strategy_log = (
+            bot_manager.algo_dir + "/" + bot_name + "/strategy.log"
+        )
         import_bot_module(bot_name)
         # d functions.activate_bot_thread(bot_name=bot_name)
         self.insert_bot_menu(name=bot_name, new=True)
@@ -454,7 +458,9 @@ class SettingsApp:
                     + " period ends."
                 )
                 import_bot_module(bot_name=bot_name, update=True)
-
+                indicators.clean_indicators(
+                    bot_name=bot_name, timefr=bot.timefr_current
+                )
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         if not Bots[bot_name].error_message:
@@ -793,19 +799,23 @@ class SettingsApp:
                         code=self.bot_algo,
                     )
                     if disp.bot_name and bot_name != disp.bot_name:
-                        bot_trades_sub[disp.bot_name].pack_forget()
+                        if disp.bot_name in bot_trades_sub:
+                            bot_trades_sub[disp.bot_name].pack_forget()
                     disp.bot_name = bot_name
                     init_bot_trades(bot_name=bot_name)
-                    bot_trades_sub[bot_name].pack(fill="both", expand="yes")
+                    if bot_name in bot_trades_sub:
+                        bot_trades_sub[bot_name].pack(fill="both", expand="yes")
                     refresh_bot_orders()
                     self.switch(option="table")
                     disp.bot_event_prev = bot_name
                     fill_bot_log(bot_name=bot_name)
                 except Exception as ex:
+                    exception = service.display_exception(ex)
                     Bots[bot_name].error_message = {
                         "error_type": ex.__class__.__name__,
-                        "message": {str(ex)},
+                        "message": exception,
                     }
+                    self.display_error_message(bot_name=bot_name)
             try:
                 self.button.config(state="disabled")
             except Exception:
@@ -827,10 +837,15 @@ class SettingsApp:
         message = ""
         err = None
         try:
+            del robo.update_bot[bot_name]
+            indicators.clean_indicators(bot_name=bot_name)
             Bots.remove(bot_name)
             TreeTable.bot_menu.delete(iid=bot_name)
-            bot_trades_sub[bot_name].destroy()
-            del trade_treeTable[bot_name]
+            if bot_name in bot_trades_sub:
+                bot_trades_sub[bot_name].destroy()
+                del bot_trades_sub[bot_name]
+            if bot_name in trade_treeTable:
+                del trade_treeTable[bot_name]
             if type == "Delete":
                 disp.bot_name = None
             message = f"Bot ``{bot_name}`` removed from Tmatic's memory."
@@ -1197,9 +1212,16 @@ def import_bot_module(bot_name: str, update=False) -> None:
             )
     try:
         robo.run[bot_name] = bot_manager.modules[bot_name].strategy
-        robo.setup_bot[bot_name] = bot_manager.modules[bot_name].setup
     except Exception:
         robo.run[bot_name] = "No strategy"
+    try:
+        robo.setup_bot[bot_name] = bot_manager.modules[bot_name].setup_bot
+    except Exception:
+        robo.setup_bot[bot_name] = "No setup"
+    try:
+        robo.update_bot[bot_name] = bot_manager.modules[bot_name].update_bot
+    except Exception:
+        robo.setup_bot[bot_name] = "No update"
     if update:
         functions.init_bot_klines(bot_name)
 

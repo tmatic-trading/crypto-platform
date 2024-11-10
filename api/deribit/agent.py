@@ -694,7 +694,7 @@ class Agent(Deribit):
                         "high": res["high"][step],
                         "low": res["low"][step],
                         "close": res["close"][step],
-                        "symbol": symbol, 
+                        "symbol": symbol,
                     }
                 )
             return klines

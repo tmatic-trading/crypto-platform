@@ -542,6 +542,7 @@ class Function(WS, Variables):
                     )
                     if var.orders[emi][clOrdID]["leavesQty"] == 0:
                         del var.orders[emi][clOrdID]
+                        # robo.run[emi]()
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -741,7 +742,7 @@ class Function(WS, Variables):
 
     def kline_update_market(self: Markets, utcnow: datetime) -> None:
         """
-        Processing timeframes
+        Processing timeframes.
         """
         for symbol, kline in self.klines.items():
             instrument = self.Instrument[symbol]
@@ -749,13 +750,14 @@ class Function(WS, Variables):
                 timefr_minutes = var.timeframe_human_format[timefr]
                 if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
                     bot_list = list()
+                    for bot_name in values["robots"]:
+                        bot = Bots[bot_name]
+                        if not bot.error_message:
+                            bot_list.append(bot_name)
+                    update_bots(bot_list=bot_list)
                     if disp.f9 == "ON":
-                        for bot_name in values["robots"]:
-                            bot = Bots[bot_name]
-                            if bot.state == "Active":
-                                if not bot.error_message:
-                                    bot_list.append(bot_name)
-                        run_bots(bot_list=bot_list)
+                        if bot.state == "Active":
+                            run_bots(bot_list=bot_list)
                     Function.save_kline_data(
                         self,
                         row=values["data"][-1],
@@ -2459,6 +2461,12 @@ def run_bots(bot_list: list) -> None:
         t.start()
 
 
+def update_bots(bot_list: list) -> None:
+    for bot_name in bot_list:
+        if callable(robo.update_bot[bot_name]):
+            robo.update_bot[bot_name]()
+
+
 '''def target_time(timeframe_sec):
     now = datetime.now(tz=timezone.utc).timestamp()
     target_tm = now + (timeframe_sec - now % timeframe_sec)
@@ -2658,7 +2666,7 @@ def load_klines(
         res = merge_klines(data=res, timefr_minutes=original, prev=prev)
     klines[symbol][timefr]["data"] = []
     for num, row in enumerate(res):
-        tm = row["timestamp"] # - timedelta(minutes=timefr_minutes)
+        tm = row["timestamp"]  # - timedelta(minutes=timefr_minutes)
         klines[symbol][timefr]["data"].append(
             {
                 "date": (tm.year - 2000) * 10000 + tm.month * 100 + tm.day,

@@ -423,9 +423,9 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
                     values["data"][-1]["lo"] = bid
         if symbol in BreakDown.symbols:
             if timefr in BreakDown.symbols[symbol]:
-                for parameters in BreakDown.symbols[symbol][timefr].values():                    
+                for parameters in BreakDown.symbols[symbol][timefr].values():
                     direct = parameters["first"] * (parameters["number"] % 2 * 2 - 1)
-                    # print("____service", parameters, direct)
+                    # print("____service", parameters, direct, ask, bid)
                     if direct >= 0 and ask > parameters["up"]:
                         parameters["number"] += 1
                         if parameters["first"] == 0:
@@ -434,7 +434,6 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
                         parameters["number"] += 1
                         if parameters["first"] == 0:
                             parameters["first"] = 1
-
 
 
 def count_orders():
