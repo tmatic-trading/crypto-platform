@@ -23,11 +23,13 @@ class BreakDown:
             "dn": 1000000000,
             "first": 0,
             "number": 0,
+            "trades": 0, 
         }
 
     def default(self):
         self.parameters["first"] = 0
         self.parameters["number"] = 0
+        self.parameters["trades"] = 0
 
 
 def clean_indicators(bot_name: str, timefr="") -> None:

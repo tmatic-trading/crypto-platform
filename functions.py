@@ -542,7 +542,8 @@ class Function(WS, Variables):
                     )
                     if var.orders[emi][clOrdID]["leavesQty"] == 0:
                         del var.orders[emi][clOrdID]
-                        # robo.run[emi]()
+                        if Bots[emi].multitrade:
+                            robo.run[emi](trade=1)
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )

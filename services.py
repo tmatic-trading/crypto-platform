@@ -425,7 +425,6 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
             if timefr in BreakDown.symbols[symbol]:
                 for parameters in BreakDown.symbols[symbol][timefr].values():
                     direct = parameters["first"] * (parameters["number"] % 2 * 2 - 1)
-                    # print("____service", parameters, direct, ask, bid)
                     if direct >= 0 and ask > parameters["up"]:
                         parameters["number"] += 1
                         if parameters["first"] == 0:
