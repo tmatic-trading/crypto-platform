@@ -542,8 +542,12 @@ class Function(WS, Variables):
                     )
                     if var.orders[emi][clOrdID]["leavesQty"] == 0:
                         del var.orders[emi][clOrdID]
-                        if Bots[emi].multitrade:
-                            robo.run[emi](trade=1)
+                        if emi in Bots.keys():
+                            if disp.f9 == "ON":
+                                bot = Bots[emi]
+                                if bot.state == "Active":
+                                    if bot.multitrade:
+                                        robo.run[emi](trade=1)
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -754,11 +758,12 @@ class Function(WS, Variables):
                     for bot_name in values["robots"]:
                         bot = Bots[bot_name]
                         if not bot.error_message:
-                            bot_list.append(bot_name)
-                    update_bots(bot_list=bot_list)
+                            if bot.state == "Active":
+                                bot_list.append(bot_name)
+                            if callable(robo.update_bot[bot_name]):
+                                robo.update_bot[bot_name]()
                     if disp.f9 == "ON":
-                        if bot.state == "Active":
-                            run_bots(bot_list=bot_list)
+                        run_bots(bot_list=bot_list)
                     Function.save_kline_data(
                         self,
                         row=values["data"][-1],
@@ -1728,7 +1733,12 @@ def handler_order(event) -> None:
         def on_closing() -> None:
             disp.order_window_trigger = "off"
             order_window.destroy()
-            tree.selection_remove(items[0])
+            try:
+                tree.selection_remove(items[0])
+            except Exception:
+                """
+                The order no longer exists.
+                """
 
         def delete(order: dict, clOrdID: str) -> None:
             try:
@@ -2460,12 +2470,6 @@ def run_bots(bot_list: list) -> None:
             args=(bot_name,),
         )
         t.start()
-
-
-def update_bots(bot_list: list) -> None:
-    for bot_name in bot_list:
-        if callable(robo.update_bot[bot_name]):
-            robo.update_bot[bot_name]()
 
 
 '''def target_time(timeframe_sec):
