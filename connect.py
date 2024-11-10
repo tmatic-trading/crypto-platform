@@ -251,6 +251,7 @@ def refresh() -> None:
             merge_orders()
             Function.market_status(ws, status="ONLINE", message="", error=False)
             functions.clear_tables()
+            bot_manager.create_bots_menu()
         while not var.queue_order.empty():
             """
             The queue thread-safely displays current orders that can be queued:
@@ -318,6 +319,24 @@ def refresh() -> None:
         var.lock_display.release()
     # Get Tmatic's CPU and Memory usage
     service.get_usage()
+
+
+
+
+    global reloading
+    tm = datetime.now()
+    ws = Markets[var.current_market]
+    if tm.minute % 2 == 0:
+        if reloading == True:
+            reload_market(ws)
+            reloading = False
+    else:
+        reloading = True
+reloading = True
+
+
+
+
 
 
 def clear_params():
