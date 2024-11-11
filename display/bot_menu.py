@@ -1221,7 +1221,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
     try:
         robo.update_bot[bot_name] = bot_manager.modules[bot_name].update_bot
     except Exception:
-        robo.setup_bot[bot_name] = "No update"
+        robo.update_bot[bot_name] = "No update"
     if update:
         functions.init_bot_klines(bot_name)
 

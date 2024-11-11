@@ -279,4 +279,4 @@ def setup_bots():
             There is no setup function for this bot or some error has
             occurred.
             """
-            service.display_exception(exception)
+            service.display_exception(exception, display=False)
