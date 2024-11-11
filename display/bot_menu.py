@@ -169,7 +169,6 @@ class SettingsApp:
         Bots[bot_name].created = time_now
         Bots[bot_name].updated = time_now
         Bots[bot_name].bot_positions = dict()
-        Bots[bot_name].bot_orders = var.orders[bot_name]
         Bots[bot_name].strategy_log = (
             bot_manager.algo_dir + "/" + bot_name + "/strategy.log"
         )

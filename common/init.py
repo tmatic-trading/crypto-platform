@@ -259,8 +259,6 @@ class Init(WS, Variables):
             for clOrdID, order in emi_orders_copy.items():
                 if order["market"] == self.name:
                     del var.orders[emi][clOrdID]
-            if not var.orders[emi]:
-                del var.orders[emi]
 
     def load_orders(self: Markets, myOrders: list) -> None:
         """

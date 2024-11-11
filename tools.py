@@ -25,8 +25,8 @@ def name(stack) -> str:
 
 class Bot(BotData):
     def __init__(self) -> None:
-        bot_name = name(inspect.stack())
-        bot = Bots[bot_name]
+        self.bot_name = name(inspect.stack())
+        bot = Bots[self.bot_name]
         self.__dict__ = bot.__dict__
 
     def remove(self, clOrdID: str) -> None:
@@ -44,10 +44,11 @@ class Bot(BotData):
             self._backtest_remove(clOrdID=clOrdID)
             return
 
-        if clOrdID in self.bot_orders:
-            order = self.bot_orders[clOrdID]
+        ord = var.orders[self.bot_name]
+        if clOrdID in ord:
+            order = ord[clOrdID]
             ws = Markets[order["market"]]
-            WS.remove_order(ws, order=self.bot_orders[clOrdID])
+            WS.remove_order(ws, order=ord[clOrdID])
         else:
             message = "Removing. Order with clOrdID=" + clOrdID + " not found."
             var.queue_info.put(
@@ -83,8 +84,9 @@ class Bot(BotData):
             self._backtest_replace(clOrdID=clOrdID, price=price)
             return clOrdID
 
-        if clOrdID in self.bot_orders:
-            order = self.bot_orders[clOrdID]
+        ord = var.orders[self.bot_name]
+        if clOrdID in ord:
+            order = ord[clOrdID]
             ws = Markets[order["market"]]
             res = WS.replace_limit(
                 ws,
@@ -131,7 +133,7 @@ class Bot(BotData):
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
-        ord = self.bot_orders.values()
+        ord = var.orders[self.bot_name].values()
         if not in_list:
             filtered = OrderedDict()
             if descend:
@@ -156,10 +158,10 @@ class Bot(BotData):
         return filtered
 
     def _backtest_remove(self, clOrdID: str) -> None:
-        del self.bot_orders[clOrdID]
+        del var.orders[self.bot_name][clOrdID]
 
     def _backtest_replace(self, clOrdID: str, price: float) -> None:
-        self.bot_orders[clOrdID]["price"] = price
+        var.orders[self.bot_name][clOrdID]["price"] = price
 
 
 class Tool(Instrument):
@@ -193,7 +195,7 @@ class Tool(Instrument):
                 ws = Markets[self.market]
                 clOrdID = None
                 if move is True:
-                    clOrdID = self._get_latest_order(orders=bot.bot_orders, side=side)
+                    clOrdID = self._get_latest_order(orders=var.orders[bot.name], side=side)
                 if clOrdID is None:
                     clOrdID = service.set_clOrdID(emi=bot.name)
                     if side == "Sell":
@@ -206,7 +208,7 @@ class Tool(Instrument):
                         symbol=self.symbol_tuple,
                     )
                 else:
-                    order = bot.bot_orders[clOrdID]
+                    order = var.orders[bot.name][clOrdID]
                     if order["price"] != price:
                         res = WS.replace_limit(
                             ws,
@@ -219,9 +221,9 @@ class Tool(Instrument):
             self._empty_orderbook(qty=qty, price=price)
         if cancel:
             if side == "Sell":
-                self._remove_orders(orders=bot.bot_orders, side="Buy")
+                self._remove_orders(orders=var.orders[bot.name], side="Buy")
             elif side == "Buy":
-                self._remove_orders(orders=bot.bot_orders, side="Sell")
+                self._remove_orders(orders=var.orders[bot.name], side="Sell")
 
         if isinstance(res, dict):
             return clOrdID
@@ -477,7 +479,7 @@ class Tool(Instrument):
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
         filtered = self._filter_by_side(
-            orders=bot.bot_orders, side=side, descend=descend, in_list=in_list
+            orders=var.orders[bot.name], side=side, descend=descend, in_list=in_list
         )
 
         return filtered
@@ -543,7 +545,6 @@ class Tool(Instrument):
             Bot name.
         """
         position = self._get_position(bot_name=bot_name)
-        # d print("+++++++++++", side, position)
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
@@ -723,7 +724,7 @@ class Tool(Instrument):
         clOrdID = None
         if qty != 0:
             if move is True:
-                clOrdID = self._get_latest_order(orders=bot.bot_orders, side=side)
+                clOrdID = self._get_latest_order(orders=var.orders[bot.name], side=side)
             data = bot.backtest_data[self.symbol_tuple]
             if side == "Sell":
                 compare_2 = data[bot.iter + 1]["open_bid"]
@@ -770,18 +771,18 @@ class Tool(Instrument):
                         value=value,
                     )
                 else:
-                    bot.bot_orders[clOrdID]["price"] = price
+                    var.orders[bot.name][clOrdID]["price"] = price
         if cancel:
             if side == "Sell":
                 orders = self._filter_by_side(
-                    orders=bot.bot_orders, side="Buy", in_list=False
+                    orders=var.orders[bot.name], side="Buy", in_list=False
                 )
             else:
                 orders = self._filter_by_side(
-                    orders=bot.bot_orders, side="Sell", in_list=False
+                    orders=var.orders[bot.name], side="Sell", in_list=False
                 )
             for clOrdID in orders:
-                del bot.bot_orders[clOrdID]
+                del var.orders[bot.name][clOrdID]
 
         return clOrdID
 

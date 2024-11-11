@@ -198,7 +198,6 @@ class Result:
 class BotData:
     name: str
     bot_positions: dict = dict()
-    bot_orders: OrderedDict
     timefr: str
     timefr_sec: int
     timefr_current: str

@@ -66,7 +66,6 @@ def setup(reload=False):
         var.current_market = "Fake"
         var.symbol = "Fake"
     functions.init_bot_treetable_trades()
-    # bot_threads()
     settings.init()
     functions.clear_tables()
     if "Fake" in var.market_list:
@@ -92,6 +91,8 @@ def setup(reload=False):
         else:
             disp.pw_rest4.add(check_frame)
     var.display_bottom = frame["method"]
+    for name in var.market_list:
+        Markets[name].api_is_active = True
 
 
 def setup_market(ws: Markets, reload=False):
@@ -215,7 +216,6 @@ def finish_setup(ws: Markets):
     common.Init.account_balances(ws)
     common.Init.load_orders(ws, ws.setup_orders)
     ws.message_time = datetime.now(tz=timezone.utc)
-    ws.api_is_active = True
 
 
 def reload_market(ws: Markets):
@@ -227,8 +227,6 @@ def reload_market(ws: Markets):
     setup_market(ws=ws, reload=True)
     var.queue_reload.put(ws)
     functions.update_order_form()
-    for bot_name in Bots.keys():
-        import_bot_module(bot_name=bot_name)
 
 
 def refresh() -> None:
@@ -254,12 +252,15 @@ def refresh() -> None:
         if disp.f3:
             terminal_reload("None")
         while not var.queue_reload.empty():
-            ws = var.queue_reload.get()
+            ws: Markets = var.queue_reload.get()
             finish_setup(ws=ws)
             merge_orders()
             Function.market_status(ws, status="ONLINE", message="", error=False)
             functions.clear_tables()
             bot_manager.create_bots_menu()
+            for bot_name in Bots.keys():
+                import_bot_module(bot_name=bot_name)            
+            ws.api_is_active = True
         while not var.queue_order.empty():
             """
             The queue thread-safely displays current orders that can be queued:

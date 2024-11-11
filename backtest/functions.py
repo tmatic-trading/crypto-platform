@@ -124,7 +124,7 @@ def _trade(
         ttime=ttime,
     )
     if clOrdID:
-        del bot.bot_orders[clOrdID]
+        del var.orders[bot.name][clOrdID]
     else:
         clOrdID = service.set_clOrdID(emi=bot.name)
     Backtest.trades += 1
