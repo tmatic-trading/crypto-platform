@@ -2536,14 +2536,26 @@ def download_kline_data(
     return res
 
 
+def kline_update_thread(ws: Markets, utcnow):
+    timeout = 30
+    sl = 0.1
+    while not ws.api_is_active:
+        time.sleep(sl)
+        timeout -= sl
+        if timeout < 0:
+            break
+    else:
+        Function.kline_update_market(ws, utcnow=utcnow)    
+
+
 def kline_update():
     while var.kline_update_active:
         utcnow = datetime.now(tz=timezone.utc)
         var.lock_kline_update.acquire(True)
         for market in var.market_list:
             ws = Markets[market]
-            if ws.api_is_active:
-                Function.kline_update_market(ws, utcnow=utcnow)
+            t = threading.Thread(target=kline_update_thread, args=(ws, utcnow,))
+            t.start()
         var.lock_kline_update.release()
         rest = 1 - time.time() % 1
         time.sleep(rest)
