@@ -14,6 +14,7 @@ from api.init import Setup
 from common.data import Bots, MetaInstrument
 from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log
+from display.bot_menu import import_bot_module
 from display.functions import info_display
 from display.settings import SettingsApp
 from display.variables import TreeTable
@@ -226,6 +227,8 @@ def reload_market(ws: Markets):
     setup_market(ws=ws, reload=True)
     var.queue_reload.put(ws)
     functions.update_order_form()
+    for bot_name in Bots.keys():
+        import_bot_module(bot_name=bot_name)
 
 
 def refresh() -> None:
@@ -324,6 +327,17 @@ def refresh() -> None:
         var.lock_display.release()
     # Get Tmatic's CPU and Memory usage
     service.get_usage()
+
+
+    global reloading
+    if datetime.now().minute % 2 == 0:
+        if reloading == True:
+            ws = Markets[var.current_market]
+            reload_market(ws)
+            reloading = False
+    else:
+        reloading = True
+reloading = True
 
 
 def clear_params():
