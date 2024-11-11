@@ -329,17 +329,6 @@ def refresh() -> None:
     service.get_usage()
 
 
-    global reloading
-    if datetime.now().minute % 2 == 0:
-        if reloading == True:
-            ws = Markets[var.current_market]
-            reload_market(ws)
-            reloading = False
-    else:
-        reloading = True
-reloading = True
-
-
 def clear_params():
     var.market_list = []
     var.orders = dict()
