@@ -374,7 +374,6 @@ class WS(Variables):
             + ", clOrdID="
             + clOrdID
         )
-
         return Agents[self.name].value.place_limit(
             self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
         )

@@ -196,6 +196,8 @@ class Tool(Instrument):
                     clOrdID = self._get_latest_order(orders=bot.bot_orders, side=side)
                 if clOrdID is None:
                     clOrdID = service.set_clOrdID(emi=bot.name)
+                    if side == "Sell":
+                        qty = -qty
                     res = WS.place_limit(
                         ws,
                         quantity=qty,
@@ -271,7 +273,7 @@ class Tool(Instrument):
             price = self.asks[0][0]
 
         return self._place(
-            price=price, qty=-abs(qty), side="Sell", move=move, bot=bot, cancel=cancel
+            price=price, qty=qty, side="Sell", move=move, bot=bot, cancel=cancel
         )
 
     def buy(

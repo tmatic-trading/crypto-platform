@@ -21,6 +21,8 @@ from display.variables import Variables as disp
 from display.variables import trim_col_width
 from functions import Function
 
+from tools import MetaTool
+
 settings = SettingsApp(disp.settings_page)
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction
@@ -138,6 +140,9 @@ def setup_market(ws: Markets, reload=False):
     ws.logNumFatal = "SETUP"
     ws.api_is_active = False
     MetaInstrument.market[ws.name] = dict()
+    for symbol in MetaTool.objects.copy().keys():
+        if symbol[1] == ws.name:
+            del MetaTool.objects[symbol]
     ws.ticker = dict()
     if reload:
         WS.exit(ws)
@@ -325,6 +330,7 @@ def clear_params():
     var.market_list = []
     var.orders = dict()
     MetaInstrument.market = dict()
+    MetaTool
 
 
 """def bot_threads() -> None:
