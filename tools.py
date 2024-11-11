@@ -323,7 +323,7 @@ class Tool(Instrument):
             price = self.bids[0][0]
 
         return self._place(
-            price=price, qty=qty, side="Sell", move=move, bot=bot, cancel=cancel
+            price=price, qty=qty, side="Buy", move=move, bot=bot, cancel=cancel
         )
 
     def EMA(self, period: int) -> float:
@@ -543,6 +543,7 @@ class Tool(Instrument):
             Bot name.
         """
         position = self._get_position(bot_name=bot_name)
+        # d print("+++++++++++", side, position)
         if side == "Sell":
             qty = min(max(0, position["position"] + position["limits"]), abs(qty))
         else:
@@ -658,8 +659,8 @@ class Tool(Instrument):
             Buy or Sell
         """
         orders = self._filter_by_side(orders=orders, side=side)
-        for order in orders.values():
-            ws = Markets[self.market]
+        ws = Markets[self.market]
+        for order in orders:
             WS.remove_order(ws, order=order)
 
     def _get_latest_order(self, orders: OrderedDict, side: str) -> Union[str, None]:
