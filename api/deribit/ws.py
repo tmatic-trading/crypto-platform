@@ -508,7 +508,7 @@ class Deribit(Variables):
                 else:
                     row["settlCurrency"] = instrument.settlCurrency
                 row["execID"] = str(row["trade_id"]) + "_" + row["settlCurrency"][0]
-                row["orderID"] = row["order_id"] + "_" + row["settlCurrency"][0]
+                row["orderID"] = row["order_id"]
                 row[
                     "leavesQty"
                 ] = 9999999999999  # leavesQty is not supported by Deribit

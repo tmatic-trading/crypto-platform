@@ -552,7 +552,9 @@ class Tool(Instrument):
         qty = round(qty, self.precision)
         if not var.backtest and qty == 0:
             message = (
-                "Position has reached the limit for ("
+                side
+                + " order rejected. "
+                + "Position has reached the limit for ("
                 + position["symbol"]
                 + ", "
                 + position["market"]
@@ -561,8 +563,7 @@ class Tool(Instrument):
                 + ", current position "
                 + str(position["position"])
                 + ". "
-                + side
-                + " order rejected."
+
             )
             var.queue_info.put(
                 {

@@ -1832,6 +1832,8 @@ def handler_order(event) -> None:
                 + var.orders[emi][clOrdID]["side"]
                 + "\nclOrdID\t"
                 + clOrdID
+                + "\norderID\t"
+                + var.orders[emi][clOrdID]["orderID"]
                 + "\nprice\t"
                 + order_price
                 + "\nquantity\t"
