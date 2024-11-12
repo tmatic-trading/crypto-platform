@@ -169,9 +169,6 @@ class SettingsApp:
         Bots[bot_name].created = time_now
         Bots[bot_name].updated = time_now
         Bots[bot_name].bot_positions = dict()
-        Bots[bot_name].strategy_log = (
-            bot_manager.algo_dir + "/" + bot_name + "/strategy.log"
-        )
         import_bot_module(bot_name)
         # d functions.activate_bot_thread(bot_name=bot_name)
         self.insert_bot_menu(name=bot_name, new=True)
@@ -1223,6 +1220,12 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.update_bot[bot_name] = "No update"
     if update:
         functions.init_bot_klines(bot_name)
+    Bots[bot_name].multitrade = False
+    tm = datetime.now()
+    h = "0" * (2 - len(str(tm.hour))) + str(tm.hour)
+    m = "0" * (2 - len(str(tm.minute))) + str(tm.minute)
+    tm = f"{tm.year}{tm.month}{tm.day}-{h}{m}"
+    Bots[bot_name].strategy_log = bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"
 
 
 def insert_bot_log(

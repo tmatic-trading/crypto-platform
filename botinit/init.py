@@ -78,7 +78,6 @@ def load_bot_parameters():
         bot.log = list()
         bot.backtest_data = dict()
         bot.iter = 0
-        bot.strategy_log = bot_manager.algo_dir + "/" + bot.name + "/strategy.log"
 
 
 def load_bots() -> None:
@@ -275,4 +274,4 @@ def setup_bots():
             There is no setup function for this bot or some error has
             occurred.
             """
-            service.display_exception(exception, display=False)
+            # service.display_exception(exception, display=True)

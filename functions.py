@@ -546,7 +546,7 @@ class Function(WS, Variables):
                             if disp.f9 == "ON":
                                 bot = Bots[emi]
                                 if bot.state == "Active":
-                                    if bot.multitrade:
+                                    if bot.multitrade:                                        
                                         robo.run[emi](trade=1)
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
