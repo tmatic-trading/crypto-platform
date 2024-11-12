@@ -2552,10 +2552,13 @@ def kline_update():
     while var.kline_update_active:
         utcnow = datetime.now(tz=timezone.utc)
         var.lock_kline_update.acquire(True)
+        threads = []
         for market in var.market_list:
             ws = Markets[market]
             t = threading.Thread(target=kline_update_thread, args=(ws, utcnow,))
+            threads.append(t)
             t.start()
+        [thread.join() for thread in threads]
         var.lock_kline_update.release()
         rest = 1 - time.time() % 1
         time.sleep(rest)

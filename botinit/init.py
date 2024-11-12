@@ -85,7 +85,6 @@ def load_bots() -> None:
     """
     Loading bots into the Bots class.
     """
-    load_bot_parameters()
 
     # Loading volumes for subscribed instruments
 

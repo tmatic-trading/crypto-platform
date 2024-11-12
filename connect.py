@@ -42,6 +42,7 @@ def setup(reload=False):
     clear_params()
     settings.load()
     common.setup_database_connecion()
+    botinit.load_bot_parameters()
     threads = []
     for name in var.market_list.copy():
         ws = Markets[name]
