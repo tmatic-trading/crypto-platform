@@ -558,8 +558,25 @@ class Function(WS, Variables):
                 if emi in var.orders and clOrdID in var.orders[emi]:
                     var.orders[emi][clOrdID]["orderID"] = row["orderID"]
                     info_p = price
-                    info_q = row["leavesQty"]
-                    var.orders[emi][clOrdID]["leavesQty"] = row["leavesQty"]
+                    """
+                    """
+                    """
+                    Deribit does not have a leavesQty field, so in case of replace this 
+                    field is ignored. The ability to change the volume is not provided 
+                    by Tmatic. In case of Deribit the leavesQty field can be: 1) set 
+                    when a new order is received (execType = "New"), 2) the leavesQty 
+                    value can be reduced by the amount of the trade volume (execType = 
+                    "Trade").
+                    """
+                    if not row["leavesQty"]:
+                        info_q = var.orders[emi][clOrdID]["leavesQty"]
+                    else:
+                        info_q = row["leavesQty"]
+                        var.orders[emi][clOrdID]["leavesQty"] = row["leavesQty"]
+                    """
+                    """
+                    """
+                    """
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )

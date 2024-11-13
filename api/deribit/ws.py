@@ -472,10 +472,26 @@ class Deribit(Variables):
                 if response_id in self.response:
                     self.response[response_id]["result"] = value
                 if order_state:
+                    """
+                    """
+                    """
+                    Deribit does not have a leavesQty field, so in the case of replace 
+                    this field is ignored. The ability to change volume is not provided 
+                    by Tmatic. When processing the application in the orders_processing 
+                    function, leavesQty = None is taken into account.
+                    """
+                    if order_state == "Replaced":
+                        leavesQty = None
+                    else:
+                        leavesQty = value["amount"]
+                    """
+                    """
+                    """
+                    """
                     row = {
                         "ticker": value["instrument_name"],
                         "category": instrument.category,
-                        "leavesQty": value["amount"],  # - value["filled_amount"],
+                        "leavesQty": leavesQty, # value["amount"] - value["filled_amount"],
                         "price": float(value["price"]),
                         "symbol": symbol,
                         "transactTime": service.time_converter(
