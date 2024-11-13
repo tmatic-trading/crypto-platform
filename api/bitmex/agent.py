@@ -206,6 +206,10 @@ class Agent(Bitmex):
         instrument.baseCoin = values["underlying"]
         instrument.quoteCoin = values["quoteCurrency"]
         instrument.valueOfOneContract = valueOfOneContract
+        if values["isInverse"]:
+            instrument.isInverse = True
+        else:
+            instrument.isInverse = False
         if values["state"] == "Open":
             if category != "spot":
                 self.instrument_index = service.fill_instrument_index(

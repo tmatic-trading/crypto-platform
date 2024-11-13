@@ -638,6 +638,7 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
         series.asks = [["-", "-"]]
         series.bids = [["-", "-"]]
         series.price_precision = 1
+        series.isInverse = instrument.isInverse
     else:
         if symb not in index[category][currency]:
             index[category][currency][symb] = {"sort": symb}

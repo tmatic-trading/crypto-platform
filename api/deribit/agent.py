@@ -141,6 +141,10 @@ class Agent(Deribit):
         instrument.valueOfOneContract = 1
         instrument.makerFee = values["maker_commission"]
         instrument.takerFee = values["taker_commission"]
+        if values["instrument_type"] == "reversed":
+            instrument.isInverse = True
+        else:
+            instrument.isInverse = False
         if instrument.state == "Open":
             self.instrument_index = service.fill_instrument_index(
                 index=self.instrument_index, instrument=instrument, ws=self

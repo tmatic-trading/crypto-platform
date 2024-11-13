@@ -70,7 +70,7 @@ class Function(WS, Variables):
         """
         instrument = self.Instrument[symbol]
         coef = instrument.valueOfOneContract * instrument.myMultiplier
-        if instrument.category in ["inverse", "future reversed"]:
+        if instrument.isInverse == True:
             sumreal = qty / price * fund
             if execFee is not None:
                 commiss = execFee
@@ -78,7 +78,7 @@ class Function(WS, Variables):
             else:
                 commiss = abs(qty) / price * rate
                 funding = qty / price * rate
-        elif instrument.category in ["spot", "spot linear"]:
+        elif instrument.category in ["spot", "spot_linear"]:
             sumreal = 0
             if execFee is not None:
                 commiss = execFee

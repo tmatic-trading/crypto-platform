@@ -700,6 +700,10 @@ class Agent(Bybit):
         instrument.asks = [[0, 0]]
         instrument.bids = [[0, 0]]
         instrument.valueOfOneContract = 1
+        if category == "inverse":
+            instrument.isInverse = True
+        else:
+            instrument.isInverse = False
         if instrument.state == "Open":
             self.instrument_index = service.fill_instrument_index(
                 index=self.instrument_index,

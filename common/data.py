@@ -47,13 +47,13 @@ class Instrument:
             ``option``,
             ``spot``,
         Deribt:
-            ``future linear``,
-            ``future reversed`,
-            ``future_combo reversed`,
-            ``spot linear``,
-            ``option linear``,
-            ``option reversed``,
-            ``option_combo reversed``,
+            ``future_linear``,
+            ``future_reversed`,
+            ``future_combo_reversed`,
+            ``spot_linear``,
+            ``option_linear``,
+            ``option_reversed``,
+            ``option_combo_reversed``,
     confirm_subscription: set
         Confirmation of successful subscription to the instrument (Bybit
         only).
@@ -63,6 +63,9 @@ class Instrument:
         Expiration time.
     fundingRate: float
         Funding rate.
+    isInverse: bool
+        Indicates that the nature of the contract is ``inverse`` or 
+        ``reversed`` in the case of Deribit.
     makerFee: float
         Taker commission for instrument.
     marginCallPrice: float
@@ -127,6 +130,7 @@ class Instrument:
     currentQty: float = 0
     expire: datetime
     fundingRate: float = 0
+    isInverse: bool
     makerFee: float = None
     market: str
     marginCallPrice: float = 0
