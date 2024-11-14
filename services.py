@@ -333,7 +333,7 @@ def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
     var.orders[emi][clOrdID]["side"] = value["side"]
     var.orders[emi][clOrdID]["orderID"] = value["orderID"]
     var.orders[emi][clOrdID]["clOrdID"] = clOrdID
-    var.orders[emi][clOrdID]["amount"] = value["leavesQty"]
+    var.orders[emi][clOrdID]["orderQty"] = value["orderQty"]
 
 
 def fill_bot_position(

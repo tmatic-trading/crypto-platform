@@ -1613,7 +1613,7 @@ class Function(WS, Variables):
                 price=price_str,
                 orderID=var.orders[emi][clOrdID]["orderID"],
                 symbol=var.orders[emi][clOrdID]["symbol"],
-                amount=var.orders[emi][clOrdID]["amount"],
+                orderQty=var.orders[emi][clOrdID]["orderQty"],
             )
 
         return clOrdID

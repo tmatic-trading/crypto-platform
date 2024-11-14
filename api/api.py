@@ -379,7 +379,7 @@ class WS(Variables):
         )
 
     def replace_limit(
-        self: Markets, leavesQty: float, price: float, orderID: str, symbol: tuple, amount: float
+        self: Markets, leavesQty: float, price: float, orderID: str, symbol: tuple, orderQty: float
     ) -> Union[dict, str]:
         """
         Moves a limit order.
@@ -417,7 +417,7 @@ class WS(Variables):
         )
 
         return Agents[self.name].value.replace_limit(
-            self, leavesQty=leavesQty, price=price, orderID=orderID, symbol=symbol, amount=amount
+            self, leavesQty=leavesQty, price=price, orderID=orderID, symbol=symbol, orderQty=orderQty
         )
 
     def remove_order(self: Markets, order: dict) -> Union[dict, str]:

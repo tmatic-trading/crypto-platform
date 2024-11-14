@@ -94,7 +94,7 @@ class Bot(BotData):
                 price=price,
                 orderID=order["orderID"],
                 symbol=order["symbol"],
-                amount=order["amount"], 
+                orderQty=order["orderQty"], 
             )
             if isinstance(res, dict):
                 return clOrdID
@@ -217,7 +217,7 @@ class Tool(Instrument):
                             price=price,
                             orderID=order["orderID"],
                             symbol=order["symbol"],
-                            amount=order["amount"], 
+                            orderQty=order["orderQty"], 
                         )
         else:
             self._empty_orderbook(qty=qty, price=price)
