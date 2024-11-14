@@ -2047,11 +2047,7 @@ def update_order_form():
         )
         if "quanto" in form.instrument.category:
             quote_currency = "Contracts"
-        elif (
-            "inverse" in form.instrument.category
-            or "reversed" in form.instrument.category
-            or "_rev" in form.instrument.category
-        ):
+        elif form.instrument.isInverse == True:
             quote_currency = form.instrument.quoteCoin
         else:
             quote_currency = form.instrument.baseCoin

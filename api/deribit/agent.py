@@ -753,7 +753,29 @@ class Agent(Deribit):
             + " - quantity - "
             + str(abs(quantity))
         )
-        params = {"order_id": orderID, "amount": quantity, "price": price}
+        """
+        """
+        """
+        Deribit does not have a leavesQty field. When amout changes when 
+        raplace order, this parameter also changes as originally declared in 
+        order. Therefore, a conflict situation may arise when processing 
+        Tmatic orders. Example: 
+            1) New order for 30 contracts.
+            2) Order executed for 10 contracts, Tmatic considers the 
+        remainder as 20 contracts.
+            3) Timatic replaces order with a new price and passes amount = 20 
+        to params. In this case, Deribit will change the order from 30 to 20 
+        contracts. Thus, Deribit will believe that there are 10 unexecuted 
+        contracts left, while Tmatic still has 20 contracts. 
+            4) Another 10 contracts executed: Deribit deletes the order as 
+        fully executed, and Tmatic considers that there are still 10 
+        contracts left and does not delete the order from its register.
+        """ 
+        params = {"order_id": orderID, "price": price}
+        """
+        """
+        """
+        """
 
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
