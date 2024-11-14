@@ -741,7 +741,7 @@ class Agent(Deribit):
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
     def replace_limit(
-        self, quantity: float, price: float, orderID: str, symbol: tuple
+        self, leavesQty: float, price: float, orderID: str, symbol: tuple, amount: float
     ) -> Union[dict, str]:
         path = Listing.REPLACE_LIMIT
         id = f"{path}_{orderID}"
@@ -751,7 +751,7 @@ class Agent(Deribit):
             + " - price - "
             + str(price)
             + " - quantity - "
-            + str(abs(quantity))
+            + str(abs(leavesQty))
         )
         """
         """
@@ -771,7 +771,7 @@ class Agent(Deribit):
         fully executed, and Tmatic considers that there are still 10 
         contracts left and does not delete the order from its register.
         """ 
-        params = {"order_id": orderID, "price": price}
+        params = {"order_id": orderID, "amount": amount, "price": price}
         """
         """
         """

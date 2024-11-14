@@ -379,7 +379,7 @@ class WS(Variables):
         )
 
     def replace_limit(
-        self: Markets, quantity: float, price: float, orderID: str, symbol: tuple
+        self: Markets, leavesQty: float, price: float, orderID: str, symbol: tuple, amount: float
     ) -> Union[dict, str]:
         """
         Moves a limit order.
@@ -388,7 +388,7 @@ class WS(Variables):
         ----------
         self: Markets
             Markets class instances such as Bitmex, Bybit, Deribit.
-        quantity: float
+        leavesQty: float
             Order quantity.
         price: float
             Order price.
@@ -409,7 +409,7 @@ class WS(Variables):
             + "symbol="
             + symbol[0]
             + ", qty="
-            + str(quantity)
+            + str(leavesQty)
             + ", price="
             + str(price)
             + ", orderID="
@@ -417,7 +417,7 @@ class WS(Variables):
         )
 
         return Agents[self.name].value.replace_limit(
-            self, quantity=quantity, price=price, orderID=orderID, symbol=symbol
+            self, leavesQty=leavesQty, price=price, orderID=orderID, symbol=symbol, amount=amount
         )
 
     def remove_order(self: Markets, order: dict) -> Union[dict, str]:

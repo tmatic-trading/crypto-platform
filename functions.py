@@ -1609,10 +1609,11 @@ class Function(WS, Variables):
         if price != var.orders[emi][clOrdID]["price"]:  # the price alters
             WS.replace_limit(
                 self,
-                quantity=qty,
+                leavesQty=qty,
                 price=price_str,
                 orderID=var.orders[emi][clOrdID]["orderID"],
                 symbol=var.orders[emi][clOrdID]["symbol"],
+                amount=var.orders[emi][clOrdID]["amount"],
             )
 
         return clOrdID

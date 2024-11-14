@@ -90,10 +90,11 @@ class Bot(BotData):
             ws = Markets[order["market"]]
             res = WS.replace_limit(
                 ws,
-                quantity=order["leavesQty"],
+                leavesQty=order["leavesQty"],
                 price=price,
                 orderID=order["orderID"],
                 symbol=order["symbol"],
+                amount=order["amount"], 
             )
             if isinstance(res, dict):
                 return clOrdID
@@ -212,10 +213,11 @@ class Tool(Instrument):
                     if order["price"] != price:
                         res = WS.replace_limit(
                             ws,
-                            quantity=order["leavesQty"],
+                            leavesQty=order["leavesQty"],
                             price=price,
                             orderID=order["orderID"],
                             symbol=order["symbol"],
+                            amount=order["amount"], 
                         )
         else:
             self._empty_orderbook(qty=qty, price=price)

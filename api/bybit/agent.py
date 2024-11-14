@@ -470,7 +470,7 @@ class Agent(Bybit):
             return error
 
     def replace_limit(
-        self, quantity: float, price: float, orderID: str, symbol: tuple
+        self, leavesQty: float, price: float, orderID: str, symbol: tuple, amount: float
     ) -> Union[dict, str]:
         instrument = self.Instrument[symbol]
         try:
@@ -478,7 +478,7 @@ class Agent(Bybit):
                 category=instrument.category,
                 symbol=instrument.ticker,
                 orderId=orderID,
-                qty=str(quantity),
+                qty=str(leavesQty),
                 price=str(price),
             )
         except Exception as exception:
