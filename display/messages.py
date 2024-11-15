@@ -33,7 +33,7 @@ class ErrorMessage(str, Enum):
         + "``Bot Menu``.\n"
     )
     IMPOSSIBLE_SUBSCRIPTION = (
-        "The {SYMBOL} instrument has a {STATE} status, but is normally Open. "
+        "The {SYMBOL} instrument has an {STATE} status, but is normally Open. "
         + "The instrument has probably expired, but in the database there are "
         + " still positions that should not exist. Check your trading history."
     )

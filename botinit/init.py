@@ -149,30 +149,33 @@ def load_bots() -> None:
                 category=value["CATEGORY"],
             )
             symbol = (value["SYMBOL"], ws.name)
-            if symbol not in ws.symbol_list:
-                if ws.Instrument[symbol].state == "Open":
-                    subscriptions.add(symbol)
-                    message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
-                    var.logger.info(message)
-                else:
-                    message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
-                        SYMBOL=symbol[0], STATE=ws.Instrument[symbol].state
-                    )
-                    _put_message(market="", message=message, warning="error")
-            name = value["EMI"]
-            if name not in Bots.keys():
-                if value["SYMBOL"] != name and name != "":
-                    qwr = (
-                        "select ID, EMI, SYMBOL from coins where side <> 'Fund' and EMI = '%s'"
-                        % (name)
-                    )
-                    data = service.select_database(qwr)
-                    for row in data:
-                        qwr = "update coins set EMI = '%s' where ID = %s;" % (
-                            "",
-                            row["ID"],
+            instrument = ws.Instrument[symbol]
+            position = round(value["POS"], instrument.precision)
+            if position != 0:      
+                if symbol not in ws.symbol_list:
+                    if instrument.state == "Open":
+                        subscriptions.add(symbol)
+                        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
+                        var.logger.info(message)
+                    else:
+                        message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
+                            SYMBOL=symbol, STATE=instrument.state
                         )
-                        service.update_database(query=qwr)
+                        _put_message(market="", message=message, warning="error")
+                name = value["EMI"]
+                if name not in Bots.keys():
+                    if value["SYMBOL"] != name and name != "":
+                        qwr = (
+                            "select ID, EMI, SYMBOL from coins where side <> 'Fund' and EMI = '%s'"
+                            % (name)
+                        )
+                        data = service.select_database(qwr)
+                        for row in data:
+                            qwr = "update coins set EMI = '%s' where ID = %s;" % (
+                                "",
+                                row["ID"],
+                            )
+                            service.update_database(query=qwr)
     var.lock.release()
 
     add_subscription(subscriptions=subscriptions)
