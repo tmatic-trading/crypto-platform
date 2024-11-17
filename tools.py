@@ -389,8 +389,8 @@ class Tool(Instrument):
             Returns latest kline data.
 
         The time frame (timefr) is specified in the bot parameters.
-        """
-        bot_name = name(inspect.stack())
+        """        
+        bot_name = name(inspect.stack())        
         timefr = Bots[bot_name].timefr
         ws = Markets[self.market]
         functions.add_new_kline(

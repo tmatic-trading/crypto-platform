@@ -778,6 +778,7 @@ class Function(WS, Variables):
                             if bot.state == "Active":
                                 bot_list.append(bot_name)
                             if callable(robo.update_bot[bot_name]):
+                                print("==============", bot_name)
                                 robo.update_bot[bot_name]()
                     if disp.f9 == "ON":
                         run_bots(bot_list=bot_list)
@@ -2789,7 +2790,6 @@ def init_market_klines(
 
             threads.append(t)
             t.start()
-
     [thread.join() for thread in threads]
     for s in success:
         if not s:

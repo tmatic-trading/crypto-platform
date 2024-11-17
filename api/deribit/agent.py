@@ -668,7 +668,7 @@ class Agent(Deribit):
             On success, list is returned, otherwise error type.
         """
         path = Listing.TRADE_BUCKETED
-        id = f"{path}_{symbol}"
+        id = f"{path}_{symbol}_{timeframe}"
         start_timestamp = service.time_converter(time=start_time)
         if isinstance(timeframe, int):
             number = timeframe * 60 * 1000000
