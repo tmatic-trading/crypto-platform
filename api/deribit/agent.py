@@ -938,28 +938,30 @@ class Agent(Deribit):
         """
         There is no Deribit websocket stream to provide funding (settlement)
         and delivery. So this thread requests this information at the
-        designated time after 08:00:00 UTC. It requests three times to avoid
-        an unsuccessful response in case there is a delay from Deribit.
+        designated time after 08:00:00 UTC. It requests two times at 8:00:30 
+        and 8:01:30 to avoid an unsuccessful response in case there is a 
+        delay from Deribit.
         """
         while self.funding_thread_active:
             tm = datetime.now(tz=timezone.utc)
-            start_time = datetime(
-                year=tm.year,
-                month=tm.month,
-                day=tm.day,
-                hour=8,
-                minute=0,
-                second=0,
-                tzinfo=timezone.utc,
-            )
             if tm.hour == 8:
-                if tm.minute <=10:
-                    if tm.second == 5 or tm.second == 35:
+                if tm.minute < 2:
+                    if tm.second >= 30:
+                        start_time = datetime(
+                            year=tm.year,
+                            month=tm.month,
+                            day=tm.day,
+                            hour=7,
+                            minute=59,
+                            second=0,
+                            tzinfo=timezone.utc,
+                        )
                         history = Agent.trading_history(
                             self, histCount=500, start_time=start_time, funding=True
                         )
-                        if isinstance(history, list):
-                            for row in history:
+                        his_data = history["data"]
+                        if isinstance(his_data, list):
+                            for row in his_data:
                                 data = service.select_database(  # read_database
                                     "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
                                     % (row["execID"], self.user_id, self.name),
