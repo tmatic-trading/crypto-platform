@@ -270,6 +270,7 @@ class Deribit(Variables):
             message = json.loads(message)
             if "result" in message:
                 id = message["id"]
+                self.logger.info("______________response__ " + str(id))
                 if "access_token" in message["result"]:
                     self.access_token = message["result"]["access_token"]
                     self.refresh_token = message["result"]["refresh_token"]

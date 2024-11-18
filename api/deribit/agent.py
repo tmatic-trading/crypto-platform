@@ -390,11 +390,11 @@ class Agent(Deribit):
                     + " - startTime - "
                     + str(service.time_converter(start / 1000))
                 )
-                res = Agent.ws_request(
+                data = Agent.ws_request(
                     self, path=path, id=id, params=params, text=text, currency=currency
                 )
-                if res:
-                    res = res[data_type]
+                if data:
+                    res = data[data_type]
                     if data_type == "logs":
                         res = list(
                             filter(
@@ -403,7 +403,7 @@ class Agent(Deribit):
                                 res,
                             )
                         )
-                        continuation = self.response[id]["result"]["continuation"]
+                        continuation = data["continuation"]
                     if isinstance(res, list):
                         for row in res:
                             if not row["instrument_name"] in self.ticker:
@@ -860,6 +860,7 @@ class Agent(Deribit):
             time.sleep(slp)  # Wait if the number of requests per second is exceeded.
         scheme["lock"].release()
         while True:
+            self.logger.info("______________request__ " + str(id))
             self.response[id] = {
                 "request_time": time.time() + self.ws_request_delay,
                 "result": None,
@@ -896,8 +897,10 @@ class Agent(Deribit):
                             time.sleep(0.5)
                             break
                         else:
+                            self.response[id]
                             return error
                     else:
+                        del self.response[id]
                         return res
                 time.sleep(0.05)
             else:
@@ -919,6 +922,7 @@ class Agent(Deribit):
                         "warning": "error",
                     }
                 )
+                self.response[id]
                 self.logNumFatal = "FATAL"
 
                 return self.logNumFatal
@@ -950,8 +954,8 @@ class Agent(Deribit):
                 tzinfo=timezone.utc,
             )
             if tm.hour == 8:
-                if tm.minute == 0:
-                    if tm.second == 1 or tm.second == 5 or tm.second == 30:
+                if tm.minute <=10:
+                    if tm.second == 5 or tm.second == 35:
                         history = Agent.trading_history(
                             self, histCount=500, start_time=start_time, funding=True
                         )
