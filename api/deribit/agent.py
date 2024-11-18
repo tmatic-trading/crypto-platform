@@ -904,7 +904,9 @@ class Agent(Deribit):
                 message = (
                     "No response to websocket "
                     + path
-                    + " request within "
+                    + " request, id="
+                    + str(id)
+                    + " within "
                     + str(self.ws_request_delay)
                     + " seconds. Reboot"
                 )

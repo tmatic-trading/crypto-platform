@@ -25,8 +25,8 @@ def name(stack) -> str:
 
 class Bot(BotData):
     def __init__(self) -> None:
-        self.bot_name = name(inspect.stack())
-        bot = Bots[self.bot_name]
+        bot_name = name(inspect.stack())
+        bot = Bots[bot_name]
         self.__dict__ = bot.__dict__
 
     def remove(self, clOrdID: str) -> None:
@@ -44,7 +44,7 @@ class Bot(BotData):
             self._backtest_remove(clOrdID=clOrdID)
             return
 
-        ord = var.orders[self.bot_name]
+        ord = var.orders[self.name]
         if clOrdID in ord:
             order = ord[clOrdID]
             ws = Markets[order["market"]]
@@ -84,7 +84,7 @@ class Bot(BotData):
             self._backtest_replace(clOrdID=clOrdID, price=price)
             return clOrdID
 
-        ord = var.orders[self.bot_name]
+        ord = var.orders[self.name]
         if clOrdID in ord:
             order = ord[clOrdID]
             ws = Markets[order["market"]]
@@ -134,7 +134,7 @@ class Bot(BotData):
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
-        ord = var.orders[self.bot_name].values()
+        ord = var.orders[self.name].values()
         if not in_list:
             filtered = OrderedDict()
             if descend:
@@ -159,10 +159,10 @@ class Bot(BotData):
         return filtered
 
     def _backtest_remove(self, clOrdID: str) -> None:
-        del var.orders[self.bot_name][clOrdID]
+        del var.orders[self.name][clOrdID]
 
     def _backtest_replace(self, clOrdID: str, price: float) -> None:
-        var.orders[self.bot_name][clOrdID]["price"] = price
+        var.orders[self.name][clOrdID]["price"] = price
 
 
 class Tool(Instrument):
