@@ -860,7 +860,6 @@ class Agent(Deribit):
             time.sleep(slp)  # Wait if the number of requests per second is exceeded.
         scheme["lock"].release()
         while True:
-            self.logger.info("______________request__ " + str(id))
             self.response[id] = {
                 "request_time": time.time() + self.ws_request_delay,
                 "result": None,
@@ -897,7 +896,7 @@ class Agent(Deribit):
                             time.sleep(0.5)
                             break
                         else:
-                            self.response[id]
+                            del self.response[id]
                             return error
                     else:
                         del self.response[id]
