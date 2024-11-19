@@ -946,7 +946,7 @@ class Agent(Deribit):
             tm = datetime.now(tz=timezone.utc)
             if tm.hour == 8:
                 if tm.minute < 2:
-                    if tm.second >= 30:
+                    if tm.second == 30:
                         start_time = datetime(
                             year=tm.year,
                             month=tm.month,
