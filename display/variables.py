@@ -1651,7 +1651,7 @@ def only_for_options(category):
 class OrderForm:
     def title_on_hover(event):
         try:
-            category = OrderForm.ws.Instrument[var.symbol]
+            category = OrderForm.ws.Instrument[var.symbol].category
         except KeyError:
             return
         if only_for_options(category) is True:
@@ -1674,7 +1674,7 @@ class OrderForm:
     ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
 
     main = tk.Frame(Variables.frame_order_form, bg=Variables.book_color)
-    ws = None
+    ws: Markets = None
     instrument: Instrument
     main.pack(fill="both")
     main.grid_columnconfigure(0, weight=0)
