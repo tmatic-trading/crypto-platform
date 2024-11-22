@@ -2162,13 +2162,13 @@ def handler_instrument(event) -> None:
                 instrument = ws.Instrument[symbol]
                 if var.symbol != symbol:
                     if (
-                        "option" in instrument.category
+                        ("option" in instrument.category and "series" in symbol[0])
                         and "combo" not in instrument.category
                     ):
                         if symbol in var.selected_option:
                             symbol = var.selected_option[symbol]
                             if var.symbol == symbol:  # Opens the options
-                                # desk only on the second click
+                                # chain only on the second click
                                 create = True
                             if var.rollup_symbol == "cancel":
                                 create = False

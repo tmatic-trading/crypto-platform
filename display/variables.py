@@ -1654,12 +1654,14 @@ class OrderForm:
             category = OrderForm.ws.Instrument[var.symbol].category
         except KeyError:
             return
-        if only_for_options(category) is True:
-            if "\n" in OrderForm.title["text"]:
-                text = "Option\nChain"
-            else:
-                text = "Option Chain"
-            OrderForm.title.config(bg=Variables.bg_select_color, text=text)
+        items = TreeTable.instrument.tree.selection()
+        if "series" in items[0]:
+            if only_for_options(category) is True:
+                if "\n" in OrderForm.title["text"]:
+                    text = "Option\nChain"
+                else:
+                    text = "Option Chain"
+                OrderForm.title.config(bg=Variables.bg_select_color, text=text)
 
     def title_on_leave(event):
         title = service.order_form_title()
