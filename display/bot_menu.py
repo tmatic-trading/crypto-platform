@@ -298,9 +298,11 @@ class SettingsApp:
         blank = tk.Label(frame_title, text=" ")
         blank.grid(row=0, column=0, sticky="NSEW")
         title = BoldLabel(frame_title, text="STRATEGY")
-        title.grid(row=0, column=1, sticky="NSEW")
+        title.grid(row=0, column=1, sticky="E")
         frame_title_sub = tk.Frame(frame_title)
-        frame_title_sub.grid(row=0, column=2)
+        frame_title_sub.grid(row=0, column=2, sticky="E")
+        blank_right = tk.Label(frame_title, text="      ")
+        blank_right.grid(row=0, column=3, sticky="NSEW")
         self.button_strategy = tk.Button(
             frame_title_sub,
             activebackground=disp.bg_active,
@@ -318,8 +320,7 @@ class SettingsApp:
             pady=1,
         )
         button_syntax.pack(fill="both", side="left")
-
-        button_backtest = tk.Button(
+        """button_backtest = tk.Button(
             frame_title_sub,
             activebackground=disp.bg_active,
             text="Backtest",
@@ -327,7 +328,7 @@ class SettingsApp:
             state="disabled",
             pady=1,
         )
-        button_backtest.pack(fill="both", side="left")
+        button_backtest.pack(fill="both", side="left")"""
         frame_title.grid_columnconfigure(0, weight=1)
         frame_title.grid_columnconfigure(1, weight=2)
         frame_title.grid_columnconfigure(2, weight=2)
@@ -457,6 +458,7 @@ class SettingsApp:
                 indicators.clean_indicators(
                     bot_name=bot_name, timefr=bot.timefr_current
                 )
+
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         if not Bots[bot_name].error_message:
@@ -1225,7 +1227,9 @@ def import_bot_module(bot_name: str, update=False) -> None:
     h = "0" * (2 - len(str(tm.hour))) + str(tm.hour)
     m = "0" * (2 - len(str(tm.minute))) + str(tm.minute)
     tm = f"{tm.year}{tm.month}{tm.day}-{h}{m}"
-    Bots[bot_name].strategy_log = bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"
+    Bots[bot_name].strategy_log = (
+        bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"
+    )
 
 
 def insert_bot_log(

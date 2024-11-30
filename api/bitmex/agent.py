@@ -470,7 +470,12 @@ class Agent(Bitmex):
         return Send.request(self, path=path, postData=postData, verb="POST")
 
     def replace_limit(
-        self, leavesQty: float, price: float, orderID: str, symbol: tuple, orderQty: float
+        self,
+        leavesQty: float,
+        price: float,
+        orderID: str,
+        symbol: tuple,
+        orderQty: float,
     ) -> Union[dict, str]:
         """
         Moves a limit order

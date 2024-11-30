@@ -23,7 +23,7 @@ class BreakDown:
             "dn": 1000000000,
             "first": 0,
             "number": 0,
-            "trades": 0, 
+            "trades": 0,
         }
 
     def default(self):
@@ -48,4 +48,3 @@ def clean_indicators(bot_name: str, timefr="") -> None:
                     del BreakDown.symbols[symbol][tf]
         if not BreakDown.symbols[symbol]:
             del BreakDown.symbols[symbol]
-

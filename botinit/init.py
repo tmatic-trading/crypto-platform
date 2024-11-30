@@ -151,7 +151,7 @@ def load_bots() -> None:
             symbol = (value["SYMBOL"], ws.name)
             instrument = ws.Instrument[symbol]
             position = round(value["POS"], instrument.precision)
-            if position != 0:      
+            if position != 0:
                 if symbol not in ws.symbol_list:
                     if instrument.state == "Open":
                         subscriptions.add(symbol)

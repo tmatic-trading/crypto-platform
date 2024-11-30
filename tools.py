@@ -94,7 +94,7 @@ class Bot(BotData):
                 price=price,
                 orderID=order["orderID"],
                 symbol=order["symbol"],
-                orderQty=order["orderQty"], 
+                orderQty=order["orderQty"],
             )
             if isinstance(res, dict):
                 return clOrdID
@@ -196,7 +196,9 @@ class Tool(Instrument):
                 ws = Markets[self.market]
                 clOrdID = None
                 if move is True:
-                    clOrdID = self._get_latest_order(orders=var.orders[bot.name], side=side)
+                    clOrdID = self._get_latest_order(
+                        orders=var.orders[bot.name], side=side
+                    )
                 if clOrdID is None:
                     clOrdID = service.set_clOrdID(emi=bot.name)
                     if side == "Sell":
@@ -217,7 +219,7 @@ class Tool(Instrument):
                             price=price,
                             orderID=order["orderID"],
                             symbol=order["symbol"],
-                            orderQty=order["orderQty"], 
+                            orderQty=order["orderQty"],
                         )
         else:
             self._empty_orderbook(qty=qty, price=price)
@@ -389,8 +391,8 @@ class Tool(Instrument):
             Returns latest kline data.
 
         The time frame (timefr) is specified in the bot parameters.
-        """        
-        bot_name = name(inspect.stack())        
+        """
+        bot_name = name(inspect.stack())
         timefr = Bots[bot_name].timefr
         ws = Markets[self.market]
         functions.add_new_kline(
@@ -565,7 +567,6 @@ class Tool(Instrument):
                 + ", current position "
                 + str(position["position"])
                 + ". "
-
             )
             var.queue_info.put(
                 {

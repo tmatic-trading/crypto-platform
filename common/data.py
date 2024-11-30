@@ -64,7 +64,7 @@ class Instrument:
     fundingRate: float
         Funding rate.
     isInverse: bool
-        Indicates that the nature of the contract is ``inverse`` or 
+        Indicates that the nature of the contract is ``inverse`` or
         ``reversed`` in the case of Deribit.
     makerFee: float
         Taker commission for instrument.

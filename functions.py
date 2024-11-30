@@ -547,7 +547,7 @@ class Function(WS, Variables):
                                 bot = Bots[emi]
                                 if bot.state == "Active":
                                     if bot.multitrade:
-                                        t = threading.Thread(target=robo.run[emi])                                    
+                                        t = threading.Thread(target=robo.run[emi])
                                         t.start()
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
@@ -562,11 +562,11 @@ class Function(WS, Variables):
                     """
                     """
                     """
-                    Deribit does not have a leavesQty field, so in case of replace this 
-                    field is ignored. The ability to change the volume is not provided 
-                    by Tmatic. In case of Deribit the leavesQty field can be: 1) set 
-                    when a new order is received (execType = "New"), 2) the leavesQty 
-                    value can be reduced by the amount of the trade volume (execType = 
+                    Deribit does not have a leavesQty field, so in case of replace this
+                    field is ignored. The ability to change the volume is not provided
+                    by Tmatic. In case of Deribit the leavesQty field can be: 1) set
+                    when a new order is received (execType = "New"), 2) the leavesQty
+                    value can be reduced by the amount of the trade volume (execType =
                     "Trade").
                     """
                     if not row["leavesQty"]:
@@ -2162,9 +2162,8 @@ def handler_instrument(event) -> None:
                 instrument = ws.Instrument[symbol]
                 if var.symbol != symbol:
                     if (
-                        ("option" in instrument.category and "series" in symbol[0])
-                        and "combo" not in instrument.category
-                    ):
+                        "option" in instrument.category and "series" in symbol[0]
+                    ) and "combo" not in instrument.category:
                         if symbol in var.selected_option:
                             symbol = var.selected_option[symbol]
                             if var.symbol == symbol:  # Opens the options
@@ -2562,7 +2561,7 @@ def kline_update_thread(ws: Markets, utcnow):
         if timeout < 0:
             break
     else:
-        Function.kline_update_market(ws, utcnow=utcnow)    
+        Function.kline_update_market(ws, utcnow=utcnow)
 
 
 def kline_update():
@@ -2572,7 +2571,13 @@ def kline_update():
         threads = []
         for market in var.market_list:
             ws = Markets[market]
-            t = threading.Thread(target=kline_update_thread, args=(ws, utcnow,))
+            t = threading.Thread(
+                target=kline_update_thread,
+                args=(
+                    ws,
+                    utcnow,
+                ),
+            )
             threads.append(t)
             t.start()
         [thread.join() for thread in threads]

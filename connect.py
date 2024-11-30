@@ -13,15 +13,13 @@ from api.deribit.ws import Deribit
 from api.init import Setup
 from common.data import Bots, MetaInstrument
 from common.variables import Variables as var
-from display.bot_menu import bot_manager, insert_bot_log
-from display.bot_menu import import_bot_module
+from display.bot_menu import bot_manager, import_bot_module, insert_bot_log
 from display.functions import info_display
 from display.settings import SettingsApp
 from display.variables import TreeTable
 from display.variables import Variables as disp
 from display.variables import trim_col_width
 from functions import Function
-
 from tools import MetaTool
 
 settings = SettingsApp(disp.settings_page)
@@ -261,7 +259,7 @@ def refresh() -> None:
             bot_manager.create_bots_menu()
             for bot_name in Bots.keys():
                 import_bot_module(bot_name=bot_name)
-            botinit.setup_bots()       
+            botinit.setup_bots()
             ws.api_is_active = True
         while not var.queue_order.empty():
             """

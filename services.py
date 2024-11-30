@@ -426,7 +426,7 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
         if symbol in BreakDown.symbols:
             if timefr in BreakDown.symbols[symbol]:
                 for parameters in BreakDown.symbols[symbol][timefr].values():
-                    #print(Bots[parameters["bot_name"]].multitrade)
+                    # print(Bots[parameters["bot_name"]].multitrade)
                     direct = parameters["first"] * (parameters["number"] % 2 * 2 - 1)
                     if direct >= 0 and ask > parameters["up"]:
                         parameters["number"] += 1

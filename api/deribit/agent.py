@@ -741,7 +741,12 @@ class Agent(Deribit):
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
 
     def replace_limit(
-        self, leavesQty: float, price: float, orderID: str, symbol: tuple, orderQty: float
+        self,
+        leavesQty: float,
+        price: float,
+        orderID: str,
+        symbol: tuple,
+        orderQty: float,
     ) -> Union[dict, str]:
         path = Listing.REPLACE_LIMIT
         id = f"{path}_{orderID}"
@@ -754,27 +759,27 @@ class Agent(Deribit):
             + str(abs(leavesQty))
         )
         """
-        """
-        """
-        Deribit does not have a leavesQty field. When amout changes when 
-        raplace order, this parameter also changes as originally declared in 
-        order. Therefore, a conflict situation may arise when processing 
-        Tmatic orders. Example: 
+        '
+        '
+        Deribit does not have a leavesQty field. When amout changes when
+        raplace order, this parameter also changes as originally declared in
+        order. Therefore, a conflict situation may arise when processing
+        Tmatic orders. Example:
             1) New order for 30 contracts.
-            2) Order executed for 10 contracts, Tmatic considers the 
+            2) Order executed for 10 contracts, Tmatic considers the
         remainder as 20 contracts.
-            3) Timatic replaces order with a new price and passes amount = 20 
-        to params. In this case, Deribit will change the order from 30 to 20 
-        contracts. Thus, Deribit will believe that there are 10 unexecuted 
-        contracts left, while Tmatic still has 20 contracts. 
-            4) Another 10 contracts executed: Deribit deletes the order as 
-        fully executed, and Tmatic considers that there are still 10 
+            3) Timatic replaces order with a new price and passes amount = 20
+        to params. In this case, Deribit will change the order from 30 to 20
+        contracts. Thus, Deribit will believe that there are 10 unexecuted
+        contracts left, while Tmatic still has 20 contracts.
+            4) Another 10 contracts executed: Deribit deletes the order as
+        fully executed, and Tmatic considers that there are still 10
         contracts left and does not delete the order from its register.
-        """ 
+        """
         params = {"order_id": orderID, "amount": orderQty, "price": price}
         """
-        """
-        """
+        '
+        '
         """
 
         return Agent.ws_request(self, path=path, id=id, params=params, text=text)
@@ -938,8 +943,8 @@ class Agent(Deribit):
         """
         There is no Deribit websocket stream to provide funding (settlement)
         and delivery. So this thread requests this information at the
-        designated time after 08:00:00 UTC. It requests two times at 8:00:30 
-        and 8:01:30 to avoid an unsuccessful response in case there is a 
+        designated time after 08:00:00 UTC. It requests two times at 8:00:30
+        and 8:01:30 to avoid an unsuccessful response in case there is a
         delay from Deribit.
         """
         while self.funding_thread_active:
