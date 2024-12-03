@@ -943,15 +943,15 @@ class Agent(Deribit):
         """
         There is no Deribit websocket stream to provide funding (settlement)
         and delivery. So this thread requests this information at the
-        designated time after 08:00:00 UTC. It requests two times at 8:00:30
-        and 8:01:30 to avoid an unsuccessful response in case there is a
+        designated time after 08:00:00 UTC. It requests two times at 8:00:15
+        and 8:01:15 to avoid an unsuccessful response in case there is a
         delay from Deribit.
         """
         while self.funding_thread_active:
             tm = datetime.now(tz=timezone.utc)
             if tm.hour == 8:
                 if tm.minute < 2:
-                    if tm.second == 30:
+                    if tm.second == 15:
                         start_time = datetime(
                             year=tm.year,
                             month=tm.month,
@@ -964,6 +964,7 @@ class Agent(Deribit):
                         history = Agent.trading_history(
                             self, histCount=500, start_time=start_time, funding=True
                         )
+                        print(history)
                         his_data = history["data"]
                         if isinstance(his_data, list):
                             for row in his_data:
@@ -972,7 +973,7 @@ class Agent(Deribit):
                                     % (row["execID"], self.user_id, self.name),
                                 )
                                 if not data:
-                                    self.transaction(row=row, info="History")
+                                    self.transaction(row=row)
                         else:
                             message = "Failed request for funding and delivery information that arrived at 8:00 AM"
                             self.logger.error(message)
