@@ -373,20 +373,16 @@ class SettingsApp:
             fg=disp.gray_color,
             justify=tk.LEFT,
         ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        service.wrap(self.brief_frame, padx=self.padx)
+        service.wrap(self.brief_frame, padx=self.padx)    
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
-            nonlocal new_state
-            if bot.state == "Active":
-                new_state = "Suspended"
-            else:
-                new_state = "Active"
+            new_state = bot_state(bot=bot, bot_name=bot_name)
             TEXT = "You are about to change state from ``{STATE}`` to ``{CHANGE}`` for bot ``{NAME}``:"
             return TEXT.format(STATE=bot.state, CHANGE=new_state, NAME=bot_name)
 
         def change_state(bot_name) -> None:
-            nonlocal new_state
+            new_state = bot_state(bot=bot, bot_name=bot_name, strategy=True)
             err = update_bot_state(new_state=new_state, bot=bot)
             if err is None:
                 text_label["text"] = return_text()
@@ -406,7 +402,6 @@ class SettingsApp:
                     fg=disp.gray_color,
                     justify=tk.LEFT,
                 ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-            new_state = ""
             text_label = tk.Label(
                 self.brief_frame,
                 text=return_text(),
@@ -956,16 +951,24 @@ def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
     return err
 
 
+def bot_state(bot: BotData, bot_name: str, strategy=False) -> str:
+    if bot.state == "Active":
+        state = "Suspended"
+    else:
+        state = "Active"
+        if strategy:
+            robo.activate_bot[bot_name]()
+
+    return state
+
+
 def handler_bot_info(event) -> None:
     """
     Called when the bot table TreeTable.bot_info is clicked.
     """
 
     def callback():
-        if bot.state == "Active":
-            new_state = "Suspended"
-        else:
-            new_state = "Active"
+        new_state = bot_state(bot=bot, bot_name=bot_name, strategy=True)
         err = update_bot_state(new_state=new_state, bot=bot)
         if err:
             functions.warning_window(message=err, width=1000, height=300)
@@ -1220,6 +1223,10 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.update_bot[bot_name] = bot_manager.modules[bot_name].update_bot
     except Exception:
         robo.update_bot[bot_name] = "No update"
+    try:
+        robo.activate_bot[bot_name] = bot_manager.modules[bot_name].activate_bot
+    except Exception:
+        robo.update_bot[bot_name] = "No activate"
     if update:
         functions.init_bot_klines(bot_name)
     Bots[bot_name].multitrade = False

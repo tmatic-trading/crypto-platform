@@ -4,4 +4,5 @@ class Variables:
     run = dict()
     setup_bot = dict()
     update_bot = dict()
+    activate_bot = dict()
     CANDLESTICK_NUMBER = 100

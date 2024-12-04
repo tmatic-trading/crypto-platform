@@ -969,12 +969,3 @@ def strategy():
 5. Turn on trading.
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/scr/menu_top.png)
-
-## Development
-
-This project is under development. New functions and connections to other crypto exchanges may appear in the near future.
-
-The immediate plans include:
-
-1. Create a convenient menu for selecting instruments instead of manually editing the .env.Subscriptions file.
-2. Stable release.
