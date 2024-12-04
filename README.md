@@ -977,4 +977,4 @@ This project is under development. New functions and connections to other crypto
 The immediate plans include:
 
 1. Create a convenient menu for selecting instruments instead of manually editing the .env.Subscriptions file.
-2. Stable release..
+2. Stable release.
