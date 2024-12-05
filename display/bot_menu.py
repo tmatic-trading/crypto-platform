@@ -1231,9 +1231,11 @@ def import_bot_module(bot_name: str, update=False) -> None:
         functions.init_bot_klines(bot_name)
     Bots[bot_name].multitrade = False
     tm = datetime.now()
-    h = "0" * (2 - len(str(tm.hour))) + str(tm.hour)
-    m = "0" * (2 - len(str(tm.minute))) + str(tm.minute)
-    tm = f"{tm.year}{tm.month}{tm.day}-{h}{m}"
+    month = "0" * (2 - len(str(tm.month))) + str(tm.month)
+    day = "0" * (2 - len(str(tm.day))) + str(tm.day)
+    hr = "0" * (2 - len(str(tm.hour))) + str(tm.hour)
+    min = "0" * (2 - len(str(tm.minute))) + str(tm.minute)    
+    tm = f"{tm.year}{month}{day}-{hr}{min}"
     Bots[bot_name].strategy_log = (
         bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"
     )

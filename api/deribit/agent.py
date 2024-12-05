@@ -964,7 +964,6 @@ class Agent(Deribit):
                         history = Agent.trading_history(
                             self, histCount=500, start_time=start_time, funding=True
                         )
-                        print(history)
                         his_data = history["data"]
                         if isinstance(his_data, list):
                             for row in his_data:
