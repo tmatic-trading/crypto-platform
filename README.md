@@ -52,7 +52,7 @@ A local computer is sufficient to debug the software.
 
 ## Installation on local computer
 
-1. Create a new folder and download the program there. *This is not required, but it is recommended to install and activate the venv virtual environment to avoid installing Python packages globally.*
+1. Create a new folder and download the program there. *This is not required, but it is recommended to install and activate the venv virtual environment to avoid installing Python packages globally. For example for Linux: 1) python3 -m venv venv 2) source venv/bin/activate*
 2. Install the packages:
 
 ```
