@@ -2732,7 +2732,7 @@ def load_klines(
     return klines
 
 
-def add_new_kline(self: Markets, symbol: tuple, bot_name: str, timefr: int) -> None:
+def add_new_kline(self: Markets, symbol: tuple, bot_name: str, timefr: str) -> None:
     """
     Adds a new kline to the dictionary klines for the given exchange. If the
     given timefr already exists in the dictionary klines[symbol], then only

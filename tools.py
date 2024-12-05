@@ -335,7 +335,7 @@ class Tool(Instrument):
     def EMA(self, period: int) -> float:
         pass
 
-    def add_kline(self) -> Callable:
+    def add_kline(self, timefr: str = "") -> Callable:
         """
         Adds kline (candlestick) data to the instrument for the time interval
         specified in the bot parameters.
@@ -351,7 +351,11 @@ class Tool(Instrument):
 
         Parameters
         ----------
-        No parameters.
+        timefr: str
+            Possible values: "1min", "2min", "3min", "5min", "10min", 
+            "15min", "20min", "30min", "1h", "2h", "3h", "4h", "6h", "12h", 
+            "1D". If omited, the time frame is specified in the bot 
+            parameters.
 
         Returns
         -------
@@ -389,11 +393,10 @@ class Tool(Instrument):
         kl(-1)
         Return type: dict
             Returns latest kline data.
-
-        The time frame (timefr) is specified in the bot parameters.
         """
         bot_name = name(inspect.stack())
-        timefr = Bots[bot_name].timefr
+        if timefr == "":
+            timefr = Bots[bot_name].timefr
         ws = Markets[self.market]
         functions.add_new_kline(
             ws, symbol=self.symbol_tuple, bot_name=bot_name, timefr=timefr

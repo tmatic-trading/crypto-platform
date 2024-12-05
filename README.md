@@ -455,6 +455,8 @@ Click ```Update strategy``` if you are in the Bot menu. Tmatic will make a reque
 
 While ```Bitmex["XBTUSDT"].add_kline()``` is present in the ```strategy.py``` file, when Tmatic is launched or a specific exchange is restarted while Tmatic is running, the kline data will also be reloaded.
 
+The `add_kline` method can take one argument `timefr`. Possible values: "1min", "2min", "3min", "5min", "10min", "15min", "20min", "30min", "1h", "2h", "3h", "4h", "6h", "12h", "1D". If omited, the timefr is specified in the bot parameters.
+
 #### Get access to data
 
 Each line of kline data is a dictionary:
