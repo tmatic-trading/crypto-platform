@@ -1,4 +1,3 @@
-# import common.init as common_init
 import connect
 from common.variables import Variables as var
 from connect import on_closing
