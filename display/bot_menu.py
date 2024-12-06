@@ -373,7 +373,7 @@ class SettingsApp:
             fg=disp.gray_color,
             justify=tk.LEFT,
         ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-        service.wrap(self.brief_frame, padx=self.padx)    
+        service.wrap(self.brief_frame, padx=self.padx)
 
     def activate(self, bot_name: str) -> str:
         def return_text() -> str:
@@ -1215,9 +1215,9 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.run[bot_name] = bot_manager.modules[bot_name].strategy
     except Exception:
         robo.run[bot_name] = "No strategy"
-    try:        
+    try:
         robo.setup_bot[bot_name] = bot_manager.modules[bot_name].setup_bot
-    except Exception as s:
+    except Exception:
         robo.setup_bot[bot_name] = "No setup"
     try:
         robo.update_bot[bot_name] = bot_manager.modules[bot_name].update_bot
@@ -1234,7 +1234,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
     month = "0" * (2 - len(str(tm.month))) + str(tm.month)
     day = "0" * (2 - len(str(tm.day))) + str(tm.day)
     hr = "0" * (2 - len(str(tm.hour))) + str(tm.hour)
-    min = "0" * (2 - len(str(tm.minute))) + str(tm.minute)    
+    min = "0" * (2 - len(str(tm.minute))) + str(tm.minute)
     tm = f"{tm.year}{month}{day}-{hr}{min}"
     Bots[bot_name].strategy_log = (
         bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"

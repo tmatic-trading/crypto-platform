@@ -280,8 +280,7 @@ def setup_bots():
             error = service.display_exception(exception, display=False)
             error_type = exception.__class__.__name__
             Bots[bot_name].error_message = {
-                        "error_type": error_type,
-                        "message": error,
-                    }
+                "error_type": error_type,
+                "message": error,
+            }
             _put_message(market="", message=error, warning=True)
-            
