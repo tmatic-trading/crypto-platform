@@ -91,6 +91,7 @@ class Deribit(Variables):
         self.funding_thread_active = True
         self.instrument_index = OrderedDict()
         self.subscriptions = list()
+        self.sequence = 0
 
     def setup_session(self):
         """
