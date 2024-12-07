@@ -616,7 +616,7 @@ class SettingsApp:
         ttk.Style().map(
             "changed.TCombobox",
             fieldbackground=[
-                ("readonly", self.bg_entry),#disp.bg_color
+                ("readonly", self.bg_entry),
                 ("disabled", self.bg_entry),
             ],
             foreground=[
@@ -638,7 +638,7 @@ class SettingsApp:
         ttk.Style().map(
             "changed.TEntry",
             fieldbackground=[
-                ("!disabled", disp.bg_color),
+                ("!disabled", self.bg_entry),#disp.bg_color
                 ("disabled", self.bg_entry),
             ],
             foreground=[
