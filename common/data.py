@@ -26,9 +26,9 @@ class Instrument:
         only be one element if the ORDER_BOOK_DEPTH in the .env file is
         defined as ``quote``.
     avgEntryPrice: float
-        Average entry price
+        Average entry price.
     baseCoin: str
-        Base coin
+        Base coin.
     bids: list
         Bids. The element is sorted by price in descending order. There can
         only be one element if the ORDER_BOOK_DEPTH in the .env file is
@@ -67,7 +67,7 @@ class Instrument:
         Indicates that the nature of the contract is ``inverse`` or
         ``reversed`` in the case of Deribit.
     makerFee: float
-        Taker commission for instrument.
+        Maker's commission for instrument.
     marginCallPrice: float
         Position margin call or liquidation price.
     market: str
@@ -75,9 +75,9 @@ class Instrument:
     maxOrderQty: float
         Not used
     minOrderQty: float
-        Minimum order quantity or lotsize
+        Minimum order quantity or lotsize.
     multiplier: int
-        :::For Bitmex only::: How much is one contract worth? You can see this
+        :::For Bitmex only::: How much is one contract worth. You can see this
         information under the Bitmex Contract Specifications for each
         instrument. For other exchanges it is equal to 1.
     myMultiplier: int
@@ -105,7 +105,7 @@ class Instrument:
         A unique value corresponding to the ticker, except in the spot
         category, where the symbol matches "baseCoin/quoteCoin".
     takerFee: float
-        Taker commission for instrument.
+        Taker's commission for instrument.
     ticker: str
         Symbol of the instrument in the exchange classification.
     tickSize: float

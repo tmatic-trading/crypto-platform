@@ -24,7 +24,7 @@ class Setup(Variables):
         """
         name = self.name
         if name in var.env:
-            if var.env[name]["TESTNET"] == "YES":
+            if var.env["TESTNET"] == "YES":
                 testnet = "TESTNET_"
             else:
                 testnet = ""

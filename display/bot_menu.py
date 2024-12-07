@@ -1071,7 +1071,9 @@ def init_bot_trades(bot_name: str) -> None:
             )
         sql = (
             "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, ABS(QTY) "
-            + "as QTY, TRADE_PRICE, TTIME from coins where EMI == '"
+            + "as QTY, TRADE_PRICE, TTIME from "
+            + var.database_table
+            + " where EMI == '"
             + bot_name
             + "' and SIDE <> 'Fund' order by TTIME limit "
             + str(disp.table_limit)

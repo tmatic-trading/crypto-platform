@@ -68,12 +68,16 @@ pip3 install pygments
 ```
 pip3 install -r requirements.txt
 ```
-3. The program uses an SQLite database and can work without installing a database management system. After running Tmatic for the first time, the tmatic.db file will be generated automatically. The database consists of two tables:
+3. The program uses an SQLite database and can work without installing a database management system. After running Tmatic for the first time, the tmatic.db file will be generated automatically. The database consists of the tables:
 
-- ```coins``` - stores all previously executed transactions and accrued funding.
+- ```real_trade``` - stores all previously executed transactions and accrued funding.
+- ```test_trade``` - stores all previously executed transactions and accrued funding in the test network.
 - ```robots``` - parameters of trading bots.
+- ```expired``` - parameters of expired instruments that were previously traded. When restoring the trading history and an expired instrument is found, Tmatic first checks the instrument parameters in the `expired` table. If the instrument is not found, it gets the information from the exchange endpoint and stores it in the `expired` table to speed up the loading process in the future.
 
-The "coins" table receives data from the websocket execution stream or trade history endpoint. Explanations for the columns of the "coins" table:
+The columns of the `real_trade` and `test_trade` tables are identical.
+
+The `real_trade` (`test_trade`) table receives data from the websocket execution stream or trade history endpoint. Explanations for the columns:
 * ID - row number in the database.
 * EXECID - unique code that exchange assigns to any transaction.
 * EMI is the identification name of the bot taken from the "clOrdID" field. EMI usually corresponds to the EMI field of the SQLite "robots" table.
@@ -100,17 +104,39 @@ The "coins" table receives data from the websocket execution stream or trade his
 * COMMISS - funding amount or commission for completing a transaction, expressed in the currency of the instrument, and is calculated in accordance with the documentation of the exchange for each instrument. A negative value means a rebate.
 * TTIME - transaction time received from the exchange.
 * DAT - time the current row was written into the database.
-* CLORDID - unique order identifier assigned by Tmatic corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, clOrdID = "1109594183.myBot" where 1109594183 is a unique order number assigned by Tmatic, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite "coins" table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding or the order was made from outside this platform where "clOrdID" was not used. If the exchange closes an open position after the instrument expires, in this case the REFER field takes the value "Delivery".
+* CLORDID - unique order identifier assigned by Tmatic corresponding to the "clOrdID" field, which the exchange registers as an additional parameter when sending an order. For example, clOrdID = "1109594183.myBot" where 1109594183 is a unique order number assigned by Tmatic, "myBot" after the dot is the bot name (EMI). When writing "clOrdID" to the SQLite `real_trade` (`test_trade`) table it is split and in this case "myBot" is written to the EMI column and 1109594183 is written to the CLORDID column. An order can be executed in parts, and by receiving information from the exchange using "clOrdID" you can understand which order is being executed and which bot placed it. The "clOrdID" field can be 0. This means that it was funding or the order was made from outside this platform where "clOrdID" was not used. If the exchange closes an open position after the instrument expires, in this case the REFER field takes the value "Delivery".
 * MARKET - name of the exchange.
 * ACCOUNT - user's exchange account number.
 
-Explanations for the columns of the SQLite "robots" table:
+Explanations for the columns of the SQLite `robots` table:
 * EMI - bot identity name.
 * SORT - allows you to do your own sorting when reading from the database.
 * DAT - time the current row was written to the database.
 * TIMEFR - timeframe that the bot uses. Possible values at the moment: "1min", "5min", "1h".
 * STATE - Possible values: "Suspended" or "Active".
 * UPDATED - update time for bot parameters or strategy.py file.
+
+Columns of the `expired` table:
+* ID - row number in the database.
+* SYMBOL - almost the same as TICKER, with exception of the spot category, where SYMBOL looks like "instrument baseCoin / instrument quoteCoin", example "BTC/USDT".
+* MARKET - name of the exchange.
+* CURRENCY - currency of a transaction or funding.
+* TICKER - instrument symbol as presented in the exchange API.
+* CATEGORY - instrument category. Possible values ​​depend on the specific exchange.
+* MYMULTIPLIER - *for Bitmex only*. Converts quantity when displayed on screen. For other exchanges it is equal to 1.
+* MULTIPLIER - *for Bitmex only*. How much is one contract worth. You can see this information under the Bitmex Contract Specifications for each instrument. For other exchanges it is equal to 1.
+* TICKSIZE - the step to increase/reduce order price.
+* PRICE_PRECISION - based on the `tickSize` of the instrument. Used to round prices ​when displayed on the screen.
+* MINORDERQTY - minimum order quantity or lotsize.
+* QTYSTEP - the step to increase/reduce order quantity. Also called LotSize.
+* PRECISION - based on the ``lotSize`` of the instrument. Used to round volumes ​​when displayed on the screen.
+* EXPIRE - expiration time.
+* BASECOIN - base coin.
+* QUOTECOIN - quote coin.
+* VALUEOFONECONTRACT - *for Bitmex only*. Used when calculating trade value. For other exchanges it is equal to 1.
+* TAKERFEE - taker's commission for instrument.
+* MAKERFEE - maker's commission for instrument.
+* DAT - time the current row was written into the database.
 
 ## Launch the program
 
@@ -246,7 +272,7 @@ If the program does not start or a warning or error appears, check the logfile.l
 
 Tmatic stores all your trading activity, including information on trades, financing and deliveries. Manage the ```history.ini``` file to set the date from which the history should be loaded. After that, the date of the last transaction is saved. You can reset the date in ```history.ini``` at any time you need. Each record in the database is unique, and no trade can be written to the database twice.
 
-Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite "coins" table.
+Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite `real_trade` (`test_trade`) table.
 
 > [!NOTE]
 > Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history. **Bybit only supports the last two years of trading history**. Its API allows trading history to be downloaded in 7-day chunks, so retrieving data for a long period may take time.

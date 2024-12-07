@@ -91,6 +91,7 @@ class Variables:
         "Bybit": [("BTCUSDT", "Bybit")],
         "Deribit": [("BTC-PERPETUAL", "Deribit")],
     }
+    platform_name = "Tmatic"
     reloading = False
     subscription_res = dict()
     timeout = 7
@@ -106,4 +107,5 @@ class Variables:
     dash = "---"
     backtest = False
     backtest_symbols = list()
-    database_table = "coins"
+    database_table: str
+    expired_table = "expired"

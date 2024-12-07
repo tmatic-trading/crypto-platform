@@ -104,7 +104,9 @@ class Function(WS, Variables):
         symbol = (symb, self.name)
         if symbol not in self.Instrument.get_keys():
             qwr = (
-                "select * from obsolete where SYMBOL ='"
+                "select * from "
+                + var.expired_table
+                + " where SYMBOL ='"
                 + symb
                 + "' and MARKET = '"
                 + self.name
@@ -114,7 +116,7 @@ class Function(WS, Variables):
             if not data:
                 WS.get_instrument(self, ticker=ticker, category=category)
                 service.add_symbol_database(
-                    instrument=self.Instrument[symbol], table="obsolete"
+                    instrument=self.Instrument[symbol], table=var.expired_table
                 )
             else:
                 data = data[0]

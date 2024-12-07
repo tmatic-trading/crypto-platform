@@ -256,7 +256,7 @@ def insert_database(values: list, table: str) -> None:
                     "insert into robots (EMI,STATE,TIMEFR) VALUES (?,?,?)",
                     values,
                 )
-            elif table in ["obsolete", "backtest"]:
+            elif table in [var.expired_table, "backtest"]:
                 qwr = (
                     """insert into %s (SYMBOL,MARKET,CATEGORY,CURRENCY,
                     TICKER,MYMULTIPLIER,MULTIPLIER,TICKSIZE,
@@ -768,7 +768,6 @@ def add_symbol_database(instrument: Instrument, table: str) -> None:
         instrument.makerFee,
     ]
     res = insert_database(values=values, table=table)
-    print("____", res)
 
 
 def set_symbol(instrument: Instrument, data: dict) -> None:

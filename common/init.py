@@ -439,12 +439,12 @@ def setup_database_connecion() -> None:
         MAKERFEE decimal(1,12) DEFAULT 0.000000000000,
         DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
 
-        sql_create_obsolete = sql_create % "obsolete"
+        sql_create_expired = sql_create % var.expired_table
         sql_create_backtest = sql_create % "backtest"
 
         var.cursor_sqlite.execute(sql_create_robots)
         var.cursor_sqlite.execute(sql_create_trade)
-        var.cursor_sqlite.execute(sql_create_obsolete)
+        var.cursor_sqlite.execute(sql_create_expired)
         var.cursor_sqlite.execute(sql_create_backtest)
         var.cursor_sqlite.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON %s (ID)"
@@ -461,7 +461,7 @@ def setup_database_connecion() -> None:
             "CREATE INDEX IF NOT EXISTS SIDE_ix ON %s (SIDE)" % var.database_table
         )
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON obsolete (MARKET, SYMBOL)"
+            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON %s (MARKET, SYMBOL)" % var.expired_table
         )
         var.cursor_sqlite.execute(
             "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON backtest (MARKET, SYMBOL)"

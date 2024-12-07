@@ -33,6 +33,7 @@ class SettingsApp:
         self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook 7"
         self.common_settings["BOTTOM_FRAME"] = "Bots"
         self.common_settings["REFRESH_RATE"] = "5"
+        self.common_settings["TESTNET"] = "YES"
 
         self.default_subscriptions = OrderedDict()
         self.default_subscriptions["Bitmex"] = var.default_symbol["Bitmex"]
@@ -55,7 +56,6 @@ class SettingsApp:
             "TESTNET_WS_URL",
             "TESTNET_API_KEY",
             "TESTNET_API_SECRET",
-            "TESTNET",
         ]
         self.market_color = {}
         self.market_defaults = {}
@@ -211,6 +211,7 @@ class SettingsApp:
             self.common_trace_changed["MARKET_LIST"].set(actual_str)
 
             # Load data from .env file for each market
+
             for market in self.market_list:
                 for setting in self.market_settings:
                     try:
@@ -225,11 +226,9 @@ class SettingsApp:
                     self.market_changed[market][setting] = self.market_saved[market][
                         setting
                     ]
-
             if missed_data is not None:
                 os.remove(self.env_file_settings)
                 self.save_dotenv("new")
-
         for setting in self.common_settings.keys():
             var.env[setting] = self.common_defaults[setting]
         for market in self.market_list:
@@ -275,6 +274,14 @@ class SettingsApp:
             disp.num_book = int(book_depth[1]) * 2
         else:
             disp.num_book = 2
+        if var.env["TESTNET"] == "YES":
+            var.database_table = "test_trade"
+            var.platform_name = "Tmatic / testnet"
+            disp.root.title(var.platform_name)
+        else:
+            var.database_table = "real_trade"
+            var.platform_name = "Tmatic"
+            disp.root.title(var.platform_name)
 
     def save_dotenv_subscriptions(self, subscriptions: OrderedDict) -> None:
         """
@@ -391,7 +398,7 @@ class SettingsApp:
         Fills the market settings with current values.
         """
         for setting, value in self.market_changed[market].items():
-            if setting != "CONNECTED":
+            if setting != "CONNECTED":                
                 widget_type = self.entry_market[setting].winfo_class()
                 if widget_type == "TCombobox":
                     self.entry_market[setting].set(value)
@@ -404,7 +411,7 @@ class SettingsApp:
                 else:
                     self.entry_market[setting].delete(0, tk.END)
                     self.entry_market[setting].insert(0, value)
-                    testnet_value = self.market_changed[market]["TESTNET"]
+                    testnet_value = self.common_defaults["TESTNET"]
                     if testnet_value:
                         testnet_setting = setting.split("_")
                         if testnet_value == "YES":
@@ -412,7 +419,7 @@ class SettingsApp:
                                 testnet_setting[0] != "TESTNET"
                                 or self.market_changed[market]["CONNECTED"] == "NO"
                             ):
-                                self.entry_market[setting].config(state="disabled")
+                                self.entry_market[setting].config(state="normal") # state="disabled"
                                 self.market_label[setting].config(fg=disp.disabled_fg)
                             else:
                                 self.entry_market[setting].config(state="normal")
@@ -422,7 +429,7 @@ class SettingsApp:
                                 testnet_setting[0] == "TESTNET"
                                 or self.market_changed[market]["CONNECTED"] == "NO"
                             ):
-                                self.entry_market[setting].config(state="disabled")
+                                self.entry_market[setting].config(state="normal") # state="disabled"
                                 self.market_label[setting].config(fg=disp.disabled_fg)
                             else:
                                 self.entry_market[setting].config(state="normal")
@@ -702,6 +709,16 @@ class SettingsApp:
                     )
                     values = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
                     self.entry_common[setting]["values"] = values
+                elif setting == "TESTNET":
+                    self.entry_common[setting] = ttk.Combobox(
+                        self.root_frame,
+                        width=self.entry_width,
+                        textvariable=self.common_trace_changed[setting],
+                        state="readonly",
+                        style="default.TCombobox",
+                    )
+                    values = ("YES", "NO")
+                    self.entry_common[setting]["values"] = values
                 self.entry_common[setting].w_name = setting
                 self.entry_common[setting].bind(
                     "<FocusIn>", lambda event: self.on_focused(event)
@@ -749,7 +766,7 @@ class SettingsApp:
                 self.market_trace[setting].trace_add(
                     "write", self.market_trace_callback
                 )
-                if setting == "TESTNET":
+                '''if setting == "TESTNET":
                     self.entry_market[setting] = ttk.Combobox(
                         self.root_frame,
                         width=self.entry_width,
@@ -761,16 +778,16 @@ class SettingsApp:
                     self.entry_market[setting].grid(
                         row=widget_row, column=2, sticky="W"
                     )
-                else:
-                    self.entry_market[setting] = ttk.Entry(
-                        self.root_frame,
-                        width=self.entry_width,
-                        textvariable=self.market_trace[setting],
-                        style="default.TEntry",
-                    )
-                    self.entry_market[setting].grid(
-                        row=widget_row, column=2, sticky="W"
-                    )
+                else:'''
+                self.entry_market[setting] = ttk.Entry(
+                    self.root_frame,
+                    width=self.entry_width,
+                    textvariable=self.market_trace[setting],
+                    style="default.TEntry",
+                )
+                self.entry_market[setting].grid(
+                    row=widget_row, column=2, sticky="W"
+                )
                 self.entry_market[setting].w_name = setting
                 self.entry_market[setting].bind(
                     "<FocusIn>", lambda event: self.on_focused(event)
