@@ -409,9 +409,10 @@ class SettingsApp:
                         self.entry_market[setting].config(state="readonly")
                         self.market_label[setting].config(fg=disp.fg_color)
                 else:
+                    self.entry_market[setting].config(state="normal")
                     self.entry_market[setting].delete(0, tk.END)
                     self.entry_market[setting].insert(0, value)
-                    testnet_value = self.common_defaults["TESTNET"]
+                    testnet_value = self.common_trace_changed["TESTNET"].get()
                     if testnet_value:
                         testnet_setting = setting.split("_")
                         if testnet_value == "YES":
@@ -419,7 +420,7 @@ class SettingsApp:
                                 testnet_setting[0] != "TESTNET"
                                 or self.market_changed[market]["CONNECTED"] == "NO"
                             ):
-                                self.entry_market[setting].config(state="normal") # state="disabled"
+                                self.entry_market[setting].config(state="disabled")
                                 self.market_label[setting].config(fg=disp.disabled_fg)
                             else:
                                 self.entry_market[setting].config(state="normal")
@@ -429,7 +430,7 @@ class SettingsApp:
                                 testnet_setting[0] == "TESTNET"
                                 or self.market_changed[market]["CONNECTED"] == "NO"
                             ):
-                                self.entry_market[setting].config(state="normal") # state="disabled"
+                                self.entry_market[setting].config(state="disabled")
                                 self.market_label[setting].config(fg=disp.disabled_fg)
                             else:
                                 self.entry_market[setting].config(state="normal")
@@ -455,6 +456,8 @@ class SettingsApp:
         """
         Called when the corresponding common setting changed.
         """
+        if self.selected_frame is not None:
+            self.set_market_fields(self.selected_frame.market)
         self.check_common_flag(var.replace(str(self), ""))
 
     def market_trace_callback(self, var, index, mode):
@@ -613,7 +616,7 @@ class SettingsApp:
         ttk.Style().map(
             "changed.TCombobox",
             fieldbackground=[
-                ("readonly", disp.bg_color),
+                ("readonly", self.bg_entry),#disp.bg_color
                 ("disabled", self.bg_entry),
             ],
             foreground=[
