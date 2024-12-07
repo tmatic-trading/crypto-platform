@@ -169,7 +169,7 @@ Bybit_TESTNET='YES'
 #
 Deribit_CONNECTED='YES'
 Deribit_HTTP_URL='https://www.deribit.com'
-Deribit_WS_URL='wss://ws.deribit.com/ws'
+Deribit_WS_URL='wss://www.deribit.com/ws'
 Deribit_API_KEY=''
 Deribit_API_SECRET=''
 Deribit_TESTNET_HTTP_URL='https://test.deribit.com'
