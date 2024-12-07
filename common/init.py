@@ -138,8 +138,13 @@ class Init(WS, Variables):
                 while his_data:
                     for row in his_data:
                         data = service.select_database(  # read_database
-                            "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
-                            % (row["execID"], self.user_id, self.name),
+                            "select EXECID from %s where EXECID='%s' and account=%s and market='%s'"
+                            % (
+                                var.database_table,
+                                row["execID"],
+                                self.user_id,
+                                self.name,
+                            ),
                         )
                         if not data:
                             Function.transaction(self, row=row, info="History")
@@ -172,14 +177,14 @@ class Init(WS, Variables):
     def account_balances(self: Markets) -> None:
         """
         Calculates the final trading results for all currencies that were
-        involved. The data is taken from the SQLite table "coins".
-        Additionally, accrued funding and paid commissions for the entire
-        period are calculated.
+        involved. The data is taken from the SQLite table. Additionally,
+        accrued funding and paid commissions for the entire period are
+        calculated.
         """
         data = service.select_database(
             "select SYMBOL, TICKER, CATEGORY from "
-            + "coins where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY"
-            % (self.user_id, self.name),
+            + "%s where ACCOUNT=%s and MARKET='%s' group by SYMBOL, CATEGORY"
+            % (var.database_table, self.user_id, self.name),
         )
         if isinstance(data, list):
             symbols = list(map(lambda x: (x["SYMBOL"], self.name), data))
@@ -193,7 +198,9 @@ class Init(WS, Variables):
             if not symbols:
                 symbols = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
             sql = (
-                "select DISTINCT(CURRENCY) from coins where MARKET = '"
+                "select DISTINCT(CURRENCY) from "
+                + var.database_table
+                + " where MARKET = '"
                 + self.name
                 + "' AND ACCOUNT = "
                 + str(self.user_id)
@@ -213,7 +220,8 @@ class Init(WS, Variables):
                         + "select IFNULL(sum(COMMISS),0.0) commiss, "
                         + "IFNULL(sum(SUMREAL),0.0) sumreal, IFNULL((select "
                         + "sum(COMMISS) from "
-                        + "coins where SIDE = 'Fund' and ACCOUNT = "
+                        + var.database_table
+                        + " where SIDE = 'Fund' and ACCOUNT = "
                         + str(self.user_id)
                         + " and MARKET = '"
                         + self.name
@@ -224,7 +232,8 @@ class Init(WS, Variables):
                         + "' and CATEGORY = '"
                         + instrument.category
                         + "'),0.0) funding from "
-                        + "coins where SIDE <> 'Fund' and ACCOUNT = "
+                        + var.database_table
+                        + " where SIDE <> 'Fund' and ACCOUNT = "
                         + str(self.user_id)
                         + " and MARKET = '"
                         + self.name
@@ -305,7 +314,8 @@ class Init(WS, Variables):
             sql = (
                 "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, QTY,"
                 + "PRICE, TTIME, COMMISS from "
-                + "coins where SIDE = 'Fund' and ACCOUNT = "
+                + var.database_table
+                + " where SIDE = 'Fund' and ACCOUNT = "
                 + str(self.user_id)
                 + " and MARKET = '"
                 + self.name
@@ -333,7 +343,8 @@ class Init(WS, Variables):
             sql = (
                 "select ID, EMI, SYMBOL, TICKER, CATEGORY, MARKET, SIDE, ABS(QTY) as QTY,"
                 + "TRADE_PRICE, TTIME, COMMISS, SUMREAL from "
-                + "coins where SIDE <> 'Fund' and ACCOUNT = "
+                + var.database_table
+                + " where SIDE <> 'Fund' and ACCOUNT = "
                 + str(self.user_id)
                 + " and MARKET = '"
                 + self.name
@@ -378,8 +389,9 @@ def setup_database_connecion() -> None:
         STATE varchar(10) DEFAULT 'Suspended',
         UPDATED timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
 
-        sql_create_coins = """
-        CREATE TABLE IF NOT EXISTS coins (
+        sql_create_trade = (
+            """
+        CREATE TABLE IF NOT EXISTS %s (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         EXECID varchar(45) DEFAULT NULL,
         EMI varchar(20) DEFAULT NULL,
@@ -401,6 +413,8 @@ def setup_database_connecion() -> None:
         DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP,
         CLORDID int DEFAULT 0,
         ACCOUNT int DEFAULT 0)"""
+            % var.database_table
+        )
 
         sql_create = """
         CREATE TABLE IF NOT EXISTS %s (
@@ -429,19 +443,23 @@ def setup_database_connecion() -> None:
         sql_create_backtest = sql_create % "backtest"
 
         var.cursor_sqlite.execute(sql_create_robots)
-        var.cursor_sqlite.execute(sql_create_coins)
+        var.cursor_sqlite.execute(sql_create_trade)
         var.cursor_sqlite.execute(sql_create_obsolete)
         var.cursor_sqlite.execute(sql_create_backtest)
         var.cursor_sqlite.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON coins (ID)"
+            "CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON %s (ID)"
+            % var.database_table
         )
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS EXECID_ix ON coins (EXECID)"
+            "CREATE INDEX IF NOT EXISTS EXECID_ix ON %s (EXECID)" % var.database_table
         )
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS EMI_QTY_ix ON coins (EMI, QTY)"
+            "CREATE INDEX IF NOT EXISTS EMI_QTY_ix ON %s (EMI, QTY)"
+            % var.database_table
         )
-        var.cursor_sqlite.execute("CREATE INDEX IF NOT EXISTS SIDE_ix ON coins (SIDE)")
+        var.cursor_sqlite.execute(
+            "CREATE INDEX IF NOT EXISTS SIDE_ix ON %s (SIDE)" % var.database_table
+        )
         var.cursor_sqlite.execute(
             "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON obsolete (MARKET, SYMBOL)"
         )

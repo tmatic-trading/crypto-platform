@@ -969,8 +969,13 @@ class Agent(Deribit):
                         if isinstance(his_data, list):
                             for row in his_data:
                                 data = service.select_database(  # read_database
-                                    "select EXECID from coins where EXECID='%s' and account=%s and market='%s'"
-                                    % (row["execID"], self.user_id, self.name),
+                                    "select EXECID from %s where EXECID='%s' and account=%s and market='%s'"
+                                    % (
+                                        var.database_table,
+                                        row["execID"],
+                                        self.user_id,
+                                        self.name,
+                                    ),
                                 )
                                 if not data:
                                     self.transaction(row=row)

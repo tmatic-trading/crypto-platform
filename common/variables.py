@@ -106,3 +106,4 @@ class Variables:
     dash = "---"
     backtest = False
     backtest_symbols = list()
+    database_table = "coins"

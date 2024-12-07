@@ -43,8 +43,9 @@ def add_subscription(subscriptions: set) -> None:
     for symbol, res in var.subscription_res.items():
         if res:
             qwr = (
-                "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY from coins where "
-                + "SYMBOL = '"
+                "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY from "
+                + var.database_table
+                + " where SYMBOL = '"
                 + symbol[0]
                 + "' and SIDE <> 'Fund' and market = '"
                 + symbol[1]
@@ -96,7 +97,9 @@ def load_bots() -> None:
             qwr = (
                 "select MARKET, SYMBOL, sum(QTY) as SUM_QTY, sum(SUMREAL) as "
                 + "SUM_SUMREAL from (select abs(QTY) as QTY, SUMREAL, "
-                + "MARKET, SYMBOL, SIDE, ACCOUNT from coins where "
+                + "MARKET, SYMBOL, SIDE, ACCOUNT from "
+                + var.database_table
+                + " where "
             )
             _or = ""
             lst = ws.symbol_list.copy()
@@ -133,7 +136,9 @@ def load_bots() -> None:
     qwr = (
         "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
         + "EMI, SYMBOL, TICKER, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
-        + "TTIME from coins where SIDE <> 'Fund' group by EMI, SYMBOL, "
+        + "TTIME from "
+        + var.database_table
+        + " where SIDE <> 'Fund' group by EMI, SYMBOL, "
         + "MARKET) res where POS <> 0 order by SYMBOL desc;"
     )
     var.lock.acquire(True)
@@ -166,12 +171,13 @@ def load_bots() -> None:
                 if name not in Bots.keys():
                     if value["SYMBOL"] != name and name != "":
                         qwr = (
-                            "select ID, EMI, SYMBOL from coins where side <> 'Fund' and EMI = '%s'"
-                            % (name)
+                            "select ID, EMI, SYMBOL from %s where side <> 'Fund' and EMI = '%s'"
+                            % (var.database_table, name)
                         )
                         data = service.select_database(qwr)
                         for row in data:
-                            qwr = "update coins set EMI = '%s' where ID = %s;" % (
+                            qwr = "update %s set EMI = '%s' where ID = %s;" % (
+                                var.database_table,
                                 "",
                                 row["ID"],
                             )
@@ -189,7 +195,9 @@ def load_bots() -> None:
             + "'Fund' then 0 else QTY end), 0) POS, ifnull(sum(case when SIDE "
             + "= 'Fund' then 0 else abs(QTY) end), 0) VOL, ifnull(sum(COMMISS)"
             + ", 0) COMMISS, ifnull(max(TTIME), '1900-01-01 01:01:01.000000') "
-            + "LTIME from coins where EMI = '"
+            + "LTIME from "
+            + var.database_table
+            + " where EMI = '"
             + name
             + "' group by SYMBOL) T;"
         )

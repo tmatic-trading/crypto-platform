@@ -212,7 +212,7 @@ class Function(WS, Variables):
                 row["transactTime"],
                 self.user_id,
             ]
-            service.insert_database(values=values, table="coins")
+            service.insert_database(values=values, table=var.database_table)
             message = {
                 "SYMBOL": row["symbol"],
                 "MARKET": row["market"],
@@ -276,8 +276,8 @@ class Function(WS, Variables):
                 if emi not in Bots.keys():
                     emi = ""
                 data = service.select_database(  # read_database
-                    "select EXECID from coins where EXECID='%s' and account=%s"
-                    % (row["execID"], self.user_id),
+                    "select EXECID from %s where EXECID='%s' and account=%s"
+                    % (var.database_table, row["execID"], self.user_id),
                 )
                 if not data:
                     handle_trade_or_delivery(row, emi, refer, clientID)
@@ -310,7 +310,9 @@ class Function(WS, Variables):
                 diff = -(lastQty + pos)
                 if diff != 0:
                     qwr = (
-                        "select sum(QTY) as sum from coins where SYMBOL = '"  # d emi
+                        "select sum(QTY) as sum from "
+                        + var.database_table
+                        + " where SYMBOL = '"  # d emi
                         + row["symbol"][0]
                         + "' and MARKET = '"
                         + self.name
@@ -383,7 +385,7 @@ class Function(WS, Variables):
                     row["transactTime"],
                     self.user_id,
                 ]
-                service.insert_database(values=values, table="coins")
+                service.insert_database(values=values, table=var.database_table)
                 results.funding += calc["funding"]
                 if not info:
                     Function.funding_display(self, message)

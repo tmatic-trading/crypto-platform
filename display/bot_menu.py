@@ -3,9 +3,9 @@
 - (done) New: insert (robots)
 - (done) Activate: update STATE (robots)
 - (done) Update: update TIMEFRAME, UPDATED (robots)
-- (done) Merge: delete record (robots), update EMI (coins)
+- (done) Merge: delete record (robots), update EMI (var.database_table)
 - (done) Duplicate: insert (robots)
-- (done) Delete: delete record (robots), update EMI (coins)
+- (done) Delete: delete record (robots), update EMI (var.database_table)
 2) Bots with 'Active' state are not allowed for the following services:
 - (done) Update: the respective fields, i.g. strategy, must be disabled
 - (done) Merge: bot destined to be deleted must have 'Suspended' state
@@ -503,7 +503,15 @@ class SettingsApp:
         def merge_bot(bot_name: str, bot_to_delete: str) -> None:
             if self.delete_warning(bot_name=bot_to_delete):
                 return
-            query = f"UPDATE coins SET EMI = '{bot_name}' WHERE EMI = '{bot_to_delete}'"
+            query = (
+                "UPDATE "
+                + var.database_table
+                + " SET EMI = '"
+                + bot_name
+                + "' WHERE EMI = '"
+                + bot_to_delete
+                + "'"
+            )
             message = self.delete_all_bot_info(bot_to_delete, query, "Merge")
             if message[0] is None:
                 message[1] = "The merge operation completed successfully."
@@ -655,7 +663,13 @@ class SettingsApp:
         def delete_bot(bot_name: str) -> None:
             if self.delete_warning(bot_name=bot_name):
                 return
-            query = f"UPDATE coins SET EMI = '' WHERE EMI = '{bot_name}'"
+            query = (
+                "UPDATE "
+                + var.database_table
+                + " SET EMI = '' WHERE EMI = '"
+                + bot_name
+                + "'"
+            )
             message = self.delete_all_bot_info(bot_name, query, "Delete")
             if message[0] is None:
                 message[1] = "The delete operation completed successfully."
@@ -844,7 +858,7 @@ class SettingsApp:
             message = f"Bot ``{bot_name}`` removed from Tmatic's memory."
             err = service.update_database(query=query_0)
             if err is None:
-                message += "\nDatabase table ``coins`` updated."
+                message += "\nDatabase table `" + var.database_table + "` updated."
                 err = service.update_database(
                     query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
                 )

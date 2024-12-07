@@ -241,9 +241,11 @@ def insert_database(values: list, table: str) -> None:
     while True:
         try:
             var.sql_lock.acquire(True)
-            if table == "coins":
+            if table == var.database_table:
                 var.cursor_sqlite.execute(
-                    "insert into coins (EXECID,EMI,REFER,CURRENCY,SYMBOL,"
+                    "insert into "
+                    + var.database_table
+                    + " (EXECID,EMI,REFER,CURRENCY,SYMBOL,"
                     + "TICKER,CATEGORY,MARKET,SIDE,QTY,QTY_REST,PRICE,"
                     + "THEOR_PRICE,TRADE_PRICE,SUMREAL,COMMISS,CLORDID,TTIME,"
                     + "ACCOUNT) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -363,7 +365,9 @@ def fill_bot_position(
         qwr = (
             "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
             + "sum(SUMREAL) as SUM_SUMREAL, sum(COMMISS) as "
-            + "SUM_COMMISS, TTIME from (select * from coins where EMI = '"
+            + "SUM_COMMISS, TTIME from (select * from "
+            + var.database_table
+            + " where EMI = '"
             + bot_name
             + "' and SYMBOL = '"
             + instrument.symbol
