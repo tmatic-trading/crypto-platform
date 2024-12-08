@@ -191,6 +191,7 @@ class Tool(Instrument):
     ):
         res = None
         if price:
+            price = service.ticksize_rounding(price=price, ticksize=self.tickSize)
             qty = self._control_limits(side=side, qty=qty, bot_name=bot.name)
             if qty != 0:
                 ws = Markets[self.market]
@@ -730,6 +731,7 @@ class Tool(Instrument):
         qty = self._control_limits(side=side, qty=qty, bot_name=bot.name)
         clOrdID = None
         if qty != 0:
+            price = service.ticksize_rounding(price=price, ticksize=self.tickSize)
             if move is True:
                 clOrdID = self._get_latest_order(orders=var.orders[bot.name], side=side)
             data = bot.backtest_data[self.symbol_tuple]
