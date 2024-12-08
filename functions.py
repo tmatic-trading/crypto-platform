@@ -1134,6 +1134,9 @@ class Function(WS, Variables):
         if instrument.markPrice != form.cache["markprice"]:
             form.markprice.value["text"] = instrument.markPrice
             form.cache["markprice"] = instrument.markPrice
+        if instrument.volume24h != form.cache["volume24h"]:
+            form.volume24h.value["text"] = instrument.volume24h
+            form.cache["volume24h"] = instrument.volume24h
         if instrument.state != form.cache["state"]:
             if instrument.state == "open":
                 form.state.value["text"] = "Open"
@@ -2047,6 +2050,8 @@ def update_order_form():
         form.market.value["text"] = form.instrument.market
         form.category.value["text"] = form.instrument.category
         form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
+        print("_______________update")
+        form.volume24h.value["text"] = form.instrument.volume24h
         if form.instrument.expire != "Perpetual":
             form.expiry.value["text"] = form.instrument.expire.strftime("%d%b%y %H:%M")
         else:
