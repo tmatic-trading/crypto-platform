@@ -461,7 +461,8 @@ def setup_database_connecion() -> None:
             "CREATE INDEX IF NOT EXISTS SIDE_ix ON %s (SIDE)" % var.database_table
         )
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON %s (MARKET, SYMBOL)" % var.expired_table
+            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON %s (MARKET, SYMBOL)"
+            % var.expired_table
         )
         var.cursor_sqlite.execute(
             "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON backtest (MARKET, SYMBOL)"

@@ -845,6 +845,8 @@ class SettingsApp:
         err = None
         try:
             del robo.update_bot[bot_name]
+            del robo.setup_bot[bot_name]
+            del robo.activate_bot[bot_name]
             indicators.clean_indicators(bot_name=bot_name)
             Bots.remove(bot_name)
             TreeTable.bot_menu.delete(iid=bot_name)
@@ -871,7 +873,7 @@ class SettingsApp:
                 TreeTable.bots.delete(iid=bot_name)
             disp.bot_event_prev = ""
             var.bot_thread_active[bot_name] = False
-            del robo.run[bot_name]
+            del robo.run_bot[bot_name]
             del self.modules[bot_name]
             del var.orders[bot_name]
             functions.remove_bot_klines(bot_name)
@@ -971,7 +973,9 @@ def bot_state(bot: BotData, bot_name: str, strategy=False) -> str:
     else:
         state = "Active"
         if strategy:
-            robo.activate_bot[bot_name]()
+            service.call_bot_function(
+                function=robo.activate_bot[bot_name], bot_name=bot_name
+            )
 
     return state
 
@@ -1228,9 +1232,9 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 }
             )
     try:
-        robo.run[bot_name] = bot_manager.modules[bot_name].strategy
+        robo.run_bot[bot_name] = bot_manager.modules[bot_name].strategy
     except Exception:
-        robo.run[bot_name] = "No strategy"
+        robo.run_bot[bot_name] = "No strategy"
     try:
         robo.setup_bot[bot_name] = bot_manager.modules[bot_name].setup_bot
     except Exception:
@@ -1242,7 +1246,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
     try:
         robo.activate_bot[bot_name] = bot_manager.modules[bot_name].activate_bot
     except Exception:
-        robo.update_bot[bot_name] = "No activate"
+        robo.activate_bot[bot_name] = "No activate"
     if update:
         functions.init_bot_klines(bot_name)
     Bots[bot_name].multitrade = False

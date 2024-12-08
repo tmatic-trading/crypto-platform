@@ -278,17 +278,4 @@ def setup_bots():
     setup function.
     """
     for bot_name in Bots.keys():
-        try:
-            robo.setup_bot[bot_name]()
-        except Exception as exception:
-            """
-            There is no setup function for this bot or some error has
-            occurred.
-            """
-            error = service.display_exception(exception, display=False)
-            error_type = exception.__class__.__name__
-            Bots[bot_name].error_message = {
-                "error_type": error_type,
-                "message": error,
-            }
-            _put_message(market="", message=error, warning=True)
+        service.call_bot_function(function=robo.setup_bot[bot_name], bot_name=bot_name)

@@ -398,7 +398,7 @@ class SettingsApp:
         Fills the market settings with current values.
         """
         for setting, value in self.market_changed[market].items():
-            if setting != "CONNECTED":                
+            if setting != "CONNECTED":
                 widget_type = self.entry_market[setting].winfo_class()
                 if widget_type == "TCombobox":
                     self.entry_market[setting].set(value)
@@ -638,7 +638,7 @@ class SettingsApp:
         ttk.Style().map(
             "changed.TEntry",
             fieldbackground=[
-                ("!disabled", self.bg_entry),#disp.bg_color
+                ("!disabled", self.bg_entry),  # disp.bg_color
                 ("disabled", self.bg_entry),
             ],
             foreground=[
@@ -769,28 +769,13 @@ class SettingsApp:
                 self.market_trace[setting].trace_add(
                     "write", self.market_trace_callback
                 )
-                '''if setting == "TESTNET":
-                    self.entry_market[setting] = ttk.Combobox(
-                        self.root_frame,
-                        width=self.entry_width,
-                        textvariable=self.market_trace[setting],
-                        state="readonly",
-                        style="default.TCombobox",
-                    )
-                    self.entry_market[setting]["values"] = ("YES", "NO")
-                    self.entry_market[setting].grid(
-                        row=widget_row, column=2, sticky="W"
-                    )
-                else:'''
                 self.entry_market[setting] = ttk.Entry(
                     self.root_frame,
                     width=self.entry_width,
                     textvariable=self.market_trace[setting],
                     style="default.TEntry",
                 )
-                self.entry_market[setting].grid(
-                    row=widget_row, column=2, sticky="W"
-                )
+                self.entry_market[setting].grid(row=widget_row, column=2, sticky="W")
                 self.entry_market[setting].w_name = setting
                 self.entry_market[setting].bind(
                     "<FocusIn>", lambda event: self.on_focused(event)

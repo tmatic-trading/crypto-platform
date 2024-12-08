@@ -551,7 +551,7 @@ class Function(WS, Variables):
                                 bot = Bots[emi]
                                 if bot.state == "Active":
                                     if bot.multitrade:
-                                        t = threading.Thread(target=robo.run[emi])
+                                        t = threading.Thread(target=robo.run_bot[emi])
                                         t.start()
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
@@ -783,8 +783,10 @@ class Function(WS, Variables):
                             if not bot.error_message:
                                 if bot.state == "Active":
                                     bot_list.append(bot_name)
-                                if callable(robo.update_bot[bot_name]):
-                                    robo.update_bot[bot_name]()
+                                service.call_bot_function(
+                                    function=robo.update_bot[bot_name],
+                                    bot_name=bot_name,
+                                )
                     if disp.f9 == "ON":
                         run_bots(bot_list=bot_list)
                     Function.save_kline_data(
@@ -2479,9 +2481,7 @@ def clear_tables():
 
 
 def run_bot_thread(bot_name):
-    if callable(robo.run[bot_name]):
-        # Calls strategy function in the strategy.py file
-        robo.run[bot_name]()
+    service.call_bot_function(function=robo.run_bot[bot_name], bot_name=bot_name)
 
 
 def run_bots(bot_list: list) -> None:

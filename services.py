@@ -5,7 +5,7 @@ import tkinter as tk
 import traceback
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Union
+from typing import Callable, Union
 
 from dotenv import dotenv_values, set_key
 
@@ -839,3 +839,29 @@ def process_position(
     position["ltime"] = ttime
     if abs(position["position"]) > position["max_position"]:
         position["max_position"] = abs(position["position"])
+
+
+def call_bot_function(function: Union[Callable, str], bot_name: str):
+    """
+    Calls the bot service functions: strategy(), setup_bot(), update_bot(),
+    activate_bot().
+    """
+    try:
+        if callable(function):
+            function()
+    except Exception as exception:
+        error = display_exception(exception, display=False)
+        error_type = exception.__class__.__name__
+        Bots[bot_name].error_message = {
+            "error_type": error_type,
+            "message": error,
+        }
+        var.queue_info.put(
+            {
+                "market": "",
+                "message": error,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": True,
+            }
+        )
+        var.logger.error(error)

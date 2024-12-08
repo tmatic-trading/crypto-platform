@@ -220,7 +220,7 @@ class Variables:
     root = tk.Tk()
     root.bind("<F7>", lambda event: Variables.on_bot_menu(event))
     root.bind("<F8>", lambda event: Variables.on_settings())
-    root.bind("<F9>", lambda event: on_trade_state(event))    
+    root.bind("<F9>", lambda event: on_trade_state(event))
     root.title(var.platform_name)
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -1612,9 +1612,7 @@ def root_dimensions(event):
 
         if now_width != Variables.all_width:
             if now_width > Variables.window_width:
-                t = var.platform_name.ljust(
-                    (now_width - Variables.window_width) // 4
-                )
+                t = var.platform_name.ljust((now_width - Variables.window_width) // 4)
                 Variables.root.title(t)
             else:
                 Variables.root.title(var.platform_name)

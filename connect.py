@@ -22,7 +22,6 @@ from display.variables import trim_col_width
 from functions import Function
 from tools import MetaTool
 
-
 settings = SettingsApp(disp.settings_page)
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
 Bitmex.transaction = Function.transaction
