@@ -427,19 +427,21 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
                     values["data"][-1]["hi"] = ask
                 if bid < values["data"][-1]["lo"]:
                     values["data"][-1]["lo"] = bid
-        if symbol in BreakDown.symbols:
-            if timefr in BreakDown.symbols[symbol]:
-                for parameters in BreakDown.symbols[symbol][timefr].values():
-                    # print(Bots[parameters["bot_name"]].multitrade)
-                    direct = parameters["first"] * (parameters["number"] % 2 * 2 - 1)
-                    if direct >= 0 and ask > parameters["up"]:
-                        parameters["number"] += 1
-                        if parameters["first"] == 0:
-                            parameters["first"] = -1
-                    if direct <= 0 and bid < parameters["dn"]:
-                        parameters["number"] += 1
-                        if parameters["first"] == 0:
-                            parameters["first"] = 1
+
+            # Processing the BreakDown indicator
+
+            if symbol in BreakDown.symbols:
+                if timefr in BreakDown.symbols[symbol]:          
+                    for parameters in BreakDown.symbols[symbol][timefr].values():
+                        direct = parameters["first"] * (parameters["number"] % 2 * 2 - 1)
+                        if direct >= 0 and ask > parameters["up"]:
+                            parameters["number"] += 1
+                            if parameters["first"] == 0:
+                                parameters["first"] = -1
+                        if direct <= 0 and bid < parameters["dn"]:
+                            parameters["number"] += 1
+                            if parameters["first"] == 0:
+                                parameters["first"] = 1
 
 
 def count_orders():

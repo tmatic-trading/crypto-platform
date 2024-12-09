@@ -278,6 +278,9 @@ class SettingsApp:
                 bot = Bots[disp.bot_name]
                 bot.updated = self.get_time()
                 update_bot_info(bot_name=disp.bot_name)
+            service.call_bot_function(
+                function=robo.setup_bot[disp.bot_name], bot_name=disp.bot_name
+            )
 
         def check_syntax() -> None:
             content = self.strategy_text.get("1.0", tk.END)

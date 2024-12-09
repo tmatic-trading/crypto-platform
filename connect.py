@@ -129,14 +129,14 @@ def setup_market(ws: Markets, reload=False):
         2. Trading history.
     """
 
-    def get_klines(ws, success, num):
-        if functions.init_market_klines(ws):
-            success["kline"] = "success"
-
     def get_history(ws, success, num):
         res = common.Init.load_trading_history(ws)
         if res in ["success", "empty"]:
             success["history"] = res
+
+    '''def get_klines(ws, success, num):
+        if functions.init_market_klines(ws):
+            success["kline"] = "success"'''
 
     ws.logNumFatal = "SETUP"
     ws.api_is_active = False
@@ -161,13 +161,14 @@ def setup_market(ws: Markets, reload=False):
             common.Init.clear_params(ws)
             if not ws.logNumFatal:
                 threads = []
-                success = {"kline": None, "history": None}
+                """success = {"kline": None, "history": None}
                 t = threading.Thread(
                     target=get_klines,
                     args=(ws, success, len(success) - 1),
                 )
                 threads.append(t)
-                t.start()
+                t.start()"""
+                success = {"history": None}
                 t = threading.Thread(
                     target=get_history,
                     args=(ws, success, len(success) - 1),
@@ -177,8 +178,8 @@ def setup_market(ws: Markets, reload=False):
                 [thread.join() for thread in threads]
                 if not success["history"]:
                     var.logger.error(ws.name + ": The trade history is not loaded.")
-                if not success["kline"]:
-                    var.logger.error(ws.name + ": Klines are not loaded.")
+                """if not success["kline"]:
+                    var.logger.error(ws.name + ": Klines are not loaded.")"""
             else:
                 var.logger.info("No robots loaded.")
                 sleep(2)
@@ -335,11 +336,6 @@ def clear_params():
     var.orders = dict()
     MetaInstrument.market = dict()
     MetaTool
-
-
-"""def bot_threads() -> None:
-    for bot_name in Bots.keys():
-        functions.activate_bot_thread(bot_name=bot_name)"""
 
 
 def terminal_reload_thread() -> None:

@@ -2050,7 +2050,6 @@ def update_order_form():
         form.market.value["text"] = form.instrument.market
         form.category.value["text"] = form.instrument.category
         form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
-        print("_______________update")
         form.volume24h.value["text"] = form.instrument.volume24h
         if form.instrument.expire != "Perpetual":
             form.expiry.value["text"] = form.instrument.expire.strftime("%d%b%y %H:%M")
@@ -2778,6 +2777,7 @@ def init_market_klines(
     """
     Downloads kline data from the endpoint of the specific exchange.
     """
+
     success = []
 
     def get_in_thread(symbol: tuple, timefr: str, klines: dict, number: int):
