@@ -10,7 +10,6 @@ class Header:
         "MCALL",
         "VOL24h",
         "EXPIRY",
-        "FUND",
     ]
     name_account = [
         "MARKET",

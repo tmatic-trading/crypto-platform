@@ -854,7 +854,6 @@ class Function(WS, Variables):
                         instrument.marginCallPrice,
                         instrument.volume24h,
                         instrument.expire,
-                        instrument.fundingRate,
                     ]
                     iid = f"{symbol[1]}!{symbol[0]}"
                     if iid in tree.children_hierarchical[market]:
@@ -2996,7 +2995,7 @@ TreeTable.instrument = TreeviewTable(
     bind=handler_instrument,
     hierarchy=True,
     lines=var.market_list,
-    hide=["7", "8", "9"],
+    hide=["7", "8", "2"],
 )
 TreeTable.account = TreeviewTable(
     frame=disp.frame_account,
