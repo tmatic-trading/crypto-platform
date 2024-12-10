@@ -1732,15 +1732,15 @@ class OrderForm:
     parameters.grid_columnconfigure(0, weight=1)
     market = ParametersFrame(parameters, 0, "Market")
     category = ParametersFrame(parameters, 1, "Category")
-    markprice = ParametersFrame(parameters, 2, "Mark Price")
-    settlcurrency = ParametersFrame(parameters, 3, "Settlement Currency")
-    volume24h = ParametersFrame(parameters, 4, "Volume24h")
-    expiry = ParametersFrame(parameters, 5, "Expiry")
-    state = ParametersFrame(parameters, 6, "State")
-    ticksize = ParametersFrame(parameters, 7, "Tick Size")
-    minOrderQty = ParametersFrame(parameters, 8, "Min Order Size")
-    takerfee = ParametersFrame(parameters, 9, "Taker's fee")
-    makerfee = ParametersFrame(parameters, 10, "Maker's fee")
+    settlcurrency = ParametersFrame(parameters, 2, "Settlement Currency")
+    expiry = ParametersFrame(parameters, 3, "Expiry")
+    markprice = ParametersFrame(parameters, 4, "Mark Price")
+    state = ParametersFrame(parameters, 5, "State")
+    ticksize = ParametersFrame(parameters, 6, "Tick Size")
+    minOrderQty = ParametersFrame(parameters, 7, "Min Order Size")
+    takerfee = ParametersFrame(parameters, 8, "Taker's Fee")
+    makerfee = ParametersFrame(parameters, 9, "Maker's Fee")
+    fundingRate = ParametersFrame(parameters, 10, "Funding Rate")
     delta = ParametersFrame(parameters, 11, "Delta")
     gamma = ParametersFrame(parameters, 12, "Gamma")
     vega = ParametersFrame(parameters, 13, "Vega")
@@ -1749,7 +1749,7 @@ class OrderForm:
 
     cache = dict()
     cache["markprice"] = "-"
-    cache["volume24h"] = "-"
+    cache["funding"] = "-"
     cache["state"] = "-"
     cache["delta"] = "-"
     cache["gamma"] = "-"

@@ -1134,15 +1134,18 @@ class Function(WS, Variables):
         if instrument.markPrice != form.cache["markprice"]:
             form.markprice.value["text"] = instrument.markPrice
             form.cache["markprice"] = instrument.markPrice
-        if instrument.volume24h != form.cache["volume24h"]:
-            form.volume24h.value["text"] = instrument.volume24h
-            form.cache["volume24h"] = instrument.volume24h
         if instrument.state != form.cache["state"]:
             if instrument.state == "open":
                 form.state.value["text"] = "Open"
             else:
                 form.state.value["text"] = instrument.state
             form.cache["state"] = instrument.state
+        if instrument.expire == "Perpetual":
+            if instrument.fundingRate != form.cache["funding"]:
+                form.fundingRate.value["text"] = service.number_rounding(
+                    number=instrument.fundingRate, precision=6
+                )
+                form.cache["funding"] = instrument.fundingRate
         if "option" in instrument.category:
             if instrument.delta != form.cache["delta"]:
                 form.delta.value["text"] = service.number_rounding(
@@ -2050,7 +2053,7 @@ def update_order_form():
         form.market.value["text"] = form.instrument.market
         form.category.value["text"] = form.instrument.category
         form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
-        form.volume24h.value["text"] = form.instrument.volume24h
+        #form.volume24h.value["text"] = form.instrument.volume24h
         if form.instrument.expire != "Perpetual":
             form.expiry.value["text"] = form.instrument.expire.strftime("%d%b%y %H:%M")
         else:
@@ -2091,12 +2094,17 @@ def update_order_form():
         else:
             form.takerfee.sub.grid_forget()
             form.makerfee.sub.grid_forget()
+        if form.instrument.expire == "Perpetual":
+            form.fundingRate.sub.grid(row=10, column=0, sticky="NEWS")
+            form.fundingRate.value["text"] = form.instrument.fundingRate
+        else:
+            form.fundingRate.sub.grid_forget()
         if "option" in form.instrument.category:
-            form.delta.sub.grid(row=10, column=0, sticky="NEWS")
-            form.gamma.sub.grid(row=11, column=0, sticky="NEWS")
-            form.vega.sub.grid(row=12, column=0, sticky="NEWS")
-            form.theta.sub.grid(row=13, column=0, sticky="NEWS")
-            form.rho.sub.grid(row=14, column=0, sticky="NEWS")
+            form.delta.sub.grid(row=11, column=0, sticky="NEWS")
+            form.gamma.sub.grid(row=12, column=0, sticky="NEWS")
+            form.vega.sub.grid(row=13, column=0, sticky="NEWS")
+            form.theta.sub.grid(row=14, column=0, sticky="NEWS")
+            form.rho.sub.grid(row=15, column=0, sticky="NEWS")
             form.delta.value["text"] = form.instrument.delta
             form.gamma.value["text"] = form.instrument.gamma
             form.vega.value["text"] = form.instrument.vega
