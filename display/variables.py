@@ -541,7 +541,10 @@ class Variables:
     # One or more exchages is put in this frame
     frame_market = tk.Frame(pw_rest1)
 
-    frame_symbol = tk.Frame(pw_rest2, bg=book_color, border=1, relief="sunken")
+    if ostype == "Mac":
+        frame_symbol = tk.Frame(pw_rest2, bg=book_color, border=0)
+    else:
+        frame_symbol = tk.Frame(pw_rest2, bg=book_color, border=1, relief="sunken")
 
     frame_symbol_nested = ScrollFrame(frame_symbol, bg=book_color, bd=0)
 
@@ -550,7 +553,10 @@ class Variables:
     frame_orderbook.pack(fill="both")
 
     # Frame for the new order form
-    frame_order_form = tk.Frame(frame_symbol_nested, bg=book_color)
+    if ostype == "Mac":
+        frame_order_form = tk.Frame(frame_symbol_nested, bg=book_color, border=1, relief="sunken")
+    else:
+        frame_order_form = tk.Frame(frame_symbol_nested, bg=book_color, border=0)
     frame_order_form.pack(fill="both", expand=True)
 
     notebook_frames = {}
@@ -1139,7 +1145,7 @@ class TreeviewTable(Variables):
         return reversed(data[: self.max_rows])
 
     def set_selection(self, index=0):
-        self.tree.selection_add(index)
+        self.tree.selection_set(index)
 
     def setup_color_cell(self):
         self._canvas = list()
@@ -1670,7 +1676,8 @@ class OrderForm:
             if items:
                 TreeTable.instrument.set_selection(items[0])
 
-    ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
+    if Variables.ostype != "Mac":
+        ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
 
     main = tk.Frame(Variables.frame_order_form, bg=Variables.book_color)
     ws: Markets = None
@@ -1716,7 +1723,7 @@ class OrderForm:
     buy_limit.grid(row=0, column=0, sticky="NEWS")
     sell_limit.grid(row=0, column=1, sticky="NEWS")
 
-    ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
+    #ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
 
     # Instrument parameters
 

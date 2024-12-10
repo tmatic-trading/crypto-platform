@@ -2222,17 +2222,19 @@ def handler_instrument(event) -> None:
                         options_desk.create(
                             instrument=instrument, update=update_order_form
                         )
-                        disp.root.update()
-                        height = (
-                            options_desk.label.winfo_height()
-                            + options_desk.calls_headers.winfo_height()
-                            + TreeTable.calls.tree.winfo_height()
-                        )
-                        if height > int(disp.window_height * 0.8):
-                            height = int(disp.window_height * 0.8)
-                        options_desk.desk.geometry(
-                            "{}x{}".format(disp.window_width, height)
-                        )
+                        #disp.root.update()
+                        options_desk.desk.update()
+                        if options_desk.label.winfo_exists():
+                            height = (
+                                options_desk.label.winfo_height()
+                                + options_desk.calls_headers.winfo_height()
+                                + TreeTable.calls.tree.winfo_height()
+                            )
+                            if height > int(disp.window_height * 0.8):
+                                height = int(disp.window_height * 0.8)
+                            options_desk.desk.geometry(
+                                "{}x{}".format(disp.window_width, height)
+                            )
             var.selected_iid[market] = items[0]
         else:
             market = items[0]
