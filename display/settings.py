@@ -335,7 +335,7 @@ class SettingsApp:
 
             self.initialized = True
             # service.wrap(frame=disp.frame_tips, padx=5)
-            self.on_tip("SETTINGS")
+        self.on_tip("SETTINGS")
 
     def on_focus_in(self, event):
         pass

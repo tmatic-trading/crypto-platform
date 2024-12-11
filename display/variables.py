@@ -1668,7 +1668,7 @@ class OrderForm:
 
     def title_on_leave(event):
         title = service.order_form_title()
-        OrderForm.title.config(bg=Variables.light_gray_color, text=title)
+        OrderForm.title.config(bg=Variables.book_color, text=title)
 
     def title_on_select(event):
         if only_for_options(OrderForm.ws.Instrument[var.symbol].category) is True:
