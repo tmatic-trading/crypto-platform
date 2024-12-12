@@ -845,7 +845,7 @@ def process_position(
 
 def call_bot_function(function: Union[Callable, str], bot_name: str):
     """
-    Calls the bot service functions: strategy(), setup_bot(), update_bot(),
+    Calls the bot service functions: run_bot(), setup_bot(), update_bot(),
     activate_bot().
     """
     try:

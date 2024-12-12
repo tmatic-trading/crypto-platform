@@ -971,7 +971,7 @@ bot = Bot()
 instrument = Bybit["BTCUSDT"]
 kline = instrument.add_kline()
 
-def strategy():
+def run_bot():
     if kline("bid", -1) > kline("open_bid", -10):
         instrument.buy(bot=bot, move=True, cancel=True)
     else:

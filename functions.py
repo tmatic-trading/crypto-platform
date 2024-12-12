@@ -549,10 +549,9 @@ class Function(WS, Variables):
                         if emi in Bots.keys():
                             if disp.f9 == "ON":
                                 bot = Bots[emi]
-                                if bot.state == "Active":
-                                    if bot.multitrade:
-                                        t = threading.Thread(target=robo.run_bot[emi])
-                                        t.start()
+                                if bot.multitrade:
+                                    t = threading.Thread(target=robo.run_bot[emi])
+                                    t.start()
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -787,8 +786,7 @@ class Function(WS, Variables):
                                     function=robo.update_bot[bot_name],
                                     bot_name=bot_name,
                                 )
-                    if disp.f9 == "ON":
-                        run_bots(bot_list=bot_list)
+                    run_bots(bot_list=bot_list)
                     Function.save_kline_data(
                         self,
                         row=values["data"][-1],

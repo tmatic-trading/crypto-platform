@@ -12,6 +12,7 @@ from common.data import BotData, Bots, Instrument, MetaInstrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 from functions import Function
+from display.variables import Variables as disp
 
 
 def name(stack) -> str:
@@ -44,23 +45,24 @@ class Bot(BotData):
             self._backtest_remove(clOrdID=clOrdID)
             return
 
-        ord = var.orders[self.name]
-        if clOrdID in ord:
-            order = ord[clOrdID]
-            ws = Markets[order["market"]]
-            WS.remove_order(ws, order=ord[clOrdID])
-        else:
-            message = "Removing. Order with clOrdID=" + clOrdID + " not found."
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": "warning",
-                    "emi": self.name,
-                    "bot_log": True,
-                }
-            )
+        if self.state == "Active" and disp.f9 == "ON":
+            ord = var.orders[self.name]
+            if clOrdID in ord:
+                order = ord[clOrdID]
+                ws = Markets[order["market"]]
+                WS.remove_order(ws, order=ord[clOrdID])
+            else:
+                message = "Removing. Order with clOrdID=" + clOrdID + " not found."
+                var.queue_info.put(
+                    {
+                        "market": "",
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": "warning",
+                        "emi": self.name,
+                        "bot_log": True,
+                    }
+                )
 
     def replace(self, clOrdID: str, price: float) -> Union[str, None]:
         """
@@ -84,32 +86,33 @@ class Bot(BotData):
             self._backtest_replace(clOrdID=clOrdID, price=price)
             return clOrdID
 
-        ord = var.orders[self.name]
-        if clOrdID in ord:
-            order = ord[clOrdID]
-            ws = Markets[order["market"]]
-            res = WS.replace_limit(
-                ws,
-                leavesQty=order["leavesQty"],
-                price=price,
-                orderID=order["orderID"],
-                symbol=order["symbol"],
-                orderQty=order["orderQty"],
-            )
-            if isinstance(res, dict):
-                return clOrdID
-        else:
-            message = "Replacing. Order with clOrdID=" + clOrdID + " not found."
-            var.queue_info.put(
-                {
-                    "market": "",
-                    "message": message,
-                    "time": datetime.now(tz=timezone.utc),
-                    "warning": "warning",
-                    "emi": self.name,
-                    "bot_log": True,
-                }
-            )
+        if self.state == "Active" and disp.f9 == "ON":
+            ord = var.orders[self.name]
+            if clOrdID in ord:
+                order = ord[clOrdID]
+                ws = Markets[order["market"]]
+                res = WS.replace_limit(
+                    ws,
+                    leavesQty=order["leavesQty"],
+                    price=price,
+                    orderID=order["orderID"],
+                    symbol=order["symbol"],
+                    orderQty=order["orderQty"],
+                )
+                if isinstance(res, dict):
+                    return clOrdID
+            else:
+                message = "Replacing. Order with clOrdID=" + clOrdID + " not found."
+                var.queue_info.put(
+                    {
+                        "market": "",
+                        "message": message,
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": "warning",
+                        "emi": self.name,
+                        "bot_log": True,
+                    }
+                )
 
     def orders(
         self, side: str, descend=False, in_list=True
@@ -275,13 +278,14 @@ class Tool(Instrument):
             return self._backtest_place(
                 bot=bot, qty=qty, side="Sell", price=price, move=move, cancel=cancel
             )
+        
+        if bot.state == "Active" and disp.f9 == "ON":
+            if not price:
+                price = self.asks[0][0]
 
-        if not price:
-            price = self.asks[0][0]
-
-        return self._place(
-            price=price, qty=qty, side="Sell", move=move, bot=bot, cancel=cancel
-        )
+            return self._place(
+                price=price, qty=qty, side="Sell", move=move, bot=bot, cancel=cancel
+            )
 
     def buy(
         self,
@@ -318,6 +322,7 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise
             None.
         """
+        
         if not qty:
             qty = self.minOrderQty
 
@@ -325,13 +330,14 @@ class Tool(Instrument):
             return self._backtest_place(
                 bot=bot, qty=qty, side="Buy", price=price, move=move, cancel=cancel
             )
+        
+        if bot.state == "Active" and disp.f9 == "ON":
+            if not price:
+                price = self.bids[0][0]
 
-        if not price:
-            price = self.bids[0][0]
-
-        return self._place(
-            price=price, qty=qty, side="Buy", move=move, bot=bot, cancel=cancel
-        )
+            return self._place(
+                price=price, qty=qty, side="Buy", move=move, bot=bot, cancel=cancel
+            )
 
     def EMA(self, period: int) -> float:
         pass
