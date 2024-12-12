@@ -170,6 +170,7 @@ SQLITE_DATABASE='tmatic.db'
 ORDER_BOOK_DEPTH='orderBook 7'
 BOTTOM_FRAME='robots'
 REFRESH_RATE='5'
+TESTNET='YES'
 #
 Bitmex_CONNECTED='YES'
 Bitmex_HTTP_URL='https://www.bitmex.com/api/v1'
@@ -180,7 +181,6 @@ Bitmex_TESTNET_HTTP_URL='https://testnet.bitmex.com/api/v1'
 Bitmex_TESTNET_WS_URL='wss://testnet.bitmex.com/realtime'
 Bitmex_TESTNET_API_KEY=''
 Bitmex_TESTNET_API_SECRET=''
-Bitmex_TESTNET='YES'
 #
 Bybit_CONNECTED='YES'
 Bybit_HTTP_URL='https://api.bybit.com/v5'
@@ -191,7 +191,6 @@ Bybit_TESTNET_HTTP_URL='https://api-testnet.bybit.com/v5'
 Bybit_TESTNET_WS_URL='wss://api-testnet.bybit.com/v5'
 Bybit_TESTNET_API_KEY=''
 Bybit_TESTNET_API_SECRET=''
-Bybit_TESTNET='YES'
 #
 Deribit_CONNECTED='YES'
 Deribit_HTTP_URL='https://www.deribit.com'
@@ -202,7 +201,6 @@ Deribit_TESTNET_HTTP_URL='https://test.deribit.com'
 Deribit_TESTNET_WS_URL='wss://test.deribit.com/ws'
 Deribit_TESTNET_API_KEY=''
 Deribit_TESTNET_API_SECRET=''
-Deribit_TESTNET='YES'
 ```
 
 - MARKET_LIST currently supports Bitmex, Bybit, and Deribit, sorted by how they appear in the app.
@@ -215,6 +213,8 @@ Deribit_TESTNET='YES'
 
 - REFRESH_RATE — determines how often the information on the screen is refreshed, from 1 to 10 times per second.
 
+- TESTNET — "YES" activates the test network.
+
 - CONNECTED — "YES" means that the exchange must be connected.
 
 - HTTP_URL — the exchange's http network.
@@ -226,8 +226,6 @@ Deribit_TESTNET='YES'
 - API_SECRET — the secret code received from the exchange.
 
 The next four parameters have the same meanings, but are related to the test network.
-
-- TESTNET — "YES" activates the test network.
 
 ```.env.Subscriptions```
 
