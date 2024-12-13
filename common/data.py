@@ -72,6 +72,8 @@ class Instrument:
         Position margin call or liquidation price.
     market: str
         Exchange name.
+    markPrice: float
+        Defines mark price for the instrument.
     maxOrderQty: float
         Not used
     minOrderQty: float
@@ -133,6 +135,7 @@ class Instrument:
     isInverse: bool
     makerFee: float = None
     market: str
+    markPrice: float = "-"
     marginCallPrice: float = 0
     maxOrderQty: float
     minOrderQty: float
@@ -161,14 +164,11 @@ class Instrument:
     askPrice: float = "-"
     askSize: float = "-"
     askIv: float = "-"
-    markPrice: float = "-"
     delta: float = "-"
     vega: float = "-"
     theta: float = "-"
     gamma: float = "-"
     rho: float = "-"
-    change24h: float = "-"
-    markPrice: float = "-"
 
     def __iter__(self):
         return Ret.iter(self)

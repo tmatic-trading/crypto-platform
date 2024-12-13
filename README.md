@@ -391,6 +391,8 @@ class Instrument:
         Position margin call or liquidation price.
     market: str
         Exchange name.
+    markPrice: float
+        Defines mark price for the instrument.
     maxOrderQty: float
         Not used
     minOrderQty: float
