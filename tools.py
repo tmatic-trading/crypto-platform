@@ -10,9 +10,10 @@ from api.api import WS, Markets
 from backtest import functions as backtest
 from common.data import BotData, Bots, Instrument, MetaInstrument
 from common.variables import Variables as var
+from display.bot_menu import bot_manager
 from display.messages import ErrorMessage
-from functions import Function
 from display.variables import Variables as disp
+from functions import Function
 
 
 def name(stack) -> str:
@@ -278,7 +279,7 @@ class Tool(Instrument):
             return self._backtest_place(
                 bot=bot, qty=qty, side="Sell", price=price, move=move, cancel=cancel
             )
-        
+
         if bot.state == "Active" and disp.f9 == "ON":
             if not price:
                 price = self.asks[0][0]
@@ -322,7 +323,7 @@ class Tool(Instrument):
             If successful, the clOrdID of this order is returned, otherwise
             None.
         """
-        
+
         if not qty:
             qty = self.minOrderQty
 
@@ -330,7 +331,7 @@ class Tool(Instrument):
             return self._backtest_place(
                 bot=bot, qty=qty, side="Buy", price=price, move=move, cancel=cancel
             )
-        
+
         if bot.state == "Active" and disp.f9 == "ON":
             if not price:
                 price = self.bids[0][0]
@@ -402,8 +403,33 @@ class Tool(Instrument):
             Returns latest kline data.
         """
         bot_name = name(inspect.stack())
+        bot = Bots[bot_name]
+        if self.state != "Open":
+            # bot.error_message = 1
+            bot_path = bot_manager.get_bot_path(bot_name)
+            message = ErrorMessage.BOT_KLINE_ERROR.format(
+                BOT_NAME=bot_name,
+                INSTRUMENT=self.symbol_tuple,
+                STATUS=self.state,
+                EXPIRE=self.expire,
+                FILE=bot_path,
+            )
+            bot.error_message = {
+                "error_type": "inactive_instrument",
+                "message": message,
+            }
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                }
+            )
+            var.logger.error(message)
+            return
         if timefr == "":
-            timefr = Bots[bot_name].timefr
+            timefr = bot.timefr
         ws = Markets[self.market]
         functions.add_new_kline(
             ws, symbol=self.symbol_tuple, bot_name=bot_name, timefr=timefr

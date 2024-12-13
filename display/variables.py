@@ -554,7 +554,9 @@ class Variables:
 
     # Frame for the new order form
     if ostype == "Mac":
-        frame_order_form = tk.Frame(frame_symbol_nested, bg=book_color, border=1, relief="sunken")
+        frame_order_form = tk.Frame(
+            frame_symbol_nested, bg=book_color, border=1, relief="sunken"
+        )
     else:
         frame_order_form = tk.Frame(frame_symbol_nested, bg=book_color, border=0)
     frame_order_form.pack(fill="both", expand=True)
@@ -1723,7 +1725,7 @@ class OrderForm:
     buy_limit.grid(row=0, column=0, sticky="NEWS")
     sell_limit.grid(row=0, column=1, sticky="NEWS")
 
-    #ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
+    # ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
 
     # Instrument parameters
 

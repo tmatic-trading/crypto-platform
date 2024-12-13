@@ -431,9 +431,11 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
             # Processing the BreakDown indicator
 
             if symbol in BreakDown.symbols:
-                if timefr in BreakDown.symbols[symbol]:          
+                if timefr in BreakDown.symbols[symbol]:
                     for parameters in BreakDown.symbols[symbol][timefr].values():
-                        direct = parameters["first"] * (parameters["number"] % 2 * 2 - 1)
+                        direct = parameters["first"] * (
+                            parameters["number"] % 2 * 2 - 1
+                        )
                         if direct >= 0 and ask > parameters["up"]:
                             parameters["number"] += 1
                             if parameters["first"] == 0:
@@ -849,8 +851,9 @@ def call_bot_function(function: Union[Callable, str], bot_name: str):
     activate_bot().
     """
     try:
-        if callable(function):
-            function()
+        if not Bots[bot_name].error_message:
+            if callable(function):
+                function()
     except Exception as exception:
         error = display_exception(exception, display=False)
         error_type = exception.__class__.__name__

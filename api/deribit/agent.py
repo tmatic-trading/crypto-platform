@@ -69,7 +69,8 @@ class Agent(Deribit):
         """
         path = Listing.GET_INSTRUMENT_DATA
         params = {"instrument_name": ticker}
-        id = f"{path}_{ticker}"
+        self.sequence += 1
+        id = f"{path}_{ticker}_{self.sequence}"
         text = " - symbol - " + ticker
         res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
         if isinstance(res, dict):
@@ -400,6 +401,14 @@ class Agent(Deribit):
                             filter(
                                 lambda x: x["type"]
                                 in ["settlement", "trade", "delivery"],
+                                res,
+                            )
+                        )
+                        # Deribit sends delivery information even if there is 
+                        # no position, so such rows are excluded.
+                        res = list(
+                            filter(
+                                lambda x: x["side"] != None,
                                 res,
                             )
                         )

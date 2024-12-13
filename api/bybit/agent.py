@@ -28,7 +28,7 @@ class Agent(Bybit):
             while cursor:
                 if cursor == "no":
                     cursor = ""
-                try:                                  
+                try:
                     result = self.session.get_instruments_info(
                         category=category,
                         limit=1000,
@@ -52,7 +52,6 @@ class Agent(Bybit):
                     Agent.fill_instrument(self, values=values, category=category)
                 if isinstance(result["result"]["list"], list):
                     success[num] = ""  # success
-                
 
         threads, success = [], []
         for num, category in enumerate(self.categories):

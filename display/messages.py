@@ -85,6 +85,12 @@ class ErrorMessage(str, Enum):
         + "and the {SYMBOL} has {NUMBER} records. The numbers should be "
         + "equal. Check the backtest data files. Exiting."
     )
+    BOT_KLINE_ERROR = (
+        "Bot `{BOT_NAME}` is trying to get kline data for the {INSTRUMENT} "
+        + "instrument with a status that is not `Open`. Current status is "
+        + "`{STATUS}`. Expiry date of the {INSTRUMENT} is {EXPIRE}. Check the "
+        + "strategy file at {FILE}."
+    )
 
     def __str__(self) -> str:
         return self.value

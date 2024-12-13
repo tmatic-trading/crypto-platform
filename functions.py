@@ -2050,7 +2050,7 @@ def update_order_form():
         form.market.value["text"] = form.instrument.market
         form.category.value["text"] = form.instrument.category
         form.settlcurrency.value["text"] = form.instrument.settlCurrency[0]
-        #form.volume24h.value["text"] = form.instrument.volume24h
+        # form.volume24h.value["text"] = form.instrument.volume24h
         if form.instrument.expire != "Perpetual":
             form.expiry.value["text"] = form.instrument.expire.strftime("%d%b%y %H:%M")
         else:
@@ -2227,7 +2227,7 @@ def handler_instrument(event) -> None:
                         options_desk.create(
                             instrument=instrument, update=update_order_form
                         )
-                        #disp.root.update()
+                        # disp.root.update()
                         options_desk.desk.update()
                         if options_desk.label.winfo_exists():
                             height = (
