@@ -67,10 +67,12 @@ class ErrorMessage(str, Enum):
         "A user ID was requested from the exchange but was not received."
     )
     POSITIONS_NOT_RECEIVED = (
-        "A list was expected when the positions were loaded, but it was not received."
+        "A list was expected when the positions were loaded, but it was not "
+        + "received."
     )
     INSTRUMENT_NOT_FOUND = (
-        "Request {PATH} received empty. ({TICKER} {CATEGORY}) instrument not found."
+        "Request {PATH} received empty. ({TICKER} {CATEGORY}) instrument not "
+        + "found."
     )
     REQUEST_EMPTY = "Request {PATH} received empty."
     FAILED_SUBSCRIPTION = "Failed to subscribe to {SYMBOL}. Reboot"
@@ -87,9 +89,12 @@ class ErrorMessage(str, Enum):
     )
     BOT_KLINE_ERROR = (
         "Bot `{BOT_NAME}` is trying to get kline data for the {INSTRUMENT} "
-        + "instrument with a status that is not `Open`. Current status is "
-        + "`{STATUS}`. Expiry date of the {INSTRUMENT} is {EXPIRE}. Check the "
-        + "strategy file at {FILE}."
+        + "instrument with the status `{STATUS}`. Expiry date of the "
+        + "{INSTRUMENT} is {EXPIRE}. Check the strategy file at {FILE}."
+    )
+    BOT_INSTRUMENT_EXPIRED = (
+        "Bot instrument `{INSTRUMENT}` expired. Check the strategy file at "
+        + "{FILE}."
     )
 
     def __str__(self) -> str:
