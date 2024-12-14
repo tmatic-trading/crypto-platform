@@ -123,10 +123,10 @@ class Instrument:
         exchanges it is equal to 1.
     """
 
-    asks: list
+    asks: list = []
     avgEntryPrice: float = 0
     baseCoin: str
-    bids: list
+    bids: list = []
     category: str
     confirm_subscription: set
     currentQty: float = 0

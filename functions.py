@@ -1549,7 +1549,7 @@ class Function(WS, Variables):
         elif pos <= 0 and instrument.asks:
             close = instrument.asks[0][0]
         else:
-            return
+            return 0
         calc = Function.calculate(
             self,
             symbol=symbol,
