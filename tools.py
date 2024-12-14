@@ -404,7 +404,7 @@ class Tool(Instrument):
         """
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
-        if self.state != "Open":
+        if self.state not in ["Open", "open"]:
             # bot.error_message = 1
             bot_path = bot_manager.get_bot_path(bot_name)
             message = ErrorMessage.BOT_KLINE_ERROR.format(
