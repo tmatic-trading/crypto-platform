@@ -4,6 +4,7 @@ import time
 import tkinter as tk
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from enum import Enum
 from random import randint
 from typing import Tuple, Union
 
@@ -24,6 +25,19 @@ from display.variables import AutoScrollbar
 from display.variables import OrderForm as form
 from display.variables import SubTreeviewTable, TreeTable, TreeviewTable
 from display.variables import Variables as disp
+
+
+class SelectDatabase(str, Enum):
+    QWR = (
+        "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
+        + "EMI, SYMBOL, TICKER, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
+        + "TTIME from {DATABASE_TABLE}"
+        + " where SIDE <> 'Fund' group by EMI, SYMBOL, "
+        + "MARKET) res where POS <> 0 order by SYMBOL desc;"
+    )
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class Function(WS, Variables):
@@ -292,15 +306,17 @@ class Function(WS, Variables):
                 pos = 0
                 if row["side"] == "Sell":
                     lastQty = -row["lastQty"]
-                else:
+                elif row["side"] == "Buy":
                     lastQty = row["lastQty"]
-                for name in Bots.keys():
-                    position = Bots[name].bot_positions
-                    if (
-                        row["symbol"] in position
-                        and position[row["symbol"]]["position"] != 0
-                    ):
-                        qty = position[row["symbol"]]["position"]
+                else:
+                    lastQty = 0
+                qwr = SelectDatabase.QWR.format(DATABASE_TABLE=var.database_table)
+                unclosed_positions = service.select_database(qwr)
+                for position in unclosed_positions:
+                    symbol = (position["SYMBOL"], position["MARKET"])
+                    if row["symbol"] == symbol and position["POS"] != 0:
+                        pass
+                        qty = position["POS"]
                         if qty > 0:
                             row["side"] = "Sell"
                             pos += qty
@@ -308,7 +324,7 @@ class Function(WS, Variables):
                             row["side"] = "Buy"
                             pos += qty
                         row["lastQty"] = abs(qty)
-                        handle_trade_or_delivery(row, name, "", "Delivery")
+                        handle_trade_or_delivery(row, position["EMI"], "", "Delivery")
                 diff = -(lastQty + pos)
                 if diff != 0:
                     qwr = (

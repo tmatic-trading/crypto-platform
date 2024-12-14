@@ -133,14 +133,7 @@ def load_bots() -> None:
     # Search for unclosed positions. If an unclosed position belongs to a bot
     # that is not in the "robots" table, EMI becomes "". If the SYMBOL of the
     # unclosed position is not subscribed, it is added to the subscription.
-    qwr = (
-        "select SYMBOL, TICKER, CATEGORY, EMI, POS, PNL, MARKET, TTIME from (select "
-        + "EMI, SYMBOL, TICKER, CATEGORY, sum(QTY) POS, sum(SUMREAL) PNL, MARKET, "
-        + "TTIME from "
-        + var.database_table
-        + " where SIDE <> 'Fund' group by EMI, SYMBOL, "
-        + "MARKET) res where POS <> 0 order by SYMBOL desc;"
-    )
+    qwr = functions.SelectDatabase.QWR.format(DATABASE_TABLE=var.database_table)
     var.lock.acquire(True)
     data = service.select_database(qwr)
     subscriptions = set()

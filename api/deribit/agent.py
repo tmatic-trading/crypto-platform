@@ -404,14 +404,6 @@ class Agent(Deribit):
                                 res,
                             )
                         )
-                        # Deribit sends delivery information even if there is 
-                        # no position, so such rows are excluded.
-                        res = list(
-                            filter(
-                                lambda x: x["side"] != None,
-                                res,
-                            )
-                        )
                         continuation = data["continuation"]
                     if isinstance(res, list):
                         for row in res:
@@ -472,10 +464,13 @@ class Agent(Deribit):
                                         "leavesQty"
                                     ] = 9999999999999  # leavesQty is not supported by Deribit
                                     row["execFee"] = row["commission"]
-                                if "buy" in row["side"] or row["side"] == "long":
-                                    row["side"] = "Buy"
-                                elif "sell" in row["side"] or row["side"] == "short":
-                                    row["side"] = "Sell"
+                                if row["side"] != None:
+                                    if "buy" in row["side"] or row["side"] == "long":
+                                        row["side"] = "Buy"
+                                    elif (
+                                        "sell" in row["side"] or row["side"] == "short"
+                                    ):
+                                        row["side"] = "Sell"
                             else:
                                 row["execType"] = "Trade"
                                 row["execID"] = (
