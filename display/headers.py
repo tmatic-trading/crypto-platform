@@ -67,7 +67,7 @@ class Header:
         "CATEGORY",
         "POSITION",
         "VOLUME",
-        "TOTAL PNL",
+        "PNL",
     ]
     name_bots = [
         "BOT NAME",
@@ -91,7 +91,7 @@ class Header:
         "CATEGORY",
         "POSITION",
         "VOLUME",
-        "TOTAL PNL",
+        "PNL",
     ]
     name_bot_trade = [
         "TIME",

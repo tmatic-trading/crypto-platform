@@ -205,7 +205,7 @@ class BotData:
     timefr: str
     timefr_sec: int
     timefr_current: str
-    pnl: dict = dict()
+    bot_pnl: dict
     state: str
     created: str
     updated: str

@@ -168,7 +168,8 @@ class SettingsApp:
         Bots[bot_name].timefr_current = timeframe
         Bots[bot_name].created = time_now
         Bots[bot_name].updated = time_now
-        Bots[bot_name].bot_positions = dict()
+        Bots[bot_name].bot_positions = {}
+        Bots[bot_name].bot_pnl = {}
         import_bot_module(bot_name)
         # d functions.activate_bot_thread(bot_name=bot_name)
         self.insert_bot_menu(name=bot_name, new=True)

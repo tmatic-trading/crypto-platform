@@ -182,6 +182,9 @@ def load_bots() -> None:
     # Loading trades and summing up the results for each bot.
 
     for name in Bots.keys():
+
+        # Open Positions
+
         qwr = (
             "select * from (select SYMBOL, CATEGORY, MARKET, TICKER, "
             + "ifnull(sum(SUMREAL), 0) SUMREAL, ifnull(sum(case when SIDE = "
@@ -192,18 +195,18 @@ def load_bots() -> None:
             + var.database_table
             + " where EMI = '"
             + name
-            + "' group by SYMBOL) T;"
+            + "' group by SYMBOL) T where POS <> 0;"
         )
         var.lock.acquire(True)
         data = service.select_database(qwr)
+        bot = Bots[name]
         for value in data:
             symbol = (value["SYMBOL"], value["MARKET"])
+            ws = Markets[value["MARKET"]]
+            instrument = ws.Instrument[symbol]
+            precision = instrument.precision
+            bot_pos = round(float(value["POS"]), precision)
             if value["MARKET"] in var.market_list:
-                ws = Markets[value["MARKET"]]
-                instrument = ws.Instrument[symbol]
-                bot = Bots[name]
-                precision = instrument.precision
-                bot_pos = round(float(value["POS"]), precision)
                 if bot_pos != 0:
                     bot.bot_positions[symbol] = {
                         "emi": name,
@@ -225,7 +228,7 @@ def load_bots() -> None:
                     if instrument.category == "spot":
                         bot.bot_positions[symbol]["pnl"] = "-"
                         bot.bot_positions[symbol]["position"] = "-"
-            elif value["POS"] != 0:
+            elif bot_pos != 0:
                 message = (
                     name
                     + " bot has open position on "
@@ -239,6 +242,34 @@ def load_bots() -> None:
                     + " to the .env.Settings file."
                 )
                 _put_message(market="", message=message, warning="warning")
+                
+        # Results by currency for closed positions
+
+        qwr = (
+            "select * from (select SYMBOL, MARKET, CURRENCY, ifnull(sum(SUMREAL), 0) "
+            + "SUMREAL, ifnull(sum(COMMISS), 0) COMMISS, ifnull(sum(case when SIDE = "
+            + "'Fund' then 0 else QTY end), 0) POS, ifnull(max(TTIME), "
+            + "'1900-01-01 01:01:01.000000') LTIME from "
+            + var.database_table
+            + " where EMI = '"
+            + name
+            + "' group by MARKET, SYMBOL) T where POS = 0 group by MARKET, CURRENCY;"
+        )
+        data = service.select_database(qwr)
+        bot.bot_pnl = {}
+        for value in data:
+            symbol = (value["SYMBOL"], value["MARKET"])
+            ws = Markets[value["MARKET"]]
+            instrument = ws.Instrument[symbol]
+            precision = instrument.precision
+            bot_pos = round(float(value["POS"]), precision)
+            if bot_pos == 0:
+                if value["MARKET"] not in bot.bot_pnl:
+                    bot.bot_pnl[value["MARKET"]] = dict()
+                bot.bot_pnl[value["MARKET"]][value["CURRENCY"]] = dict()
+                bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] = value["SUMREAL"]
+                bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["commission"] = value["COMMISS"]
+                bot.iter = name
         var.lock.release()
 
     # Importing the strategy.py bot files

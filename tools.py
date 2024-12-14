@@ -843,7 +843,10 @@ class MetaTool(type):
         if symbol not in MetaInstrument.market[market]:
             raise ValueError(f"The instrument {symbol} not found.")
         if symbol not in self.objects:
-            if datetime.now(tz=timezone.utc) > MetaInstrument.market[market][symbol].expire:
+            if (
+                datetime.now(tz=timezone.utc)
+                > MetaInstrument.market[market][symbol].expire
+            ):
                 bot_name = name(inspect.stack())
                 bot = Bots[bot_name]
                 bot_path = bot_manager.get_bot_path(bot_name)

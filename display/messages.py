@@ -93,8 +93,7 @@ class ErrorMessage(str, Enum):
         + "{INSTRUMENT} is {EXPIRE}. Check the strategy file at {FILE}."
     )
     BOT_INSTRUMENT_EXPIRED = (
-        "Bot instrument `{INSTRUMENT}` expired. Check the strategy file at "
-        + "{FILE}."
+        "Bot instrument `{INSTRUMENT}` expired. Check the strategy file at " + "{FILE}."
     )
 
     def __str__(self) -> str:

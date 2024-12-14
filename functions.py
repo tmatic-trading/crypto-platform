@@ -1422,6 +1422,18 @@ class Function(WS, Variables):
                 result_market = {market: False for market in var.market_list}
                 if disp.bot_name:
                     bot = Bots[disp.bot_name]
+                    for market, values in bot.bot_pnl.items():
+                        if market in result_market:
+                            if not result_market[market]:
+                                result_market[market] = dict()
+                                for currency, value in values.items():
+                                    result_market[market][currency] = dict()
+                                    result_market[market][currency]["pnl"] = value[
+                                        "pnl"
+                                    ]
+                                    result_market[market][currency][
+                                        "commission"
+                                    ] = value["commission"]
                     for symbol, value in bot.bot_positions.items():
                         market = value["market"]
                         currency = value["currency"]
@@ -1432,7 +1444,9 @@ class Function(WS, Variables):
                                 ws, symbol=symbol, pos=value["position"]
                             )
                             if currency in result_market[market]:
-                                result_market[market][currency]["pnl"] += pos_value
+                                result_market[market][currency]["pnl"] += (
+                                    value["sumreal"] + pos_value
+                                )
                                 result_market[market][currency]["commission"] += value[
                                     "commiss"
                                 ]
