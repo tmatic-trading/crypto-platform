@@ -184,12 +184,12 @@ class Bybit(Variables):
     def __update_orderbook(self, values: dict, category: str) -> None:
         symbol = (self.ticker[(values["s"], category)], self.name)
         instrument = self.Instrument[symbol]
+        values["a"].sort(key=lambda x: x[0])
+        values["b"].sort(key=lambda x: x[0], reverse=True)
         asks = values["a"][:10]
         bids = values["b"][:10]
         asks = list(map(lambda x: [float(x[0]), float(x[1])], asks))
         bids = list(map(lambda x: [float(x[0]), float(x[1])], bids))
-        asks.sort(key=lambda x: x[0])
-        bids.sort(key=lambda x: x[0], reverse=True)
         instrument.asks = asks
         instrument.bids = bids
         if symbol in self.klines:
