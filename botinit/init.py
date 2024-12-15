@@ -202,11 +202,11 @@ def load_bots() -> None:
         bot = Bots[name]
         for value in data:
             symbol = (value["SYMBOL"], value["MARKET"])
-            ws = Markets[value["MARKET"]]
-            instrument = ws.Instrument[symbol]
-            precision = instrument.precision
-            bot_pos = round(float(value["POS"]), precision)
             if value["MARKET"] in var.market_list:
+                ws = Markets[value["MARKET"]]
+                instrument = ws.Instrument[symbol]
+                precision = instrument.precision
+                bot_pos = round(float(value["POS"]), precision)
                 if bot_pos != 0:
                     bot.bot_positions[symbol] = {
                         "emi": name,
@@ -228,7 +228,7 @@ def load_bots() -> None:
                     if instrument.category == "spot":
                         bot.bot_positions[symbol]["pnl"] = "-"
                         bot.bot_positions[symbol]["position"] = "-"
-            elif bot_pos != 0:
+            elif value["POS"] != 0:
                 message = (
                     name
                     + " bot has open position on "
