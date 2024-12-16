@@ -843,30 +843,32 @@ class MetaTool(type):
         if symbol not in MetaInstrument.market[market]:
             raise ValueError(f"The instrument {symbol} not found.")
         if symbol not in self.objects:
-            if (
-                datetime.now(tz=timezone.utc)
-                > MetaInstrument.market[market][symbol].expire
-            ):
-                bot_name = name(inspect.stack())
-                bot = Bots[bot_name]
-                bot_path = bot_manager.get_bot_path(bot_name)
-                message = ErrorMessage.BOT_INSTRUMENT_EXPIRED.format(
-                    INSTRUMENT=symbol,
-                    FILE=bot_path,
-                )
-                bot.error_message = {
-                    "error_type": "expired_instrument",
-                    "message": message,
-                }
-                var.queue_info.put(
-                    {
-                        "market": "",
+            expire = MetaInstrument.market[market][symbol].expire
+            if isinstance(expire, datetime):
+                if (
+                    datetime.now(tz=timezone.utc)
+                    > expire
+                ):
+                    bot_name = name(inspect.stack())
+                    bot = Bots[bot_name]
+                    bot_path = bot_manager.get_bot_path(bot_name)
+                    message = ErrorMessage.BOT_INSTRUMENT_EXPIRED.format(
+                        INSTRUMENT=symbol,
+                        FILE=bot_path,
+                    )
+                    bot.error_message = {
+                        "error_type": "expired_instrument",
                         "message": message,
-                        "time": datetime.now(tz=timezone.utc),
-                        "warning": True,
                     }
-                )
-                var.logger.error(message)
+                    var.queue_info.put(
+                        {
+                            "market": "",
+                            "message": message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": True,
+                        }
+                    )
+                    var.logger.error(message)
             self.objects[symbol] = Tool(MetaInstrument.market[market][symbol])
 
         return self.objects[symbol]
