@@ -1204,10 +1204,11 @@ def import_bot_module(bot_name: str, update=False) -> None:
             "message": message,
         }
     except Exception as exception:
+        err = service.display_exception(exception, display=False)
         message = ErrorMessage.BOT_LOADING_ERROR.format(
             MODULE=module,
             CLASS=exception.__class__.__name__,
-            EXCEPTION=exception,
+            EXCEPTION=err,
             BOT_NAME=bot_name,
         )
         var.logger.warning(message)
@@ -1216,7 +1217,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 "market": "",
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
-                "warning": "warning",
+                "warning": True,
                 "emi": bot_name,
             }
         )

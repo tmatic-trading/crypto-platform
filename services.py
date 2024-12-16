@@ -199,6 +199,9 @@ def close(markets):
 
 
 def display_exception(exception, display=True) -> str:
+    """
+    Error trace.
+    """
     formated = "".join(
         traceback.format_exception(type(exception), exception, exception.__traceback__)
     )
