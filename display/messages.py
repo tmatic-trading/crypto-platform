@@ -95,6 +95,11 @@ class ErrorMessage(str, Enum):
     BOT_INSTRUMENT_EXPIRED = (
         "Bot instrument `{INSTRUMENT}` expired. Check the strategy file at " + "{FILE}."
     )
+    BOT_PNL_CALCULATIONS = (
+        "The bot `{BOT_NAME}` had trades on {MARKET}, but {MARKET} is not "
+        + "connected. The results of these trades are not included in the "
+        + "PNL calculations."
+    )
 
     def __str__(self) -> str:
         return self.value

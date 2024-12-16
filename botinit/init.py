@@ -242,7 +242,7 @@ def load_bots() -> None:
                     + " to the .env.Settings file."
                 )
                 _put_message(market="", message=message, warning="warning")
-                
+
         # Results by currency for closed positions
 
         qwr = (
@@ -258,18 +258,28 @@ def load_bots() -> None:
         data = service.select_database(qwr)
         bot.bot_pnl = {}
         for value in data:
-            symbol = (value["SYMBOL"], value["MARKET"])
-            ws = Markets[value["MARKET"]]
-            instrument = ws.Instrument[symbol]
-            precision = instrument.precision
-            bot_pos = round(float(value["POS"]), precision)
-            if bot_pos == 0:
-                if value["MARKET"] not in bot.bot_pnl:
-                    bot.bot_pnl[value["MARKET"]] = dict()
-                bot.bot_pnl[value["MARKET"]][value["CURRENCY"]] = dict()
-                bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] = value["SUMREAL"]
-                bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["commission"] = value["COMMISS"]
-                bot.iter = name
+            if value["MARKET"] in var.market_list:
+                symbol = (value["SYMBOL"], value["MARKET"])
+                ws = Markets[value["MARKET"]]
+                instrument = ws.Instrument[symbol]
+                precision = instrument.precision
+                bot_pos = round(float(value["POS"]), precision)
+                if bot_pos == 0:
+                    if value["MARKET"] not in bot.bot_pnl:
+                        bot.bot_pnl[value["MARKET"]] = dict()
+                    bot.bot_pnl[value["MARKET"]][value["CURRENCY"]] = dict()
+                    bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] = value[
+                        "SUMREAL"
+                    ]
+                    bot.bot_pnl[value["MARKET"]][value["CURRENCY"]][
+                        "commission"
+                    ] = value["COMMISS"]
+                    bot.iter = name
+            else:
+                message = ErrorMessage.BOT_PNL_CALCULATIONS.format(
+                    BOT_NAME=name, MARKET=value["MARKET"]
+                )
+                _put_message(market="", message=message, warning="warning")
         var.lock.release()
 
     # Importing the strategy.py bot files

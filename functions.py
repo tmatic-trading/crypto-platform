@@ -877,7 +877,7 @@ class Function(WS, Variables):
                                 parent=market,
                                 iid=iid,
                                 values=Function.form_instrument_line(
-                                    self,
+                                    ws,
                                     compare=compare,
                                     instrument=instrument,
                                     symbol=symbol,
@@ -888,7 +888,7 @@ class Function(WS, Variables):
                             parent=market,
                             iid=iid,
                             values=Function.form_instrument_line(
-                                self,
+                                ws,
                                 compare=compare,
                                 instrument=instrument,
                                 symbol=symbol,
