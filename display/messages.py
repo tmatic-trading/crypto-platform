@@ -100,6 +100,10 @@ class ErrorMessage(str, Enum):
         + "connected. The results of these trades are not included in the "
         + "PNL calculations."
     )
+    EMPTY_ORDERBOOK_DATA = (
+        "Unable to obtain best {SIDE} price from {SYMBOL} because the "
+        + "order book is empty."
+    )
 
     def __str__(self) -> str:
         return self.value

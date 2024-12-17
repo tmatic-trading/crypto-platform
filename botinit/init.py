@@ -182,7 +182,6 @@ def load_bots() -> None:
     # Loading trades and summing up the results for each bot.
 
     for name in Bots.keys():
-
         # Open Positions
 
         qwr = (

@@ -546,8 +546,28 @@ class Tool(Instrument):
                 values = {"data": ws.klines[self.symbol_tuple][timefr]["data"]}
             else:
                 values = ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
-            values["bid"] = self.instrument.bids[0][0]
-            values["ask"] = self.instrument.asks[0][0]
+            try:
+                values["bid"] = self.instrument.bids[0][0]
+            except IndexError as exception:
+                message = {
+                    "error_type": exception.__class__.__name__,
+                    "message": ErrorMessage.EMPTY_ORDERBOOK_DATA.format(
+                        SIDE="bid", SYMBOL=self.symbol_tuple
+                    ),
+                }
+                Bots[bot_name].error_message = message
+                values["bid"] = 0
+            try:
+                values["ask"] = self.instrument.asks[0][0]
+            except IndexError as exception:
+                message = {
+                    "error_type": exception.__class__.__name__,
+                    "message": ErrorMessage.EMPTY_ORDERBOOK_DATA.format(
+                        SIDE="ask", SYMBOL=self.symbol_tuple
+                    ),
+                }
+                Bots[bot_name].error_message = message
+                values["ask"] = 0
 
             return values
 
@@ -845,10 +865,7 @@ class MetaTool(type):
         if symbol not in self.objects:
             expire = MetaInstrument.market[market][symbol].expire
             if isinstance(expire, datetime):
-                if (
-                    datetime.now(tz=timezone.utc)
-                    > expire
-                ):
+                if datetime.now(tz=timezone.utc) > expire:
                     bot_name = name(inspect.stack())
                     bot = Bots[bot_name]
                     bot_path = bot_manager.get_bot_path(bot_name)
