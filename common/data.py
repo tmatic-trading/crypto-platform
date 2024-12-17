@@ -136,7 +136,7 @@ class Instrument:
     makerFee: float = None
     market: str
     markPrice: float = "-"
-    marginCallPrice: float = 0
+    marginCallPrice: float = "-"
     maxOrderQty: float
     minOrderQty: float
     multiplier: int
