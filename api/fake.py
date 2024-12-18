@@ -18,6 +18,7 @@ class Fake(Variables):
         self.name = "Fake"
         self.symbol_list = ["BTCUSDT"]
         self.instrument_index = OrderedDict()
+        self.klines = dict()
 
     def exit(self):
         pass
