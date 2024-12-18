@@ -422,8 +422,14 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
     """
 
     if symbol in ws.klines:
-        ask = instrument.asks[0][0]
-        bid = instrument.bids[0][0]
+        try:
+            ask = instrument.asks[0][0]
+            bid = instrument.bids[0][0]
+        except Exception:
+            """
+            The order book is probably empty.
+            """
+            return
         for timefr, values in ws.klines[symbol].items():
             if values["data"]:
                 if ask > values["data"][-1]["hi"]:
