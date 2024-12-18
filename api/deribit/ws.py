@@ -16,6 +16,8 @@ from common.variables import Variables as var
 from display.messages import Message
 from services import display_exception
 
+from .api_auth import API_auth
+
 
 class Deribit(Variables):
     class Account(metaclass=MetaAccount):
@@ -317,14 +319,24 @@ class Deribit(Variables):
         Requests DBT's `public/auth` to
         authenticate the WebSocket Connection.
         """
+        sig = API_auth.generate_headers(
+            api_key=self.api_key,
+            api_secret=self.api_secret,
+            method="",
+            url="",
+            path="_ws_signature",
+        )
         msg = {
             "jsonrpc": "2.0",
             "id": 9929,
             "method": "public/auth",
             "params": {
-                "grant_type": "client_credentials",
-                "client_id": self.api_key,
-                "client_secret": self.api_secret,
+                "grant_type": "client_signature",
+                "client_id": sig["id"],
+                "timestamp": sig["ts"],
+                "nonce": sig["nonce"],
+                "data": "",
+                "signature": sig["signature"],
             },
         }
         self.ws.send(json.dumps(msg))

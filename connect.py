@@ -226,7 +226,7 @@ def reload_market(ws: Markets):
     TreeTable.market.tree.update()
     setup_market(ws=ws, reload=True)
     var.queue_reload.put(ws)
-    #functions.update_order_form()
+    # functions.update_order_form()
 
 
 def refresh() -> None:

@@ -36,7 +36,13 @@ class API_auth(AuthBase):
             + ",nonce="
             + nonce
         )
-        headers = {"Authorization": authorization}
+        headers = {
+            "Authorization": authorization,
+            "nonce": nonce,
+            "id": api_key,
+            "ts": tstamp,
+            "signature": signature,
+        }
 
         return headers
 
@@ -48,6 +54,8 @@ class API_auth(AuthBase):
                                 https://docs.deribit.com/#authentication
         """
         request_data = verb + "\n" + uri + "\n" + msg + "\n"
+        if uri == "_ws_signature":
+            request_data = ""
         stringToSign: str = tstamp + "\n" + nonce + "\n" + request_data
         byte_key = secret.encode()
         message = stringToSign.encode()
