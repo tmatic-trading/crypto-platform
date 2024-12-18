@@ -91,7 +91,8 @@ def setup(reload=False):
             disp.pw_rest4.add(check_frame)
     var.display_bottom = frame["method"]
     for name in var.market_list:
-        Markets[name].api_is_active = True
+        if Markets[name].name != "Fake":
+            Markets[name].api_is_active = True
 
 
 def setup_market(ws: Markets, reload=False):
