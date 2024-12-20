@@ -1180,6 +1180,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
     """
     module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
     Bots[bot_name].error_message = {}
+    Bots[bot_name].multitrade = False
     try:
         if module in sys.modules:
             del sys.modules[module]
@@ -1254,7 +1255,6 @@ def import_bot_module(bot_name: str, update=False) -> None:
         robo.activate_bot[bot_name] = "No activate"
     if update:
         functions.init_bot_klines(bot_name)
-    Bots[bot_name].multitrade = False
     tm = datetime.now()
     month = "0" * (2 - len(str(tm.month))) + str(tm.month)
     day = "0" * (2 - len(str(tm.day))) + str(tm.day)
