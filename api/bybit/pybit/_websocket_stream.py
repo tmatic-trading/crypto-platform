@@ -178,7 +178,7 @@ class _WebSocketManager:
             self._auth()
 
         resubscribe_to_topics()
-        
+
         # self._send_initial_ping()
 
         self.attempting_connection = False

@@ -263,6 +263,22 @@ If the program does not start or a warning or error appears, check the logfile.l
             <td>Empty trading history</td>
             <td>This warning may appear when a trade history was requested, the answer was correct, but it was an empty list. The warning may appear: <b>1.</b> You have a new account and there is no previous trading activity. <b>2.</b> Normally after loading the trading history, the history.ini file contains the time of the last transaction. When you restart Tmatic, you receive this transaction from the exchange again, and the response is not empty. If you manually changed the entry in histori.ini to a time later than the time of the last transaction, this warning appears.</td>
         </tr>
+        <tr>
+            <td>SSL: CERTIFICATE_VERIFY_FAILED</td>
+            <td>This may occur for Windows users. There is probably a problem with the certifi module. This error occurs when the server you are trying to connect to has renewed the SSL certificate, but the certifi module cannot find it in its database.<br><br>
+            Solution:<br><br>
+            For example, you are trying to connect to Bybit testnet.<br><br>
+            1. Get the http address from the .env.Settings file https://api-testnet.bybit.com/v5<br>
+            2. Open the page in your internet browser, such as Google Chrome.<br>
+            3. Click the "View site information" button, which is located before the address bar.<br>
+            4. Click the link with the lock icon "Show connection details".<br>
+            5. Click the last line "Show certificate".<br>
+            6. In the window that opens, click the second tab "Details", then click "Export" in the lower right corner. Save the certificate by selecting the file type as a certificate chain.<br>
+            7. In the folder where Tmatic is installed, run the script:<br><br>
+            import certifi<br>
+            print(certifi.where())<br><br>
+            This will give you the path to the cacert.pem file. Open the file with the certificate that you downloaded from the browser and copy all the lines from it to the end of the cacert.pem file.</td>
+        </tr>
     </tbody>
 </table>
 
