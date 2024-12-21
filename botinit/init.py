@@ -204,26 +204,17 @@ def load_bots() -> None:
                 precision = instrument.precision
                 bot_pos = round(float(value["POS"]), precision)
                 if bot_pos != 0:
-                    bot.bot_positions[symbol] = {
-                        "emi": name,
-                        "symbol": value["SYMBOL"],
-                        "category": value["CATEGORY"],
-                        "market": value["MARKET"],
-                        "ticker": value["TICKER"],
-                        "position": bot_pos,
-                        "volume": round(float(value["VOL"]), precision),
-                        "sumreal": float(value["SUMREAL"]),
-                        "commiss": float(value["COMMISS"]),
-                        "ltime": service.time_converter(time=value["LTIME"], usec=True),
-                        "pnl": 0,
-                        "lotSize": instrument.minOrderQty,
-                        "currency": instrument.settlCurrency[0],
-                        "limits": instrument.minOrderQty,
-                        "max_position": 0,
-                    }
-                    if instrument.category == "spot":
-                        bot.bot_positions[symbol]["pnl"] = "-"
-                        bot.bot_positions[symbol]["position"] = "-"
+                    service.fill_bot_position(
+                        bot_name=name,
+                        symbol=symbol,
+                        instrument=instrument,
+                        user_id=ws.user_id,
+                        position=bot_pos,
+                        volume=round(float(value["VOL"]), precision),
+                        sumreal=float(value["SUMREAL"]),
+                        commiss=float(value["COMMISS"]),
+                        ltime=service.time_converter(time=value["LTIME"], usec=True),
+                    )
             elif value["POS"] != 0:
                 message = (
                     name

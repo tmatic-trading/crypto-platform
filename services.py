@@ -343,7 +343,15 @@ def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
 
 
 def fill_bot_position(
-    bot_name: str, symbol: tuple, instrument: Instrument, user_id: int
+    bot_name: str,
+    symbol: tuple,
+    instrument: Instrument,
+    user_id: int,
+    position=0,
+    volume=0,
+    sumreal=0,
+    commiss=0,
+    ltime=None,
 ) -> None:
     bot = Bots[bot_name]
     bot.bot_positions[symbol] = {
@@ -352,17 +360,20 @@ def fill_bot_position(
         "category": instrument.category,
         "market": instrument.market,
         "ticker": instrument.ticker,
-        "position": 0,
-        "volume": 0,
-        "sumreal": 0,
-        "commiss": 0,
-        "ltime": None,
+        "position": position,
+        "volume": volume,
+        "sumreal": sumreal,
+        "commiss": commiss,
+        "ltime": ltime,
         "pnl": 0,
         "lotSize": instrument.minOrderQty,
         "currency": instrument.settlCurrency[0],
         "limits": instrument.minOrderQty,
         "max_position": 0,
     }
+    if instrument.category == "spot":
+        bot.bot_positions[symbol]["pnl"] = "-"
+        bot.bot_positions[symbol]["position"] = "-"
     # Checks if this bot has any records in the database on this instrument.
     if not var.backtest:
         qwr = (
