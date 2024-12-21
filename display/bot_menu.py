@@ -161,19 +161,17 @@ class SettingsApp:
         """
         time_now = self.get_time()
         var.orders[bot_name] = OrderedDict()
-        Bots[bot_name].name = bot_name
-        Bots[bot_name].state = "Suspended"
-        Bots[bot_name].timefr = timeframe
-        Bots[bot_name].timefr_sec = service.timeframe_seconds(timeframe)
-        Bots[bot_name].timefr_current = timeframe
-        Bots[bot_name].created = time_now
-        Bots[bot_name].updated = time_now
-        Bots[bot_name].bot_positions = {}
-        Bots[bot_name].bot_pnl = {}
+        bot = Bots[bot_name]
+        service.init_bot(
+            bot=bot,
+            name=bot_name,
+            state="Suspended",
+            timefr=timeframe,
+            created=time_now,
+            updated=time_now,
+        )
         import_bot_module(bot_name)
-        # d functions.activate_bot_thread(bot_name=bot_name)
         self.insert_bot_menu(name=bot_name, new=True)
-        Bots[bot_name].log = list()
 
     def create_bot(self, bot_name, timeframe) -> bool:
         """

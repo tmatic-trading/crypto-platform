@@ -68,17 +68,14 @@ def load_bot_parameters():
         if value["EMI"] not in var.orders:
             var.orders[value["EMI"]] = OrderedDict()
         bot = Bots[value["EMI"]]
-        bot.name = value["EMI"]
-        bot.timefr = value["TIMEFR"]
-        bot.timefr_sec = service.timeframe_seconds(value["TIMEFR"])
-        bot.timefr_current = value["TIMEFR"]
-        bot.created = value["DAT"]
-        bot.updated = value["UPDATED"]
-        bot.state = value["STATE"]
-        bot.bot_positions = dict()
-        bot.log = list()
-        bot.backtest_data = dict()
-        bot.iter = 0
+        service.init_bot(
+            bot=bot,
+            name=value["EMI"],
+            state=value["STATE"],
+            timefr=value["TIMEFR"],
+            created=value["DAT"],
+            updated=value["UPDATED"],
+        )
 
 
 def load_bots() -> None:

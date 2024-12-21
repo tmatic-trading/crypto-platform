@@ -879,3 +879,23 @@ def call_bot_function(function: Union[Callable, str], bot_name: str):
             }
         )
         var.logger.error(error)
+
+
+def init_bot(
+    bot: BotData, name: str, state: str, timefr: str, created: str, updated: str
+) -> None:
+    """
+    Initializes bot variables.
+    """
+    bot.name = name
+    bot.timefr = timefr
+    bot.timefr_sec = timeframe_seconds(timefr)
+    bot.timefr_current = timefr
+    bot.created = created
+    bot.updated = updated
+    bot.state = state
+    bot.bot_positions = dict()
+    bot.log = list()
+    bot.backtest_data = dict()
+    bot.iter = 0
+    bot.bot_pnl = dict()
