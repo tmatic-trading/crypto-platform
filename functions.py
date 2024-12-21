@@ -1583,9 +1583,27 @@ class Function(WS, Variables):
         """
         instrument = self.Instrument[symbol]
         if pos > 0 and instrument.bids:
-            close = instrument.bids[0][0]
+            try:
+                close = instrument.bids[0][0]
+            except IndexError:
+                message = (
+                    ErrorMessage.EMPTY_ORDERBOOK_DATA.format(SIDE="bid", SYMBOL=symbol),
+                )
+                _put_message(
+                    market=self.name, message=message, warning="warning", logger=False
+                )
+                return 0
         elif pos <= 0 and instrument.asks:
-            close = instrument.asks[0][0]
+            try:
+                close = instrument.asks[0][0]
+            except IndexError:
+                message = (
+                    ErrorMessage.EMPTY_ORDERBOOK_DATA.format(SIDE="ask", SYMBOL=symbol),
+                )
+                _put_message(
+                    market=self.name, message=message, warning="warning", logger=False
+                )
+                return 0
         else:
             return 0
         calc = Function.calculate(
@@ -3002,7 +3020,7 @@ def setup_klines():
                 market_list.pop(indx)
 
 
-def _put_message(market: str, message: str, warning=None) -> None:
+def _put_message(market: str, message: str, warning=None, logger=True) -> None:
     """
     Places an information message into the queue and the logger.
     """
@@ -3014,12 +3032,13 @@ def _put_message(market: str, message: str, warning=None) -> None:
             "warning": warning,
         }
     )
-    if not warning:
-        var.logger.info(market + " - " + message)
-    elif warning == "warning":
-        var.logger.warning(market + " - " + message)
-    else:
-        var.logger.error(market + " - " + message)
+    if logger:
+        if not warning:
+            var.logger.info(market + " - " + message)
+        elif warning == "warning":
+            var.logger.warning(market + " - " + message)
+        else:
+            var.logger.error(market + " - " + message)
 
 
 def clear_klines():
