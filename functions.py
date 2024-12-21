@@ -347,7 +347,7 @@ class Function(WS, Variables):
                             MARKET=self.name,
                             POSITION=data["sum"],
                         )
-                        _put_message(market=self.name, message=message, warning="error")
+                        _put_message(market=self.name, message=message, warning=True)
                     else:
                         emi = ""
                         if diff > 0:
@@ -811,16 +811,40 @@ class Function(WS, Variables):
                     )
                     next_minute = int(utcnow.minute / timefr_minutes) * timefr_minutes
                     dt_now = utcnow.replace(minute=next_minute, second=0, microsecond=0)
+                    try:
+                        ask = instrument.asks[0][0]
+                    except IndexError:
+                        message = ErrorMessage.EMPTY_ORDERBOOK_DATA_KLINE.format(
+                            SIDE="ask",
+                            SYMBOL=symbol,
+                            PRICE=values["data"][-1]["open_ask"],
+                        )
+                        _put_message(
+                            market=instrument.market, message=message, warning=True
+                        )
+                        ask = values["data"][-1]["open_ask"]
+                    try:
+                        bid = instrument.bids[0][0]
+                    except IndexError:
+                        message = ErrorMessage.EMPTY_ORDERBOOK_DATA_KLINE.format(
+                            SIDE="bid",
+                            SYMBOL=symbol,
+                            PRICE=values["data"][-1]["open_bid"],
+                        )
+                        _put_message(
+                            market=instrument.market, message=message, warning=True
+                        )
+                        bid = values["data"][-1]["open_bid"]
                     values["data"].append(
                         {
                             "date": (utcnow.year - 2000) * 10000
                             + utcnow.month * 100
                             + utcnow.day,
                             "time": utcnow.hour * 100 + utcnow.minute,
-                            "open_bid": instrument.bids[0][0],
-                            "open_ask": instrument.asks[0][0],
-                            "hi": instrument.asks[0][0],
-                            "lo": instrument.bids[0][0],
+                            "open_bid": bid,
+                            "open_ask": ask,
+                            "hi": ask,
+                            "lo": bid,
                             "funding": instrument.fundingRate,
                             "datetime": dt_now,
                         }

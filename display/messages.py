@@ -104,6 +104,11 @@ class ErrorMessage(str, Enum):
         "Unable to obtain best {SIDE} price from {SYMBOL} because the "
         + "order book is empty."
     )
+    EMPTY_ORDERBOOK_DATA_KLINE = (
+        "When adding a new kline entry could not get best {SIDE} price from "
+        + "{SYMBOL} because the order book is empty; {SIDE} was assigned to "
+        + "its previous value of {PRICE}."
+    )
 
     def __str__(self) -> str:
         return self.value
