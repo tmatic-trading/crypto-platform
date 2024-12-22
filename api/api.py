@@ -364,15 +364,15 @@ class WS(Variables):
         """
         var.logger.info(
             self.name
-            + " - Order - New - "
+            + " - Sending a new order - "
             + "symbol="
             + symbol[0]
-            + ", qty="
-            + str(quantity)
-            + ", price="
-            + str(price)
             + ", clOrdID="
             + clOrdID
+            + ", price="
+            + str(price)
+            + ", qty="
+            + str(quantity)
         )
         return Agents[self.name].value.place_limit(
             self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
@@ -385,6 +385,7 @@ class WS(Variables):
         orderID: str,
         symbol: tuple,
         orderQty: float,
+        clOrdID: str,
     ) -> Union[dict, str]:
         """
         Moves a limit order.
@@ -410,15 +411,17 @@ class WS(Variables):
         """
         var.logger.info(
             self.name
-            + " - Order - Replace - "
+            + " - Replace order - "
             + "symbol="
             + symbol[0]
-            + ", qty="
-            + str(leavesQty)
-            + ", price="
-            + str(price)
             + ", orderID="
             + orderID
+            + ", clOrdID="
+            + clOrdID
+            + ", price="
+            + str(price)
+            + ", qty="
+            + str(leavesQty)
         )
 
         return Agents[self.name].value.replace_limit(
@@ -449,11 +452,17 @@ class WS(Variables):
         """
         var.logger.info(
             self.name
-            + " - Order - Cancel - "
+            + " - Cancel order - "
             + "symbol="
             + order["symbol"][0]
             + ", orderID="
             + order["orderID"]
+            + ", clOrdID="
+            + order["clOrdID"]
+            + ", price="
+            + str(order["price"])
+            + ", qty="
+            + str(order["orderQty"])
         )
 
         return Agents[self.name].value.remove_order(self, order=order)

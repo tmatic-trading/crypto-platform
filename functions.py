@@ -533,7 +533,9 @@ class Function(WS, Variables):
         price = row["price"]
         info_q = ""
         info_p = ""
+        order_message = ""
         if row["execType"] == "Canceled":
+            order_message = "Order canceled " + row["symbol"][0]
             info_p = price
             info_q = row["orderQty"] - row["cumQty"]
             if emi in var.orders and clOrdID in var.orders[emi]:
@@ -545,6 +547,7 @@ class Function(WS, Variables):
                 order_not_found(clOrdID=clOrdID)
         else:
             if row["execType"] == "New":
+                order_message = "New order " + row["symbol"][0]
                 if "clOrdID" in row and row["clOrdID"]:
                     service.fill_order(
                         emi=emi, clOrdID=clOrdID, category=row["category"], value=row
@@ -552,6 +555,7 @@ class Function(WS, Variables):
                 info_p = price
                 info_q = row["orderQty"]
             elif row["execType"] == "Trade":
+                order_message = "Transaction "  + row["symbol"][0]
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
                 if emi in var.orders and clOrdID in var.orders[emi]:
@@ -575,6 +579,7 @@ class Function(WS, Variables):
                     if info != "History":
                         order_not_found(clOrdID=clOrdID)
             elif row["execType"] == "Replaced":
+                order_message = "Order replaced " + row["symbol"][0]
                 if emi in var.orders and clOrdID in var.orders[emi]:
                     var.orders[emi][clOrdID]["orderID"] = row["orderID"]
                     info_p = price
@@ -616,8 +621,8 @@ class Function(WS, Variables):
             info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
             if info != "History":
                 message = (
-                    row["execType"]
-                    + " emi="
+                    order_message
+                    + ", emi="
                     + emi
                     + ", side="
                     + row["side"]
@@ -625,6 +630,8 @@ class Function(WS, Variables):
                     + str(info_p)
                     + ", qty="
                     + info_q
+                    + ", clOrdID="
+                    + clOrdID
                 )
                 var.queue_info.put(
                     {
@@ -641,7 +648,7 @@ class Function(WS, Variables):
                 self.name
                 + " - "
                 + info
-                + row["execType"]
+                + order_message
                 + " - "
                 + "side=%s, orderID=%s, clOrdID=%s, price=%s, qty=%s",
                 row["side"],
@@ -1648,18 +1655,6 @@ class Function(WS, Variables):
         if emi not in Bots.keys():
             emi = service.set_emi(symbol=symbol)
         clOrdID = service.set_clOrdID(emi=emi)
-        var.logger.info(
-            "Posting symbol="
-            + str(symbol)
-            + " clOrdID="
-            + clOrdID
-            + " side="
-            + side
-            + " price="
-            + price_str
-            + " qty="
-            + str(qty)
-        )
         WS.place_limit(
             self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
         )
@@ -1679,24 +1674,16 @@ class Function(WS, Variables):
         price_str = Function.format_price(
             self, number=price, symbol=var.orders[emi][clOrdID]["symbol"]
         )
-        var.logger.info(
-            "Putting orderID="
-            + var.orders[emi][clOrdID]["orderID"]
-            + " clOrdID="
-            + clOrdID
-            + " price="
-            + price_str
-            + " qty="
-            + str(qty)
-        )
         if price != var.orders[emi][clOrdID]["price"]:  # the price alters
+            order = var.orders[emi][clOrdID]
             WS.replace_limit(
                 self,
                 leavesQty=qty,
                 price=price_str,
-                orderID=var.orders[emi][clOrdID]["orderID"],
-                symbol=var.orders[emi][clOrdID]["symbol"],
-                orderQty=var.orders[emi][clOrdID]["orderQty"],
+                orderID=order["orderID"],
+                symbol=order["symbol"],
+                orderQty=order["orderQty"],
+                clOrdID=clOrdID,
             )
 
         return clOrdID
@@ -1705,8 +1692,6 @@ class Function(WS, Variables):
         """
         Del_order() function cancels orders
         """
-        message = "Deleting orderID=" + order["orderID"] + " clOrdID=" + clOrdID
-        var.logger.info(message)
         WS.remove_order(self, order=order)
 
         return self.logNumFatal
