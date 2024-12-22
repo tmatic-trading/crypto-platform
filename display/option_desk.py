@@ -3,6 +3,8 @@ import tkinter as tk
 from api.api import Markets
 from common.data import Instrument
 from common.variables import Variables as var
+from display.variables import Variables as disp
+from display.variables import on_canvas_leave
 
 from .headers import Header
 from .variables import ScrollFrame, TreeTable, TreeviewTable
@@ -16,6 +18,7 @@ class OptionDesk:
         self.dash = ["-", "-", "-", "-", "-", "-", "-", "-", "-"]
 
     def on_closing(self) -> None:
+        on_canvas_leave("", self.desk, disp.ostype)
         self.is_on = False
         self.desk.destroy()
 

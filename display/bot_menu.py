@@ -505,7 +505,7 @@ class SettingsApp:
         def merge_bot(bot_name: str, bot_to_delete: str) -> None:
             if self.delete_warning(bot_name=bot_to_delete):
                 return
-            
+
             query = (
                 "UPDATE "
                 + var.database_table
@@ -909,7 +909,7 @@ class SettingsApp:
                 )
                 functions.warning_window(message=message)
                 return True
-            
+
         bot = Bots[bot_name]
         if bot.bot_positions:
             for symbol, position in bot.bot_positions.items():
@@ -927,7 +927,7 @@ class SettingsApp:
                     )
                     functions.warning_window(message=message)
                     return True
-        
+
         return False
 
     def display_error_message(self, bot_name: str) -> None:
