@@ -778,7 +778,7 @@ class Function(WS, Variables):
     def format_price(self: Markets, number: Union[float, str], symbol: tuple) -> str:
         try:
             number = float(number)
-        except:
+        except Exception:
             return number
         #if not isinstance(number, str):
         precision = self.Instrument[symbol].price_precision
@@ -1208,7 +1208,7 @@ class Function(WS, Variables):
                 form.cache["gamma"] = instrument.gamma
             if instrument.vega != form.cache["vega"]:
                 form.vega.value["text"] = service.format_number(
-                    number=instrument.vega, precision=8
+                    number=instrument.vega
                 )
                 form.cache["vega"] = instrument.vega
             if instrument.theta != form.cache["theta"]:
