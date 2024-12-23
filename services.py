@@ -111,12 +111,18 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
     return res
 
 
-def number_rounding(number: float, precision: int) -> str:
+'''def number_rounding(number: float, precision: int) -> str:
     """
     Rounds a number to the specified precision.
     """
-    if not isinstance(number, float):
+    
+    if number == "-":#not isinstance(number, float):
         return number
+    else:
+        return round(float(number), precision)
+    print(number, round(number, precision))
+    # The code below does the same as round(float(number), precision)
+    # because format(number, precision=precision) also rounds the 'number' variable
     number = "{:.{precision}f}".format(number, precision=precision)
     for num, char in enumerate(reversed(number)):
         if char != "0":
@@ -124,6 +130,25 @@ def number_rounding(number: float, precision: int) -> str:
     number = number[: len(number) - num]
     if number[-1] == ".":
         number = number[:-1]
+    print(number)
+
+    return number'''
+
+
+def format_number(number: Union[float, str], precision=8) -> str:
+    """
+    Rounding a value from 2 to 'precision' decimal places.
+    """
+    try:
+        number = float(number)
+    except Exception:
+
+        return number
+
+    after_dot = max(2, precision + 1 - max(1, len(str(int(abs(number))))))
+    number = "{:.{num}f}".format(number, num=after_dot)
+    number = number.rstrip("0")
+    number = number.rstrip(".")
 
     return number
 
