@@ -776,17 +776,20 @@ class Function(WS, Variables):
         return qty
 
     def format_price(self: Markets, number: Union[float, str], symbol: tuple) -> str:
-        if not isinstance(number, str):
-            precision = self.Instrument[symbol].price_precision
-            number = "{:.{precision}f}".format(number, precision=precision)
-            if precision:
-                dot = number.find(".")
-                if dot == -1:
-                    number = number + "."
-                n = len(number) - 1 - number.find(".")
-                for _ in range(precision - n):
-                    number = number + "0"
-
+        try:
+            number = float(number)
+        except:
+            return number
+        #if not isinstance(number, str):
+        precision = self.Instrument[symbol].price_precision
+        number = "{:.{precision}f}".format(number, precision=precision)
+        if precision:
+            dot = number.find(".")
+            if dot == -1:
+                number = number + "."
+            n = len(number) - 1 - number.find(".")
+            for _ in range(precision - n):
+                number = number + "0"
         return number
 
     def kline_update_market(self: Markets, utcnow: datetime) -> None:
@@ -1176,7 +1179,9 @@ class Function(WS, Variables):
 
     def display_parameters(self, instrument: Instrument):
         if instrument.markPrice != form.cache["markprice"]:
-            form.markprice.value["text"] = instrument.markPrice
+            form.markprice.value["text"] = service.format_number(
+                number=instrument.markPrice
+            )
             form.cache["markprice"] = instrument.markPrice
         if instrument.state != form.cache["state"]:
             if instrument.state == "open":
@@ -1186,34 +1191,34 @@ class Function(WS, Variables):
             form.cache["state"] = instrument.state
         if instrument.expire == "Perpetual":
             if instrument.fundingRate != form.cache["funding"]:
-                form.fundingRate.value["text"] = service.number_rounding(
-                    number=instrument.fundingRate, precision=6
+                form.fundingRate.value["text"] = service.format_number(
+                    number=instrument.fundingRate, precision=5
                 )
                 form.cache["funding"] = instrument.fundingRate
         if "option" in instrument.category:
             if instrument.delta != form.cache["delta"]:
-                form.delta.value["text"] = service.number_rounding(
-                    number=instrument.delta, precision=6
+                form.delta.value["text"] = service.format_number(
+                    number=instrument.delta
                 )
                 form.cache["delta"] = instrument.delta
             if instrument.gamma != form.cache["gamma"]:
-                form.gamma.value["text"] = service.number_rounding(
-                    number=instrument.gamma, precision=6
+                form.gamma.value["text"] = service.format_number(
+                    number=instrument.gamma
                 )
-                form.cache["delta"] = instrument.gamma
+                form.cache["gamma"] = instrument.gamma
             if instrument.vega != form.cache["vega"]:
-                form.vega.value["text"] = service.number_rounding(
-                    number=instrument.vega, precision=6
+                form.vega.value["text"] = service.format_number(
+                    number=instrument.vega, precision=8
                 )
                 form.cache["vega"] = instrument.vega
             if instrument.theta != form.cache["theta"]:
-                form.theta.value["text"] = service.number_rounding(
-                    number=instrument.theta, precision=6
+                form.theta.value["text"] = service.format_number(
+                    number=instrument.theta
                 )
                 form.cache["theta"] = instrument.theta
             if instrument.rho != form.cache["rho"]:
-                form.rho.value["text"] = service.number_rounding(
-                    number=instrument.rho, precision=6
+                form.rho.value["text"] = service.format_number(
+                    number=instrument.rho
                 )
                 form.cache["rho"] = instrument.rho
 
@@ -1528,7 +1533,8 @@ class Function(WS, Variables):
         compare[3] = Function.format_price(
             self, number=instrument.avgEntryPrice, symbol=symbol
         )
-        compare[4] = format_number(number=instrument.unrealisedPnl)
+        compare[4] = service.format_number(number=instrument.unrealisedPnl)
+        # why no compare[] for MCALL data? 
         compare[6] = Function.humanFormat(self, instrument.volume24h, symbol)
         if compare[7] != "Perpetual":
             compare[7] = instrument.expire.strftime("%d%b%y %H:%M")
@@ -1540,7 +1546,7 @@ class Function(WS, Variables):
     ) -> None:
         def form_result_line(compare):
             for num in range(len(compare)):
-                compare[num] = format_number(compare[num])
+                compare[num] = service.format_number(compare[num])
 
             return compare
 
@@ -1572,7 +1578,7 @@ class Function(WS, Variables):
                     symbol=symbol,
                 )
             num = columns[1] + 1
-            compare[num] = format_number(number=compare[num])
+            compare[num] = service.format_number(number=compare[num])
             return compare
 
         if iid in tree.children_hierarchical[market]:
@@ -1789,7 +1795,7 @@ class Function(WS, Variables):
 
 def form_result_line(compare):
     for num in range(1, 7):
-        compare[num] = format_number(compare[num])
+        compare[num] = service.format_number(compare[num])
     return compare
 
 
@@ -2133,13 +2139,13 @@ def update_order_form():
             )
         )
         form.price_currency["text"] = form.instrument.quoteCoin
-        form.markprice.value["text"] = form.instrument.markPrice
-        form.cache["markprice"] = form.instrument.markPrice
-        if form.instrument.state == "open":
-            form.state.value["text"] = "Open"
-        else:
-            form.state.value["text"] = form.instrument.state
-        form.cache["state"] = form.instrument.state
+        #form.markprice.value["text"] = form.instrument.markPrice
+        #form.cache["markprice"] = form.instrument.markPrice
+        #if form.instrument.state == "open":
+        #    form.state.value["text"] = "Open"
+        #else:
+        #    form.state.value["text"] = form.instrument.state
+        #form.cache["state"] = form.instrument.state
         if form.instrument.makerFee != None:
             form.takerfee.sub.grid(row=8, column=0, sticky="NEWS")
             form.makerfee.sub.grid(row=9, column=0, sticky="NEWS")
@@ -2150,7 +2156,7 @@ def update_order_form():
             form.makerfee.sub.grid_forget()
         if form.instrument.expire == "Perpetual":
             form.fundingRate.sub.grid(row=10, column=0, sticky="NEWS")
-            form.fundingRate.value["text"] = form.instrument.fundingRate
+            #form.fundingRate.value["text"] = form.instrument.fundingRate
         else:
             form.fundingRate.sub.grid_forget()
         if "option" in form.instrument.category:
@@ -2159,17 +2165,19 @@ def update_order_form():
             form.vega.sub.grid(row=13, column=0, sticky="NEWS")
             form.theta.sub.grid(row=14, column=0, sticky="NEWS")
             form.rho.sub.grid(row=15, column=0, sticky="NEWS")
-            form.delta.value["text"] = form.instrument.delta
-            form.gamma.value["text"] = form.instrument.gamma
-            form.vega.value["text"] = form.instrument.vega
-            form.theta.value["text"] = form.instrument.theta
-            form.rho.value["text"] = form.instrument.rho
+            #form.delta.value["text"] = form.instrument.delta
+            #form.gamma.value["text"] = form.instrument.gamma
+            #form.vega.value["text"] = form.instrument.vega
+            #form.theta.value["text"] = form.instrument.theta
+            #form.rho.value["text"] = form.instrument.rho
         else:
             form.delta.sub.grid_forget()
             form.gamma.sub.grid_forget()
             form.vega.sub.grid_forget()
             form.theta.sub.grid_forget()
             form.rho.sub.grid_forget()
+
+    Function.display_parameters(form.ws, form.instrument)
 
 
 def handler_orderbook(event) -> None:
@@ -2191,19 +2199,6 @@ def handler_orderbook(event) -> None:
             )
         except Exception:
             pass
-
-
-def format_number(number: Union[float, str]) -> str:
-    """
-    Rounding a value from 2 to 8 decimal places.
-    """
-    if not isinstance(number, str):
-        after_dot = max(2, 9 - max(1, len(str(int(number)))))
-        number = "{:.{num}f}".format(number, num=after_dot)
-        number = number.rstrip("0")
-        number = number.rstrip(".")
-
-    return number
 
 
 def set_option(ws: Markets, instrument: Instrument, symbol: tuple):
