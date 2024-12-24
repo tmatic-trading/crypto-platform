@@ -18,6 +18,10 @@ from .pybit.unified_trading import HTTP, WebSocket
 
 
 class Bybit(Variables):
+    """
+    The official Python3 API connector is used https://github.com/bybit-exchange/pybit
+    Disabled _send_initial_ping, _on_pong in _websocket_stream.py
+    """
     class Account(metaclass=MetaAccount):
         pass
 
@@ -105,6 +109,12 @@ class Bybit(Variables):
             "linear": WebSocket,
         }
         self.ws_private = WebSocket
+        self.ws_wait = {
+            "spot": "",
+            "inverse": "",
+            "option": "",
+            "linear": "",
+        }
 
         def subscribe_in_thread(category):
             lst = list()
@@ -426,11 +436,23 @@ class Bybit(Variables):
 
         # ws connection
 
+        timeout = 5
+        while self.ws_wait[category]:
+            timeout -= 0.1
+            if timeout < 0:
+                self.logNumFatal = "FATAL"
+
+                return self.logNumFatal
+            
+            time.sleep(0.1)
+
         if not self.ws[category].__class__.__name__ == "WebSocket":
+            self.ws_wait[category] = "wait"
             try:
                 self.ws[category] = WebSocket(
                     testnet=self.testnet, channel_type=category
                 )
+                self.ws_wait[category] = ""
             except Exception as exception:
                 Unify.error_handler(
                     self,

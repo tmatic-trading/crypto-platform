@@ -910,7 +910,7 @@ class Function(WS, Variables):
                             tree.update_hierarchical(
                                 parent=market,
                                 iid=iid,
-                                values=Function.form_instrument_line(
+                                values=Function.format_instrument_line(
                                     ws,
                                     compare=compare,
                                     instrument=instrument,
@@ -921,7 +921,7 @@ class Function(WS, Variables):
                         tree.insert_hierarchical(
                             parent=market,
                             iid=iid,
-                            values=Function.form_instrument_line(
+                            values=Function.format_instrument_line(
                                 ws,
                                 compare=compare,
                                 instrument=instrument,
@@ -1526,7 +1526,7 @@ class Function(WS, Variables):
                     if len(tree.children) > 1 and "notification" in tree.children:
                         tree.delete(iid="notification")
 
-    def form_instrument_line(
+    def format_instrument_line(
         self, compare: list, instrument: Instrument, symbol: tuple
     ) -> list:
         compare[2] = Function.volume(self, qty=instrument.currentQty, symbol=symbol)

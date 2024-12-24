@@ -142,7 +142,7 @@ class _WebSocketManager:
                 on_close=lambda ws, *args: self._on_close(),
                 on_open=lambda ws, *args: self._on_open(),
                 on_error=lambda ws, err: self._on_error(err),
-                on_pong=lambda ws, *args: self._on_pong(),
+                # on_pong=lambda ws, *args: self._on_pong(),
             )
 
             # Setup the thread running WebSocketApp.
@@ -249,7 +249,7 @@ class _WebSocketManager:
             self.ws.send(self.custom_ping_message)
         except Exception:
             print(
-                "______Tmatic: Bybit API is still pinging, but the websocket is already closed"
+                "______Pybit ping exception"
             )
 
     def _send_initial_ping(self):
