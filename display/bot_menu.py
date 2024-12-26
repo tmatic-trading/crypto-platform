@@ -1,19 +1,3 @@
-"""
-1) Provide database transformations for the following operations:
-- (done) New: insert (robots)
-- (done) Activate: update STATE (robots)
-- (done) Update: update TIMEFRAME, UPDATED (robots)
-- (done) Merge: delete record (robots), update EMI (var.database_table)
-- (done) Duplicate: insert (robots)
-- (done) Delete: delete record (robots), update EMI (var.database_table)
-2) Bots with 'Active' state are not allowed for the following services:
-- (done) Update: the respective fields, i.g. strategy, must be disabled
-- (done) Merge: bot destined to be deleted must have 'Suspended' state
-- (done) Delete
-3) Bots with active orders are not allowed for the following services:
-- Delete: no active orders allowed
-- Merge: no active orders allowed for the bot is being deleted
-"""
 import importlib
 import os
 import re
@@ -78,6 +62,8 @@ class SettingsApp:
             self.example_strategy = f.read()
 
         self.info_value = {}
+        self.entered_bot_name = ""
+        self.max_bot_name_symbols = 16
 
         # Keeps the selected bot's algorithm derived from strategy.py file
         self.bot_algo = ""
@@ -97,18 +83,26 @@ class SettingsApp:
 
     def name_trace_callback(self, item, index, mode):
         name = item.replace(str(self), "")
-        bot_name = re.sub("[\W]+", "", self.name_trace.get())
-        if (
-            bot_name in Bots.keys()
-            # or bot_name != self.name_trace.get()
-            or bot_name == ""
-        ):
+        # bot_name = re.sub("[\W]+", "", self.name_trace.get())
+        bot_name = re.sub("[^0-9a-zA-Z_-]", "", self.name_trace.get())
+        if len(bot_name) > self.max_bot_name_symbols:
+            bot_name = self.entered_bot_name
+        else:
+            self.entered_bot_name = bot_name
+        if_name_exists = False
+        for existing_name in Bots.keys():
+            if bot_name.lower() == existing_name.lower():
+                if_name_exists = True
+                break
+        if if_name_exists is True or bot_name == "":
             self.bot_entry[name].config(style="used.TEntry")
             self.button.config(state="disabled")
         else:
             self.bot_entry[name].config(style="free.TEntry")
             self.button.config(state="normal")
         cursor = self.bot_entry[name].index(tk.INSERT)
+        if bot_name != self.name_trace.get():
+            cursor -= 1
         self.bot_entry[name].delete(0, tk.END)
         self.bot_entry[name].insert(0, bot_name)
         self.bot_entry[name].icursor(cursor)
@@ -758,7 +752,9 @@ class SettingsApp:
         TreeTable.bot_info.update(row=0, values=values)
         tk.Label(
             self.brief_frame,
-            text="Create a new bot with a unique name:",
+            text="Create a new bot with a unique name using 'a-z A-Z 0-9 _ -' ("
+            + str(self.max_bot_name_symbols)
+            + " symbols max):",
             bg=disp.bg_color,
             justify=tk.LEFT,
         ).pack(anchor="nw", padx=self.padx, pady=self.pady)
@@ -789,6 +785,7 @@ class SettingsApp:
             state="disabled",
         )
         self.bot_entry["Name"].delete(0, tk.END)
+        self.entered_bot_name = ""
         self.button.pack(anchor="nw", padx=50, pady=20)
         res_label = tk.Label(
             self.brief_frame,
@@ -859,7 +856,9 @@ class SettingsApp:
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
 
-    def delete_all_bot_info(self, bot_name, query_r, query_t, type) -> Union[bool, None]:
+    def delete_all_bot_info(
+        self, bot_name, query_r, query_t, type
+    ) -> Union[bool, None]:
         message = ""
         err = None
         try:
