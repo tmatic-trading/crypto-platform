@@ -421,11 +421,12 @@ def setup_database_connecion() -> None:
         create_table_for_trades(var.database_real)
         create_table_for_trades(var.database_test)
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON %s (MARKET, SYMBOL)"
-            % var.expired_table
+            "CREATE INDEX IF NOT EXISTS %s_MARKET_SYMBOL ON %s (MARKET, SYMBOL)"
+            % (var.expired_table, var.expired_table)
         )
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON backtest (MARKET, SYMBOL)"
+            "CREATE INDEX IF NOT EXISTS %s_MARKET_SYMBOL ON %s (MARKET, SYMBOL)"
+            % (var.backtest_table, var.backtest_table)
         )
         var.connect_sqlite.commit()
 
