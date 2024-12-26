@@ -115,7 +115,7 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
     """
     Rounds a number to the specified precision.
     """
-    
+
     if number == "-":#not isinstance(number, float):
         return number
     else:
@@ -142,7 +142,6 @@ def format_number(number: Union[float, str], precision=8) -> str:
     try:
         number = float(number)
     except Exception:
-
         return number
 
     after_dot = max(2, precision + 1 - max(1, len(str(int(abs(number))))))

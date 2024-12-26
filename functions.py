@@ -555,7 +555,7 @@ class Function(WS, Variables):
                 info_p = price
                 info_q = row["orderQty"]
             elif row["execType"] == "Trade":
-                order_message = "Transaction "  + row["symbol"][0]
+                order_message = "Transaction " + row["symbol"][0]
                 info_p = row["lastPx"]
                 info_q = row["lastQty"]
                 if emi in var.orders and clOrdID in var.orders[emi]:
@@ -780,7 +780,7 @@ class Function(WS, Variables):
             number = float(number)
         except Exception:
             return number
-        #if not isinstance(number, str):
+        # if not isinstance(number, str):
         precision = self.Instrument[symbol].price_precision
         number = "{:.{precision}f}".format(number, precision=precision)
         if precision:
@@ -1207,9 +1207,7 @@ class Function(WS, Variables):
                 )
                 form.cache["gamma"] = instrument.gamma
             if instrument.vega != form.cache["vega"]:
-                form.vega.value["text"] = service.format_number(
-                    number=instrument.vega
-                )
+                form.vega.value["text"] = service.format_number(number=instrument.vega)
                 form.cache["vega"] = instrument.vega
             if instrument.theta != form.cache["theta"]:
                 form.theta.value["text"] = service.format_number(
@@ -1217,9 +1215,7 @@ class Function(WS, Variables):
                 )
                 form.cache["theta"] = instrument.theta
             if instrument.rho != form.cache["rho"]:
-                form.rho.value["text"] = service.format_number(
-                    number=instrument.rho
-                )
+                form.rho.value["text"] = service.format_number(number=instrument.rho)
                 form.cache["rho"] = instrument.rho
 
     def refresh_tables(self: Markets) -> None:
@@ -1534,7 +1530,7 @@ class Function(WS, Variables):
             self, number=instrument.avgEntryPrice, symbol=symbol
         )
         compare[4] = service.format_number(number=instrument.unrealisedPnl)
-        # why no compare[] for MCALL data? 
+        # why no compare[] for MCALL data?
         compare[6] = Function.humanFormat(self, instrument.volume24h, symbol)
         if compare[7] != "Perpetual":
             compare[7] = instrument.expire.strftime("%d%b%y %H:%M")
@@ -2139,13 +2135,13 @@ def update_order_form():
             )
         )
         form.price_currency["text"] = form.instrument.quoteCoin
-        #form.markprice.value["text"] = form.instrument.markPrice
-        #form.cache["markprice"] = form.instrument.markPrice
-        #if form.instrument.state == "open":
+        # form.markprice.value["text"] = form.instrument.markPrice
+        # form.cache["markprice"] = form.instrument.markPrice
+        # if form.instrument.state == "open":
         #    form.state.value["text"] = "Open"
-        #else:
+        # else:
         #    form.state.value["text"] = form.instrument.state
-        #form.cache["state"] = form.instrument.state
+        # form.cache["state"] = form.instrument.state
         if form.instrument.makerFee != None:
             form.takerfee.sub.grid(row=8, column=0, sticky="NEWS")
             form.makerfee.sub.grid(row=9, column=0, sticky="NEWS")
@@ -2156,7 +2152,7 @@ def update_order_form():
             form.makerfee.sub.grid_forget()
         if form.instrument.expire == "Perpetual":
             form.fundingRate.sub.grid(row=10, column=0, sticky="NEWS")
-            #form.fundingRate.value["text"] = form.instrument.fundingRate
+            # form.fundingRate.value["text"] = form.instrument.fundingRate
         else:
             form.fundingRate.sub.grid_forget()
         if "option" in form.instrument.category:
@@ -2165,11 +2161,11 @@ def update_order_form():
             form.vega.sub.grid(row=13, column=0, sticky="NEWS")
             form.theta.sub.grid(row=14, column=0, sticky="NEWS")
             form.rho.sub.grid(row=15, column=0, sticky="NEWS")
-            #form.delta.value["text"] = form.instrument.delta
-            #form.gamma.value["text"] = form.instrument.gamma
-            #form.vega.value["text"] = form.instrument.vega
-            #form.theta.value["text"] = form.instrument.theta
-            #form.rho.value["text"] = form.instrument.rho
+            # form.delta.value["text"] = form.instrument.delta
+            # form.gamma.value["text"] = form.instrument.gamma
+            # form.vega.value["text"] = form.instrument.vega
+            # form.theta.value["text"] = form.instrument.theta
+            # form.rho.value["text"] = form.instrument.rho
         else:
             form.delta.sub.grid_forget()
             form.gamma.sub.grid_forget()

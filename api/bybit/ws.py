@@ -22,6 +22,7 @@ class Bybit(Variables):
     The official Python3 API connector is used https://github.com/bybit-exchange/pybit
     Disabled _send_initial_ping, _on_pong in _websocket_stream.py
     """
+
     class Account(metaclass=MetaAccount):
         pass
 
@@ -56,6 +57,10 @@ class Bybit(Variables):
                 (1440, "D"),
             ]
         )
+        self.orderbook_depth = {
+            "quote": {"spot": 1, "inverse": 1, "option": 25, "linear": 1},
+            "orderBook": {"spot": 50, "inverse": 50, "option": 25, "linear": 50},
+        }
         self.account_types = ["UNIFIED", "CONTRACT"]
         self.settleCoin_list = list()
         self.logger = var.logger
@@ -81,10 +86,6 @@ class Bybit(Variables):
         """
 
     def setup_streams(self):
-        if var.order_book_depth == "quote":
-            self.orderbook_depth = 1
-        else:
-            self.orderbook_depth = 50
         for symbol in self.symbol_list:
             instrument = self.Instrument[symbol]
             if instrument.category == "linear":
@@ -441,7 +442,7 @@ class Bybit(Variables):
                 self.logNumFatal = "FATAL"
 
                 return self.logNumFatal
-            
+
             time.sleep(0.1)
 
         if not self.ws[category].__class__.__name__ == "WebSocket":
@@ -469,7 +470,7 @@ class Bybit(Variables):
             self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
-                    depth=self.orderbook_depth,
+                    depth=self.orderbook_depth[var.order_book_depth][category],
                     symbol=ticker,
                     callback=lambda x: self.__update_orderbook(
                         values=x["data"], category="linear"
@@ -510,7 +511,7 @@ class Bybit(Variables):
             self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
-                    depth=self.orderbook_depth,
+                    depth=self.orderbook_depth[var.order_book_depth][category],
                     symbol=ticker,
                     callback=lambda x: self.__update_orderbook(
                         values=x["data"], category="inverse"
@@ -551,7 +552,7 @@ class Bybit(Variables):
             self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
-                    depth=self.orderbook_depth,
+                    depth=self.orderbook_depth[var.order_book_depth][category],
                     symbol=ticker,
                     callback=lambda x: self.__update_orderbook(
                         values=x["data"], category="spot"
@@ -592,7 +593,7 @@ class Bybit(Variables):
             self._put_message(message)
             try:
                 self.ws[category].orderbook_stream(
-                    depth=self.orderbook_depth,
+                    depth=self.orderbook_depth[var.order_book_depth][category],
                     symbol=ticker,
                     callback=lambda x: self.__update_orderbook(
                         values=x["data"], category="option"
@@ -670,7 +671,8 @@ class Bybit(Variables):
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
         arg_ticker = f"tickers.{ticker}"
-        arg_orderbook = f"orderbook.{self.orderbook_depth}.{ticker}"
+        depth = self.orderbook_depth[var.order_book_depth][instrument.category]
+        arg_orderbook = f"orderbook.{depth}.{ticker}"
         args.append(arg_ticker)
         args.append(arg_orderbook)
 

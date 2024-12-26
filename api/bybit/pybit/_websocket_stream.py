@@ -248,9 +248,7 @@ class _WebSocketManager:
         try:
             self.ws.send(self.custom_ping_message)
         except Exception:
-            print(
-                "______Pybit ping exception"
-            )
+            print("______Pybit ping exception")
 
     def _send_initial_ping(self):
         """https://github.com/bybit-exchange/pybit/issues/164"""
