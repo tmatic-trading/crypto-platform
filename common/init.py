@@ -389,33 +389,6 @@ def setup_database_connecion() -> None:
         STATE varchar(10) DEFAULT 'Suspended',
         UPDATED timestamp NULL DEFAULT CURRENT_TIMESTAMP)"""
 
-        sql_create_trade = (
-            """
-        CREATE TABLE IF NOT EXISTS %s (
-        ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        EXECID varchar(45) DEFAULT NULL,
-        EMI varchar(20) DEFAULT NULL,
-        REFER varchar(20) DEFAULT NULL,
-        MARKET varchar(20) DEFAULT NULL,
-        CURRENCY varchar(10) DEFAULT NULL,
-        SYMBOL varchar(40) DEFAULT NULL,
-        TICKER varchar(40) DEFAULT NULL,
-        CATEGORY varchar(20) DEFAULT NULL,
-        SIDE varchar(4) DEFAULT NULL,
-        QTY decimal(20,8) DEFAULT NULL,
-        QTY_REST decimal(20,8) DEFAULT NULL,
-        PRICE decimal(20,8) DEFAULT NULL,
-        THEOR_PRICE decimal(20,8) DEFAULT NULL,
-        TRADE_PRICE decimal(20,8) DEFAULT NULL,
-        SUMREAL decimal(30,12) DEFAULT NULL,
-        COMMISS decimal(30,16) DEFAULT 0.0000000000000000,
-        TTIME datetime DEFAULT NULL,
-        DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-        CLORDID int DEFAULT 0,
-        ACCOUNT int DEFAULT 0)"""
-            % var.database_table
-        )
-
         sql_create = """
         CREATE TABLE IF NOT EXISTS %s (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -443,23 +416,10 @@ def setup_database_connecion() -> None:
         sql_create_backtest = sql_create % "backtest"
 
         var.cursor_sqlite.execute(sql_create_robots)
-        var.cursor_sqlite.execute(sql_create_trade)
         var.cursor_sqlite.execute(sql_create_expired)
         var.cursor_sqlite.execute(sql_create_backtest)
-        var.cursor_sqlite.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS ID_UNIQUE ON %s (ID)"
-            % var.database_table
-        )
-        var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS EXECID_ix ON %s (EXECID)" % var.database_table
-        )
-        var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS EMI_QTY_ix ON %s (EMI, QTY)"
-            % var.database_table
-        )
-        var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS SIDE_ix ON %s (SIDE)" % var.database_table
-        )
+        create_table_for_trades(var.database_real)
+        create_table_for_trades(var.database_test)
         var.cursor_sqlite.execute(
             "CREATE INDEX IF NOT EXISTS SYMBOL_MARKET_ix ON %s (MARKET, SYMBOL)"
             % var.expired_table
@@ -469,6 +429,54 @@ def setup_database_connecion() -> None:
         )
         var.connect_sqlite.commit()
 
+    except Exception as error:
+        var.logger.error(error)
+        raise
+
+def create_table_for_trades(table_name):
+    try:
+        sql_create_trade = ("""
+        CREATE TABLE IF NOT EXISTS %s (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        EXECID varchar(45) DEFAULT NULL,
+        EMI varchar(20) DEFAULT NULL,
+        REFER varchar(20) DEFAULT NULL,
+        MARKET varchar(20) DEFAULT NULL,
+        CURRENCY varchar(10) DEFAULT NULL,
+        SYMBOL varchar(40) DEFAULT NULL,
+        TICKER varchar(40) DEFAULT NULL,
+        CATEGORY varchar(20) DEFAULT NULL,
+        SIDE varchar(4) DEFAULT NULL,
+        QTY decimal(20,8) DEFAULT NULL,
+        QTY_REST decimal(20,8) DEFAULT NULL,
+        PRICE decimal(20,8) DEFAULT NULL,
+        THEOR_PRICE decimal(20,8) DEFAULT NULL,
+        TRADE_PRICE decimal(20,8) DEFAULT NULL,
+        SUMREAL decimal(30,12) DEFAULT NULL,
+        COMMISS decimal(30,16) DEFAULT 0.0000000000000000,
+        TTIME datetime DEFAULT NULL,
+        DAT timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        CLORDID int DEFAULT 0,
+        ACCOUNT int DEFAULT 0)"""
+            % table_name
+        )
+        var.cursor_sqlite.execute(sql_create_trade)
+        var.cursor_sqlite.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS %s_ID ON %s (ID)"
+            % (table_name, table_name)
+        )
+        var.cursor_sqlite.execute(
+            "CREATE INDEX IF NOT EXISTS %s_EXECID ON %s (EXECID)"
+            % (table_name, table_name)
+        )
+        var.cursor_sqlite.execute(
+            "CREATE INDEX IF NOT EXISTS %s_EMI_QTY ON %s (EMI, QTY)"
+            % (table_name, table_name)
+        )
+        var.cursor_sqlite.execute(
+            "CREATE INDEX IF NOT EXISTS %s_SIDE ON %s (SIDE)"
+            % (table_name, table_name)
+        )
     except Exception as error:
         var.logger.error(error)
         raise

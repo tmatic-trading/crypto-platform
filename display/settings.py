@@ -275,11 +275,11 @@ class SettingsApp:
         else:
             disp.num_book = 2
         if var.env["TESTNET"] == "YES":
-            var.database_table = "test_trade"
+            var.database_table = var.database_test
             var.platform_name = "Tmatic / testnet"
             disp.root.title(var.platform_name)
         else:
-            var.database_table = "real_trade"
+            var.database_table = var.database_real
             var.platform_name = "Tmatic"
             disp.root.title(var.platform_name)
 

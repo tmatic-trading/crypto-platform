@@ -107,5 +107,7 @@ class Variables:
     dash = "---"
     backtest = False
     backtest_symbols = list()
+    database_real = "real_trade"
+    database_test = "test_trade"
     database_table: str
     expired_table = "expired"

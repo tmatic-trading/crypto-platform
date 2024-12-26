@@ -506,16 +506,25 @@ class SettingsApp:
             if self.delete_warning(bot_name=bot_to_delete):
                 return
 
-            query = (
+            query_r = (
                 "UPDATE "
-                + var.database_table
+                + var.database_real
                 + " SET EMI = '"
                 + bot_name
                 + "' WHERE EMI = '"
                 + bot_to_delete
                 + "'"
             )
-            message = self.delete_all_bot_info(bot_to_delete, query, "Merge")
+            query_t = (
+                "UPDATE "
+                + var.database_test
+                + " SET EMI = '"
+                + bot_name
+                + "' WHERE EMI = '"
+                + bot_to_delete
+                + "'"
+            )
+            message = self.delete_all_bot_info(bot_to_delete, query_r, query_t, "Merge")
             if message[0] is None:
                 message[1] = "The merge operation completed successfully."
             else:
@@ -666,14 +675,21 @@ class SettingsApp:
         def delete_bot(bot_name: str) -> None:
             if self.delete_warning(bot_name=bot_name):
                 return
-            query = (
+            query_r = (
                 "UPDATE "
-                + var.database_table
+                + var.database_real
                 + " SET EMI = '' WHERE EMI = '"
                 + bot_name
                 + "'"
             )
-            message = self.delete_all_bot_info(bot_name, query, "Delete")
+            query_t = (
+                "UPDATE "
+                + var.database_test
+                + " SET EMI = '' WHERE EMI = '"
+                + bot_name
+                + "'"
+            )
+            message = self.delete_all_bot_info(bot_name, query_r, query_t, "Delete")
             if message[0] is None:
                 message[1] = "The delete operation completed successfully."
                 values = ["" for _ in Header.name_bot]
@@ -843,7 +859,7 @@ class SettingsApp:
             info_left.pack(fill="both", side="left")
             info_right.pack(fill="both", expand=True, side="left")
 
-    def delete_all_bot_info(self, bot_name, query_0, type) -> Union[bool, None]:
+    def delete_all_bot_info(self, bot_name, query_r, query_t, type) -> Union[bool, None]:
         message = ""
         err = None
         try:
@@ -861,14 +877,17 @@ class SettingsApp:
             if type == "Delete":
                 disp.bot_name = None
             message = f"Bot ``{bot_name}`` removed from Tmatic's memory."
-            err = service.update_database(query=query_0)
+            err = service.update_database(query=query_r)
             if err is None:
-                message += "\nDatabase table `" + var.database_table + "` updated."
-                err = service.update_database(
-                    query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
-                )
+                message += "\nDatabase table `" + var.database_real + "` updated."
+                err = service.update_database(query=query_t)
                 if err is None:
-                    message += f"\nBot ``{bot_name}`` deleted from the database."
+                    message += "\nDatabase table `" + var.database_test + "` updated."
+                    err = service.update_database(
+                        query=f"DELETE FROM robots WHERE EMI = '{bot_name}'"
+                    )
+                    if err is None:
+                        message += f"\nBot ``{bot_name}`` deleted from the database."
             bot_path = self.get_bot_path(bot_name)
             shutil.rmtree(str(bot_path))
             message += f"\nThe ``/{bot_name}/`` subdirectory erased."
