@@ -111,3 +111,4 @@ class Variables:
     database_test = "test_trade"
     database_table: str
     expired_table = "expired"
+    backtest_table = "backtest"
