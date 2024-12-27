@@ -256,39 +256,12 @@ class Function(WS, Variables):
                 category=row["category"],
             )
             instrument = self.Instrument[row["symbol"]]
-            if "clOrdID" in row:
-                if "." not in row["clOrdID"]:
-                    del row["clOrdID"]
 
             # Trade
 
             if row["execType"] == "Trade":
-                if "clOrdID" in row:
-                    dot = row["clOrdID"].find(".")
-                    if (
-                        dot == -1
-                    ):  # The transaction was done from the exchange web interface,
-                        # the clOrdID field is missing or clOrdID does not have EMI number
-                        emi = ""
-                        refer = ""
-                        if row["clOrdID"] == "":
-                            clientID = 0
-                        else:
-                            try:
-                                clientID = int(row["clOrdID"])
-                            except Exception:
-                                clientID = 0
-                    else:
-                        emi = row["clOrdID"][dot + 1 :]
-                        clientID = row["clOrdID"][:dot]
-                        refer = emi
-                        symb = emi.split(".")[0]
-                        if symb == row["symbol"][0]:
-                            refer = ""
-                else:
-                    emi = ""
-                    clientID = 0
-                    refer = ""
+                cl_id, emi = service.get_clOrdID(row=row)
+                refer = emi
                 if emi not in Bots.keys():
                     emi = ""
                 data = service.select_database(  # read_database
@@ -296,7 +269,7 @@ class Function(WS, Variables):
                     % (var.database_table, row["execID"], self.user_id),
                 )
                 if not data:
-                    handle_trade_or_delivery(row, emi, refer, clientID)
+                    handle_trade_or_delivery(row, emi, refer, cl_id)
                 Function.orders_processing(self, row=row, info=info)
 
             # Delivery
@@ -411,11 +384,10 @@ class Function(WS, Variables):
             # New order
 
             elif row["execType"] == "New":
-                if (
-                    "clOrdID" not in row
-                ):  # The order was placed from the exchange web interface
+                cl_id, emi = service.get_clOrdID(row=row)
+                if cl_id == 0:  # The order was placed outside Tmatic.
                     emi = service.set_emi(symbol=row["symbol"])
-                    clOrdID = service.set_clOrdID(emi=emi)
+                    clOrdID = service.set_clOrdID()
                     service.fill_order(
                         emi=emi, clOrdID=clOrdID, category=row["category"], value=row
                     )
@@ -499,20 +471,13 @@ class Function(WS, Variables):
             )
             _put_message(market=self.name, message=message, warning="warning")
 
-        if "clOrdID" in row:
-            if row["clOrdID"]:
-                clOrdID = row["clOrdID"]
-                dot = row["clOrdID"].find(".")
-                if dot == -1:
-                    emi = service.set_emi(symbol=row["symbol"])
-                else:
-                    emi = row["clOrdID"][dot + 1 :]
-            else:
-                """Possibly retrieved from Trading history"""
-                clOrdID = "Empty"
-                emi = "Not_found!"
-        else:  # Retrieved from /execution or /execution/tradeHistory. The order was made
-            # through the exchange web interface.
+        cl_id, emi = service.get_clOrdID(row=row)
+        if cl_id != 0:
+            clOrdID = row["clOrdID"]
+            if emi == "":
+                emi = service.set_emi(symbol=row["symbol"])
+        else: # Retrieved from /execution or /execution/tradeHistory. The order 
+            # was made outside Tmatic.
             for emi, values in var.orders.items():
                 for clOrdID, value in values.items():
                     if value["orderID"] == row["orderID"]:
@@ -523,7 +488,8 @@ class Function(WS, Variables):
                 break
             else:
                 """There is no order with this orderID in the var.orders. The
-                order was not sent via Tmatic."""
+                order was not sent via Tmatic. Possibly retrieved from 
+                Trading history"""
                 clOrdID = "Empty!"
                 emi = "Not_found!"
         if "orderID" not in row:
@@ -610,12 +576,12 @@ class Function(WS, Variables):
             if emi in var.orders and clOrdID in var.orders[emi]:
                 var.orders[emi][clOrdID]["price"] = price
                 var.orders[emi][clOrdID]["transactTime"] = row["transactTime"]
-        try:
+        '''try:
             t = clOrdID.split(".")
             int(t[0])
             emi = service.set_emi(symbol=t[1:3])
         except ValueError:
-            emi = clOrdID
+            emi = clOrdID'''
         if info_q:
             info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
             info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])

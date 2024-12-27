@@ -274,17 +274,12 @@ class Init(WS, Variables):
         All open orders received from the exchange endpoint as a result of an
         HTTP request are taken into account in the orders array.
         """
-
         myOrders.sort(key=lambda x: x["transactTime"], reverse=True)
         for val in reversed(myOrders):
             if val["leavesQty"] != 0:
-                emi = service.set_emi(symbol=val["symbol"])
-                if "clOrdID" in val:
-                    if "." not in val["clOrdID"]:
-                        del val["clOrdID"]
-                if "clOrdID" not in val:
-                    # The order was placed from the exchange web interface
-                    clOrdID = service.set_clOrdID(emi=emi)
+                cl_id, emi = service.get_clOrdID(row=val)
+                if cl_id == 0:
+                    cl_id = service.set_clOrdID()
                     info_display(
                         self.name,
                         "Outside placement: price="
@@ -292,18 +287,15 @@ class Init(WS, Variables):
                         + " side="
                         + val["side"]
                         + ". Assigned clOrdID="
-                        + clOrdID,
+                        + cl_id,
                     )
+                if emi == "":
+                    emi = service.set_emi(symbol=val["symbol"])
                 else:
-                    clOrdID = val["clOrdID"]
-                    res = clOrdID.split(".")
-                    if len(res) > 1:
-                        emi = service.set_emi(symbol=res[1:])
-                    else:
-                        emi = res[1]
+                    cl_id = val["clOrdID"]
                 category = self.Instrument[val["symbol"]].category
                 service.fill_order(
-                    emi=emi, clOrdID=clOrdID, category=category, value=val
+                    emi=emi, clOrdID=cl_id, category=category, value=val
                 )
 
     def load_database(self: Markets) -> None:
