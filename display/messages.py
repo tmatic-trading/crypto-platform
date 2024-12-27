@@ -25,10 +25,10 @@ class ErrorMessage(str, Enum):
         "There was an error loading {MODULE}:\n\n{EXCEPTION}\n\n"
         + "Probably ``algo`` is missing a subdirectory named ``{BOT_NAME}``, "
         + "or ``{BOT_NAME}`` is missing a strategy.py file, or strategy.py has "
-        + "an incorrect import."
+        + "an incorrect import.\n"
     )
     BOT_LOADING_ERROR = (
-        "There was an error loading {MODULE}:\n\n{CLASS} {EXCEPTION}\n\n"
+        "There was an error loading {MODULE}:\n\n{CLASS} {EXCEPTION}\n"
         + "Correct the strategy file or delete ``{BOT_NAME}`` using the "
         + "``Bot Menu``.\n"
     )

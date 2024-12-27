@@ -519,13 +519,7 @@ def format_message(market: str, message: str, tm=None) -> str:
     if not tm:
         tm = datetime.now(tz=timezone.utc)
     text = (
-        noll(str(tm.hour), 2)
-        + ":"
-        + noll(str(tm.minute), 2)
-        + ":"
-        + noll(str(tm.second), 2)
-        + "."
-        + noll(str(int(tm.microsecond / 1000)), 3)
+        tm.strftime("%Y-%m-%d %H:%M:%S.%f")[:23]
         + "  "
         + market
         + message
