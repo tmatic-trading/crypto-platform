@@ -752,7 +752,7 @@ class SettingsApp:
         TreeTable.bot_info.update(row=0, values=values)
         tk.Label(
             self.brief_frame,
-            text="Create a new bot with a unique name using 'a-z A-Z 0-9 _ -' ("
+            text="Create a new bot with a unique name using ``a-z A-Z _ 0-9`` ("
             + str(self.max_bot_name_symbols)
             + " symbols max):",
             bg=disp.bg_color,
