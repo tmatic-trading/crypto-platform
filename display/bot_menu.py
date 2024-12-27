@@ -83,8 +83,8 @@ class SettingsApp:
 
     def name_trace_callback(self, item, index, mode):
         name = item.replace(str(self), "")
-        # bot_name = re.sub("[\W]+", "", self.name_trace.get())
-        bot_name = re.sub("[^0-9a-zA-Z_-]", "", self.name_trace.get())
+        bot_name = re.sub("[\W]+", "", self.name_trace.get())
+        # bot_name = re.sub("[^0-9a-zA-Z_-]", "", self.name_trace.get())
         if len(bot_name) > self.max_bot_name_symbols:
             bot_name = self.entered_bot_name
         else:

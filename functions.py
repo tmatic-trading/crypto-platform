@@ -1621,7 +1621,7 @@ class Function(WS, Variables):
         if side == "Sell":
             qty = -qty
         if emi not in Bots.keys():
-            emi = service.set_emi(symbol=symbol)
+            emi = False
         clOrdID = service.set_clOrdID(emi=emi)
         WS.place_limit(
             self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
