@@ -476,7 +476,7 @@ class Function(WS, Variables):
             clOrdID = row["clOrdID"]
             if emi == "":
                 emi = service.set_emi(symbol=row["symbol"])
-        else: # Retrieved from /execution or /execution/tradeHistory. The order 
+        else:  # Retrieved from /execution or /execution/tradeHistory. The order
             # was made outside Tmatic.
             for emi, values in var.orders.items():
                 for clOrdID, value in values.items():
@@ -488,7 +488,7 @@ class Function(WS, Variables):
                 break
             else:
                 """There is no order with this orderID in the var.orders. The
-                order was not sent via Tmatic. Possibly retrieved from 
+                order was not sent via Tmatic. Possibly retrieved from
                 Trading history"""
                 clOrdID = "Empty!"
                 emi = "Not_found!"
@@ -576,12 +576,12 @@ class Function(WS, Variables):
             if emi in var.orders and clOrdID in var.orders[emi]:
                 var.orders[emi][clOrdID]["price"] = price
                 var.orders[emi][clOrdID]["transactTime"] = row["transactTime"]
-        '''try:
+        """try:
             t = clOrdID.split(".")
             int(t[0])
             emi = service.set_emi(symbol=t[1:3])
         except ValueError:
-            emi = clOrdID'''
+            emi = clOrdID"""
         if info_q:
             info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
             info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
@@ -2314,6 +2314,8 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
             )
             var.current_market = ws.name
             var.rollup_symbol = f"{ws.name}!{symb}"
+        if init:
+            var.subscription_res[symbol] = True
     else:
         message = ErrorMessage.FAILED_SUBSCRIPTION.format(SYMBOL=symb)
         _put_message(market=market, message=message, warning="error")

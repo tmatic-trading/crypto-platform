@@ -19,7 +19,7 @@ def add_subscription(subscriptions: set) -> None:
         if symbol[1] in var.market_list:
             ws = Markets[symbol[1]]
             ws.positions[symbol] = {"POS": 0}
-            var.subscription_res[symbol] = None
+            var.subscription_res[symbol] = False
             t = threading.Thread(
                 target=functions.confirm_subscription,
                 args=(
@@ -29,6 +29,7 @@ def add_subscription(subscriptions: set) -> None:
                     True,
                 ),
             )
+            threads.append(t)
             t.start()
         else:
             message = (
@@ -41,9 +42,11 @@ def add_subscription(subscriptions: set) -> None:
             _put_message(market=ws.name, message=message, warning="warning")
     [thread.join() for thread in threads]
     for symbol, res in var.subscription_res.items():
+        ws = Markets[symbol[1]]
         if res:
             qwr = (
-                "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY from "
+                "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
+                + "sum(SUMREAL) as SUM_SUMREAL from "
                 + var.database_table
                 + " where SYMBOL = '"
                 + symbol[0]
@@ -54,7 +57,9 @@ def add_subscription(subscriptions: set) -> None:
                 + ";"
             )
             data = service.select_database(qwr)
-            ws.Instrument[symbol].volume = data[0]["SUM_QTY"]
+            instrument = ws.Instrument[symbol]
+            instrument.volume = round(data[0]["SUM_QTY"], instrument.precision)
+            instrument.sumreal = data[0]["SUM_SUMREAL"]
 
 
 def load_bot_parameters():
@@ -116,6 +121,7 @@ def load_bots() -> None:
             sql += qwr
             union = " union "
         sql += ";"
+
         var.lock.acquire(True)
         data = service.select_database(sql)
         for value in data:

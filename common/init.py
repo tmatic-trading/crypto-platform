@@ -294,9 +294,7 @@ class Init(WS, Variables):
                 else:
                     cl_id = val["clOrdID"]
                 category = self.Instrument[val["symbol"]].category
-                service.fill_order(
-                    emi=emi, clOrdID=cl_id, category=category, value=val
-                )
+                service.fill_order(emi=emi, clOrdID=cl_id, category=category, value=val)
 
     def load_database(self: Markets) -> None:
         """
@@ -426,9 +424,11 @@ def setup_database_connecion() -> None:
         var.logger.error(error)
         raise
 
+
 def create_table_for_trades(table_name):
     try:
-        sql_create_trade = ("""
+        sql_create_trade = (
+            """
         CREATE TABLE IF NOT EXISTS %s (
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         EXECID varchar(45) DEFAULT NULL,
@@ -467,8 +467,7 @@ def create_table_for_trades(table_name):
             % (table_name, table_name)
         )
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS %s_SIDE ON %s (SIDE)"
-            % (table_name, table_name)
+            "CREATE INDEX IF NOT EXISTS %s_SIDE ON %s (SIDE)" % (table_name, table_name)
         )
     except Exception as error:
         var.logger.error(error)

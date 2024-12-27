@@ -939,29 +939,29 @@ def init_bot(
     bot.bot_pnl = dict()
 
 
-def get_clOrdID(row: dict) -> tuple:    
+def get_clOrdID(row: dict) -> tuple:
     cl_id = 0
     emi = ""
     if "clOrdID" in row:
         res = row["clOrdID"].split(".")
         try:
-            # The standard clOrdID scheme is a number or a number 
-            # and the bot name, separated by a dot. Two or more 
-            # dots in clOrdID are ignored, in which case only the 
+            # The standard clOrdID scheme is a number or a number
+            # and the bot name, separated by a dot. Two or more
+            # dots in clOrdID are ignored, in which case only the
             # first element - the number - is considered.
             int(res[0])
             cl_id = res[0]
             if len(res) > 1:
-                if res[1] == "" or len(res) > 2:                    
+                if res[1] == "" or len(res) > 2:
                     pass
                 else:
-                    emi = res[1]                       
-        except ValueError: # The transaction was probably not made 
-            # through Tmatic, the first element before the dot 
+                    emi = res[1]
+        except ValueError:  # The transaction was probably not made
+            # through Tmatic, the first element before the dot
             # must be digital.
-            pass                           
-    else: # The transaction was done from the exchange web 
-        # interface, the clOrdID field is missing. 
+            pass
+    else:  # The transaction was done from the exchange web
+        # interface, the clOrdID field is missing.
         pass
 
     return cl_id, emi
