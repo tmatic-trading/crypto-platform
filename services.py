@@ -1,5 +1,6 @@
 import os
 import platform
+import threading
 import time
 import tkinter as tk
 import traceback
@@ -9,6 +10,7 @@ from typing import Callable, Union
 
 from dotenv import dotenv_values, set_key
 
+from botinit.variables import Variables as robo
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
@@ -443,6 +445,17 @@ def bot_error(bot: BotData) -> str:
     return error
 
 
+def call_bot_breakdown():
+    """
+    The bot strategy is called again when the indicator is triggered.
+    """
+    for bot_name in Bots.keys():
+        bot = Bots[bot_name]
+        if bot.multitrade == "BreakDown":
+            t = threading.Thread(target=robo.run_bot[bot_name])
+            t.start()
+
+
 def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
     """
     Updates the high and low values of kline data when websocket updates the
@@ -487,10 +500,12 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
                             parameters["number"] += 1
                             if parameters["first"] == 0:
                                 parameters["first"] = -1
+                            call_bot_breakdown()
                         if direct <= 0 and bid < parameters["dn"]:
                             parameters["number"] += 1
                             if parameters["first"] == 0:
                                 parameters["first"] = 1
+                            call_bot_breakdown()
 
 
 def count_orders():
@@ -518,13 +533,7 @@ def format_message(market: str, message: str, tm=None) -> str:
         market += ": "
     if not tm:
         tm = datetime.now(tz=timezone.utc)
-    text = (
-        tm.strftime("%Y-%m-%d %H:%M:%S.%f")[:23]
-        + "  "
-        + market
-        + message
-        + "\n"
-    )
+    text = tm.strftime("%Y-%m-%d %H:%M:%S.%f")[:23] + "  " + market + message + "\n"
     if isinstance(text, tuple):
         text = text[0]
 

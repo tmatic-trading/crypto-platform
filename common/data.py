@@ -214,7 +214,7 @@ class BotData:
     backtest_data: dict
     iter: int = 0
     strategy_log: str
-    multitrade: bool = False
+    multitrade: str = ""
 
     def __iter__(self):
         return Ret.iter(self)
