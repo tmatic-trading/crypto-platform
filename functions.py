@@ -3167,6 +3167,10 @@ for name, values in disp.notebook_frames.items():
         disp.notebook.add(values["frame"], text=name)
     else:
         var.display_bottom = values["method"]
+if "MAIN_TAB_SELECTED" in disp.pref_params:
+    disp.notebook.select(disp.pref_params["MAIN_TAB_SELECTED"])
+if "BOT_TAB_SELECTED" in disp.pref_params:
+    disp.bot_note.select(disp.pref_params["BOT_TAB_SELECTED"])
 
 
 def form_trace(item, index, mode, str_var: tk.StringVar, widget: tk.Entry) -> None:
