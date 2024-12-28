@@ -593,6 +593,12 @@ class Variables:
         notebook = ttk.Notebook(pw_rest4, padding=(-9, 0, -9, -9))
     else:
         notebook = ttk.Notebook(pw_rest4, padding=0)
+    notebook.bind("<<NotebookTabChanged>>", lambda event: service.set_dotenv(
+            dotenv_path=var.preferences,
+            key="MAIN_TAB_SELECTED",
+            value=str(Variables.notebook.index("current")),
+        )
+    )
 
     pw_rest4.add(notebook)
     pw_rest4.add(frame_bots)
@@ -708,6 +714,12 @@ class Variables:
         bot_note = ttk.Notebook(pw_bot_info, padding=(-9, 0, -9, -9))
     else:
         bot_note = ttk.Notebook(pw_bot_info, padding=0)
+    bot_note.bind("<<NotebookTabChanged>>", lambda event: service.set_dotenv(
+            dotenv_path=var.preferences,
+            key="BOT_TAB_SELECTED",
+            value=str(Variables.bot_note.index("current")),
+        )
+    )
     frame_strategy = tk.Frame(pw_bot_info)
     frame_strategy.pack(fill="both", expand="yes")
     bot_positions = tk.Frame(bot_note, bg=bg_color)
@@ -866,7 +878,6 @@ class Variables:
     for pw, value in pw_ratios.items():
         if value["name"] in pref_params:
             pw_ratios[pw]["ratio"] = float(pref_params[value["name"]])
-
 
 def on_trade_state(event) -> None:
     if Variables.f9 == "ON":
