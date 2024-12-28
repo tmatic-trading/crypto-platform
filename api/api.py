@@ -138,6 +138,7 @@ class WS(Variables):
             service.display_exception(exception)
             self.logger.error(self.name + " Orders not loaded. Reboot.")
             return service.unexpected_error(self)
+
         threads = []
         success = {}
         try:
