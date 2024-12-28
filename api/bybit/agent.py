@@ -70,6 +70,7 @@ class Agent(Bybit):
                 return error
 
         self.symbol_list = service.check_symbol_list(
+            ws=self, 
             symbols=self.Instrument.get_keys(),
             market=self.name,
             symbol_list=self.symbol_list,

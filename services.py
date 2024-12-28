@@ -560,7 +560,7 @@ def cancel_market(market: str) -> None:
         var.market_list.remove(market)
 
 
-def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
+def check_symbol_list(ws, symbols: list, market: str, symbol_list: list) -> list:
     """
     Checks if the symbols in the symbol_list of a given market are valid for
     further websocket subscription. Removes misspelled or expired symbols
@@ -569,6 +569,8 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
 
     Parameters
     ----------
+    ws: object
+        Markets such as Bitmex, Bybit, Deribit.
     symbols: list
         List of symbols of all available active instruments, which is
         received from the exchange.
@@ -603,8 +605,12 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
         return symbol_list
 
     if symbols:
+        tm = datetime.now(tz=timezone.utc)
         for symbol in symbol_list.copy():
-            if symbol not in symbols:
+            if symbol not in symbols or (
+                ws.Instrument[symbol].expire != "Perpetual"
+                and ws.Instrument[symbol].expire < tm
+            ):
                 message = ErrorMessage.UNKNOWN_SYMBOL.format(
                     SYMBOL=symbol[0], MARKET=market
                 )
@@ -613,7 +619,7 @@ def check_symbol_list(symbols: list, market: str, symbol_list: list) -> list:
                         "market": market,
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
-                        "warning": "error",
+                        "warning": "warning",
                     }
                 )
                 var.logger.error(message)
