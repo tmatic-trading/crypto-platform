@@ -263,9 +263,6 @@ class SettingsApp:
 
         # Set parameters
 
-        if var.market_list:
-            var.current_market = var.market_list[0]
-            var.symbol = var.env[var.current_market]["SYMBOLS"][0]
         book_depth = var.env["ORDER_BOOK_DEPTH"].split(" ")
         var.order_book_depth = book_depth[0]
         var.db_sqlite = var.env["SQLITE_DATABASE"]
