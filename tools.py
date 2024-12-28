@@ -227,7 +227,7 @@ class Tool(Instrument):
                             orderQty=order["orderQty"],
                         )
         else:
-            self._empty_orderbook(qty=qty, price=price)
+            self._empty_orderbook(qty=qty, price=price, bot_name=bot.name)
         if cancel:
             if side == "Sell":
                 self._remove_orders(orders=var.orders[bot.name], side="Buy")
@@ -282,7 +282,11 @@ class Tool(Instrument):
 
         if bot.state == "Active" and disp.f9 == "ON":
             if not price:
-                price = self.asks[0][0]
+                try:
+                    price = self.asks[0][0]
+                except IndexError:
+                    self._empty_orderbook(qty=qty, price=price, bot_name=bot.name)
+                    return
 
             return self._place(
                 price=price, qty=qty, side="Sell", move=move, bot=bot, cancel=cancel
@@ -334,7 +338,11 @@ class Tool(Instrument):
 
         if bot.state == "Active" and disp.f9 == "ON":
             if not price:
-                price = self.bids[0][0]
+                try:
+                    price = self.bids[0][0]
+                except IndexError:
+                    self._empty_orderbook(qty=qty, price=price, bot_name=bot.name)
+                    return
 
             return self._place(
                 price=price, qty=qty, side="Buy", move=move, bot=bot, cancel=cancel
@@ -637,11 +645,11 @@ class Tool(Instrument):
 
         return qty
 
-    def _empty_orderbook(self, qty: float, price: float) -> None:
+    def _empty_orderbook(self, qty: float, price: float, bot_name: str) -> None:
         """
         Sends a warning message if the order book is empty.
         """
-        order = f"Buy qty={qty}, price={price}"
+        order = f"qty={qty}, price={price}"
         message = ErrorMessage.EMPTY_ORDERBOOK(ORDER=order, SYMBOL=self.symbol_tuple)
         var.logger.warning(message)
         var.queue_info.put(
@@ -650,6 +658,7 @@ class Tool(Instrument):
                 "message": message,
                 "time": datetime.now(tz=timezone.utc),
                 "warning": "warning",
+                "emi": bot_name,
             }
         )
 

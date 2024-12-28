@@ -1003,7 +1003,8 @@ class Function(WS, Variables):
                     )
                     rest[symbol] += position["position"]
                     rest_volume[symbol] += position["volume"]
-                    rest_sumreal[symbol] += pnl
+                    if not isinstance(pnl, str):
+                        rest_sumreal[symbol] += pnl
                     compare = [
                         position["emi"],
                         position["symbol"],
@@ -1034,7 +1035,8 @@ class Function(WS, Variables):
                         if symbol in rest:
                             position = instrument.currentQty - rest[symbol]
                             volume = instrument.volume - rest_volume[symbol]
-                            pnl = pnl - rest_sumreal[symbol]
+                            if not isinstance(pnl, str):
+                                pnl = pnl - rest_sumreal[symbol]
                         else:
                             position = instrument.currentQty
                             volume = instrument.volume
@@ -1729,9 +1731,15 @@ class Function(WS, Variables):
 
         if symbol in self.symbol_list:
             if qty > 0:
-                price = self.Instrument[symbol].bids[0][0]
+                try:
+                    price = self.Instrument[symbol].bids[0][0]
+                except IndexError:
+                    return "empty_orderbook_bids"
             else:
-                price = self.Instrument[symbol].asks[0][0]
+                try:
+                    price = self.Instrument[symbol].asks[0][0]
+                except IndexError:
+                    return "empty_orderbook_asks"
             res = Function.calculate(
                 self,
                 symbol=symbol,
@@ -1744,7 +1752,7 @@ class Function(WS, Variables):
         else:
             # symbol is not signed, so there is no order book and therefore
             # no position closing price. PNL cannot be calculated.
-            pnl = 0
+            pnl = "symbol_not_signed"
 
         return pnl
 
