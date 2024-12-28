@@ -450,11 +450,15 @@ def call_bot_breakdown():
     The bot strategy is called again when the indicator is triggered.
     """
     for bot_name in Bots.keys():
-        bot = Bots[bot_name]
-        if not bot.error_message:
-            if bot.multitrade == "BreakDown":
-                t = threading.Thread(target=robo.run_bot[bot_name])
-                t.start()
+        if Bots[bot_name].multitrade == "BreakDown":
+            t = threading.Thread(
+                target=call_bot_function,
+                args=(
+                    robo.run_bot[bot_name],
+                    bot_name,
+                ),
+            )
+            t.start()
 
 
 def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
