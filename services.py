@@ -451,9 +451,10 @@ def call_bot_breakdown():
     """
     for bot_name in Bots.keys():
         bot = Bots[bot_name]
-        if bot.multitrade == "BreakDown":
-            t = threading.Thread(target=robo.run_bot[bot_name])
-            t.start()
+        if not bot.error_message:
+            if bot.multitrade == "BreakDown":
+                t = threading.Thread(target=robo.run_bot[bot_name])
+                t.start()
 
 
 def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
