@@ -1009,6 +1009,16 @@ class TreeviewTable(Variables):
             self.tree.bind("<<TreeviewSelect>>", bind)
         self.iid_count = 0
         self.init()
+        if self.hide:
+            self.column_hide = []
+            self.hide_num = 0
+            hide_begin = list(self.tree["columns"])
+            self.column_hide.append(tuple(hide_begin))
+            for num, id_col in enumerate(self.hide, start=1):
+                self.column_hide.append(hide_begin)
+                self.column_hide[num].remove(id_col)
+                hide_begin = list(self.column_hide[num])
+                self.column_hide[num] = tuple(hide_begin)
         if self.multicolor:
             self.setup_color_cell()
             self.tree.bind("<Configure>", self.on_window_resize)
@@ -1039,16 +1049,6 @@ class TreeviewTable(Variables):
                     self.tree.insert("", tk.END, iid=item, values=blank)
                 self.cache[item] = blank
             self.children = self.tree.get_children()
-        if self.hide:
-            self.column_hide = []
-            self.hide_num = 0
-            hide_begin = list(self.tree["columns"])
-            self.column_hide.append(tuple(hide_begin))
-            for num, id_col in enumerate(self.hide, start=1):
-                self.column_hide.append(hide_begin)
-                self.column_hide[num].remove(id_col)
-                hide_begin = list(self.column_hide[num])
-                self.column_hide[num] = tuple(hide_begin)
 
     def init_hierarchical(self):
         self.tree.column("#0", anchor=tk.W)
