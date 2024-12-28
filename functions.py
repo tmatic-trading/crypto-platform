@@ -2256,7 +2256,23 @@ def handler_instrument(event) -> None:
                             options_desk.desk.geometry(
                                 "{}x{}".format(disp.window_width, height)
                             )
-            var.selected_iid[market] = items[0]
+                var.selected_iid[market] = items[0]
+                service.set_dotenv(
+                    dotenv_path=var.preferences,
+                    key="MARKET_SELECTED",
+                    value=market,
+                )
+                str_in = ""
+                for market in var.selected_iid:
+                    if str_in == "":
+                        str_in = var.selected_iid[market]
+                    else:
+                        str_in += "," + var.selected_iid[market]
+                service.set_dotenv(
+                    dotenv_path=var.preferences,
+                    key="SYMBOL_SELECTED",
+                    value=str_in,
+                )
         else:
             market = items[0]
             var.current_market = market
@@ -2468,8 +2484,28 @@ def init_bot_treetable_trades():
 
 
 def clear_tables():
-    current_market = var.current_market
-    symbol = var.symbol
+    if not var.current_market or var.current_market not in var.market_list:
+        if "MARKET_SELECTED" in disp.pref_params:
+            market = disp.pref_params["MARKET_SELECTED"]
+            if market and market in var.market_list:
+                var.current_market = market
+            else:
+                var.current_market = var.market_list[0]
+        else:
+            var.current_market = var.market_list[0]
+        if "SYMBOL_SELECTED" in disp.pref_params:
+            all_markets = disp.pref_params["SYMBOL_SELECTED"].split(",")
+            for item in all_markets:
+                values = item.split("!")
+                if len(values) > 1:
+                    if values[0] not in var.selected_iid:
+                        var.selected_iid[values[0]] = values[0] + "!" + values[1]
+                    if values[0] == var.current_market:
+                        var.symbol = (values[1], var.current_market)
+    else:
+        if var.current_market not in var.market_list:
+            var.current_market = var.market_list[0]
+
     var.lock_display.acquire(True)
     TreeTable.instrument.lines = var.market_list
     TreeTable.instrument.init()
@@ -2485,25 +2521,18 @@ def clear_tables():
     TreeTable.orderbook.init()
     TreeTable.bot_menu.init()
     if "Fake" not in var.market_list:
+        current_market = var.current_market
         for market in var.market_list:
-            ws = Markets[market]
             var.current_market = market
-            Function.display_instruments(ws, "end")
-        if current_market in var.market_list:
-            var.current_market = current_market
-            ws = Markets[var.current_market]
-            if symbol in ws.symbol_list:
-                var.symbol = symbol
-            else:
-                var.symbol = ws.symbol_list[0]
-        else:
-            var.current_market = var.market_list[0]
-            ws = Markets[var.current_market]
-            var.symbol = ws.symbol_list[0]
-        if ws.name in var.selected_iid:
-            iid = var.selected_iid[ws.name]
-        else:
-            iid = ws.name
+            Function.display_instruments(Markets[market], "end")
+        var.current_market = current_market
+        if var.current_market in var.selected_iid:
+            lst = var.selected_iid[var.current_market].split("!")
+            if len(lst) > 1:
+                var.symbol = (lst[1], var.current_market)
+        if var.symbol not in Markets[var.current_market].symbol_list:
+            var.symbol = Markets[var.current_market].symbol_list[0]
+        iid = var.current_market + "!" + var.symbol[0]
         TreeTable.instrument.on_rollup(iid=iid, setup="child")
         update_order_form()
     var.lock_display.release()
