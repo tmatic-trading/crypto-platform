@@ -1328,27 +1328,29 @@ def insert_bot_log(
         True, if only it refills text_bot_log widget when switching between
         bots.
     """
-    if not fill:
-        message = service.format_message(market=market, message=message, tm=tm)
-        Bots[bot_name].log.append((warning, message))
-        path = f"{bot_manager.algo_dir}{bot_name}/bot.log"
-        with open(path, "a") as f:
-            f.write(message)
-    if bot_name == disp.bot_name:
-        num = message.count("\n")
-        disp.text_bot_log.insert("1.0", message)
-        if warning:
-            color = disp.red_color
-        elif warning == "warning":
-            color = disp.warning_color
-        else:
-            color = disp.gray_color
-        if warning:
-            disp.text_bot_log.tag_add(" ", "1.0", f"{num}.1000")
-            disp.text_bot_log.tag_config(" ", foreground=color)
-        if len(Bots[bot_name].log) > disp.text_line_limit:
-            limit = f"{disp.text_line_limit + 1}.0"
-            disp.text_bot_log.delete(limit, "end")
+    bot = Bots[bot_name]
+    if not bot.error_message:
+        if not fill:
+            message = service.format_message(market=market, message=message, tm=tm)
+            bot.log.append((warning, message))
+            path = f"{bot_manager.algo_dir}{bot_name}/bot.log"
+            with open(path, "a") as f:
+                f.write(message)
+        if bot_name == disp.bot_name:
+            num = message.count("\n")
+            disp.text_bot_log.insert("1.0", message)
+            if warning:
+                color = disp.red_color
+            elif warning == "warning":
+                color = disp.warning_color
+            else:
+                color = disp.gray_color
+            if warning:
+                disp.text_bot_log.tag_add(" ", "1.0", f"{num}.1000")
+                disp.text_bot_log.tag_config(" ", foreground=color)
+            if len(bot.log) > disp.text_line_limit:
+                limit = f"{disp.text_line_limit + 1}.0"
+                disp.text_bot_log.delete(limit, "end")
 
 
 def fill_bot_log(bot_name: str) -> None:
