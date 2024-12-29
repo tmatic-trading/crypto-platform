@@ -6,6 +6,11 @@ class Message(str, Enum):
         "Subscription to {SYMBOL}. Waiting for confirmation from {MARKET}."
     )
     SUBSCRIPTION_ADDED = "Added subscription to {SYMBOL}."
+    UNCLOSED_POSITION_FOUND = (
+        "An open position {POSITION} for {SYMBOL} was found in the database, "
+        + "but there is no subscription for {SYMBOL}. The subscription will "
+        + "be added."
+    )
     UNSUBSCRIPTION_WAITING = (
         "Unsubscribe from {SYMBOL}. Waiting for confirmation from {MARKET}."
     )

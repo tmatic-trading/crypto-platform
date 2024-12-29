@@ -136,48 +136,72 @@ def load_bots() -> None:
     # Search for unclosed positions. If an unclosed position belongs to a bot
     # that is not in the "robots" table, EMI becomes "". If the SYMBOL of the
     # unclosed position is not subscribed, it is added to the subscription.
-    qwr = functions.SelectDatabase.QWR.format(DATABASE_TABLE=var.database_table)
+    
     var.lock.acquire(True)
-    data = service.select_database(qwr)
-    subscriptions = set()
-    for value in data:
-        if value["MARKET"] in var.market_list:
-            ws = Markets[value["MARKET"]]
-            functions.Function.add_symbol(
-                ws,
-                symb=value["SYMBOL"],
-                ticker=value["TICKER"],
-                category=value["CATEGORY"],
-            )
-            symbol = (value["SYMBOL"], ws.name)
-            instrument = ws.Instrument[symbol]
-            position = round(value["POS"], instrument.precision)
-            if position != 0:
-                if symbol not in ws.symbol_list:
-                    if instrument.state == "Open":
-                        subscriptions.add(symbol)
-                        message = Message.SUBSCRIPTION_ADDED.format(SYMBOL=symbol[0])
-                        var.logger.info(message)
-                    else:
-                        message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
-                            SYMBOL=symbol, STATE=instrument.state
-                        )
-                        _put_message(market="", message=message, warning="error")
-                name = value["EMI"]
-                if name not in Bots.keys():
-                    if value["SYMBOL"] != name and name != "":
-                        qwr = (
-                            "select ID, EMI, SYMBOL from %s where side <> 'Fund' and EMI = '%s'"
-                            % (var.database_table, name)
-                        )
-                        data = service.select_database(qwr)
-                        for row in data:
-                            qwr = "update %s set EMI = '%s' where ID = %s;" % (
-                                var.database_table,
-                                "",
-                                row["ID"],
+    update = True
+    update_symbol = dict()
+    while update:
+        update = False
+        qwr = functions.SelectDatabase.QWR.format(DATABASE_TABLE=var.database_table)
+        data = service.select_database(qwr)
+        subscriptions = set()
+        update_symbol = dict()
+        for value in data:
+            if value["MARKET"] in var.market_list:
+                ws = Markets[value["MARKET"]]
+                functions.Function.add_symbol(
+                    ws,
+                    symb=value["SYMBOL"],
+                    ticker=value["TICKER"],
+                    category=value["CATEGORY"],
+                )
+                symbol = (value["SYMBOL"], ws.name)
+                instrument = ws.Instrument[symbol]
+                position = round(value["POS"], instrument.precision)
+                if position != 0:
+                    name = value["EMI"]
+                    update_symbol[symbol] = {"position": position}
+                    if name not in Bots.keys():
+                        if name != "":
+                            qwr = (
+                                "select ID, EMI, SYMBOL from %s where side <> 'Fund' and EMI = '%s'"
+                                % (var.database_table, name)
                             )
-                            service.update_database(query=qwr)
+                            data = service.select_database(qwr)
+                            for row in data:
+                                qwr = "update %s set EMI = '%s' where ID = %s;" % (
+                                    var.database_table,
+                                    "",
+                                    row["ID"],
+                                )
+                                service.update_database(query=qwr)
+                            update = True
+
+    # Adding subscriptions to unclosed positions found in the database (if any).
+
+    for symbol, value in update_symbol.items():
+        ws = Markets[symbol[1]]
+        instrument = ws.Instrument[symbol]
+        if value["position"] != 0:
+            if symbol not in ws.symbol_list:
+                tm = datetime.now(tz=timezone.utc)
+                if (
+                    instrument.state == "Open"
+                    and isinstance(instrument.expire, datetime)
+                    and instrument.expire > tm
+                ) or instrument.expire == "Perpetual":
+                    subscriptions.add(symbol)
+                    message = Message.UNCLOSED_POSITION_FOUND.format(
+                        POSITION=value["position"], SYMBOL=symbol[0]
+                    )
+                    _put_message(
+                        market="", message=message, warning="warning"
+                    )
+                else:
+                    message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
+                        SYMBOL=symbol, STATE=instrument.state
+                    )
+                    _put_message(market="", message=message, warning=True)
     var.lock.release()
 
     add_subscription(subscriptions=subscriptions)
