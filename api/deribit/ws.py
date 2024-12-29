@@ -19,6 +19,10 @@ from services import display_exception
 from .api_auth import API_auth
 
 
+from api.errors import Error
+from .error import DeribitWsRequestError
+
+
 class Deribit(Variables):
     class Account(metaclass=MetaAccount):
         pass
@@ -232,7 +236,6 @@ class Deribit(Variables):
         )
         self._put_message(message=message)
         self.subscriptions.append(channels)
-
         self.__subscribe_channels(
             type="public",
             channels=channels,
@@ -295,9 +298,18 @@ class Deribit(Variables):
                     if message["params"]["type"] == "test_request":
                         self.__heartbeat_response()
             elif "error" in message:
-                id = message["id"]
-                if id in self.response:
-                    self.response[id]["result"] = {"error": message["error"]}
+                res = {"error": message["error"]}
+                if "id" in message:
+                    if message["id"] in self.response:
+                        self.response[id]["result"] = res
+                else:
+                    Error.handler(
+                            self,
+                            exception=DeribitWsRequestError(response=res),
+                            response=res,
+                            verb="request via ws",
+                            path="",
+                        )
             self.pinging = datetime.now(tz=timezone.utc)
         except Exception as exception:
             display_exception(exception)

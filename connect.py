@@ -1,6 +1,7 @@
 import threading
 from datetime import datetime, timedelta, timezone
 from time import sleep
+from collections import OrderedDict
 
 import botinit.init as botinit
 import common.init as common
@@ -141,6 +142,7 @@ def setup_market(ws: Markets, reload=False):
 
     ws.logNumFatal = "SETUP"
     ws.api_is_active = False
+    ws.instrument_index = OrderedDict()
     MetaInstrument.market[ws.name] = dict()
     for symbol in MetaTool.objects.copy().keys():
         if symbol[1] == ws.name:

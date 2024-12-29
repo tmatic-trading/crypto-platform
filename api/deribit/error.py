@@ -26,6 +26,9 @@ class ErrorStatus(Enum):
         10066: "too_many_concurrent_requests",
         13780: "move_positions_over_limit",
     }
+    FATAL = {
+        -32600: "request entity too large",
+    }
     BLOCK = {
         11098: "account_locked",
         12003: "login_over_limit",
@@ -148,7 +151,6 @@ class ErrorStatus(Enum):
         13902: "mass_quotes_disabled",
         13903: "too_many_quotes",
         -32602: "Invalid params",
-        -32600: "request entity too large",
         -32700: "Parse error",
     }
     CANCEL = {
