@@ -682,9 +682,11 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
             index[category][currency][option_series]["PUTS"] = list()
             index[category][currency][option_series]["sort"] = option_series
         if parts[-1] == "C":
-            index[category][currency][option_series]["CALLS"].append(symb)
+            if symb not in index[category][currency][option_series]["CALLS"]:
+                index[category][currency][option_series]["CALLS"].append(symb)
         else:
-            index[category][currency][option_series]["PUTS"].append(symb)
+            if symb not in index[category][currency][option_series]["PUTS"]:
+                index[category][currency][option_series]["PUTS"].append(symb)
 
         # Add a series of options.
 
