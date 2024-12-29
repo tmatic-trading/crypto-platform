@@ -264,7 +264,7 @@ If the program does not start or a warning or error appears, check the logfile.l
         </tr>
         <tr>
             <td>Empty trading history</td>
-            <td>This warning may appear when a trade history was requested, the answer was correct, but it was an empty list. The warning may appear: <b>1.</b> You have a new account and there is no previous trading activity. <b>2.</b> Normally after loading the trading history, the history.ini file contains the time of the last transaction. When you restart Tmatic, you receive this transaction from the exchange again, and the response is not empty. If you manually changed the entry in histori.ini to a time later than the time of the last transaction, this warning appears.</td>
+            <td>This warning may appear when a trade history was requested, the answer was correct, but it was an empty list. The warning may appear: 1. You have a new account and there is no previous trading activity. 2. Normally after loading the trading history, the history.ini file contains the time of the last transaction. When you restart Tmatic, you receive this transaction from the exchange again, and the response is not empty. If you manually changed the entry in histori.ini to a time later than the time of the last transaction, this warning appears.</td>
         </tr>
         <tr>
             <td>SSL: CERTIFICATE_VERIFY_FAILED</td>
@@ -281,6 +281,21 @@ If the program does not start or a warning or error appears, check the logfile.l
             import certifi<br>
             print(certifi.where())<br><br>
             This will give you the path to the cacert.pem file. Open the file with the certificate that you downloaded from the browser and copy all the lines from it to the end of the cacert.pem file.</td>
+        </tr>
+        <tr>
+            <td>ImportError: No module named 'tkinter'</td>
+            <td>For Python 3, tkinter should already be included in your Python installation. However, if it is not available, you can install it in the terminal or command prompt as described below:<br><br>
+            <b>Linux</b><br><br>
+            Debian based distros:<br><br>
+            sudo apt-get install python3-tk<br><br>
+            RPM based distros:<br><br>
+            sudo yum install python3-tkinter<br><br>
+            <b>MacOS</b><br><br>
+            brew install python-tk<br><br>
+            <b>Windows</b><br><br>
+            Download the latest Python version from python.org.<br>
+            During installation, ensure the “Tcl/Tk and IDLE” option is selected.
+            </td>
         </tr>
     </tbody>
 </table>
