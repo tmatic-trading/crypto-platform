@@ -312,6 +312,8 @@ class Agent(Bybit):
                         if row["execType"] == "Funding":
                             if row["side"] == "Sell":
                                 row["lastQty"] = -row["lastQty"]
+                        elif row["execType"] == "Settle":
+                            row["execType"] = "Delivery"
                         row["execFee"] = float(row["execFee"])
                     trade_history += res
                     success[num] = ""  # success
