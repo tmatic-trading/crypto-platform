@@ -1339,12 +1339,12 @@ def insert_bot_log(
         if bot_name == disp.bot_name:
             num = message.count("\n")
             disp.text_bot_log.insert("1.0", message)
-            if warning:
-                color = disp.red_color
-            elif warning == "warning":
+            if warning == "warning":
                 color = disp.warning_color
+            elif warning:
+                color = disp.red_color
             else:
-                color = disp.gray_color
+                color = disp.fg_color
             if warning:
                 disp.text_bot_log.tag_add(" ", "1.0", f"{num}.1000")
                 disp.text_bot_log.tag_config(" ", foreground=color)
