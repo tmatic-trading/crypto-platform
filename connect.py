@@ -45,6 +45,8 @@ def setup(reload=False):
     threads = []
     for name in var.market_list.copy():
         ws = Markets[name]
+        ws.instrument_index = OrderedDict()
+        MetaInstrument.market[ws.name] = dict()
         Setup.variables(ws)
         ws.setup_session()
         if name in var.market_list:
@@ -142,8 +144,6 @@ def setup_market(ws: Markets, reload=False):
 
     ws.logNumFatal = "SETUP"
     ws.api_is_active = False
-    ws.instrument_index = OrderedDict()
-    MetaInstrument.market[ws.name] = dict()
     for symbol in MetaTool.objects.copy().keys():
         if symbol[1] == ws.name:
             del MetaTool.objects[symbol]
