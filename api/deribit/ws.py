@@ -9,6 +9,7 @@ import requests
 import websocket
 
 import services as service
+from api.errors import Error
 from api.init import Setup
 from api.variables import Variables
 from common.data import MetaAccount, MetaInstrument, MetaResult
@@ -17,9 +18,6 @@ from display.messages import Message
 from services import display_exception
 
 from .api_auth import API_auth
-
-
-from api.errors import Error
 from .error import DeribitWsRequestError
 
 
@@ -304,12 +302,12 @@ class Deribit(Variables):
                         self.response[id]["result"] = res
                 else:
                     Error.handler(
-                            self,
-                            exception=DeribitWsRequestError(response=res),
-                            response=res,
-                            verb="request via ws",
-                            path="",
-                        )
+                        self,
+                        exception=DeribitWsRequestError(response=res),
+                        response=res,
+                        verb="request via ws",
+                        path="",
+                    )
             self.pinging = datetime.now(tz=timezone.utc)
         except Exception as exception:
             display_exception(exception)

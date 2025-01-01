@@ -535,10 +535,10 @@ def format_message(market: str, message: str, tm=None) -> str:
     Formats the message in the required format.
     """
     if market:
-        market += ": "
+        market = "-" + market + "- "
     if not tm:
         tm = datetime.now(tz=timezone.utc)
-    text = tm.strftime("%Y-%m-%d %H:%M:%S.%f")[:23] + "  " + market + message + "\n"
+    text = tm.strftime("%Y-%m-%d %H:%M:%S.%f")[:23] + " " + market + message + "\n"
     if isinstance(text, tuple):
         text = text[0]
 

@@ -3024,6 +3024,56 @@ def clear_klines():
         Markets[market].klines = dict()
 
 
+def update_instruments():
+    """
+    Update instruments of all connected exchanges. If new instruments appear,
+    they will be added to the Instrument array for each exchange. The
+    instrument_index array will also be updated, where all expired
+    instruments will be removed.
+    """
+    threads = []
+    success = {}
+
+    def get_instruments(market, ws):
+        nonlocal success
+        try:
+            error = WS.get_active_instruments(ws)
+            if error:
+                if error == "FATAL":
+                    message = (
+                        market
+                        + ": An unexpected error occurred while loading instruments."
+                    )
+                else:
+                    message = error
+                _put_message(market=market, message=message, warning=True)
+                success[market] = error
+        except Exception as exception:
+            message = service.display_exception(exception, display=False)
+            _put_message(market=market, message=message, warning=True)
+            success[market] = error
+
+    for market in var.market_list:
+        ws = Markets[market]
+        success[market] = ""
+        t = threading.Thread(target=get_instruments, args=(market, ws))
+        threads.append(t)
+        t.start()
+    [thread.join() for thread in threads]
+    count = 0
+    for market, error in success.items():
+        if error:
+            break
+        count += len(Markets[market].Instrument.get_keys())
+    else:
+        message = (
+            "The instruments have been updated successfully. Total of "
+            + str(count)
+            + " instruments."
+        )
+        _put_message(market="", message=message)
+
+
 TreeTable.orderbook = TreeviewTable(
     frame=disp.frame_orderbook,
     name="orderbook",

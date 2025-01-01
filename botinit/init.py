@@ -136,7 +136,7 @@ def load_bots() -> None:
     # Search for unclosed positions. If an unclosed position belongs to a bot
     # that is not in the "robots" table, EMI becomes "". If the SYMBOL of the
     # unclosed position is not subscribed, it is added to the subscription.
-    
+
     var.lock.acquire(True)
     update = True
     update_symbol = dict()
@@ -193,15 +193,11 @@ def load_bots() -> None:
                     subscriptions.add(symbol)
                     message = Message.UNCLOSED_POSITION_FOUND.format(
                         POSITION=functions.Function.volume(
-                            ws,
-                            value["position"],
-                            symbol
+                            ws, value["position"], symbol
                         ),
-                        SYMBOL=symbol[0]
+                        SYMBOL=symbol[0],
                     )
-                    _put_message(
-                        market="", message=message, warning="warning"
-                    )
+                    _put_message(market="", message=message, warning="warning")
                 else:
                     message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
                         SYMBOL=symbol, STATE=instrument.state

@@ -125,6 +125,7 @@ class Agent(Bitmex):
                     }
                 )
                 return
+
         # myMultiplier
 
         if values["isInverse"]:  # Inverse
@@ -202,8 +203,6 @@ class Agent(Bitmex):
             instrument.expire = "Perpetual"
         if "fundingRate" in values:
             instrument.fundingRate = values["fundingRate"] * 100
-        instrument.asks = [[0, 0]]
-        instrument.bids = [[0, 0]]
         instrument.baseCoin = values["underlying"]
         instrument.quoteCoin = values["quoteCurrency"]
         instrument.valueOfOneContract = valueOfOneContract

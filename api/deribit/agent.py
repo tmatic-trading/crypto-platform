@@ -138,8 +138,6 @@ class Agent(Deribit):
             instrument.unrealisedPnl = "-"
         if category == "option":
             instrument.fundingRate = "-"
-        instrument.asks = [[0, 0]]
-        instrument.bids = [[0, 0]]
         instrument.valueOfOneContract = 1
         instrument.makerFee = values["maker_commission"]
         instrument.takerFee = values["taker_commission"]

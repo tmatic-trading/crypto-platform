@@ -99,7 +99,7 @@ class Bot(BotData):
                     orderID=order["orderID"],
                     symbol=order["symbol"],
                     orderQty=order["orderQty"],
-                    clOrdID=clOrdID, 
+                    clOrdID=clOrdID,
                 )
                 if isinstance(res, dict):
                     return clOrdID
@@ -226,11 +226,11 @@ class Tool(Instrument):
                             orderID=order["orderID"],
                             symbol=order["symbol"],
                             orderQty=order["orderQty"],
-                            clOrdID=clOrdID, 
+                            clOrdID=clOrdID,
                         )
         else:
             self._empty_orderbook(qty=qty, price=price, bot_name=bot.name)
-        if cancel and qty != 0:
+        if cancel:
             if side == "Sell":
                 self._remove_orders(orders=var.orders[bot.name], side="Buy")
             elif side == "Buy":
