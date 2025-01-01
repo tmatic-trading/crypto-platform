@@ -643,6 +643,39 @@ def unexpected_error(ws) -> str:
     return ws.logNumFatal
 
 
+def set_option_series(symb: str):
+    parts = symb.split("-")
+    option_series = "-".join(parts[:2]) + var._series
+    if parts[-1] == "C":
+        option_type = "CALLS"
+    else:
+        option_type = "PUTS"
+
+    return option_type, option_series
+
+
+def remove_from_instrument_index(index: OrderedDict, instrument: Instrument) -> None:
+    """
+    Removing an expired instrument from the instrument menu.
+    """
+    symb = instrument.symbol
+    currency = instrument.settlCurrency[0]
+    if "option" in instrument.category and "combo" not in instrument.category:
+        option_type, option_series = set_option_series(symb=symb)
+        lst = index[instrument.category][currency][option_series][option_type]
+        lst.remove(symb)
+        if not lst:
+            del index[instrument.category][currency][option_series][option_type]
+            if len(index[instrument.category][currency][option_series]) == 1:
+                del index[instrument.category][currency][option_series]
+    else:
+        del index[instrument.category][currency][symb]
+    if not index[instrument.category][currency]:
+        del index[instrument.category][currency]
+        if not index[instrument.category]:
+            del index[instrument.category]
+
+
 def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dict:
     """
     Adds an instrument to the instrument_index dictionary.
@@ -674,19 +707,14 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
         index[category][currency] = OrderedDict()
     symb = instrument.symbol
     if "option" in category and "combo" not in category:
-        parts = symb.split("-")
-        option_series = "-".join(parts[:2]) + var._series
+        option_type, option_series = set_option_series(symb=symb)
         if option_series not in index[category][currency]:
             index[category][currency][option_series] = OrderedDict()
             index[category][currency][option_series]["CALLS"] = list()
             index[category][currency][option_series]["PUTS"] = list()
             index[category][currency][option_series]["sort"] = option_series
-        if parts[-1] == "C":
-            if symb not in index[category][currency][option_series]["CALLS"]:
-                index[category][currency][option_series]["CALLS"].append(symb)
-        else:
-            if symb not in index[category][currency][option_series]["PUTS"]:
-                index[category][currency][option_series]["PUTS"].append(symb)
+        if symb not in index[category][currency][option_series][option_type]:
+            index[category][currency][option_series][option_type].append(symb)
 
         # Add a series of options.
 

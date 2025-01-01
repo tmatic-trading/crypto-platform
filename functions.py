@@ -3034,7 +3034,7 @@ def update_instruments():
     threads = []
     success = {}
 
-    def get_instruments(market, ws):
+    def get_instruments(market: str, ws: Markets):
         nonlocal success
         try:
             error = WS.get_active_instruments(ws)
@@ -3053,6 +3053,26 @@ def update_instruments():
             _put_message(market=market, message=message, warning=True)
             success[market] = error
 
+    def check_instruments(market: str):
+        ws = Markets[market]
+        symbols = ws.Instrument.get_keys()
+        tm = datetime.now(tz=timezone.utc)
+        index = ws.instrument_index
+        for symbol in symbols:
+            instrument = ws.Instrument[symbol]
+            currency = instrument.settlCurrency[0]
+            if instrument.expire != "Perpetual":
+                if instrument.expire < tm:
+                    if instrument.state == "Open":
+                        instrument.state = "Expired"
+                        if instrument.category in index:
+                            cat = index[instrument.category]
+                            if currency in cat:
+                                if symbol[0] in cat[currency]:
+                                    service.remove_from_instrument_index(
+                                        index=index, instrument=instrument
+                                    )
+
     for market in var.market_list:
         ws = Markets[market]
         success[market] = ""
@@ -3065,6 +3085,7 @@ def update_instruments():
         if error:
             break
         count += len(Markets[market].Instrument.get_keys())
+        check_instruments(market=market)
     else:
         message = (
             "The instruments have been updated successfully. Total of "

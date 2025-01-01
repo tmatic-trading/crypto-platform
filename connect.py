@@ -338,7 +338,6 @@ def clear_params():
     var.market_list = []
     var.orders = dict()
     MetaInstrument.market = dict()
-    MetaTool
 
 
 def terminal_reload_thread() -> None:
