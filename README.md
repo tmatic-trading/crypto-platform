@@ -280,7 +280,7 @@ If the program does not start or a warning or error appears, check the logfile.l
             7. Open Terminal, then type python3 (or python for Windows OS), press ENTER, then run the script:<br><br>
             import certifi<br>
             print(certifi.where())<br><br>
-            This will give you the path to the cacert.pem file. Open the file with the certificate that you've just downloaded from the browser and copy all the lines from it to the end of the cacert.pem file. Save cacert.pem and restart Tmatic</td>
+            This will give you the path to the cacert.pem file. Open the file with the certificate that you've just downloaded from the browser and copy all the lines from it to the end of the cacert.pem file. Save cacert.pem and restart Tmatic.</td>
         </tr>
         <tr>
             <td>ImportError: No module named 'tkinter'</td>
