@@ -272,15 +272,15 @@ If the program does not start or a warning or error appears, check the logfile.l
             Solution:<br><br>
             For example, you are trying to connect to Bybit testnet.<br><br>
             1. Get the http address from the .env.Settings file https://api-testnet.bybit.com/v5<br>
-            2. Open the page in your internet browser, such as Google Chrome.<br>
-            3. Click the "View site information" button, which is located before the address bar.<br>
-            4. Click the link with the lock icon "Show connection details".<br>
-            5. Click the last line "Show certificate".<br>
-            6. In the window that opens, click the second tab "Details", then click "Export" in the lower right corner. Save the certificate by selecting the file type as a certificate chain.<br>
-            7. In the folder where Tmatic is installed, run the script:<br><br>
+            2. Open the page in your internet browser, such as Google Chrome. You will probably see “File not found.” message.<br>
+            3. Click the "View site information" icon, which is located before the address bar.<br>
+            4. Choose the "Show connection details" line which normally begins with the lock icon displaying "Connection is secure".<br>
+            5. Click the last line "Show certificate" normally displaying "Sertificate is valid".<br>
+            6. In the window that opens, click the second tab "Details", then click "Export" in the lower right corner. Save the certificate by selecting the file type as a "certificate chain".<br>
+            7. Open Terminal, then type python3 (or python for Windows OS), press ENTER, then run the script:<br><br>
             import certifi<br>
             print(certifi.where())<br><br>
-            This will give you the path to the cacert.pem file. Open the file with the certificate that you downloaded from the browser and copy all the lines from it to the end of the cacert.pem file.</td>
+            This will give you the path to the cacert.pem file. Open the file with the certificate that you've just downloaded from the browser and copy all the lines from it to the end of the cacert.pem file. Save cacert.pem and restart Tmatic.</td>
         </tr>
         <tr>
             <td>ImportError: No module named 'tkinter'</td>
