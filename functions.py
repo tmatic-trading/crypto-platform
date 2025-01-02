@@ -2551,45 +2551,11 @@ def run_bots(bot_list: list) -> None:
         t.start()
 
 
-'''def target_time(timeframe_sec):
+"""def target_time(timeframe_sec):
     now = datetime.now(tz=timezone.utc).timestamp()
     target_tm = now + (timeframe_sec - now % timeframe_sec)
 
-    return target_tm
-
-
-def bot_in_thread(bot_name: str, target_tm: float, bot: BotData):
-    """
-    Bot entry point
-    """
-    while var.bot_thread_active[bot_name]:
-        tm = time.time()
-        if tm > target_tm:
-            target_tm = target_time(bot.timefr_sec)
-            bot.timefr_current = bot.timefr
-            if disp.f9 == "ON":
-                if bot.state == "Active":
-                    if not bot.error_message:
-                        if callable(robo.run[bot_name]):
-                            # Calls strategy function in the strategy.py file
-                            print("____________call strategy")
-                            robo.run[bot_name]()
-        time.sleep(1 - time.time() % 1)
-
-
-def activate_bot_thread(bot_name: str) -> None:
-    var.bot_thread_active[bot_name] = True
-    bot = Bots[bot_name]
-    target_tm = target_time(bot.timefr_sec)
-    t = threading.Thread(
-        target=bot_in_thread,
-        args=(
-            bot_name,
-            target_tm,
-            bot,
-        ),
-    )
-    t.start()'''
+    return target_tm"""
 
 
 def download_kline_data(
@@ -3033,6 +2999,7 @@ def update_instruments():
     """
     threads = []
     success = {}
+    removed, added, instruments = [], [], {}
 
     def get_instruments(market: str, ws: Markets):
         nonlocal success
@@ -3048,6 +3015,8 @@ def update_instruments():
                     message = error
                 _put_message(market=market, message=message, warning=True)
                 success[market] = error
+                return
+
         except Exception as exception:
             message = service.display_exception(exception, display=False)
             _put_message(market=market, message=message, warning=True)
@@ -3069,13 +3038,21 @@ def update_instruments():
                             cat = index[instrument.category]
                             if currency in cat:
                                 if symbol[0] in cat[currency]:
+                                    removed.append(symbol)
                                     service.remove_from_instrument_index(
                                         index=index, instrument=instrument
                                     )
 
+    def format_list(data):
+        lst = ""
+        for symbol in added:
+            lst += "    " + str(symbol) + "\n"
+        return lst
+
     for market in var.market_list:
         ws = Markets[market]
         success[market] = ""
+        instruments[market] = set(ws.Instrument.get_keys())
         t = threading.Thread(target=get_instruments, args=(market, ws))
         threads.append(t)
         t.start()
@@ -3084,7 +3061,11 @@ def update_instruments():
     for market, error in success.items():
         if error:
             break
-        count += len(Markets[market].Instrument.get_keys())
+        instr = Markets[market].Instrument.get_keys()
+        count += len(instr)
+        for symbol in instr:
+            if symbol not in instruments[market]:
+                added.append(symbol)
         check_instruments(market=market)
     else:
         message = (
@@ -3093,6 +3074,17 @@ def update_instruments():
             + " instruments."
         )
         _put_message(market="", message=message)
+        message = ""
+        if added:
+            lst = format_list(added)
+            message += "Added instruments:\n" + lst + "\n"
+        if removed:
+            lst = format_list(removed)
+            message += "Removed instruments:\n" + lst
+        if message:
+            warning_window(
+                message=message, width=500, height=300, title="Updating instruments"
+            )
 
 
 TreeTable.orderbook = TreeviewTable(

@@ -474,6 +474,8 @@ class Variables:
             on_f3_reload()
         elif value == "<F8> Settings":
             Variables.on_settings()
+        elif value == "- Update instruments":
+            var.queue_info.put({"update"})
 
     menu_button = CustomButton(
         root,
@@ -486,6 +488,7 @@ class Variables:
             "<F9> Trading ON",
             "<F8> Settings",
             "<F7> Bot Menu",
+            "- Update instruments",
             "<F3> Reload All",
         ],  # , "Settings", "About"],
     )

@@ -235,21 +235,26 @@ def reload_market(ws: Markets):
 def refresh() -> None:
     while not var.queue_info.empty():
         info = var.queue_info.get()
-        if "bot_log" not in info:
-            info_display(
-                market=info["market"],
-                message=info["message"],
-                warning=info["warning"],
-                tm=info["time"],
-            )
-        if "emi" in info and info["emi"] in Bots.keys():
-            insert_bot_log(
-                market=info["market"],
-                bot_name=info["emi"],
-                message=info["message"],
-                warning=info["warning"],
-                tm=info["time"],
-            )
+        if "update" in info:
+            if not var.reloading:
+                t = threading.Thread(target=functions.update_instruments)
+                t.start()
+        else:
+            if "bot_log" not in info:
+                info_display(
+                    market=info["market"],
+                    message=info["message"],
+                    warning=info["warning"],
+                    tm=info["time"],
+                )
+            if "emi" in info and info["emi"] in Bots.keys():
+                insert_bot_log(
+                    market=info["market"],
+                    bot_name=info["emi"],
+                    message=info["message"],
+                    warning=info["warning"],
+                    tm=info["time"],
+                )
     if not var.reloading:
         utc = datetime.now(tz=timezone.utc)
         if disp.f3:
