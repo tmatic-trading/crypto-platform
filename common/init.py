@@ -2,7 +2,10 @@ import os
 import sqlite3
 import threading
 from datetime import datetime, timezone
+from pathlib import Path
 from sqlite3 import Error
+
+from dotenv import dotenv_values, set_key
 
 import services as service
 from api.api import WS, Markets
@@ -17,33 +20,9 @@ var.working_directory = os.path.abspath(os.getcwd())
 
 
 class Init(WS, Variables):
-    file_lock = threading.Lock()
-
     def clear_params(self: Markets) -> None:
         self.connect_count += 1
         self.account_disp = "Acc." + str(self.user_id)
-
-    def save_history_file(self: Markets, time: datetime):
-        Init.file_lock.acquire(True)
-        with open("history.ini", "r") as f:
-            lst = list(f)
-        saved = ""
-        with open("history.ini", "w") as f:
-            for row in lst:
-                row = row.replace("\n", "")
-                res = row.split()
-                if res:
-                    if res[0] == self.name:
-                        row = res[0] + " " + str(time)[:19]
-                        if not saved:
-                            f.write(row + "\n")
-                        saved = "success"
-                    else:
-                        f.write(row + "\n")
-            if not saved:
-                row = self.name + " " + str(time)[:19]
-                f.write(row + "\n")
-        Init.file_lock.release()
 
     def load_trading_history(self: Markets) -> None:
         """
@@ -82,52 +61,70 @@ class Init(WS, Variables):
         "execFee": float            Executed trading fee
         """
         tm = datetime.now(tz=timezone.utc)
-        try:
-            with open("history.ini", "r") as f:
-                lst = list(f)
-        except FileNotFoundError:
-            var.logger.warning(
-                "The history.ini not found. The history.ini file has been created."
-            )
-            with open("history.ini", "w"):
-                pass
-            lst = list()
-        last_history_time = ""
-        for row in lst:
-            row = row.replace("\n", "")
-            res = row.split()
-            if res:
-                if res[0] == self.name:
-                    _time = " ".join(res[1:])
-                    break
+        if var.env["TESTNET"] == "YES":
+            his = ".env.History.testnet"
         else:
-            _time = "2000-01-01 00:0:00"
+            his = ".env.History"
+        his_file = Path(his)
+        _time = "2000-01-01 00:0:00"
+        dotenv_data = dotenv_values(his_file)
+        tm = datetime.now(tz=timezone.utc)
+        print(dotenv_data)
+        if not dotenv_data:
+            var.logger.warning(
+                "The " + his + " not found. The " + his + " file has been created."
+            )
+            his_file.touch(mode=0o600)
+        if self.name not in dotenv_data:
             var.logger.warning(
                 "No time found for "
                 + self.name
-                + " from history.ini. Assigned time: "
+                + " from "
+                + his
+                + ". Assigned time: "
                 + _time
             )
+            set_key(
+                dotenv_path=his_file,
+                key_to_set=self.name,
+                value_to_set=_time,
+            )
+            dotenv_data = dotenv_values(his_file)
         try:
-            last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+            last_history_time = datetime.strptime(
+                dotenv_data[self.name], "%Y-%m-%d %H:%M:%S"
+            )
         except ValueError:
-            _time = "2000-01-01 00:0:00"
             var.logger.warning(
                 "Time format for "
                 + self.name
-                + " from the history.ini is incorrect. Assigned time: "
+                + " from the "
+                + his
+                + " is incorrect. Assigned time: "
                 + _time
             )
             last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+            set_key(
+                dotenv_path=his_file,
+                key_to_set=self.name,
+                value_to_set=_time,
+            )
         last_history_time = last_history_time.replace(tzinfo=timezone.utc)
         if last_history_time > tm:
-            _time = "2000-01-01 00:0:00"
             var.logger.warning(
-                "The time in the history.ini file is greater than the current time. Assigned time: "
+                "The time in the "
+                + his
+                + " file is greater than the current time. Assigned time: "
                 + _time
+            )
+            set_key(
+                dotenv_path=his_file,
+                key_to_set=self.name,
+                value_to_set=_time,
             )
             last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
             last_history_time = last_history_time.replace(tzinfo=timezone.utc)
+
         count_val = 500
         history = WS.trading_history(
             self, histCount=count_val, start_time=last_history_time
@@ -150,7 +147,11 @@ class Init(WS, Variables):
                             Function.transaction(self, row=row, info="History")
                     last_history_time = his_data[-1]["transactTime"]
                     if not self.logNumFatal:
-                        Init.save_history_file(self, time=last_history_time)
+                        set_key(
+                            dotenv_path=his,
+                            key_to_set=self.name,
+                            value_to_set=str(last_history_time)[:19],
+                        )
                     if history["length"] < count_val:
                         return "success"
                     history = WS.trading_history(

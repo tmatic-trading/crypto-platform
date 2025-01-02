@@ -264,7 +264,7 @@ If the program does not start or a warning or error appears, check the logfile.l
         </tr>
         <tr>
             <td>Empty trading history</td>
-            <td>This warning may appear when a trade history was requested, the answer was correct, but it was an empty list. The warning may appear: 1. You have a new account and there is no previous trading activity. 2. Normally after loading the trading history, the history.ini file contains the time of the last transaction. When you restart Tmatic, you receive this transaction from the exchange again, and the response is not empty. If you manually changed the entry in histori.ini to a time later than the time of the last transaction, this warning appears.</td>
+            <td>This warning may appear when a trade history was requested, the answer was correct, but it was an empty list. The warning may appear: 1. You have a new account and there is no previous trading activity. 2. Normally after loading the trading history, the env.History (env.History.testnet) file contains the time of the last transaction. When you restart Tmatic, you receive this transaction from the exchange again, and the response is not empty. If you manually changed the entry in histori.ini to a time later than the time of the last transaction, this warning appears.</td>
         </tr>
         <tr>
             <td>SSL: CERTIFICATE_VERIFY_FAILED</td>
@@ -302,9 +302,9 @@ If the program does not start or a warning or error appears, check the logfile.l
 
 ## Trade History
 
-Tmatic stores all your trading activity, including information on trades, financing and deliveries. Manage the ```history.ini``` file to set the date from which the history should be loaded. After that, the date of the last transaction is saved. You can reset the date in ```history.ini``` at any time you need. Each record in the database is unique, and no trade can be written to the database twice.
+Tmatic stores all your trading activity, including information on trades, financing and deliveries. Manage the ```env.History (env.History.testnet)``` file to set the date from which the history should be loaded. After that, the date of the last transaction is saved. You can reset the date in ```env.History (env.History.testnet)``` at any time you need. Each record in the database is unique, and no trade can be written to the database twice.
 
-Check the ```history.ini``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite `real_trade` (`test_trade`) table.
+Check the ```env.History (env.History.testnet)``` file which keeps the date and time of the last transaction in the format: ```year-month-day hours:minutes:seconds``` (example ```2023-12-08 12:53:36```). You can use any date and time depending on your needs. For instance, if you want to be guaranteed to download all the transactions that were made on your current account, simply specify the year, e.g. 2000, any month, day and time. Thus, the program will download all transactions for your account starting from the very beginning. Transactions and funding will be recorded to the database in the SQLite `real_trade` (`test_trade`) table.
 
 > [!NOTE]
 > Please keep in mind that **Bitmex has removed trade history prior to 2020 for [testnet.bitmex.com](https://testnet.bitmex.com) test accounts**, so if your trading activity on [testnet.bitmex.com](https://testnet.bitmex.com) was prior to 2020, you will not be able to get your entire trade history. **Bybit only supports the last two years of trading history**. Its API allows trading history to be downloaded in 7-day chunks, so retrieving data for a long period may take time.
