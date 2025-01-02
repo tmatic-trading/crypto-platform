@@ -553,7 +553,7 @@ class Agent(Bybit):
                         account.orderMargin = total
                     if "totalPositionIM" in coin:
                         account.positionMagrin = float(coin["totalPositionIM"])
-                    if "availableToWithdraw" in coin:
+                    if "availableToWithdraw" in coin and coin["availableToWithdraw"]:
                         account.availableMargin = float(coin["availableToWithdraw"])
                     if "equity" in coin:
                         account.marginBalance = float(coin["equity"])
