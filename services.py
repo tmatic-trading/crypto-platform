@@ -1018,4 +1018,16 @@ def option_in_subscribed_symbol(symb: str, market: str):
     return(symb_res[0])
 
 def symbols_to_string(values):
-    return(", ".join(map(lambda x: x[0], values)))
+    #return(", ".join(map(lambda x: x[0], values)))
+    values_str = ""
+    for item in values:
+        if item in var.selected_option:
+            item_str = item[0] + "^^" + var.selected_option[item][0]
+        else:
+            item_str = item[0]
+        if values_str == "":
+            values_str = item_str
+        else:
+            values_str += "," + item_str
+    return(values_str)
+
