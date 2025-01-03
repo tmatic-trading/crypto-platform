@@ -251,9 +251,11 @@ class SettingsApp:
                 if not symbols:
                     symbols = [var.default_symbol[market][0][0]]
                 for symb in symbols:
+                    symb = service.option_in_subscribed_symbol(symb, market)
                     var.env[market]["SYMBOLS"].append((symb, market))
             except KeyError:
                 for symb in self.default_subscriptions[market]:
+                    symb = service.option_in_subscribed_symbol(symb, market)
                     var.env[market]["SYMBOLS"].append((symb, market))
                 set_key(
                     dotenv_path=self.env_file_subscriptions,

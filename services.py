@@ -1009,3 +1009,13 @@ def get_clOrdID(row: dict) -> tuple:
         pass
 
     return cl_id, emi
+
+def option_in_subscribed_symbol(symb: str, market: str):
+    # .split returns symbol under 0 index, remembered option under 1 index (if any)
+    symb_res = symb.split("^^")
+    if len(symb_res) > 1:
+        var.selected_option[(symb_res[0], market)] = (symb_res[1], market)
+    return(symb_res[0])
+
+def symbols_to_string(values):
+    return(", ".join(map(lambda x: x[0], values)))
