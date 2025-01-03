@@ -2333,11 +2333,10 @@ def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> No
         ws.symbol_list = [symbol] + ws.symbol_list
         if not init:
             var.env[market]["SYMBOLS"] = [symbol] + var.env[market]["SYMBOLS"]
-            value = ", ".join(map(lambda x: x[0], var.env[market]["SYMBOLS"]))
             service.set_dotenv(
                 dotenv_path=var.subscriptions,
                 key=service.define_symbol_key(market=market),
-                value=value,
+                value=service.symbols_to_string(var.env[market]["SYMBOLS"]),
             )
             var.current_market = ws.name
             var.rollup_symbol = f"{ws.name}!{symb}"
@@ -2360,8 +2359,6 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
         var.message_response = ErrorMessage.UNSUBSCRIPTION_WARNING
         return
     symbol = (symb, market)
-    if symbol in var.selected_option:
-        del var.selected_option[symbol]
     message = Message.UNSUBSCRIPTION_WAITING.format(SYMBOL=symb, MARKET=market)
     _put_message(market=market, message=message)
     var.unsubscription.add(symbol)
@@ -2378,9 +2375,16 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
         data = dotenv_data[key].replace(" ", "")
         data = data.split(",")
         for item in ["", symb]:
+            item_option = ""
+            if (item, market) in var.selected_option:
+                item_option = item + "^^" + var.selected_option[(item, market)][0]
             while item in data:
                 data.remove(item)
+            while item_option in data:
+                data.remove(item_option)
         data = ",".join(data)
+        if symbol in var.selected_option:
+            del var.selected_option[symbol]
         service.set_dotenv(var.subscriptions, key=key, value=data)
         tree = TreeTable.instrument
         tree.delete_hierarchical(parent=market, iid=f"{market}!{symb}")

@@ -5,6 +5,7 @@ from common.data import Instrument
 from common.variables import Variables as var
 from display.variables import Variables as disp
 from display.variables import on_canvas_leave
+from services import set_dotenv, symbols_to_string, define_symbol_key
 
 from .headers import Header
 from .variables import ScrollFrame, TreeTable, TreeviewTable
@@ -222,6 +223,12 @@ class OptionDesk:
                     var.symbol = (options[iid], market)
                     var.current_market = market
                     var.selected_option[(self.symbol, self.market)] = var.symbol
+                    values = symbols_to_string(var.env[market]["SYMBOLS"])
+                    set_dotenv(
+                        dotenv_path=var.subscriptions,
+                        key=define_symbol_key(market=market),
+                        value=values.replace(self.symbol, self.symbol + "^^" + options[iid]),
+                    )
                     self.update()
                     self.on_closing()
         self.close_window = True
