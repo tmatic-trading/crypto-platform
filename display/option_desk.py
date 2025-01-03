@@ -223,11 +223,10 @@ class OptionDesk:
                     var.symbol = (options[iid], market)
                     var.current_market = market
                     var.selected_option[(self.symbol, self.market)] = var.symbol
-                    values = symbols_to_string(var.env[market]["SYMBOLS"])
                     set_dotenv(
                         dotenv_path=var.subscriptions,
                         key=define_symbol_key(market=market),
-                        value=values.replace(self.symbol, self.symbol + "^^" + options[iid]),
+                        value=symbols_to_string(var.env[market]["SYMBOLS"]),
                     )
                     self.update()
                     self.on_closing()
