@@ -2052,13 +2052,20 @@ def update_order_form():
     form.instrument = form.ws.Instrument[var.symbol]
     if form.ws.name != "Fake":
         if form.instrument.ticker == "option!":
-            if var.symbol not in var.selected_option:
+            if var.symbol in var.selected_option:
                 symb = set_option(
-                    ws=form.ws, instrument=form.instrument, symbol=var.symbol
+                    ws=form.ws,
+                    instrument=form.instrument,
+                    symbol=var.symbol,
+                    option=var.selected_option[var.symbol][0]
                 )
-                var.symbol = (symb, form.ws.name)
             else:
-                var.symbol = var.selected_option[var.symbol]
+                symb = set_option(
+                    ws=form.ws,
+                    instrument=form.instrument,
+                    symbol=var.symbol
+                )
+            var.symbol = (symb, form.ws.name)
             form.instrument = form.ws.Instrument[var.symbol]
         form.option_emi["menu"].delete(0, "end")
         form.entry_price.delete(0, "end")
@@ -2174,17 +2181,21 @@ def handler_orderbook(event) -> None:
             pass
 
 
-def set_option(ws: Markets, instrument: Instrument, symbol: tuple):
+def set_option(ws: Markets, instrument: Instrument, symbol: tuple, option=""):
     series = ws.instrument_index[instrument.category][instrument.settlCurrency[0]][
         symbol[0]
     ]
-    if series["CALLS"]:
-        symb = series["CALLS"][0]
-    elif series["PUTS"]:
-        symb = series["PUTS"][0]
-    var.selected_option[symbol] = (symb, ws.name)
+    if option in series["CALLS"] or option in series["PUTS"]:
 
-    return symb
+        return option
+    else:
+        if series["CALLS"]:
+            option = series["CALLS"][0]
+        elif series["PUTS"]:
+            option = series["PUTS"][0]
+        var.selected_option[symbol] = (option, ws.name)
+
+    return option
 
 
 def handler_instrument(event) -> None:
@@ -2206,23 +2217,27 @@ def handler_instrument(event) -> None:
                         "option" in instrument.category and "series" in symbol[0]
                     ) and "combo" not in instrument.category:
                         if symbol in var.selected_option:
-                            symbol = var.selected_option[symbol]
+                            symb = set_option(
+                                ws=ws,
+                                instrument=instrument,
+                                symbol=symbol,
+                                option=var.selected_option[symbol][0]
+                            )
+                            symbol = (symb, market)
                             if var.symbol == symbol:  # Opens the options
                                 # chain only on the second click
                                 create = True
                             if var.rollup_symbol == "cancel":
                                 create = False
                                 var.rollup_symbol = ""
-                            var.symbol = symbol
                         else:
                             symb = set_option(
-                                ws=ws, instrument=instrument, symbol=symbol
+                                ws=ws,
+                                instrument=instrument,
+                                symbol=symbol
                             )
                             symbol = (symb, market)
-                            var.symbol = symbol
-                            # create = False
-                    else:
-                        var.symbol = symbol
+                    var.symbol = symbol
                     update_order_form()
                     TreeTable.orderbook.clear_color_cell()
                 else:
