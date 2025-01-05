@@ -207,7 +207,8 @@ class Bybit(Variables):
     def __update_ticker(self, values: dict, category: str) -> None:
         symb = self.ticker[(values["symbol"], category)]
         instrument = self.Instrument[(symb, self.name)]
-        instrument.volume24h = float(values["volume24h"])
+        if "volume24h" in values and values["volume24h"]:
+            instrument.volume24h = float(values["volume24h"])
         if "fundingRate" in values:
             if values["fundingRate"]:
                 instrument.fundingRate = float(values["fundingRate"]) * 100
@@ -244,20 +245,20 @@ class Bybit(Variables):
                     if coin["locked"] != "":
                         total += float(coin["locked"])
                         check += 1
-                if "totalOrderIM" in coin:
+                if "totalOrderIM" in coin and coin["totalOrderIM"]:
                     total += float(coin["totalOrderIM"])
                     check += 1
                 if check:
                     account.orderMargin = total
                 if "totalPositionIM" in coin:
                     account.positionMagrin = float(coin["totalPositionIM"])
-                if "availableToWithdraw" in coin:
+                if "availableToWithdraw" in coin and coin["availableToWithdraw"]:
                     account.availableMargin = float(coin["availableToWithdraw"])
-                if "equity" in coin:
+                if "equity" in coin and coin["equity"]:
                     account.marginBalance = float(coin["equity"])
-                if "walletBalance" in coin:
+                if "walletBalance" in coin and coin["walletBalance"]:
                     account.walletBalance = float(coin["walletBalance"])
-                if "unrealisedPnl" in coin:
+                if "unrealisedPnl" in coin and coin["unrealisedPnl"]:
                     account.unrealisedPnl = float(coin["unrealisedPnl"])
 
     def __update_position(self, values: dict) -> None:
