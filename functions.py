@@ -967,6 +967,7 @@ class Function(WS, Variables):
                     result.sumreal + result.result,
                     -result.commission,
                     -result.funding,
+                    result.sumreal + result.result - result.commission - result.funding,
                 ]
                 iid = market + currency[0]
                 Function.update_result_line(
@@ -1475,6 +1476,7 @@ class Function(WS, Variables):
                                 currency,
                                 res["pnl"],
                                 -res["commission"],
+                                res["pnl"] - res["commission"],
                             ]
                             iid = disp.bot_name + "!" + market + "!" + currency
                             lines.add(iid)
