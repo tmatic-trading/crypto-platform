@@ -59,6 +59,7 @@ class Header:
         "PNL SUM",
         "COMMISSION SUM",
         "FUNDING SUM",
+        "TOTAL",
     ]
     name_position = [
         "MARKET",
@@ -118,6 +119,7 @@ class Header:
         "CURRENCY",
         "PNL SUM",
         "COMMISSION SUM",
+        "TOTAL",
     ]
     name_calls = [
         "OPEN",
