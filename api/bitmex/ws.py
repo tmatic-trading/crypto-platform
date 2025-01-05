@@ -80,6 +80,8 @@ class Bitmex(Variables):
             self.__reset()
             self.logger.info("Connecting to websocket")
             self.logger.debug("Starting a new thread")
+            time_out = 5
+            websocket.setdefaulttimeout(time_out)
             self.ws = websocket.WebSocketApp(
                 self.__get_url(),
                 on_open=self.__on_open,
@@ -92,7 +94,6 @@ class Bitmex(Variables):
             newth.daemon = True
             newth.start()
             # Waits for connection established
-            time_out = 5
             while (
                 (not self.ws.sock or not self.ws.sock.connected)
                 and time_out >= 0

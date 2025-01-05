@@ -105,6 +105,8 @@ class Deribit(Variables):
 
     def start_ws(self):
         self.logger.info("Connecting to websocket")
+        time_out, slp = 5, 0.1
+        websocket.setdefaulttimeout(time_out)
         self.ws = websocket.WebSocketApp(
             self.ws_url + self.api_version,
             on_message=self.__on_message,
@@ -115,8 +117,9 @@ class Deribit(Variables):
         newth = threading.Thread(target=lambda: self.ws.run_forever())
         newth.daemon = True
         newth.start()
-        # Waits for connection established
-        time_out, slp = 5, 0.1
+
+        # Waits for connection established.
+
         while (not self.ws.sock or not self.ws.sock.connected) and time_out >= 0:
             time.sleep(slp)
             time_out -= slp
@@ -124,6 +127,7 @@ class Deribit(Variables):
             self.logger.error("Couldn't connect to websocket!")
             self.logNumFatal = "FATAL"
             return self.logNumFatal
+        
         self.logger.info("Connected to websocket.")
         time_out, slp = 3, 0.05
         while not self.access_token:
