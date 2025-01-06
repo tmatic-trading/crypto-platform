@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime
 from typing import Any, Iterable, Union
+from common.variables import Variables as var
 
 
 class Ret:
@@ -135,8 +136,8 @@ class Instrument:
     isInverse: bool
     makerFee: float = None
     market: str
-    markPrice: float = "-"
-    marginCallPrice: float = "-"
+    markPrice: float = var.DASH
+    marginCallPrice: float = var.DASH
     maxOrderQty: float
     minOrderQty: float
     multiplier: int
@@ -157,18 +158,18 @@ class Instrument:
     volume24h: float = 0
     valueOfOneContract: float
 
-    openInterest: float = "-"
-    bidPrice: float = "-"
-    bidSize: float = "-"
-    bidIv: float = "-"
-    askPrice: float = "-"
-    askSize: float = "-"
-    askIv: float = "-"
-    delta: float = "-"
-    vega: float = "-"
-    theta: float = "-"
-    gamma: float = "-"
-    rho: float = "-"
+    openInterest: float = var.DASH
+    bidPrice: float = var.DASH
+    bidSize: float = var.DASH
+    bidIv: float = var.DASH
+    askPrice: float = var.DASH
+    askSize: float = var.DASH
+    askIv: float = var.DASH
+    delta: float = var.DASH
+    vega: float = var.DASH
+    theta: float = var.DASH
+    gamma: float = var.DASH
+    rho: float = var.DASH
 
     def __iter__(self):
         return Ret.iter(self)

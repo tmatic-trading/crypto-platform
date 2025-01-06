@@ -401,8 +401,8 @@ def fill_bot_position(
         "max_position": 0,
     }
     if instrument.category == "spot":
-        bot.bot_positions[symbol]["pnl"] = "-"
-        bot.bot_positions[symbol]["position"] = "-"
+        bot.bot_positions[symbol]["pnl"] = var.DASH
+        bot.bot_positions[symbol]["position"] = var.DASH
     # Checks if this bot has any records in the database on this instrument.
     if not var.backtest:
         qwr = (
@@ -438,7 +438,7 @@ def timeframe_seconds(timefr: str) -> int:
 
 def bot_error(bot: BotData) -> str:
     if not bot.error_message:
-        error = "-"
+        error = var.DASH
     else:
         error = bot.error_message["error_type"]
 
@@ -726,18 +726,18 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
         series.category = instrument.category
         series.settlCurrency = instrument.settlCurrency
         series.quoteCoin = instrument.quoteCoin
-        series.currentQty = "-"
-        series.avgEntryPrice = "-"
-        series.unrealisedPnl = "-"
-        series.marginCallPrice = "-"
+        series.currentQty = var.DASH
+        series.avgEntryPrice = var.DASH
+        series.unrealisedPnl = var.DASH
+        series.marginCallPrice = var.DASH
         series.state = instrument.state
-        series.volume24h = "-"
+        series.volume24h = var.DASH
         series.expire = instrument.expire
-        series.fundingRate = "-"
+        series.fundingRate = var.DASH
         series.baseCoin = instrument.baseCoin
         series.precision = instrument.precision
-        series.asks = [["-", "-"]]
-        series.bids = [["-", "-"]]
+        series.asks = [[var.DASH, var.DASH]]
+        series.bids = [[var.DASH, var.DASH]]
         series.price_precision = 1
         series.isInverse = instrument.isInverse
     else:

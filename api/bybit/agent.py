@@ -672,7 +672,7 @@ class Agent(Bybit):
                 self.settleCoin_list.append(values["settleCoin"])
         else:
             instrument.settlCurrency = (
-                "-",
+                var.DASH,
                 self.name,
             )
         if "deliveryTime" in values:
@@ -699,13 +699,13 @@ class Agent(Bybit):
         instrument.multiplier = 1
         instrument.myMultiplier = 1
         if category == "spot":
-            instrument.fundingRate = "-"
-            instrument.avgEntryPrice = "-"
-            instrument.marginCallPrice = "-"
-            instrument.currentQty = "-"
-            instrument.unrealisedPnl = "-"
+            instrument.fundingRate = var.DASH
+            instrument.avgEntryPrice = var.DASH
+            instrument.marginCallPrice = var.DASH
+            instrument.currentQty = var.DASH
+            instrument.unrealisedPnl = var.DASH
         if category == "option":
-            instrument.fundingRate = "-"
+            instrument.fundingRate = var.DASH
         instrument.valueOfOneContract = 1
         if category == "inverse":
             instrument.isInverse = True

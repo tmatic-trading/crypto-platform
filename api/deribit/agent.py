@@ -111,7 +111,7 @@ class Agent(Deribit):
             instrument.settlCurrency = (values["settlement_currency"], self.name)
         else:
             instrument.settlCurrency = (
-                "-",
+                var.DASH,
                 self.name,
             )
         instrument.expire = service.time_converter(
@@ -131,13 +131,13 @@ class Agent(Deribit):
         instrument.multiplier = 1
         instrument.myMultiplier = 1
         if category == "spot":
-            instrument.fundingRate = "-"
-            instrument.avgEntryPrice = "-"
-            instrument.marginCallPrice = "-"
-            instrument.currentQty = "-"
-            instrument.unrealisedPnl = "-"
+            instrument.fundingRate = var.DASH
+            instrument.avgEntryPrice = var.DASH
+            instrument.marginCallPrice = var.DASH
+            instrument.currentQty = var.DASH
+            instrument.unrealisedPnl = var.DASH
         if category == "option":
-            instrument.fundingRate = "-"
+            instrument.fundingRate = var.DASH
         instrument.valueOfOneContract = 1
         instrument.makerFee = values["maker_commission"]
         instrument.takerFee = values["taker_commission"]
@@ -279,7 +279,7 @@ class Agent(Deribit):
                 '''if "estimated_liquidation_price" in values:
                     instrument.marginCallPrice = values["estimated_liquidation_price"]
                 else:
-                    instrument.marginCallPrice = "-"'''
+                    instrument.marginCallPrice = var.DASH'''
         else:
             self.logger.error(
                 "The dict was expected when the positions were loaded, but "

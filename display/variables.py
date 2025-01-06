@@ -1660,7 +1660,7 @@ class ParametersFrame(tk.Label):
         self.sub = tk.Frame(frame, bg=Variables.book_color)
         self.sub.grid(row=row, column=0, sticky="NEWS")
         self.name = FormLabel(self.sub, text=name, row=0, column=0, sticky="W")
-        self.value = FormLabel(self.sub, text="-", row=0, column=1, sticky="E")
+        self.value = FormLabel(self.sub, text=var.DASH, row=0, column=1, sticky="E")
         self.sub.grid_columnconfigure(0, weight=1)
         self.sub.grid_columnconfigure(1, weight=1)
 
@@ -1725,7 +1725,7 @@ class OrderForm:
         main, width=9, bg=Variables.bg_color, textvariable=qty_var
     )
     title = FormLabel(
-        main, text="-", font=Variables.bold_font, row=0, column=0, colspan=3
+        main, text=var.DASH, font=Variables.bold_font, row=0, column=0, colspan=3
     )
     title.bind("<Motion>", title_on_hover)
     title.bind("<Leave>", title_on_leave)
@@ -1734,7 +1734,7 @@ class OrderForm:
     quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
     price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
     emi_var = tk.StringVar()
-    options = ["-"]
+    options = [var.DASH]
     qty_currency = FormLabel(main, text="    ", row=2, column=2, sticky="W")
     price_currency = FormLabel(main, text="    ", row=3, column=2, sticky="W")
     option_emi = tk.OptionMenu(main, emi_var, *options)
@@ -1769,11 +1769,11 @@ class OrderForm:
     rho = ParametersFrame(parameters, 15, "Rho")
 
     cache = dict()
-    cache["markprice"] = "-"
-    cache["funding"] = "-"
-    cache["state"] = "-"
-    cache["delta"] = "-"
-    cache["gamma"] = "-"
-    cache["vega"] = "-"
-    cache["theta"] = "-"
-    cache["rho"] = "-"
+    cache["markprice"] = var.DASH
+    cache["funding"] = var.DASH
+    cache["state"] = var.DASH
+    cache["delta"] = var.DASH
+    cache["gamma"] = var.DASH
+    cache["vega"] = var.DASH
+    cache["theta"] = var.DASH
+    cache["rho"] = var.DASH

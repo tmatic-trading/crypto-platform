@@ -103,8 +103,7 @@ class Variables:
     _series = "_series"
     selected_option = dict()
     rollup_symbol = "cancel"
-    selected_iid = dict()
-    dash = "---"
+    selected_iid = dict()    
     backtest = False
     backtest_symbols = list()
     database_real = "real_trade"
@@ -112,3 +111,6 @@ class Variables:
     database_table: str
     expired_table = "expired"
     backtest_table = "backtest"
+    DASH = "-"
+    DASH3 = "---"
+

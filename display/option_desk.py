@@ -16,7 +16,7 @@ class OptionDesk:
     def __init__(self) -> None:
         self.is_on = False
         self.ws: Markets
-        self.dash = ["-", "-", "-", "-", "-", "-", "-", "-", "-"]
+        self.dash = [var.DASH for _ in range(9)]
 
     def on_closing(self) -> None:
         on_canvas_leave("", self.desk, disp.ostype)
@@ -69,11 +69,11 @@ class OptionDesk:
             if call in self.calls:
                 self.calls_list.append(call)
             else:
-                self.calls_list.append("-")
+                self.calls_list.append(var.DASH)
             if put in self.puts:
                 self.puts_list.append(put)
             else:
-                self.puts_list.append("-")
+                self.puts_list.append(var.DASH)
 
         if not self.is_on:
             self.desk = tk.Toplevel()
@@ -219,7 +219,7 @@ class OptionDesk:
                     options = self.calls_list
                 else:
                     options = self.puts_list
-                if options[iid] != "-":
+                if options[iid] != var.DASH:
                     var.symbol = (options[iid], market)
                     var.current_market = market
                     var.selected_option[(self.symbol, self.market)] = var.symbol

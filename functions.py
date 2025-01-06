@@ -649,7 +649,7 @@ class Function(WS, Variables):
         tm = tm.replace("T", " ")[:15]
         emi = val["EMI"]
         if emi == "":
-            emi = var.dash
+            emi = var.DASH3
         row = [
             tm,
             val["SYMBOL"][0],
@@ -707,7 +707,7 @@ class Function(WS, Variables):
         """
         symb = val["emi"].split(".")[0]
         if symb == val["symbol"][0]:
-            emi = var.dash
+            emi = var.DASH3
         else:
             emi = val["emi"]
         tm = str(val["transactTime"])[2:]
@@ -735,7 +735,7 @@ class Function(WS, Variables):
         )
 
     def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
-        if qty in ["-", "None"]:
+        if qty in [var.DASH, "None"]:
             return qty
         if qty == 0:
             qty = "0"
@@ -1058,7 +1058,7 @@ class Function(WS, Variables):
                         else:
                             notificate = False
                             compare = [
-                                var.dash,
+                                var.DASH3,
                                 instrument.symbol,
                                 instrument.category,
                                 position,
@@ -1693,7 +1693,7 @@ class Function(WS, Variables):
         TreeTable.market.tree.update()
 
     def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
-        if volNow == "-":
+        if volNow == var.DASH:
             return volNow
         if volNow > 1000000000:
             volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
@@ -1791,7 +1791,7 @@ def handler_order(event) -> None:
         ws = Markets[values[indx]]
         indx = TreeTable.orders.title.index("BOT")
         emi = str(values[indx])
-        if emi == var.dash:
+        if emi == var.DASH3:
             symbol = (
                 values[TreeTable.orders.title.index("SYMBOL")],
                 values[TreeTable.orders.title.index("MARKET")],
@@ -2214,7 +2214,7 @@ def handler_instrument(event) -> None:
                 instrument = ws.Instrument[symbol]
                 if var.symbol != symbol:
                     if (
-                        "option" in instrument.category and "series" in symbol[0]
+                        "option" in instrument.category and var._series in symbol[0]
                     ) and "combo" not in instrument.category:
                         if symbol in var.selected_option:
                             symb = set_option(
@@ -2316,6 +2316,45 @@ def handler_account(event) -> None:
         tree.selection_remove(items[0])
 
 
+def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
+    """
+    Prevents canceling subscription if there are open orders, positions
+    or only one instrument left in the list for this exchange.
+    """
+    instrument = ws.Instrument[symbol]
+
+    '''print("________", *ws.instrument_index, symbol, instrument.category, instrument.settlCurrency[0])
+    if "option" in instrument.category and var._series in symbol[0]:
+        series = ws.instrument_index[instrument.category][instrument.settlCurrency[0]][
+        symbol[0]
+        ]
+        series["PUTS"]
+        series["CALLS"]
+
+        lst = series["PUTS"] + series["CALLS"]
+
+        if value["symbol"] in lst:
+            .....      
+        print("_______________ option")'''
+    
+
+    for orders in var.orders.values():
+        for value in orders.values():
+            if symbol == value["symbol"]:
+                return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(
+                    SYMBOL=symbol
+                )    
+    if instrument.currentQty != 0:
+        position = Function.volume(ws, qty=instrument.currentQty, symbol=symbol)
+        return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
+            SYMBOL=symbol, POSITION=position
+        )
+    if len(ws.symbol_list) == 1:
+        return ErrorMessage.UNSUBSCRIPTION_WARNING
+
+    return ""
+
+
 def confirm_subscription(market: str, symb: str, timeout=None, init=False) -> None:
     """
     Called when using the Instruments menu or while initial loading if an
@@ -2369,29 +2408,6 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
     exchange. After receiving confirmation from the exchange, removes the
     symbol from the .env.Subscriptions file.
     """
-
-    def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
-        """
-        Prevents canceling subscription if there are open orders, positions
-        or only one instrument left in the list for this exchange.
-        """
-        for orders in var.orders.values():
-            for value in orders.values():
-                if symbol == value["symbol"]:
-                    return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(
-                        SYMBOL=symbol
-                    )
-        instrument = ws.Instrument[symbol]
-        if instrument.currentQty != 0:
-            position = Function.volume(ws, qty=instrument.currentQty, symbol=symbol)
-            return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
-                SYMBOL=symbol, POSITION=position
-            )
-        if len(ws.symbol_list) == 1:
-            return ErrorMessage.UNSUBSCRIPTION_WARNING
-
-        return ""
-
     ws = Markets[market]
     symbol = (symb, market)
     var.message_response = check_unsubscribe(ws, symbol)
