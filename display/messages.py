@@ -20,7 +20,10 @@ class Message(str, Enum):
     )
     WEBSOCKET_SUBSCRIPTION = "sending ws subscription - {NAME} - channel - {CHANNEL}"
     WEBSOCKET_UNSUBSCRIBE = "sending ws unsubscribe - {NAME} - channel - {CHANNEL}"
-
+    WEBSOCKET_SUBSCRIPTION_SKIPPED = (
+        "Already subscribed symbol {SKIPPED} skipped during websocket subscription "
+        + "to {SYMBOL}."
+    )
     def __str__(self) -> str:
         return self.value
 
@@ -122,6 +125,5 @@ class ErrorMessage(str, Enum):
         "Instrument {SYMBOL} has an open position {POSITION}. The position "
         + "should be closed before canceling subscription."
     )
-
     def __str__(self) -> str:
         return self.value

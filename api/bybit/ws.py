@@ -614,6 +614,14 @@ class Bybit(Variables):
         # Option
 
         elif category == "option":
+            if var._series in symbol[0]:
+                for item in self.symbol_list:
+                    if item[0] in ticker:
+                        ticker.remove(item[0])
+                        message = Message.WEBSOCKET_SUBSCRIPTION_SKIPPED.format(
+                            SKIPPED=item[0], SYMBOL=symbol[0]
+                        )
+                        self._put_message(message=message, warning="warning")
             message = Message.WEBSOCKET_SUBSCRIPTION.format(
                 NAME="Orderbook", CHANNEL=category + " " + str(ticker)
             )
