@@ -84,7 +84,7 @@ class Function(WS, Variables):
         """
         instrument = self.Instrument[symbol]
         coef = instrument.valueOfOneContract * instrument.myMultiplier
-        if instrument.isInverse == True:
+        if instrument.isInverse == True and "option" not in instrument.category:
             sumreal = qty / price * fund
             if execFee is not None:
                 commiss = execFee
@@ -99,7 +99,7 @@ class Function(WS, Variables):
             else:
                 commiss = abs(qty) * price * rate
             funding = 0
-        else:
+        else: # here the options are also calculated
             sumreal = -qty * price * fund
             if execFee is not None:
                 commiss = execFee
@@ -2060,13 +2060,11 @@ def update_order_form():
                     ws=form.ws,
                     instrument=form.instrument,
                     symbol=var.symbol,
-                    option=var.selected_option[var.symbol][0]
+                    option=var.selected_option[var.symbol][0],
                 )
             else:
                 symb = set_option(
-                    ws=form.ws,
-                    instrument=form.instrument,
-                    symbol=var.symbol
+                    ws=form.ws, instrument=form.instrument, symbol=var.symbol
                 )
             var.symbol = (symb, form.ws.name)
             form.instrument = form.ws.Instrument[var.symbol]
@@ -2189,7 +2187,6 @@ def set_option(ws: Markets, instrument: Instrument, symbol: tuple, option=""):
         symbol[0]
     ]
     if option in series["CALLS"] or option in series["PUTS"]:
-
         return option
     else:
         if series["CALLS"]:
@@ -2224,7 +2221,7 @@ def handler_instrument(event) -> None:
                                 ws=ws,
                                 instrument=instrument,
                                 symbol=symbol,
-                                option=var.selected_option[symbol][0]
+                                option=var.selected_option[symbol][0],
                             )
                             symbol = (symb, market)
                             if var.symbol == symbol:  # Opens the options
@@ -2235,9 +2232,7 @@ def handler_instrument(event) -> None:
                                 var.rollup_symbol = ""
                         else:
                             symb = set_option(
-                                ws=ws,
-                                instrument=instrument,
-                                symbol=symbol
+                                ws=ws, instrument=instrument, symbol=symbol
                             )
                             symbol = (symb, market)
                     var.symbol = symbol

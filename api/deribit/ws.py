@@ -127,7 +127,7 @@ class Deribit(Variables):
             self.logger.error("Couldn't connect to websocket!")
             self.logNumFatal = "FATAL"
             return self.logNumFatal
-        
+
         self.logger.info("Connected to websocket.")
         time_out, slp = 3, 0.05
         while not self.access_token:

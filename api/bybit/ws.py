@@ -284,18 +284,18 @@ class Bybit(Variables):
     def __handle_order(self, values):
         """
         1.
-        If the order is executed immediately, Bybit treats it as a market 
-        order and the message with orderStatus "New" does not appear in this 
-        callback, instead Bybit sends orderStatus "Filled" and only after 
-        the execution_stream has already received the corresponding trade. 
-        The order with the status "Filled" is ignored by Tmatic because the 
-        normal sequence of messages from the websocket is: 1) new order, 
-        2) execution. So in case of a market order, Tmatic will always issue 
+        If the order is executed immediately, Bybit treats it as a market
+        order and the message with orderStatus "New" does not appear in this
+        callback, instead Bybit sends orderStatus "Filled" and only after
+        the execution_stream has already received the corresponding trade.
+        The order with the status "Filled" is ignored by Tmatic because the
+        normal sequence of messages from the websocket is: 1) new order,
+        2) execution. So in case of a market order, Tmatic will always issue
         a warning "order with clOrdID <> not found".
         2.
-        Bybit never sends OrderStatus "Replaced". If the order is moved to 
-        another price, OrderStatus will be "New". Tmatic looks for 
-        orderLinkId in var.orders array, and if orderLinkId matches clOrdID 
+        Bybit never sends OrderStatus "Replaced". If the order is moved to
+        another price, OrderStatus will be "New". Tmatic looks for
+        orderLinkId in var.orders array, and if orderLinkId matches clOrdID
         of any order, OrderStatus "Replaced" is assigned.
         """
         for value in values["data"]:

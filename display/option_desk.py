@@ -5,7 +5,7 @@ from common.data import Instrument
 from common.variables import Variables as var
 from display.variables import Variables as disp
 from display.variables import on_canvas_leave
-from services import set_dotenv, symbols_to_string, define_symbol_key
+from services import define_symbol_key, set_dotenv, symbols_to_string
 
 from .headers import Header
 from .variables import ScrollFrame, TreeTable, TreeviewTable
