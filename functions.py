@@ -99,7 +99,7 @@ class Function(WS, Variables):
             else:
                 commiss = abs(qty) * price * rate
             funding = 0
-        else: # here the options are also calculated
+        else:  # here the options are also calculated
             sumreal = -qty * price * fund
             if execFee is not None:
                 commiss = execFee
@@ -2255,7 +2255,9 @@ def handler_instrument(event) -> None:
                                     )
                                     t.start()
                             if var.message_response:
-                                warning_window(var.message_response)
+                                warning_window(
+                                    var.message_response, width=500, height=200
+                                )
                                 var.message_response = ""
                 if create:
                     if (
@@ -2367,11 +2369,34 @@ def confirm_unsubscribe(market: str, symb: str) -> None:
     exchange. After receiving confirmation from the exchange, removes the
     symbol from the .env.Subscriptions file.
     """
+
+    def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
+        """
+        Prevents canceling subscription if there are open orders, positions
+        or only one instrument left in the list for this exchange.
+        """
+        for orders in var.orders.values():
+            for value in orders.values():
+                if symbol == value["symbol"]:
+                    return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(
+                        SYMBOL=symbol
+                    )
+        instrument = ws.Instrument[symbol]
+        if instrument.currentQty != 0:
+            position = Function.volume(ws, qty=instrument.currentQty, symbol=symbol)
+            return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
+                SYMBOL=symbol, POSITION=position
+            )
+        if len(ws.symbol_list) == 1:
+            return ErrorMessage.UNSUBSCRIPTION_WARNING
+
+        return ""
+
     ws = Markets[market]
-    if len(ws.symbol_list) == 1:
-        var.message_response = ErrorMessage.UNSUBSCRIPTION_WARNING
-        return
     symbol = (symb, market)
+    var.message_response = check_unsubscribe(ws, symbol)
+    if var.message_response:
+        return
     message = Message.UNSUBSCRIPTION_WAITING.format(SYMBOL=symb, MARKET=market)
     _put_message(market=market, message=message)
     var.unsubscription.add(symbol)

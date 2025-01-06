@@ -114,6 +114,14 @@ class ErrorMessage(str, Enum):
         + "{SYMBOL} because the order book is empty; {SIDE} was assigned to "
         + "its previous value of {PRICE}."
     )
+    UNSUBSCRIPTION_WARNING_ORDERS = (
+        "Instrument {SYMBOL} has open orders. Please cancel orders before "
+        + "canceling subscription."
+    )
+    UNSUBSCRIPTION_WARNING_POSITION = (
+        "Instrument {SYMBOL} has an open position {POSITION}. The position "
+        + "should be closed before canceling subscription."
+    )
 
     def __str__(self) -> str:
         return self.value
