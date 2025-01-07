@@ -3,7 +3,7 @@ import threading
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
-from typing import Callable
+from typing import Callable, Union
 
 import requests
 import websocket
@@ -578,14 +578,13 @@ class Deribit(Variables):
                     self.name,
                 )
                 instrument = self.Instrument[symbol]
-                if symbol in self.symbol_list:
-                    if instrument.category == "future_linear":
-                        instrument.currentQty = value["size_currency"]
-                    else:
-                        instrument.currentQty = value["size"]
-                    instrument.avgEntryPrice = value["average_price"]
-                    instrument.unrealisedPnl = value["total_profit_loss"]
-                    # instrument.marginCallPrice is not provided
+                if instrument.category == "future_linear":
+                    instrument.currentQty = value["size_currency"]
+                else:
+                    instrument.currentQty = value["size"]
+                instrument.avgEntryPrice = value["average_price"]
+                instrument.unrealisedPnl = value["total_profit_loss"]
+                # instrument.marginCallPrice is not provided
 
     def ping_pong(self):
         if datetime.now(tz=timezone.utc) - self.pinging > timedelta(

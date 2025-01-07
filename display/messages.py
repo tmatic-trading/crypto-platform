@@ -126,6 +126,12 @@ class ErrorMessage(str, Enum):
         "Instrument {SYMBOL} has an open position {POSITION}. The position "
         + "should be closed before canceling subscription."
     )
+    UNSUBSCRIPTION_WARNING_UNSETTLED = (
+        "The balance of the instrument {SYMBOL} is zero, but not the balance "
+        + "of the bot(s).\n\nOpen positions of Tmatic internal accounting:\n\n"
+        + "{LIST}\nYou should close bot positions or delete bot(s) to settle "
+        + "the balance."
+    )
 
     def __str__(self) -> str:
         return self.value

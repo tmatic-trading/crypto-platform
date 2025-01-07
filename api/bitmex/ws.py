@@ -472,9 +472,9 @@ class Bitmex(Variables):
                     / self.currency_divisor[instrument.settlCurrency[0]]
                 )
             if "liquidationPrice" in values:
-                '''if values["liquidationPrice"] == 100000000:
+                """if values["liquidationPrice"] == 100000000:
                     instrument.marginCallPrice = "inf"
-                else:'''
+                else:"""
                 instrument.marginCallPrice = values["liquidationPrice"]
 
     def __update_instrument(self, symbol: tuple, values: dict):

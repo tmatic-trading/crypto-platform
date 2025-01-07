@@ -265,21 +265,20 @@ class Bybit(Variables):
         for value in values["data"]:
             symbol = self.ticker[(value["symbol"], value["category"])]
             symbol = (symbol, self.name)
-            if symbol in self.symbol_list:
-                instrument = self.Instrument[symbol]
-                if value["side"] == "Sell":
-                    instrument.currentQty = -float(value["size"])
+            instrument = self.Instrument[symbol]
+            if value["side"] == "Sell":
+                instrument.currentQty = -float(value["size"])
+            else:
+                instrument.currentQty = float(value["size"])
+            instrument.avgEntryPrice = float(value["entryPrice"])
+            if value["liqPrice"] == "":
+                if instrument.currentQty == 0:
+                    instrument.marginCallPrice = 0
                 else:
-                    instrument.currentQty = float(value["size"])
-                instrument.avgEntryPrice = float(value["entryPrice"])
-                if value["liqPrice"] == "":
-                    if instrument.currentQty == 0:
-                        instrument.marginCallPrice = 0
-                    else:
-                        instrument.marginCallPrice = "inf"
-                else:
-                    instrument.marginCallPrice = value["liqPrice"]
-                instrument.unrealisedPnl = value["unrealisedPnl"]
+                    instrument.marginCallPrice = "inf"
+            else:
+                instrument.marginCallPrice = value["liqPrice"]
+            instrument.unrealisedPnl = value["unrealisedPnl"]
 
     def __handle_order(self, values):
         """

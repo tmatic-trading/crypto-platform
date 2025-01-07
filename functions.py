@@ -1045,7 +1045,20 @@ class Function(WS, Variables):
                         market=market,
                         tree=tree,
                     )
+            lst = []
             for symbol in ws.symbol_list:
+                instrument = ws.Instrument[symbol]
+                if instrument.ticker == "option!":
+                    strikes = service.select_option_strikes(
+                        index=ws.instrument_index, instrument=instrument
+                    )
+                    for strike in strikes:
+                        smb = (strike, ws.name)
+                        if ws.Instrument[smb].currentQty != 0 or smb in rest:
+                            lst.append(smb)
+                elif "spot" not in instrument.category:
+                    lst.append(symbol)
+            for symbol in lst:
                 instrument = ws.Instrument[symbol]
                 if "spot" not in instrument.category:
                     if instrument.ticker != "option!":
@@ -1086,6 +1099,7 @@ class Function(WS, Variables):
                                 market=market,
                                 tree=tree,
                             )
+
             notification = market + "_notification"
             if notificate:
                 if notification not in tree.children_hierarchical[market]:
@@ -2195,16 +2209,13 @@ def handler_orderbook(event) -> None:
 
 
 def set_option(ws: Markets, instrument: Instrument, symbol: tuple, option=""):
-    series = ws.instrument_index[instrument.category][instrument.settlCurrency[0]][
-        symbol[0]
-    ]
-    if option in series["CALLS"] or option in series["PUTS"]:
+    strikes = service.select_option_strikes(
+        index=ws.instrument_index, instrument=instrument
+    )
+    if option in strikes:
         return option
     else:
-        if series["CALLS"]:
-            option = series["CALLS"][0]
-        elif series["PUTS"]:
-            option = series["PUTS"][0]
+        option = strikes[0]
         var.selected_option[symbol] = (option, ws.name)
 
     return option
@@ -2225,9 +2236,7 @@ def handler_instrument(event) -> None:
                 ws = Markets[market]
                 instrument = ws.Instrument[symbol]
                 if var.symbol != symbol:
-                    if (
-                        "option" in instrument.category and var._series in symbol[0]
-                    ) and "combo" not in instrument.category:
+                    if instrument.ticker == "option!":
                         if symbol in var.selected_option:
                             symb = set_option(
                                 ws=ws,
@@ -2268,7 +2277,7 @@ def handler_instrument(event) -> None:
                                     t.start()
                             if var.message_response:
                                 warning_window(
-                                    var.message_response, width=500, height=200
+                                    var.message_response, width=650, height=350
                                 )
                                 var.message_response = ""
                 if create:
@@ -2334,15 +2343,14 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
     or only one instrument left in the list for this exchange.
     """
     instrument = ws.Instrument[symbol]
-    if "option" in instrument.category and var._series in symbol[0]:
-        series = ws.instrument_index[instrument.category][instrument.settlCurrency[0]][
-        symbol[0]
-        ]
-        lst = series["PUTS"] + series["CALLS"]
+    if instrument.ticker == "option!":
+        symbols = service.select_option_strikes(
+            index=ws.instrument_index, instrument=instrument
+        )
     else:
-        lst = [symbol[0]]
+        symbols = [symbol[0]]
     each_symbol = []
-    for item in lst:
+    for item in symbols:
         each = (item, symbol[1])
         each_symbol.append(each)
         instrument = ws.Instrument[each]
@@ -2351,11 +2359,48 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
             return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
                 SYMBOL=each, POSITION=position
             )
+        lst, total = [], 0
+        for bot_name in Bots.keys():
+            for smb, position in Bots[bot_name].bot_positions.items():
+                if smb == symbol:
+                    lst.append({"emi": bot_name, "position": position["position"]})
+                    total += position["position"]
+
+        if lst:
+            lst.append({"emi": symbol[0], "position": -total})
+        text, emi_len, pos_len = "", 0, 0
+        for item in lst:
+            if len(item["emi"]) > emi_len:
+                emi_len = len(item["emi"]) + 1
+            if len(str(item["position"])) > pos_len:
+                pos_len = len(str(item["position"]))
+        if emi_len < 20:
+            emi_len = 20
+        bar = "    |" + "-" * (emi_len + 2 + pos_len) + "|\n"
+        text += bar
+        text += "    | Bot/Symbol" + " " * (emi_len - 17 + pos_len) + "Balance |\n"
+        text += bar
+        for item in lst:
+            space = len(item["emi"])
+            text += (
+                "    | "
+                + item["emi"]
+                + (emi_len - space + pos_len - len(str(item["position"]))) * " "
+                + str(item["position"])
+                + " |"
+                + "\n"
+            )
+        text += bar
+        return ErrorMessage.UNSUBSCRIPTION_WARNING_UNSETTLED.format(
+            SYMBOL=symbol, LIST=text
+        )
     for orders in var.orders.values():
         for value in orders.values():
             for item in each_symbol:
                 if item == value["symbol"]:
-                    return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(SYMBOL=symbol)
+                    return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(
+                        SYMBOL=symbol
+                    )
     if len(ws.symbol_list) == 1:
         return ErrorMessage.UNSUBSCRIPTION_WARNING
 
