@@ -2368,32 +2368,32 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
 
         if lst:
             lst.append({"emi": symbol[0], "position": -total})
-        text, emi_len, pos_len = "", 0, 0
-        for item in lst:
-            if len(item["emi"]) > emi_len:
-                emi_len = len(item["emi"]) + 1
-            if len(str(item["position"])) > pos_len:
-                pos_len = len(str(item["position"]))
-        if emi_len < 20:
-            emi_len = 20
-        bar = "    |" + "-" * (emi_len + 2 + pos_len) + "|\n"
-        text += bar
-        text += "    | Bot/Symbol" + " " * (emi_len - 17 + pos_len) + "Balance |\n"
-        text += bar
-        for item in lst:
-            space = len(item["emi"])
-            text += (
-                "    | "
-                + item["emi"]
-                + (emi_len - space + pos_len - len(str(item["position"]))) * " "
-                + str(item["position"])
-                + " |"
-                + "\n"
+            text, emi_len, pos_len = "", 0, 0
+            for item in lst:
+                if len(item["emi"]) > emi_len:
+                    emi_len = len(item["emi"]) + 1
+                if len(str(item["position"])) > pos_len:
+                    pos_len = len(str(item["position"]))
+            if emi_len < 20:
+                emi_len = 20
+            bar = "    |" + "-" * (emi_len + 2 + pos_len) + "|\n"
+            text += bar
+            text += "    | Bot/Symbol" + " " * (emi_len - 17 + pos_len) + "Balance |\n"
+            text += bar
+            for item in lst:
+                space = len(item["emi"])
+                text += (
+                    "    | "
+                    + item["emi"]
+                    + (emi_len - space + pos_len - len(str(item["position"]))) * " "
+                    + str(item["position"])
+                    + " |"
+                    + "\n"        
+                )
+            text += bar
+            return ErrorMessage.UNSUBSCRIPTION_WARNING_UNSETTLED.format(
+                SYMBOL=symbol, LIST=text
             )
-        text += bar
-        return ErrorMessage.UNSUBSCRIPTION_WARNING_UNSETTLED.format(
-            SYMBOL=symbol, LIST=text
-        )
     for orders in var.orders.values():
         for value in orders.values():
             for item in each_symbol:
