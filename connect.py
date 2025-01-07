@@ -239,6 +239,12 @@ def refresh() -> None:
             if not var.reloading:
                 t = threading.Thread(target=functions.update_instruments)
                 t.start()
+        elif "trades_display" in info:
+            Function.trades_display(
+                info["trades_display"], table=info["table"], val=info["message"]
+            )
+        elif "funding_display" in info:
+            Function.funding_display(info["funding_display"], val=info["message"])
         else:
             if "bot_log" not in info:
                 info_display(

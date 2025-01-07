@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime
 from typing import Any, Iterable, Union
+
 from common.variables import Variables as var
 
 

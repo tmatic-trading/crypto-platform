@@ -276,10 +276,10 @@ class Agent(Deribit):
                     instrument.currentQty = values["size"]
                 instrument.avgEntryPrice = values["average_price"]
                 instrument.unrealisedPnl = values["total_profit_loss"]
-                '''if "estimated_liquidation_price" in values:
+                """if "estimated_liquidation_price" in values:
                     instrument.marginCallPrice = values["estimated_liquidation_price"]
                 else:
-                    instrument.marginCallPrice = var.DASH'''
+                    instrument.marginCallPrice = var.DASH"""
         else:
             self.logger.error(
                 "The dict was expected when the positions were loaded, but "

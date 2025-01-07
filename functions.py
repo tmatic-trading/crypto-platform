@@ -241,10 +241,22 @@ class Function(WS, Variables):
                 "CATEGORY": instrument.category,
             }
             if not info:
-                Function.trades_display(self, table=TreeTable.trades, val=message)
+                var.queue_info.put(
+                    {
+                        "trades_display": self,
+                        "table": TreeTable.trades,
+                        "message": message,
+                        "emi": emi,
+                    }
+                )
                 if emi in Bots.keys():
-                    Function.trades_display(
-                        self, table=bot_menu.trade_treeTable[emi], val=message
+                    var.queue_info.put(
+                        {
+                            "trades_display": self,
+                            "table": bot_menu.trade_treeTable[emi],
+                            "message": message,
+                            "emi": emi,
+                        }
                     )
 
         var.lock.acquire(True)
@@ -379,7 +391,7 @@ class Function(WS, Variables):
                 service.insert_database(values=values, table=var.database_table)
                 results.funding += calc["funding"]
                 if not info:
-                    Function.funding_display(self, message)
+                    var.queue_info.put({"funding_display": self, "message": message})
 
             # New order
 
@@ -2323,7 +2335,7 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
     """
     instrument = ws.Instrument[symbol]
 
-    '''print("________", *ws.instrument_index, symbol, instrument.category, instrument.settlCurrency[0])
+    """print("________", *ws.instrument_index, symbol, instrument.category, instrument.settlCurrency[0])
     if "option" in instrument.category and var._series in symbol[0]:
         series = ws.instrument_index[instrument.category][instrument.settlCurrency[0]][
         symbol[0]
@@ -2334,16 +2346,13 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
         lst = series["PUTS"] + series["CALLS"]
 
         if value["symbol"] in lst:
-            .....      
-        print("_______________ option")'''
-    
+            .....
+        print("_______________ option")"""
 
     for orders in var.orders.values():
         for value in orders.values():
             if symbol == value["symbol"]:
-                return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(
-                    SYMBOL=symbol
-                )    
+                return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(SYMBOL=symbol)
     if instrument.currentQty != 0:
         position = Function.volume(ws, qty=instrument.currentQty, symbol=symbol)
         return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
