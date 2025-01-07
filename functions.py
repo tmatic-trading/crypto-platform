@@ -1767,17 +1767,17 @@ class Function(WS, Variables):
         if qty == 0:
             return sumreal
 
-        if symbol in self.symbol_list:
+        if symbol in self.Instrument.get_keys():
             if qty > 0:
                 try:
                     price = self.Instrument[symbol].bids[0][0]
                 except IndexError:
-                    return "empty_orderbook_bids"
+                    return "empty_bids"
             else:
                 try:
                     price = self.Instrument[symbol].asks[0][0]
                 except IndexError:
-                    return "empty_orderbook_asks"
+                    return "empty_asks"
             res = Function.calculate(
                 self,
                 symbol=symbol,
@@ -1788,9 +1788,9 @@ class Function(WS, Variables):
             )
             pnl = sumreal + res["sumreal"]
         else:
-            # symbol is not signed, so there is no order book and therefore
-            # no position closing price. PNL cannot be calculated.
-            pnl = "symbol_not_signed"
+            # no such symbol for the certain market, therefore there is no order book, hence
+            # no closing price for the position. PNL cannot be calculated.
+            pnl = "no_such_symbol"
 
         return pnl
 
