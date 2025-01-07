@@ -2334,7 +2334,6 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
     or only one instrument left in the list for this exchange.
     """
     instrument = ws.Instrument[symbol]
-
     if "option" in instrument.category and var._series in symbol[0]:
         series = ws.instrument_index[instrument.category][instrument.settlCurrency[0]][
         symbol[0]
@@ -2342,17 +2341,21 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
         lst = series["PUTS"] + series["CALLS"]
     else:
         lst = [symbol[0]]
+    each_symbol = []
+    for item in lst:
+        each = (item, symbol[1])
+        each_symbol.append(each)
+        instrument = ws.Instrument[each]
+        if instrument.currentQty != 0:
+            position = Function.volume(ws, qty=instrument.currentQty, symbol=each)
+            return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
+                SYMBOL=each, POSITION=position
+            )
     for orders in var.orders.values():
         for value in orders.values():
-            for item in lst:
-                if (item, symbol[1]) == value["symbol"]:
+            for item in each_symbol:
+                if item == value["symbol"]:
                     return ErrorMessage.UNSUBSCRIPTION_WARNING_ORDERS.format(SYMBOL=symbol)
-
-    if instrument.currentQty != 0:
-        position = Function.volume(ws, qty=instrument.currentQty, symbol=symbol)
-        return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
-            SYMBOL=symbol, POSITION=position
-        )
     if len(ws.symbol_list) == 1:
         return ErrorMessage.UNSUBSCRIPTION_WARNING
 
