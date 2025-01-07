@@ -2350,8 +2350,8 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
     else:
         symbols = [symbol[0]]
     each_symbol = []
-    for item in symbols:
-        each = (item, symbol[1])
+    for s in symbols:
+        each = (s, symbol[1])
         each_symbol.append(each)
         instrument = ws.Instrument[each]
         if instrument.currentQty != 0:
@@ -2363,9 +2363,9 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
         for bot_name in Bots.keys():
             for smb, position in Bots[bot_name].bot_positions.items():
                 if smb == symbol:
-                    lst.append({"emi": bot_name, "position": position["position"]})
+                    pos = Function.volume(ws, qty=position["position"], symbol=symbol)
+                    lst.append({"emi": bot_name, "position": pos})
                     total += position["position"]
-
         if lst:
             lst.append({"emi": symbol[0], "position": -total})
             text, emi_len, pos_len = "", 0, 0
