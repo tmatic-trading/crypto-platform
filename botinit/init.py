@@ -88,7 +88,7 @@ def load_bots() -> None:
     Loading bots into the Bots class.
     """
 
-    # Loading volumes trade results for instruments.
+    # Loading volumes and trade results for instruments.
 
     union = ""
     sql = ""
@@ -99,7 +99,9 @@ def load_bots() -> None:
         sql += union
         sql += (
             "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, sum(SUMREAL) "
-            + "as SUM_SUMREAL from test_trade where MARKET = '"
+            + "as SUM_SUMREAL from "
+            + var.database_table
+            + " where MARKET = '"
             + market
             + "' and account = '"
             + str(ws.user_id)
