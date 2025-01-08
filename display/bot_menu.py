@@ -1155,10 +1155,12 @@ def refresh_bot_orders():
     bot_tree.clear_all()
     anyline = False
     for child in tree.children:
-        if child.split(".")[1] == disp.bot_name:
-            row = tree.tree.item(child)["values"]
-            bot_tree.insert(values=row, iid=child, configure=row[indx_side])
-            anyline = True
+        lst = child.split(".")
+        if len(lst) > 1:
+            if child.split(".")[1] == disp.bot_name:
+                row = tree.tree.item(child)["values"]
+                bot_tree.insert(values=row, iid=child, configure=row[indx_side])
+                anyline = True
     if anyline:
         if "No orders" in bot_tree.children:
             bot_tree.delete(iid="No orders")
