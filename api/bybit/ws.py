@@ -740,12 +740,12 @@ class Bybit(Variables):
             NAME="Orderbook, Ticker", CHANNEL=unsubscription_args
         )
         self.logger.info(message)
-        if instrument.ticker == "option!":
+        if "option" in instrument.category:
             topic = str(sorted(unsubscription_args))
             self.unsubscriptions.add(topic)
         else:
             self.unsubscriptions.add(req_id)
-            topic = req_id
+            topic = req_id       
         unsubscription_message = json.dumps(
             {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
         )
