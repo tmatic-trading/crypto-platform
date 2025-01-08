@@ -453,6 +453,8 @@ class Deribit(Variables):
         instrument.askSize = values["best_ask_amount"]
         instrument.markPrice = values["mark_price"]
         instrument.state = values["state"]
+        if values["state"] == "open":
+            instrument.state = "Open"
 
     def __update_portfolio(self, values: dict) -> None:
         currency = (values["currency"], self.name)
