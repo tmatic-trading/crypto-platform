@@ -2361,14 +2361,13 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
             )
         lst, total = [], 0
         for bot_name in Bots.keys():
-            for smb, position in Bots[bot_name].bot_positions.items():
-                if smb == symbol:
-                    pos = Function.volume(ws, qty=position["position"], symbol=symbol)
-                    if round(position["position"], instrument.precision) != 0:
-                        lst.append({"emi": bot_name, "position": pos})
-                        total += position["position"]
+            for smb, pos in Bots[bot_name].bot_positions.items():
+                if smb == each and round(pos["position"], instrument.precision) != 0:
+                    volume = Function.volume(ws, qty=pos["position"], symbol=smb)
+                    lst.append({"emi": bot_name, "position": volume})
+                    total += pos["position"]
         if lst:
-            lst.append({"emi": symbol[0], "position": -total})
+            lst.append({"emi": each[0], "position": -total})
             text, emi_len, pos_len = "", 0, 0
             for item in lst:
                 if len(item["emi"]) > emi_len:
@@ -2379,7 +2378,7 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
                 emi_len = 20
             bar = "    |" + "-" * (emi_len + 2 + pos_len) + "|\n"
             text += bar
-            text += "    | Bot/Symbol" + " " * (emi_len - 17 + pos_len) + "Balance |\n"
+            text += "    | Bot/Symbol" + " " * (emi_len - 18 + pos_len) + "Position |\n"
             text += bar
             for item in lst:
                 space = len(item["emi"])
@@ -2392,8 +2391,14 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
                     + "\n"
                 )
             text += bar
+            if len(lst) == 2:
+                piece1 = "is a bot"
+                piece2 = "bot position or delete the bot"
+            else:
+                piece1 = "are bots"
+                piece2 = "bots positions or delete the bots"
             return ErrorMessage.UNSUBSCRIPTION_WARNING_UNSETTLED.format(
-                SYMBOL=symbol, LIST=text
+                SYMBOL=symbol, PIECE1=piece1, LIST=text, PIECE2=piece2
             )
     for orders in var.orders.values():
         for value in orders.values():
