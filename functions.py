@@ -2364,8 +2364,9 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
             for smb, position in Bots[bot_name].bot_positions.items():
                 if smb == symbol:
                     pos = Function.volume(ws, qty=position["position"], symbol=symbol)
-                    lst.append({"emi": bot_name, "position": pos})
-                    total += position["position"]
+                    if round(position["position"], instrument.precision) != 0:
+                        lst.append({"emi": bot_name, "position": pos})
+                        total += position["position"]
         if lst:
             lst.append({"emi": symbol[0], "position": -total})
             text, emi_len, pos_len = "", 0, 0

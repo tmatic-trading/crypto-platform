@@ -1157,7 +1157,7 @@ def refresh_bot_orders():
     for child in tree.children:
         lst = child.split(".")
         if len(lst) > 1:
-            if child.split(".")[1] == disp.bot_name:
+            if lst[1] == disp.bot_name:
                 row = tree.tree.item(child)["values"]
                 bot_tree.insert(values=row, iid=child, configure=row[indx_side])
                 anyline = True
