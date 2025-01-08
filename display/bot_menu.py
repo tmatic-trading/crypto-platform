@@ -1108,7 +1108,7 @@ def init_bot_trades(bot_name: str) -> None:
             bot_trades_sub[bot_name] = tk.Frame(disp.bot_trades)
             trade_treeTable[bot_name] = TreeviewTable(
                 frame=bot_trades_sub[bot_name],
-                name="bot trades",
+                name="bot_trades",
                 size=0,
                 title=Header.name_bot_trade,
             )
@@ -1159,7 +1159,7 @@ def refresh_bot_orders():
         if len(lst) > 1:
             if lst[1] == disp.bot_name:
                 row = tree.tree.item(child)["values"]
-                bot_tree.insert(values=row, iid=child, configure=row[indx_side])
+                bot_tree.insert(values=row[:-1], iid=child, configure=row[indx_side])
                 anyline = True
     if anyline:
         if "No orders" in bot_tree.children:

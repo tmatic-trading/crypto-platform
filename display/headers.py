@@ -102,7 +102,6 @@ class Header:
         "SIDE",
         "PRICE",
         "QTY",
-        "BOT NAME",
     ]
     name_bot_order = [
         "TIME",
@@ -112,7 +111,6 @@ class Header:
         "SIDE",
         "PRICE",
         "QTY",
-        "BOT NAME",
     ]
     name_bot_results = [
         "MARKET",

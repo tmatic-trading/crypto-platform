@@ -674,8 +674,9 @@ class Function(WS, Variables):
                 symbol=val["SYMBOL"],
             ),
             Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
-            emi,
         ]
+        if table.name == "trades":
+            row.append(emi)
         if init:
             return row
         table.insert(values=row, market=self.name, configure=val["SIDE"])
@@ -3359,7 +3360,6 @@ TreeTable.bot_orders = TreeviewTable(
     size=0,
     title=Header.name_bot_order,
     bind=handler_order,
-    hide=["8", "3", "5"],
 )
 
 
