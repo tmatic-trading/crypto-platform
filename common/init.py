@@ -468,7 +468,17 @@ def create_table_for_trades(table_name):
             % (table_name, table_name)
         )
         var.cursor_sqlite.execute(
-            "CREATE INDEX IF NOT EXISTS %s_SIDE ON %s (SIDE)" % (table_name, table_name)
+            (
+                "CREATE INDEX IF NOT EXISTS %s_SIDE ON %s "
+                + "(SIDE)"
+            ) % (table_name, table_name)
+        )
+        var.cursor_sqlite.execute(
+            (
+                "CREATE INDEX IF NOT EXISTS %s_SUREAL_QTY ON %s "
+                + "(MARKET, ACCOUNT, SYMBOL, SIDE, QTY, SUMREAL)"
+            )
+            % (table_name, table_name)
         )
     except Exception as error:
         var.logger.error(error)

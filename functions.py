@@ -2388,7 +2388,7 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
                     + (emi_len - space + pos_len - len(str(item["position"]))) * " "
                     + str(item["position"])
                     + " |"
-                    + "\n"        
+                    + "\n"
                 )
             text += bar
             return ErrorMessage.UNSUBSCRIPTION_WARNING_UNSETTLED.format(

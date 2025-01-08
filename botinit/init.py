@@ -88,50 +88,36 @@ def load_bots() -> None:
     Loading bots into the Bots class.
     """
 
-    # Loading volumes for subscribed instruments
+    # Loading volumes trade results for instruments.
 
-    if var.market_list:
-        union = ""
-        sql = ""
-        for market in var.market_list:
-            ws = Markets[market]
-            sql += union
-            qwr = (
-                "select MARKET, SYMBOL, sum(QTY) as SUM_QTY, sum(SUMREAL) as "
-                + "SUM_SUMREAL from (select abs(QTY) as QTY, SUMREAL, "
-                + "MARKET, SYMBOL, SIDE, ACCOUNT from "
-                + var.database_table
-                + " where "
-            )
-            _or = ""
-            lst = ws.symbol_list.copy()
-            if not lst:
-                lst = [("MUST_NOT_BE_EMPTY", "MUST_NOT_BE_EMPTY")]
-            for symbol in lst:
-                qwr += _or
-                qwr += "SYMBOL = '" + symbol[0] + "'"
-                _or = " or "
-            qwr += (
-                ") T where SIDE <> 'Fund' and MARKET = '"
-                + ws.name
-                + "' and ACCOUNT = "
-                + str(ws.user_id)
-                + " group by SYMBOL, MARKET"
-            )
-            sql += qwr
-            union = " union "
-        sql += ";"
-
-        var.lock.acquire(True)
-        data = service.select_database(sql)
-        for value in data:
-            ws = Markets[value["MARKET"]]
-            symbol = (value["SYMBOL"], value["MARKET"])
+    union = ""
+    sql = ""
+    symbols = dict()
+    for market in var.market_list:
+        ws = Markets[market]
+        symbols[market] = ws.Instrument.get_keys()
+        sql += union
+        sql += (
+            "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, sum(SUMREAL) "
+            + "as SUM_SUMREAL from test_trade where MARKET = '"
+            + market
+            + "' and account = '"
+            + str(ws.user_id)
+            + "' and side <> 'Fund' group by SYMBOL"
+        )
+        union = " union ALL "
+    sql += ";"
+    var.lock.acquire(True)
+    data = service.select_database(sql)
+    for value in data:
+        ws = Markets[value["MARKET"]]
+        symbol = (value["SYMBOL"], value["MARKET"])
+        if symbol in symbols[market]:
             instrument = ws.Instrument[symbol]
             precision = instrument.precision
             instrument.volume = round(float(value["SUM_QTY"]), precision)
             instrument.sumreal = float(value["SUM_SUMREAL"])
-        var.lock.release()
+    var.lock.release()
 
     # Search for unclosed positions. If an unclosed position belongs to a bot
     # that is not in the "robots" table, EMI becomes "". If the SYMBOL of the
