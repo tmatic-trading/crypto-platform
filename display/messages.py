@@ -127,10 +127,9 @@ class ErrorMessage(str, Enum):
         + "should be closed before canceling subscription."
     )
     UNSUBSCRIPTION_WARNING_UNSETTLED = (
-        "The balance of the instrument {SYMBOL} is zero, but not the balance "
-        + "of the bot(s).\n\nOpen positions of Tmatic internal accounting:\n\n"
-        + "{LIST}\nYou should close bot positions or delete bot(s) to settle "
-        + "the balance."
+        "The balance of the symbol {SYMBOL} is zero, but according to the Tmatic's "
+        + "internal accounting there {PIECE1} with open position for this "
+        + "instrument:\n\n{LIST}\nYou should close the {PIECE2} to settle the balance."
     )
 
     def __str__(self) -> str:
