@@ -288,6 +288,20 @@ def load_bots() -> None:
                 _put_message(market="", message=message, warning="warning")
         var.lock.release()
 
+    # Removing from every market's symbol_list subsribed single option strikes (if any)
+
+    for market_str in var.market_list:
+        market = Markets[market_str]
+        market_list = market.symbol_list.copy()
+        for symbol in market_list:
+            if var._series in symbol[0]:
+                options = service.select_option_strikes(
+                    index=market.instrument_index, instrument=market.Instrument[symbol]
+                )
+                for smb in market_list:
+                    if smb[0] in options:
+                        market.symbol_list.remove(smb)
+
     # Importing the strategy.py bot files
 
     for bot_name in Bots.keys():
