@@ -178,14 +178,15 @@ def load_bots() -> None:
                     and isinstance(instrument.expire, datetime)
                     and instrument.expire > tm
                 ) or instrument.expire == "Perpetual":
-                    subscriptions.add(symbol)
-                    message = Message.UNCLOSED_POSITION_FOUND.format(
-                        POSITION=functions.Function.volume(
-                            ws, value["position"], symbol
-                        ),
-                        SYMBOL=symbol[0],
-                    )
-                    _put_message(market="", message=message, warning="warning")
+                    if "spot" not in instrument.category:
+                        subscriptions.add(symbol)
+                        message = Message.UNCLOSED_POSITION_FOUND.format(
+                            POSITION=functions.Function.volume(
+                                ws, value["position"], symbol
+                            ),
+                            SYMBOL=symbol[0],
+                        )
+                    _put_message(market=instrument.market, message=message, warning="warning")
                 else:
                     message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
                         SYMBOL=symbol, STATE=instrument.state
