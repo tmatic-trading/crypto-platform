@@ -501,16 +501,18 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
                         direct = parameters["first"] * (
                             parameters["number"] % 2 * 2 - 1
                         )
-                        if direct >= 0 and ask > parameters["up"]:
-                            parameters["number"] += 1
-                            if parameters["first"] == 0:
-                                parameters["first"] = -1
-                            call_bot_breakdown()
-                        if direct <= 0 and bid < parameters["dn"]:
-                            parameters["number"] += 1
-                            if parameters["first"] == 0:
-                                parameters["first"] = 1
-                            call_bot_breakdown()
+                        if parameters["up"]:
+                            if direct >= 0 and ask > parameters["up"]:
+                                parameters["number"] += 1
+                                if parameters["first"] == 0:
+                                    parameters["first"] = -1
+                                call_bot_breakdown()
+                        if parameters["dn"]:
+                            if direct <= 0 and  bid < parameters["dn"]:
+                                parameters["number"] += 1
+                                if parameters["first"] == 0:
+                                    parameters["first"] = 1
+                                call_bot_breakdown()
 
 
 def count_orders():
@@ -958,6 +960,7 @@ def call_bot_function(function: Union[Callable, str], bot_name: str):
                 "message": error,
                 "time": datetime.now(tz=timezone.utc),
                 "warning": True,
+                "emi": bot_name,
             }
         )
         var.logger.error(error)

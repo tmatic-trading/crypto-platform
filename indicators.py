@@ -19,8 +19,8 @@ class BreakDown:
         BreakDown.symbols[self.symbol][self.bot.timefr][self.bot.name] = {
             "bot_name": self.bot.name,
             "symbol": self.symbol,
-            "up": 0,
-            "dn": 1000000000,
+            "up": False,
+            "dn": False,
             "first": 0,
             "number": 0,
             "trades": 0,
