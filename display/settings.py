@@ -246,8 +246,12 @@ class SettingsApp:
         for market in self.market_list:
             var.env[market]["SYMBOLS"] = list()
             try:
-                sub = service.define_symbol_key(market=market)
-                symbols = values[sub].replace(",", " ").split()
+                sub = service.define_symbol_key(market=market)                
+                _symbols = values[sub].replace(",", " ").split()
+                symbols = []
+                for s in _symbols:
+                    if s not in symbols:
+                        symbols.append(s)
                 if not symbols:
                     symbols = [var.default_symbol[market][0][0]]
                 for symb in symbols:
