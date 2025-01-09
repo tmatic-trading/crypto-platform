@@ -542,8 +542,8 @@ class Agent(Bitmex):
                         and instrument.currentQty != 0
                     ):
                         if "avgEntryPrice" in values:
-                            instrument.avgEntryPrice = service.set_avgEntryPrice(
-                                instrument=instrument, price=values["avgEntryPrice"]
+                            instrument.avgEntryPrice = service.set_number(
+                                instrument=instrument, number=values["avgEntryPrice"]
                             )
                         if "marginCallPrice" in values:
                             if values["marginCallPrice"] == 100000000:
@@ -551,7 +551,9 @@ class Agent(Bitmex):
                             else:
                                 instrument.marginCallPrice = values["marginCallPrice"]
                         if "unrealisedPnl" in values:
-                            instrument.unrealisedPnl = values["unrealisedPnl"]
+                            instrument.unrealisedPnl = service.set_number(
+                                instrument=instrument, number=values["unrealisedPnl"]
+                            )
         else:
             self.logger.error(ErrorMessage.POSITIONS_NOT_RECEIVED)
             return "FATAL"

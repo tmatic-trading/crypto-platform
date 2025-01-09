@@ -270,8 +270,8 @@ class Bybit(Variables):
                 instrument.currentQty = -float(value["size"])
             else:
                 instrument.currentQty = float(value["size"])
-            instrument.avgEntryPrice = service.set_avgEntryPrice(
-                instrument=instrument, price=float(value["entryPrice"])
+            instrument.avgEntryPrice = service.set_number(
+                instrument=instrument, number=float(value["entryPrice"])
             )
             if value["liqPrice"] == "":
                 if instrument.currentQty == 0:
@@ -280,7 +280,9 @@ class Bybit(Variables):
                     instrument.marginCallPrice = "inf"
             else:
                 instrument.marginCallPrice = value["liqPrice"]
-            instrument.unrealisedPnl = value["unrealisedPnl"]
+            instrument.unrealisedPnl = service.set_number(
+                instrument=instrument, number=float(value["unrealisedPnl"])
+            )
 
     def __handle_order(self, values):
         """

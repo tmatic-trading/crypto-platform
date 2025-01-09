@@ -130,7 +130,7 @@ class Agent(Deribit):
             instrument.state = "Inactive"
         instrument.multiplier = 1
         instrument.myMultiplier = 1
-        if category == "spot":
+        if "spot" in category:
             instrument.fundingRate = var.DASH
             instrument.avgEntryPrice = var.DASH
             instrument.marginCallPrice = var.DASH
@@ -277,10 +277,12 @@ class Agent(Deribit):
                         instrument.currentQty = values["size_currency"]
                     else:
                         instrument.currentQty = values["size"]
-                instrument.avgEntryPrice = service.set_avgEntryPrice(
-                    instrument=instrument, price=values["average_price"]
+                instrument.avgEntryPrice = service.set_number(
+                    instrument=instrument, number=values["average_price"]
                 )
-                instrument.unrealisedPnl = values["total_profit_loss"]
+                instrument.unrealisedPnl = service.set_number(
+                    instrument=instrument, number=values["total_profit_loss"]
+                )
                 """if "estimated_liquidation_price" in values:
                     instrument.marginCallPrice = values["estimated_liquidation_price"]
                 else:

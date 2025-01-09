@@ -584,10 +584,12 @@ class Deribit(Variables):
                     instrument.currentQty = value["size_currency"]
                 else:
                     instrument.currentQty = value["size"]
-                instrument.avgEntryPrice = service.set_avgEntryPrice(
-                    instrument=instrument, price=value["average_price"]
+                instrument.avgEntryPrice = service.set_number(
+                    instrument=instrument, number=value["average_price"]
                 )
-                instrument.unrealisedPnl = value["total_profit_loss"]
+                instrument.unrealisedPnl = service.set_number(
+                    instrument=instrument, number=value["total_profit_loss"]
+                )
                 # instrument.marginCallPrice is not provided
 
     def ping_pong(self):

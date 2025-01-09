@@ -461,7 +461,7 @@ class Instrument:
         Symbol of the instrument in the exchange classification.
     tickSize: float
         The step to increase/reduce order price.
-    unrealisedPnl: float
+    unrealisedPnl: [float, str]
         Unrealised PnL.
     volume: float
         The total trading volume on a given account.

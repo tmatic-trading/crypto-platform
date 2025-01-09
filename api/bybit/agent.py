@@ -606,10 +606,12 @@ class Agent(Bybit):
                         instrument.currentQty = float(values["size"])
                         if values["side"] == "Sell":
                             instrument.currentQty = -instrument.currentQty
-                    instrument.avgEntryPrice = service.set_avgEntryPrice(
-                        instrument=instrument, price=float(values["avgPrice"])
+                    instrument.avgEntryPrice = service.set_number(
+                        instrument=instrument, number=float(values["avgPrice"])
                     )
-                    instrument.unrealisedPnl = values["unrealisedPnl"]
+                    instrument.unrealisedPnl = service.set_number(
+                        instrument=instrument, number=float(values["unrealisedPnl"])
+                    )
                     instrument.marginCallPrice = values["liqPrice"]
                     if not instrument.marginCallPrice:
                         instrument.marginCallPrice = "inf"

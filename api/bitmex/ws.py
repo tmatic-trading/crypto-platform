@@ -466,8 +466,8 @@ class Bitmex(Variables):
                 if values["avgEntryPrice"] == None:
                     values["avgEntryPrice"] == var.DASH
                 else:
-                    instrument.avgEntryPrice = service.set_avgEntryPrice(
-                        instrument=instrument, price=values["avgEntryPrice"]
+                    instrument.avgEntryPrice = service.set_number(
+                        instrument=instrument, number=values["avgEntryPrice"]
                     )
             if "unrealisedPnl" in values:
                 instrument.unrealisedPnl = (

@@ -114,7 +114,7 @@ class Instrument:
         Symbol of the instrument in the exchange classification.
     tickSize: float
         The step to increase/reduce order price.
-    unrealisedPnl: float
+    unrealisedPnl: [float, str]
         Unrealised PnL.
     volume: float
         The total trading volume on a given account.
@@ -154,7 +154,7 @@ class Instrument:
     takerFee: float = None
     ticker: str
     tickSize: float
-    unrealisedPnl: float = 0
+    unrealisedPnl: float = var.DASH
     volume: float = 0
     volume24h: float = 0
     valueOfOneContract: float
