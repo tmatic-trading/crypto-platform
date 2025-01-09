@@ -542,7 +542,9 @@ class Agent(Bitmex):
                         and instrument.currentQty != 0
                     ):
                         if "avgEntryPrice" in values:
-                            instrument.avgEntryPrice = values["avgEntryPrice"]
+                            instrument.avgEntryPrice = service.set_avgEntryPrice(
+                                instrument=instrument, price=values["avgEntryPrice"]
+                            )
                         if "marginCallPrice" in values:
                             if values["marginCallPrice"] == 100000000:
                                 instrument.marginCallPrice = "inf"

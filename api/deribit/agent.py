@@ -277,7 +277,9 @@ class Agent(Deribit):
                         instrument.currentQty = values["size_currency"]
                     else:
                         instrument.currentQty = values["size"]
-                instrument.avgEntryPrice = values["average_price"]
+                instrument.avgEntryPrice = service.set_avgEntryPrice(
+                    instrument=instrument, price=values["average_price"]
+                )
                 instrument.unrealisedPnl = values["total_profit_loss"]
                 """if "estimated_liquidation_price" in values:
                     instrument.marginCallPrice = values["estimated_liquidation_price"]

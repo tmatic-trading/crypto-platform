@@ -27,7 +27,7 @@ class Instrument:
         Asks. The elements are sorted by price in ascending order. There can
         only be one element if the ORDER_BOOK_DEPTH in the .env file is
         defined as ``quote``.
-    avgEntryPrice: float
+    avgEntryPrice: [float, str]
         Average entry price.
     baseCoin: str
         Base coin.
@@ -126,7 +126,7 @@ class Instrument:
     """
 
     asks: list = []
-    avgEntryPrice: float = 0
+    avgEntryPrice: float = var.DASH
     baseCoin: str
     bids: list = []
     category: str

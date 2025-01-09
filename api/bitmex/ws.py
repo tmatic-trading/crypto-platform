@@ -458,14 +458,17 @@ class Bitmex(Variables):
             if values["currentQty"] or values["currentQty"] == 0:
                 instrument.currentQty = values["currentQty"] / instrument.myMultiplier
         if instrument.currentQty == 0:
-            instrument.avgEntryPrice = 0
-            instrument.marginCallPrice = 0
-            instrument.unrealisedPnl = 0
+            instrument.avgEntryPrice = var.DASH
+            instrument.marginCallPrice = var.DASH
+            instrument.unrealisedPnl = var.DASH
         else:
             if "avgEntryPrice" in values:
-                instrument.avgEntryPrice = values["avgEntryPrice"]
-                if instrument.avgEntryPrice == None:
-                    instrument.avgEntryPrice = 0
+                if values["avgEntryPrice"] == None:
+                    values["avgEntryPrice"] == var.DASH
+                else:
+                    instrument.avgEntryPrice = service.set_avgEntryPrice(
+                        instrument=instrument, price=values["avgEntryPrice"]
+                    )
             if "unrealisedPnl" in values:
                 instrument.unrealisedPnl = (
                     values["unrealisedPnl"]

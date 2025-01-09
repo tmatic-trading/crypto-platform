@@ -1035,3 +1035,10 @@ def symbols_to_string(values):
         else:
             values_str += "," + item_str
     return values_str
+
+
+def set_avgEntryPrice(instrument: Instrument, price: float) -> Union[float, str]:
+    if "spot" in instrument.category or price == 0:
+        return var.DASH
+
+    return price

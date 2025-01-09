@@ -270,7 +270,9 @@ class Bybit(Variables):
                 instrument.currentQty = -float(value["size"])
             else:
                 instrument.currentQty = float(value["size"])
-            instrument.avgEntryPrice = float(value["entryPrice"])
+            instrument.avgEntryPrice = service.set_avgEntryPrice(
+                instrument=instrument, price=float(value["entryPrice"])
+            )
             if value["liqPrice"] == "":
                 if instrument.currentQty == 0:
                     instrument.marginCallPrice = 0

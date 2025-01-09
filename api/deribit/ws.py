@@ -584,7 +584,9 @@ class Deribit(Variables):
                     instrument.currentQty = value["size_currency"]
                 else:
                     instrument.currentQty = value["size"]
-                instrument.avgEntryPrice = value["average_price"]
+                instrument.avgEntryPrice = service.set_avgEntryPrice(
+                    instrument=instrument, price=value["average_price"]
+                )
                 instrument.unrealisedPnl = value["total_profit_loss"]
                 # instrument.marginCallPrice is not provided
 
