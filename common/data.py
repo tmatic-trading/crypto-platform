@@ -70,7 +70,7 @@ class Instrument:
         ``reversed`` in the case of Deribit.
     makerFee: float
         Maker's commission for instrument.
-    marginCallPrice: float
+    marginCallPrice: [float, str]
         Position margin call or liquidation price.
     market: str
         Exchange name.

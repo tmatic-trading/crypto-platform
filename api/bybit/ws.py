@@ -274,10 +274,7 @@ class Bybit(Variables):
                 instrument=instrument, number=float(value["entryPrice"])
             )
             if value["liqPrice"] == "":
-                if instrument.currentQty == 0:
-                    instrument.marginCallPrice = 0
-                else:
-                    instrument.marginCallPrice = "inf"
+                instrument.marginCallPrice = var.DASH
             else:
                 instrument.marginCallPrice = value["liqPrice"]
             instrument.unrealisedPnl = service.set_number(

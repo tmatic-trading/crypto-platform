@@ -614,7 +614,7 @@ class Agent(Bybit):
                     )
                     instrument.marginCallPrice = values["liqPrice"]
                     if not instrument.marginCallPrice:
-                        instrument.marginCallPrice = "inf"
+                        instrument.marginCallPrice = var.DASH
                 if isinstance(res["result"]["list"], list):
                     success[num] = ""  # success
 

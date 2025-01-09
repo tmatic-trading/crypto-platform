@@ -538,10 +538,7 @@ class Agent(Bitmex):
                                 instrument=instrument, number=values["avgEntryPrice"]
                             )
                         if "marginCallPrice" in values:
-                            if values["marginCallPrice"] == 100000000:
-                                instrument.marginCallPrice = "inf"
-                            else:
-                                instrument.marginCallPrice = values["marginCallPrice"]
+                            instrument.marginCallPrice = values["marginCallPrice"]
                         if "unrealisedPnl" in values:
                             instrument.unrealisedPnl = service.set_number(
                                 instrument=instrument, number=values["unrealisedPnl"]

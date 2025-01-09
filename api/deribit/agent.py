@@ -136,6 +136,8 @@ class Agent(Deribit):
             instrument.marginCallPrice = var.DASH
             instrument.currentQty = var.DASH
             instrument.unrealisedPnl = var.DASH
+        else:
+            instrument.marginCallPrice = var.NA
         if category == "option":
             instrument.fundingRate = var.DASH
         instrument.valueOfOneContract = 1

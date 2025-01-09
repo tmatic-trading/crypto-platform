@@ -113,3 +113,4 @@ class Variables:
     backtest_table = "backtest"
     DASH = "-"
     DASH3 = "---"
+    NA = "n/a"

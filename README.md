@@ -421,7 +421,7 @@ class Instrument:
         Expiration time.
     fundingRate: float
         Funding rate.
-    marginCallPrice: float
+    marginCallPrice: [float, str]
         Position margin call or liquidation price.
     market: str
         Exchange name.
