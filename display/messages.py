@@ -11,6 +11,10 @@ class Message(str, Enum):
         + "but there is no subscription for {SYMBOL}. The subscription will "
         + "be added."
     )
+    NON_SUBSCRIBED_SYMBOL_ORDER = (
+        "The symbol {SYMBOL} has open order(s) but not subscribed. The subscription "
+        "will be added."
+    )
     UNSUBSCRIPTION_WAITING = (
         "Unsubscribe from {SYMBOL}. Waiting for confirmation from {MARKET}."
     )

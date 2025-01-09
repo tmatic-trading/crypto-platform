@@ -6,7 +6,7 @@ from typing import Union
 import services as service
 from api.http import Send
 from common.variables import Variables as var
-from display.messages import ErrorMessage
+from display.messages import ErrorMessage, Message
 
 from .path import Listing
 from .ws import Bitmex
@@ -418,6 +418,10 @@ class Agent(Bitmex):
                 )
                 if order["symbol"] not in self.symbol_list:
                     self.symbol_list.append(order["symbol"])
+                    message = Message.NON_SUBSCRIBED_SYMBOL_ORDER.format(
+                        SYMBOL=order["symbol"][0]
+                    )
+                    self._put_message(message=message, warning="warning")
         else:
             self.logger.error(
                 "The list was expected when the orders were loaded, but it was not received."
