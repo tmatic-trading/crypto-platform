@@ -2351,54 +2351,60 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
     each_symbol = []
     for s in symbols:
         each = (s, symbol[1])
-        each_symbol.append(each)
-        instrument = ws.Instrument[each]
-        if instrument.currentQty != 0:
-            position = Function.volume(ws, qty=instrument.currentQty, symbol=each)
-            return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
-                SYMBOL=each, POSITION=position
-            )
-        lst, total = [], 0
-        for bot_name in Bots.keys():
-            for smb, pos in Bots[bot_name].bot_positions.items():
-                if smb == each and round(pos["position"], instrument.precision) != 0:
-                    volume = Function.volume(ws, qty=pos["position"], symbol=smb)
-                    lst.append({"emi": bot_name, "position": volume})
-                    total += pos["position"]
-        if lst:
-            lst.append({"emi": each[0], "position": -total})
-            text, emi_len, pos_len = "", 0, 0
-            for item in lst:
-                if len(item["emi"]) > emi_len:
-                    emi_len = len(item["emi"]) + 1
-                if len(str(item["position"])) > pos_len:
-                    pos_len = len(str(item["position"]))
-            if emi_len < 20:
-                emi_len = 20
-            bar = "    |" + "-" * (emi_len + 2 + pos_len) + "|\n"
-            text += bar
-            text += "    | Bot/Symbol" + " " * (emi_len - 18 + pos_len) + "Position |\n"
-            text += bar
-            for item in lst:
-                space = len(item["emi"])
-                text += (
-                    "    | "
-                    + item["emi"]
-                    + (emi_len - space + pos_len - len(str(item["position"]))) * " "
-                    + str(item["position"])
-                    + " |"
-                    + "\n"
+        each_symbol.append(each)        
+        if "spot" not in instrument.category:
+            instrument = ws.Instrument[each]
+            if instrument.currentQty != 0:
+                position = Function.volume(ws, qty=instrument.currentQty, symbol=each)
+                return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
+                    SYMBOL=each, POSITION=position
                 )
-            text += bar
-            if len(lst) == 2:
-                piece1 = "is a bot"
-                piece2 = "bot position or delete the bot"
-            else:
-                piece1 = "are bots"
-                piece2 = "bots positions or delete the bots"
-            return ErrorMessage.UNSUBSCRIPTION_WARNING_UNSETTLED.format(
-                SYMBOL=symbol, PIECE1=piece1, LIST=text, PIECE2=piece2
-            )
+            lst, total = [], 0
+            for bot_name in Bots.keys():
+                for smb, pos in Bots[bot_name].bot_positions.items():
+                    if (
+                        smb == each
+                        and round(pos["position"], instrument.precision) != 0
+                    ):
+                        volume = Function.volume(ws, qty=pos["position"], symbol=smb)
+                        lst.append({"emi": bot_name, "position": volume})
+                        total += pos["position"]
+            if lst:
+                lst.append({"emi": each[0], "position": -total})
+                text, emi_len, pos_len = "", 0, 0
+                for item in lst:
+                    if len(item["emi"]) > emi_len:
+                        emi_len = len(item["emi"]) + 1
+                    if len(str(item["position"])) > pos_len:
+                        pos_len = len(str(item["position"]))
+                if emi_len < 20:
+                    emi_len = 20
+                bar = "    |" + "-" * (emi_len + 2 + pos_len) + "|\n"
+                text += bar
+                text += (
+                    "    | Bot/Symbol" + " " * (emi_len - 18 + pos_len) + "Position |\n"
+                )
+                text += bar
+                for item in lst:
+                    space = len(item["emi"])
+                    text += (
+                        "    | "
+                        + item["emi"]
+                        + (emi_len - space + pos_len - len(str(item["position"]))) * " "
+                        + str(item["position"])
+                        + " |"
+                        + "\n"
+                    )
+                text += bar
+                if len(lst) == 2:
+                    piece1 = "is a bot"
+                    piece2 = "bot position or delete the bot"
+                else:
+                    piece1 = "are bots"
+                    piece2 = "bots positions or delete the bots"
+                return ErrorMessage.UNSUBSCRIPTION_WARNING_UNSETTLED.format(
+                    SYMBOL=symbol, PIECE1=piece1, LIST=text, PIECE2=piece2
+                )
     for orders in var.orders.values():
         for value in orders.values():
             for item in each_symbol:

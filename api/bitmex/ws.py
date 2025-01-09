@@ -545,7 +545,7 @@ class Bitmex(Variables):
             return True
 
         return False
-    
+
     def _put_message(self, message: str, warning=None) -> None:
         """
         Places an information message into the queue and the logger.

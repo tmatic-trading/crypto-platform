@@ -13,7 +13,6 @@ from common.variables import Variables as var
 from display.bot_menu import bot_manager
 from display.messages import ErrorMessage
 from display.variables import Variables as disp
-from functions import Function
 
 
 def name(stack) -> str:
