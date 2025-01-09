@@ -7,7 +7,7 @@ import services as service
 from api.bybit.erruni import Unify
 from api.errors import Error
 from common.variables import Variables as var
-from display.messages import ErrorMessage
+from display.messages import ErrorMessage, Message
 
 from .ws import Bybit
 
@@ -406,6 +406,10 @@ class Agent(Bybit):
                     )
                     if order["symbol"] not in self.symbol_list:
                         self.symbol_list.append(order["symbol"])
+                        message = Message.NON_SUBSCRIBED_SYMBOL_ORDER.format(
+                            SYMBOL=order["symbol"][0]
+                        )
+                        self._put_message(message=message, warning="warning")
                 myOrders += res["result"]["list"]
                 if isinstance(res["result"]["list"], list):
                     success[num] = ""  # success

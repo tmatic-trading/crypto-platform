@@ -3,7 +3,7 @@ import threading
 import time
 import traceback
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from time import sleep
 
 import requests
@@ -545,3 +545,22 @@ class Bitmex(Variables):
             return True
 
         return False
+    
+    def _put_message(self, message: str, warning=None) -> None:
+        """
+        Places an information message into the queue and the logger.
+        """
+        var.queue_info.put(
+            {
+                "market": self.name,
+                "message": message,
+                "time": datetime.now(tz=timezone.utc),
+                "warning": warning,
+            }
+        )
+        if not warning:
+            var.logger.info(self.name + " - " + message)
+        elif warning == "warning":
+            var.logger.warning(self.name + " - " + message)
+        else:
+            var.logger.error(self.name + " - " + message)

@@ -9,7 +9,7 @@ import services as service
 from api.errors import Error
 from api.http import Send
 from common.variables import Variables as var
-from display.messages import ErrorMessage
+from display.messages import ErrorMessage, Message
 
 from .error import DeribitWsRequestError
 from .path import Listing, Matching_engine
@@ -194,6 +194,10 @@ class Agent(Deribit):
                             order["side"] = "Sell"
                         if symbol not in self.symbol_list:
                             self.symbol_list.append(symbol)
+                            message = Message.NON_SUBSCRIBED_SYMBOL_ORDER.format(
+                                SYMBOL=order["symbol"][0]
+                            )
+                            self._put_message(message=message, warning="warning")
                     self.setup_orders = res["result"]
                     return ""
                 else:
