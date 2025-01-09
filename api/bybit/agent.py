@@ -600,9 +600,12 @@ class Agent(Bybit):
                 for values in res["result"]["list"]:
                     symbol = (self.ticker[(values["symbol"], category)], self.name)
                     instrument = self.Instrument[symbol]
-                    instrument.currentQty = float(values["size"])
-                    if values["side"] == "Sell":
-                        instrument.currentQty = -instrument.currentQty
+                    if instrument.category == "spot":
+                        instrument.currentQty = var.DASH
+                    else:
+                        instrument.currentQty = float(values["size"])
+                        if values["side"] == "Sell":
+                            instrument.currentQty = -instrument.currentQty
                     instrument.avgEntryPrice = float(values["avgPrice"])
                     instrument.unrealisedPnl = values["unrealisedPnl"]
                     instrument.marginCallPrice = values["liqPrice"]

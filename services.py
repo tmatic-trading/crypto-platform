@@ -508,7 +508,7 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
                                     parameters["first"] = -1
                                 call_bot_breakdown()
                         if parameters["dn"]:
-                            if direct <= 0 and  bid < parameters["dn"]:
+                            if direct <= 0 and bid < parameters["dn"]:
                                 parameters["number"] += 1
                                 if parameters["first"] == 0:
                                     parameters["first"] = 1

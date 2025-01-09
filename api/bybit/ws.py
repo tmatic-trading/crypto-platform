@@ -745,7 +745,7 @@ class Bybit(Variables):
             self.unsubscriptions.add(topic)
         else:
             self.unsubscriptions.add(req_id)
-            topic = req_id       
+            topic = req_id
         unsubscription_message = json.dumps(
             {"op": "unsubscribe", "req_id": req_id, "args": unsubscription_args}
         )

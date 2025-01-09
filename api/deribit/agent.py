@@ -270,10 +270,13 @@ class Agent(Deribit):
             for values in data["result"]:
                 symbol = (self.ticker[values["instrument_name"]], self.name)
                 instrument = self.Instrument[symbol]
-                if instrument.category == "future_linear":
-                    instrument.currentQty = values["size_currency"]
+                if "spot" in instrument.category:
+                    instrument.currentQty = var.DASH
                 else:
-                    instrument.currentQty = values["size"]
+                    if instrument.category == "future_linear":
+                        instrument.currentQty = values["size_currency"]
+                    else:
+                        instrument.currentQty = values["size"]
                 instrument.avgEntryPrice = values["average_price"]
                 instrument.unrealisedPnl = values["total_profit_loss"]
                 """if "estimated_liquidation_price" in values:

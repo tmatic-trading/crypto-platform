@@ -232,11 +232,12 @@ class Agent(Bitmex):
         data = Send.request(self, path=path, verb="GET")
         if isinstance(data, list):
             if data:
-                instrument.currentQty = (
-                    # data[0]["currentQty"] * instrument.valueOfOneContract
-                    data[0]["currentQty"]
-                    / instrument.myMultiplier
-                )
+                if instrument == "spot":
+                    instrument.currentQty = var.DASH
+                else:
+                    instrument.currentQty = (
+                        data[0]["currentQty"] / instrument.myMultiplier
+                    )
             self.logger.info(
                 str(symbol)
                 + " has been added to the positions dictionary for "
@@ -530,10 +531,16 @@ class Agent(Bitmex):
                     )
                     instrument = self.Instrument[symbol]
                     if "currentQty" in values:
-                        instrument.currentQty = (
-                            values["currentQty"] / instrument.myMultiplier
-                        )
-                    if instrument.currentQty != 0:
+                        if instrument.category == "spot":
+                            instrument.currentQty = var.DASH
+                        else:
+                            instrument.currentQty = (
+                                values["currentQty"] / instrument.myMultiplier
+                            )
+                    if (
+                        not isinstance(instrument.currentQty, str)
+                        and instrument.currentQty != 0
+                    ):
                         if "avgEntryPrice" in values:
                             instrument.avgEntryPrice = values["avgEntryPrice"]
                         if "marginCallPrice" in values:

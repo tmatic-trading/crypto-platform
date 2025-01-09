@@ -747,7 +747,7 @@ class Function(WS, Variables):
             values=row, market=self.name, iid=val["clOrdID"], configure=val["side"]
         )
 
-    def volume(self: Markets, qty: Union[int, float], symbol: tuple) -> str:
+    def volume(self: Markets, qty: Union[int, float, str], symbol: tuple) -> str:
         if qty in [var.DASH, "None"]:
             return qty
         if qty == 0:
@@ -1526,11 +1526,9 @@ class Function(WS, Variables):
     def format_instrument_line(
         self, compare: list, instrument: Instrument, symbol: tuple
     ) -> list:
-        compare[2] = Function.volume(self, qty=instrument.currentQty, symbol=symbol)
-        compare[3] = Function.format_price(
-            self, number=instrument.avgEntryPrice, symbol=symbol
-        )
-        compare[4] = service.format_number(number=instrument.unrealisedPnl)
+        compare[2] = Function.volume(self, qty=compare[2], symbol=symbol)
+        compare[3] = Function.format_price(self, number=compare[3], symbol=symbol)
+        compare[4] = service.format_number(number=compare[4])
         # why no compare[] for MCALL data?
         compare[6] = Function.humanFormat(self, instrument.volume24h, symbol)
         if compare[7] != "Perpetual":

@@ -272,8 +272,6 @@ def refresh() -> None:
             Function.market_status(ws, status="ONLINE", message="", error=False)
             functions.clear_tables()
             bot_manager.create_bots_menu()
-            for bot_name in Bots.keys():
-                import_bot_module(bot_name=bot_name)
             botinit.setup_bots()
             ws.api_is_active = True
         while not var.queue_order.empty():
