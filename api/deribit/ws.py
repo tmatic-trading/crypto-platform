@@ -303,7 +303,7 @@ class Deribit(Variables):
                 res = {"error": message["error"]}
                 if "id" in message:
                     if message["id"] in self.response:
-                        self.response[id]["result"] = res
+                        self.response[message["id"]]["result"] = res
                 else:
                     Error.handler(
                         self,

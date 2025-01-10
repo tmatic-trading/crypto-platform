@@ -114,8 +114,8 @@ class ErrorMessage(str, Enum):
         + "PNL calculations."
     )
     EMPTY_ORDERBOOK_DATA = (
-        "Unable to obtain best {SIDE} price from {SYMBOL} because the "
-        + "order book is empty."
+        "When querying kline data, best {SIDE} price could not be obtained "
+        + "from {SYMBOL} because the order book is empty."
     )
     EMPTY_ORDERBOOK_DATA_KLINE = (
         "When adding a new kline entry could not get best {SIDE} price from "
