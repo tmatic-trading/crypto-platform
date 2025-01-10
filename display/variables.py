@@ -834,6 +834,12 @@ class Variables:
         highlightcolor=bg_select_color,
         highlightthickness=1,
     )
+    frame_i_options = tk.Frame(
+        root,
+        highlightbackground=bg_select_color,
+        highlightcolor=bg_select_color,
+        highlightthickness=1,
+    )
 
     def resize_width(event, pw, start_width, min_ratio):
         ratio = pw.winfo_width() / start_width
@@ -1273,17 +1279,19 @@ class TreeviewTable(Variables):
         if self.active_row != item:
             widget.tk.call(widget, "tag", "remove", "highlight")
             widget.tk.call(widget, "tag", "add", "highlight", item)
-        self.active_row = item
+            self.active_row = item
 
     def on_leave(self, event):
         widget = event.widget
         widget.tk.call(widget, "tag", "remove", "highlight")
+        self.active_row = ""
 
 
 class SubTreeviewTable(TreeviewTable):
     def __init__(self, subtable=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subtable: TreeviewTable = subtable
+        self.main_table: TreeviewTable
         self.frame.bind("<Leave>", self.on_leave_frame)
 
     def on_hover(self, event):
@@ -1294,22 +1302,24 @@ class SubTreeviewTable(TreeviewTable):
             self.tree.tk.call(self.tree, "tag", "remove", "highlight")
             if item:
                 self.tree.tk.call(self.tree, "tag", "add", "highlight", item)
-                if self.subtable and TreeTable.market.active_row:
+                if self.subtable:# and TreeTable.market.active_row:
                     self.display_subtable(item=item)
             else:
                 self.del_sub(self)
 
     def display_subtable(self, item: str):
-        ws = Markets[TreeTable.market.active_row]
         if self.name == "market":
+            ws = Markets[self.main_table.active_row]
             lst = ws.instrument_index.keys()
             x_pos = self.frame_market.winfo_width()
         elif self.name == "category":
+            ws = Markets[self.main_table.active_row]
             lst = ws.instrument_index[TreeTable.i_category.active_row].keys()
             x_pos = (
                 self.frame_market.winfo_width() + self.frame_i_category.winfo_width()
             )
         elif self.name == "currency":
+            ws = Markets[self.main_table.active_row]
             lst = ws.instrument_index[TreeTable.i_category.active_row][
                 TreeTable.i_currency.active_row
             ]
@@ -1318,45 +1328,82 @@ class SubTreeviewTable(TreeviewTable):
                 + self.frame_i_category.winfo_width()
                 + self.frame_i_currency.winfo_width()
             )
-        y_pos = (
-            self.tree.winfo_rooty()
-            - self.root.winfo_rooty()
-            + self.tree.bbox(item=item)[1]
-            + self.tree.bbox(item=item)[3] // 2
-        )
-        self.subtable.clear_all()
-        for item in reversed(lst):
-            self.subtable.insert(values=[item], iid=item)
-        self.subtable.tree.column("1", width=200)
-        rows = len(self.subtable.tree.get_children())
-        if rows > 20:
-            rows = 20
-            self.subtable.scroll.grid(row=0, column=1, sticky="NS")
+        elif self.name == "instrument":
+            lst = []
+            smb = item.split("!")
+            if len(smb) > 1:
+                if var._series in smb[1]:
+                    ws = Markets[smb[0]]
+                    instrument = ws.Instrument[(smb[1], smb[0])]
+                    strikes = service.select_option_strikes(
+                        index=ws.instrument_index, instrument=instrument
+                    )
+                    for option in strikes:
+                        symbol = ws.Instrument[(option, smb[0])]
+                        if symbol.currentQty != 0:
+                            lst.append(
+                                (
+                                    option,
+                                    symbol.currentQty,
+                                    symbol.avgEntryPrice,
+                                    service.format_number(number=symbol.unrealisedPnl)
+                                )
+                            )
+                    self.main_table.frame.winfo_rootx()
+                    x = self.root.winfo_pointerx()
+                    if x < self.main_table.frame.winfo_rootx() + self.main_table.frame.winfo_width() / 2:
+                        x_pos = x - self.root.winfo_rootx() + 5
+                    else:
+                        x_pos = x - self.root.winfo_rootx() - self.frame_i_options.winfo_width() - 5
+                    self.subtable.tree.column("2", width=70)
+                    self.subtable.tree.column("3", width=70)
+                    self.subtable.tree.column("4", width=70)
+        if len(lst) > 0:
+            y_pos = (
+                self.tree.winfo_rooty()
+                - self.root.winfo_rooty()
+                + self.tree.bbox(item=item)[1]
+                + self.tree.bbox(item=item)[3] // 2
+            )
+            self.subtable.clear_all()
+            for item in reversed(lst):
+                if type(item) is str:
+                    item = [item]
+                self.subtable.insert(values=item, iid=item[0])
+            self.subtable.tree.column("1", width=200)
+            rows = len(self.subtable.tree.get_children())
+            if rows > 20:
+                rows = 20
+                self.subtable.scroll.grid(row=0, column=1, sticky="NS")
+            else:
+                self.subtable.scroll.grid_forget()
+            height = self.main_table.tree.bbox(self.main_table.tree.get_children()[0])[1]
+            y_pos -= height * (rows + 1) // 2
+            y_pos = max(y_pos, 0)
+            self.subtable.tree.config(height=rows)
+            self.subtable.frame.place(x=x_pos, y=y_pos)
         else:
-            self.subtable.scroll.grid_forget()
-        height = TreeTable.market.tree.bbox(TreeTable.market.tree.get_children()[0])[1]
-        y_pos -= height * (rows + 1) // 2
-        y_pos = max(y_pos, 0)
-        self.subtable.tree.config(height=rows)
-        self.subtable.frame.place(x=x_pos, y=y_pos)
+            self.del_sub(self.main_table)
 
     def on_leave(self, event):
         height = self.tree.winfo_height()
         x, y = self.root.winfo_pointerxy()
         pos_y = self.tree.winfo_rooty()
-        if y < pos_y or y >= pos_y + height:
-            self.del_sub(TreeTable.market)
-            TreeTable.market.tree.tk.call(
-                TreeTable.market.tree, "tag", "remove", "highlight"
+        # or x > self.main_table.frame.winfo_rootx() + self.main_table.frame.winfo_width() - 15:
+        if y < pos_y or y >= pos_y + height or x < self.main_table.frame.winfo_rootx():
+            self.del_sub(self.main_table)
+            self.main_table.tree.tk.call(
+                self.main_table.tree, "tag", "remove", "highlight"
             )
 
     def on_leave_frame(self, event):
         x, y = self.root.winfo_pointerxy()
         if not self.subtable:
+            # or x <= self.frame.winfo_rootx():
             if x >= self.frame.winfo_width() + self.frame.winfo_rootx():
-                self.del_sub(TreeTable.market)
-                TreeTable.market.tree.tk.call(
-                    TreeTable.market.tree, "tag", "remove", "highlight"
+                self.del_sub(self.main_table)
+                self.main_table.tree.tk.call(
+                    self.main_table.tree, "tag", "remove", "highlight"
                 )
 
     def del_sub(self, widget):
@@ -1393,6 +1440,7 @@ class TreeTable:
     calls: TreeviewTable
     strikes: TreeviewTable
     puts: TreeviewTable
+    i_options: TreeviewTable
 
 
 class ClickLabel(tk.Label):
