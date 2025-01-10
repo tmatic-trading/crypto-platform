@@ -179,16 +179,31 @@ def load_bots() -> None:
                     and instrument.expire > tm
                 ) or instrument.expire == "Perpetual":
                     if "spot" not in instrument.category:
-                        subscriptions.add(symbol)
-                        message = Message.UNCLOSED_POSITION_FOUND.format(
-                            POSITION=functions.Function.volume(
-                                ws, value["position"], symbol
-                            ),
-                            SYMBOL=symbol[0],
-                        )
-                        _put_message(
-                            market=instrument.market, message=message, warning="warning"
-                        )
+                        do_subscribe = True
+                        if "option" in instrument.category:
+                            for smb in ws.symbol_list:
+                                if var._series in smb[0]:
+                                    options = service.select_option_strikes(
+                                        index=ws.instrument_index,
+                                        instrument=ws.Instrument[smb]
+                                    )
+                                    if symbol[0] in options:
+                                        # already subscribed in series
+                                        do_subscribe = False
+                                        break
+                        if do_subscribe == True:
+                            subscriptions.add(symbol)
+                            message = Message.UNCLOSED_POSITION_FOUND.format(
+                                POSITION=functions.Function.volume(
+                                    ws, value["position"], symbol
+                                ),
+                                SYMBOL=symbol[0],
+                            )
+                            _put_message(
+                                market=instrument.market,
+                                message=message,
+                                warning="warning"
+                            )
                 else:
                     message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
                         SYMBOL=symbol, STATE=instrument.state
@@ -295,13 +310,13 @@ def load_bots() -> None:
 
     for market_str in var.market_list:
         market = Markets[market_str]
-        market_list = market.symbol_list.copy()
-        for symbol in market_list:
+        symbols = market.symbol_list.copy()
+        for symbol in symbols:
             if var._series in symbol[0]:
                 options = service.select_option_strikes(
                     index=market.instrument_index, instrument=market.Instrument[symbol]
                 )
-                for smb in market_list:
+                for smb in symbols:
                     if smb[0] in options:
                         market.symbol_list.remove(smb)
 

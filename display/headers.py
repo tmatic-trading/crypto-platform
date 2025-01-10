@@ -141,4 +141,10 @@ class Header:
         "DELTA",
         "OPEN",
     ]
+    name_i_options = [
+        "SYMBOL",
+        "POS",
+        "ENTRY",
+        "PNL",
+    ]
     name_strikes = ["STRIKE"]

@@ -3227,15 +3227,24 @@ TreeTable.orderbook = TreeviewTable(
     multicolor=True,
     autoscroll=True,
 )
-TreeTable.instrument = TreeviewTable(
+TreeTable.i_options = SubTreeviewTable(
+    frame=disp.frame_i_options,
+    name="options",
+    title=Header.name_i_options,
+    bind=handler_instrument,
+)
+TreeTable.instrument = SubTreeviewTable(
     frame=disp.frame_instrument,
     name="instrument",
     title=Header.name_instrument,
     bind=handler_instrument,
     hierarchy=True,
     lines=var.market_list,
+    subtable=TreeTable.i_options,
     hide=["7", "8", "2"],
 )
+TreeTable.i_options.main_table = TreeTable.instrument
+TreeTable.instrument.main_table = TreeTable.instrument
 TreeTable.account = TreeviewTable(
     frame=disp.frame_account,
     name="account",
@@ -3279,6 +3288,10 @@ TreeTable.market = SubTreeviewTable(
     subtable=TreeTable.i_category,
     selectmode="none",
 )
+TreeTable.i_list.main_table = TreeTable.market
+TreeTable.i_currency.main_table = TreeTable.market
+TreeTable.i_category.main_table = TreeTable.market
+TreeTable.market.main_table = TreeTable.market
 TreeTable.results = TreeviewTable(
     frame=disp.frame_results,
     name="results",
@@ -3333,7 +3346,6 @@ TreeTable.bot_results = TreeviewTable(
     autoscroll=True,
     hierarchy=True,
 )
-
 TreeTable.orders = TreeviewTable(
     frame=disp.frame_orders,
     name="orders",
