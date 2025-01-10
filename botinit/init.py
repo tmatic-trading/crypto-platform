@@ -186,9 +186,9 @@ def load_bots() -> None:
                             ),
                             SYMBOL=symbol[0],
                         )
-                    _put_message(
-                        market=instrument.market, message=message, warning="warning"
-                    )
+                        _put_message(
+                            market=instrument.market, message=message, warning="warning"
+                        )
                 else:
                     message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(
                         SYMBOL=symbol, STATE=instrument.state
