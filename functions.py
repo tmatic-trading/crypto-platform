@@ -2223,10 +2223,12 @@ def set_option(ws: Markets, instrument: Instrument, symbol: tuple, option=""):
 def handler_option(event) -> None:
     tree = event.widget
     items = tree.selection()
-    var.symbol = (items[0], var.current_market)
-    TreeTable.instrument.set_selection(
-        index=f"{var.current_market}!{TreeTable.instrument.par}"
-    )
+    if items:
+        var.symbol = (items[0], var.current_market)
+        TreeTable.instrument.set_selection(
+            index=f"{var.current_market}!{TreeTable.instrument.par}"
+        )
+        TreeTable.i_options.del_sub(TreeTable.i_options.main_table)
 
 
 def handler_instrument(event) -> None:
