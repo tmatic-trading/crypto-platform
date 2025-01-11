@@ -2220,6 +2220,15 @@ def set_option(ws: Markets, instrument: Instrument, symbol: tuple, option=""):
     return option
 
 
+def handler_option(event) -> None:
+    tree = event.widget
+    items = tree.selection()
+    var.symbol = (items[0], var.current_market)
+    TreeTable.instrument.set_selection(
+        index=f"{var.current_market}!{TreeTable.instrument.par}"
+    )
+
+
 def handler_instrument(event) -> None:
     tree = event.widget
     items = tree.selection()
@@ -2739,6 +2748,7 @@ def merge_klines(data: list, timefr_minutes: int, prev: int):
     hi = 0
     lo = 0
     cl = 0
+    timestamp, symbol = None, ""
     res = list()
     prev, fl = None, "append"
     for num, el in enumerate(data, 1):
@@ -3220,7 +3230,7 @@ TreeTable.i_options = SubTreeviewTable(
     frame=disp.frame_i_options,
     name="options",
     title=Header.name_i_options,
-    bind=handler_instrument,
+    bind=handler_option,
 )
 TreeTable.instrument = SubTreeviewTable(
     frame=disp.frame_instrument,
@@ -3232,8 +3242,10 @@ TreeTable.instrument = SubTreeviewTable(
     subtable=TreeTable.i_options,
     hide=["7", "8", "2"],
 )
+
 TreeTable.i_options.main_table = TreeTable.instrument
 TreeTable.instrument.main_table = TreeTable.instrument
+
 TreeTable.account = TreeviewTable(
     frame=disp.frame_account,
     name="account",
@@ -3277,10 +3289,12 @@ TreeTable.market = SubTreeviewTable(
     subtable=TreeTable.i_category,
     selectmode="none",
 )
+
 TreeTable.i_list.main_table = TreeTable.market
 TreeTable.i_currency.main_table = TreeTable.market
 TreeTable.i_category.main_table = TreeTable.market
 TreeTable.market.main_table = TreeTable.market
+
 TreeTable.results = TreeviewTable(
     frame=disp.frame_results,
     name="results",

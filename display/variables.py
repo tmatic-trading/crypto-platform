@@ -1293,6 +1293,7 @@ class SubTreeviewTable(TreeviewTable):
         self.subtable: TreeviewTable = subtable
         self.main_table: TreeviewTable
         self.frame.bind("<Leave>", self.on_leave_frame)
+        self.par: str
 
     def on_hover(self, event):
         item = self.tree.identify_row(event.y)
@@ -1335,6 +1336,7 @@ class SubTreeviewTable(TreeviewTable):
                 if var._series in smb[1]:
                     ws = Markets[smb[0]]
                     instrument = ws.Instrument[(smb[1], smb[0])]
+                    self.par = smb[1]
                     strikes = service.select_option_strikes(
                         index=ws.instrument_index, instrument=instrument
                     )
@@ -1356,17 +1358,17 @@ class SubTreeviewTable(TreeviewTable):
                         < self.main_table.frame.winfo_rootx()
                         + self.main_table.frame.winfo_width() / 2
                     ):
-                        x_pos = x - self.root.winfo_rootx() + 5
+                        x_pos = x - self.root.winfo_rootx() + 40
                     else:
                         x_pos = (
                             x
                             - self.root.winfo_rootx()
                             - self.frame_i_options.winfo_width()
-                            - 5
+                            - 40
                         )
-                    self.subtable.tree.column("2", width=70)
-                    self.subtable.tree.column("3", width=70)
-                    self.subtable.tree.column("4", width=70)
+                    self.subtable.tree.column("2", width=80)
+                    self.subtable.tree.column("3", width=80)
+                    self.subtable.tree.column("4", width=80)
         if len(lst) > 0:
             y_pos = (
                 self.tree.winfo_rooty()
