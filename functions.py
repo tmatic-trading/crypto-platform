@@ -2224,11 +2224,12 @@ def handler_option(event) -> None:
     tree = event.widget
     items = tree.selection()
     if items:
-        var.symbol = (items[0], var.current_market)
+        TreeTable.i_options.del_sub(TreeTable.i_options.main_table)        
+        var.selected_option[(TreeTable.instrument.par, var.current_market)] = var.symbol
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{TreeTable.instrument.par}"
         )
-        TreeTable.i_options.del_sub(TreeTable.i_options.main_table)
+        var.symbol = (items[0], var.current_market)
 
 
 def handler_instrument(event) -> None:
