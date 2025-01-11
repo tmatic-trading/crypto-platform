@@ -344,8 +344,6 @@ def refresh() -> None:
     # Get Tmatic's CPU and Memory usage
     service.get_usage()
 
-    print("-----", var.symbol)
-
 
 def clear_params():
     var.market_list = []
