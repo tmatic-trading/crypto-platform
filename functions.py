@@ -2231,6 +2231,11 @@ def handler_option(event) -> None:
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{TreeTable.instrument.picked}"
         )
+        service.set_dotenv(
+            dotenv_path=var.subscriptions,
+            key=service.define_symbol_key(market=var.current_market),
+            value=service.symbols_to_string(var.env[var.current_market]["SYMBOLS"]),
+        )
 
 
 def handler_instrument(event) -> None:

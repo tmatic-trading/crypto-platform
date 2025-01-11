@@ -146,5 +146,7 @@ class Header:
         "POS",
         "ENTRY",
         "PNL",
+        "MCALL",
+        "VOL24h",
     ]
     name_strikes = ["STRIKE"]
