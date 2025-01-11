@@ -2227,7 +2227,9 @@ def handler_option(event) -> None:
         TreeTable.i_options.del_sub(TreeTable.i_options.main_table)
         var.rollup_symbol = "cancel"
         var.symbol = (items[0], var.current_market)
-        var.selected_option[(TreeTable.instrument.picked, var.current_market)] = var.symbol
+        var.selected_option[
+            (TreeTable.instrument.picked, var.current_market)
+        ] = var.symbol
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{TreeTable.instrument.picked}"
         )

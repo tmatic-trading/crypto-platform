@@ -1422,9 +1422,7 @@ class SubTreeviewTable(TreeviewTable):
                     self.main_table.tree, "tag", "remove", "highlight"
                 )
             elif x <= pos_x or x >= pos_x + width:
-                self.tree.tk.call(
-                    self.tree, "tag", "remove", "highlight"
-                )
+                self.tree.tk.call(self.tree, "tag", "remove", "highlight")
                 self.active_row = ""
 
     def del_sub(self, widget):
