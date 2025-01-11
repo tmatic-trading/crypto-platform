@@ -1348,6 +1348,8 @@ class SubTreeviewTable(TreeviewTable):
                                     symbol.currentQty,
                                     symbol.avgEntryPrice,
                                     service.format_number(number=symbol.unrealisedPnl),
+                                    symbol.marginCallPrice,
+                                    symbol.volume24h,
                                 )
                             )
                     self.main_table.frame.winfo_rootx()
@@ -1365,9 +1367,9 @@ class SubTreeviewTable(TreeviewTable):
                             - self.frame_i_options.winfo_width()
                             - 30
                         )
-                    self.subtable.tree.column("2", width=80)
-                    self.subtable.tree.column("3", width=80)
-                    self.subtable.tree.column("4", width=80)
+                    for col in range(2, 7):
+                        self.subtable.tree.column(str(col), width=80)
+
         if len(lst) > 0:
             y_pos = (
                 self.tree.winfo_rooty()
