@@ -828,7 +828,7 @@ class Variables:
         highlightcolor=bg_select_color,
         highlightthickness=1,
     )
-    frame_i_list = tk.Frame(
+    frame_i_symbols = tk.Frame(
         root,
         highlightbackground=bg_select_color,
         highlightcolor=bg_select_color,
@@ -1284,7 +1284,6 @@ class TreeviewTable(Variables):
     def on_leave(self, event):
         widget = event.widget
         widget.tk.call(widget, "tag", "remove", "highlight")
-        self.active_row = ""
 
 
 class SubTreeviewTable(TreeviewTable):
@@ -1293,7 +1292,7 @@ class SubTreeviewTable(TreeviewTable):
         self.subtable: TreeviewTable = subtable
         self.main_table: TreeviewTable
         self.frame.bind("<Leave>", self.on_leave_frame)
-        self.par: str
+        self.picked: str
 
     def on_hover(self, event):
         item = self.tree.identify_row(event.y)
@@ -1336,7 +1335,7 @@ class SubTreeviewTable(TreeviewTable):
                 if var._series in smb[1]:
                     ws = Markets[smb[0]]
                     instrument = ws.Instrument[(smb[1], smb[0])]
-                    self.par = smb[1]
+                    self.picked = smb[1]
                     strikes = service.select_option_strikes(
                         index=ws.instrument_index, instrument=instrument
                     )
@@ -1358,13 +1357,13 @@ class SubTreeviewTable(TreeviewTable):
                         < self.main_table.frame.winfo_rootx()
                         + self.main_table.frame.winfo_width() / 2
                     ):
-                        x_pos = x - self.root.winfo_rootx() + 40
+                        x_pos = x - self.root.winfo_rootx() + 30
                     else:
                         x_pos = (
                             x
                             - self.root.winfo_rootx()
                             - self.frame_i_options.winfo_width()
-                            - 40
+                            - 30
                         )
                     self.subtable.tree.column("2", width=80)
                     self.subtable.tree.column("3", width=80)
@@ -1401,23 +1400,30 @@ class SubTreeviewTable(TreeviewTable):
     def on_leave(self, event):
         height = self.tree.winfo_height()
         x, y = self.root.winfo_pointerxy()
+        pos_x = self.main_table.frame.winfo_rootx()
         pos_y = self.tree.winfo_rooty()
-        # or x > self.main_table.frame.winfo_rootx() + self.main_table.frame.winfo_width() - 15:
-        if y < pos_y or y >= pos_y + height or x < self.main_table.frame.winfo_rootx():
+        if y <= pos_y or y >= pos_y + height or x <= pos_x:
             self.del_sub(self.main_table)
             self.main_table.tree.tk.call(
                 self.main_table.tree, "tag", "remove", "highlight"
             )
+            self.active_row = ""
 
     def on_leave_frame(self, event):
-        x, y = self.root.winfo_pointerxy()
+        x = self.root.winfo_pointerx()
+        pos_x = self.frame.winfo_rootx()
+        width = self.frame.winfo_width()
         if not self.subtable:
-            # or x <= self.frame.winfo_rootx():
-            if x >= self.frame.winfo_width() + self.frame.winfo_rootx():
+            if x >= pos_x + width and self.name != "options":
                 self.del_sub(self.main_table)
                 self.main_table.tree.tk.call(
                     self.main_table.tree, "tag", "remove", "highlight"
                 )
+            elif x <= pos_x or x >= pos_x + width:
+                self.tree.tk.call(
+                    self.tree, "tag", "remove", "highlight"
+                )
+                self.active_row = ""
 
     def del_sub(self, widget):
         """
@@ -1449,7 +1455,7 @@ class TreeTable:
     bot_results: TreeviewTable
     i_category: SubTreeviewTable
     i_currency: SubTreeviewTable
-    i_list: SubTreeviewTable
+    i_symbols: SubTreeviewTable
     calls: TreeviewTable
     strikes: TreeviewTable
     puts: TreeviewTable

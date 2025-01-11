@@ -2227,11 +2227,10 @@ def handler_option(event) -> None:
         TreeTable.i_options.del_sub(TreeTable.i_options.main_table)
         var.rollup_symbol = "cancel"
         var.symbol = (items[0], var.current_market)
-        var.selected_option[(TreeTable.instrument.par, var.current_market)] = var.symbol
+        var.selected_option[(TreeTable.instrument.picked, var.current_market)] = var.symbol
         TreeTable.instrument.set_selection(
-            index=f"{var.current_market}!{TreeTable.instrument.par}"
+            index=f"{var.current_market}!{TreeTable.instrument.picked}"
         )
-
 
 
 def handler_instrument(event) -> None:
@@ -2546,7 +2545,7 @@ def handler_subscription(event) -> None:
         Instrument symbol.
     """
     market = TreeTable.market.active_row
-    symb = TreeTable.i_list.active_row
+    symb = TreeTable.i_symbols.active_row
     if market:
         ws = Markets[market]
         symbol = (symb, market)
@@ -2558,7 +2557,7 @@ def handler_subscription(event) -> None:
             var.current_market = market
             TreeTable.instrument.on_rollup(iid=f"{market}!{symb}", setup="child")
         TreeTable.market.del_sub(TreeTable.market)
-        TreeTable.i_list.clear_all()
+        TreeTable.i_symbols.clear_all()
 
 
 def handler_bot(event) -> None:
@@ -3260,9 +3259,9 @@ TreeTable.account = TreeviewTable(
     lines=var.market_list,
     hide=["3", "5", "6"],
 )
-TreeTable.i_list = SubTreeviewTable(
-    frame=disp.frame_i_list,
-    name="list",
+TreeTable.i_symbols = SubTreeviewTable(
+    frame=disp.frame_i_symbols,
+    name="symbols",
     size=0,
     style="menu.Treeview",
     title=["Instrument"],
@@ -3274,7 +3273,7 @@ TreeTable.i_currency = SubTreeviewTable(
     size=0,
     style="menu.Treeview",
     title=["Currency"],
-    subtable=TreeTable.i_list,
+    subtable=TreeTable.i_symbols,
 )
 TreeTable.i_category = SubTreeviewTable(
     frame=disp.frame_i_category,
@@ -3295,7 +3294,7 @@ TreeTable.market = SubTreeviewTable(
     selectmode="none",
 )
 
-TreeTable.i_list.main_table = TreeTable.market
+TreeTable.i_symbols.main_table = TreeTable.market
 TreeTable.i_currency.main_table = TreeTable.market
 TreeTable.i_category.main_table = TreeTable.market
 TreeTable.market.main_table = TreeTable.market
