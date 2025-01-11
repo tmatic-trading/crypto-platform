@@ -2224,12 +2224,14 @@ def handler_option(event) -> None:
     tree = event.widget
     items = tree.selection()
     if items:
-        TreeTable.i_options.del_sub(TreeTable.i_options.main_table)        
+        TreeTable.i_options.del_sub(TreeTable.i_options.main_table)
+        var.rollup_symbol = "cancel"
+        var.symbol = (items[0], var.current_market)
         var.selected_option[(TreeTable.instrument.par, var.current_market)] = var.symbol
         TreeTable.instrument.set_selection(
             index=f"{var.current_market}!{TreeTable.instrument.par}"
         )
-        var.symbol = (items[0], var.current_market)
+
 
 
 def handler_instrument(event) -> None:

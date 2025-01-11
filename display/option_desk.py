@@ -214,7 +214,6 @@ class OptionDesk:
                 if options[iid] != var.DASH:
                     var.symbol = (options[iid], market)
                     var.current_market = market
-                    print("_____________op", self.symbol, var.symbol)
                     var.selected_option[(self.symbol, self.market)] = var.symbol
                     set_dotenv(
                         dotenv_path=var.subscriptions,

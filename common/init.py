@@ -68,7 +68,6 @@ class Init(WS, Variables):
         _time = "2000-01-01 00:0:00"
         dotenv_data = dotenv_values(his_file)
         tm = datetime.now(tz=timezone.utc)
-        print(dotenv_data)
         if not dotenv_data:
             var.logger.warning(
                 "The " + his + " not found. The " + his + " file has been created."
