@@ -403,7 +403,7 @@ class Bitmex(Variables):
         self.logger.debug("Websocket opened")
 
     def __on_close(self, *args) -> None:
-        self.logger.info(self.name + " - Websocket closed")
+        self.logger.info("Websocket closed.")
         # self.logNumFatal = "FATAL"
 
     def __reset(self) -> None:
@@ -463,7 +463,7 @@ class Bitmex(Variables):
             instrument.unrealisedPnl = var.DASH
         else:
             if "avgEntryPrice" in values:
-                if values["avgEntryPrice"] == None:
+                if values["avgEntryPrice"] is None:
                     values["avgEntryPrice"] == var.DASH
                 else:
                     instrument.avgEntryPrice = service.set_number(

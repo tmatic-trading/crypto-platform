@@ -9,7 +9,6 @@ from services import define_symbol_key, set_dotenv, symbols_to_string
 
 from .headers import Header
 from .variables import ScrollFrame, TreeTable, TreeviewTable
-from .variables import Variables as disp
 
 
 class OptionDesk:
@@ -118,13 +117,6 @@ class OptionDesk:
                 frame=self.calls_headers,
                 name="t",
                 title=Header.name_calls,
-                size=0,
-                cancel_scroll=True,
-            )
-            headers_strikes = TreeviewTable(
-                frame=strikes_headers,
-                name="t",
-                title=Header.name_strikes,
                 size=0,
                 cancel_scroll=True,
             )

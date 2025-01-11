@@ -3,7 +3,7 @@ import threading
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Union
+from typing import Callable
 
 import requests
 import websocket

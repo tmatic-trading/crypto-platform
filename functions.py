@@ -15,7 +15,7 @@ import services as service
 from api.api import WS, Markets
 from api.variables import Variables
 from botinit.variables import Variables as robo
-from common.data import BotData, Bots, Instrument
+from common.data import Bots, Instrument
 from common.variables import Variables as var
 from display.functions import info_display
 from display.headers import Header
@@ -84,7 +84,7 @@ class Function(WS, Variables):
         """
         instrument = self.Instrument[symbol]
         coef = instrument.valueOfOneContract * instrument.myMultiplier
-        if instrument.isInverse == True and "option" not in instrument.category:
+        if instrument.isInverse is True and "option" not in instrument.category:
             sumreal = qty / price * fund
             if execFee is not None:
                 commiss = execFee
@@ -780,10 +780,10 @@ class Function(WS, Variables):
         Processing timeframes.
         """
         for symbol, kline in self.klines.items():
-            instrument = self.Instrument[symbol]
             for timefr, values in kline.items():
                 timefr_minutes = var.timeframe_human_format[timefr]
                 if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
+                    instrument = self.Instrument[symbol]
                     bot_list = list()
                     for bot_name in values["robots"]:
                         bot = Bots[bot_name]
@@ -2129,7 +2129,7 @@ def update_order_form():
         )
         if "quanto" in form.instrument.category:
             quote_currency = "Contracts"
-        elif form.instrument.isInverse == True:
+        elif form.instrument.isInverse is True:
             quote_currency = form.instrument.quoteCoin
         else:
             quote_currency = form.instrument.baseCoin
@@ -2152,7 +2152,7 @@ def update_order_form():
         # else:
         #    form.state.value["text"] = form.instrument.state
         # form.cache["state"] = form.instrument.state
-        if form.instrument.makerFee != None:
+        if form.instrument.makerFee is not None:
             form.takerfee.sub.grid(row=8, column=0, sticky="NEWS")
             form.makerfee.sub.grid(row=9, column=0, sticky="NEWS")
             form.takerfee.value["text"] = f"{form.instrument.takerFee*100}%"
@@ -2351,7 +2351,7 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
     each_symbol = []
     for s in symbols:
         each = (s, symbol[1])
-        each_symbol.append(each)        
+        each_symbol.append(each)
         if "spot" not in instrument.category:
             instrument = ws.Instrument[each]
             if instrument.currentQty != 0:
@@ -2711,18 +2711,6 @@ def download_kline_data(
     return res
 
 
-def kline_update_thread(ws: Markets, utcnow):
-    timeout = 30
-    sl = 0.1
-    while not ws.api_is_active:
-        time.sleep(sl)
-        timeout -= sl
-        if timeout < 0:
-            break
-    else:
-        Function.kline_update_market(ws, utcnow=utcnow)
-
-
 def kline_update():
     while var.kline_update_active:
         utcnow = datetime.now(tz=timezone.utc)
@@ -2730,15 +2718,16 @@ def kline_update():
         threads = []
         for market in var.market_list:
             ws = Markets[market]
-            t = threading.Thread(
-                target=kline_update_thread,
-                args=(
-                    ws,
-                    utcnow,
-                ),
-            )
-            threads.append(t)
-            t.start()
+            if ws.api_is_active:
+                t = threading.Thread(
+                    target=Function.kline_update_market,
+                    args=(
+                        ws,
+                        utcnow,
+                    ),
+                )
+                threads.append(t)
+                t.start()
         [thread.join() for thread in threads]
         var.lock_kline_update.release()
         rest = 1 - time.time() % 1

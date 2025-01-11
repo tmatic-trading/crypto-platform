@@ -8,7 +8,7 @@ from api.api import Markets
 from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var
-from display.bot_menu import bot_manager, import_bot_module
+from display.bot_menu import import_bot_module
 from display.messages import ErrorMessage, Message
 
 
@@ -185,13 +185,13 @@ def load_bots() -> None:
                                 if var._series in smb[0]:
                                     options = service.select_option_strikes(
                                         index=ws.instrument_index,
-                                        instrument=ws.Instrument[smb]
+                                        instrument=ws.Instrument[smb],
                                     )
                                     if symbol[0] in options:
                                         # already subscribed in series
                                         do_subscribe = False
                                         break
-                        if do_subscribe == True:
+                        if do_subscribe is True:
                             subscriptions.add(symbol)
                             message = Message.UNCLOSED_POSITION_FOUND.format(
                                 POSITION=functions.Function.volume(
@@ -202,7 +202,7 @@ def load_bots() -> None:
                             _put_message(
                                 market=instrument.market,
                                 message=message,
-                                warning="warning"
+                                warning="warning",
                             )
                 else:
                     message = ErrorMessage.IMPOSSIBLE_SUBSCRIPTION.format(

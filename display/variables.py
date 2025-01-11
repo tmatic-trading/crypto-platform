@@ -1302,7 +1302,7 @@ class SubTreeviewTable(TreeviewTable):
             self.tree.tk.call(self.tree, "tag", "remove", "highlight")
             if item:
                 self.tree.tk.call(self.tree, "tag", "add", "highlight", item)
-                if self.subtable:# and TreeTable.market.active_row:
+                if self.subtable:  # and TreeTable.market.active_row:
                     self.display_subtable(item=item)
             else:
                 self.del_sub(self)
@@ -1346,15 +1346,24 @@ class SubTreeviewTable(TreeviewTable):
                                     option,
                                     symbol.currentQty,
                                     symbol.avgEntryPrice,
-                                    service.format_number(number=symbol.unrealisedPnl)
+                                    service.format_number(number=symbol.unrealisedPnl),
                                 )
                             )
                     self.main_table.frame.winfo_rootx()
                     x = self.root.winfo_pointerx()
-                    if x < self.main_table.frame.winfo_rootx() + self.main_table.frame.winfo_width() / 2:
+                    if (
+                        x
+                        < self.main_table.frame.winfo_rootx()
+                        + self.main_table.frame.winfo_width() / 2
+                    ):
                         x_pos = x - self.root.winfo_rootx() + 5
                     else:
-                        x_pos = x - self.root.winfo_rootx() - self.frame_i_options.winfo_width() - 5
+                        x_pos = (
+                            x
+                            - self.root.winfo_rootx()
+                            - self.frame_i_options.winfo_width()
+                            - 5
+                        )
                     self.subtable.tree.column("2", width=70)
                     self.subtable.tree.column("3", width=70)
                     self.subtable.tree.column("4", width=70)
@@ -1377,7 +1386,9 @@ class SubTreeviewTable(TreeviewTable):
                 self.subtable.scroll.grid(row=0, column=1, sticky="NS")
             else:
                 self.subtable.scroll.grid_forget()
-            height = self.main_table.tree.bbox(self.main_table.tree.get_children()[0])[1]
+            height = self.main_table.tree.bbox(self.main_table.tree.get_children()[0])[
+                1
+            ]
             y_pos -= height * (rows + 1) // 2
             y_pos = max(y_pos, 0)
             self.subtable.tree.config(height=rows)

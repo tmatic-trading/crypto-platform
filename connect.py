@@ -14,7 +14,7 @@ from api.deribit.ws import Deribit
 from api.init import Setup
 from common.data import Bots, MetaInstrument
 from common.variables import Variables as var
-from display.bot_menu import bot_manager, import_bot_module, insert_bot_log
+from display.bot_menu import bot_manager, insert_bot_log
 from display.functions import info_display
 from display.settings import SettingsApp
 from display.variables import TreeTable

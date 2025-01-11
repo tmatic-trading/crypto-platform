@@ -3,7 +3,6 @@ import threading
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone
-from uuid import uuid4
 
 import services as service
 from api.bybit.erruni import Unify
@@ -407,7 +406,7 @@ class Bybit(Variables):
         except Exception:
             pass
         self.api_is_active = False
-        self.logger.info(self.name + " - Websocket closed")
+        self.logger.info("Websocket closed.")
 
     def transaction(self, **kwargs):
         """

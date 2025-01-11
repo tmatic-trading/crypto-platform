@@ -476,7 +476,7 @@ class Agent(Deribit):
                                         "leavesQty"
                                     ] = 9999999999999  # leavesQty is not supported by Deribit
                                     row["execFee"] = row["commission"]
-                                if row["side"] != None:
+                                if row["side"] is not None:
                                     if "buy" in row["side"] or row["side"] == "long":
                                         row["side"] = "Buy"
                                     elif (

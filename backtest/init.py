@@ -8,7 +8,7 @@ import common.init as common
 
 # import functions
 # import services as service
-from api.api import WS, Markets
+from api.api import Markets
 
 # from api.bitmex.ws import Bitmex
 # from api.bybit.ws import Bybit

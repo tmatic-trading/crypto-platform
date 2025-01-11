@@ -1,5 +1,4 @@
 import threading
-from collections import OrderedDict
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Union
@@ -125,7 +124,7 @@ class WS(Variables):
                 return error
         try:
             Agents[self.name].value.activate_funding_thread(self)
-        except:
+        except Exception as exception:
             service.display_exception(exception)
             message = self.name + " Error calling activate_funding_thread()."
             self.logger.error(message)

@@ -865,7 +865,7 @@ class MetaTool(type):
         symbol = (item, market)
         ws = Markets[market]
         if var.backtest:  # backtest is runnig
-            if Markets[market].Instrument.get_keys() == None:
+            if Markets[market].Instrument.get_keys() is None:
                 backtest.get_instrument(ws, symbol)
             if symbol not in MetaInstrument.market[market]:
                 backtest.get_instrument(ws, symbol)

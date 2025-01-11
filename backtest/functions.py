@@ -1,11 +1,10 @@
 import os
 from collections import OrderedDict
-from datetime import datetime
 from typing import Union
 
 import services as service
 from api.api import WS, Markets
-from common.data import BotData, Bots, Instrument
+from common.data import BotData, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage
 from functions import Function
@@ -35,7 +34,7 @@ def get_instrument(ws: Markets, symbol: tuple):
     data = service.select_database(qwr)
     if not data:
         symbols = ws.Instrument.get_keys()
-        if symbols == None or symbol not in symbols:
+        if symbols is None or symbol not in symbols:
             WS.get_active_instruments(ws)
         service.add_symbol_database(instrument=ws.Instrument[symbol], table="backtest")
     else:
@@ -51,7 +50,7 @@ def load_backtest_data(bot: BotData):
         else:
             try:
                 record[header] = float(line[num])
-            except:
+            except Exception:
                 record[header] = 0
 
     print(" ")

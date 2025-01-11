@@ -116,11 +116,11 @@ class SettingsApp:
     def check_syntax(self, code):
         try:
             # Compile the code to check for syntax errors
-            compiled_code = compile(code, "<string>", "exec")
+            compile(code, "<string>", "exec")
             # Execute the compiled code to check for runtime errors
             # exec(compiled_code, {})
             return True, None
-        except (SyntaxError, Exception) as e:
+        except (SyntaxError, Exception):
             return False, traceback.format_exc()
 
     def create_file(self, file_name):

@@ -1,11 +1,9 @@
-import sys
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
 import services as service
 from api.bybit.erruni import Unify
-from api.errors import Error
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
 

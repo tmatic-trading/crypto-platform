@@ -210,8 +210,8 @@ def precision(number: float) -> int:
 def add_space(line: list) -> str:
     n = max(map(lambda x: len(x), line))
     lst = list()
-    for l in line:
-        lst.append((n - len(l)) * " " + l)
+    for li in line:
+        lst.append((n - len(li)) * " " + li)
 
     return "\n".join(lst)
 
@@ -231,7 +231,7 @@ def display_exception(exception, display=True) -> str:
     formated = "".join(
         traceback.format_exception(type(exception), exception, exception.__traceback__)
     )
-    if display == True:
+    if display is True:
         print(formated)
 
     return formated
@@ -345,7 +345,7 @@ def update_database(query: list) -> Union[str, None]:
 
 def set_clOrdID(emi: str = False) -> str:
     var.last_order += 1
-    if emi == False:
+    if emi is False:
         clOrdID = f"{var.last_order}"
     else:
         clOrdID = f"{var.last_order}.{emi}"
@@ -864,7 +864,7 @@ def add_symbol_database(instrument: Instrument, table: str) -> None:
         instrument.takerFee,
         instrument.makerFee,
     ]
-    res = insert_database(values=values, table=table)
+    insert_database(values=values, table=table)
 
 
 def set_symbol(instrument: Instrument, data: dict) -> None:
