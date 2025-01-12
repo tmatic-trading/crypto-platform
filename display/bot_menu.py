@@ -1118,14 +1118,14 @@ def init_bot_trades(bot_name: str) -> None:
             + var.database_table
             + " where EMI == '"
             + bot_name
-            + "' and SIDE <> 'Fund' order by TTIME limit "
+            + "' and SIDE <> 'Fund' order by TTIME desc limit "
             + str(disp.table_limit)
         )
         data = service.select_database(sql)
         indx_side = trade_treeTable[bot_name].title.index("SIDE")
         indx_market = trade_treeTable[bot_name].title.index("MARKET")
         line = False
-        for val in data:
+        for val in reversed(data):
             val["SYMBOL"] = (val["SYMBOL"], val["MARKET"])
             # Displays trades only if you have a subscription to this market in the .env file
             if val["MARKET"] in var.market_list:
