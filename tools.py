@@ -30,7 +30,7 @@ class Bot(BotData):
         bot = Bots[bot_name]
         self.__dict__ = bot.__dict__
 
-    def remove(self, clOrdID: str) -> None:
+    def remove(self, clOrdID: str = "") -> None:
         """
         Removes the open order by its clOrdID.
 
@@ -40,6 +40,8 @@ class Bot(BotData):
             An instance of a bot in the Bot class.
         clOrdID: str
             Order ID. Example: "1348642035.Super"
+            If this parameter is omitted, all orders for this bot will be 
+            deleted.
         """
         if var.backtest:
             self._backtest_remove(clOrdID=clOrdID)
@@ -47,22 +49,29 @@ class Bot(BotData):
 
         if self.state == "Active" and disp.f9 == "ON":
             ord = var.orders[self.name]
-            if clOrdID in ord:
-                order = ord[clOrdID]
-                ws = Markets[order["market"]]
-                WS.remove_order(ws, order=ord[clOrdID])
+            lst = []
+            if not clOrdID:
+                for clOrdID in ord:
+                    lst.append(clOrdID)
             else:
-                message = "Removing. Order with clOrdID=" + clOrdID + " not found."
-                var.queue_info.put(
-                    {
-                        "market": "",
-                        "message": message,
-                        "time": datetime.now(tz=timezone.utc),
-                        "warning": "warning",
-                        "emi": self.name,
-                        "bot_log": True,
-                    }
-                )
+                lst.append(clOrdID)
+            for clOrdID in lst:
+                if clOrdID in ord:
+                    order = ord[clOrdID]
+                    ws = Markets[order["market"]]
+                    WS.remove_order(ws, order=ord[clOrdID])
+                else:
+                    message = "Removing. Order with clOrdID=" + clOrdID + " not found."
+                    var.queue_info.put(
+                        {
+                            "market": "",
+                            "message": message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": "warning",
+                            "emi": self.name,
+                            "bot_log": True,
+                        }
+                    )
 
     def replace(self, clOrdID: str, price: float) -> Union[str, None]:
         """
@@ -116,7 +125,7 @@ class Bot(BotData):
                 )
 
     def orders(
-        self, side: str, descend=False, in_list=True
+        self, side: str = "", descend=False, in_list=True
     ) -> Union[OrderedDict, list]:
         """
         Get the bot orders filtered by side.
@@ -124,7 +133,8 @@ class Bot(BotData):
         Parameters
         ----------
         side: str
-            The Sell or Buy side of the order.
+            The Sell or Buy side of the order. If this parameter is omitted, 
+            all orders are returned.
         descend: bool
             If omitted, the data is sorted in ascending order by the value of
             ``transactTime``. If True, descending order is returned.

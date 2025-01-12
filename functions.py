@@ -789,7 +789,7 @@ class Function(WS, Variables):
                         bot = Bots[bot_name]
                         if bot.timefr == timefr:
                             if not bot.error_message:
-                                if bot.state == "Active":
+                                if bot.state != "OFF":
                                     bot_list.append(bot_name)
                                 service.call_bot_function(
                                     function=robo.update_bot[bot_name],

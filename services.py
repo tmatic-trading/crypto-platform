@@ -445,22 +445,6 @@ def bot_error(bot: BotData) -> str:
     return error
 
 
-def call_bot_breakdown():
-    """
-    The bot strategy is called again when the indicator is triggered.
-    """
-    for bot_name in Bots.keys():
-        if Bots[bot_name].multitrade == "BreakDown":
-            t = threading.Thread(
-                target=call_bot_function,
-                args=(
-                    robo.run_bot[bot_name],
-                    bot_name,
-                ),
-            )
-            t.start()
-
-
 def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
     """
     Updates the high and low values of kline data when websocket updates the
@@ -506,13 +490,11 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
                                 parameters["number"] += 1
                                 if parameters["first"] == 0:
                                     parameters["first"] = -1
-                                call_bot_breakdown()
                         if parameters["dn"]:
                             if direct <= 0 and bid < parameters["dn"]:
                                 parameters["number"] += 1
                                 if parameters["first"] == 0:
                                     parameters["first"] = 1
-                                call_bot_breakdown()
 
 
 def count_orders():

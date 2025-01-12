@@ -857,7 +857,8 @@ Use the ```orders()``` method of the the Bot class to get the bot's current open
 Parameters
 ----------
 side: str
-    The Sell or Buy side of the order.
+    The Sell or Buy side of the order. If this parameter is omitted, 
+    all orders are returned.
 descend: bool
     If omitted, the data is sorted in ascending order by the value of
     ``transactTime``. If True, descending order is returned.
@@ -931,7 +932,9 @@ Parameters:
 bot: Bot
     An instance of a bot in the Bot class.
 clOrdID: str
-    Order ID. Example: "1348642035.Super"
+    Order ID. Example: "1348642035.Super".
+    If this parameter is omitted, all orders for this bot will be
+    deleted.
 """
 ```
 
