@@ -506,7 +506,7 @@ Exchanges support thousands of instruments. Downloading kline data and then upda
 To get kline data for an instrument, use the add_kline() method. For example, add to your strategy.py file:
 
 ```Python
-import Bitmex
+from tools import Bitmex
 
 kline = Bitmex["XBTUSDT"].add_kline()
 ```
@@ -624,7 +624,7 @@ The parameters of the sell order are described above. All parameters except ```b
 Examples:
 
 ```Python
-import Bitmex, Bot
+from tools import Bitmex, Bot
 bot = Bot()
 ```
 
@@ -694,7 +694,7 @@ limit: float
 Example:
 
 ```Python
-import Bitmex, Bot
+from tools import Bitmex, Bot
 bot = Bot()
 
 Bitmex["XBTUSDT"].set_limit(bot=bot, limit=0.003)
@@ -721,7 +721,7 @@ float
 Example:
 
 ```Python
-import Bitmex, Bot
+from tools import Bitmex, Bot
 bot = Bot()
 
 print(Bitmex["XBTUSDT"].limit(bot=bot))
@@ -754,7 +754,7 @@ float
 Example:
 
 ```Python
-import Bitmex, Bot
+from tools import Bitmex, Bot
 bot = Bot()
 
 print(Bitmex["XBTUSDT"].position(bot=bot))
@@ -797,7 +797,7 @@ OrderedDict | list
 Example:
 
 ```Python
-import Bitmex, Bot
+from tools import Bitmex, Bot
 bot = Bot()
 
 print(Bitmex["XBTUSDT"].orders(bot=bot, side="Buy", in_list=False))
@@ -877,7 +877,7 @@ OrderedDict | list
 Example:
 
 ```Python
-import Bot
+from tools import Bot
 
 bot = Bot()
 
@@ -942,7 +942,7 @@ Example: This example shows how to place a sell order at the first ask price and
 
 ```Python
 import time
-import Bitmex, Bot
+from tools import Bitmex, Bot
 
 bot = Bot()
 
@@ -980,7 +980,7 @@ Example: This example shows how to place a sell order at the first ask price and
 
 ```Python
 import time
-import Bitmex, Bot
+from tools import Bitmex, Bot
 
 bot = Bot()
 instrument = Bitmex["XBTUSDT"]
@@ -1007,7 +1007,7 @@ The bot strategy is located in the strategy.py file in the ```/algo/<bot name>``
 ```run_bot()``` - similar to update_bot and is also called at the beginning of a new period after update_bot. In addition, it is called every time after any of the bot orders is fully executed. Additional calls must be activated via the ```multitrade``` bot parameter. Example:
 
 ```Python
-import Bot
+from tools import Bot
 
 bot = Bot()
 bot.multitrade = True
