@@ -926,7 +926,7 @@ def call_bot_function(function: Union[Callable, str], bot_name: str):
     activate_bot().
     """
     try:
-        if not Bots[bot_name].error_message:
+        if not Bots[bot_name].error_message:    
             if callable(function):
                 function()
     except Exception as exception:

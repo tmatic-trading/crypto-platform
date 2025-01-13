@@ -994,6 +994,27 @@ bot.replace(clOrdID=id, price=price)
 > [!NOTE]
 > If the replacement failed in case the clOrdID is not found, a message will appear in the bot log. You can see it in the Bot menu, on the Log tab, in the Notepad widget.
 
+### Special functions
+
+The bot strategy is located in the strategy.py file in the ```/algo/<bot name>``` folder. Some strategy functions have reserved names and the following uses:
+
+```setup_bot()``` - works when Tmatic is started, restarted or the bot is updated. Use this function if the bot requires preliminary settings after starting the application or updating the strategy in the bot menu.
+
+```activate_bot()``` - sometimes you need to make changes to the bot parameters when switching the bot state to Active. Every time you make the bot active from the bot menu, this function is triggered.
+
+```update_bot()``` - at the moment, bots work on timeframes from 1 minute to 1 day. Each time at the beginning of a new period, this function is called.
+
+```run_bot()``` - similar to update_bot and is also called at the beginning of a new period after update_bot. In addition, it is called every time after any of the bot orders is fully executed. Additional calls must be activated via the ```multitrade``` bot parameter. Example:
+
+```Python
+import Bot
+
+bot = Bot()
+bot.multitrade = True
+```
+
+All special functions are optional and may be missing from the strategy file. Use them at your discretion, but for the bot to start trading, one of the update_bot or run_bot functions is required. It is convenient to put sell and buy instructions in these functions. You can also use both of these functions at the same time, for example, update_bot to update the bot parameters and run_bot to manage sells and buys.
+
 
 ### Strategy example
 

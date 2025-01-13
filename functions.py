@@ -543,7 +543,8 @@ class Function(WS, Variables):
                         var.orders[emi][clOrdID]["leavesQty"], precision
                     )
                     if var.orders[emi][clOrdID]["leavesQty"] == 0:
-                        if emi in Bots.keys():
+                        del var.orders[emi][clOrdID]
+                        if emi in Bots.keys():                            
                             if Bots[emi].multitrade:
                                 t = threading.Thread(
                                     target=service.call_bot_function,
@@ -552,8 +553,7 @@ class Function(WS, Variables):
                                         emi,
                                     ),
                                 )
-                                t.start()
-                        del var.orders[emi][clOrdID]
+                                t.start()                        
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
