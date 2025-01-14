@@ -643,19 +643,6 @@ class Agent(Deribit):
                 break
             startTime = endTime
         trade_history.sort(key=lambda x: x["transactTime"])
-        """for row in trade_history:
-            print(
-                row["transactTime"],
-                row["execType"],
-                row["symbol"],
-                row["side"],
-                row["lastQty"],
-                row["lastPx"],
-                "___lastQty",
-                row["lastQty"],
-                row["execID"],
-            )
-        print("___________________________FINISH", len(trade_history))"""
 
         return {"data": trade_history, "length": len(trade_history)}
 

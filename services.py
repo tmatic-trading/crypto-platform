@@ -925,14 +925,16 @@ def call_bot_function(function: Union[Callable, str], bot_name: str):
     Calls the bot service functions: run_bot(), setup_bot(), update_bot(),
     activate_bot().
     """
+    bot = Bots[bot_name]
     try:
-        if not Bots[bot_name].error_message:    
-            if callable(function):
-                function()
+        if bot.state != "Disconnected":
+            if not bot.error_message:
+                if callable(function):
+                    function()
     except Exception as exception:
         error = display_exception(exception, display=False)
         error_type = exception.__class__.__name__
-        Bots[bot_name].error_message = {
+        bot.error_message = {
             "error_type": error_type,
             "message": error,
         }

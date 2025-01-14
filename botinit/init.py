@@ -352,4 +352,7 @@ def setup_bots():
     setup function.
     """
     for bot_name in Bots.keys():
-        service.call_bot_function(function=robo.setup_bot[bot_name], bot_name=bot_name)
+        if Bots[bot_name].state != "Disconnected":
+            service.call_bot_function(
+                function=robo.setup_bot[bot_name], bot_name=bot_name
+            )

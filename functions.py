@@ -544,7 +544,7 @@ class Function(WS, Variables):
                     )
                     if var.orders[emi][clOrdID]["leavesQty"] == 0:
                         del var.orders[emi][clOrdID]
-                        if emi in Bots.keys():                            
+                        if emi in Bots.keys():
                             if Bots[emi].multitrade:
                                 t = threading.Thread(
                                     target=service.call_bot_function,
@@ -553,7 +553,7 @@ class Function(WS, Variables):
                                         emi,
                                     ),
                                 )
-                                t.start()                        
+                                t.start()
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )
@@ -789,12 +789,12 @@ class Function(WS, Variables):
                         bot = Bots[bot_name]
                         if bot.timefr == timefr:
                             if not bot.error_message:
-                                if bot.state != "OFF":
+                                if bot.state != "Disconnected":
                                     bot_list.append(bot_name)
-                                service.call_bot_function(
-                                    function=robo.update_bot[bot_name],
-                                    bot_name=bot_name,
-                                )
+                                    service.call_bot_function(
+                                        function=robo.update_bot[bot_name],
+                                        bot_name=bot_name,
+                                    )
                     run_bots(bot_list=bot_list)
                     Function.save_kline_data(
                         self,

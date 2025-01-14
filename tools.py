@@ -40,7 +40,7 @@ class Bot(BotData):
             An instance of a bot in the Bot class.
         clOrdID: str
             Order ID. Example: "1348642035.Super"
-            If this parameter is omitted, all orders for this bot will be 
+            If this parameter is omitted, all orders for this bot will be
             deleted.
         """
         if var.backtest:
@@ -133,7 +133,7 @@ class Bot(BotData):
         Parameters
         ----------
         side: str
-            The Sell or Buy side of the order. If this parameter is omitted, 
+            The Sell or Buy side of the order. If this parameter is omitted,
             all orders are returned.
         descend: bool
             If omitted, the data is sorted in ascending order by the value of

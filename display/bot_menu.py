@@ -261,6 +261,7 @@ class SettingsApp:
                 text_widget=self.strategy_text,
                 code=content,
             )
+
             import_bot_module(disp.bot_name, update=True)
             qwr = (
                 "UPDATE robots SET"
@@ -271,9 +272,10 @@ class SettingsApp:
                 bot = Bots[disp.bot_name]
                 bot.updated = self.get_time()
                 update_bot_info(bot_name=disp.bot_name)
-            service.call_bot_function(
-                function=robo.setup_bot[disp.bot_name], bot_name=disp.bot_name
-            )
+            if Bots[disp.bot_name].state != "Disconnected":
+                service.call_bot_function(
+                    function=robo.setup_bot[disp.bot_name], bot_name=disp.bot_name
+                )
 
         def check_syntax() -> None:
             content = self.strategy_text.get("1.0", tk.END)
@@ -1215,92 +1217,93 @@ def import_bot_module(bot_name: str, update=False) -> None:
     update: bool
         Evaluates to True when strategy.py is updated.
     """
-    module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
-    Bots[bot_name].error_message = {}
-    Bots[bot_name].multitrade = False
-    try:
-        if module in sys.modules:
-            del sys.modules[module]
-        mod = importlib.import_module(module)
-        bot_manager.modules[bot_name] = mod
-    except ModuleNotFoundError as exception:
-        message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(
-            MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
-        )
-        var.logger.warning(message)
-        var.queue_info.put(
-            {
-                "market": "",
-                "message": message,
-                "time": datetime.now(tz=timezone.utc),
-                "warning": "warning",
-                "emi": bot_name,
-            }
-        )
-        Bots[bot_name].error_message = {
-            "error_type": exception.__class__.__name__,
-            "message": message,
-        }
-    except Exception as exception:
-        err = service.display_exception(exception, display=False)
-        message = ErrorMessage.BOT_LOADING_ERROR.format(
-            MODULE=module,
-            CLASS=exception.__class__.__name__,
-            EXCEPTION=err,
-            BOT_NAME=bot_name,
-        )
-        var.logger.warning(message)
-        var.queue_info.put(
-            {
-                "market": "",
-                "message": message,
-                "time": datetime.now(tz=timezone.utc),
-                "warning": True,
-                "emi": bot_name,
-            }
-        )
-        Bots[bot_name].error_message = {
-            "error_type": exception.__class__.__name__,
-            "message": message,
-        }
-    else:
-        if update:
+    if Bots[bot_name].state != "Disconnected":
+        module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
+        Bots[bot_name].error_message = {}
+        Bots[bot_name].multitrade = False
+        try:
+            if module in sys.modules:
+                del sys.modules[module]
+            mod = importlib.import_module(module)
+            bot_manager.modules[bot_name] = mod
+        except ModuleNotFoundError as exception:
+            message = ErrorMessage.BOT_FOLDER_NOT_FOUND.format(
+                MODULE=module, EXCEPTION=exception, BOT_NAME=bot_name
+            )
+            var.logger.warning(message)
             var.queue_info.put(
                 {
                     "market": "",
-                    "message": bot_name + " updated successfully.",
+                    "message": message,
                     "time": datetime.now(tz=timezone.utc),
-                    "warning": None,
+                    "warning": "warning",
                     "emi": bot_name,
                 }
             )
-    try:
-        robo.run_bot[bot_name] = bot_manager.modules[bot_name].run_bot
-    except Exception:
-        robo.run_bot[bot_name] = "No strategy"
-    try:
-        robo.setup_bot[bot_name] = bot_manager.modules[bot_name].setup_bot
-    except Exception:
-        robo.setup_bot[bot_name] = "No setup"
-    try:
-        robo.update_bot[bot_name] = bot_manager.modules[bot_name].update_bot
-    except Exception:
-        robo.update_bot[bot_name] = "No update"
-    try:
-        robo.activate_bot[bot_name] = bot_manager.modules[bot_name].activate_bot
-    except Exception:
-        robo.activate_bot[bot_name] = "No activate"
-    if update:
-        functions.init_bot_klines(bot_name)
-    tm = datetime.now()
-    month = "0" * (2 - len(str(tm.month))) + str(tm.month)
-    day = "0" * (2 - len(str(tm.day))) + str(tm.day)
-    hr = "0" * (2 - len(str(tm.hour))) + str(tm.hour)
-    min = "0" * (2 - len(str(tm.minute))) + str(tm.minute)
-    tm = f"{tm.year}{month}{day}-{hr}{min}"
-    Bots[bot_name].strategy_log = (
-        bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"
-    )
+            Bots[bot_name].error_message = {
+                "error_type": exception.__class__.__name__,
+                "message": message,
+            }
+        except Exception as exception:
+            err = service.display_exception(exception, display=False)
+            message = ErrorMessage.BOT_LOADING_ERROR.format(
+                MODULE=module,
+                CLASS=exception.__class__.__name__,
+                EXCEPTION=err,
+                BOT_NAME=bot_name,
+            )
+            var.logger.warning(message)
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": True,
+                    "emi": bot_name,
+                }
+            )
+            Bots[bot_name].error_message = {
+                "error_type": exception.__class__.__name__,
+                "message": message,
+            }
+        else:
+            if update:
+                var.queue_info.put(
+                    {
+                        "market": "",
+                        "message": bot_name + " updated successfully.",
+                        "time": datetime.now(tz=timezone.utc),
+                        "warning": None,
+                        "emi": bot_name,
+                    }
+                )
+        try:
+            robo.run_bot[bot_name] = bot_manager.modules[bot_name].run_bot
+        except Exception:
+            robo.run_bot[bot_name] = "No strategy"
+        try:
+            robo.setup_bot[bot_name] = bot_manager.modules[bot_name].setup_bot
+        except Exception:
+            robo.setup_bot[bot_name] = "No setup"
+        try:
+            robo.update_bot[bot_name] = bot_manager.modules[bot_name].update_bot
+        except Exception:
+            robo.update_bot[bot_name] = "No update"
+        try:
+            robo.activate_bot[bot_name] = bot_manager.modules[bot_name].activate_bot
+        except Exception:
+            robo.activate_bot[bot_name] = "No activate"
+        if update:
+            functions.init_bot_klines(bot_name)
+        tm = datetime.now()
+        month = "0" * (2 - len(str(tm.month))) + str(tm.month)
+        day = "0" * (2 - len(str(tm.day))) + str(tm.day)
+        hr = "0" * (2 - len(str(tm.hour))) + str(tm.hour)
+        min = "0" * (2 - len(str(tm.minute))) + str(tm.minute)
+        tm = f"{tm.year}{month}{day}-{hr}{min}"
+        Bots[bot_name].strategy_log = (
+            bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"
+        )
 
 
 def insert_bot_log(

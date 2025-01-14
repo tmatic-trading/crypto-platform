@@ -857,7 +857,7 @@ Use the ```orders()``` method of the the Bot class to get the bot's current open
 Parameters
 ----------
 side: str
-    The Sell or Buy side of the order. If this parameter is omitted, 
+    The Sell or Buy side of the order. If this parameter is omitted,
     all orders are returned.
 descend: bool
     If omitted, the data is sorted in ascending order by the value of
