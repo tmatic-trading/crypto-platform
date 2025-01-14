@@ -385,10 +385,17 @@ class SettingsApp:
         service.wrap(self.brief_frame, padx=self.padx)
 
     def activate(self, bot_name: str) -> str:
+        def format_text() -> str:
+            return (
+                "The current state of the bot is `{STATE}`. "
+                + "You can change it using the menu list below:"
+            ).format(STATE=bot.state)
+        
         def change_state() -> None:
             if state.get() != bot.state:
                 err = update_bot_state(new_state=state.get(), bot=bot)
                 if err is None:
+                    text_label["text"] = format_text()
                     res_label["text"] = f"State changed to `{bot.state}`."
 
         def display_tip(event):
@@ -406,7 +413,7 @@ class SettingsApp:
             ).format(STATE=bot.state)
             text_label = tk.Label(
                 self.brief_frame,
-                text=TEXT,
+                text=format_text(),
                 bg=disp.bg_color,
                 justify=tk.LEFT,
             )
