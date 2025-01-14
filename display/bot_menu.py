@@ -24,6 +24,7 @@ from common.variables import Variables as var
 from display.messages import ErrorMessage
 
 from .headers import Header
+from .tips import Tips
 from .variables import AutoScrollbar, ScrollFrame, TreeTable, TreeviewTable
 from .variables import Variables as disp
 
@@ -254,12 +255,22 @@ class SettingsApp:
         def update_strategy() -> None:
             content = self.strategy_text.get("1.0", tk.END)
             bot_path = self.get_bot_path(disp.bot_name)
-            self.write_file(f"{str(bot_path)}/{self.strategy_file}", content)
+            fileneme = f"{str(bot_path)}/{self.strategy_file}"
+            self.write_file(fileneme, content)
             self.button_strategy.config(state="disabled")
             self.bot_algo = content
             self.insert_code(
                 text_widget=self.strategy_text,
                 code=content,
+            )
+            var.queue_info.put(
+                {
+                    "market": "",
+                    "message": "The " + fileneme + " file has been saved.",
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": None,
+                    "emi": disp.bot_name,
+                }
             )
 
             import_bot_module(disp.bot_name, update=True)
@@ -374,24 +385,57 @@ class SettingsApp:
         service.wrap(self.brief_frame, padx=self.padx)
 
     def activate(self, bot_name: str) -> str:
-        def return_text() -> str:
-            new_state = bot_state(bot=bot, bot_name=bot_name)
-            TEXT = "You are about to change state from ``{STATE}`` to ``{CHANGE}`` for bot ``{NAME}``:"
-            return TEXT.format(STATE=bot.state, CHANGE=new_state, NAME=bot_name)
+        def change_state() -> None:
+            if state.get() != bot.state:
+                err = update_bot_state(new_state=state.get(), bot=bot)
+                if err is None:
+                    res_label["text"] = f"State changed to `{bot.state}`."
 
-        def change_state(bot_name) -> None:
-            new_state = bot_state(bot=bot, bot_name=bot_name, strategy=True)
-            err = update_bot_state(new_state=new_state, bot=bot)
-            if err is None:
-                text_label["text"] = return_text()
-                res_label["text"] = f"State changed to ``{bot.state}``."
-                self.button.config(text=button_text[Bots[bot_name].state])
+        def display_tip(event):
+            res_label["text"] = tips_select[state.get()].value
+            service.wrap(self.brief_frame, padx=self.padx)
 
         bot = Bots[bot_name]
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         disp.bot_menu_option = "activate"
         if not bot.error_message or (bot.error_message and bot.state == "Active"):
+            TEXT = (
+                "The current state of the bot is `{STATE}`. "
+                + "You can change it using the menu list below:"
+            ).format(STATE=bot.state)
+            text_label = tk.Label(
+                self.brief_frame,
+                text=TEXT,
+                bg=disp.bg_color,
+                justify=tk.LEFT,
+            )
+            text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+            state = ttk.Combobox(self.brief_frame, width=12, state="readonly")
+            state["values"] = ("Active", "Suspended", "Disconnected")
+            state.set("Select")
+            state.pack(anchor="nw", padx=50, pady=0)
+            state.bind("<<ComboboxSelected>>", display_tip)
+            self.button = tk.Button(
+                self.brief_frame,
+                activebackground=disp.bg_active,
+                text="Confirm",
+                command=change_state,
+            )
+            self.button.pack(anchor="nw", padx=50, pady=10)
+            tips_select = {
+                "Active": Tips.ACTIVE_STATE,
+                "Suspended": Tips.SUSPENDED_STATE,
+                "Disconnected": Tips.DISCONNECTED_STATE,
+            }
+            res_label = tk.Label(
+                self.brief_frame,
+                text="",
+                bg=disp.bg_color,
+                fg=disp.fg_color,
+                justify=tk.LEFT,
+            )
+            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
             if bot.error_message:
                 tk.Label(
                     self.brief_frame,
@@ -400,29 +444,6 @@ class SettingsApp:
                     fg=disp.gray_color,
                     justify=tk.LEFT,
                 ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-            text_label = tk.Label(
-                self.brief_frame,
-                text=return_text(),
-                bg=disp.bg_color,
-                justify=tk.LEFT,
-            )
-            text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-            button_text = {"Active": "Suspend", "Suspended": "Activate"}
-            self.button = tk.Button(
-                self.brief_frame,
-                activebackground=disp.bg_active,
-                text=button_text[bot.state],
-                command=lambda: change_state(bot_name),
-            )
-            self.button.pack(anchor="nw", padx=50, pady=10)
-            res_label = tk.Label(
-                self.brief_frame,
-                text="",
-                bg=disp.bg_color,
-                fg=disp.gray_color,
-                justify=tk.LEFT,
-            )
-            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
             service.wrap(self.brief_frame, padx=self.padx)
         else:
             self.display_error_message(bot_name=bot_name)
@@ -1002,21 +1023,23 @@ def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
     )
     if err is None:
         bot.state = new_state
+        import_bot_module(bot.name, update=False)
         update_bot_info(bot_name=bot.name)
+        if Bots[disp.bot_name].state != "Disconnected":
+            service.call_bot_function(
+                function=robo.activate_bot[bot.name], bot_name=bot.name
+            )
+
         return
 
     return err
 
 
-def bot_state(bot: BotData, bot_name: str, strategy=False) -> str:
+def bot_state(bot: BotData) -> str:
     if bot.state == "Active":
         state = "Suspended"
     else:
         state = "Active"
-        if strategy:
-            service.call_bot_function(
-                function=robo.activate_bot[bot_name], bot_name=bot_name
-            )
 
     return state
 
@@ -1027,7 +1050,7 @@ def handler_bot_info(event) -> None:
     """
 
     def callback():
-        new_state = bot_state(bot=bot, bot_name=bot_name, strategy=True)
+        new_state = bot_state(bot=bot)
         err = update_bot_state(new_state=new_state, bot=bot)
         if err:
             functions.warning_window(message=err, width=1000, height=300)
@@ -1271,7 +1294,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
                 var.queue_info.put(
                     {
                         "market": "",
-                        "message": bot_name + " updated successfully.",
+                        "message": "The bot `" + bot_name + "` updated successfully.",
                         "time": datetime.now(tz=timezone.utc),
                         "warning": None,
                         "emi": bot_name,
@@ -1304,6 +1327,15 @@ def import_bot_module(bot_name: str, update=False) -> None:
         Bots[bot_name].strategy_log = (
             bot_manager.algo_dir + "/" + bot_name + "/strategy_" + tm + ".log"
         )
+    else:
+        if bot_name in robo.run_bot:
+            del robo.run_bot[bot_name]
+        if bot_name in robo.setup_bot:
+            del robo.setup_bot[bot_name]
+        if bot_name in robo.update_bot:
+            del robo.update_bot[bot_name]
+        if bot_name in robo.activate_bot:
+            del robo.activate_bot[bot_name]
 
 
 def insert_bot_log(

@@ -93,3 +93,12 @@ class Tips(Enum):
         },
     }
     TESTNET = "Select YES if you are using a test account, otherwise select NO."
+    ACTIVE_STATE = "`Active` - all functions are operational. Trading is allowed."
+    SUSPENDED_STATE = (
+        "`Suspended` - the bot file strategy.py is loaded "
+        + "into memory. All functions are operational. Trading instructions "
+        + "are prohibited."
+    )
+    DISCONNECTED_STATE = (
+        "`Disconnected` - the bot file strategy.py is not " + "operational."
+    )

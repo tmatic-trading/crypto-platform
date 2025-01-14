@@ -248,21 +248,17 @@ def refresh() -> None:
         elif "funding_display" in info:
             Function.funding_display(info["funding_display"], val=info["message"])
         else:
+            mes = {
+                "market": info["market"],
+                "message": info["message"],
+                "warning": info["warning"],
+                "tm": info["time"],
+            }
             if "bot_log" not in info:
-                info_display(
-                    market=info["market"],
-                    message=info["message"],
-                    warning=info["warning"],
-                    tm=info["time"],
-                )
+                info_display(**mes)
             if "emi" in info and info["emi"] in Bots.keys():
-                insert_bot_log(
-                    market=info["market"],
-                    bot_name=info["emi"],
-                    message=info["message"],
-                    warning=info["warning"],
-                    tm=info["time"],
-                )
+                mes["bot_name"] = info["emi"]
+                insert_bot_log(**mes)
     if not var.reloading:
         utc = datetime.now(tz=timezone.utc)
         if disp.f3:

@@ -546,14 +546,15 @@ class Function(WS, Variables):
                         del var.orders[emi][clOrdID]
                         if emi in Bots.keys():
                             if Bots[emi].multitrade:
-                                t = threading.Thread(
-                                    target=service.call_bot_function,
-                                    args=(
-                                        robo.run_bot[emi],
-                                        emi,
-                                    ),
-                                )
-                                t.start()
+                                if Bots[emi].state != "Disconnected":
+                                    t = threading.Thread(
+                                        target=service.call_bot_function,
+                                        args=(
+                                            robo.run_bot[emi],
+                                            emi,
+                                        ),
+                                    )
+                                    t.start()
                     var.queue_order.put(
                         {"action": "delete", "clOrdID": clOrdID, "market": self.name}
                     )

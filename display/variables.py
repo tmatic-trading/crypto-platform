@@ -741,6 +741,7 @@ class Variables:
     bot_note.add(bot_log, text="Log")
 
     # Bot log widget
+
     if ostype == "Mac":
         text_bot_log = tk.Text(
             bot_log,

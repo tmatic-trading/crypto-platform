@@ -532,7 +532,9 @@ def format_message(market: str, message: str, tm=None) -> str:
 def wrap(frame: tk.Frame, padx):
     for child in frame.winfo_children():
         if type(child) is tk.Label:
-            child.config(wraplength=frame.winfo_width() - padx * 2)
+            child.config(wraplength=frame.winfo_width() - child.winfo_x() - padx * 2)
+        elif type(child) is tk.Frame:
+            wrap(child, padx)
 
 
 def cancel_market(market: str) -> None:
@@ -927,10 +929,9 @@ def call_bot_function(function: Union[Callable, str], bot_name: str):
     """
     bot = Bots[bot_name]
     try:
-        if bot.state != "Disconnected":
-            if not bot.error_message:
-                if callable(function):
-                    function()
+        if not bot.error_message:
+            if callable(function):
+                function()
     except Exception as exception:
         error = display_exception(exception, display=False)
         error_type = exception.__class__.__name__
