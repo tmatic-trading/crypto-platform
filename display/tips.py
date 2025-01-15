@@ -97,7 +97,7 @@ class Tips(Enum):
     SUSPENDED_STATE = (
         "`Suspended` - the bot file strategy.py is loaded "
         + "into memory. All functions are operational. Trading instructions "
-        + "are prohibited."
+        + "are ignored."
     )
     DISCONNECTED_STATE = (
         "`Disconnected` - the bot file strategy.py is not " + "operational."

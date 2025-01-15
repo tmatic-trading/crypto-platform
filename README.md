@@ -113,7 +113,7 @@ Explanations for the columns of the SQLite `robots` table:
 * SORT - allows you to do your own sorting when reading from the database.
 * DAT - time the current row was written to the database.
 * TIMEFR - timeframe that the bot uses. Possible values at the moment: "1min", "5min", "1h".
-* STATE - Possible values: "Suspended" or "Active".
+* STATE - Possible values: "Disconnected", "Suspended" or "Active".
 * UPDATED - update time for bot parameters or strategy.py file.
 
 Columns of the `expired` table:
@@ -350,7 +350,7 @@ What happens if you place an order from the standard exchange trading web interf
 The Bot Menu simplifies the management of bots using the GUI. The functions available in the Bot Menu:
 
 * Add a new bot.
-* Update bot's state: "Active" or "Suspended".
+* Update bot's state: "Disconnected", "Suspended" or "Active".
 * Edit bot's parameters.
 * Merge two bots.
 * Duplicate bot.
