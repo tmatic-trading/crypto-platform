@@ -5,6 +5,7 @@ import webbrowser
 from datetime import datetime
 from tkinter import ttk
 from typing import Callable, Union
+from operator import itemgetter
 
 import services as service
 from api.api import Markets
@@ -1293,6 +1294,7 @@ class SubTreeviewTable(TreeviewTable):
         self.subtable: TreeviewTable = subtable
         self.main_table: TreeviewTable
         self.frame.bind("<Leave>", self.on_leave_frame)
+        self.tree.bind("<Button-1>", self.on_click)
         self.picked: str
 
     def on_hover(self, event):
@@ -1321,9 +1323,33 @@ class SubTreeviewTable(TreeviewTable):
             )
         elif self.name == "currency":
             ws = Markets[self.main_table.active_row]
-            lst = ws.instrument_index[TreeTable.i_category.active_row][
+            indx = ws.instrument_index[TreeTable.i_category.active_row][
                 TreeTable.i_currency.active_row
             ]
+            l = []
+            for smb in sorted(indx.keys()):
+                symbol = (smb, ws.name)
+                if var._series in smb:
+                    strikes = service.select_option_strikes(
+                        index=ws.instrument_index, instrument=ws.Instrument[symbol]
+                    )
+                    vol24h = 0
+                    for option in strikes:
+                        vol24h += ws.Instrument[(option, ws.name)].volume24h
+                else:
+                    vol24h = ws.Instrument[symbol].volume24h
+                l.append((smb, vol24h))
+            if "MENU_SORTING" in Variables.pref_params:
+                if Variables.pref_params["MENU_SORTING"] == "vol24h":
+                    l = sorted(l, key=itemgetter(1), reverse=True)
+                    self.subtable.tree.heading("#1", text="Symbol")
+                    self.subtable.tree.heading("#2", text="Vol24h*")
+                else:
+                    self.subtable.tree.heading("#1", text="Symbol*")
+                    self.subtable.tree.heading("#2", text="Vol24h")
+            lst = []
+            for smb in l:
+                lst.append((smb[0], service.humanFormat(ws, smb[1], (smb[0], ws.name))))
             x_pos = (
                 self.frame_market.winfo_width()
                 + self.frame_i_category.winfo_width()
@@ -1383,7 +1409,6 @@ class SubTreeviewTable(TreeviewTable):
                 if type(item) is str:
                     item = [item]
                 self.subtable.insert(values=item, iid=item[0])
-            self.subtable.tree.column("1", width=200)
             rows = len(self.subtable.tree.get_children())
             if rows > 20:
                 rows = 20
@@ -1436,6 +1461,22 @@ class SubTreeviewTable(TreeviewTable):
                 widget.subtable.frame.place(x=-1000, y=-1000)
                 widget.active_row = ""
                 self.del_sub(widget.subtable)
+
+    def on_click(self, event):
+        region = self.tree.identify("region", event.x, event.y)
+        if region == "heading" and self.name == "symbols":
+            column = self.tree.identify_column(event.x)
+            if column == "#1":
+                column = "symbol"
+            else:
+                column = "vol24h"
+            service.set_dotenv(
+                dotenv_path=var.preferences,
+                key="MENU_SORTING",
+                value=column,
+            )
+            Variables.pref_params["MENU_SORTING"] = column
+            TreeTable.i_currency.display_subtable(item=TreeTable.i_currency.active_row)
 
 
 class TreeTable:
