@@ -29,50 +29,23 @@ class OptionDesk:
         self.currency = instrument.settlCurrency[0]
         self.symbol = instrument.symbol
         self.ws = Markets[self.market]
-        self.calls = self.ws.instrument_index[self.category][self.currency][
+        self.calls_list = self.ws.instrument_index[self.category][self.currency][
             instrument.symbol
         ]["CALLS"]
-        self.puts = self.ws.instrument_index[self.category][self.currency][
+        self.puts_list = self.ws.instrument_index[self.category][self.currency][
             instrument.symbol
         ]["PUTS"]
-        self.calls_set = set(self.calls)
-        self.puts_set = set(self.puts)
-        if self.calls:
-            if self.calls[0].split("-")[-1] in ["C"]:
-                indx = -2
-            else:
-                indx = -1
-            call_strikes = list(map(lambda x: x.split("-")[indx], self.calls))
-        else:
-            call_strikes = []
-        if self.puts:
-            if self.puts[0].split("-")[-1] in ["P"]:
-                indx = -2
-            else:
-                indx = -1
-            put_strikes = list(map(lambda x: x.split("-")[indx], self.puts))
-        else:
-            put_strikes = []
-        self.strikes = list(set(call_strikes).union(set(put_strikes)))
-        self.strikes = list(map(lambda x: x.replace("d", "."), self.strikes))
+        self.calls_set = set(self.calls_list)
+        self.puts_set = set(self.puts_list)
+        self.strikes = []
+        for item in self.calls_list:
+            option = self.ws.Instrument[(item, self.market)]
+            self.strikes.append(option.optionStrike)
         try:
             self.strikes.sort(key=lambda x: float(x))
         except Exception:
             self.strikes.sort()
-        self.calls_list = list()
-        self.puts_list = list()
-        option_symb = instrument.symbol.split(var._series)[0]
-        for num, strike in enumerate(self.strikes):
-            call = f"{option_symb}-{strike.replace('.', 'd')}-C"
-            put = f"{option_symb}-{strike.replace('.', 'd')}-P"
-            if call in self.calls:
-                self.calls_list.append(call)
-            else:
-                self.calls_list.append(var.DASH)
-            if put in self.puts:
-                self.puts_list.append(put)
-            else:
-                self.puts_list.append(var.DASH)
+        # self.strikes = list(map(lambda x: x.replace("d", "."), self.strikes))
 
         if not self.is_on:
             self.desk = tk.Toplevel()
@@ -190,15 +163,14 @@ class OptionDesk:
 
             self.desk.lift()
             self.is_on = True
-
-            option = var.selected_option[(self.symbol, self.market)][0]
-            kind = option.split("-")[-1]
             self.close_window = False
-            if kind == "C":
-                indx = self.calls_list.index(option)
+
+            option = var.selected_option[(self.symbol, self.market)]
+            if self.ws.Instrument[option].optionType == "CALLS":
+                indx = self.calls_list.index(option[0])
                 TreeTable.calls.set_selection(index=indx)
-            elif kind == "P":
-                indx = self.puts_list.index(option)
+            elif self.ws.Instrument[option].optionType == "PUTS":
+                indx = self.puts_list.index(option[0])
                 TreeTable.puts.set_selection(index=indx)
 
     def select_instrument(self, event, kind, market):

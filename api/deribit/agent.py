@@ -138,8 +138,9 @@ class Agent(Deribit):
             instrument.unrealisedPnl = var.DASH
         else:
             instrument.marginCallPrice = var.NA
-        if category == "option":
+        if "option" in category and "combo" not in category:
             instrument.fundingRate = var.DASH
+            instrument.optionType = values["option_type"].upper() + "S"
         instrument.valueOfOneContract = 1
         instrument.makerFee = values["maker_commission"]
         instrument.takerFee = values["taker_commission"]

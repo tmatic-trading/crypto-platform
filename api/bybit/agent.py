@@ -707,14 +707,15 @@ class Agent(Bybit):
             instrument.state = values["status"]
         instrument.multiplier = 1
         instrument.myMultiplier = 1
-        if category == "spot":
+        if "spot" in category:
             instrument.fundingRate = var.DASH
             instrument.avgEntryPrice = var.DASH
             instrument.marginCallPrice = var.DASH
             instrument.currentQty = var.DASH
             instrument.unrealisedPnl = var.DASH
-        if category == "option":
+        if "option" in category and "combo" not in category:
             instrument.fundingRate = var.DASH
+            instrument.optionType = values["optionsType"].upper() + "S"
         instrument.valueOfOneContract = 1
         if category == "inverse":
             instrument.isInverse = True

@@ -89,6 +89,10 @@ class Instrument:
         For other exchanges it is equal to 1.
     openInterest: float
         Open interest size.
+    optionStrike: str
+        :::For options only::: The strike value
+    optionType: str
+        :::For options only::: Option type. CALL, PUT
     precision: int
         Based on the ``lotSize`` of the instrument. Used to round volumes
         ​​when displayed on the screen.
@@ -143,6 +147,8 @@ class Instrument:
     minOrderQty: float
     multiplier: int
     myMultiplier: int
+    optionStrike: str
+    optionType: str
     precision: int
     price_precision: int
     qtyStep: float

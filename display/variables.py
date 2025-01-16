@@ -5,7 +5,6 @@ import webbrowser
 from datetime import datetime
 from tkinter import ttk
 from typing import Callable, Union
-from operator import itemgetter
 
 import services as service
 from api.api import Markets

@@ -632,12 +632,9 @@ def unexpected_error(ws) -> str:
 def set_option_series(symb: str):
     parts = symb.split("-")
     option_series = "-".join(parts[:2]) + var._series
-    if parts[-1] == "C":
-        option_type = "CALLS"
-    else:
-        option_type = "PUTS"
+    option_strike = parts[2]
 
-    return option_type, option_series
+    return option_series, option_strike
 
 
 def remove_from_instrument_index(index: OrderedDict, instrument: Instrument) -> None:
@@ -647,7 +644,8 @@ def remove_from_instrument_index(index: OrderedDict, instrument: Instrument) -> 
     symb = instrument.symbol
     currency = instrument.settlCurrency[0]
     if "option" in instrument.category and "combo" not in instrument.category:
-        option_type, option_series = set_option_series(symb=symb)
+        option_type = instrument.optionType
+        option_series, option_strike = set_option_series(symb=symb)
         lst = index[instrument.category][currency][option_series][option_type]
         lst.remove(symb)
         if not lst:
@@ -693,7 +691,8 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
         index[category][currency] = OrderedDict()
     symb = instrument.symbol
     if "option" in category and "combo" not in category:
-        option_type, option_series = set_option_series(symb=symb)
+        option_type = instrument.optionType
+        option_series, instrument.optionStrike = set_option_series(symb=symb)
         if option_series not in index[category][currency]:
             index[category][currency][option_series] = OrderedDict()
             index[category][currency][option_series]["CALLS"] = list()
