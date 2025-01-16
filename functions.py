@@ -600,7 +600,7 @@ class Function(WS, Variables):
         except ValueError:
             emi = clOrdID"""
         if info_q:
-            info_q = Function.volume(self, qty=info_q, symbol=row["symbol"])
+            info_q = service.volume(self, qty=info_q, symbol=row["symbol"])
             info_p = Function.format_price(self, number=info_p, symbol=row["symbol"])
             if info != "History":
                 message = (
@@ -674,7 +674,7 @@ class Function(WS, Variables):
                 number=float(val["TRADE_PRICE"]),
                 symbol=val["SYMBOL"],
             ),
-            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
+            service.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
         ]
         if table.name == "trades":
             row.append(emi)
@@ -708,7 +708,7 @@ class Function(WS, Variables):
                 symbol=val["SYMBOL"],
             ),
             "{:.7f}".format(-val["COMMISS"]),
-            Function.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
+            service.volume(self, qty=val["QTY"], symbol=val["SYMBOL"]),
         ]
         if init:
             return row
@@ -738,7 +738,7 @@ class Function(WS, Variables):
                 number=val["price"],
                 symbol=val["symbol"],
             ),
-            Function.volume(self, qty=val["leavesQty"], symbol=val["symbol"]),
+            service.volume(self, qty=val["leavesQty"], symbol=val["symbol"]),
             emi,
         ]
         clOrdID = val["clOrdID"]
@@ -747,17 +747,6 @@ class Function(WS, Variables):
         TreeTable.orders.insert(
             values=row, market=self.name, iid=val["clOrdID"], configure=val["side"]
         )
-
-    def volume(self: Markets, qty: Union[int, float, str], symbol: tuple) -> str:
-        if qty in [var.DASH, "None"]:
-            return qty
-        if qty == 0:
-            qty = "0"
-        else:
-            instrument = self.Instrument[symbol]
-            qty = "{:.{precision}f}".format(qty, precision=instrument.precision)
-
-        return qty
 
     def format_price(self: Markets, number: Union[float, str], symbol: tuple) -> str:
         try:
@@ -1251,7 +1240,7 @@ class Function(WS, Variables):
                         if compare != tree.cache[number]:
                             tree.cache[number] = compare
                             row = [
-                                Function.volume(
+                                service.volume(
                                     self, qty=val[count][1], symbol=var.symbol
                                 ),
                                 Function.format_price(
@@ -1283,14 +1272,14 @@ class Function(WS, Variables):
                                 Function.format_price(
                                     self, number=val[count][0], symbol=var.symbol
                                 ),
-                                Function.volume(
+                                service.volume(
                                     self, qty=val[count][1], symbol=var.symbol
                                 ),
                             ]
                             tree.update(row=number, values=row)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=Function.volume(
+                                    text=service.volume(
                                         self, qty=qty, symbol=var.symbol
                                     ),
                                     row=number,
@@ -1527,11 +1516,11 @@ class Function(WS, Variables):
     def format_instrument_line(
         self, compare: list, instrument: Instrument, symbol: tuple
     ) -> list:
-        compare[2] = Function.volume(self, qty=compare[2], symbol=symbol)
+        compare[2] = service.volume(self, qty=compare[2], symbol=symbol)
         compare[3] = Function.format_price(self, number=compare[3], symbol=symbol)
         compare[4] = service.format_number(number=compare[4])
         # why no compare[] for MCALL data?
-        compare[6] = Function.humanFormat(self, instrument.volume24h, symbol)
+        compare[6] = service.humanFormat(self, instrument.volume24h, symbol)
         if compare[7] != "Perpetual":
             compare[7] = instrument.expire.strftime("%d%b%y %H:%M")
 
@@ -1568,7 +1557,7 @@ class Function(WS, Variables):
     ) -> None:
         def form_line(compare):
             for column in columns:
-                compare[column] = Function.volume(
+                compare[column] = service.volume(
                     self,
                     qty=compare[column],
                     symbol=symbol,
@@ -1717,20 +1706,6 @@ class Function(WS, Variables):
         else:
             TreeTable.market.paint(row=row, configure="Market")
         TreeTable.market.tree.update()
-
-    def humanFormat(self: Markets, volNow: int, symbol: tuple) -> str:
-        if volNow == var.DASH:
-            return volNow
-        if volNow > 1000000000:
-            volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
-        elif volNow > 1000000:
-            volNow = "{:.2f}".format(round(volNow / 1000000, 2)) + "M"
-        elif volNow > 1000:
-            volNow = "{:.2f}".format(round(volNow / 1000, 2)) + "K"
-        else:
-            volNow = Function.volume(self, qty=volNow, symbol=symbol)
-
-        return volNow
 
     def find_order(self: Markets, price: float, symbol: str) -> Union[float, str]:
         qty = 0
@@ -1931,7 +1906,7 @@ def handler_order(event) -> None:
                 + "\nprice\t"
                 + order_price
                 + "\nquantity\t"
-                + Function.volume(
+                + service.volume(
                     ws,
                     qty=var.orders[emi][clOrdID]["leavesQty"],
                     symbol=var.orders[emi][clOrdID]["symbol"],
@@ -1975,7 +1950,7 @@ def minimum_qty(qnt):
             "The "
             + str(var.symbol)
             + " quantity must be greater than or equal to "
-            + Function.volume(form.ws, qty=minOrderQty, symbol=var.symbol)
+            + service.volume(form.ws, qty=minOrderQty, symbol=var.symbol)
         )
         warning_window(message)
         return "error"
@@ -1986,7 +1961,7 @@ def minimum_qty(qnt):
             "The "
             + str(var.symbol)
             + " quantity must be multiple to "
-            + Function.volume(form.ws, qty=qtyStep, symbol=var.symbol)
+            + service.volume(form.ws, qty=qtyStep, symbol=var.symbol)
         )
         warning_window(message)
         return "error"
@@ -2111,7 +2086,7 @@ def update_order_form():
         form.entry_quantity.delete(0, "end")
         form.entry_quantity.insert(
             0,
-            Function.volume(
+            service.volume(
                 form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol
             ),
         )
@@ -2141,7 +2116,7 @@ def update_order_form():
         form.minOrderQty.value["text"] = (
             quote_currency
             + " "
-            + Function.volume(
+            + service.volume(
                 form.ws, qty=form.instrument.minOrderQty, symbol=var.symbol
             )
         )
@@ -2376,7 +2351,7 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
         if "spot" not in instrument.category:
             instrument = ws.Instrument[each]
             if instrument.currentQty != 0:
-                position = Function.volume(ws, qty=instrument.currentQty, symbol=each)
+                position = service.volume(ws, qty=instrument.currentQty, symbol=each)
                 return ErrorMessage.UNSUBSCRIPTION_WARNING_POSITION.format(
                     SYMBOL=each, POSITION=position
                 )
@@ -2387,7 +2362,7 @@ def check_unsubscribe(ws: Markets, symbol: tuple) -> str:
                         smb == each
                         and round(pos["position"], instrument.precision) != 0
                     ):
-                        volume = Function.volume(ws, qty=pos["position"], symbol=smb)
+                        volume = service.volume(ws, qty=pos["position"], symbol=smb)
                         lst.append({"emi": bot_name, "position": volume})
                         total += pos["position"]
             if lst:
@@ -3272,9 +3247,11 @@ TreeTable.i_symbols = SubTreeviewTable(
     name="symbols",
     size=0,
     style="menu.Treeview",
-    title=["Instrument"],
+    title=["Symbol", "Vol24h"],
     bind=handler_subscription,
 )
+TreeTable.i_symbols.tree.column("#1", width=250)
+TreeTable.i_symbols.tree.column("#2", width=80)
 TreeTable.i_currency = SubTreeviewTable(
     frame=disp.frame_i_currency,
     name="currency",
@@ -3283,6 +3260,7 @@ TreeTable.i_currency = SubTreeviewTable(
     title=["Currency"],
     subtable=TreeTable.i_symbols,
 )
+TreeTable.i_currency.tree.column("#1", width=150)
 TreeTable.i_category = SubTreeviewTable(
     frame=disp.frame_i_category,
     name="category",
@@ -3291,6 +3269,7 @@ TreeTable.i_category = SubTreeviewTable(
     title=["Category"],
     subtable=TreeTable.i_currency,
 )
+TreeTable.i_category.tree.column("#1", width=150)
 TreeTable.market = SubTreeviewTable(
     frame=disp.frame_market,
     name="market",

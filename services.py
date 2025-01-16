@@ -1027,3 +1027,30 @@ def set_number(instrument: Instrument, number: float) -> Union[float, str]:
         return var.DASH
 
     return number
+
+
+def volume(market, qty: Union[int, float, str], symbol: tuple) -> str:
+    if qty in [var.DASH, "None"]:
+        return qty
+    if qty == 0:
+        qty = "0"
+    else:
+        instrument = market.Instrument[symbol]
+        qty = "{:.{precision}f}".format(qty, precision=instrument.precision)
+
+    return qty
+
+
+def humanFormat(market, volNow: int, symbol: tuple) -> str:
+    if volNow == var.DASH:
+        return volNow
+    if volNow > 1000000000:
+        volNow = "{:.2f}".format(round(volNow / 1000000000, 2)) + "B"
+    elif volNow > 1000000:
+        volNow = "{:.2f}".format(round(volNow / 1000000, 2)) + "M"
+    elif volNow > 1000:
+        volNow = "{:.2f}".format(round(volNow / 1000, 2)) + "K"
+    else:
+        volNow = volume(market, qty=volNow, symbol=symbol)
+
+    return volNow
