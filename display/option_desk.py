@@ -29,23 +29,40 @@ class OptionDesk:
         self.currency = instrument.settlCurrency[0]
         self.symbol = instrument.symbol
         self.ws = Markets[self.market]
-        self.calls_list = self.ws.instrument_index[self.category][self.currency][
+        self.calls = sorted(self.ws.instrument_index[self.category][self.currency][
             instrument.symbol
-        ]["CALLS"]
-        self.puts_list = self.ws.instrument_index[self.category][self.currency][
+        ]["CALLS"])
+        self.puts = sorted(self.ws.instrument_index[self.category][self.currency][
             instrument.symbol
-        ]["PUTS"]
-        self.calls_set = set(self.calls_list)
-        self.puts_set = set(self.puts_list)
-        self.strikes = []
-        for item in self.calls_list:
-            option = self.ws.Instrument[(item, self.market)]
-            self.strikes.append(option.optionStrike)
-        try:
-            self.strikes.sort(key=lambda x: float(x))
-        except Exception:
-            self.strikes.sort()
-        # self.strikes = list(map(lambda x: x.replace("d", "."), self.strikes))
+        ]["PUTS"])
+        self.calls_set = set(self.calls)
+        self.puts_set = set(self.puts)
+        self.strikes = list()
+        strike_calls = {}
+        strike_puts = {}
+        # Some strikes look like: "0d12", "0d2176", "0d6", etc.
+        # Therefore we replace "d" with "." to make float sort possible
+        for item in self.calls:
+            opt_strike = self.ws.Instrument[(item, self.market)].optionStrike
+            if "d" in opt_strike:
+                opt_strike = float(opt_strike.replace("d", "."))
+            else:
+                opt_strike = int(opt_strike)
+            strike_calls[opt_strike] = item
+            self.strikes.append(opt_strike)
+        for item in self.puts:
+            opt_strike = self.ws.Instrument[(item, self.market)].optionStrike
+            if "d" in opt_strike:
+                opt_strike = float(opt_strike.replace("d", "."))
+            else:
+                opt_strike = int(opt_strike)
+            strike_puts[opt_strike] = item
+        self.strikes = sorted(self.strikes)
+        self.calls_list = list()
+        self.puts_list = list()
+        for item in self.strikes:
+            self.calls_list.append(strike_calls[item])
+            self.puts_list.append(strike_puts[item])
 
         if not self.is_on:
             self.desk = tk.Toplevel()
