@@ -3217,6 +3217,14 @@ TreeTable.i_options = SubTreeviewTable(
     title=Header.name_i_options,
     bind=handler_option,
 )
+
+TreeTable.i_options.tree.column("#1", width=200)
+TreeTable.i_options.tree.column("#2", width=80)
+TreeTable.i_options.tree.column("#3", width=80)
+TreeTable.i_options.tree.column("#4", width=80)
+TreeTable.i_options.tree.column("#5", width=80)
+TreeTable.i_options.tree.column("#6", width=80)
+
 TreeTable.instrument = SubTreeviewTable(
     frame=disp.frame_instrument,
     name="instrument",
@@ -3245,11 +3253,12 @@ TreeTable.i_symbols = SubTreeviewTable(
     name="symbols",
     size=0,
     style="menu.Treeview",
-    title=["Symbol", "Vol24h"],
+    title=["Symbol"],
     bind=handler_subscription,
 )
+
 TreeTable.i_symbols.tree.column("#1", width=250)
-TreeTable.i_symbols.tree.column("#2", width=80)
+
 TreeTable.i_currency = SubTreeviewTable(
     frame=disp.frame_i_currency,
     name="currency",
@@ -3258,7 +3267,9 @@ TreeTable.i_currency = SubTreeviewTable(
     title=["Currency"],
     subtable=TreeTable.i_symbols,
 )
+
 TreeTable.i_currency.tree.column("#1", width=150)
+
 TreeTable.i_category = SubTreeviewTable(
     frame=disp.frame_i_category,
     name="category",
@@ -3267,7 +3278,9 @@ TreeTable.i_category = SubTreeviewTable(
     title=["Category"],
     subtable=TreeTable.i_currency,
 )
+
 TreeTable.i_category.tree.column("#1", width=150)
+
 TreeTable.market = SubTreeviewTable(
     frame=disp.frame_market,
     name="market",
