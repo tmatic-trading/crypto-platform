@@ -1349,7 +1349,7 @@ class SubTreeviewTable(TreeviewTable):
                     self.subtable.tree.heading("#2", text="Vol24h")
             lst = []
             for smb in l:
-                lst.append((smb[0], service.humanFormat(ws, smb[1], (smb[0], ws.name))))
+                lst.append((smb[0], service.humanFormat(ws.Instrument[(smb[0], ws.name)], smb[1])))
             x_pos = (
                 self.frame_market.winfo_width()
                 + self.frame_i_category.winfo_width()
