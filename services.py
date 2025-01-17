@@ -629,14 +629,27 @@ def unexpected_error(ws) -> str:
     return ws.logNumFatal
 
 
+def set_symbol_sort(symb: str):
+    parts = symb.replace("_", "-").split("-")
+    symbol_sort = ""
+    for part in parts:
+        if part in var.sort_pattern:
+            symbol_sort += var.sort_pattern[part] + "-"
+        else:
+            symbol_sort += part.upper() + "-"
+
+    return symbol_sort[:-1]
+
+
 def set_option_series(symb: str):
     parts = symb.split("-")
-    option_series = "-".join(parts[:2]) + var._series
     option_strike = parts[2]
+    option_series = "-".join(parts[:2]) + var._series
     if len(parts) > 4:
         option_series += "-" + parts[4]
+    option_sort = set_symbol_sort(symb=option_series)
 
-    return option_series, option_strike
+    return option_series, option_strike, option_sort
 
 
 def remove_from_instrument_index(index: OrderedDict, instrument: Instrument) -> None:
@@ -694,12 +707,14 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
     symb = instrument.symbol
     if "option" in category and "combo" not in category:
         option_type = instrument.optionType
-        option_series, instrument.optionStrike = set_option_series(symb=symb)
+        option_series, instrument.optionStrike, option_sort = set_option_series(
+            symb=symb
+        )
         if option_series not in index[category][currency]:
             index[category][currency][option_series] = OrderedDict()
             index[category][currency][option_series]["CALLS"] = list()
             index[category][currency][option_series]["PUTS"] = list()
-            index[category][currency][option_series]["sort"] = option_series
+            index[category][currency][option_series]["sort"] = option_sort
         if symb not in index[category][currency][option_series][option_type]:
             index[category][currency][option_series][option_type].append(symb)
 
@@ -729,7 +744,8 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
         series.isInverse = instrument.isInverse
     else:
         if symb not in index[category][currency]:
-            index[category][currency][symb] = {"sort": symb}
+            symbol_sort = set_symbol_sort(symb=symb)
+            index[category][currency][symb] = {"sort": symbol_sort}
 
     return index
 
@@ -758,7 +774,7 @@ def sort_instrument_index(ws, index: OrderedDict) -> OrderedDict:
     for category, values_category in index.items():
         res[category] = OrderedDict(sorted(values_category.items(), key=lambda x: x[0]))
         for currency, values_currency in res[category].items():
-            res[category][currency] = OrderedDict(
+            res[category][currency] = dict(
                 sorted(values_currency.items(), key=lambda x: x[1]["sort"])
             )
             for series, values in res[category][currency].items():
