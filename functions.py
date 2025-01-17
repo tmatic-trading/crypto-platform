@@ -1251,7 +1251,7 @@ class Function(WS, Variables):
                             tree.update(row=number, values=row)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=Function.volume(
+                                    text=service.volume(
                                         self, qty=qty, symbol=var.symbol
                                     ),
                                     row=number,
