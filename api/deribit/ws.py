@@ -179,7 +179,6 @@ class Deribit(Variables):
 
         channels = ["user.portfolio.any"]
         self.logger.info("ws subscription - Portfolio - channel - " + str(channels[0]))
-        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="private",
             channels=channels,
@@ -191,7 +190,6 @@ class Deribit(Variables):
 
         channels = ["user.orders.any.any.raw"]
         self.logger.info("ws subscription - Orders - channel - " + str(channels[0]))
-        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="private",
             channels=channels,
@@ -205,7 +203,6 @@ class Deribit(Variables):
         self.logger.info(
             "ws subscription - User changes - channel - " + str(channels[0])
         )
-        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="private",
             channels=channels,
@@ -237,7 +234,6 @@ class Deribit(Variables):
             NAME="Orderbook", CHANNEL=str(channels)
         )
         self._put_message(message=message)
-        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="public",
             channels=channels,
@@ -265,7 +261,6 @@ class Deribit(Variables):
             NAME="Ticker", CHANNEL=str(channels)
         )
         self._put_message(message=message)
-        self.subscriptions.append(channels)
         self.__subscribe_channels(
             type="public",
             channels=channels,
@@ -375,16 +370,23 @@ class Deribit(Variables):
 
     def __subscribe_channels(
         self, type: str, channels: list, id: str, callback: Callable
-    ) -> None:
-        msg = {
-            "jsonrpc": "2.0",
-            "method": type + "/subscribe",
-            "id": id,
-            "params": {"channels": channels},
-        }
-        for channel in channels:
-            self.callback_directory[channel] = callback
-        self.ws.send(json.dumps(msg))
+    ) -> None:        
+        """
+        Subscription in parts when the number of channels exceeds 250
+        """
+        length, step = len(channels), 250
+        for num in range(0, length, step):
+            part = channels[num:num+step]
+            self.subscriptions.append(part)
+            msg = {
+                "jsonrpc": "2.0",
+                "method": type + "/subscribe",
+                "id": id,
+                "params": {"channels": part},
+            }
+            for channel in part:
+                self.callback_directory[channel] = callback
+            self.ws.send(json.dumps(msg))
 
     def __establish_heartbeat(self) -> None:
         """
