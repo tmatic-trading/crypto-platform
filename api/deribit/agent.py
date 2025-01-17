@@ -45,7 +45,7 @@ class Agent(Deribit):
                         symbol_list=self.symbol_list,
                     )
                     self.instrument_index = service.sort_instrument_index(
-                        index=self.instrument_index
+                        self, index=self.instrument_index
                     )
                     return ""
                 else:

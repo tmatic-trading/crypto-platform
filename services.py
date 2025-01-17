@@ -633,6 +633,8 @@ def set_option_series(symb: str):
     parts = symb.split("-")
     option_series = "-".join(parts[:2]) + var._series
     option_strike = parts[2]
+    if len(parts) > 4:
+        option_series += "-" + parts[4]
 
     return option_series, option_strike
 
@@ -747,7 +749,7 @@ def set_dotenv(dotenv_path: str, key: str, value: str):
     )
 
 
-def sort_instrument_index(index: OrderedDict) -> OrderedDict:
+def sort_instrument_index(ws, index: OrderedDict) -> OrderedDict:
     """
     Categories and currencies are sorted by name, instruments by the `sort`
     parameter, options are additionally sorted by ascending strike price.
@@ -762,17 +764,15 @@ def sort_instrument_index(index: OrderedDict) -> OrderedDict:
             for series, values in res[category][currency].items():
                 for key, value in values.items():
                     if key in ["CALLS", "PUTS"]:
-                        try:
-                            value.sort(
-                                key=lambda x: float(x.split("-")[-2].replace("d", "."))
-                            )
-                        except Exception:
-                            try:
-                                value.sort(
-                                    key=lambda x: float(x.split("-")[-1].split("_")[0])
-                                )
-                            except Exception:
-                                value.sort()
+                        symbol_value = {}
+                        for item in value:
+                            opt_strike = ws.Instrument[(item, ws.name)].optionStrike
+                            if "d" in opt_strike:
+                                opt_strike = float(opt_strike.replace("d", "."))
+                            else:
+                                opt_strike = int(opt_strike)
+                            symbol_value[opt_strike] = item
+                        value = list(dict(sorted(symbol_value.items())).values())
                         res[category][currency][series][key] = value
 
     return res
