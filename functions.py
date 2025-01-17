@@ -1234,11 +1234,11 @@ class Function(WS, Variables):
             count = 0
             for number in range(start, end, direct):
                 if len(val) > count:
-                    qty = Function.find_order(self, val[count][0], symbol=var.symbol)
-                    instrument = self.Instrument[var.symbol]
+                    qty = Function.find_order(self, val[count][0], symbol=var.symbol)                    
                     if side == "bids":
                         compare = [val[count][0], val[count][1], qty]
                         if compare != tree.cache[number]:
+                            instrument = self.Instrument[var.symbol]
                             tree.cache[number] = compare
                             row = [
                                 service.volume(instrument, qty=val[count][1]),
@@ -1263,6 +1263,7 @@ class Function(WS, Variables):
                     else:
                         compare = [qty, val[count][0], val[count][1]]
                         if compare != tree.cache[number]:
+                            instrument = self.Instrument[var.symbol]
                             tree.cache[number] = compare
                             row = [
                                 "",
