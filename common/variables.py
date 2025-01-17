@@ -42,8 +42,8 @@ def expire_pattern():
     beg_month = datetime.now(tz=timezone.utc).month
     end_month = 12
     year_subt = 2000
-    for year in range(this_year, this_year + 2):
-        if year != this_year:
+    for year in range(this_year, this_year + 3):
+        if year - this_year > 1:
             end_month = datetime.now().month
         if year - year_subt > 99:
             year_subt += 100
