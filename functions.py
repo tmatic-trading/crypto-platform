@@ -1235,14 +1235,13 @@ class Function(WS, Variables):
             for number in range(start, end, direct):
                 if len(val) > count:
                     qty = Function.find_order(self, val[count][0], symbol=var.symbol)
+                    instrument = self.Instrument[var.symbol]
                     if side == "bids":
                         compare = [val[count][0], val[count][1], qty]
                         if compare != tree.cache[number]:
                             tree.cache[number] = compare
                             row = [
-                                service.volume(
-                                    self.Instrument[var.symbol], qty=val[count][1]
-                                ),
+                                service.volume(instrument, qty=val[count][1]),
                                 Function.format_price(
                                     self, number=val[count][0], symbol=var.symbol
                                 ),
@@ -1251,9 +1250,7 @@ class Function(WS, Variables):
                             tree.update(row=number, values=row)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=service.volume(
-                                        self, qty=qty, symbol=var.symbol
-                                    ),
+                                    text=service.volume(instrument, qty=qty),
                                     row=number,
                                     column=2,
                                     bg_color=disp.green_color,
@@ -1272,16 +1269,12 @@ class Function(WS, Variables):
                                 Function.format_price(
                                     self, number=val[count][0], symbol=var.symbol
                                 ),
-                                service.volume(
-                                    self.Instrument[var.symbol], qty=val[count][1]
-                                ),
+                                service.volume(instrument, qty=val[count][1]),
                             ]
                             tree.update(row=number, values=row)
                             if qty:
                                 TreeTable.orderbook.show_color_cell(
-                                    text=service.volume(
-                                        self.Instrument[var.symbol], qty=qty
-                                    ),
+                                    text=service.volume(instrument, qty=qty),
                                     row=number,
                                     column=0,
                                     bg_color=disp.red_color,

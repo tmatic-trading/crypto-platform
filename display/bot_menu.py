@@ -390,7 +390,7 @@ class SettingsApp:
                 "The current state of the bot is `{STATE}`. "
                 + "You can change it using the menu list below:"
             ).format(STATE=bot.state)
-        
+
         def change_state() -> None:
             if state.get() != bot.state:
                 err = update_bot_state(new_state=state.get(), bot=bot)
@@ -1087,7 +1087,9 @@ def handler_bot_info(event) -> None:
                 else:
                     if disp.robots_window_trigger == "off":
                         disp.robots_window_trigger = "on"
-                        width = max(250, int(len(bot_name) * disp.symbol_width * 1.5) + 150)
+                        width = max(
+                            250, int(len(bot_name) * disp.symbol_width * 1.5) + 150
+                        )
                         robot_window = tk.Toplevel(
                             disp.root, padx=10, pady=10, bg=disp.title_color
                         )

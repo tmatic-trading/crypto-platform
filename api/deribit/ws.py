@@ -370,13 +370,13 @@ class Deribit(Variables):
 
     def __subscribe_channels(
         self, type: str, channels: list, id: str, callback: Callable
-    ) -> None:        
+    ) -> None:
         """
         Subscription in parts when the number of channels exceeds 250
         """
         length, step = len(channels), 250
         for num in range(0, length, step):
-            part = channels[num:num+step]
+            part = channels[num : num + step]
             self.subscriptions.append(part)
             msg = {
                 "jsonrpc": "2.0",

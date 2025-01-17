@@ -194,9 +194,7 @@ def load_bots() -> None:
                         if do_subscribe is True:
                             subscriptions.add(symbol)
                             message = Message.UNCLOSED_POSITION_FOUND.format(
-                                POSITION=service.volume(
-                                    instrument, value["position"]
-                                ),
+                                POSITION=service.volume(instrument, value["position"]),
                                 SYMBOL=symbol[0],
                             )
                             _put_message(
