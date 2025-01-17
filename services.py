@@ -707,9 +707,7 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
     symb = instrument.symbol
     if "option" in category and "combo" not in category:
         option_type = instrument.optionType
-        option_series, instrument.optionStrike, option_sort = set_option_series(
-            symb=symb
-        )
+        option_series, instrument.optionStrike, option_sort = set_option_series(symb=symb)
         if option_series not in index[category][currency]:
             index[category][currency][option_series] = OrderedDict()
             index[category][currency][option_series]["CALLS"] = list()
@@ -774,7 +772,7 @@ def sort_instrument_index(ws, index: OrderedDict) -> OrderedDict:
     for category, values_category in index.items():
         res[category] = OrderedDict(sorted(values_category.items(), key=lambda x: x[0]))
         for currency, values_currency in res[category].items():
-            res[category][currency] = dict(
+            res[category][currency] = OrderedDict(
                 sorted(values_currency.items(), key=lambda x: x[1]["sort"])
             )
             for series, values in res[category][currency].items():
@@ -788,7 +786,7 @@ def sort_instrument_index(ws, index: OrderedDict) -> OrderedDict:
                             else:
                                 opt_strike = int(opt_strike)
                             symbol_value[opt_strike] = item
-                        value = list(dict(sorted(symbol_value.items())).values())
+                        value = list(OrderedDict(sorted(symbol_value.items())).values())
                         res[category][currency][series][key] = value
 
     return res

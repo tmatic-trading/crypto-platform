@@ -38,8 +38,8 @@ def expire_pattern():
         "DEC": [31, "L", 12],
     }
     pattern = {}
-    this_year = datetime.now().year
-    beg_month = datetime.now().month
+    this_year = datetime.now(tz=timezone.utc).year
+    beg_month = datetime.now(tz=timezone.utc).month
     end_month = 12
     year_subt = 2000
     for year in range(this_year, this_year + 2):
