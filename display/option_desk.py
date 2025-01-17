@@ -87,6 +87,13 @@ class OptionDesk:
                 size=0,
                 cancel_scroll=True,
             )
+            TreeviewTable(
+                frame=strikes_headers,
+                name="t",
+                title=Header.name_strikes,
+                size=0,
+                cancel_scroll=True,
+            )
             headers_puts = TreeviewTable(
                 frame=puts_headers,
                 name="t",
