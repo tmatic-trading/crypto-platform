@@ -786,7 +786,7 @@ def sort_instrument_index(ws, index: OrderedDict) -> OrderedDict:
                             else:
                                 opt_strike = int(opt_strike)
                             symbol_value[opt_strike] = item
-                        value = list(OrderedDict(sorted(symbol_value.items())).values())
+                        value = list(map(lambda x: x[1], sorted(symbol_value.items())))
                         res[category][currency][series][key] = value
 
     return res
