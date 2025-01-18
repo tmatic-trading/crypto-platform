@@ -18,32 +18,32 @@ class ListenLogger(logging.Filter):
         return True
 
 
-def expire_pattern():
+def expire_pattern(scope: int) -> dict:
     """
     Represents the expire date pattern required for correct sorting of symbols
-    having the type 'DDMMMYY'. Contains expire dates for the next 12 + 1 months.
+    having the type 'DDMMMYY'. Contains expire dates for the next (scope: int) years.
     """
     month_abbr = {
-        "JAN": [31, "A", 1],
-        "FEB": [29, "B", 2],
-        "MAR": [31, "C", 3],
-        "APR": [30, "D", 4],
-        "MAY": [31, "E", 5],
-        "JUN": [30, "F", 6],
-        "JUL": [31, "G", 7],
-        "AUG": [31, "H", 8],
-        "SEP": [30, "I", 9],
-        "OCT": [31, "J", 10],
-        "NOV": [30, "K", 11],
-        "DEC": [31, "L", 12],
+        "JAN": [31, "A"],
+        "FEB": [29, "B"],
+        "MAR": [31, "C"],
+        "APR": [30, "D"],
+        "MAY": [31, "E"],
+        "JUN": [30, "F"],
+        "JUL": [31, "G"],
+        "AUG": [31, "H"],
+        "SEP": [30, "I"],
+        "OCT": [31, "J"],
+        "NOV": [30, "K"],
+        "DEC": [31, "L"],
     }
     pattern = {}
     this_year = datetime.now(tz=timezone.utc).year
     beg_month = datetime.now(tz=timezone.utc).month
     end_month = 12
     year_subt = 2000
-    for year in range(this_year, this_year + 3):
-        if year - this_year > 1:
+    for year in range(this_year, this_year + scope + 1):
+        if year - this_year == scope:
             end_month = datetime.now().month
         if year - year_subt > 99:
             year_subt += 100
@@ -52,8 +52,8 @@ def expire_pattern():
             year_str = "0" + str(year)
         else:
             year_str = str(year)
-        for month, values in month_abbr.items():
-            if values[2] >= beg_month and values[2] <= end_month:
+        for i, (month, values) in enumerate(month_abbr.items(), start=1):
+            if i >= beg_month and i <= end_month:
                 beg_month = -1
                 for day in range(1, values[0] + 1):
                     pattern_in = str(day) + str(month) + year_str
@@ -163,4 +163,4 @@ class Variables:
     DASH = "-"
     DASH3 = "---"
     NA = "n/a"
-    sort_pattern = expire_pattern()
+    sort_pattern = expire_pattern(scope=2)
