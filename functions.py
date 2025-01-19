@@ -2217,37 +2217,11 @@ def handler_instrument(event) -> None:
         if len(lst) > 1:
             symb = lst[1]
             if market:
-                create = False
+                create = True
                 symbol = (symb, market)
                 _symb = symb
                 ws = Markets[market]
                 instrument = ws.Instrument[symbol]
-                if var.symbol != symbol:
-                    if instrument.ticker == "option!":
-                        if symbol in var.selected_option:
-                            symb = set_option(
-                                ws=ws,
-                                instrument=instrument,
-                                symbol=symbol,
-                                option=var.selected_option[symbol][0],
-                            )
-                            symbol = (symb, market)
-                            if var.symbol == symbol:  # Opens the options
-                                # chain only on the second click
-                                create = True
-                            if var.rollup_symbol == "cancel":
-                                create = False
-                                var.rollup_symbol = ""
-                        else:
-                            symb = set_option(
-                                ws=ws, instrument=instrument, symbol=symbol
-                            )
-                            symbol = (symb, market)
-                    var.symbol = symbol
-                    update_order_form()
-                    TreeTable.orderbook.clear_color_cell()
-                else:
-                    var.rollup_symbol = ""
                 if time.time() - var.select_time > 0.2:
                     if symbol not in var.unsubscription:
                         bbox = tree.bbox(items[0], "#0")
@@ -2267,27 +2241,61 @@ def handler_instrument(event) -> None:
                                     var.message_response, width=650, height=350
                                 )
                                 var.message_response = ""
-                if create:
+                if instrument.ticker == "option!":
+                    old_category = ws.Instrument[var.symbol].category
+                    strikes = []
                     if (
-                        "option" in instrument.category
-                        and "combo" not in instrument.category
+                        var.symbol[1] == symbol[1]
+                        and "option" in old_category
+                        and "combo" not in old_category
                     ):
-                        options_desk.create(
-                            instrument=instrument, update=update_order_form
+                        strikes = service.select_option_strikes(
+                            index=ws.instrument_index, instrument=instrument
                         )
-                        # disp.root.update()
-                        options_desk.desk.update()
-                        if options_desk.label.winfo_exists():
-                            height = (
-                                options_desk.label.winfo_height()
-                                + options_desk.calls_headers.winfo_height()
-                                + TreeTable.calls.tree.winfo_height()
+                    if var.symbol != symbol and var.symbol[0] not in strikes:
+                        var.symbol = symbol
+                        update_order_form()
+                        TreeTable.orderbook.clear_color_cell()
+                    else: # Opens the options chain only on the second click
+                        if var.rollup_symbol == "cancel":
+                            var.rollup_symbol = ""
+                        elif create == True:
+                            if symbol in var.selected_option:
+                                symb = set_option(
+                                    ws=ws,
+                                    instrument=instrument,
+                                    symbol=symbol,
+                                    option=var.selected_option[symbol][0],
+                                )
+                                symbol = (symb, market)
+                            else:
+                                symb = set_option(
+                                    ws=ws, instrument=instrument, symbol=symbol
+                                )
+                                symbol = (symb, market)
+                            options_desk.create(
+                                instrument=instrument, update=update_order_form
                             )
-                            if height > int(disp.window_height * 0.8):
-                                height = int(disp.window_height * 0.8)
-                            options_desk.desk.geometry(
-                                "{}x{}".format(disp.window_width, height)
-                            )
+                            # disp.root.update()
+                            options_desk.desk.update()
+                            if options_desk.label.winfo_exists():
+                                height = (
+                                    options_desk.label.winfo_height()
+                                    + options_desk.calls_headers.winfo_height()
+                                    + TreeTable.calls.tree.winfo_height()
+                                )
+                                if height > int(disp.window_height * 0.8):
+                                    height = int(disp.window_height * 0.8)
+                                options_desk.desk.geometry(
+                                    "{}x{}".format(disp.window_width, height)
+                                )
+                elif var.symbol != symbol:
+                    var.symbol = symbol
+                    update_order_form()
+                    TreeTable.orderbook.clear_color_cell()
+                else:
+                    var.rollup_symbol = ""
+
                 var.selected_iid[market] = items[0]
                 service.set_dotenv(
                     dotenv_path=var.preferences,
@@ -2528,7 +2536,6 @@ def handler_subscription(event) -> None:
             t = threading.Thread(target=confirm_subscription, args=(market, symb))
             t.start()
         else:
-            var.symbol = symbol
             var.current_market = market
             TreeTable.instrument.on_rollup(iid=f"{market}!{symb}", setup="child")
         TreeTable.market.del_sub(TreeTable.market)
