@@ -7,6 +7,7 @@ from tkinter import StringVar, ttk
 from dotenv import dotenv_values, set_key
 
 import services as service
+from api.api import MetaMarket
 from common.variables import Variables as var
 from display.tips import Tips
 from display.variables import ClickLabel
@@ -24,28 +25,24 @@ class SettingsApp:
         self.bg_active = disp.bg_select_color
         self.fg_changed = disp.warning_color
         self.title_color = disp.title_color
-
         self.common_trace_changed = {}
-
         self.common_settings = OrderedDict()
-        self.common_settings["MARKET_LIST"] = "Bitmex,Bybit,Deribit"
+        self.common_settings["MARKET_LIST"] = self.get_str_markets(
+            list(MetaMarket.names.keys())
+        )
         self.common_settings["SQLITE_DATABASE"] = "tmatic.db"
         self.common_settings["ORDER_BOOK_DEPTH"] = "orderBook 7"
         self.common_settings["BOTTOM_FRAME"] = "Bots"
         self.common_settings["REFRESH_RATE"] = "5"
         self.common_settings["TESTNET"] = "YES"
 
-        self.default_subscriptions = OrderedDict()
-        self.default_subscriptions["Bitmex"] = var.default_symbol["Bitmex"]
-        self.default_subscriptions["Bybit"] = var.default_symbol["Bybit"]
-        self.default_subscriptions["Deribit"] = var.default_symbol["Deribit"]
         for setting in self.common_settings.keys():
             self.common_trace_changed[setting] = StringVar(name=setting + str(self))
             self.common_trace_changed[setting].set(self.common_settings[setting])
         self.common_defaults = {}
         self.common_flag = {}
-
         self.market_list = self.common_settings["MARKET_LIST"].split(",")
+        self.default_subscriptions = OrderedDict()
         self.market_settings = [
             "CONNECTED",
             "HTTP_URL",
@@ -82,10 +79,12 @@ class SettingsApp:
                     self.market_defaults[market][item] = values[val]
             self.market_defaults[market]["CONNECTED"] = "YES"
             self.market_defaults[market]["TESTNET"] = "YES"
+            self.default_subscriptions[market] = var.default_symbol[market]
+            self.default_subscriptions[market] = var.default_symbol[market]
+            self.default_subscriptions[market] = var.default_symbol[market]
 
         self.indent = "  "
         self.entry_width = 45
-        os.abort()
 
         # To keep track whether market is clicked
         self.click_market = "false"
@@ -184,7 +183,7 @@ class SettingsApp:
                     actual_list.append(market)
                     missed_data = 1
             self.market_list = actual_list.copy()
-            actual_str = self.get_str_markets()
+            actual_str = self.get_str_markets(self.market_list)
             self.common_defaults["MARKET_LIST"] = actual_str
             self.common_trace_changed["MARKET_LIST"].set(actual_str)
 
@@ -337,7 +336,9 @@ class SettingsApp:
         # Update market_list
         self.market_list = [frame.market for frame in self.settings_center]
         # Remember the new market order
-        self.common_trace_changed["MARKET_LIST"].set(self.get_str_markets())
+        self.common_trace_changed["MARKET_LIST"].set(
+            self.get_str_markets(self.market_list)
+        )
         self.check_common_flag("MARKET_LIST")
 
     def update_positions(self, moving_frame):
@@ -423,8 +424,8 @@ class SettingsApp:
                     self.entry_market[setting].config(style=f"default.{widget_type}")
         self.root_frame.focus()
 
-    def get_str_markets(self):
-        return ",".join(str(x) for x in self.market_list)
+    def get_str_markets(self, lst):
+        return ",".join(str(x) for x in lst)
 
     def insert_comment(self, file_path, comment):
         """
@@ -712,7 +713,7 @@ class SettingsApp:
                 self.common_defaults[setting] = self.entry_common[setting].get()
             else:
                 # Set the initial value for common setting
-                self.common_defaults[setting] = self.get_str_markets()
+                self.common_defaults[setting] = self.get_str_markets(self.market_list)
             self.common_trace_changed[setting].set(self.common_defaults[setting])
             self.common_flag[setting] = 0
 
