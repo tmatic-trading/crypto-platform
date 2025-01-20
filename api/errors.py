@@ -65,6 +65,7 @@ class Error(Variables):
             FATAL   This market will be reloaded.
             RETRY   Retry the request.
         """
+        
         canceled = f" - {self.name} loading cancelled."
         error_name = exception.__class__.__name__
         prefix = f"{self.name} - {error_name} - "
@@ -88,8 +89,7 @@ class Error(Variables):
             "InvalidRequestError",
             "FailedRequestError",
             "WebSocketBadStatusException",
-            "DeribitWsRequestError",
-        ]:
+        ] or (response and "error" in response):
             response = try_response(response, exception)
             status_code = response["error"]["code"]
             status = GetErrorStatus.get_status(self.name, response)

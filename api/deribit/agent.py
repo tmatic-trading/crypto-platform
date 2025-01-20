@@ -932,9 +932,8 @@ class Agent(Deribit):
                     }
                 )
                 self.response[id]
-                self.logNumFatal = "FATAL"
 
-                return self.logNumFatal
+                return service.unexpected_error(self)
 
     def activate_funding_thread(self):
         """

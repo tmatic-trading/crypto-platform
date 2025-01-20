@@ -103,8 +103,7 @@ class Bitmex(Variables):
                 time_out -= 0.1
             if time_out <= 0:
                 self.logger.error("Couldn't connect to websocket!")
-                self.logNumFatal = "FATAL"
-                return self.logNumFatal
+                return service.unexpected_error(self)
             self.logger.info("Connected to websocket.")
 
             return ""
@@ -128,7 +127,7 @@ class Bitmex(Variables):
             message = "Exception while connecting to websocket."
             if not self.logNumFatal:
                 message += " Reboot."
-                self.logNumFatal = "FATAL"
+                service.unexpected_error(self)
             self.logger.error(message)
             return self.logNumFatal
         if not self.logNumFatal:
@@ -203,7 +202,7 @@ class Bitmex(Variables):
                 return []
         except Exception:
             self.logger.error("Exception while authenticating. Restarting...")
-            self.logNumFatal = "FATAL"
+            service.unexpected_error(self)
             return []
 
     def __wait_for_tables(self, symbol_list) -> None:
@@ -225,8 +224,7 @@ class Bitmex(Variables):
                         + str(table_lack)
                         + " - missing."
                     )
-                    self.logNumFatal = "FATAL"
-                    return self.logNumFatal
+                    return service.unexpected_error(self)
                 sleep(0.1)
             count = 0
         while True:
@@ -390,7 +388,7 @@ class Bitmex(Variables):
             self.logger.error(
                 traceback.format_exc()
             )  # Error in api.py. Take a look in logfile.log. Restarting...
-            self.logNumFatal = "FATAL"
+            service.unexpected_error(self)
 
     def __on_error(self, ws, error) -> None:
         """
@@ -404,7 +402,7 @@ class Bitmex(Variables):
 
     def __on_close(self, *args) -> None:
         self.logger.info("Websocket closed.")
-        # self.logNumFatal = "FATAL"
+        # service.unexpected_error(self)
 
     def __reset(self) -> None:
         """
@@ -540,7 +538,7 @@ class Bitmex(Variables):
                 self.ws.send("ping")
             except Exception:
                 self.logger.error("Bitmex websocket ping error. Reboot")
-                self.logNumFatal = "FATAL"
+                service.unexpected_error(self)
                 return False
             return True
 

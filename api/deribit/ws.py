@@ -125,17 +125,15 @@ class Deribit(Variables):
             time_out -= slp
         if time_out <= 0:
             self.logger.error("Couldn't connect to websocket!")
-            self.logNumFatal = "FATAL"
-            return self.logNumFatal
+            return service.unexpected_error(self)
 
         self.logger.info("Connected to websocket.")
         time_out, slp = 3, 0.05
         while not self.access_token:
             time_out -= slp
-            if time_out <= 0:
+            if time_out <= 0 or self.logNumFatal == "CANCEL":
                 self.logger.error("Access_token not received. Reboot.")
-                self.logNumFatal = "FATAL"
-                return self.logNumFatal
+                return service.unexpected_error(self)
             time.sleep(slp)
         self.logger.info("access_token received")
 
@@ -299,6 +297,14 @@ class Deribit(Variables):
                 if "id" in message:
                     if message["id"] in self.response:
                         self.response[message["id"]]["result"] = res
+                    else:
+                        Error.handler(
+                            self,
+                            exception=DeribitWsRequestError(response=res),
+                            response=res,
+                            verb="request via ws",
+                            path="",
+                        )
                 else:
                     Error.handler(
                         self,
@@ -310,18 +316,18 @@ class Deribit(Variables):
             self.pinging = datetime.now(tz=timezone.utc)
         except Exception as exception:
             display_exception(exception)
-            self.logNumFatal = "FATAL"
+            service.unexpected_error(self)
 
     def __on_error(self, ws, error):
         """
         We are here if websocket has fatal errors.
         """
         self.logger.error(type(error).__name__ + " " + str(error))
-        self.logNumFatal = "FATAL"
+        service.unexpected_error(self)
 
     def __on_close(self, *args):
         self.logger.info("Websocket closed.")
-        self.logNumFatal = "FATAL"
+        service.unexpected_error(self)
 
     def __ws_auth(self) -> None:
         """

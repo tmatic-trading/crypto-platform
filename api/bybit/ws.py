@@ -465,9 +465,8 @@ class Bybit(Variables):
         while self.ws_wait[category]:
             timeout -= 0.1
             if timeout < 0:
-                self.logNumFatal = "FATAL"
 
-                return self.logNumFatal
+                return service.unexpected_error(self)
 
             time.sleep(0.1)
 

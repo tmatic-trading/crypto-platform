@@ -626,6 +626,7 @@ def unexpected_error(ws) -> str:
     if not ws.logNumFatal:
         ws.logNumFatal = "FATAL"
 
+
     return ws.logNumFatal
 
 
