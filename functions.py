@@ -1234,7 +1234,7 @@ class Function(WS, Variables):
             count = 0
             for number in range(start, end, direct):
                 if len(val) > count:
-                    qty = Function.find_order(self, val[count][0], symbol=var.symbol)                    
+                    qty = Function.find_order(self, val[count][0], symbol=var.symbol)
                     if side == "bids":
                         compare = [val[count][0], val[count][1], qty]
                         if compare != tree.cache[number]:
@@ -2256,7 +2256,7 @@ def handler_instrument(event) -> None:
                         var.symbol = symbol
                         update_order_form()
                         TreeTable.orderbook.clear_color_cell()
-                    else: # Opens the options chain only on the second click
+                    else:  # Opens the options chain only on the second click
                         if var.rollup_symbol == "cancel":
                             var.rollup_symbol = ""
                         elif create == True:

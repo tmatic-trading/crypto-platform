@@ -63,7 +63,7 @@ class SettingsApp:
         self.market_changed = {}
         self.market_saved = {}
         self.market_flag = {}
-        values = dotenv_values(f"{var.working_directory}/display/{var.default_urls}")
+        values = dotenv_values(f"{var.working_directory}/common/{var.default_urls}")
         for market in self.market_list:
             self.market_color[market] = self.bg_entry
             self.market_defaults[market] = {}
@@ -85,6 +85,7 @@ class SettingsApp:
 
         self.indent = "  "
         self.entry_width = 45
+        os.abort()
 
         # To keep track whether market is clicked
         self.click_market = "false"

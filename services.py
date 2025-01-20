@@ -626,7 +626,6 @@ def unexpected_error(ws) -> str:
     if not ws.logNumFatal:
         ws.logNumFatal = "FATAL"
 
-
     return ws.logNumFatal
 
 
@@ -708,7 +707,9 @@ def fill_instrument_index(index: OrderedDict, instrument: Instrument, ws) -> dic
     symb = instrument.symbol
     if "option" in category and "combo" not in category:
         option_type = instrument.optionType
-        option_series, instrument.optionStrike, option_sort = set_option_series(symb=symb)
+        option_series, instrument.optionStrike, option_sort = set_option_series(
+            symb=symb
+        )
         if option_series not in index[category][currency]:
             index[category][currency][option_series] = OrderedDict()
             index[category][currency][option_series]["CALLS"] = list()
