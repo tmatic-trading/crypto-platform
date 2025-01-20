@@ -623,7 +623,7 @@ def unexpected_error(ws) -> str:
     received does not match the expected data, and this error is assumed to
     be FATAL.
     """
-    if not ws.logNumFatal:
+    if not ws.logNumFatal or ws.logNumFatal in ["RETRY", "IGNORE"]:
         ws.logNumFatal = "FATAL"
 
     return ws.logNumFatal
