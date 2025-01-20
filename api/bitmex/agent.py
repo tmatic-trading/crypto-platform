@@ -118,7 +118,7 @@ class Agent(Bitmex):
                 var.logger.warning(message)
                 var.queue_info.put(
                     {
-                        "market": "Bitmex",
+                        "market": self.name,
                         "message": message,
                         "time": datetime.now(tz=timezone.utc),
                         "warning": "error",

@@ -98,7 +98,7 @@ class Variables:
     settings = ".env.Settings"
     subscriptions = ".env.Subscriptions"
     preferences = ".env.Preferences"
-    default_urls = "URLs.txt"
+    default_settings = "default.txt"
     logger: logging = setup_logger()
     connect_sqlite = None
     cursor_sqlite = None
@@ -136,11 +136,7 @@ class Variables:
             ("1D", 1440),
         ]
     )
-    default_symbol = {
-        "Bitmex": [("XBTUSDT", "Bitmex")],
-        "Bybit": [("BTCUSDT", "Bybit")],
-        "Deribit": [("BTC-PERPETUAL", "Deribit")],
-    }
+    default_symbol = dict()
     platform_name = "Tmatic"
     reloading = False
     subscription_res = dict()

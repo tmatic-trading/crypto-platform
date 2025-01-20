@@ -60,7 +60,7 @@ class SettingsApp:
         self.market_changed = {}
         self.market_saved = {}
         self.market_flag = {}
-        values = dotenv_values(f"{var.working_directory}/common/{var.default_urls}")
+        values = dotenv_values(f"{var.working_directory}/common/{var.default_settings}")
         for market in self.market_list:
             self.market_color[market] = self.bg_entry
             self.market_defaults[market] = {}
@@ -79,9 +79,9 @@ class SettingsApp:
                     self.market_defaults[market][item] = values[val]
             self.market_defaults[market]["CONNECTED"] = "YES"
             self.market_defaults[market]["TESTNET"] = "YES"
-            self.default_subscriptions[market] = var.default_symbol[market]
-            self.default_subscriptions[market] = var.default_symbol[market]
-            self.default_subscriptions[market] = var.default_symbol[market]
+            default_symbol = (values[f"{market}_DEFAULT_SYMBOL"], market)
+            self.default_subscriptions[market] = default_symbol
+            var.default_symbol[market] = default_symbol
 
         self.indent = "  "
         self.entry_width = 45
