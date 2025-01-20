@@ -63,6 +63,7 @@ class SettingsApp:
         self.market_changed = {}
         self.market_saved = {}
         self.market_flag = {}
+        values = dotenv_values(f"{var.working_directory}/display/{var.default_urls}")
         for market in self.market_list:
             self.market_color[market] = self.bg_entry
             self.market_defaults[market] = {}
@@ -74,35 +75,11 @@ class SettingsApp:
                 self.market_changed[market][setting] = ""
                 self.market_saved[market][setting] = ""
                 self.market_flag[market][setting] = 0
-            if market == "Bitmex":
-                self.market_defaults[market][
-                    "HTTP_URL"
-                ] = "https://www.bitmex.com/api/v1"
-                self.market_defaults[market]["WS_URL"] = "wss://ws.bitmex.com/realtime"
-                self.market_defaults[market][
-                    "TESTNET_HTTP_URL"
-                ] = "https://testnet.bitmex.com/api/v1"
-                self.market_defaults[market][
-                    "TESTNET_WS_URL"
-                ] = "wss://testnet.bitmex.com/realtime"
-            elif market == "Bybit":
-                self.market_defaults[market]["HTTP_URL"] = "https://api.bybit.com/v5"
-                self.market_defaults[market]["WS_URL"] = "wss://api.bybit.com/v5"
-                self.market_defaults[market][
-                    "TESTNET_HTTP_URL"
-                ] = "https://api-testnet.bybit.com/v5"
-                self.market_defaults[market][
-                    "TESTNET_WS_URL"
-                ] = "wss://api-testnet.bybit.com/v5"
-            elif market == "Deribit":
-                self.market_defaults[market]["HTTP_URL"] = "https://www.deribit.com"
-                self.market_defaults[market]["WS_URL"] = "wss://ws.deribit.com/ws"
-                self.market_defaults[market][
-                    "TESTNET_HTTP_URL"
-                ] = "https://test.deribit.com"
-                self.market_defaults[market][
-                    "TESTNET_WS_URL"
-                ] = "wss://test.deribit.com/ws"
+            items = ["HTTP_URL", "WS_URL", "TESTNET_HTTP_URL", "TESTNET_WS_URL"]
+            for item in items:
+                val = f"{market}_{item}"
+                if val in values:
+                    self.market_defaults[market][item] = values[val]
             self.market_defaults[market]["CONNECTED"] = "YES"
             self.market_defaults[market]["TESTNET"] = "YES"
 
