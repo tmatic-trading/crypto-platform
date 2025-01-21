@@ -1,22 +1,12 @@
 import threading
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Union
 
 import services as service
-from api.bitmex.agent import Agent as BitmexAgent
-from api.bybit.agent import Agent as BybitAgent
-from api.deribit.agent import Agent as DeribitAgent
-from api.setup import Markets
+from api.setup import Agents, Markets
 from common.variables import Variables as var
 
 from .variables import Variables
-
-
-class Agents(Enum):
-    Bitmex = BitmexAgent
-    Bybit = BybitAgent
-    Deribit = DeribitAgent
 
 
 class WS(Variables):

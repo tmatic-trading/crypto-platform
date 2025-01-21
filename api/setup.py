@@ -1,9 +1,13 @@
+from enum import Enum
 from typing import Union
+
+from api.bitmex.agent import Agent as BitmexAgent
 from api.bitmex.ws import Bitmex
+from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
+from api.deribit.agent import Agent as DeribitAgent
 from api.deribit.ws import Deribit
 from api.fake import Fake
-from enum import Enum
 
 
 class MetaMarket(type):
@@ -14,11 +18,9 @@ class MetaMarket(type):
         "Deribit": Deribit,
     }
 
-    def __getitem__(self, item) -> Union[
-        Bitmex,
-        Bybit,
-        Deribit,
-    ]:
+    def __getitem__(
+        self, item
+    ) -> Union[Bitmex, Bybit, Deribit,]:
         if item not in self.dictionary:
             if item != "Fake":
                 try:
@@ -40,36 +42,43 @@ class Markets(
     pass
 
 
+class Agents(Enum):
+    Bitmex = BitmexAgent
+    Bybit = BybitAgent
+    Deribit = DeribitAgent
+
+
 class Default(Enum):
     """
-    When adding a new exchange, all parameters except DEFAULT_SYMBOL can 
+    When adding a new exchange, all parameters except DEFAULT_SYMBOL can
     be omitted. DEFAULT_SYMBOL is required.
     """
 
-    Bitmex_HTTP_URL='https://www.bitmex.com/api/v1'
-    Bitmex_WS_URL='wss://ws.bitmex.com/realtime'
-    Bitmex_TESTNET_HTTP_URL='https://testnet.bitmex.com/api/v1'
-    Bitmex_TESTNET_WS_URL='wss://testnet.bitmex.com/realtime'
-    Bitmex_DEFAULT_SYMBOL='XBTUSDT'
+    Bitmex_HTTP_URL = "https://www.bitmex.com/api/v1"
+    Bitmex_WS_URL = "wss://ws.bitmex.com/realtime"
+    Bitmex_TESTNET_HTTP_URL = "https://testnet.bitmex.com/api/v1"
+    Bitmex_TESTNET_WS_URL = "wss://testnet.bitmex.com/realtime"
+    Bitmex_DEFAULT_SYMBOL = "XBTUSDT"
     #
-    Bybit_HTTP_URL='https://api.bybit.com/v5'
-    Bybit_WS_URL='wss://api.bybit.com/v5'
-    Bybit_TESTNET_HTTP_URL='https://api-testnet.bybit.com/v5'
-    Bybit_TESTNET_WS_URL='wss://api-testnet.bybit.com/v5'
-    Bybit_DEFAULT_SYMBOL='BTCUSDT'
+    Bybit_HTTP_URL = "https://api.bybit.com/v5"
+    Bybit_WS_URL = "wss://api.bybit.com/v5"
+    Bybit_TESTNET_HTTP_URL = "https://api-testnet.bybit.com/v5"
+    Bybit_TESTNET_WS_URL = "wss://api-testnet.bybit.com/v5"
+    Bybit_DEFAULT_SYMBOL = "BTCUSDT"
     #
-    Deribit_HTTP_URL='https://www.deribit.com'
-    Deribit_WS_URL='wss://ws.deribit.com/ws'
-    Deribit_TESTNET_HTTP_URL='https://test.deribit.com'
-    Deribit_TESTNET_WS_URL='wss://test.deribit.com/ws'
-    Deribit_DEFAULT_SYMBOL='BTC-PERPETUAL'
+    Deribit_HTTP_URL = "https://www.deribit.com"
+    Deribit_WS_URL = "wss://ws.deribit.com/ws"
+    Deribit_TESTNET_HTTP_URL = "https://test.deribit.com"
+    Deribit_TESTNET_WS_URL = "wss://test.deribit.com/ws"
+    Deribit_DEFAULT_SYMBOL = "BTC-PERPETUAL"
 
 
 class Documentation:
     """
-    When adding a new exchange, links to documentation are not required. 
+    When adding a new exchange, links to documentation are not required.
     They only provide additional information in the Settings menu.
     """
+
     docs = {
         "Bitmex": {
             "HTTP_URL": "https://www.bitmex.com/app/apiOverview",
