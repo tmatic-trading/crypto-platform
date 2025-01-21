@@ -333,7 +333,7 @@ class ErrorStatus(Enum):
         110067: "Unified account is not supported.",
     }
 
-    def error_status(error):
+    def status(error):
         error_number = error["error"]["code"]
         for status in ErrorStatus:
             if error_number in status.value:

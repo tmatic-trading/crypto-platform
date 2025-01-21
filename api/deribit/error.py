@@ -172,7 +172,7 @@ class ErrorStatus(Enum):
         -32000: "Missing params",
     }
 
-    def error_status(error):
+    def status(error):
         error_number = error["error"]["code"]
         for status in ErrorStatus:
             if error_number in status.value:

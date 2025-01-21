@@ -12,6 +12,7 @@ from common.data import MetaAccount, MetaInstrument, MetaResult
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
 
+from .error import ErrorStatus
 from .pybit._websocket_stream import _V5WebSocketManager
 from .pybit.unified_trading import HTTP, WebSocket
 
@@ -71,6 +72,7 @@ class Bybit(Variables):
         self.instrument_index = OrderedDict()
         var.market_object[self.name] = self
         self.unsubscriptions = set()
+        self.get_error = ErrorStatus
 
     def setup_session(self):
         self.session: HTTP = HTTP(

@@ -9,6 +9,7 @@ import requests
 import websocket
 
 import services as service
+from api.deribit.error import ErrorStatus
 from api.errors import Error
 from api.init import Setup
 from api.variables import Variables
@@ -96,6 +97,7 @@ class Deribit(Variables):
         self.subscriptions = list()
         self.sequence = 0
         self.api_auth = API_auth
+        self.get_error = ErrorStatus
 
     def setup_session(self):
         """

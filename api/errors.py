@@ -1,10 +1,6 @@
 import json
 from datetime import datetime, timezone
-from enum import Enum
 
-from api.bitmex.error import ErrorStatus as BitmexErrorStatus
-from api.bybit.error import ErrorStatus as BybitErrorStatus
-from api.deribit.error import ErrorStatus as DeribitErrorStatus
 from api.variables import Variables
 from common.variables import Variables as var
 
@@ -24,15 +20,6 @@ class HostNameIsInvalid(Exception):
         self.message = f"{uri} host name is invalid"
         self.status_code = 404
         self.code = self.status_code
-
-
-class GetErrorStatus(Enum):
-    Bitmex = BitmexErrorStatus
-    Bybit = BybitErrorStatus
-    Deribit = DeribitErrorStatus
-
-    def get_status(name, res):
-        return GetErrorStatus[name].value.error_status(res)
 
 
 class Error(Variables):
@@ -92,10 +79,10 @@ class Error(Variables):
         ] or (response and "error" in response):
             response = try_response(response, exception)
             status_code = response["error"]["code"]
-            status = GetErrorStatus.get_status(self.name, response)
+            status = self.get_error.status(response)
             if status:
                 try:
-                    message = GetErrorStatus[self.name].value[status].value[status_code]
+                    message = self.get_error.value[status].value[status_code]
                 except Exception:
                     message = response["error"]["message"]
                 error_message = f"{prefix}{status_code} {message}"

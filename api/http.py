@@ -1,7 +1,6 @@
 import json
 import time
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Union
 
 import requests

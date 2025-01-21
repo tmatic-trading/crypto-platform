@@ -18,6 +18,7 @@ from common.variables import Variables as var
 from services import display_exception
 
 from .api_auth import API_auth
+from .error import ErrorStatus
 
 
 class Bitmex(Variables):
@@ -56,6 +57,7 @@ class Bitmex(Variables):
         self.instrument_index = OrderedDict()
         self.unsubscribe = dict()
         self.api_auth = API_auth
+        self.get_error = ErrorStatus
 
     def setup_session(self):
         """

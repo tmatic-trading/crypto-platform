@@ -109,7 +109,7 @@ class ErrorStatus(Enum):
         530: "Server Error",
     }
 
-    def error_status(res):
+    def status(res):
         error = res["error"]["message"]
         for status in ErrorStatus:
             if error in status.value:
