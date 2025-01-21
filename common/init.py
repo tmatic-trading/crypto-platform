@@ -7,8 +7,9 @@ from sqlite3 import Error
 from dotenv import dotenv_values, set_key
 
 import services as service
-from api.api import WS, Markets
+from api.api import WS
 from api.init import Variables
+from api.setup import Markets
 from common.variables import Variables as var
 from display.functions import info_display
 from display.variables import TreeTable

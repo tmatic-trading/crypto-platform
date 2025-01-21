@@ -5,37 +5,12 @@ from typing import Union
 
 import services as service
 from api.bitmex.agent import Agent as BitmexAgent
-from api.bitmex.ws import Bitmex
 from api.bybit.agent import Agent as BybitAgent
-from api.bybit.ws import Bybit
 from api.deribit.agent import Agent as DeribitAgent
-from api.deribit.ws import Deribit
-from api.fake import Fake
+from api.setup import Markets
 from common.variables import Variables as var
 
 from .variables import Variables
-
-
-class MetaMarket(type):
-    dictionary = dict()
-    names = {"Bitmex": Bitmex, "Bybit": Bybit, "Deribit": Deribit}
-
-    def __getitem__(self, item) -> Union[Bitmex, Bybit, Deribit]:
-        if item not in self.dictionary:
-            if item != "Fake":
-                try:
-                    self.dictionary[item] = self.names[item]()
-                except ValueError:
-                    raise ValueError(f"{item} not found")
-            elif item == "Fake":
-                self.dictionary[item] = Fake()
-            return self.dictionary[item]
-        else:
-            return self.dictionary[item]
-
-
-class Markets(Bitmex, Bybit, Deribit, metaclass=MetaMarket):
-    pass
 
 
 class Agents(Enum):

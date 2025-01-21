@@ -3,7 +3,8 @@ from collections import OrderedDict
 from typing import Union
 
 import services as service
-from api.api import WS, Markets
+from api.api import WS
+from api.setup import Markets
 from common.data import BotData, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage

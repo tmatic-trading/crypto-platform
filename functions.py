@@ -12,7 +12,8 @@ from dotenv import dotenv_values
 
 import display.bot_menu as bot_menu
 import services as service
-from api.api import WS, Markets
+from api.api import WS
+from api.setup import Markets
 from api.variables import Variables
 from botinit.variables import Variables as robo
 from common.data import Bots, Instrument

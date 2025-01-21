@@ -17,7 +17,7 @@ from pygments.styles import get_style_by_name
 import functions
 import indicators
 import services as service
-from api.api import Markets
+from api.setup import Markets
 from botinit.variables import Variables as robo
 from common.data import BotData, Bots
 from common.variables import Variables as var

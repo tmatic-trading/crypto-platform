@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import functions
 import services as service
-from api.api import Markets
+from api.setup import Markets
 from botinit.variables import Variables as robo
 from common.data import Bots
 from common.variables import Variables as var

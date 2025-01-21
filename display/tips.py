@@ -47,51 +47,11 @@ class Tips(Enum):
     WS_URL = URLS
     TESTNET_HTTP_URL = URLS
     TESTNET_WS_URL = URLS
-    docs = {
-        "Bitmex": {
-            "HTTP_URL": "https://www.bitmex.com/app/apiOverview",
-            "WS_URL": "https://www.bitmex.com/app/apiOverview",
-            "TESTNET_HTTP_URL": "https://testnet.bitmex.com/app/apiOverview",
-            "TESTNET_WS_URL": "https://testnet.bitmex.com/app/apiOverview",
-        },
-        "Bybit": {
-            "HTTP_URL": "https://bybit-exchange.github.io/docs/v5/intro",
-            "WS_URL": "https://bybit-exchange.github.io/docs/v5/intro",
-            "TESTNET_HTTP_URL": "https://bybit-exchange.github.io/docs/v5/intro",
-            "TESTNET_WS_URL": "https://bybit-exchange.github.io/docs/v5/intro",
-        },
-        "Deribit": {
-            "HTTP_URL": "https://docs.deribit.com/",
-            "WS_URL": "https://docs.deribit.com/",
-            "TESTNET_HTTP_URL": "https://docs.deribit.com/",
-            "TESTNET_WS_URL": "https://docs.deribit.com/",
-        },
-    }
     API = "API keys can be obtained from the link below."
     API_KEY = API
     API_SECRET = API
     TESTNET_API_KEY = API
     TESTNET_API_SECRET = API
-    api = {
-        "Bitmex": {
-            "API_KEY": "https://www.bitmex.com/app/apiKeys",
-            "API_SECRET": "https://www.bitmex.com/app/apiKeys",
-            "TESTNET_API_KEY": "https://testnet.bitmex.com/app/apiKeys",
-            "TESTNET_API_SECRET": "https://testnet.bitmex.com/app/apiKeys",
-        },
-        "Bybit": {
-            "API_KEY": "https://www.bybit.com/app/user/api-management",
-            "API_SECRET": "https://www.bybit.com/app/user/api-management",
-            "TESTNET_API_KEY": "https://testnet.bybit.com/app/user/api-management",
-            "TESTNET_API_SECRET": "https://testnet.bybit.com/app/user/api-management",
-        },
-        "Deribit": {
-            "API_KEY": "https://www.deribit.com/account/BTC/API",
-            "API_SECRET": "https://www.deribit.com/account/BTC/API",
-            "TESTNET_API_KEY": "https://test.deribit.com/account/BTC/API",
-            "TESTNET_API_SECRET": "https://test.deribit.com/account/BTC/API",
-        },
-    }
     TESTNET = "Select YES if you are using a test account, otherwise select NO."
     ACTIVE_STATE = "`Active` - all functions are operational. Trading is allowed."
     SUSPENDED_STATE = (
@@ -101,4 +61,7 @@ class Tips(Enum):
     )
     DISCONNECTED_STATE = (
         "`Disconnected` - the bot file strategy.py is not " + "operational."
+    )
+    DOCS_NOT_PROVIDED = (
+        "Documentation link not provided. See Documentation class api/setup.py"
     )

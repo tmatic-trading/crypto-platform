@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from api.api import Markets
+from api.setup import Markets
 from common.data import Instrument
 from common.variables import Variables as var
 from display.variables import Variables as disp

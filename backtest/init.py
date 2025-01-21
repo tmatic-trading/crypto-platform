@@ -6,14 +6,14 @@
 import botinit.init as botinit
 import common.init as common
 
-# import functions
-# import services as service
-from api.api import Markets
-
 # from api.bitmex.ws import Bitmex
 # from api.bybit.ws import Bybit
 # from api.deribit.ws import Deribit
 from api.init import Setup
+
+# import functions
+# import services as service
+from api.setup import Markets
 
 # from common.data import Bots, MetaInstrument
 from common.variables import Variables as var

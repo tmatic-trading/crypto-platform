@@ -98,7 +98,6 @@ class Variables:
     settings = ".env.Settings"
     subscriptions = ".env.Subscriptions"
     preferences = ".env.Preferences"
-    default_settings = "default.txt"
     logger: logging = setup_logger()
     connect_sqlite = None
     cursor_sqlite = None

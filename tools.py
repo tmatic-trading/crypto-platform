@@ -6,7 +6,8 @@ from typing import Callable, Union
 
 import functions
 import services as service
-from api.api import WS, Markets
+from api.api import WS
+from api.setup import Markets
 from backtest import functions as backtest
 from common.data import BotData, Bots, Instrument, MetaInstrument
 from common.variables import Variables as var

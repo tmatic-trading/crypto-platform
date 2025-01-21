@@ -7,11 +7,12 @@ import botinit.init as botinit
 import common.init as common
 import functions
 import services as service
-from api.api import WS, Markets
+from api.api import WS
 from api.bitmex.ws import Bitmex
 from api.bybit.ws import Bybit
 from api.deribit.ws import Deribit
 from api.init import Setup
+from api.setup import Markets
 from common.data import Bots, MetaInstrument
 from common.variables import Variables as var
 from display.bot_menu import bot_manager, insert_bot_log

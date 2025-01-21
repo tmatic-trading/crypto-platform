@@ -7,7 +7,7 @@ from tkinter import StringVar, ttk
 from dotenv import dotenv_values, set_key
 
 import services as service
-from api.api import MetaMarket
+from api.setup import Default, Documentation, MetaMarket
 from common.variables import Variables as var
 from display.tips import Tips
 from display.variables import ClickLabel
@@ -60,7 +60,9 @@ class SettingsApp:
         self.market_changed = {}
         self.market_saved = {}
         self.market_flag = {}
-        values = dotenv_values(f"{var.working_directory}/common/{var.default_settings}")
+        values = {}
+        for item in Default:
+            values[item.name] = item.value
         for market in self.market_list:
             self.market_color[market] = self.bg_entry
             self.market_defaults[market] = {}
@@ -111,6 +113,7 @@ class SettingsApp:
         self.setting_button.config(state="disabled")
         self.initialized = False
         self.click_label = tk.Label()
+        self.docs_label = tk.Label()
         self.blank_lb = tk.Label()
         self.return_lb = tk.Label()
         self.return_main_page()
@@ -784,12 +787,25 @@ class SettingsApp:
             text = Tips.SQLITE_DATABASE.value.format(DATABASE=var.db_sqlite)
         disp.tips["text"] = setting + "\n\n" + text
         self.click_label.destroy()
+        self.docs_label.destroy()
         if "WS" in setting or "HTTP" in setting:
-            link = Tips.docs.value[self.selected_frame.market][setting]
-            self.click_label = ClickLabel(disp.frame_tips, text=link, link=link)
+            if self.selected_frame.market in Documentation.docs:
+                link = Documentation.docs[self.selected_frame.market][setting]
+                self.click_label = ClickLabel(disp.frame_tips, text=link, link=link)
+            else:
+                self.docs_label = tk.Label(
+                    disp.frame_tips, text=Tips.DOCS_NOT_PROVIDED.value, bg=disp.bg_color
+                )
+                self.docs_label.pack()
         elif "API" in setting:
-            link = Tips.api.value[self.selected_frame.market][setting]
-            self.click_label = ClickLabel(disp.frame_tips, text=link, link=link)
+            if self.selected_frame.market in Documentation.api:
+                link = Documentation.api[self.selected_frame.market][setting]
+                self.click_label = ClickLabel(disp.frame_tips, text=link, link=link)
+            else:
+                self.docs_label = tk.Label(
+                    disp.frame_tips, text=Tips.DOCS_NOT_PROVIDED.value, bg=disp.bg_color
+                )
+                self.docs_label.pack()
         self.return_main_page()
 
 
