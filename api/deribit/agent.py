@@ -26,7 +26,7 @@ class Agent(Deribit):
         Returns
         -------
         str
-            On success, "" is returned, otherwise "error".
+            On success, "" is returned, otherwise an error.
         """
         path = self.api_version + Listing.GET_ACTIVE_INSTRUMENTS
         data = Send.request(self, path=path, verb="GET")

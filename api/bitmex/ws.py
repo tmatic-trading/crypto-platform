@@ -55,6 +55,7 @@ class Bitmex(Variables):
         self.ticker = dict()
         self.instrument_index = OrderedDict()
         self.unsubscribe = dict()
+        self.api_auth = API_auth
 
     def setup_session(self):
         """

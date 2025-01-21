@@ -12,7 +12,7 @@ class API_auth(AuthBase):
         api_key: str, api_secret: str, method: str, url: str, path: str, data=None
     ) -> dict:
         """
-        Called when forming a request - generates api key headers.
+        Called when https requesting - generates api key headers.
         """
         tstamp = str(int(time.time()) * 1000)
         nonce = "".join(

@@ -6,26 +6,9 @@ from typing import Union
 
 import requests
 
-from api.bitmex.api_auth import API_auth as Bitmex_API_auth
-from api.bitmex.error import ErrorStatus as BitmexErrorStatus
-from api.deribit.api_auth import API_auth as Deribit_API_auth
-from api.deribit.error import ErrorStatus as DeribitErrorStatus
 from api.errors import Error
 from api.variables import Variables
 from common.variables import Variables as var
-
-
-class GetErrorStatus(Enum):
-    Bitmex = BitmexErrorStatus
-    Deribit = DeribitErrorStatus
-
-    def get_status(name, res):
-        return GetErrorStatus[name].value.error_status(res)
-
-
-class Auth(Enum):
-    Bitmex = Bitmex_API_auth
-    Deribit = Deribit_API_auth
 
 
 class Send(Variables):
@@ -76,7 +59,7 @@ class Send(Variables):
                     data = json.dumps(postData)
                 else:
                     data = postData
-                headers = Auth[self.name].value.generate_headers(
+                headers = self.api_auth.generate_headers(
                     api_key=self.api_key,
                     api_secret=self.api_secret,
                     method=verb,

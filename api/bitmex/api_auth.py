@@ -9,7 +9,7 @@ class API_auth:
         api_key: str, api_secret: str, method: str, url: str, path: str, data=None
     ) -> dict:
         """
-        Called when forming a request - generates api key headers.
+        Called when https requesting - generates api key headers.
         """
         headers = dict()
         expires = int(round(time.time()) + 5)
@@ -23,11 +23,6 @@ class API_auth:
             nonce=expires,
             data=data or "",
         )
-        '''headers["user-agent"] = "Tmatic"
-        headers["Accept-Encoding"] = "gzip, deflate"
-        headers["accept"] = "application/json"
-        headers["Connection"] = "keep-alive"
-        headers["content-type"] = "application/json"'''
 
         return headers
 

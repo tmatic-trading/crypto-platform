@@ -61,7 +61,6 @@ class Deribit(Variables):
                 (1440, "1D"),
             ]
         )
-        self.settleCoin_list = list()
         self.ws = websocket
         self.logger = var.logger
         self.klines = dict()
@@ -96,6 +95,7 @@ class Deribit(Variables):
         self.instrument_index = OrderedDict()
         self.subscriptions = list()
         self.sequence = 0
+        self.api_auth = API_auth
 
     def setup_session(self):
         """
