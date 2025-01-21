@@ -33,6 +33,7 @@ class Bybit(Variables):
         pass
 
     def __init__(self):
+        self.object = Bybit
         self.name = "Bybit"
         Setup.variables(self)
         self.categories = ["spot", "inverse", "option", "linear"]

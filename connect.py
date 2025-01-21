@@ -8,9 +8,6 @@ import common.init as common
 import functions
 import services as service
 from api.api import WS
-from api.bitmex.ws import Bitmex
-from api.bybit.ws import Bybit
-from api.deribit.ws import Deribit
 from api.init import Setup
 from api.setup import Markets
 from common.data import Bots, MetaInstrument
@@ -26,9 +23,6 @@ from tools import MetaTool
 
 settings = SettingsApp(disp.settings_page)
 disp.root.bind("<F3>", lambda event: terminal_reload(event))
-Bitmex.transaction = Function.transaction
-Bybit.transaction = Function.transaction
-Deribit.transaction = Function.transaction
 thread = threading.Thread(target=functions.kline_update)
 thread.start()
 
@@ -46,6 +40,7 @@ def setup(reload=False):
     threads = []
     for name in var.market_list.copy():
         ws = Markets[name]
+        ws.object.transaction = Function.transaction
         ws.instrument_index = OrderedDict()
         MetaInstrument.market[ws.name] = dict()
         Setup.variables(ws)

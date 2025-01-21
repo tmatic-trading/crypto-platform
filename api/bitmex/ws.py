@@ -32,6 +32,7 @@ class Bitmex(Variables):
         pass
 
     def __init__(self):
+        self.object = Bitmex
         self.name = "Bitmex"
         self.data = dict()
         self.Api_auth = API_auth

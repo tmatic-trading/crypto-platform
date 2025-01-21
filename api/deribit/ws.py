@@ -33,6 +33,7 @@ class Deribit(Variables):
         pass
 
     def __init__(self):
+        self.object = Deribit
         self.name = "Deribit"
         self.api_version = "/api/v2/"
         Setup.variables(self)
