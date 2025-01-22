@@ -61,8 +61,8 @@ class SettingsApp:
         self.market_saved = {}
         self.market_flag = {}
         values = {}
-        for item in Default:
-            values[item.name] = item.value
+        for name, value in Default.__members__.items():
+            values[name] = value.value
         for market in self.market_list:
             self.market_color[market] = self.bg_entry
             self.market_defaults[market] = {}
