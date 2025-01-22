@@ -153,7 +153,11 @@ def setup_market(ws: Markets, reload=False):
         var.queue_order.put({"action": "clear", "market": ws.name})
         ws.logNumFatal = WS.start_ws(ws)
         if ws.logNumFatal:
-            WS.exit(ws)
+            try:
+                WS.exit(ws)
+            except Exception as ex:
+                service.display_exception(ex)
+                service.unexpected_error(ws)
             if ws.logNumFatal != "CANCEL":
                 sleep(2)
         else:
