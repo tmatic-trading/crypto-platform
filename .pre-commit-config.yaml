@@ -1,0 +1,36 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace  # removes extra spaces
+    -   id: check-added-large-files  # checks large files for changes
+    -   id: end-of-file-fixer  # adds a blank line at the end of the file
+    -   id: check-yaml  # checks the syntax of .yaml files
+    -   id: check-json  # checks the syntax of .json files
+    -   id: check-case-conflict  # checks files that may conflict on case-insensitive file systems
+    -   id: check-merge-conflict  # checks files for conflicting merge lines
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1 # Use the revision sha / tag you want to point at
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+# Scanner for stylistic errors that violate PEP8 conventions
+-   repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+    -   id: flake8
+        exclude: __init__.py
+        args: [ "--ignore=F821", "--max-line-length=120", "--ignore=W503" ]
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    
+-   repo: https://github.com/psf/black
+    rev: 23.12.0
+    hooks:
+    -   id: black

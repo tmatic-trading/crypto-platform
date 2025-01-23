@@ -8,7 +8,6 @@ old/
 venv/
 .env*
 .~lock*
-.pre-commit-config.yaml
 1.py
 2.py
 3.py
