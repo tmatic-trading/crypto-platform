@@ -107,7 +107,6 @@ class Deribit(Variables):
         pass
 
     def start_ws(self):
-        self.logger.info("Connecting to websocket")
         time_out, slp = 5, 0.1
         websocket.setdefaulttimeout(time_out)
         self.ws = websocket.WebSocketApp(
@@ -682,8 +681,8 @@ class Deribit(Variables):
                 }
             )
         if not warning:
-            var.logger.info(self.name + " - " + message)
+            self.logger.info(self.name + " - " + message)
         elif warning == "warning":
-            var.logger.warning(self.name + " - " + message)
+            self.logger.warning(self.name + " - " + message)
         else:
-            var.logger.error(self.name + " - " + message)
+            self.logger.error(self.name + " - " + message)

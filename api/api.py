@@ -1,6 +1,6 @@
 import threading
 from datetime import datetime, timezone
-from typing import Union
+from typing import Callable, Union
 
 import services as service
 from api.setup import Agents, Markets
@@ -10,7 +10,7 @@ from .variables import Variables
 
 
 class WS(Variables):
-    def start_ws(self: Markets) -> str:
+    def connect_market(self: Markets) -> str:
         """
         Loading instruments, orders, user ID, wallet balance, position
         information and initializing websockets.
@@ -20,67 +20,33 @@ class WS(Variables):
         str
             On success, "" is returned, otherwise an error type or error message.
         """
-
-        """def start_ws_in_thread():
-            try:
-                Markets[self.name].start()
-            except Exception as exception:
-                service.display_exception(exception)"""
-
-        def get_in_thread(method):
+        def get_in_thread(method: Callable):
+            """
+            On success, "" is returned, otherwise an error type.
+            """
             method_name = method.__name__
             try:
                 error = method(self)
                 if error:
                     success[method_name] = error
-                else:
-                    success[method_name] = ""  # success
             except Exception as exception:
                 mes = service.display_exception(exception, display=False)
                 WS._put_message(self, message=mes, warning=True)
-                success[method_name] = "CANCEL"
-
-        def get_instruments(_thread):
-            try:
-                error = WS.get_active_instruments(self)
-                if error:
-                    success[_thread] = error
-                    return
-            except Exception as exception:
-                mes = service.display_exception(exception, display=False)
-                WS._put_message(self, message=mes, warning=True)
-                success[_thread] = "CANCEL"
-
-        def start_ws_in_thread(_thread):
-            try:
-                error = Markets[self.name].start_ws()
-                if error:
-                    success[_thread] = error
-            except Exception as exception:
-                mes = service.display_exception(exception, display=False)
-                WS._put_message(self, message=mes, warning=True)
-                success[_thread] = "CANCEL"
-
-        def setup_streams(_thread):
-            try:
-                error = Markets[self.name].setup_streams()
-                if not error:
-                    success[_thread] = error
-            except Exception as exception:
-                mes = service.display_exception(exception, display=False)
-                WS._put_message(self, message=mes, warning=True)
-                success[_thread] = "CANCEL"
+                self.logNumFatal = "CANCEL"
+                success[method_name] = self.logNumFatal
 
         # It starts here.
 
         threads = []
         success = {}
+
         success["get_active_instruments"] = ""
-        t = threading.Thread(target=get_instruments, args=("get_active_instruments",))
+        t = threading.Thread(target=get_in_thread, args=(WS.get_active_instruments,))
         threads.append(t)
         t.start()
+
         success["start_ws"] = ""
-        t = threading.Thread(target=start_ws_in_thread, args=("start_ws",))
+        t = threading.Thread(target=get_in_thread, args=(WS.start_ws,))
         threads.append(t)
         t.start()
 
@@ -91,60 +57,49 @@ class WS(Variables):
                 self.logger.error(
                     self.name + ": error occurred while loading " + method_name
                 )
-                self.logNumFatal = error
-                return self.logNumFatal
-        try:
-            Agents[self.name].value.activate_funding_thread(self)
-        except Exception as exception:
-            mes = service.display_exception(exception, display=False)
-            message = self.name + " Error calling activate_funding_thread().\n\n" + mes
-            WS._put_message(self, message=message, warning=True)
-            self.logNumFatal = "CANCEL"
-            return self.logNumFatal
-        try:
-            error = WS.open_orders(self)
-            if error:
-                return error
-        except Exception as exception:
-            mes = service.display_exception(exception)
-            WS._put_message(self, message=message, warning=True)
-            self.logNumFatal = "CANCEL"
-            return self.logNumFatal
+                return service.unexpected_error(self)
+
+        success["open_orders"] = ""
+        t = threading.Thread(target=get_in_thread, args=(WS.open_orders,))
+        t.start()
+        t.join()
+        if success["open_orders"]:
+            self.logger.error(
+                self.name + ": error occurred while loading open_orders."
+            )
+            return service.unexpected_error(self)
 
         threads = []
         success = {}
-        try:
-            success["setup_streams"] = "FATAL"
-            t = threading.Thread(target=setup_streams, args=("setup_streams",))
-            threads.append(t)
-            t.start()
-            success["get_user"] = "FATAL"
-            t = threading.Thread(target=get_in_thread, args=(WS.get_user,))
-            threads.append(t)
-            t.start()
-            success["get_wallet_balance"] = "FATAL"
-            t = threading.Thread(target=get_in_thread, args=(WS.get_wallet_balance,))
-            threads.append(t)
-            t.start()
-            success["get_position_info"] = "FATAL"
-            t = threading.Thread(target=get_in_thread, args=(WS.get_position_info,))
-            threads.append(t)
-            t.start()
-            [thread.join() for thread in threads]
-        except Exception as exception:
-            service.display_exception(exception)
-            self.logNumFatal = "CANCEL"
 
-            return self.logNumFatal
+        success["activate_funding_thread"] = ""
+        t = threading.Thread(target=get_in_thread, args=(WS.activate_funding_thread,))
+        t.start()
+        success["setup_streams"] = ""
+        t = threading.Thread(target=get_in_thread, args=(WS.setup_streams,))
+        threads.append(t)
+        t.start()
+        success["get_user"] = ""
+        t = threading.Thread(target=get_in_thread, args=(WS.get_user,))
+        threads.append(t)
+        t.start()
+        success["get_wallet_balance"] = ""
+        t = threading.Thread(target=get_in_thread, args=(WS.get_wallet_balance,))
+        threads.append(t)
+        t.start()
+        success["get_position_info"] = ""
+        t = threading.Thread(target=get_in_thread, args=(WS.get_position_info,))
+        threads.append(t)
+        t.start()
+
+        [thread.join() for thread in threads]
 
         for method_name, error in success.items():
             if error:
                 self.logger.error(
                     self.name + ": error occurred while loading " + method_name
                 )
-                self.logNumFatal = error
-
-                return self.logNumFatal
+                return service.unexpected_error(self)
             
         if self.logNumFatal:
             return self.logNumFatal
@@ -180,6 +135,47 @@ class WS(Variables):
         WS._put_message(self, message="Requesting all active instruments.")
 
         return Agents[self.name].value.get_active_instruments(self)
+    
+    def start_ws(self: Markets) -> str:
+        """
+        Launching a websocket.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as
+            FATAL, CANCEL.
+        """
+        WS._put_message(self, message="Connecting to websocket.")
+
+        return Markets[self.name].start_ws()    
+
+    def setup_streams(self: Markets) -> str:
+        """
+        Initial websocket subscriptions, heartbeat, etc.
+
+        Returns
+        -------
+        str
+            On success, "" is returned, otherwise an error type, such as
+            FATAL, CANCEL.
+        """
+        WS._put_message(self, message="Establishing subscriptions via web sockets.")
+
+        return Markets[self.name].setup_streams()
+    
+    def activate_funding_thread(self: Markets) -> str:
+        """
+        Only for Deribit, which does not provide funding and delivery 
+        information via websocket.
+
+        Returns
+        -------
+        str
+            On success, "" is returned.
+        """
+
+        return Agents[self.name].value.activate_funding_thread(self)
 
     def get_user(self: Markets) -> str:
         """
@@ -503,6 +499,6 @@ class WS(Variables):
                 }
             )
         if warning is None:
-            var.logger.info(self.name + " - " + message)
+            self.logger.info(self.name + " - " + message)
         else:
-            var.logger.error(self.name + " - " + message)
+            self.logger.error(self.name + " - " + message)

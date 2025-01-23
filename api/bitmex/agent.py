@@ -115,7 +115,7 @@ class Agent(Bitmex):
                 message = ErrorMessage.NO_CURRENCY.format(
                     TICKER=values["symbol"], CURRENCY=values["settlCurrency"]
                 )
-                var.logger.warning(message)
+                self.logger.warning(message)
                 var.queue_info.put(
                     {
                         "market": self.name,
@@ -557,4 +557,4 @@ class Agent(Bitmex):
         """
         Not used for Bitmex.
         """
-        pass
+        return ""

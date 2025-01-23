@@ -732,7 +732,7 @@ class Agent(Bybit):
         """
         Not used for Bybit.
         """
-        pass
+        return ""
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

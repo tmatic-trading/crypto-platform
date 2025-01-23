@@ -4,6 +4,7 @@ import queue
 import threading
 import time
 from collections import OrderedDict
+from typing import Callable
 from datetime import datetime, timezone
 
 
@@ -144,7 +145,7 @@ class Variables:
     message_response = ""
     unsubscription = set()
     market_object = dict()
-    display_bottom: callable
+    display_bottom: Callable
     _series = "_series"
     selected_option = dict()
     rollup_symbol = "cancel"

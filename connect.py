@@ -151,7 +151,7 @@ def setup_market(ws: Markets, reload=False):
         ws.logNumFatal = ""
         common.Init.clear_orders_by_market(ws)
         var.queue_order.put({"action": "clear", "market": ws.name})
-        ws.logNumFatal = WS.start_ws(ws)
+        ws.logNumFatal = WS.connect_market(ws)
         if ws.logNumFatal:
             try:
                 WS.exit(ws)

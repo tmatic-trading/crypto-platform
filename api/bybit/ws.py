@@ -104,7 +104,6 @@ class Bybit(Variables):
         """
         Connecting to websocket.
         """
-        self.logger.info("Connecting to websocket")
         self.ws = {
             "spot": WebSocket,
             "inverse": WebSocket,
@@ -811,11 +810,11 @@ class Bybit(Variables):
             }
         )
         if not warning:
-            var.logger.info(self.name + " - " + message)
+            self.logger.info(self.name + " - " + message)
         elif warning == "warning":
-            var.logger.warning(self.name + " - " + message)
+            self.logger.warning(self.name + " - " + message)
         else:
-            var.logger.error(self.name + " - " + message)
+            self.logger.error(self.name + " - " + message)
 
 
 _V5WebSocketManager._handle_incoming_message = Bybit._handle_incoming_message

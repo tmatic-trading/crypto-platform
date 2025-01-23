@@ -939,9 +939,12 @@ class Agent(Deribit):
         """
         Makes the funding_thread active.
         """
+        self.logger.info("Activation of the funding thread.")
         self.funding_thread_active = True
         t = threading.Thread(target=Agent.funding_thread, args=(self,))
         t.start()
+
+        return ""
 
     def funding_thread(self) -> None:
         """

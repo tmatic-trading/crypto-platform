@@ -1,6 +1,6 @@
 import os
 from collections import OrderedDict
-from typing import Union
+from typing import Callable, Union
 
 import services as service
 from api.api import WS
@@ -207,7 +207,7 @@ def _save_results_by_day(bot: BotData):
             f.write(data + "\n")
 
 
-def run(bot: BotData, strategy: callable):
+def run(bot: BotData, strategy: Callable):
     symbols = list(bot.backtest_data.keys())
     size = len(bot.backtest_data[symbols[0]]) - 1
     for bot.iter in range(1, size):

@@ -82,8 +82,6 @@ class Bitmex(Variables):
         }
         if not self.logNumFatal:
             self.__reset()
-            self.logger.info("Connecting to websocket")
-            self.logger.debug("Starting a new thread")
             time_out = 5
             websocket.setdefaulttimeout(time_out)
             self.ws = websocket.WebSocketApp(
@@ -561,8 +559,8 @@ class Bitmex(Variables):
             }
         )
         if not warning:
-            var.logger.info(self.name + " - " + message)
+            self.logger.info(self.name + " - " + message)
         elif warning == "warning":
-            var.logger.warning(self.name + " - " + message)
+            self.logger.warning(self.name + " - " + message)
         else:
-            var.logger.error(self.name + " - " + message)
+            self.logger.error(self.name + " - " + message)

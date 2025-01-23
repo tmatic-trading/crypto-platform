@@ -1,4 +1,5 @@
 import tkinter as tk
+from typing import Callable
 
 from api.setup import Markets
 from common.data import Instrument
@@ -22,7 +23,7 @@ class OptionDesk:
         self.is_on = False
         self.desk.destroy()
 
-    def create(self, instrument: Instrument, update: callable):
+    def create(self, instrument: Instrument, update: Callable):
         self.update = update
         self.market = instrument.market
         self.category = instrument.category
