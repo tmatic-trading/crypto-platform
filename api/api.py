@@ -35,9 +35,10 @@ class WS(Variables):
                     success[method_name] = error
                 else:
                     success[method_name] = ""  # success
-
             except Exception as exception:
-                service.display_exception(exception)
+                mes = service.display_exception(exception, display=False)
+                WS._put_message(self, message=mes, warning=True)
+                success[method_name] = "CANCEL"
 
         def get_instruments(_thread):
             try:
@@ -46,11 +47,9 @@ class WS(Variables):
                     success[_thread] = error
                     return
             except Exception as exception:
-                service.display_exception(exception)
-                message = self.name + " Instruments not loaded."
-                self.logger.error(message)
-                error = service.unexpected_error(self)
-                success[_thread] = error
+                mes = service.display_exception(exception, display=False)
+                WS._put_message(self, message=mes, warning=True)
+                success[_thread] = "CANCEL"
 
         def start_ws_in_thread(_thread):
             try:
@@ -58,13 +57,19 @@ class WS(Variables):
                 if error:
                     success[_thread] = error
             except Exception as exception:
-                service.display_exception(exception)
-                success[_thread] = "FATAL"
+                mes = service.display_exception(exception, display=False)
+                WS._put_message(self, message=mes, warning=True)
+                success[_thread] = "CANCEL"
 
         def setup_streams(_thread):
-            error = Markets[self.name].setup_streams()
-            if not error:
-                success[_thread] = error
+            try:
+                error = Markets[self.name].setup_streams()
+                if not error:
+                    success[_thread] = error
+            except Exception as exception:
+                mes = service.display_exception(exception, display=False)
+                WS._put_message(self, message=mes, warning=True)
+                success[_thread] = "CANCEL"
 
         # It starts here.
 
@@ -86,22 +91,25 @@ class WS(Variables):
                 self.logger.error(
                     self.name + ": error occurred while loading " + method_name
                 )
-                return error
+                self.logNumFatal = error
+                return self.logNumFatal
         try:
             Agents[self.name].value.activate_funding_thread(self)
         except Exception as exception:
-            service.display_exception(exception)
-            message = self.name + " Error calling activate_funding_thread()."
-            self.logger.error(message)
-            return message
+            mes = service.display_exception(exception, display=False)
+            message = self.name + " Error calling activate_funding_thread().\n\n" + mes
+            WS._put_message(self, message=message, warning=True)
+            self.logNumFatal = "CANCEL"
+            return self.logNumFatal
         try:
             error = WS.open_orders(self)
             if error:
                 return error
         except Exception as exception:
-            service.display_exception(exception)
-            self.logger.error(self.name + " Orders not loaded. Reboot.")
-            return service.unexpected_error(self)
+            mes = service.display_exception(exception)
+            WS._put_message(self, message=message, warning=True)
+            self.logNumFatal = "CANCEL"
+            return self.logNumFatal
 
         threads = []
         success = {}
@@ -125,16 +133,22 @@ class WS(Variables):
             [thread.join() for thread in threads]
         except Exception as exception:
             service.display_exception(exception)
-            return "FATAL"
+            self.logNumFatal = "CANCEL"
+
+            return self.logNumFatal
 
         for method_name, error in success.items():
             if error:
                 self.logger.error(
                     self.name + ": error occurred while loading " + method_name
                 )
-                return error
+                self.logNumFatal = error
+
+                return self.logNumFatal
+            
         if self.logNumFatal:
             return self.logNumFatal
+        
         var.queue_info.put(
             {
                 "market": self.name,
@@ -298,7 +312,7 @@ class WS(Variables):
         str
             On success, "" is returned, otherwise an error type.
         """
-        var.logger.info(self.name + " - Requesting open orders.")
+        WS._put_message(self, message="Requesting open orders.")
 
         return Agents[self.name].value.open_orders(self)
 
@@ -327,7 +341,7 @@ class WS(Variables):
             If successful, a response from the exchange server is returned,
             otherwise - the error type (str).
         """
-        var.logger.info(
+        message = (
             self.name
             + " - Sending a new order - "
             + "symbol="
@@ -339,6 +353,9 @@ class WS(Variables):
             + ", qty="
             + str(quantity)
         )
+
+        WS._put_message(self, message=message, info=False)
+
         return Agents[self.name].value.place_limit(
             self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
         )
@@ -374,7 +391,7 @@ class WS(Variables):
             If successful, a response from the exchange server is returned,
             otherwise - the error type (str).
         """
-        var.logger.info(
+        message = (
             self.name
             + " - Replace order - "
             + "symbol="
@@ -388,6 +405,8 @@ class WS(Variables):
             + ", qty="
             + str(leavesQty)
         )
+
+        WS._put_message(self, message=message, info=False)
 
         return Agents[self.name].value.replace_limit(
             self,
@@ -415,7 +434,7 @@ class WS(Variables):
             If successful, a response from the exchange server is returned,
             otherwise - the error type (str).
         """
-        var.logger.info(
+        message = (
             self.name
             + " - Cancel order - "
             + "symbol="
@@ -430,6 +449,8 @@ class WS(Variables):
             + str(order["orderQty"])
         )
 
+        WS._put_message(self, message=message, info=False)
+
         return Agents[self.name].value.remove_order(self, order=order)
 
     def get_wallet_balance(self: Markets) -> str:
@@ -443,7 +464,7 @@ class WS(Variables):
             On success, "" is returned, otherwise an error type, such as
             FATAL, CANCEL.
         """
-        var.logger.info(self.name + " - Requesting account.")
+        WS._put_message(self, message="Requesting account.")
 
         return Agents[self.name].value.get_wallet_balance(self)
 
@@ -468,16 +489,20 @@ class WS(Variables):
 
         return Markets[self.name].ping_pong()
 
-    def _put_message(self: Markets, message: str) -> None:
+    def _put_message(self: Markets, message: str, warning=None, info=True) -> None:
         """
         Places an information message into the queue and the logger.
         """
-        var.queue_info.put(
-            {
-                "market": self.name,
-                "message": message,
-                "time": datetime.now(tz=timezone.utc),
-                "warning": None,
-            }
-        )
-        var.logger.info(self.name + " - " + message)
+        if info:
+            var.queue_info.put(
+                {
+                    "market": self.name,
+                    "message": message,
+                    "time": datetime.now(tz=timezone.utc),
+                    "warning": warning,
+                }
+            )
+        if warning is None:
+            var.logger.info(self.name + " - " + message)
+        else:
+            var.logger.error(self.name + " - " + message)
