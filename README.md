@@ -1,7 +1,7 @@
 ![](https://img.shields.io/badge/Python-3.9+-blue) ![](https://img.shields.io/badge/SQLite-latest-004864)
 
 # Cryptocurrency platform designed for automated trading on the Bitmex, Bybit and Deribit crypto exchanges
-### [Installation](#Installation-on-local-computer) - [Launch](#Launch-the-program) - [Troubleshooting](#Troubleshooting) - [Bot menu](#Bot-menu) - [Add algorithm](#Add-trading-algorithm) - [Contributing](#Contributing-to-Tmatic)
+### [Installation](#Installation-on-local-computer) - [Launch](#Launch-the-program) - [Troubleshooting](#Troubleshooting) - [Bot menu](#Bot-menu) - [Add algorithm](#Add-trading-algorithm) - [Contributing](CONTRIBUTING.md)
 
 ![Image](https://github.com/evgrmn/tmatic/blob/main/scr/tmatic.png)
 
