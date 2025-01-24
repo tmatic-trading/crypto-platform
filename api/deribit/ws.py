@@ -216,6 +216,9 @@ class Deribit(Variables):
         via the Instruments menu, the options series subscribes to all
         available put and call strikes.
         """
+
+        # Orderbook
+
         channels = list()
         for symbol in symbol_list:
             instrument = self.Instrument[symbol]
@@ -379,22 +382,15 @@ class Deribit(Variables):
     def __subscribe_channels(
         self, type: str, channels: list, id: str, callback: Callable
     ) -> None:
-        """
-        Subscription in parts when the number of channels exceeds 250
-        """
-        length, step = len(channels), 250
-        for num in range(0, length, step):
-            part = channels[num : num + step]
-            self.subscriptions.append(part)
-            msg = {
-                "jsonrpc": "2.0",
-                "method": type + "/subscribe",
-                "id": id,
-                "params": {"channels": part},
-            }
-            for channel in part:
-                self.callback_directory[channel] = callback
-            self.ws.send(json.dumps(msg))
+        msg = {
+            "jsonrpc": "2.0",
+            "method": type + "/subscribe",
+            "id": id,
+            "params": {"channels": []},
+        }
+        self.send_in_parts(channels=channels, msg=msg)
+        for channel in channels:
+            self.callback_directory[channel] = callback
 
     def __establish_heartbeat(self) -> None:
         """
@@ -620,12 +616,6 @@ class Deribit(Variables):
         return self._confirm_subscription()
 
     def unsubscribe_symbol(self, symbol: tuple) -> None:
-        msg = {
-            "jsonrpc": "2.0",
-            "id": "subscription",
-            "method": "public/unsubscribe",
-            "params": {"channels": None},
-        }
         channels = list()
         instrument = self.Instrument[symbol]
         ticker = instrument.ticker
@@ -643,13 +633,17 @@ class Deribit(Variables):
                 channels.append(channel)
                 channel = f"ticker.{option}.100ms"
                 channels.append(channel)
-        msg["params"]["channels"] = channels
-        self.subscriptions.append(channels)
         message = Message.WEBSOCKET_UNSUBSCRIBE.format(
             NAME="Orderbook, Ticker", CHANNEL=channels
         )
         self._put_message(message=message)
-        self.ws.send(json.dumps(msg))
+        msg = {
+            "jsonrpc": "2.0",
+            "id": "subscription",
+            "method": "public/unsubscribe",
+            "params": {"channels": []},
+        }
+        self.send_in_parts(channels=channels, msg=msg)
         res = self._confirm_subscription(action="unsubscribe")
         if not res:
             for channel in channels:
@@ -659,6 +653,19 @@ class Deribit(Variables):
                     print("____channel not found", ticker, channel)
 
         return res
+    
+    def send_in_parts(self, channels: list, msg: dict) -> None:
+        """
+        Subscription/unsubscription can be to thousands of channels, and an 
+        error occurs from Deribit 'Request entity too large'. The list of 
+        channels is split into parts of 250.
+        """
+        length, step = len(channels), 250
+        for num in range(0, length, step):
+            part = channels[num : num + step]
+            self.subscriptions.append(part)
+            msg["params"]["channels"] = part
+            self.ws.send(json.dumps(msg))
 
     def transaction(self, **kwargs):
         """
