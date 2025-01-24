@@ -268,15 +268,16 @@ def load_bots() -> None:
         # Results by currency for closed positions
 
         qwr = (
-            "select * from (select SYMBOL, MARKET, CURRENCY, ifnull(sum(SUMREAL), 0) "
+            "select SYMBOL, MARKET, CURRENCY, ifnull(sum(SUMREAL), 0) "
             + "SUMREAL, ifnull(sum(COMMISS), 0) COMMISS, ifnull(sum(case when SIDE = "
             + "'Fund' then 0 else QTY end), 0) POS, ifnull(max(TTIME), "
             + "'1900-01-01 01:01:01.000000') LTIME from "
             + var.database_table
             + " where EMI = '"
             + name
-            + "' group by MARKET, SYMBOL) T where POS = 0 group by MARKET, CURRENCY;"
+            + "' group by MARKET, SYMBOL"
         )
+
         data = service.select_database(qwr)
         bot.bot_pnl = {}
         for value in data:
@@ -285,17 +286,20 @@ def load_bots() -> None:
                 ws = Markets[value["MARKET"]]
                 instrument = ws.Instrument[symbol]
                 precision = instrument.precision
-                bot_pos = round(float(value["POS"]), precision)
+                bot_pos = round(float(value["POS"]), precision)                
                 if bot_pos == 0:
                     if value["MARKET"] not in bot.bot_pnl:
                         bot.bot_pnl[value["MARKET"]] = dict()
-                    bot.bot_pnl[value["MARKET"]][value["CURRENCY"]] = dict()
-                    bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] = value[
+                    if value["CURRENCY"] not in bot.bot_pnl[value["MARKET"]]:
+                        bot.bot_pnl[value["MARKET"]][value["CURRENCY"]] = dict()
+                        bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] = 0
+                        bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["commission"] = 0
+                    bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] += value[
                         "SUMREAL"
                     ]
                     bot.bot_pnl[value["MARKET"]][value["CURRENCY"]][
                         "commission"
-                    ] = value["COMMISS"]
+                    ] += value["COMMISS"]
                     bot.iter = name
             else:
                 message = ErrorMessage.BOT_PNL_CALCULATIONS.format(
