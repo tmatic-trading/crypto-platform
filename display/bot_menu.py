@@ -393,7 +393,11 @@ class SettingsApp:
 
         def change_state() -> None:
             if state.get() != bot.state:
-                err = update_bot_state(new_state=state.get(), bot=bot)
+                if prev_state == "Disconnected":
+                    update = True
+                else:
+                    update = False
+                err = update_bot_state(new_state=state.get(), bot=bot, update=update)
                 if err is None:
                     text_label["text"] = format_text()
                     res_label["text"] = f"State changed to `{bot.state}`."
@@ -403,57 +407,54 @@ class SettingsApp:
             service.wrap(self.brief_frame, padx=self.padx)
 
         bot = Bots[bot_name]
+        prev_state = bot.state
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         disp.bot_menu_option = "activate"
-        if not bot.error_message or (bot.error_message and bot.state == "Active"):
-            TEXT = (
-                "The current state of the bot is `{STATE}`. "
-                + "You can change it using the menu list below:"
-            ).format(STATE=bot.state)
-            text_label = tk.Label(
-                self.brief_frame,
-                text=format_text(),
-                bg=disp.bg_color,
-                justify=tk.LEFT,
-            )
-            text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-            state = ttk.Combobox(self.brief_frame, width=12, state="readonly")
+        text_label = tk.Label(
+            self.brief_frame,
+            text=format_text(),
+            bg=disp.bg_color,
+            justify=tk.LEFT,
+        )
+        text_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+        state = ttk.Combobox(self.brief_frame, width=12, state="readonly")
+        if not bot.error_message:
             state["values"] = ("Active", "Suspended", "Disconnected")
-            state.set("Select")
-            state.pack(anchor="nw", padx=50, pady=0)
-            state.bind("<<ComboboxSelected>>", display_tip)
-            self.button = tk.Button(
-                self.brief_frame,
-                activebackground=disp.bg_active,
-                text="Confirm",
-                command=change_state,
-            )
-            self.button.pack(anchor="nw", padx=50, pady=10)
-            tips_select = {
-                "Active": Tips.ACTIVE_STATE,
-                "Suspended": Tips.SUSPENDED_STATE,
-                "Disconnected": Tips.DISCONNECTED_STATE,
-            }
-            res_label = tk.Label(
-                self.brief_frame,
-                text="",
-                bg=disp.bg_color,
-                fg=disp.fg_color,
-                justify=tk.LEFT,
-            )
-            res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
-            if bot.error_message:
-                tk.Label(
-                    self.brief_frame,
-                    text=bot.error_message["message"],
-                    bg=disp.bg_color,
-                    fg=disp.gray_color,
-                    justify=tk.LEFT,
-                ).pack(anchor="nw", padx=self.padx, pady=self.pady)
-            service.wrap(self.brief_frame, padx=self.padx)
         else:
-            self.display_error_message(bot_name=bot_name)
+            state["values"] = ("Suspended", "Disconnected")
+        state.set("Select")
+        state.pack(anchor="nw", padx=50, pady=0)
+        state.bind("<<ComboboxSelected>>", display_tip)
+        self.button = tk.Button(
+            self.brief_frame,
+            activebackground=disp.bg_active,
+            text="Confirm",
+            command=change_state,
+        )
+        self.button.pack(anchor="nw", padx=50, pady=10)
+        tips_select = {
+            "Active": Tips.ACTIVE_STATE,
+            "Suspended": Tips.SUSPENDED_STATE,
+            "Disconnected": Tips.DISCONNECTED_STATE,
+        }
+        res_label = tk.Label(
+            self.brief_frame,
+            text="",
+            bg=disp.bg_color,
+            fg=disp.fg_color,
+            justify=tk.LEFT,
+        )
+        res_label.pack(anchor="nw", padx=self.padx, pady=self.pady)
+        if bot.error_message:
+            tk.Label(
+                self.brief_frame,
+                text=bot.error_message["message"],
+                bg=disp.bg_color,
+                fg=disp.gray_color,
+                justify=tk.LEFT,
+            ).pack(anchor="nw", padx=self.padx, pady=self.pady)
+        service.wrap(self.brief_frame, padx=self.padx)
 
     def parameters(self, bot_name: str) -> None:
         def on_button(value: int) -> None:
@@ -1009,7 +1010,7 @@ class SettingsApp:
                     bot.error_message = {}
 
 
-def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
+def update_bot_state(new_state: str, bot: BotData, update=False) -> Union[str, None]:
     """
     Updates the database entry when the bot's state changes.
 
@@ -1030,9 +1031,14 @@ def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
     )
     if err is None:
         bot.state = new_state
-        import_bot_module(bot.name, update=False)
+        import_bot_module(bot.name, update=update)
         update_bot_info(bot_name=bot.name)
+    if update:
         if Bots[disp.bot_name].state != "Disconnected":
+            if update:
+                service.call_bot_function(
+                    function=robo.setup_bot[bot.name], bot_name=bot.name
+                )
             service.call_bot_function(
                 function=robo.activate_bot[bot.name], bot_name=bot.name
             )

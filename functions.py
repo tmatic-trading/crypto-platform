@@ -2260,7 +2260,7 @@ def handler_instrument(event) -> None:
                     else:  # Opens the options chain only on the second click
                         if var.rollup_symbol == "cancel":
                             var.rollup_symbol = ""
-                        elif create == True:
+                        elif create is True:
                             if symbol in var.selected_option:
                                 symb = set_option(
                                     ws=ws,

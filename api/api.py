@@ -20,6 +20,7 @@ class WS(Variables):
         str
             On success, "" is returned, otherwise an error type or error message.
         """
+
         def get_in_thread(method: Callable):
             """
             On success, "" is returned, otherwise an error type.
@@ -64,9 +65,7 @@ class WS(Variables):
         t.start()
         t.join()
         if success["open_orders"]:
-            self.logger.error(
-                self.name + ": error occurred while loading open_orders."
-            )
+            self.logger.error(self.name + ": error occurred while loading open_orders.")
             return service.unexpected_error(self)
 
         threads = []
@@ -100,10 +99,10 @@ class WS(Variables):
                     self.name + ": error occurred while loading " + method_name
                 )
                 return service.unexpected_error(self)
-            
+
         if self.logNumFatal:
             return self.logNumFatal
-        
+
         var.queue_info.put(
             {
                 "market": self.name,
@@ -135,7 +134,7 @@ class WS(Variables):
         WS._put_message(self, message="Requesting all active instruments.")
 
         return Agents[self.name].value.get_active_instruments(self)
-    
+
     def start_ws(self: Markets) -> str:
         """
         Launching a websocket.
@@ -148,7 +147,7 @@ class WS(Variables):
         """
         WS._put_message(self, message="Connecting to websocket.")
 
-        return Markets[self.name].start_ws()    
+        return Markets[self.name].start_ws()
 
     def setup_streams(self: Markets) -> str:
         """
@@ -163,10 +162,10 @@ class WS(Variables):
         WS._put_message(self, message="Establishing subscriptions via web sockets.")
 
         return Markets[self.name].setup_streams()
-    
+
     def activate_funding_thread(self: Markets) -> str:
         """
-        Only for Deribit, which does not provide funding and delivery 
+        Only for Deribit, which does not provide funding and delivery
         information via websocket.
 
         Returns

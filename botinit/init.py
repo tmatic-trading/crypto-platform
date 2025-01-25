@@ -286,14 +286,16 @@ def load_bots() -> None:
                 ws = Markets[value["MARKET"]]
                 instrument = ws.Instrument[symbol]
                 precision = instrument.precision
-                bot_pos = round(float(value["POS"]), precision)                
+                bot_pos = round(float(value["POS"]), precision)
                 if bot_pos == 0:
                     if value["MARKET"] not in bot.bot_pnl:
                         bot.bot_pnl[value["MARKET"]] = dict()
                     if value["CURRENCY"] not in bot.bot_pnl[value["MARKET"]]:
                         bot.bot_pnl[value["MARKET"]][value["CURRENCY"]] = dict()
                         bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] = 0
-                        bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["commission"] = 0
+                        bot.bot_pnl[value["MARKET"]][value["CURRENCY"]][
+                            "commission"
+                        ] = 0
                     bot.bot_pnl[value["MARKET"]][value["CURRENCY"]]["pnl"] += value[
                         "SUMREAL"
                     ]

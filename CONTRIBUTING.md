@@ -141,19 +141,19 @@ Let's say you are going to connect to the `Binance`. Make sure that the Binance 
             self.name = "Binance"
             Setup.variables(self)
             self.session = requests.Session() # Https requests.
-            self.timefrs: OrderedDict # Define the default time frames 
+            self.timefrs: OrderedDict # Define the default time frames
             # set by the exchange.
             self.ws = websocket # Websocket object.
             self.logger = var.logger # Writes to logfile.log.
             self.klines = dict() # Kline (candlestick) data.
             self.setup_orders = list() # Open orders when loading.
-            self.account_disp = "" # Exchange name and account number in 
+            self.account_disp = "" # Exchange name and account number in
             # the Instrument menu.
             self.pinging: str # Used to monitor the connection using ping.
-            self.ticker = dict() # Brings the classification of tickers 
-            # to a single standard, for example ETH_USDT (Deribit API) -> 
+            self.ticker = dict() # Brings the classification of tickers
+            # to a single standard, for example ETH_USDT (Deribit API) ->
             # ETH/USDT (Tmatic standard).
-            self.instrument_index = OrderedDict() # Used in the Instrument 
+            self.instrument_index = OrderedDict() # Used in the Instrument
             # menu to classify instruments into categories and currencies.
             self.api_auth = API_auth # Generates api key headers and signature.
             self.get_error = ErrorStatus # Error codes.
@@ -211,7 +211,7 @@ Let's say you are going to connect to the `Binance`. Make sure that the Binance 
             api_key: str, api_secret: str, method: str, url: str, path: str, data=None
         ) -> dict:
             """
-            Called when forming a request - generates api key headers. 
+            Called when forming a request - generates api key headers.
             Details in the exchange documentation.
             """
             headers = dict()
@@ -282,7 +282,7 @@ Let's say you are going to connect to the `Binance`. Make sure that the Binance 
                     self.dictionary[item] = Fake()
 
             return self.dictionary[item]
-    ``` 
+    ```
 
     - Class `Markets`:
 
@@ -291,7 +291,7 @@ Let's say you are going to connect to the `Binance`. Make sure that the Binance 
         Bitmex,
         Bybit,
         Deribit,
-        Binance, 
+        Binance,
         metaclass=MetaMarket,
     ):
         pass

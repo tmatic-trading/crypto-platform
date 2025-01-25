@@ -653,11 +653,11 @@ class Deribit(Variables):
                     print("____channel not found", ticker, channel)
 
         return res
-    
+
     def send_in_parts(self, channels: list, msg: dict) -> None:
         """
-        Subscription/unsubscription can be to thousands of channels, and an 
-        error occurs from Deribit 'Request entity too large'. The list of 
+        Subscription/unsubscription can be to thousands of channels, and an
+        error occurs from Deribit 'Request entity too large'. The list of
         channels is split into parts of 250.
         """
         length, step = len(channels), 250

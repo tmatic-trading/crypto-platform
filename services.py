@@ -1,6 +1,5 @@
 import os
 import platform
-import threading
 import time
 import tkinter as tk
 import traceback
@@ -10,7 +9,6 @@ from typing import Callable, Union
 
 from dotenv import dotenv_values, set_key
 
-from botinit.variables import Variables as robo
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message

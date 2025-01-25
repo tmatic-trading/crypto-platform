@@ -4,8 +4,8 @@ import queue
 import threading
 import time
 from collections import OrderedDict
-from typing import Callable
 from datetime import datetime, timezone
+from typing import Callable
 
 
 class ListenLogger(logging.Filter):
