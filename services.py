@@ -1066,3 +1066,4 @@ def humanFormat(instrument: Instrument, volNow: int) -> str:
         volNow = volume(instrument, qty=volNow)
 
     return volNow
+
