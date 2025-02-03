@@ -558,3 +558,12 @@ class Agent(Bitmex):
         Not used for Bitmex.
         """
         return ""
+
+    def cancel_all_by_instrument(self, symbol: tuple):
+        instrument = self.Instrument[symbol]
+        path = Listing.CANCEL_ALL_BY_INSTRUMENT.format(SYMBOL=instrument.ticker)
+        res = Send.request(self, path=path, verb="DELETE")
+        if self.logNumFatal == "":
+            return res
+        else:
+            return self.logNumFatal

@@ -53,7 +53,7 @@ class Error(Variables):
             RETRY   Retry the request.
         """
 
-        canceled = f" - {self.name} loading cancelled."
+        # canceled = f" - {self.name} loading cancelled."
         error_name = exception.__class__.__name__
         prefix = f"{self.name} - {error_name} - "
         if error_name in ["ConnectionError", "ReadTimeout"]:
@@ -138,7 +138,7 @@ class Error(Variables):
             queue_message["warning"] = "warning"
             var.queue_info.put(queue_message)
         elif status == "CANCEL":
-            logger_message += canceled
+            # logger_message += canceled
             self.logger.error(logger_message)
             var.queue_info.put(queue_message)
         if self.logNumFatal == "CANCEL":  # Since the loading process is

@@ -17,6 +17,7 @@ class Listing(str, Enum):
     ORDER_ACTIONS = "/order"
     GET_POSITION_INFO = "/position"
     OPEN_ORDERS = "/order?filter=%7B%22open%22%3A%20true%7D&reverse=false"
+    CANCEL_ALL_BY_INSTRUMENT = "/order/all?symbol={SYMBOL}"
 
     def __str__(self) -> str:
         return self.value
