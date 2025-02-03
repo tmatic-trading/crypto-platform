@@ -463,7 +463,7 @@ class WS(Variables):
 
         return Agents[self.name].value.get_wallet_balance(self)
 
-    def get_position_info(self: Markets) -> dict:
+    def get_position_info(self: Markets) -> str:
         """
         Get position information.
 
@@ -476,6 +476,33 @@ class WS(Variables):
         WS._put_message(self, message="Requesting positions.")
 
         return Agents[self.name].value.get_position_info(self)
+    
+    def cancel_all_by_instrument(self: Markets, symbol: tuple):
+        """
+        Cancels all existing orders for the instrument.
+
+        Parameters
+        ----------
+        self: Markets
+            Markets class instances such as Bitmex, Bybit, Deribit.
+        symbol: tuple
+            Order parameters.
+
+        Returns
+        -------
+        str
+            On success, an exchange response is returned, otherwise an error 
+            type, such as FATAL, CANCEL.
+        """
+        message = (
+            self.name
+            + " - Cancel all orders by instrument - "
+            + "symbol="
+            + symbol[0]
+        )
+        WS._put_message(self, message=message, info=False)
+
+        return Agents[self.name].value.cancel_all_by_instrument(self, symbol=symbol)
 
     def ping_pong(self: Markets) -> None:
         """

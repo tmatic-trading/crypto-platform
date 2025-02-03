@@ -13,6 +13,7 @@ class Listing(str, Enum):
     PLACE_LIMIT = "private/{SIDE}"
     REPLACE_LIMIT = "private/edit"
     REMOVE_ORDER = "private/cancel"
+    CANCEL_ALL_BY_INSTRUMENT = "private/cancel_all_by_instrument"
 
     def __str__(self) -> str:
         return self.value

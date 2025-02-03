@@ -276,7 +276,7 @@ class Deribit(Variables):
             message = json.loads(message)
             if "result" in message:
                 id = message["id"]
-                if "access_token" in message["result"]:
+                if id == "get_token":
                     self.access_token = message["result"]["access_token"]
                     self.refresh_token = message["result"]["refresh_token"]
                 elif id == "subscription":
@@ -348,7 +348,7 @@ class Deribit(Variables):
         )
         msg = {
             "jsonrpc": "2.0",
-            "id": 9929,
+            "id": "get_token",
             "method": "public/auth",
             "params": {
                 "grant_type": "client_signature",

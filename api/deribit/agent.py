@@ -769,6 +769,16 @@ class Agent(Deribit):
         params = {"order_id": order["orderID"]}
 
         return Agent.ws_request(self, path=path, id=id, params=params)
+    
+    def cancel_all_by_instrument(self, symbol: tuple):
+        path = Listing.CANCEL_ALL_BY_INSTRUMENT
+        self.sequence += 1
+        instrument = self.Instrument[symbol]
+        ticker = instrument.ticker
+        id = f"{path}_{ticker}_{self.sequence}"
+        params = {"instrument_name": ticker}
+
+        return Agent.ws_request(self, path=path, id=id, params=params)
 
     def ws_request(
         self, path: str, id: str, params: dict, currency="BTC"
@@ -864,8 +874,8 @@ class Agent(Deribit):
                 )
             while time.time() < self.response[id]["request_time"]:
                 res = self.response[id]["result"]
-                if res:
-                    if "error" in res:
+                if res is not None:
+                    if isinstance(res, dict) and "error" in res:
                         error = Error.handler(
                             self,
                             exception=DeribitWsRequestError(response=res),
