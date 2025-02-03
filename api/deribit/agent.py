@@ -72,8 +72,7 @@ class Agent(Deribit):
         params = {"instrument_name": ticker}
         self.sequence += 1
         id = f"{path}_{ticker}_{self.sequence}"
-        text = " - symbol - " + ticker
-        res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
+        res = Agent.ws_request(self, path=path, id=id, params=params)
         if isinstance(res, dict):
             Agent.fill_instrument(self, values=res)
 
@@ -390,14 +389,6 @@ class Agent(Deribit):
                     params["sorting"] = "desc"
                 if continuation:
                     params["continuation"] = continuation
-                text = (
-                    " - "
-                    + currency
-                    + " - period - "
-                    + str(service.time_converter(start / 1000))
-                    + " - "
-                    + str(service.time_converter(end / 1000))
-                )
                 self.logger.info(
                     "Requesting trading history - currency - "
                     + currency
@@ -405,7 +396,7 @@ class Agent(Deribit):
                     + str(service.time_converter(start / 1000))
                 )
                 data = Agent.ws_request(
-                    self, path=path, id=id, params=params, text=text, currency=currency
+                    self, path=path, id=id, params=params, currency=currency
                 )
                 if data:
                     res = data[data_type]
@@ -687,8 +678,7 @@ class Agent(Deribit):
             "end_timestamp": end_timestamp,
             "resolution": str(resolution),
         }
-        text = " - symbol - " + str(symbol) + " - interval - " + str(timeframe)
-        res = Agent.ws_request(self, path=path, id=id, params=params, text=text)
+        res = Agent.ws_request(self, path=path, id=id, params=params)
         if isinstance(res, dict):
             klines = []
             for step in range(len(res["ticks"])):
@@ -727,14 +717,6 @@ class Agent(Deribit):
         side = "buy" if quantity > 0 else "sell"
         path = Listing.PLACE_LIMIT.format(SIDE=side)
         id = f"{path}_{clOrdID}"
-        text = (
-            " - symbol - "
-            + str(symbol)
-            + " - price - "
-            + str(price)
-            + " - quantity - "
-            + str(abs(quantity))
-        )
         params = {
             "instrument_name": self.Instrument[symbol].ticker,
             "price": price,
@@ -743,7 +725,7 @@ class Agent(Deribit):
             "label": clOrdID,
         }
 
-        return Agent.ws_request(self, path=path, id=id, params=params, text=text)
+        return Agent.ws_request(self, path=path, id=id, params=params)
 
     def replace_limit(
         self,
@@ -755,14 +737,6 @@ class Agent(Deribit):
     ) -> Union[dict, str]:
         path = Listing.REPLACE_LIMIT
         id = f"{path}_{orderID}"
-        text = (
-            " - symbol - "
-            + str(symbol[0])
-            + " - price - "
-            + str(price)
-            + " - quantity - "
-            + str(abs(leavesQty))
-        )
         """
         '
         '
@@ -787,18 +761,17 @@ class Agent(Deribit):
         '
         """
 
-        return Agent.ws_request(self, path=path, id=id, params=params, text=text)
+        return Agent.ws_request(self, path=path, id=id, params=params)
 
     def remove_order(self, order: dict) -> Union[dict, str]:
         path = Listing.REMOVE_ORDER
         id = f"{path}_{order['orderID']}"
-        text = " - symbol - " + str(order["symbol"][0])
         params = {"order_id": order["orderID"]}
 
-        return Agent.ws_request(self, path=path, id=id, params=params, text=text)
+        return Agent.ws_request(self, path=path, id=id, params=params)
 
     def ws_request(
-        self, path: str, id: str, params: dict, text: str, currency="BTC"
+        self, path: str, id: str, params: dict, currency="BTC"
     ) -> Union[str, list, dict]:
         """
         Requests data over websocket connection. Request limits are taken
@@ -813,8 +786,6 @@ class Agent(Deribit):
             Response key.
         params: dict
             Request parameters.
-        text: str
-            Aadditional info saved to the log file.
         currency: str
             By default, limits apply globally for all currencies, but can be
             enabled for specific customers upon request.
