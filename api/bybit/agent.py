@@ -609,10 +609,10 @@ class Agent(Bybit):
                         if values["side"] == "Sell":
                             instrument.currentQty = -instrument.currentQty
                     instrument.avgEntryPrice = service.set_number(
-                        instrument=instrument, number=float(values["avgPrice"])
+                        instrument=instrument, number=values["avgPrice"]
                     )
                     instrument.unrealisedPnl = service.set_number(
-                        instrument=instrument, number=float(values["unrealisedPnl"])
+                        instrument=instrument, number=values["unrealisedPnl"]
                     )
                     instrument.marginCallPrice = values["liqPrice"]
                     if not instrument.marginCallPrice:
@@ -733,6 +733,20 @@ class Agent(Bybit):
         Not used for Bybit.
         """
         return ""
+
+    def cancel_all_by_instrument(self, symbol: tuple):
+        instrument = self.Instrument[symbol]
+        try:
+            res = self.session.cancel_all_orders(
+                category=instrument.category, symbol=instrument.ticker
+            )
+        except Exception as exception:
+            error = Unify.error_handler(
+                self, exception=exception, verb="POST", path="cancel_all_orders"
+            )
+            return error
+
+        return res
 
 
 def find_value_by_key(data: dict, key: str) -> Union[str, None]:

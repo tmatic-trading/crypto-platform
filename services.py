@@ -1036,10 +1036,10 @@ def symbols_to_string(values):
 
 
 def set_number(instrument: Instrument, number: float) -> Union[float, str]:
-    if "spot" in instrument.category or number == 0:
+    if "spot" in instrument.category or number in [0, ""]:
         return var.DASH
 
-    return number
+    return float(number)
 
 
 def volume(instrument: Instrument, qty: Union[int, float, str]) -> str:
@@ -1066,4 +1066,3 @@ def humanFormat(instrument: Instrument, volNow: int) -> str:
         volNow = volume(instrument, qty=volNow)
 
     return volNow
-

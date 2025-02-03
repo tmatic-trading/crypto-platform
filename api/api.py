@@ -476,7 +476,7 @@ class WS(Variables):
         WS._put_message(self, message="Requesting positions.")
 
         return Agents[self.name].value.get_position_info(self)
-    
+
     def cancel_all_by_instrument(self: Markets, symbol: tuple):
         """
         Cancels all existing orders for the instrument.
@@ -491,14 +491,11 @@ class WS(Variables):
         Returns
         -------
         str
-            On success, an exchange response is returned, otherwise an error 
+            On success, an exchange response is returned, otherwise an error
             type, such as FATAL, CANCEL.
         """
         message = (
-            self.name
-            + " - Cancel all orders by instrument - "
-            + "symbol="
-            + symbol[0]
+            self.name + " - Cancel all orders by instrument - " + "symbol=" + symbol[0]
         )
         WS._put_message(self, message=message, info=False)
 

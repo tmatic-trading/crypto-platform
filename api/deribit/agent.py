@@ -769,7 +769,7 @@ class Agent(Deribit):
         params = {"order_id": order["orderID"]}
 
         return Agent.ws_request(self, path=path, id=id, params=params)
-    
+
     def cancel_all_by_instrument(self, symbol: tuple):
         path = Listing.CANCEL_ALL_BY_INSTRUMENT
         self.sequence += 1

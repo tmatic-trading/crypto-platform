@@ -272,14 +272,14 @@ class Bybit(Variables):
             else:
                 instrument.currentQty = float(value["size"])
             instrument.avgEntryPrice = service.set_number(
-                instrument=instrument, number=float(value["entryPrice"])
+                instrument=instrument, number=value["entryPrice"]
             )
             if value["liqPrice"] == "":
                 instrument.marginCallPrice = var.DASH
             else:
                 instrument.marginCallPrice = value["liqPrice"]
             instrument.unrealisedPnl = service.set_number(
-                instrument=instrument, number=float(value["unrealisedPnl"])
+                instrument=instrument, number=value["unrealisedPnl"]
             )
 
     def __handle_order(self, values):
