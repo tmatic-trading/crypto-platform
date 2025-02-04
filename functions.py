@@ -1951,7 +1951,7 @@ def handler_order(event) -> None:
             RadioButtonFrame(
                 frame_dn,
                 row=2,
-                name="Cancel all orders for " + order["symbol"][1],
+                name="Cancel all orders for " + order["symbol"][0],
                 variable=variable,
                 val="Cancel all",
             )
