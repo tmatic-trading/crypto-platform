@@ -360,9 +360,6 @@ class Tool(Instrument):
                 price=price, qty=qty, side="Buy", move=move, bot=bot, cancel=cancel
             )
 
-    def EMA(self, period: int) -> float:
-        pass
-
     def add_kline(self, timefr: str = "") -> Callable:
         """
         Adds kline (candlestick) data to the instrument for the time interval

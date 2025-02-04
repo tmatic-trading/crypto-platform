@@ -24,7 +24,12 @@ from display.messages import ErrorMessage, Message
 from display.option_desk import options_desk
 from display.variables import AutoScrollbar
 from display.variables import OrderForm as form
-from display.variables import SubTreeviewTable, TreeTable, TreeviewTable
+from display.variables import (
+    RadioButtonFrame,
+    SubTreeviewTable,
+    TreeTable,
+    TreeviewTable,
+)
 from display.variables import Variables as disp
 
 
@@ -1803,7 +1808,7 @@ def handler_order(event) -> None:
                 The order no longer exists.
                 """
 
-        def delete(order: dict, clOrdID: str) -> None:
+        def cancel(order: dict, clOrdID: str) -> None:
             try:
                 var.orders[emi][clOrdID]
             except KeyError:
@@ -1868,6 +1873,16 @@ def handler_order(event) -> None:
                 )
             on_closing()
 
+        def select(order: dict, clOrdID: str) -> None:
+            selection = variable.get()
+            if selection == "Move":
+                replace(clOrdID=clOrdID)
+            elif selection == "Cancel":
+                cancel(order=order, clOrdID=clOrdID)
+            elif selection == "Cancel all":
+                WS.cancel_all_by_instrument(ws, symbol=order["symbol"])
+                on_closing()
+
         if disp.order_window_trigger == "off":
             order = var.orders[emi][clOrdID]
             disp.order_window_trigger = "on"
@@ -1879,7 +1894,7 @@ def handler_order(event) -> None:
             order_window.protocol("WM_DELETE_WINDOW", on_closing)
             order_window.attributes("-topmost", 1)
             frame_up = tk.Frame(order_window)
-            frame_dn = tk.Frame(order_window)
+            frame_dn = tk.Frame(order_window, padx=12, pady=12)
             label1 = tk.Label(frame_up, justify="left")
             order_price = Function.format_price(
                 ws,
@@ -1888,45 +1903,59 @@ def handler_order(event) -> None:
             )
             label1["text"] = (
                 "market\t"
-                + var.orders[emi][clOrdID]["symbol"][1]
+                + order["symbol"][1]
                 + "\nsymbol\t"
-                + var.orders[emi][clOrdID]["symbol"][0]
+                + order["symbol"][0]
                 + "\nside\t"
-                + var.orders[emi][clOrdID]["side"]
+                + order["side"]
                 + "\nclOrdID\t"
                 + clOrdID
                 + "\norderID\t"
-                + var.orders[emi][clOrdID]["orderID"]
+                + order["orderID"]
                 + "\nprice\t"
                 + order_price
                 + "\nquantity\t"
                 + service.volume(
-                    ws.Instrument[var.orders[emi][clOrdID]["symbol"]],
-                    qty=var.orders[emi][clOrdID]["leavesQty"],
+                    ws.Instrument[order["symbol"]],
+                    qty=order["leavesQty"],
                 )
             )
-            label_price = tk.Label(frame_dn)
-            label_price["text"] = "Price "
             label1.pack(side="left")
             button = tk.Button(
                 frame_dn,
-                text="Delete order",
-                command=lambda id=clOrdID: delete(clOrdID=id, order=order),
+                text="Confirm",
+                command=lambda: select(clOrdID=clOrdID, order=order),
             )
+            button.grid(row=3, column=0, columnspan=2)
             price_replace = tk.StringVar(frame_dn, order_price)
-            entry_price = tk.Entry(
-                frame_dn, width=10, bg=disp.bg_color, textvariable=price_replace
+            frame_up.pack()
+            frame_dn.pack()
+            variable = tk.StringVar()
+            RadioButtonFrame(
+                frame_dn,
+                row=0,
+                name="Move order to new price",
+                variable=variable,
+                val="Move",
+                entry=True,
+                invoke=True,
+                textvariable=price_replace,
             )
-            button_replace = tk.Button(
-                frame_dn, text="Replace", command=lambda id=clOrdID: replace(id)
+            RadioButtonFrame(
+                frame_dn,
+                row=1,
+                name="Cancel order",
+                variable=variable,
+                val="Cancel",
             )
-            button.pack(side="right")
-            label_price.pack(side="left")
-            entry_price.pack(side="left")
-            button_replace.pack(side="left")
-            frame_up.pack(side="top", fill="x")
-            frame_dn.pack(side="top", fill="x")
-            change_color(color=disp.title_color, container=order_window)
+            RadioButtonFrame(
+                frame_dn,
+                row=2,
+                name="Cancel all orders for " + order["symbol"][1],
+                variable=variable,
+                val="Cancel all",
+            )
+            # change_color(color=disp.title_color, container=order_window)
 
 
 def first_price(prices: list) -> float:

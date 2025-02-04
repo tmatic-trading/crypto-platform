@@ -1808,8 +1808,6 @@ class OrderForm:
     buy_limit.grid(row=0, column=0, sticky="NEWS")
     sell_limit.grid(row=0, column=1, sticky="NEWS")
 
-    # ttk.Separator(Variables.frame_order_form, orient="horizontal").pack(fill="x")
-
     # Instrument parameters
 
     parameters = tk.Frame(Variables.frame_order_form, bg=Variables.book_color)
@@ -1841,3 +1839,34 @@ class OrderForm:
     cache["vega"] = var.DASH
     cache["theta"] = var.DASH
     cache["rho"] = var.DASH
+
+
+class RadioButtonFrame:
+    def __init__(
+        self,
+        frame,
+        row,
+        name,
+        variable,
+        val,
+        entry=False,
+        invoke=False,
+        textvariable="",
+    ):
+        self.sub = tk.Frame(frame)
+        self.sub.grid(row=row, column=0, sticky="NEWS")
+        self.radiobutton = tk.Radiobutton(
+            self.sub, text=name, variable=variable, value=val
+        )
+        if entry:
+            self.entry = tk.Entry(
+                self.sub, width=15, bg=Variables.bg_color, textvariable=textvariable
+            )
+            self.radiobutton.grid(row=0, column=0, sticky="W")
+            self.entry.grid(row=0, column=1, sticky="W")
+        else:
+            self.radiobutton.grid(row=row, column=0, sticky="W", columnspan=2)
+        if invoke:
+            self.radiobutton.invoke()
+        self.sub.grid_columnconfigure(0, weight=1)
+        self.sub.grid_columnconfigure(1, weight=1)
