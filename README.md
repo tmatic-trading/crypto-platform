@@ -573,7 +573,7 @@ A value of -1 returns data for the most recent period, -2 for the period before 
 
 ### Buying and Selling instructions
 
-Timatic has only one order type - limit. If a buy order is placed above the best ask price, the trade will be executed for this ask price. The same applies to sell orders.
+Available order types: `Market`, `Limit`. If a limit buy order is placed above the best ask price, the trade will be executed for this ask price. The same applies to sell orders.
 
 Buy and sell orders are methods that can be called for any instrument from such classes as Bitmex or Bybit of the tools module. For more details, see ```Selecting an instrument``` above.
 
@@ -592,6 +592,8 @@ or
 Bitmex["XBTUSDT"].buy(bot=bot)
 ```
 
+Parameters of the sell() method:
+
 ```Python
 """
 Parameters
@@ -599,16 +601,21 @@ Parameters
 bot: Bot
     An instance of a bot in the Bot class.
 qty: float
-    Order quantity. If qty is omitted, then: qty is taken as minOrderQty.
+    Optional. Order quantity. If qty is omitted, then: qty is taken as 
+    minOrderQty.
 price: float
-    Order price. If price is omitted, then price is taken as the current
-    first offer in the order book.
+    Optional. Order price. If price is omitted for a limit order, the price 
+    is taken as the current first offer in the order book. For a market 
+    order, this parameter is ignored.
 move: bool
-    Checks for open sell orders for the current instrument for this bot and
-    if there are any, takes the last order and moves it to the new price. If
-    not, places a new order.
+    Optional. Checks for open sell orders for the current instrument for 
+    this bot and if there are any, takes the last order and moves it to the 
+    new price. If not, places a new order. By default False.
 cancel: bool
-    If True, cancels all buy orders for the current instrument for this bot.
+    Optional. If True, cancels all buy orders for the current instrument for 
+    this bot. By default False.
+ordType: str
+    Optional. Order type. Valid options: Market, Limit. By default Limit.
 
 Returns
 -------

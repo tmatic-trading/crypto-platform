@@ -10,7 +10,7 @@ class Listing(str, Enum):
     TRADES_LAST_5_DAYS = "private/get_user_trades_by_currency_and_time"
     GET_INSTRUMENT_DATA = "public/get_instrument"
     TRADE_BUCKETED = "public/get_tradingview_chart_data"
-    PLACE_LIMIT = "private/{SIDE}"
+    PLACE_ORDER = "private/{SIDE}"
     REPLACE_LIMIT = "private/edit"
     REMOVE_ORDER = "private/cancel"
     CANCEL_ALL_BY_INSTRUMENT = "private/cancel_all_by_instrument"

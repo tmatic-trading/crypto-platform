@@ -703,11 +703,11 @@ class Agent(Deribit):
             )
             return service.unexpected_error(self)
 
-    def place_limit(
-        self, quantity: float, price: float, clOrdID: str, symbol: tuple
+    def place_order(
+        self, quantity: float, price: float, clOrdID: str, symbol: tuple, ordType: str
     ) -> Union[dict, str]:
         """
-        Places a limit order.
+        Places an order. Available order types: Market, Limit.
 
         Returns
         -------
@@ -715,15 +715,18 @@ class Agent(Deribit):
             On success, dict is returned, otherwise an error type.
         """
         side = "buy" if quantity > 0 else "sell"
-        path = Listing.PLACE_LIMIT.format(SIDE=side)
+        path = Listing.PLACE_ORDER.format(SIDE=side)
         id = f"{path}_{clOrdID}"
         params = {
             "instrument_name": self.Instrument[symbol].ticker,
-            "price": price,
             "amount": abs(quantity),
-            "type": "limit",
             "label": clOrdID,
         }
+        if ordType == "Limit":
+            params["price"] = price
+            params["type"] = "limit"
+        elif ordType == "Market":
+            params["type"] = "market"
 
         return Agent.ws_request(self, path=path, id=id, params=params)
 

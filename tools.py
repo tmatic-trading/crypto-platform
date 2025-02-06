@@ -203,6 +203,7 @@ class Tool(Instrument):
         move: bool,
         bot: BotData,
         cancel: bool,
+        ordType: str,
     ):
         res = None
         if price:
@@ -219,12 +220,13 @@ class Tool(Instrument):
                     clOrdID = service.set_clOrdID(emi=bot.name)
                     if side == "Sell":
                         qty = -qty
-                    res = WS.place_limit(
+                    res = WS.place_order(
                         ws,
                         quantity=qty,
                         price=price,
                         clOrdID=clOrdID,
                         symbol=self.symbol_tuple,
+                        ordType=ordType,
                     )
                 else:
                     order = var.orders[bot.name][clOrdID]
@@ -256,6 +258,7 @@ class Tool(Instrument):
         price: float = None,
         move: bool = False,
         cancel: bool = False,
+        ordType: str = "Limit",
     ) -> Union[str, None]:
         """
         Sets a sell order.
@@ -265,18 +268,21 @@ class Tool(Instrument):
         bot: Bot
             An instance of a bot in the Bot class.
         qty: float
-            Order quantity. If qty is omitted, then: qty is taken as
+            Optional. Order quantity. If qty is omitted, then: qty is taken as 
             minOrderQty.
         price: float
-            Order price. If price is omitted, then price is taken as the
-            current first offer in the order book.
+            Optional. Order price. If price is omitted for a limit order, the price 
+            is taken as the current first offer in the order book. For a market 
+            order, this parameter is ignored.
         move: bool
-            Checks for open sell orders for the current instrument for this
-            bot and if there are any, takes the last order and moves it to
-            the new price. If not, places a new order.
+            Optional. Checks for open sell orders for the current instrument for 
+            this bot and if there are any, takes the last order and moves it to the 
+            new price. If not, places a new order. By default False.
         cancel: bool
-            If True, cancels all buy orders for the current instrument for
-            this bot.
+            Optional. If True, cancels all buy orders for the current instrument for 
+            this bot. By default False.
+        ordType: str
+            Optional. Order type. Valid options: Market, Limit. By default Limit.
 
         Returns
         -------
@@ -301,7 +307,13 @@ class Tool(Instrument):
                     return
 
             return self._place(
-                price=price, qty=qty, side="Sell", move=move, bot=bot, cancel=cancel
+                price=price,
+                qty=qty,
+                side="Sell",
+                move=move,
+                bot=bot,
+                cancel=cancel,
+                ordType=ordType,
             )
 
     def buy(
@@ -311,6 +323,7 @@ class Tool(Instrument):
         price: float = None,
         move: bool = False,
         cancel: bool = False,
+        ordType: str = "Limit",
     ) -> Union[str, None]:
         """
         Sets a buy order.
@@ -320,18 +333,21 @@ class Tool(Instrument):
         bot: Bot
             An instance of a bot in the Bot class.
         qty: float
-            Order quantity. If qty is omitted, then: qty is taken as
+            Optional. Order quantity. If qty is omitted, then: qty is taken as 
             minOrderQty.
         price: float
-            Order price. If price is omitted, then price is taken as the
-            current first bid in the order book.
+            Optional. Order price. If price is omitted for a limit order, the price 
+            is taken as the current first bid in the order book. For a market 
+            order, this parameter is ignored.
         move: bool
-            Checks for open buy orders for the current instrument for this
-            bot and if there are any, takes the last order and moves it to
-            the new price. If not, places a new order.
+            Optional. Checks for open buy orders for the current instrument for 
+            this bot and if there are any, takes the last order and moves it to the 
+            new price. If not, places a new order. By default False.
         cancel: bool
-            If True, cancels all buy orders for the current instrument for
-            this bot.
+            Optional. If True, cancels all sell orders for the current instrument for 
+            this bot. By default False.
+        ordType: str
+            Optional. Order type. Valid options: Market, Limit. By default Limit.
 
         Returns
         -------
@@ -345,7 +361,13 @@ class Tool(Instrument):
 
         if var.backtest:
             return self._backtest_place(
-                bot=bot, qty=qty, side="Buy", price=price, move=move, cancel=cancel
+                bot=bot,
+                qty=qty,
+                side="Buy",
+                price=price,
+                move=move,
+                cancel=cancel,
+                ordType=ordType,
             )
 
         if bot.state == "Active" and disp.f9 == "ON":
@@ -357,7 +379,13 @@ class Tool(Instrument):
                     return
 
             return self._place(
-                price=price, qty=qty, side="Buy", move=move, bot=bot, cancel=cancel
+                price=price,
+                qty=qty,
+                side="Buy",
+                move=move,
+                bot=bot,
+                cancel=cancel,
+                ordType=ordType,
             )
 
     def add_kline(self, timefr: str = "") -> Callable:
@@ -796,6 +824,7 @@ class Tool(Instrument):
         price: Union[float, None],
         move: bool,
         cancel: bool,
+        ordType: str,
     ) -> Union[str, None]:
         qty = self._control_limits(side=side, qty=qty, bot_name=bot.name)
         clOrdID = None
@@ -811,6 +840,8 @@ class Tool(Instrument):
                 else:
                     if price < compare_2:
                         price = compare_2
+                if ordType == "Market":
+                    price = compare_2
                 compare_1 = price
             else:
                 compare_1 = data[bot.iter + 1]["open_ask"]
@@ -819,6 +850,8 @@ class Tool(Instrument):
                 else:
                     if price > compare_1:
                         price = compare_1
+                if ordType == "Market":
+                    price = compare_1
                 compare_2 = price
             ttime = int(str(data[bot.iter]["date"]) + str(data[bot.iter]["time"]))
             if compare_1 <= compare_2:

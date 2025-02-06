@@ -179,7 +179,6 @@ class Function(WS, Variables):
         """
         Trades and funding processing
         """
-
         def handle_trade_or_delivery(row, emi, refer, clientID):
             results = self.Result[row["settlCurrency"]]
             lastQty = row["lastQty"]
@@ -274,6 +273,8 @@ class Function(WS, Variables):
                 category=row["category"],
             )
             instrument = self.Instrument[row["symbol"]]
+            if "price" not in row:
+                row["price"] = 0
 
             # Trade
 
@@ -1645,7 +1646,7 @@ class Function(WS, Variables):
         if emi not in Bots.keys():
             emi = False
         clOrdID = service.set_clOrdID(emi=emi)
-        WS.place_limit(
+        WS.place_order(
             self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
         )
 

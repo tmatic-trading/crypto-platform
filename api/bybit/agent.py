@@ -453,21 +453,26 @@ class Agent(Bybit):
 
         return ""
 
-    def place_limit(
-        self, quantity: float, price: float, clOrdID: str, symbol: tuple
+    def place_order(
+        self, quantity: float, price: float, clOrdID: str, symbol: tuple, ordType: str
     ) -> Union[dict, str]:
+        """
+        Places an order. Available order types: Market, Limit.
+        """
         side = "Buy" if quantity > 0 else "Sell"
         instrument = self.Instrument[symbol]
+        params = {
+            "category": instrument.category,
+            "symbol": instrument.ticker,
+            "side": side,
+            "orderType": ordType,
+            "qty": str(abs(quantity)),
+            "orderLinkId": clOrdID,
+        }
+        if ordType == "Limit":
+            params["price"] = price
         try:
-            return self.session.place_order(
-                category=instrument.category,
-                symbol=instrument.ticker,
-                side=side,
-                orderType="Limit",
-                qty=str(abs(quantity)),
-                price=str(price),
-                orderLinkId=clOrdID,
-            )
+            return self.session.place_order(**params)
         except Exception as exception:
             error = Unify.error_handler(
                 self, exception=exception, verb="POST", path="place_order"

@@ -311,8 +311,13 @@ class WS(Variables):
 
         return Agents[self.name].value.open_orders(self)
 
-    def place_limit(
-        self: Markets, quantity: float, price: float, clOrdID: str, symbol: tuple
+    def place_order(
+        self: Markets,
+        quantity: float,
+        price: float,
+        clOrdID: str,
+        symbol: tuple,
+        ordType="Limit",
     ) -> Union[dict, str]:
         """
         Places a limit order.
@@ -329,6 +334,8 @@ class WS(Variables):
             Unique order identifier, including the bot name.
         symbol: str
             Instrument symbol. Example ("BTCUSDT", "Bybit").
+        ordType: str
+            Order type. Valid options: Market, Limit.
 
         Returns
         -------
@@ -351,8 +358,13 @@ class WS(Variables):
 
         WS._put_message(self, message=message, info=False)
 
-        return Agents[self.name].value.place_limit(
-            self, quantity=quantity, price=price, clOrdID=clOrdID, symbol=symbol
+        return Agents[self.name].value.place_order(
+            self,
+            quantity=quantity,
+            price=price,
+            clOrdID=clOrdID,
+            symbol=symbol,
+            ordType=ordType,
         )
 
     def replace_limit(

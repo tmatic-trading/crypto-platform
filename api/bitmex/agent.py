@@ -431,11 +431,11 @@ class Agent(Bitmex):
 
         return ""
 
-    def place_limit(
-        self, quantity: float, price: float, clOrdID: str, symbol: tuple
+    def place_order(
+        self, quantity: float, price: float, clOrdID: str, symbol: tuple, ordType: str
     ) -> Union[dict, str]:
         """
-        Places a limit order.
+        Places an order. Available order types: Market, Limit.
 
         Returns
         -------
@@ -462,10 +462,11 @@ class Agent(Bitmex):
         postData = {
             "symbol": instrument.ticker,
             "orderQty": round(quantity * instrument.myMultiplier),
-            "price": price,
             "clOrdID": clOrdID,
-            "ordType": "Limit",
+            "ordType": ordType,
         }
+        if ordType == "Limit":
+            postData["price"] = price
 
         return Send.request(self, path=path, postData=postData, verb="POST")
 
