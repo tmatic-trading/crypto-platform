@@ -268,18 +268,18 @@ class Tool(Instrument):
         bot: Bot
             An instance of a bot in the Bot class.
         qty: float
-            Optional. Order quantity. If qty is omitted, then: qty is taken as 
+            Optional. Order quantity. If qty is omitted, then: qty is taken as
             minOrderQty.
         price: float
-            Optional. Order price. If price is omitted for a limit order, the price 
-            is taken as the current first offer in the order book. For a market 
+            Optional. Order price. If price is omitted for a limit order, the price
+            is taken as the current first offer in the order book. For a market
             order, this parameter is ignored.
         move: bool
-            Optional. Checks for open sell orders for the current instrument for 
-            this bot and if there are any, takes the last order and moves it to the 
+            Optional. Checks for open sell orders for the current instrument for
+            this bot and if there are any, takes the last order and moves it to the
             new price. If not, places a new order. By default False.
         cancel: bool
-            Optional. If True, cancels all buy orders for the current instrument for 
+            Optional. If True, cancels all buy orders for the current instrument for
             this bot. By default False.
         ordType: str
             Optional. Order type. Valid options: Market, Limit. By default Limit.
@@ -333,18 +333,18 @@ class Tool(Instrument):
         bot: Bot
             An instance of a bot in the Bot class.
         qty: float
-            Optional. Order quantity. If qty is omitted, then: qty is taken as 
+            Optional. Order quantity. If qty is omitted, then: qty is taken as
             minOrderQty.
         price: float
-            Optional. Order price. If price is omitted for a limit order, the price 
-            is taken as the current first bid in the order book. For a market 
+            Optional. Order price. If price is omitted for a limit order, the price
+            is taken as the current first bid in the order book. For a market
             order, this parameter is ignored.
         move: bool
-            Optional. Checks for open buy orders for the current instrument for 
-            this bot and if there are any, takes the last order and moves it to the 
+            Optional. Checks for open buy orders for the current instrument for
+            this bot and if there are any, takes the last order and moves it to the
             new price. If not, places a new order. By default False.
         cancel: bool
-            Optional. If True, cancels all sell orders for the current instrument for 
+            Optional. If True, cancels all sell orders for the current instrument for
             this bot. By default False.
         ordType: str
             Optional. Order type. Valid options: Market, Limit. By default Limit.

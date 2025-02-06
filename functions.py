@@ -179,6 +179,7 @@ class Function(WS, Variables):
         """
         Trades and funding processing
         """
+
         def handle_trade_or_delivery(row, emi, refer, clientID):
             results = self.Result[row["settlCurrency"]]
             lastQty = row["lastQty"]
@@ -1635,6 +1636,7 @@ class Function(WS, Variables):
         side: str,
         price: float,
         qty: int,
+        ordType: str,
     ) -> str:
         """
         This function sends a new order
@@ -1647,7 +1649,12 @@ class Function(WS, Variables):
             emi = False
         clOrdID = service.set_clOrdID(emi=emi)
         WS.place_order(
-            self, quantity=qty, price=price_str, clOrdID=clOrdID, symbol=symbol
+            self,
+            quantity=qty,
+            price=price_str,
+            clOrdID=clOrdID,
+            symbol=symbol,
+            ordType=ordType,
         )
 
         return clOrdID
@@ -2006,25 +2013,33 @@ def check_order_warning():
     return True
 
 
-def callback_sell_limit() -> None:
-    for warning in form.warning.values():
+def callback_order(side: str) -> None:
+    ordType = form.type_var.get()
+    for entry, warning in form.warning.items():
         if warning != "":
-            warning_window(warning)
-            return
+            if entry == "price" and ordType == "Market":
+                pass
+            else:
+                warning_window(warning)
+                return
     if check_order_warning():
         emi = form.emi_var.get()
+        price = form.price_var.get()
         if emi != "Select":
             try:
                 qnt = abs(float(form.qty_var.get()))
-                price = float(form.price_var.get())
-                res = "yes"
             except Exception:
-                warning_window("Fields must be numbers!")
-                res = "no"
-            if res == "yes" and qnt != 0:
-                price = Function.round_price(
-                    form.ws, symbol=var.symbol, price=price, rside=-qnt
-                )
+                warning_window("Quantity must be a number!")
+                return
+            if ordType == "Limit":
+                try:
+                    price = Function.round_price(
+                        form.ws, symbol=var.symbol, price=float(price), rside=-qnt
+                    )
+                except Exception:
+                    warning_window("Price must be a number!")
+                    return
+            if qnt != 0:
                 if minimum_qty(qnt):
                     return
                 Function.post_order(
@@ -2032,43 +2047,10 @@ def callback_sell_limit() -> None:
                     name=form.ws.name,
                     symbol=var.symbol,
                     emi=emi,
-                    side="Sell",
+                    side=side,
                     price=price,
                     qty=qnt,
-                )
-        else:
-            warning_window("The selection is empty.")
-
-
-def callback_buy_limit() -> None:
-    for warning in form.warning.values():
-        if warning != "":
-            warning_window(warning)
-            return
-    if check_order_warning():
-        emi = form.emi_var.get()
-        if form.qty_var.get() and form.price_var.get() and emi and emi != "Select":
-            try:
-                qnt = abs(float(form.qty_var.get()))
-                price = float(form.price_var.get())
-                res = "yes"
-            except Exception:
-                warning_window("Fields must be numbers!")
-                res = "no"
-            if res == "yes" and qnt != 0:
-                price = Function.round_price(
-                    form.ws, symbol=var.symbol, price=price, rside=qnt
-                )
-                if minimum_qty(qnt):
-                    return
-                Function.post_order(
-                    form.ws,
-                    name=form.ws.name,
-                    symbol=var.symbol,
-                    emi=emi,
-                    side="Buy",
-                    price=price,
-                    qty=qnt,
+                    ordType=ordType,
                 )
         else:
             warning_window("The selection is empty.")
@@ -3488,8 +3470,20 @@ def form_trace(item, index, mode, str_var: tk.StringVar, widget: tk.Entry) -> No
     widget.icursor(cursor)
 
 
-form.sell_limit.configure(command=callback_sell_limit)
-form.buy_limit.configure(command=callback_buy_limit)
+def form_trace_type(item, index, mode) -> None:
+    ordType = form.type_var.get()
+    if ordType == "Market":
+        form.entry_price.configure(state="disabled")
+        form.sell_button.configure(text="Sell market")
+        form.buy_button.configure(text="Buy market")
+    else:
+        form.entry_price.configure(state="normal")
+        form.sell_button.configure(text="Sell limit")
+        form.buy_button.configure(text="Buy limit")
+
+
+form.sell_button.configure(command=lambda: callback_order("Sell"))
+form.buy_button.configure(command=lambda: callback_order("Buy"))
 form.price_var.trace_add(
     "write",
     lambda *trace: form_trace(*trace, form.price_var, form.entry_price),
@@ -3497,6 +3491,10 @@ form.price_var.trace_add(
 form.qty_var.trace_add(
     "write",
     lambda *trace: form_trace(*trace, form.qty_var, form.entry_quantity),
+)
+form.type_var.trace_add(
+    "write",
+    lambda *trace: form_trace_type(*trace),
 )
 
 # change_color(color=disp.title_color, container=disp.root)

@@ -1774,9 +1774,9 @@ class OrderForm:
     buttons = tk.Frame(main)
     buttons.grid_columnconfigure(0, weight=1)
     buttons.grid_columnconfigure(1, weight=1)
-    sell_limit = tk.Button(buttons, text="Sell Limit")
-    buy_limit = tk.Button(buttons, text="Buy Limit")
-    buttons.grid(row=4, column=0, columnspan=3, sticky="NEWS")
+    sell_button = tk.Button(buttons, text="Sell Limit")
+    buy_button = tk.Button(buttons, text="Buy Limit")
+    buttons.grid(row=4, column=0, columnspan=4, sticky="NEWS")
     price_name = "price"
     qty_name = "quantity"
     price_var = tk.StringVar(name=price_name)
@@ -1789,12 +1789,17 @@ class OrderForm:
         main, width=9, bg=Variables.bg_color, textvariable=qty_var
     )
     title = FormLabel(
-        main, text=var.DASH, font=Variables.bold_font, row=0, column=0, colspan=3
+        main, text=var.DASH, font=Variables.bold_font, row=0, column=0, colspan=4
     )
     title.bind("<Motion>", title_on_hover)
     title.bind("<Leave>", title_on_leave)
     title.bind("<ButtonRelease-1>", title_on_select)
     emi = FormLabel(main, text="Bot", row=1, column=0, sticky="W")
+    type_var = tk.StringVar()
+    type_var.set("Limit")
+    options = ["Limit", "Market"]
+    option_type = tk.OptionMenu(main, type_var, *options)
+    option_type.grid(row=2, column=3, sticky="NEWS")
     quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
     price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
     emi_var = tk.StringVar()
@@ -1802,11 +1807,11 @@ class OrderForm:
     qty_currency = FormLabel(main, text="    ", row=2, column=2, sticky="W")
     price_currency = FormLabel(main, text="    ", row=3, column=2, sticky="W")
     option_emi = tk.OptionMenu(main, emi_var, *options)
-    option_emi.grid(row=1, column=1, columnspan=2, sticky="W")
+    option_emi.grid(row=1, column=1, columnspan=3, sticky="W")
     entry_quantity.grid(row=2, column=1, sticky="NEWS")
     entry_price.grid(row=3, column=1, sticky="NEWS")
-    buy_limit.grid(row=0, column=0, sticky="NEWS")
-    sell_limit.grid(row=0, column=1, sticky="NEWS")
+    buy_button.grid(row=0, column=0, sticky="NEWS")
+    sell_button.grid(row=0, column=1, sticky="NEWS")
 
     # Instrument parameters
 
