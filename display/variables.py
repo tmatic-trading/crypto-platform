@@ -298,7 +298,6 @@ class Variables:
     line_height = tkinter.font.Font(font="TkDefaultFont").metrics("linespace")
     symbol_width = tkinter.font.Font().measure("01234567890.") / 12
     symbol_height = tkinter.font.nametofont("TkDefaultFont").actual()["size"]
-    button_height = 20
     style = ttk.Style()
     disabled_fg = style.lookup("TEntry", "foreground", ("disabled",))
     current_font = tkinter.font.nametofont(tk.Label().cget("font"))
@@ -1798,8 +1797,19 @@ class OrderForm:
     type_var = tk.StringVar()
     type_var.set("Limit")
     options = ["Limit", "Market"]
-    option_type = tk.OptionMenu(main, type_var, *options)
-    option_type.grid(row=2, column=3, sticky="NEWS")
+    width = 0
+    for option in options:
+        if len(option) > width:
+            width = len(option)
+    order_type = ttk.Combobox(
+        main,
+        state="readonly",
+        textvariable=type_var,
+        values=options,
+        width=width,
+        background="White",
+    )
+    order_type.grid(row=2, column=3, sticky="NEWS")
     quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
     price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
     emi_var = tk.StringVar()

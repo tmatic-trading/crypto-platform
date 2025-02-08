@@ -2163,6 +2163,8 @@ def update_order_form():
             form.vega.sub.grid_forget()
             form.theta.sub.grid_forget()
             form.rho.sub.grid_forget()
+        form.order_type.current(0)
+        form.order_type.selection_clear()
 
     Function.display_parameters(form.ws, form.instrument)
 
