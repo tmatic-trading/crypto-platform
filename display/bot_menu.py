@@ -1386,8 +1386,11 @@ def insert_bot_log(
         message = service.format_message(market=market, message=message, tm=tm)
         bot.log.append((warning, message))
         path = f"{bot_manager.algo_dir}{bot_name}/bot.log"
-        with open(path, "a") as f:
-            f.write(message)
+        try:
+            with open(path, "a") as f:
+                f.write(message)
+        except FileNotFoundError:
+            pass
     if bot_name == disp.bot_name:
         num = message.count("\n")
         disp.text_bot_log.insert("1.0", message)
