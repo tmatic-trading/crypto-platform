@@ -90,9 +90,7 @@ class Init(WS, Variables):
             )
             dotenv_data = dotenv_values(his_file)
         try:
-            last_history_time = datetime.strptime(
-                dotenv_data[self.name], "%Y-%m-%d %H:%M:%S"
-            )
+            last_history_time = datetime.fromisoformat(dotenv_data[self.name])
         except ValueError:
             var.logger.warning(
                 "Time format for "
@@ -102,7 +100,7 @@ class Init(WS, Variables):
                 + " is incorrect. Assigned time: "
                 + _time
             )
-            last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+            last_history_time = datetime.fromisoformat(_time)
             set_key(
                 dotenv_path=his_file,
                 key_to_set=self.name,
@@ -121,7 +119,7 @@ class Init(WS, Variables):
                 key_to_set=self.name,
                 value_to_set=_time,
             )
-            last_history_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+            last_history_time = datetime.fromisoformat(_time)
             last_history_time = last_history_time.replace(tzinfo=timezone.utc)
 
         count_val = 500

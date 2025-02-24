@@ -174,11 +174,13 @@ def time_converter(
             time = time[:f]
         if usec:
             try:
-                dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
+                #dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
+                dt = datetime.fromisoformat(time)
             except Exception:
-                dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+                #dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+                dt = datetime.fromisoformat(time)
         else:
-            dt = datetime.strptime(time[:19], "%Y-%m-%d %H:%M:%S")
+            dt = datetime.fromisoformat(time[:19])
         dt = dt.replace(tzinfo=timezone.utc)
         return dt
 
