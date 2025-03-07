@@ -1776,7 +1776,7 @@ class OrderForm:
     buttons.grid_columnconfigure(1, weight=1)
     sell_button = tk.Button(buttons, text="Sell Limit")
     buy_button = tk.Button(buttons, text="Buy Limit")
-    buttons.grid(row=4, column=0, columnspan=4, sticky="NEWS")
+    buttons.grid(row=5, column=0, columnspan=3, sticky="NEWS")
     price_name = "price"
     qty_name = "quantity"
     price_var = tk.StringVar(name=price_name)
@@ -1810,17 +1810,19 @@ class OrderForm:
         width=width,
         background="White",
     )
-    order_type.grid(row=2, column=3, sticky="NEWS")
-    quantity = FormLabel(main, text="Qty", row=2, column=0, sticky="W")
-    price = FormLabel(main, text="Price", row=3, column=0, sticky="W")
+    ord_type = FormLabel(main, text="Type", row=2, column=0, sticky="W")
+    order_type.grid(row=2, column=1, sticky="NEWS")    
+    quantity = FormLabel(main, text="Qty", row=3, column=0, sticky="W")
+    price = FormLabel(main, text="Price", row=4, column=0, sticky="W")
     emi_var = tk.StringVar()
     options = [var.DASH]
-    qty_currency = FormLabel(main, text="    ", row=2, column=2, sticky="W")
-    price_currency = FormLabel(main, text="    ", row=3, column=2, sticky="W")
+    
+    qty_currency = FormLabel(main, text="    ", row=3, column=2, sticky="W")
+    price_currency = FormLabel(main, text="    ", row=4, column=2, sticky="W")
     option_emi = tk.OptionMenu(main, emi_var, *options)
-    option_emi.grid(row=1, column=1, columnspan=3, sticky="W")
-    entry_quantity.grid(row=2, column=1, sticky="NEWS")
-    entry_price.grid(row=3, column=1, sticky="NEWS")
+    option_emi.grid(row=1, column=1, columnspan=2, sticky="W")
+    entry_quantity.grid(row=3, column=1, sticky="NEWS")
+    entry_price.grid(row=4, column=1, sticky="NEWS")
     buy_button.grid(row=0, column=0, sticky="NEWS")
     sell_button.grid(row=0, column=1, sticky="NEWS")
 
