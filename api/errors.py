@@ -32,7 +32,7 @@ class Error(Variables):
         Parameters
         ----------
         self: object
-            Bitmex, Bybit, Deribit
+            Bitmex, Bybit, Deribit, Mexc
         exception: object
             ConnectionError, ReadTimeout, HTTPError ect.
         response: dict

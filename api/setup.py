@@ -77,6 +77,8 @@ class Default(Enum):
     Deribit_TESTNET_WS_URL = "wss://test.deribit.com/ws"
     Deribit_DEFAULT_SYMBOL = "BTC-PERPETUAL"
     #
+    Mexc_HTTP_URL = "https://contract.mexc.com/api/v1"
+    Mexc_WS_URL = "wss://contract.mexc.com/edge"
     Mexc_DEFAULT_SYMBOL = "BTCUSDT"
 
 
