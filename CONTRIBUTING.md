@@ -297,7 +297,7 @@ Let's say you are going to connect to the `Binance`. Make sure that the Binance 
         pass
     ```
 
-    - Class `Agent`:
+    - Class `Agents`:
 
     ```Python
     class Agents(Enum):

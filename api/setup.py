@@ -7,6 +7,8 @@ from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
 from api.deribit.agent import Agent as DeribitAgent
 from api.deribit.ws import Deribit
+from api.mexc.agent import Agent as MexcAgent
+from api.mexc.ws import Mexc
 from api.fake import Fake
 
 
@@ -16,11 +18,12 @@ class MetaMarket(type):
         "Bitmex": Bitmex,
         "Bybit": Bybit,
         "Deribit": Deribit,
+        "Mexc": Mexc, 
     }
 
     def __getitem__(
         self, item
-    ) -> Union[Bitmex, Bybit, Deribit,]:
+    ) -> Union[Bitmex, Bybit, Deribit, Mexc,]:
         if item not in self.dictionary:
             if item != "Fake":
                 try:
@@ -37,6 +40,7 @@ class Markets(
     Bitmex,
     Bybit,
     Deribit,
+    Mexc, 
     metaclass=MetaMarket,
 ):
     pass
@@ -46,6 +50,7 @@ class Agents(Enum):
     Bitmex = BitmexAgent
     Bybit = BybitAgent
     Deribit = DeribitAgent
+    Mexc = Mexc
 
 
 class Default(Enum):
@@ -71,6 +76,8 @@ class Default(Enum):
     Deribit_TESTNET_HTTP_URL = "https://test.deribit.com"
     Deribit_TESTNET_WS_URL = "wss://test.deribit.com/ws"
     Deribit_DEFAULT_SYMBOL = "BTC-PERPETUAL"
+    #
+    Mexc_DEFAULT_SYMBOL = "BTCUSDT"
 
 
 class Documentation:
