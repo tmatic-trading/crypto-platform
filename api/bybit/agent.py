@@ -535,6 +535,10 @@ class Agent(Bybit):
                 error = Unify.error_handler(
                     self, exception=exception, verb="GET", path="get_wallet_balance"
                 )
+                # Patch. Bybit doesn't support account type "CONTRACT" since September 2023
+                # https://www.bybit.com/en/help-center/article/Comparison-between-UTA-and-Standard-AccountBybit_Unified_Trading_Account
+                if exception.__dict__["message"] == "accountType only support UNIFIED.":
+                    return ""
                 return error
 
             # Bybit bug patch 20/08/2024 on request accountType = "CONTRACT"
