@@ -66,7 +66,7 @@ class Init(WS, Variables):
         else:
             his = ".env.History"
         his_file = Path(his)
-        _time = "2000-01-01 00:0:00"
+        _time = "2000-01-01 00:00:00"
         dotenv_data = dotenv_values(his_file)
         tm = datetime.now(tz=timezone.utc)
         if not dotenv_data:

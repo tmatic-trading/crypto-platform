@@ -50,7 +50,7 @@ class Agents(Enum):
     Bitmex = BitmexAgent
     Bybit = BybitAgent
     Deribit = DeribitAgent
-    Mexc = Mexc
+    Mexc = MexcAgent
 
 
 class Default(Enum):

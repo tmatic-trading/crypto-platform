@@ -1163,7 +1163,6 @@ class TreeviewTable(Variables):
                     data.append(line["values"])
         data += rows
         self.clear_all()
-        print("===", data)
         data = list(
             map(lambda x: x + [datetime.fromisoformat(f"20{x[0]}")], data)
         )
