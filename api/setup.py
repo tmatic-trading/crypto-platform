@@ -7,9 +7,9 @@ from api.bybit.agent import Agent as BybitAgent
 from api.bybit.ws import Bybit
 from api.deribit.agent import Agent as DeribitAgent
 from api.deribit.ws import Deribit
+from api.fake import Fake
 from api.mexc.agent import Agent as MexcAgent
 from api.mexc.ws import Mexc
-from api.fake import Fake
 
 
 class MetaMarket(type):
@@ -18,7 +18,7 @@ class MetaMarket(type):
         "Bitmex": Bitmex,
         "Bybit": Bybit,
         "Deribit": Deribit,
-        "Mexc": Mexc, 
+        "Mexc": Mexc,
     }
 
     def __getitem__(
@@ -40,7 +40,7 @@ class Markets(
     Bitmex,
     Bybit,
     Deribit,
-    Mexc, 
+    Mexc,
     metaclass=MetaMarket,
 ):
     pass

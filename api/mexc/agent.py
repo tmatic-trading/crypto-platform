@@ -22,7 +22,7 @@ class Agent(Mexc):
         """
         path = Listing.GET_ACTIVE_INSTRUMENTS
         data = Send.request(self, path=path, verb="GET")
-        
+
         if isinstance(data, dict):
             if "data" in data:
                 if isinstance(data["data"], list):
@@ -50,7 +50,6 @@ class Agent(Mexc):
         self.logger.error(error)
 
         return service.unexpected_error(self)
-    
 
     def fill_instrument(self, values: dict) -> str:
         """
@@ -61,7 +60,7 @@ class Agent(Mexc):
         Instrument class. See detailed description of the fields there.
         """
 
-        # Possible settleCoin {'ETH', 'USDC', 'AVAX', 'BTC', 'SUI', 'XRP', 
+        # Possible settleCoin {'ETH', 'USDC', 'AVAX', 'BTC', 'SUI', 'XRP',
         # 'SOL', 'ADA', 'USDT', 'LINK', 'LTC', 'DOGE'}
 
         if values["settleCoin"] not in ["USDC", "USDT"]:
@@ -142,7 +141,7 @@ class Agent(Mexc):
         # self.setup_orders = res
 
         return ""
-    
+
     def activate_funding_thread(self):
         """
         Not used for Mexc.

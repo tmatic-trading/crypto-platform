@@ -1163,9 +1163,7 @@ class TreeviewTable(Variables):
                     data.append(line["values"])
         data += rows
         self.clear_all()
-        data = list(
-            map(lambda x: x + [datetime.fromisoformat(f"20{x[0]}")], data)
-        )
+        data = list(map(lambda x: x + [datetime.fromisoformat(f"20{x[0]}")], data))
         data.sort(key=lambda x: x[-1], reverse=True)
         data = list(map(lambda x: x[:-1], data))
 
@@ -1810,12 +1808,12 @@ class OrderForm:
         background="White",
     )
     ord_type = FormLabel(main, text="Type", row=2, column=0, sticky="W")
-    order_type.grid(row=2, column=1, sticky="NEWS")    
+    order_type.grid(row=2, column=1, sticky="NEWS")
     quantity = FormLabel(main, text="Qty", row=3, column=0, sticky="W")
     price = FormLabel(main, text="Price", row=4, column=0, sticky="W")
     emi_var = tk.StringVar()
     options = [var.DASH]
-    
+
     qty_currency = FormLabel(main, text="    ", row=3, column=2, sticky="W")
     price_currency = FormLabel(main, text="    ", row=4, column=2, sticky="W")
     option_emi = tk.OptionMenu(main, emi_var, *options)

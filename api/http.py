@@ -56,7 +56,7 @@ class Send(Variables):
             try:
                 req = requests.Request(verb, url, json=postData, params=None)
                 headers = self.api_auth.generate_headers(
-                    api_key=self.api_key,   
+                    api_key=self.api_key,
                     api_secret=self.api_secret,
                     method=verb,
                     url=url,

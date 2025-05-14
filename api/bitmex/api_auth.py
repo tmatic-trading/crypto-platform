@@ -1,8 +1,8 @@
 import hashlib
 import hmac
+import json
 import time
 from urllib.parse import urlparse
-import json
 
 
 class API_auth:
