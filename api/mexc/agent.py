@@ -22,6 +22,7 @@ class Agent(Mexc):
         """
         path = Listing.GET_ACTIVE_INSTRUMENTS
         data = Send.request(self, path=path, verb="GET")
+        
         if isinstance(data, dict):
             if "data" in data:
                 if isinstance(data["data"], list):
@@ -59,11 +60,9 @@ class Agent(Mexc):
         The data fields of different exchanges are unified through the
         Instrument class. See detailed description of the fields there.
         """
-        # if "BTC" in values["symbol"]:
 
-        
-        # Possible settleCoin {'ETH', 'USDC', 'AVAX', 'BTC', 'SUI', 'XRP', 'SOL', 'ADA', 'USDT', 'LINK', 'LTC', 'DOGE'}
-
+        # Possible settleCoin {'ETH', 'USDC', 'AVAX', 'BTC', 'SUI', 'XRP', 
+        # 'SOL', 'ADA', 'USDT', 'LINK', 'LTC', 'DOGE'}
 
         if values["settleCoin"] not in ["USDC", "USDT"]:
             category = "linear"
@@ -105,3 +104,47 @@ class Agent(Mexc):
             self.instrument_index = service.fill_instrument_index(
                 index=self.instrument_index, instrument=instrument, ws=self
             )
+
+    def open_orders(self) -> str:
+        path = Listing.OPEN_ORDERS
+        res = Send.request(
+            self,
+            path=path,
+            verb="GET",
+        )
+
+        print("_________res", res)
+
+        # if isinstance(res, list):
+        #     for order in res:
+        #         order["symbol"] = (
+        #             self.ticker[order["symbol"]],
+        #             self.name,
+        #         )
+        #         instrument = self.Instrument[order["symbol"]]
+        #         order["orderQty"] /= instrument.myMultiplier
+        #         order["leavesQty"] /= instrument.myMultiplier
+        #         order["cumQty"] /= instrument.myMultiplier
+        #         order["transactTime"] = service.time_converter(
+        #             time=order["transactTime"], usec=True
+        #         )
+        #         if order["symbol"] not in self.symbol_list:
+        #             self.symbol_list.append(order["symbol"])
+        #             message = Message.NON_SUBSCRIBED_SYMBOL_ORDER.format(
+        #                 SYMBOL=order["symbol"][0]
+        #             )
+        #             self._put_message(message=message, warning="warning")
+        # else:
+        #     self.logger.error(
+        #         "The list was expected when the orders were loaded, but it was not received."
+        #     )
+        #     return service.unexpected_error(self)
+        # self.setup_orders = res
+
+        return ""
+    
+    def activate_funding_thread(self):
+        """
+        Not used for Mexc.
+        """
+        return ""

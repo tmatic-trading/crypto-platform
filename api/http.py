@@ -49,22 +49,19 @@ class Send(Variables):
             type.
         """
         url = self.http_url + path
+
         cur_retries = 1
         while True:
             response = None
             try:
                 req = requests.Request(verb, url, json=postData, params=None)
-                if isinstance(postData, dict):
-                    data = json.dumps(postData)
-                else:
-                    data = postData
                 headers = self.api_auth.generate_headers(
-                    api_key=self.api_key,
+                    api_key=self.api_key,   
                     api_secret=self.api_secret,
                     method=verb,
                     url=url,
                     path=path,
-                    data=data,
+                    data=postData,
                 )
                 req.headers = headers
                 prepped = self.session.prepare_request(req)

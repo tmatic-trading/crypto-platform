@@ -3,6 +3,7 @@ import hmac
 import random
 import string
 import time
+import json
 
 from requests.auth import AuthBase
 
@@ -18,6 +19,8 @@ class API_auth(AuthBase):
         nonce = "".join(
             random.choice(string.ascii_lowercase + string.digits) for _ in range(8)
         )
+        if isinstance(data, dict):
+            data = json.dumps(data)
         signature = API_auth.generate_signature(
             tstamp=tstamp,
             secret=api_secret,

@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import time
 from urllib.parse import urlparse
+import json
 
 
 class API_auth:
@@ -11,6 +12,8 @@ class API_auth:
         """
         Called when https requesting - generates api key headers.
         """
+        if isinstance(data, dict):
+            data = json.dumps(data)
         headers = dict()
         expires = int(round(time.time()) + 5)
         url = url.replace(" ", "%20")

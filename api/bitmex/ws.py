@@ -35,7 +35,6 @@ class Bitmex(Variables):
         self.object = Bitmex
         self.name = "Bitmex"
         self.data = dict()
-        self.Api_auth = API_auth
         Setup.variables(self)
         self.session = requests.Session()
         self.session.headers.update({"user-agent": "Tmatic"})

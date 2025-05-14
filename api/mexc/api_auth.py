@@ -12,22 +12,34 @@ class API_auth:
         Called when forming a request - generates api key headers.
         Details in the exchange documentation.
         """
+        tstamp = str(int(time.time() * 1000))
+        if isinstance(data, dict):
+            data = "&".join([f"{k}={v}" for k, v in sorted(data.items())])
+        
         headers = dict()
-        """
-        Place the code here.
-        """
-
+        headers["Signature"] = API_auth.generate_signature(
+            api_key=api_key, 
+            secret=api_secret,
+            tstamp=tstamp, 
+            data=data or "",
+        )
+        headers["Request-Time"] = tstamp
+        headers["Content-Type"] = "application/json"
+        headers["ApiKey"] = api_key
+        
         return headers
 
     def generate_signature(
-        secret: str, verb: str, url: str, nonce: int, data: str
+        api_key: str,  secret: str, tstamp: str, data: str
     ) -> str:
         """
         Generates an API signature. Details in the exchange documentation.
         """
-        signature = ""
-        """
-        Place the code here.
-        """
+        data = api_key + tstamp + data
+        signature = hmac.new(
+            secret.encode("utf-8"),
+            data.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
 
         return signature
