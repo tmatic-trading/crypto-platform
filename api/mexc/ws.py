@@ -86,16 +86,16 @@ class Mexc(Variables):
         self.logger.info("Connected to websocket.")
         if self._ws_auth() == "error":
             return service.unexpected_error(self)
-        
+
         return ""
 
     def _on_message(self, ws, message):
         message = json.loads(message)
-        print("__________on_message", message["channel"])
+        # print("__________on_message", message["channel"], message)
         if message["channel"] == "push.ticker":
             self.callback_directory["push.ticker"](values=message["data"])
         elif message["channel"] == self.depth_push:
-            self.callback_directory[self.depth_push](values=message["data"])
+            self.callback_directory[self.depth_push](values=message)
         elif message["channel"] in self.response:
             self.response[message["channel"]] = message["data"]
 
@@ -143,9 +143,7 @@ class Mexc(Variables):
                 self.logger.info("WebSocket authentication successful.")
                 return
             elif self.response["rs.login"] != "Pending":
-                message = (
-                    "WebSocket authentication error. " + self.response["rs.login"]
-                )
+                message = "WebSocket authentication error. " + self.response["rs.login"]
                 del self.response["rs.login"]
                 self._put_message(message=message)
                 return "error"
@@ -154,7 +152,6 @@ class Mexc(Variables):
         self._put_message(message=message)
 
         return "error"
-
 
     def exit(self):
         """
@@ -182,9 +179,7 @@ class Mexc(Variables):
             return self.logNumFatal
 
     def _subscribe(self):
-
         self._subscribe_symbols()
-
 
         # try:
         #     if not self.logNumFatal:
@@ -210,13 +205,12 @@ class Mexc(Variables):
         #         self.pinging = "pong"
 
         return ""
-    
+
     def _subscribe_symbols(self) -> None:
         """
         Orderbook and ticker subscription. Called at boot or reboot time.
-        """        
+        """
         for symbol in self.symbol_list:
-
             # Ticker
 
             instrument = self.Instrument[symbol]
@@ -231,7 +225,7 @@ class Mexc(Variables):
             self._put_message(message=message)
 
             # Orderbook
-            
+
             params = {"method": self.depth_sub, "param": {"symbol": instrument.ticker}}
             if self.depth_sub == "sub.depth.full":
                 params["param"]["limit"] = 10
@@ -270,41 +264,39 @@ class Mexc(Variables):
 
     def _update_ticker(self, values: dict) -> None:
         print("_____________callback ticker", values)
-        pass
-        # symbol = (self.ticker[values["instrument_name"]], self.name)
-        # instrument = self.Instrument[symbol]
-        # instrument.volume24h = values["stats"]["volume"]
-        # if "funding_8h" in values:
-        #     instrument.fundingRate = values["funding_8h"] * 100
-        # if "open_interest" in values:
-        #     instrument.openInterest = values["open_interest"]
-        # if "option" in instrument.category:
-        #     instrument.delta = values["greeks"]["delta"]
-        #     instrument.vega = values["greeks"]["vega"]
-        #     instrument.theta = values["greeks"]["theta"]
-        #     instrument.gamma = values["greeks"]["gamma"]
-        #     instrument.rho = values["greeks"]["rho"]
-        #     instrument.bidIv = values["bid_iv"]
-        #     instrument.askIv = values["ask_iv"]
-        # instrument.bidPrice = values["best_bid_price"]
-        # instrument.askPrice = values["best_ask_price"]
-        # instrument.bidSize = values["best_bid_amount"]
-        # instrument.askSize = values["best_ask_amount"]
-        # instrument.markPrice = values["mark_price"]
-        # instrument.state = values["state"]
-        # if values["state"] == "open":
-        #     instrument.state = "Open"
+        symbol = (self.ticker[values["symbol"]], self.name)
+        instrument = self.Instrument[symbol]
+        instrument.volume24h = values["volume24"]
+        instrument.fundingRate = values["fundingRate"] * 100
+        # instrument.openInterest
+        instrument.bidPrice = values["bid1"]
+        instrument.askPrice = values["ask1"]
+        # instrument.bidSize
+        # instrument.askSize
+        # instrument.markPrice
+        # instrument.state
 
     def _update_orderbook(self, values: dict) -> None:
-        print("_____________callback orderbook", values)
-        pass
-        # symbol = (self.ticker[values["instrument_name"]], self.name)
-        # instrument = self.Instrument[symbol]
-        # instrument.asks = values["asks"]
-        # instrument.bids = values["bids"]
-        # if symbol in self.klines:
-        #     service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
-
+        symbol = (self.ticker[values["symbol"]], self.name)
+        instrument = self.Instrument[symbol]
+        instrument.asks = list(
+            map(
+                lambda x: [
+                    x[0],
+                    round(x[1] * instrument.qtyStep, instrument.precision),
+                ],
+                values["data"]["asks"],
+            )
+        )
+        instrument.bids = list(
+            map(
+                lambda x: [
+                    x[0],
+                    round(x[1] * instrument.qtyStep, instrument.precision),
+                ],
+                values["data"]["bids"],
+            )
+        )
     def _put_message(self, message: str, warning=None, info=True) -> None:
         """
         Places an information message into the queue and the logger.
