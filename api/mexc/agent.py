@@ -1,3 +1,6 @@
+from datetime import datetime, timezone
+from typing import Union
+
 import services as service
 from api.errors import Error
 from api.http import Send
@@ -146,4 +149,9 @@ class Agent(Mexc):
         """
         Not used for Mexc.
         """
+        return ""
+
+    def trading_history(
+        self, histCount: int, start_time: datetime = None, funding: bool = False
+    ) -> Union[dict, str]:
         return ""

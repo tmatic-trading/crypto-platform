@@ -126,6 +126,8 @@ class Init(WS, Variables):
         history = WS.trading_history(
             self, histCount=count_val, start_time=last_history_time
         )
+        if isinstance(history, str):
+            return "Error"
         his_data = history["data"]
         if isinstance(his_data, list):
             if his_data:

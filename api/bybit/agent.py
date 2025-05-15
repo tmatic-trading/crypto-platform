@@ -263,7 +263,7 @@ class Agent(Bybit):
                         path="get_executions",
                     )
                     success[num] = error
-                    return
+                    return service.unexpected_error(self)
 
                 cursor = data["result"]["nextPageCursor"]
                 res = data["result"]["list"]
@@ -338,7 +338,7 @@ class Agent(Bybit):
             for error in success:
                 if error:
                     self.logNumFatal = error
-                    return error
+                    return service.unexpected_error(self)
             self.logger.info(
                 "Trading history data, received: "
                 + str(len(trade_history))

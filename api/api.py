@@ -291,12 +291,18 @@ class WS(Variables):
         res = Agents[self.name].value.trading_history(
             self, histCount=histCount, start_time=start_time
         )
-        message = (
-            "From the trading history received: " + str(res["length"]) + " records"
-        )
-        WS._put_message(self, message=message)
+        if isinstance(res, str):
+            message = "Error loading trading history. Reboot."
+            WS._put_message(self, message=message, warning=True)
 
-        return res
+            return res
+        else:
+            message = (
+                "From the trading history received: " + str(res["length"]) + " records"
+            )
+            WS._put_message(self, message=message)
+
+            return res
 
     def open_orders(self: Markets) -> str:
         """

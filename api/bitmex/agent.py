@@ -394,7 +394,7 @@ class Agent(Bitmex):
                     )
             return {"data": spot_not_included, "length": len(res)}
         else:
-            res  # error type
+            return service.unexpected_error(self)
 
     def open_orders(self) -> str:
         path = Listing.OPEN_ORDERS

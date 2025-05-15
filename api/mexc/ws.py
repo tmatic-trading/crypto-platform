@@ -263,7 +263,7 @@ class Mexc(Variables):
         # )
 
     def _update_ticker(self, values: dict) -> None:
-        print("_____________callback ticker", values)
+        # print("_____________callback ticker", values)
         symbol = (self.ticker[values["symbol"]], self.name)
         instrument = self.Instrument[symbol]
         instrument.volume24h = values["volume24"]
@@ -297,6 +297,7 @@ class Mexc(Variables):
                 values["data"]["bids"],
             )
         )
+
     def _put_message(self, message: str, warning=None, info=True) -> None:
         """
         Places an information message into the queue and the logger.
