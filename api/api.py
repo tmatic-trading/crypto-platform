@@ -67,6 +67,8 @@ class WS(Variables):
         if success["open_orders"]:
             self.logger.error(self.name + ": error occurred while loading open_orders.")
             return service.unexpected_error(self)
+        
+
 
         threads = []
         success = {}

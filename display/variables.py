@@ -1670,6 +1670,8 @@ def root_dimensions(event):
         now_x = Variables.root.winfo_x()
         now_y = Variables.root.winfo_y()
         if now_width != Variables.pref_params["ROOT_WIDTH"]:
+            if now_width < 1000:
+                now_width = 1000
             service.set_dotenv(
                 dotenv_path=var.preferences,
                 key="ROOT_WIDTH",
@@ -1677,6 +1679,8 @@ def root_dimensions(event):
             )
             Variables.pref_params["ROOT_WIDTH"] = now_width
         if now_height != Variables.pref_params["ROOT_HEIGHT"]:
+            if now_height < 600:
+                now_height = 600
             service.set_dotenv(
                 dotenv_path=var.preferences,
                 key="ROOT_HEIGHT",

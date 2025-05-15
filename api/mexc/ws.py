@@ -51,7 +51,11 @@ class Mexc(Variables):
         # menu to classify instruments into categories and currencies.
         self.api_auth = API_auth  # Generates api key headers and signature.
         self.get_error = ErrorStatus  # Error codes.
-        self.subscriptions = dict()
+        self.response = dict()
+        self.subscriptions = set()
+        self.callback_directory = dict()
+        self.depth_sub = "sub.depth.full"
+        self.depth_push = "push.depth.full"
 
     def setup_session(self):
         """
@@ -87,9 +91,13 @@ class Mexc(Variables):
 
     def _on_message(self, ws, message):
         message = json.loads(message)
-        print("__________on_message", message, type(message))
-        if message["channel"] in self.subscriptions:
-            self.subscriptions[message["channel"]] = message["data"]
+        print("__________on_message", message["channel"])
+        if message["channel"] == "push.ticker":
+            self.callback_directory["push.ticker"](values=message["data"])
+        elif message["channel"] == self.depth_push:
+            self.callback_directory[self.depth_push](values=message["data"])
+        elif message["channel"] in self.response:
+            self.response[message["channel"]] = message["data"]
 
     def _on_error(self, ws, error):
         """
@@ -112,7 +120,7 @@ class Mexc(Variables):
             secret=self.api_secret,
             tstamp=tstamp,
         )
-        self.subscriptions["rs.login"] = "Pending"
+        self.response["rs.login"] = "Pending"
         self.ws.send(
             json.dumps(
                 {
@@ -130,15 +138,15 @@ class Mexc(Variables):
         while time_out >= 0:
             time.sleep(slp)
             time_out -= slp
-            if self.subscriptions["rs.login"] == "success":
-                del self.subscriptions["rs.login"]
+            if self.response["rs.login"] == "success":
+                del self.response["rs.login"]
                 self.logger.info("WebSocket authentication successful.")
                 return
-            elif self.subscriptions["rs.login"] != "Pending":
+            elif self.response["rs.login"] != "Pending":
                 message = (
-                    "WebSocket authentication error. " + self.subscriptions["rs.login"]
+                    "WebSocket authentication error. " + self.response["rs.login"]
                 )
-                del self.subscriptions["rs.login"]
+                del self.response["rs.login"]
                 self._put_message(message=message)
                 return "error"
 
@@ -174,11 +182,9 @@ class Mexc(Variables):
             return self.logNumFatal
 
     def _subscribe(self):
-        self.subscriptions = list()
-        params = {"method": "sub.ticker", "param": {"symbol": "BTC_USDT"}}
-        params = {"method": "ping"}
-        self.ws.send(json.dumps(params))
-        print("____________________________subs")
+
+        self._subscribe_symbols()
+
 
         # try:
         #     if not self.logNumFatal:
@@ -204,6 +210,100 @@ class Mexc(Variables):
         #         self.pinging = "pong"
 
         return ""
+    
+    def _subscribe_symbols(self) -> None:
+        """
+        Orderbook and ticker subscription. Called at boot or reboot time.
+        """        
+        for symbol in self.symbol_list:
+
+            # Ticker
+
+            instrument = self.Instrument[symbol]
+            params = {"method": "sub.ticker", "param": {"symbol": instrument.ticker}}
+            self.ws.send(json.dumps(params))
+            channel = "push.ticker"
+            self.subscriptions.add((channel, instrument.ticker))
+            self.callback_directory[channel] = self._update_ticker
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Ticker", CHANNEL=instrument.ticker
+            )
+            self._put_message(message=message)
+
+            # Orderbook
+            
+            params = {"method": self.depth_sub, "param": {"symbol": instrument.ticker}}
+            if self.depth_sub == "sub.depth.full":
+                params["param"]["limit"] = 10
+            self.ws.send(json.dumps(params))
+            channel = self.depth_push
+            self.subscriptions.add((channel, instrument.ticker))
+            self.callback_directory[channel] = self._update_orderbook
+            message = Message.WEBSOCKET_SUBSCRIPTION.format(
+                NAME="Orderbook", CHANNEL=instrument.ticker
+            )
+            self._put_message(message=message)
+        # channels = list()
+        # for symbol in symbol_list:
+        #     instrument = self.Instrument[symbol]
+        #     ticker = instrument.ticker
+        #     if ticker != "option!":
+        #         channel = f"ticker.{ticker}.100ms"
+        #         channels.append(channel)
+        #     else:
+        #         lst = service.select_option_strikes(
+        #             index=self.instrument_index, instrument=instrument
+        #         )
+        #         for option in lst:
+        #             channel = f"ticker.{option}.100ms"
+        #             channels.append(channel)
+        # message = Message.WEBSOCKET_SUBSCRIPTION.format(
+        #     NAME="Ticker", CHANNEL=str(channels)
+        # )
+        # self._put_message(message=message)
+        # self.__subscribe_channels(
+        #     type="public",
+        #     channels=channels,
+        #     id="subscription",
+        #     callback=self.__update_ticker,
+        # )
+
+    def _update_ticker(self, values: dict) -> None:
+        print("_____________callback ticker", values)
+        pass
+        # symbol = (self.ticker[values["instrument_name"]], self.name)
+        # instrument = self.Instrument[symbol]
+        # instrument.volume24h = values["stats"]["volume"]
+        # if "funding_8h" in values:
+        #     instrument.fundingRate = values["funding_8h"] * 100
+        # if "open_interest" in values:
+        #     instrument.openInterest = values["open_interest"]
+        # if "option" in instrument.category:
+        #     instrument.delta = values["greeks"]["delta"]
+        #     instrument.vega = values["greeks"]["vega"]
+        #     instrument.theta = values["greeks"]["theta"]
+        #     instrument.gamma = values["greeks"]["gamma"]
+        #     instrument.rho = values["greeks"]["rho"]
+        #     instrument.bidIv = values["bid_iv"]
+        #     instrument.askIv = values["ask_iv"]
+        # instrument.bidPrice = values["best_bid_price"]
+        # instrument.askPrice = values["best_ask_price"]
+        # instrument.bidSize = values["best_bid_amount"]
+        # instrument.askSize = values["best_ask_amount"]
+        # instrument.markPrice = values["mark_price"]
+        # instrument.state = values["state"]
+        # if values["state"] == "open":
+        #     instrument.state = "Open"
+
+    def _update_orderbook(self, values: dict) -> None:
+        print("_____________callback orderbook", values)
+        pass
+        # symbol = (self.ticker[values["instrument_name"]], self.name)
+        # instrument = self.Instrument[symbol]
+        # instrument.asks = values["asks"]
+        # instrument.bids = values["bids"]
+        # if symbol in self.klines:
+        #     service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
 
     def _put_message(self, message: str, warning=None, info=True) -> None:
         """
