@@ -39,13 +39,15 @@ class Deribit(Variables):
         Setup.variables(self)
         self.session = requests.Session()
         self.define_category = {
-            "future_linear": "future_linear",
+            "future_linear": "future_linear",            
             "future_reversed": "future_reversed",
             "future_combo_reversed": "future_combo_rev",
+            "future_combo_linear": "future_combo_lin",
             "spot_linear": "spot_linear",
             "option_linear": "option_linear",
             "option_reversed": "option_reversed",
             "option_combo_reversed": "option_combo_rev",
+            "option_combo_linear": "option_combo_lin",
         }
         self.timefrs = OrderedDict(
             [
