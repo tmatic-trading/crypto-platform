@@ -39,7 +39,7 @@ class Deribit(Variables):
         Setup.variables(self)
         self.session = requests.Session()
         self.define_category = {
-            "future_linear": "future_linear",            
+            "future_linear": "future_linear",
             "future_reversed": "future_reversed",
             "future_combo_reversed": "future_combo_rev",
             "future_combo_linear": "future_combo_lin",

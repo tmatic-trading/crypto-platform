@@ -119,6 +119,7 @@ class Variables:
     orders = dict()
     timeframe_human_format = OrderedDict(
         [
+            ("tick", None),
             ("1min", 1),
             ("2min", 2),
             ("3min", 3),

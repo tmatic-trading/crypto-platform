@@ -779,68 +779,64 @@ class Function(WS, Variables):
         """
         for symbol, kline in self.klines.items():
             for timefr, values in kline.items():
-                timefr_minutes = var.timeframe_human_format[timefr]
-                if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
-                    instrument = self.Instrument[symbol]
-                    bot_list = list()
-                    for bot_name in values["robots"]:
-                        bot = Bots[bot_name]
-                        if bot.timefr == timefr:
-                            if not bot.error_message:
-                                if bot.state != "Disconnected":
-                                    bot_list.append(bot_name)
-                                    service.call_bot_function(
-                                        function=robo.update_bot[bot_name],
-                                        bot_name=bot_name,
-                                    )
-                    run_bots(bot_list=bot_list)
-                    Function.save_kline_data(
-                        self,
-                        row=values["data"][-1],
-                        symbol=symbol,
-                        timefr=timefr,
-                    )
-                    next_minute = int(utcnow.minute / timefr_minutes) * timefr_minutes
-                    dt_now = utcnow.replace(minute=next_minute, second=0, microsecond=0)
-                    try:
-                        ask = instrument.asks[0][0]
-                    except IndexError:
-                        message = ErrorMessage.EMPTY_ORDERBOOK_DATA_KLINE.format(
-                            SIDE="ask",
-                            SYMBOL=symbol,
-                            PRICE=values["data"][-1]["open_ask"],
+                if timefr != "tick":
+                    timefr_minutes = var.timeframe_human_format[timefr]
+                    if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
+                        instrument = self.Instrument[symbol]
+                        service.update_and_run_bots(
+                            bots=values["robots"], timefr=timefr
                         )
-                        _put_message(
-                            market=instrument.market, message=message, warning=True
+                        Function.save_kline_data(
+                            self,
+                            row=values["data"][-1],
+                            symbol=symbol,
+                            timefr=timefr,
                         )
-                        ask = values["data"][-1]["open_ask"]
-                    try:
-                        bid = instrument.bids[0][0]
-                    except IndexError:
-                        message = ErrorMessage.EMPTY_ORDERBOOK_DATA_KLINE.format(
-                            SIDE="bid",
-                            SYMBOL=symbol,
-                            PRICE=values["data"][-1]["open_bid"],
+                        next_minute = (
+                            int(utcnow.minute / timefr_minutes) * timefr_minutes
                         )
-                        _put_message(
-                            market=instrument.market, message=message, warning=True
+                        dt_now = utcnow.replace(
+                            minute=next_minute, second=0, microsecond=0
                         )
-                        bid = values["data"][-1]["open_bid"]
-                    values["data"].append(
-                        {
-                            "date": (utcnow.year - 2000) * 10000
-                            + utcnow.month * 100
-                            + utcnow.day,
-                            "time": utcnow.hour * 100 + utcnow.minute,
-                            "open_bid": bid,
-                            "open_ask": ask,
-                            "hi": ask,
-                            "lo": bid,
-                            "funding": instrument.fundingRate,
-                            "datetime": dt_now,
-                        }
-                    )
-                    values["time"] = dt_now
+                        try:
+                            ask = instrument.asks[0][0]
+                        except IndexError:
+                            message = ErrorMessage.EMPTY_ORDERBOOK_DATA_KLINE.format(
+                                SIDE="ask",
+                                SYMBOL=symbol,
+                                PRICE=values["data"][-1]["open_ask"],
+                            )
+                            _put_message(
+                                market=instrument.market, message=message, warning=True
+                            )
+                            ask = values["data"][-1]["open_ask"]
+                        try:
+                            bid = instrument.bids[0][0]
+                        except IndexError:
+                            message = ErrorMessage.EMPTY_ORDERBOOK_DATA_KLINE.format(
+                                SIDE="bid",
+                                SYMBOL=symbol,
+                                PRICE=values["data"][-1]["open_bid"],
+                            )
+                            _put_message(
+                                market=instrument.market, message=message, warning=True
+                            )
+                            bid = values["data"][-1]["open_bid"]
+                        values["data"].append(
+                            {
+                                "date": (utcnow.year - 2000) * 10000
+                                + utcnow.month * 100
+                                + utcnow.day,
+                                "time": utcnow.hour * 100 + utcnow.minute,
+                                "open_bid": bid,
+                                "open_ask": ask,
+                                "hi": ask,
+                                "lo": bid,
+                                "funding": instrument.fundingRate,
+                                "datetime": dt_now,
+                            }
+                        )
+                        values["time"] = dt_now
 
     def refresh_on_screen(self: Markets, utc: datetime) -> None:
         """
@@ -2679,17 +2675,17 @@ def clear_tables():
     var.lock_display.release()
 
 
-def run_bot_thread(bot_name):
-    service.call_bot_function(function=robo.run_bot[bot_name], bot_name=bot_name)
+# def run_bot_thread(bot_name):
+#     service.call_bot_function(function=robo.run_bot[bot_name], bot_name=bot_name)
 
 
-def run_bots(bot_list: list) -> None:
-    for bot_name in bot_list:
-        t = threading.Thread(
-            target=run_bot_thread,
-            args=(bot_name,),
-        )
-        t.start()
+# def run_bots(bot_list: list) -> None:
+#     for bot_name in bot_list:
+#         t = threading.Thread(
+#             target=run_bot_thread,
+#             args=(bot_name,),
+#         )
+#         t.start()
 
 
 """def target_time(timeframe_sec):
@@ -2820,6 +2816,8 @@ def load_klines(
     target = datetime.now(tz=timezone.utc)
     target = target.replace(second=0, microsecond=0)
     timefr_minutes = var.timeframe_human_format[timefr]
+    if not timefr_minutes:  # Bot uses tick data
+        return timefr
     original = timefr_minutes
     prev = 1
     for tf_min in reversed(self.timefrs.keys()):
@@ -2920,6 +2918,10 @@ def add_new_kline(self: Markets, symbol: tuple, bot_name: str, timefr: str) -> N
         except KeyError:
             self.klines[symbol] = dict()
             append_new()
+    if timefr == "tick":
+        self.klines[symbol][timefr]["data"] = dict()
+        self.klines[symbol][timefr]["data"]["bid"] = None
+        self.klines[symbol][timefr]["data"]["ask"] = None
 
 
 def init_market_klines(

@@ -1,5 +1,6 @@
 import os
 import platform
+import threading
 import time
 import tkinter as tk
 import traceback
@@ -9,6 +10,7 @@ from typing import Callable, Union
 
 from dotenv import dotenv_values, set_key
 
+from botinit.variables import Variables as robo
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
@@ -429,11 +431,15 @@ def fill_bot_position(
 
 def timeframe_seconds(timefr: str) -> int:
     """
-    Converts a time interval in a string to seconds.
+    Converts a time interval in a string to seconds. Ignore if time interval
+    is 'tick'.
     """
     timefr_minutes = var.timeframe_human_format[timefr]
 
-    return timefr_minutes * 60
+    if timefr_minutes:
+        return timefr_minutes * 60
+    else:
+        return timefr_minutes
 
 
 def bot_error(bot: BotData) -> str:
@@ -448,7 +454,9 @@ def bot_error(bot: BotData) -> str:
 def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
     """
     Updates the high and low values of kline data when websocket updates the
-    order book.
+    order book. If the time interval is 'tick', then
+        1) The bid and ask are updated.
+        2) The bot strategy is called if the bid or ask value changes.
 
     Parameters
     ----------
@@ -472,10 +480,16 @@ def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
             return
         for timefr, values in ws.klines[symbol].items():
             if values["data"]:
-                if ask > values["data"][-1]["hi"]:
-                    values["data"][-1]["hi"] = ask
-                if bid < values["data"][-1]["lo"]:
-                    values["data"][-1]["lo"] = bid
+                if timefr == "tick":
+                    if bid != values["data"]["bid"] or ask != values["data"]["ask"]:
+                        update_and_run_bots(bots=values["robots"], timefr=timefr)
+                    values["data"]["bid"] = bid
+                    values["data"]["ask"] = ask
+                else:
+                    if ask > values["data"][-1]["hi"]:
+                        values["data"][-1]["hi"] = ask
+                    if bid < values["data"][-1]["lo"]:
+                        values["data"][-1]["lo"] = bid
 
             # Processing the BreakDown indicator
 
@@ -964,6 +978,35 @@ def call_bot_function(function: Union[Callable, str], bot_name: str):
             }
         )
         var.logger.error(error)
+
+
+def run_bot_thread(bot_name):
+    call_bot_function(function=robo.run_bot[bot_name], bot_name=bot_name)
+
+
+def run_bots(bot_list: list) -> None:
+    for bot_name in bot_list:
+        t = threading.Thread(
+            target=run_bot_thread,
+            args=(bot_name,),
+        )
+        t.start()
+
+
+def update_and_run_bots(bots: set, timefr: str):
+    bot_list = list()
+    for bot_name in bots:
+        bot = Bots[bot_name]
+        if bot.timefr == timefr:
+            if not bot.error_message:
+                if bot.state != "Disconnected":
+                    if bot.state == "Active":
+                        bot_list.append(bot_name)
+                    call_bot_function(
+                        function=robo.update_bot[bot_name],
+                        bot_name=bot_name,
+                    )
+    run_bots(bot_list=bot_list)
 
 
 def init_bot(
