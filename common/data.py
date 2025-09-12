@@ -223,6 +223,7 @@ class BotData:
     iter: int = 0
     strategy_log: str
     multitrade: str = ""
+    block: bool = False
 
     def __iter__(self):
         return Ret.iter(self)

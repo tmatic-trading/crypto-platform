@@ -1,5 +1,6 @@
 import inspect
 import platform
+import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Callable, Union
@@ -31,6 +32,14 @@ class Bot(BotData):
         bot = Bots[bot_name]
         self.__dict__ = bot.__dict__
 
+    def wait(self) -> None:
+        """
+        Waiting for the previous operation to complete on a specific bot.
+        """
+        while self.block:
+            time.sleep(0.05)
+        self.block = True
+
     def remove(self, clOrdID: str = "") -> None:
         """
         Removes the open order by its clOrdID.
@@ -48,6 +57,7 @@ class Bot(BotData):
             self._backtest_remove(clOrdID=clOrdID)
             return
 
+        self.wait()
         if self.state == "Active" and disp.f9 == "ON":
             ord = var.orders[self.name]
             lst = []
@@ -73,6 +83,7 @@ class Bot(BotData):
                             "bot_log": True,
                         }
                     )
+        self.block = False
 
     def replace(self, clOrdID: str, price: float) -> Union[str, None]:
         """
@@ -96,6 +107,7 @@ class Bot(BotData):
             self._backtest_replace(clOrdID=clOrdID, price=price)
             return clOrdID
 
+        self.wait()
         if self.state == "Active" and disp.f9 == "ON":
             ord = var.orders[self.name]
             if clOrdID in ord:
@@ -111,6 +123,7 @@ class Bot(BotData):
                     clOrdID=clOrdID,
                 )
                 if isinstance(res, dict):
+                    self.block = False
                     return clOrdID
             else:
                 message = "Replacing. Order with clOrdID=" + clOrdID + " not found."
@@ -124,6 +137,7 @@ class Bot(BotData):
                         "bot_log": True,
                     }
                 )
+        self.block = False
 
     def orders(
         self, side: str = "", descend=False, in_list=True
@@ -149,6 +163,7 @@ class Bot(BotData):
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
+        self.wait()
         ord = var.orders[self.name].values()
         if not in_list:
             filtered = OrderedDict()
@@ -170,6 +185,7 @@ class Bot(BotData):
                         filtered.append(value)
                 else:
                     filtered.append(value)
+        self.block = False
 
         return filtered
 
@@ -205,6 +221,7 @@ class Tool(Instrument):
         cancel: bool,
         ordType: str,
     ):
+        Bot.wait(bot)
         res = None
         if price:
             price = service.ticksize_rounding(price=price, ticksize=self.tickSize)
@@ -247,6 +264,7 @@ class Tool(Instrument):
                 self._remove_orders(orders=var.orders[bot.name], side="Buy")
             elif side == "Buy":
                 self._remove_orders(orders=var.orders[bot.name], side="Sell")
+        bot.block = False
 
         if isinstance(res, dict):
             return clOrdID
@@ -531,7 +549,9 @@ class Tool(Instrument):
         float
             The bot position value for the instrument.
         """
+        Bot.wait(bot)
         position = self._get_position(bot_name=bot.name)
+        bot.block = False
 
         return position["position"]
 
@@ -562,9 +582,11 @@ class Tool(Instrument):
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
+        Bot.wait(bot)
         filtered = self._filter_by_side(
             orders=var.orders[bot.name], side=side, descend=descend, in_list=in_list
         )
+        bot.block = False
 
         return filtered
 
