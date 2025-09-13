@@ -935,14 +935,17 @@ Use the ```remove()``` method to delete an open order by its clOrdID.
 
 ```Python
 """
+Removes the open order by its clOrdID or symbol.
+
 Parameters:
------------
-bot: Bot
-    An instance of a bot in the Bot class.
+-----------x`
 clOrdID: str
-    Order ID. Example: "1348642035.Super".
-    If this parameter is omitted, all orders for this bot will be
-    deleted.
+    Order ID. Example: "1348642035.Super"
+    If this parameter is omitted, orders for this bot will be
+    deleted by the symbol parameter.
+symbol: str
+    Example: "ETH-PERPETUAL". If this parameter is omitted,
+    all orders for this bot will be deleted.
 """
 ```
 

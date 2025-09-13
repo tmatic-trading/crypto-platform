@@ -50,16 +50,19 @@ class Bot(BotData):
         while self.block[0] != count:
             time.sleep(0.05)
 
-    def remove(self, clOrdID: str = "") -> None:
+    def remove(self, clOrdID: str = "", symbol: str = "") -> None:
         """
-        Removes the open order by its clOrdID.
+        Removes the open order by its clOrdID or symbol.
 
         Parameters:
         -----------
         clOrdID: str
             Order ID. Example: "1348642035.Super"
-            If this parameter is omitted, all orders for this bot will be
-            deleted.
+            If this parameter is omitted, orders for this bot will be
+            deleted by the symbol parameter.
+        symbol: str
+            Example: "ETH-PERPETUAL". If this parameter is omitted,
+            all orders for this bot will be deleted.
         """
         if var.backtest:
             self._backtest_remove(clOrdID=clOrdID)
@@ -72,7 +75,12 @@ class Bot(BotData):
             lst = []
             if not clOrdID:
                 for clOrdID in ord:
-                    lst.append(clOrdID)
+                    if symbol:
+                        s = (symbol, ord[clOrdID]["market"])
+                        if s == ord[clOrdID]["symbol"]:
+                            lst.append(clOrdID)
+                    else:
+                        lst.append(clOrdID)
             else:
                 lst.append(clOrdID)
             for clOrdID in lst:
