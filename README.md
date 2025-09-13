@@ -113,7 +113,7 @@ Explanations for the columns of the SQLite `robots` table:
 * EMI - bot identity name.
 * SORT - allows you to do your own sorting when reading from the database.
 * DAT - time the current row was written to the database.
-* TIMEFR - timeframe that the bot uses. Possible values at the moment: "1min", "5min", "1h".
+* TIMEFR - timeframe that the bot uses. Possible values at the moment: "tick", "1min", "2min", "3min", "5min", "10min", "15min", "20min", "30min", "1h", "2h", "3h", "4h", "6h", "12h", "1D".
 * STATE - Possible values: "Disconnected", "Suspended" or "Active".
 * UPDATED - update time for bot parameters or strategy.py file.
 
