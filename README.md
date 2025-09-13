@@ -938,7 +938,11 @@ Use the ```remove()``` method to delete an open order by its clOrdID.
 Removes the open order by its clOrdID or symbol.
 
 Parameters:
------------x`
+-----------`
+Removes the open order by its clOrdID or symbol.
+
+Parameters:
+-----------
 clOrdID: str
     Order ID. Example: "1348642035.Super"
     If this parameter is omitted, orders for this bot will be

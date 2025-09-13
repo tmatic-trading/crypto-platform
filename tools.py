@@ -76,8 +76,8 @@ class Bot(BotData):
             if not clOrdID:
                 for clOrdID in ord:
                     if symbol:
-                        s = (symbol, ord[clOrdID]["market"])
-                        if s == ord[clOrdID]["symbol"]:
+                        smb = (symbol, ord[clOrdID]["market"])
+                        if smb == ord[clOrdID]["symbol"]:
                             lst.append(clOrdID)
                     else:
                         lst.append(clOrdID)
@@ -156,7 +156,7 @@ class Bot(BotData):
         self.block.pop(0)
 
     def orders(
-        self, side: str = "", descend=False, in_list=True
+        self, side: str = "", descend=False, in_list=True, symbol: str = ""
     ) -> Union[OrderedDict, list]:
         """
         Get the bot orders filtered by side.
@@ -172,6 +172,8 @@ class Bot(BotData):
         in_list: bool
             If True, the data is returned in a list, otherwise an OrderedDict
             is returned where the key is clOrdID.
+        symbol: str
+            Return orders by a specific symbol.
 
         Returns
         -------
@@ -187,21 +189,27 @@ class Bot(BotData):
             if descend:
                 ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
             for value in ord:
+                smb = (symbol, value["market"])
                 if side:
                     if value["side"] == side:
-                        filtered[value["clOrdID"]] = value
+                        if not symbol or smb == value["symbol"]:
+                            filtered[value["clOrdID"]] = value
                 else:
-                    filtered[value["clOrdID"]] = value
+                    if not symbol or smb == value["symbol"]:
+                        filtered[value["clOrdID"]] = value
         else:
             filtered = list()
             if descend:
                 ord = sorted(ord, key=lambda x: x["transactTime"], reverse=True)
             for value in ord:
+                smb = (symbol, value["market"])
                 if side:
                     if value["side"] == side:
-                        filtered.append(value)
+                        if not symbol or smb == value["symbol"]:
+                            filtered.append(value)
                 else:
-                    filtered.append(value)
+                    if not symbol or smb == value["symbol"]:
+                        filtered.append(value)
         self.block.pop(0)
 
         return filtered
