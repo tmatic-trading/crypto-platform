@@ -628,6 +628,7 @@ class Tool(Instrument):
             The line with the latest date is designated as -1, the
             line before the latest is designated -2, and so on. If args is
             empty, all kline are returned in the "data" key.
+            If timefr is "tck", the arguments are ignored.
 
         Returns
         -------
@@ -636,10 +637,13 @@ class Tool(Instrument):
         """
         if not var.backtest:
             ws = Markets[self.market]
-            if not args:
-                values = {"data": ws.klines[self.symbol_tuple][timefr]["data"]}
+            if timefr == "tick":
+                values = dict()
             else:
-                values = ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
+                if not args:
+                    values = {"data": ws.klines[self.symbol_tuple][timefr]["data"]}
+                else:
+                    values = ws.klines[self.symbol_tuple][timefr]["data"][args[0]]
             try:
                 values["bid"] = self.instrument.bids[0][0]
             except IndexError as exception:
