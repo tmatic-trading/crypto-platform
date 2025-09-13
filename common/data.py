@@ -223,7 +223,11 @@ class BotData:
     iter: int = 0
     strategy_log: str
     multitrade: str = ""
-    block: bool = False
+
+    # Technical. Ensures the order in which transactions are executed. See
+    # tools.py wait().
+    block: list = []
+    count: int = 0
 
     def __iter__(self):
         return Ret.iter(self)

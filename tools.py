@@ -32,13 +32,23 @@ class Bot(BotData):
         bot = Bots[bot_name]
         self.__dict__ = bot.__dict__
 
-    def wait(self) -> None:
+    def wait(self, count: int) -> None:
         """
         Waiting for the previous operation to complete on a specific bot.
+        Sometimes we send an order to the exchange, and the previous one is
+        still being processed. Thus, the current order depends on the result
+        of the previous operations. Since each new operation is performed in
+        a separate thread, this thread will be suspended until the previous
+        operation is completed.
+
+        Parameters:
+        -----------
+        count: int
+            The serial number of each bot's operation.
         """
-        while self.block:
+        self.block.append(self.count)
+        while self.block[0] != count:
             time.sleep(0.05)
-        self.block = True
 
     def remove(self, clOrdID: str = "") -> None:
         """
@@ -46,8 +56,6 @@ class Bot(BotData):
 
         Parameters:
         -----------
-        bot: Bot
-            An instance of a bot in the Bot class.
         clOrdID: str
             Order ID. Example: "1348642035.Super"
             If this parameter is omitted, all orders for this bot will be
@@ -57,7 +65,8 @@ class Bot(BotData):
             self._backtest_remove(clOrdID=clOrdID)
             return
 
-        self.wait()
+        self.count += 1
+        self.wait(self.count)
         if self.state == "Active" and disp.f9 == "ON":
             ord = var.orders[self.name]
             lst = []
@@ -83,7 +92,7 @@ class Bot(BotData):
                             "bot_log": True,
                         }
                     )
-        self.block = False
+        self.block.pop(0)
 
     def replace(self, clOrdID: str, price: float) -> Union[str, None]:
         """
@@ -91,8 +100,6 @@ class Bot(BotData):
 
         Parameters
         ----------
-        bot: Bot
-            An instance of a bot in the Bot class.
         clOrdID: str
             Order ID. Order ID. Example: "1348642035.Super"
         price: float
@@ -107,7 +114,8 @@ class Bot(BotData):
             self._backtest_replace(clOrdID=clOrdID, price=price)
             return clOrdID
 
-        self.wait()
+        self.count += 1
+        self.wait(self.count)
         if self.state == "Active" and disp.f9 == "ON":
             ord = var.orders[self.name]
             if clOrdID in ord:
@@ -123,7 +131,7 @@ class Bot(BotData):
                     clOrdID=clOrdID,
                 )
                 if isinstance(res, dict):
-                    self.block = False
+                    self.block.pop(0)
                     return clOrdID
             else:
                 message = "Replacing. Order with clOrdID=" + clOrdID + " not found."
@@ -137,7 +145,7 @@ class Bot(BotData):
                         "bot_log": True,
                     }
                 )
-        self.block = False
+        self.block.pop(0)
 
     def orders(
         self, side: str = "", descend=False, in_list=True
@@ -163,7 +171,8 @@ class Bot(BotData):
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
-        self.wait()
+        self.count += 1
+        self.wait(self.count)
         ord = var.orders[self.name].values()
         if not in_list:
             filtered = OrderedDict()
@@ -185,7 +194,7 @@ class Bot(BotData):
                         filtered.append(value)
                 else:
                     filtered.append(value)
-        self.block = False
+        self.block.pop(0)
 
         return filtered
 
@@ -221,7 +230,8 @@ class Tool(Instrument):
         cancel: bool,
         ordType: str,
     ):
-        Bot.wait(bot)
+        bot.count += 1
+        Bot.wait(bot, bot.count)
         res = None
         if price:
             price = service.ticksize_rounding(price=price, ticksize=self.tickSize)
@@ -264,7 +274,7 @@ class Tool(Instrument):
                 self._remove_orders(orders=var.orders[bot.name], side="Buy")
             elif side == "Buy":
                 self._remove_orders(orders=var.orders[bot.name], side="Sell")
-        bot.block = False
+        bot.block.pop(0)
 
         if isinstance(res, dict):
             return clOrdID
@@ -549,9 +559,10 @@ class Tool(Instrument):
         float
             The bot position value for the instrument.
         """
-        Bot.wait(bot)
+        bot.count += 1
+        Bot.wait(bot, bot.count)
         position = self._get_position(bot_name=bot.name)
-        bot.block = False
+        bot.block.pop(0)
 
         return position["position"]
 
@@ -582,11 +593,12 @@ class Tool(Instrument):
             Orders are sorted by ``transactTime`` in the order specified in
             the descend parameter. The OrderedDict key is the clOrdID value.
         """
-        Bot.wait(bot)
+        bot.count += 1
+        Bot.wait(bot, bot.count)
         filtered = self._filter_by_side(
             orders=var.orders[bot.name], side=side, descend=descend, in_list=in_list
         )
-        bot.block = False
+        bot.block.pop(0)
 
         return filtered
 
