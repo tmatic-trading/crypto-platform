@@ -773,6 +773,32 @@ class Function(WS, Variables):
                 number = number + "0"
         return number
 
+    def calculate_bot_pnl(self, bot_positions: dict):
+        for symbol, position in bot_positions.items():
+            pnl = Function.calculate_pnl(
+                Markets[position["market"]],
+                symbol=symbol,
+                qty=position["position"],
+                sumreal=position["sumreal"],
+            )
+            position["pnl"] = pnl
+
+    def update_and_run_bots(self, bots: set, timefr: str):
+        bot_list = list()
+        for bot_name in bots:
+            bot = Bots[bot_name]
+            if bot.timefr == timefr:
+                if not bot.error_message:
+                    if bot.state != "Disconnected":
+                        if bot.state == "Active":
+                            bot_list.append(bot_name)
+                            Function.calculate_bot_pnl(self, bot.bot_positions)
+                        service.call_bot_function(
+                            function=robo.update_bot[bot_name],
+                            bot_name=bot_name,
+                        )
+        service.run_bots(bot_list=bot_list)
+
     def kline_update_market(self: Markets, utcnow: datetime) -> None:
         """
         Processing timeframes.
@@ -783,8 +809,8 @@ class Function(WS, Variables):
                     timefr_minutes = var.timeframe_human_format[timefr]
                     if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
                         instrument = self.Instrument[symbol]
-                        service.update_and_run_bots(
-                            bots=values["robots"], timefr=timefr
+                        Function.update_and_run_bots(
+                            self, bots=values["robots"], timefr=timefr
                         )
                         Function.save_kline_data(
                             self,
@@ -1771,6 +1797,66 @@ class Function(WS, Variables):
             pnl = "no_such_symbol"
 
         return pnl
+
+    def kline_hi_lo_values(self: Markets, symbol: tuple, instrument: Instrument):
+        """
+        Updates the high and low values of kline data when websocket updates the
+        order book. If the time interval is 'tick', then
+            1) The bid and ask are updated.
+            2) The bot strategy is called if the bid or ask value changes.
+
+        Parameters
+        ----------
+        ws: Markets
+            Bitmex, Bybit, Deribit
+        symbol: tuple
+            Instrument symbol in (symbol, market name) format, e.g.
+            ("BTCUSD", "Bybit").
+        instrument: Instrument
+            The Instrument instance for this symbol.
+        """
+        if symbol in self.klines:
+            try:
+                ask = instrument.asks[0][0]
+                bid = instrument.bids[0][0]
+            except Exception:
+                """
+                The order book is probably empty.
+                """
+                return
+            for timefr, values in self.klines[symbol].items():
+                if values["data"]:
+                    if timefr == "tick":
+                        if bid != values["data"]["bid"] or ask != values["data"]["ask"]:
+                            Function.update_and_run_bots(
+                                self, bots=values["robots"], timefr=timefr
+                            )
+                        values["data"]["bid"] = bid
+                        values["data"]["ask"] = ask
+                    else:
+                        if ask > values["data"][-1]["hi"]:
+                            values["data"][-1]["hi"] = ask
+                        if bid < values["data"][-1]["lo"]:
+                            values["data"][-1]["lo"] = bid
+
+                # Processing the BreakDown indicator
+
+                # if symbol in BreakDown.symbols:
+                #     if timefr in BreakDown.symbols[symbol]:
+                #         for parameters in BreakDown.symbols[symbol][timefr].values():
+                #             direct = parameters["first"] * (
+                #                 parameters["number"] % 2 * 2 - 1
+                #             )
+                #             if parameters["up"]:
+                #                 if direct >= 0 and ask > parameters["up"]:
+                #                     parameters["number"] += 1
+                #                     if parameters["first"] == 0:
+                #                         parameters["first"] = -1
+                #             if parameters["dn"]:
+                #                 if direct <= 0 and bid < parameters["dn"]:
+                #                     parameters["number"] += 1
+                #                     if parameters["first"] == 0:
+                #                         parameters["first"] = 1
 
 
 def form_result_line(compare):

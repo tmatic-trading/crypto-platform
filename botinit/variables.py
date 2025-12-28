@@ -5,4 +5,4 @@ class Variables:
     setup_bot = dict()
     update_bot = dict()
     activate_bot = dict()
-    CANDLESTICK_NUMBER = 150
+    CANDLESTICK_NUMBER = 500

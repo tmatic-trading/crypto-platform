@@ -203,7 +203,7 @@ class Bybit(Variables):
         instrument.asks = asks[:10]
         instrument.bids = bids[:10]
         if symbol in self.klines:
-            service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
+            self.kline_hi_lo_values(symbol=symbol, instrument=instrument)
 
     def __update_ticker(self, values: dict, category: str) -> None:
         symb = self.ticker[(values["symbol"], category)]
@@ -766,6 +766,13 @@ class Bybit(Variables):
                 self.ws[category].callback_directory.pop(arg)
 
         return ""
+
+    def kline_hi_lo_values(self, **kwargs):
+        """
+        This method is replaced by kline_hi_lo_values() from functions.py after the
+        application is launched.
+        """
+        pass
 
     @staticmethod
     def _process_unsubscription_message(message):

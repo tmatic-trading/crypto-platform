@@ -444,7 +444,7 @@ class Bitmex(Variables):
                     bid[1] /= instrument.myMultiplier
                 instrument.bids = values["bids"]
         if symbol in self.klines:
-            service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
+            self.kline_hi_lo_values(symbol=symbol, instrument=instrument)
 
     def __update_position(self, key, values: dict) -> None:
         """
@@ -544,6 +544,13 @@ class Bitmex(Variables):
             return True
 
         return False
+
+    def kline_hi_lo_values(self, **kwargs):
+        """
+        This method is replaced by kline_hi_lo_values() from functions.py after the
+        application is launched.
+        """
+        pass
 
     def _put_message(self, message: str, warning=None) -> None:
         """

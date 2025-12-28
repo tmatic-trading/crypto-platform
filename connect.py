@@ -41,6 +41,7 @@ def setup(reload=False):
     for name in var.market_list.copy():
         ws = Markets[name]
         ws.object.transaction = Function.transaction
+        ws.object.kline_hi_lo_values = Function.kline_hi_lo_values
         ws.instrument_index = OrderedDict()
         MetaInstrument.market[ws.name] = dict()
         Setup.variables(ws)

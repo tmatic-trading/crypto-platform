@@ -358,14 +358,14 @@ class Agent(Deribit):
         corrects the timestamp of the trades from the endpoint mentioned
         above for 1ms ahead. Thus after sorting, the trades from the
         ``private/get_user_trades_by_currency_and_time`` are always first.
-        If a position is opened by a bot, a record corresponding to the bot 
-        name appears in the database, and for some reason this position is 
-        closed using 'private/get_transaction_log'. This confuses the 
-        database, as 'private/get_transaction_log' does not contain a label 
-        field (clOrdID). Therefore, the bot's position will never be closed. 
-        The solution is either to fix the database by manually replacing the 
-        'EMI' and 'REFER' fields with the corresponding bot names, or to 
-        delete the database and restore the trading history without 
+        If a position is opened by a bot, a record corresponding to the bot
+        name appears in the database, and for some reason this position is
+        closed using 'private/get_transaction_log'. This confuses the
+        database, as 'private/get_transaction_log' does not contain a label
+        field (clOrdID). Therefore, the bot's position will never be closed.
+        The solution is either to fix the database by manually replacing the
+        'EMI' and 'REFER' fields with the corresponding bot names, or to
+        delete the database and restore the trading history without
         specifying bot names.
         2.
         Deribit limits non_matching_engine requests using a special scheme

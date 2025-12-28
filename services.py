@@ -137,7 +137,7 @@ def ticksize_rounding(price: float, ticksize: float) -> float:
     return number'''
 
 
-def format_number(number: Union[float, str], precision=8) -> str:
+def format_number(number: Union[float, str], precision=9) -> str:
     """
     Rounding a value from 2 to 'precision' decimal places.
     """
@@ -449,66 +449,6 @@ def bot_error(bot: BotData) -> str:
         error = bot.error_message["error_type"]
 
     return error
-
-
-def kline_hi_lo_values(ws, symbol: tuple, instrument: Instrument) -> None:
-    """
-    Updates the high and low values of kline data when websocket updates the
-    order book. If the time interval is 'tick', then
-        1) The bid and ask are updated.
-        2) The bot strategy is called if the bid or ask value changes.
-
-    Parameters
-    ----------
-    ws: Markets
-        Bitmex, Bybit, Deribit
-    symbol: tuple
-        Instrument symbol in (symbol, market name) format, e.g.
-        ("BTCUSD", "Bybit").
-    instrument: Instrument
-        The Instrument instance for this symbol.
-    """
-
-    if symbol in ws.klines:
-        try:
-            ask = instrument.asks[0][0]
-            bid = instrument.bids[0][0]
-        except Exception:
-            """
-            The order book is probably empty.
-            """
-            return
-        for timefr, values in ws.klines[symbol].items():
-            if values["data"]:
-                if timefr == "tick":
-                    if bid != values["data"]["bid"] or ask != values["data"]["ask"]:
-                        update_and_run_bots(bots=values["robots"], timefr=timefr)
-                    values["data"]["bid"] = bid
-                    values["data"]["ask"] = ask
-                else:
-                    if ask > values["data"][-1]["hi"]:
-                        values["data"][-1]["hi"] = ask
-                    if bid < values["data"][-1]["lo"]:
-                        values["data"][-1]["lo"] = bid
-
-            # Processing the BreakDown indicator
-
-            if symbol in BreakDown.symbols:
-                if timefr in BreakDown.symbols[symbol]:
-                    for parameters in BreakDown.symbols[symbol][timefr].values():
-                        direct = parameters["first"] * (
-                            parameters["number"] % 2 * 2 - 1
-                        )
-                        if parameters["up"]:
-                            if direct >= 0 and ask > parameters["up"]:
-                                parameters["number"] += 1
-                                if parameters["first"] == 0:
-                                    parameters["first"] = -1
-                        if parameters["dn"]:
-                            if direct <= 0 and bid < parameters["dn"]:
-                                parameters["number"] += 1
-                                if parameters["first"] == 0:
-                                    parameters["first"] = 1
 
 
 def count_orders():
@@ -991,22 +931,6 @@ def run_bots(bot_list: list) -> None:
             args=(bot_name,),
         )
         t.start()
-
-
-def update_and_run_bots(bots: set, timefr: str):
-    bot_list = list()
-    for bot_name in bots:
-        bot = Bots[bot_name]
-        if bot.timefr == timefr:
-            if not bot.error_message:
-                if bot.state != "Disconnected":
-                    if bot.state == "Active":
-                        bot_list.append(bot_name)
-                    call_bot_function(
-                        function=robo.update_bot[bot_name],
-                        bot_name=bot_name,
-                    )
-    run_bots(bot_list=bot_list)
 
 
 def init_bot(

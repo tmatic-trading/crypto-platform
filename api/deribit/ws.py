@@ -437,7 +437,7 @@ class Deribit(Variables):
         instrument.asks = values["asks"]
         instrument.bids = values["bids"]
         if symbol in self.klines:
-            service.kline_hi_lo_values(self, symbol=symbol, instrument=instrument)
+            self.kline_hi_lo_values(symbol=symbol, instrument=instrument)
 
     def __update_ticker(self, values: dict) -> None:
         symbol = (self.ticker[values["instrument_name"]], self.name)
@@ -672,6 +672,13 @@ class Deribit(Variables):
     def transaction(self, **kwargs):
         """
         This method is replaced by transaction() from functions.py after the
+        application is launched.
+        """
+        pass
+
+    def kline_hi_lo_values(self, **kwargs):
+        """
+        This method is replaced by kline_hi_lo_values() from functions.py after the
         application is launched.
         """
         pass
