@@ -857,7 +857,8 @@ class Tool(Instrument):
         dict
             All bot's position values: "emi", "symbol", "category", "limits",
             "ticker", "position", "volume", "sumreal", "commiss", "ltime",
-            "pnl", "lotSize", "currency", "limits".
+            "sum_pnl", "lotSize", "currency", "limits", "entry", "entry_pnl",
+            "entry_sumreal".
         """
         bot = Bots[bot_name]
         if self.symbol_tuple not in bot.bot_positions:

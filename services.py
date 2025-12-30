@@ -383,6 +383,8 @@ def fill_bot_position(
     sumreal=0,
     commiss=0,
     ltime=None,
+    bot_position_entry=None,
+    entry_sumreal=None,
 ) -> None:
     bot = Bots[bot_name]
     bot.bot_positions[symbol] = {
@@ -393,19 +395,23 @@ def fill_bot_position(
         "ticker": instrument.ticker,
         "position": position,
         "volume": volume,
+        "entry": bot_position_entry,
+        "entry_sumreal": entry_sumreal,
         "sumreal": sumreal,
         "commiss": commiss,
         "ltime": ltime,
-        "pnl": 0,
+        "sum_pnl": 0,
         "lotSize": instrument.minOrderQty,
         "currency": instrument.settlCurrency[0],
         "limits": instrument.minOrderQty,
         "max_position": 0,
     }
     if instrument.category == "spot":
-        bot.bot_positions[symbol]["pnl"] = var.DASH
+        bot.bot_positions[symbol]["sum_pnl"] = var.DASH
         bot.bot_positions[symbol]["position"] = var.DASH
+
     # Checks if this bot has any records in the database on this instrument.
+
     if not var.backtest:
         qwr = (
             "select MARKET, SYMBOL, sum(abs(QTY)) as SUM_QTY, "
@@ -860,37 +866,6 @@ def display_backtest_parameters(bot: BotData):
     print(text)
 
 
-def process_position(
-    bot: BotData,
-    symbol: tuple,
-    instrument: Instrument,
-    user_id: int,
-    qty: float,
-    calc: dict,
-    ttime: Union[datetime, str],
-):
-    if symbol not in bot.bot_positions:
-        fill_bot_position(
-            bot_name=bot.name,
-            symbol=symbol,
-            instrument=instrument,
-            user_id=user_id,
-        )
-    position = bot.bot_positions[symbol]
-    if "spot" not in instrument.category:
-        position["position"] += qty
-        position["position"] = round(
-            position["position"],
-            instrument.precision,
-        )
-    position["volume"] += abs(qty)
-    position["commiss"] += calc["commiss"]
-    position["sumreal"] += calc["sumreal"]
-    position["ltime"] = ttime
-    if abs(position["position"]) > position["max_position"]:
-        position["max_position"] = abs(position["position"])
-
-
 def call_bot_function(function: Union[Callable, str], bot_name: str):
     """
     Calls the bot service functions: run_bot(), setup_bot(), update_bot(),
@@ -1035,3 +1010,7 @@ def humanFormat(instrument: Instrument, volNow: int) -> str:
         volNow = volume(instrument, qty=volNow)
 
     return volNow
+
+
+def calculate_entry_pnl() -> float:
+    pass

@@ -239,6 +239,27 @@ def load_bots() -> None:
                 precision = instrument.precision
                 bot_pos = round(float(value["POS"]), precision)
                 if bot_pos != 0:
+                    # Loading transaction history for the position
+
+                    qwr = (
+                        "select EMI, MARKET, SYMBOL, QTY, PRICE, TRADE_PRICE, TTIME "
+                        + "from "
+                        + var.database_table
+                        + " where EMI = '"
+                        + name
+                        + "' and SYMBOL = '"
+                        + value["SYMBOL"]
+                        + "' and MARKET = '"
+                        + value["MARKET"]
+                        + "' order by TTIME"
+                    )
+                    data = service.select_database(qwr)
+                    (
+                        bot_position_entry,
+                        bot_position_sumreal,
+                    ) = functions.calculate_average_price(
+                        symbol=symbol, trades=data, bot_position_entry=None
+                    )
                     service.fill_bot_position(
                         bot_name=name,
                         symbol=symbol,
@@ -249,6 +270,8 @@ def load_bots() -> None:
                         sumreal=float(value["SUMREAL"]),
                         commiss=float(value["COMMISS"]),
                         ltime=service.time_converter(time=value["LTIME"], usec=True),
+                        bot_position_entry=bot_position_entry,
+                        entry_sumreal=bot_position_sumreal,
                     )
             elif value["POS"] != 0:
                 message = (

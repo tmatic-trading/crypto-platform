@@ -16,7 +16,7 @@ from api.api import WS
 from api.setup import Markets
 from api.variables import Variables
 from botinit.variables import Variables as robo
-from common.data import Bots, Instrument
+from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.functions import info_display
 from display.headers import Header
@@ -202,7 +202,7 @@ class Function(WS, Variables):
             instrument.volume += abs(lastQty)
             instrument.sumreal += calc["sumreal"]
             if emi in Bots.keys():
-                service.process_position(
+                process_position(
                     bot=Bots[emi],
                     symbol=row["symbol"],
                     instrument=instrument,
@@ -210,6 +210,7 @@ class Function(WS, Variables):
                     qty=lastQty,
                     calc=calc,
                     ttime=row["transactTime"],
+                    price=row["lastPx"],
                 )
             results.commission += calc["commiss"]
             results.sumreal += calc["sumreal"]
@@ -775,13 +776,15 @@ class Function(WS, Variables):
 
     def calculate_bot_pnl(self, bot_positions: dict):
         for symbol, position in bot_positions.items():
-            pnl = Function.calculate_pnl(
+            pnl, entry_pnl = Function.calculate_pnl(
                 Markets[position["market"]],
                 symbol=symbol,
                 qty=position["position"],
                 sumreal=position["sumreal"],
+                entry_sumreal=position["entry_sumreal"],
             )
-            position["pnl"] = pnl
+            position["sum_pnl"] = pnl
+            position["entry_pnl"] = entry_pnl
 
     def update_and_run_bots(self, bots: set, timefr: str):
         bot_list = list()
@@ -1039,7 +1042,7 @@ class Function(WS, Variables):
                         tree.delete_hierarchical(parent=market, iid=iid)
                 else:
                     notificate = False
-                    pnl = Function.calculate_pnl(
+                    pnl, entry_pnl = Function.calculate_pnl(
                         ws,
                         symbol=symbol,
                         qty=position["position"],
@@ -1061,7 +1064,8 @@ class Function(WS, Variables):
                         self,
                         iid=iid,
                         compare=compare,
-                        columns=[3, 4],
+                        col_volumes=[3, 4],
+                        col_numbers=[5],
                         symbol=symbol,
                         market=market,
                         tree=tree,
@@ -1083,7 +1087,7 @@ class Function(WS, Variables):
                 instrument = ws.Instrument[symbol]
                 if "spot" not in instrument.category:
                     if instrument.ticker != "option!":
-                        pnl = Function.calculate_pnl(
+                        pnl, entry_pnl = Function.calculate_pnl(
                             ws,
                             symbol=symbol,
                             qty=instrument.currentQty,
@@ -1115,7 +1119,8 @@ class Function(WS, Variables):
                                 self,
                                 iid=iid,
                                 compare=compare,
-                                columns=[3, 4],
+                                col_volumes=[3, 4],
+                                col_numbers=[5],
                                 symbol=symbol,
                                 market=market,
                                 tree=tree,
@@ -1415,24 +1420,28 @@ class Function(WS, Variables):
                                 tree.delete_hierarchical(parent=market, iid=iid)
                         else:
                             pos_by_market[market] = True
-                            pnl = Function.calculate_pnl(
+                            pnl, entry_pnl = Function.calculate_pnl(
                                 Markets[position["market"]],
                                 symbol=symbol,
                                 qty=position["position"],
                                 sumreal=position["sumreal"],
+                                entry_sumreal=position["entry_sumreal"],
                             )
                             compare = [
                                 position["symbol"],
                                 position["category"],
                                 position["position"],
                                 position["volume"],
+                                position["entry"],
+                                entry_pnl,
                                 pnl,
                             ]
                             Function.update_position_line(
                                 self,
                                 iid=iid,
                                 compare=compare,
-                                columns=[2, 3],
+                                col_volumes=[2, 3],
+                                col_numbers=[4, 5, 6],
                                 symbol=symbol,
                                 market=market,
                                 tree=tree,
@@ -1574,19 +1583,21 @@ class Function(WS, Variables):
         self: Markets,
         iid: str,
         compare: list,
-        columns: list,
+        col_volumes: list,
+        col_numbers: list,
         symbol: tuple,
         market: str,
         tree: TreeviewTable,
     ) -> None:
         def form_line(compare):
-            for column in columns:
+            for column in col_volumes:
                 compare[column] = service.volume(
                     self.Instrument[symbol],
                     qty=compare[column],
                 )
-            num = columns[1] + 1
-            compare[num] = service.format_number(number=compare[num])
+            for column in col_numbers:
+                compare[column] = service.format_number(number=compare[column])
+
             return compare
 
         if iid in tree.children_hierarchical[market]:
@@ -1748,7 +1759,7 @@ class Function(WS, Variables):
         return qty
 
     def calculate_pnl(
-        self: Markets, symbol: tuple, qty: float, sumreal: float
+        self: Markets, symbol: tuple, qty: float, sumreal: float, entry_sumreal=0
     ) -> Union[float, str]:
         """
         Calculates current position pnl.
@@ -1769,19 +1780,19 @@ class Function(WS, Variables):
             PNL value.
         """
         if qty == 0:
-            return sumreal
+            return sumreal, 0
 
         if symbol in self.Instrument.get_keys():
             if qty > 0:
                 try:
                     price = self.Instrument[symbol].bids[0][0]
                 except IndexError:
-                    return "empty_bids"
+                    return "empty_bids", "empty_bids"
             else:
                 try:
                     price = self.Instrument[symbol].asks[0][0]
                 except IndexError:
-                    return "empty_asks"
+                    return "empty_asks", "empty_asks"
             res = Function.calculate(
                 self,
                 symbol=symbol,
@@ -1791,12 +1802,14 @@ class Function(WS, Variables):
                 fund=1,
             )
             pnl = sumreal + res["sumreal"]
+            entry_pnl = entry_sumreal + res["sumreal"]
         else:
             # no such symbol for the certain market, therefore there is no order book, hence
             # no closing price for the position. PNL cannot be calculated.
             pnl = "no_such_symbol"
+            entry_pnl = pnl
 
-        return pnl
+        return pnl, entry_pnl
 
     def kline_hi_lo_values(self: Markets, symbol: tuple, instrument: Instrument):
         """
@@ -3304,6 +3317,83 @@ def update_instruments():
             warning_window(
                 message=message, width=500, height=300, title="Updating instruments"
             )
+
+
+def calculate_average_price(
+    symbol: tuple, trades: list, bot_position_entry: float, init_pos=0
+) -> float:
+    """
+    Determines the average price of the bot's position at the moment the
+    program is launched or a new transaction is made.
+    """
+    prev_pos = init_pos
+    for value in trades:
+        init_pos += value["QTY"]
+        if (init_pos >= 0 and prev_pos <= 0) or (init_pos <= 0 and prev_pos >= 0):
+            if init_pos != 0:
+                bot_position_entry = value["TRADE_PRICE"]
+        elif (init_pos > 0 and value["QTY"] > 0) or (init_pos < 0 and value["QTY"] < 0):
+            bot_position_entry = (
+                bot_position_entry * prev_pos + value["TRADE_PRICE"] * value["QTY"]
+            ) / init_pos
+        if init_pos == 0:
+            bot_position_entry = 0
+        prev_pos = init_pos
+
+    if bot_position_entry:
+        bot_position_sumreal = Function.calculate(
+            Markets[symbol[1]],
+            symbol=symbol,
+            price=bot_position_entry,
+            qty=init_pos,
+            rate=0,
+            fund=1,
+        )["sumreal"]
+    else:
+        bot_position_sumreal = 0
+
+    return bot_position_entry, bot_position_sumreal
+
+
+def process_position(
+    bot: BotData,
+    symbol: tuple,
+    instrument: Instrument,
+    user_id: int,
+    qty: float,
+    calc: dict,
+    ttime: Union[datetime, str],
+    price: float,
+):
+    if symbol not in bot.bot_positions:
+        service.fill_bot_position(
+            bot_name=bot.name,
+            symbol=symbol,
+            instrument=instrument,
+            user_id=user_id,
+        )
+    position = bot.bot_positions[symbol]
+    trades = [{"QTY": qty, "TRADE_PRICE": price}]
+    bot_position_entry, bot_position_sumreal = calculate_average_price(
+        symbol=symbol,
+        trades=trades,
+        init_pos=position["position"],
+        bot_position_entry=position["entry"],
+    )
+    if "spot" not in instrument.category:
+        position["position"] += qty
+        position["position"] = round(
+            position["position"],
+            instrument.precision,
+        )
+    position["volume"] += abs(qty)
+    position["commiss"] += calc["commiss"]
+    position["sumreal"] += calc["sumreal"]
+    position["ltime"] = ttime
+    if abs(position["position"]) > position["max_position"]:
+        position["max_position"] = abs(position["position"])
+    position["entry"] = bot_position_entry
+    position["entry_sumreal"] = bot_position_sumreal
 
 
 TreeTable.orderbook = TreeviewTable(

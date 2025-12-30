@@ -2,6 +2,7 @@ import os
 from collections import OrderedDict
 from typing import Callable, Union
 
+import functions
 import services as service
 from api.api import WS
 from api.setup import Markets
@@ -114,7 +115,7 @@ def _trade(
         rate=instrument.makerFee,
         fund=1,
     )
-    service.process_position(
+    functions.process_position(
         bot=bot,
         symbol=(instrument.symbol, instrument.market),
         instrument=instrument,
@@ -122,6 +123,7 @@ def _trade(
         qty=qty,
         calc=calc,
         ttime=ttime,
+        price=price,
     )
     if clOrdID:
         del var.orders[bot.name][clOrdID]
