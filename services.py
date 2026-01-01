@@ -397,6 +397,8 @@ def fill_bot_position(
         "volume": volume,
         "entry": bot_position_entry,
         "entry_sumreal": entry_sumreal,
+        "entry_pnl": None,
+        "entry_pnl_percent": None,
         "sumreal": sumreal,
         "commiss": commiss,
         "ltime": ltime,

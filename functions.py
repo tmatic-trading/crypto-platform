@@ -776,15 +776,16 @@ class Function(WS, Variables):
 
     def calculate_bot_pnl(self, bot_positions: dict):
         for symbol, position in bot_positions.items():
-            pnl, entry_pnl = Function.calculate_pnl(
+            res = Function.calculate_pnl(
                 Markets[position["market"]],
                 symbol=symbol,
                 qty=position["position"],
                 sumreal=position["sumreal"],
                 entry_sumreal=position["entry_sumreal"],
             )
-            position["sum_pnl"] = pnl
-            position["entry_pnl"] = entry_pnl
+            position["sum_pnl"] = res["pnl"]
+            position["entry_pnl"] = res["entry_pnl"]
+            position["entry_pnl_percent"] = res["entry_pnl_percent"]
 
     def update_and_run_bots(self, bots: set, timefr: str):
         bot_list = list()
@@ -1042,7 +1043,7 @@ class Function(WS, Variables):
                         tree.delete_hierarchical(parent=market, iid=iid)
                 else:
                     notificate = False
-                    pnl, entry_pnl = Function.calculate_pnl(
+                    res = Function.calculate_pnl(
                         ws,
                         symbol=symbol,
                         qty=position["position"],
@@ -1050,15 +1051,15 @@ class Function(WS, Variables):
                     )
                     rest[symbol] += position["position"]
                     rest_volume[symbol] += position["volume"]
-                    if not isinstance(pnl, str):
-                        rest_sumreal[symbol] += pnl
+                    if not isinstance(res["pnl"], str):
+                        rest_sumreal[symbol] += res["pnl"]
                     compare = [
                         position["emi"],
                         position["symbol"],
                         position["category"],
                         position["position"],
                         position["volume"],
-                        pnl,
+                        res["pnl"],
                     ]
                     Function.update_position_line(
                         self,
@@ -1087,7 +1088,7 @@ class Function(WS, Variables):
                 instrument = ws.Instrument[symbol]
                 if "spot" not in instrument.category:
                     if instrument.ticker != "option!":
-                        pnl, entry_pnl = Function.calculate_pnl(
+                        res = Function.calculate_pnl(
                             ws,
                             symbol=symbol,
                             qty=instrument.currentQty,
@@ -1096,8 +1097,8 @@ class Function(WS, Variables):
                         if symbol in rest:
                             position = instrument.currentQty - rest[symbol]
                             volume = instrument.volume - rest_volume[symbol]
-                            if not isinstance(pnl, str):
-                                pnl = pnl - rest_sumreal[symbol]
+                            if not isinstance(res["pnl"], str):
+                                pnl = res["pnl"] - rest_sumreal[symbol]
                         else:
                             position = instrument.currentQty
                             volume = instrument.volume
@@ -1420,7 +1421,7 @@ class Function(WS, Variables):
                                 tree.delete_hierarchical(parent=market, iid=iid)
                         else:
                             pos_by_market[market] = True
-                            pnl, entry_pnl = Function.calculate_pnl(
+                            res = Function.calculate_pnl(
                                 Markets[position["market"]],
                                 symbol=symbol,
                                 qty=position["position"],
@@ -1433,15 +1434,16 @@ class Function(WS, Variables):
                                 position["position"],
                                 position["volume"],
                                 position["entry"],
-                                entry_pnl,
-                                pnl,
+                                res["entry_pnl"],
+                                res["entry_pnl_percent"],
+                                res["pnl"],
                             ]
                             Function.update_position_line(
                                 self,
                                 iid=iid,
                                 compare=compare,
                                 col_volumes=[2, 3],
-                                col_numbers=[4, 5, 6],
+                                col_numbers=[4, 5, 6, 7],
                                 symbol=symbol,
                                 market=market,
                                 tree=tree,
@@ -1776,23 +1778,31 @@ class Function(WS, Variables):
 
         Returns
         -------
-        float
-            PNL value.
+        dict
+            PNL values.
         """
         if qty == 0:
-            return sumreal, 0
+            return {"pnl": sumreal, "entry_pnl": 0, "entry_pnl_percent": 0}
 
         if symbol in self.Instrument.get_keys():
             if qty > 0:
                 try:
                     price = self.Instrument[symbol].bids[0][0]
                 except IndexError:
-                    return "empty_bids", "empty_bids"
+                    return {
+                        "pnl": "empty_bids",
+                        "entry_pnl": "empty_bids",
+                        "entry_pnl_percent": "empty_bids",
+                    }
             else:
                 try:
                     price = self.Instrument[symbol].asks[0][0]
                 except IndexError:
-                    return "empty_asks", "empty_asks"
+                    return {
+                        "pnl": "empty_asks",
+                        "entry_pnl": "empty_asks",
+                        "entry_pnl_percent": "empty_asks",
+                    }
             res = Function.calculate(
                 self,
                 symbol=symbol,
@@ -1803,13 +1813,19 @@ class Function(WS, Variables):
             )
             pnl = sumreal + res["sumreal"]
             entry_pnl = entry_sumreal + res["sumreal"]
+            entry_pnl_percent = entry_pnl / abs(qty) * price * 100
         else:
             # no such symbol for the certain market, therefore there is no order book, hence
             # no closing price for the position. PNL cannot be calculated.
             pnl = "no_such_symbol"
             entry_pnl = pnl
+            entry_pnl_percent = pnl
 
-        return pnl, entry_pnl
+        return {
+            "pnl": pnl,
+            "entry_pnl": entry_pnl,
+            "entry_pnl_percent": entry_pnl_percent,
+        }
 
     def kline_hi_lo_values(self: Markets, symbol: tuple, instrument: Instrument):
         """

@@ -94,6 +94,7 @@ class Header:
         "VOLUME",
         "ENTRY",
         "ENTRY PNL",
+        "ENTRY PNL %",
         "SUM PNL",
     ]
     name_bot_trade = [

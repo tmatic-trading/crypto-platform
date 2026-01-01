@@ -858,7 +858,7 @@ class Tool(Instrument):
             All bot's position values: "emi", "symbol", "category", "limits",
             "ticker", "position", "volume", "sumreal", "commiss", "ltime",
             "sum_pnl", "lotSize", "currency", "limits", "entry", "entry_pnl",
-            "entry_sumreal".
+            "entry_sumreal",  "entry_pnl_percent".
         """
         bot = Bots[bot_name]
         if self.symbol_tuple not in bot.bot_positions:
