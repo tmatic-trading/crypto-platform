@@ -781,6 +781,7 @@ class Function(WS, Variables):
                 symbol=symbol,
                 qty=position["position"],
                 sumreal=position["sumreal"],
+                entry_price=position["entry"],
                 entry_sumreal=position["entry_sumreal"],
             )
             position["sum_pnl"] = res["pnl"]
@@ -1048,6 +1049,8 @@ class Function(WS, Variables):
                         symbol=symbol,
                         qty=position["position"],
                         sumreal=position["sumreal"],
+                        entry_price=position["entry"],
+                        entry_sumreal=position["entry_sumreal"],
                     )
                     rest[symbol] += position["position"]
                     rest_volume[symbol] += position["volume"]
@@ -1093,6 +1096,7 @@ class Function(WS, Variables):
                             symbol=symbol,
                             qty=instrument.currentQty,
                             sumreal=instrument.sumreal,
+                            entry_price=instrument.avgEntryPrice,
                         )
                         if symbol in rest:
                             position = instrument.currentQty - rest[symbol]
@@ -1426,6 +1430,7 @@ class Function(WS, Variables):
                                 symbol=symbol,
                                 qty=position["position"],
                                 sumreal=position["sumreal"],
+                                entry_price=position["entry"],
                                 entry_sumreal=position["entry_sumreal"],
                             )
                             compare = [
@@ -1761,7 +1766,12 @@ class Function(WS, Variables):
         return qty
 
     def calculate_pnl(
-        self: Markets, symbol: tuple, qty: float, sumreal: float, entry_sumreal=0
+        self: Markets,
+        symbol: tuple,
+        qty: float,
+        sumreal: float,
+        entry_price: float,
+        entry_sumreal=0,
     ) -> Union[float, str]:
         """
         Calculates current position pnl.
@@ -1813,7 +1823,10 @@ class Function(WS, Variables):
             )
             pnl = sumreal + res["sumreal"]
             entry_pnl = entry_sumreal + res["sumreal"]
-            entry_pnl_percent = entry_pnl / abs(qty) * price * 100
+            if qty > 0:
+                entry_pnl_percent = (price - entry_price) / entry_price * 100
+            else:
+                entry_pnl_percent = (entry_price - price) / entry_price * 100
         else:
             # no such symbol for the certain market, therefore there is no order book, hence
             # no closing price for the position. PNL cannot be calculated.
