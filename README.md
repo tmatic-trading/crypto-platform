@@ -774,6 +774,9 @@ Result:
 0.001
 ```
 
+> [!NOTE]
+> You can also get the all bot's positions with all the relevant parameters. Example: ```bot.bot_positions```
+
 ### Get bot's orders for the instrument
 
 Use the ```orders()``` method to get the current open orders for a given instrument. If necessary, filter the orders by sell or buy side and sort them in descending order. Set the `in_list` parameter to return the result in a list or OrderedDict format.
