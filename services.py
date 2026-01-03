@@ -387,30 +387,31 @@ def fill_bot_position(
     entry_sumreal=None,
 ) -> None:
     bot = Bots[bot_name]
-    bot.bot_positions[symbol] = {
-        "emi": bot_name,
-        "symbol": instrument.symbol,
-        "category": instrument.category,
-        "market": instrument.market,
-        "ticker": instrument.ticker,
-        "position": position,
-        "volume": volume,
-        "entry": bot_position_entry,
-        "entry_sumreal": entry_sumreal,
-        "entry_pnl": None,
-        "entry_pnl_percent": None,
-        "sumreal": sumreal,
-        "commiss": commiss,
-        "ltime": ltime,
-        "sum_pnl": 0,
-        "lotSize": instrument.minOrderQty,
-        "currency": instrument.settlCurrency[0],
-        "limits": instrument.minOrderQty,
-        "max_position": 0,
-    }
-    if instrument.category == "spot":
-        bot.bot_positions[symbol]["sum_pnl"] = var.DASH
-        bot.bot_positions[symbol]["position"] = var.DASH
+    if symbol not in bot.bot_positions:
+        bot.bot_positions[symbol] = {
+            "emi": bot_name,
+            "symbol": instrument.symbol,
+            "category": instrument.category,
+            "market": instrument.market,
+            "ticker": instrument.ticker,
+            "position": position,
+            "volume": volume,
+            "entry": bot_position_entry,
+            "entry_sumreal": entry_sumreal,
+            "entry_pnl": None,
+            "entry_pnl_percent": None,
+            "sumreal": sumreal,
+            "commiss": commiss,
+            "ltime": ltime,
+            "sum_pnl": 0,
+            "lotSize": instrument.minOrderQty,
+            "currency": instrument.settlCurrency[0],
+            "limits": instrument.minOrderQty,
+            "max_position": 0,
+        }
+        if instrument.category == "spot":
+            bot.bot_positions[symbol]["sum_pnl"] = var.DASH
+            bot.bot_positions[symbol]["position"] = var.DASH
 
     # Checks if this bot has any records in the database on this instrument.
 
