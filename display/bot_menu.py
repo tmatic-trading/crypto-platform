@@ -172,11 +172,14 @@ class SettingsApp:
         """
         Creates and initializes a new bot.
         """
+        bot_path = self.get_bot_path(bot_name)
+        if os.path.isdir(bot_path):
+            functions.warning_window(message=bot_path + " already exists.")
+            return False
         err = service.insert_database(
             values=[bot_name, "Suspended", timeframe], table="robots"
         )
-        if err is None:
-            bot_path = self.get_bot_path(bot_name)
+        if err is None:            
             # Create a new directory with the name as the new bot's name
             os.mkdir(bot_path)
             # Create the '__init__.py' file in the new directory. This file is empty
@@ -196,8 +199,9 @@ class SettingsApp:
                 f"*\n!__init__.py\n!.gitignore\n!{self.strategy_file}\n",
             )
             self.init_bot(bot_name=bot_name, timeframe=timeframe)
-
             return True
+        else:
+            return False
 
     def insert_code(self, text_widget: tk.Text, code: str) -> None:
         """
