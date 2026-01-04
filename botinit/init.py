@@ -67,7 +67,7 @@ def load_bot_parameters():
 
     data = service.select_database(qwr)
     for bd in data:
-        bd["DAT_datetime"] = datetime.fromisoformat(bd["DAT"])
+        bd["DAT_datetime"] = service.combine_formats(bd["DAT"])
     data.sort(key=lambda x: x["DAT_datetime"])
     for value in data:
         if value["EMI"] not in var.orders:

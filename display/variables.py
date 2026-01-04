@@ -1163,7 +1163,7 @@ class TreeviewTable(Variables):
                     data.append(line["values"])
         data += rows
         self.clear_all()
-        data = list(map(lambda x: x + [datetime.fromisoformat(f"20{x[0]}")], data))
+        data = list(map(lambda x: x + [service.combine_formats(f"20{x[0]}")], data))
         data.sort(key=lambda x: x[-1], reverse=True)
         data = list(map(lambda x: x[:-1], data))
 

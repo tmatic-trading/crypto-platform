@@ -154,6 +154,20 @@ def format_number(number: Union[float, str], precision=9) -> str:
     return number
 
 
+def combine_formats(data: str) -> datetime:
+    "Ensures fromisoformat compatibility with Python 3.9"
+    try:
+        return datetime.fromisoformat(data)
+    except ValueError:
+        try:
+            return datetime.strptime(data, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                return datetime.strptime(data, "%Y-%m-%d %H:%M:%S.%f")
+            except ValueError:
+                return datetime.strptime(data, "%Y%m%d %H:%M:%S")
+            
+
 def time_converter(
     time: Union[int, float, str, datetime], usec=False
 ) -> Union[datetime, int]:
@@ -175,17 +189,11 @@ def time_converter(
         if f > 0:
             time = time[:f]
         if usec:
-            try:
-                # dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
-                dt = datetime.fromisoformat(time)
-            except Exception:
-                # dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-                dt = datetime.fromisoformat(time)
+            dt = combine_formats(time)
         else:
-            dt = datetime.fromisoformat(time[:19])
+            dt = combine_formats(time[:19])
         dt = dt.replace(tzinfo=timezone.utc)
         return dt
-
     else:
         raise TypeError(type(time))
 
