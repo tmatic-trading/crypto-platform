@@ -179,7 +179,7 @@ class SettingsApp:
         err = service.insert_database(
             values=[bot_name, "Suspended", timeframe], table="robots"
         )
-        if err is None:            
+        if err is None:
             # Create a new directory with the name as the new bot's name
             os.mkdir(bot_path)
             # Create the '__init__.py' file in the new directory. This file is empty

@@ -166,7 +166,7 @@ def combine_formats(data: str) -> datetime:
                 return datetime.strptime(data, "%Y-%m-%d %H:%M:%S.%f")
             except ValueError:
                 return datetime.strptime(data, "%Y%m%d %H:%M:%S")
-            
+
 
 def time_converter(
     time: Union[int, float, str, datetime], usec=False
@@ -363,7 +363,9 @@ def set_clOrdID(emi: str = False) -> str:
     return clOrdID
 
 
-def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
+def fill_order(
+    emi: str, clOrdID: str, category: str, value: dict
+) -> Union[float, None]:
     if emi not in var.orders:
         var.orders[emi] = OrderedDict()
     if clOrdID not in var.orders[emi]:
@@ -379,6 +381,9 @@ def fill_order(emi: str, clOrdID: str, category: str, value: dict) -> None:
         var.orders[emi][clOrdID]["orderID"] = value["orderID"]
         var.orders[emi][clOrdID]["clOrdID"] = clOrdID
         var.orders[emi][clOrdID]["orderQty"] = value["orderQty"]
+        return value["orderQty"]
+    else:
+        return None
 
 
 def fill_bot_position(

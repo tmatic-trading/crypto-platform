@@ -993,7 +993,7 @@ class MetaTool(type):
                     var.logger.error(message)
             self.objects[symbol] = Tool(MetaInstrument.market[market][symbol])
 
-        # Initializing the bot's position variables when assigning an 
+        # Initializing the bot's position variables when assigning an
         # instrument to the bot in its strategy.py file.
 
         service.fill_bot_position(
