@@ -218,6 +218,7 @@ class CustomButton(tk.Frame):
 
 class Variables:
     root = tk.Tk()
+    root.bind("<F1>", lambda event: Variables.on_menu_select())
     root.bind("<F7>", lambda event: Variables.on_bot_menu(event))
     root.bind("<F8>", lambda event: Variables.on_settings())
     root.bind("<F9>", lambda event: on_trade_state(event))
@@ -465,7 +466,9 @@ class Variables:
     )"""
 
     def on_menu_select(value):
-        if value == "<F7> Bot Menu":
+        if value == "<F1> Home":
+            Variables.on_main()
+        elif value == "<F7> Bot Menu":
             Variables.on_bot_menu("None")
         elif value[:4] == "<F9>":
             on_trade_state("none")
@@ -484,6 +487,7 @@ class Variables:
         fg_color,
         command=on_menu_select,
         menu_items=[
+            "<F1> Home", 
             "<F9> Trading ON",
             "<F8> Settings",
             "<F7> Bot Menu",
@@ -896,13 +900,13 @@ class Variables:
 def on_trade_state(event) -> None:
     if Variables.f9 == "ON":
         Variables.menu_button.menu.entryconfigure(
-            0, label="<F9> Trading " + Variables.f9
+            1, label="<F9> Trading " + Variables.f9
         )
         Variables.f9 = "OFF"
         Variables.label_f9.config(bg=Variables.red_color)
     elif Variables.f9 == "OFF":
         Variables.menu_button.menu.entryconfigure(
-            0, label="<F9> Trading " + Variables.f9
+            1, label="<F9> Trading " + Variables.f9
         )
         Variables.f9 = "ON"
         Variables.label_f9.config(bg=Variables.green_color)
