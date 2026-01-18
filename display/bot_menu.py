@@ -897,9 +897,12 @@ class SettingsApp:
         message = ""
         err = None
         try:
-            del robo.update_bot[bot_name]
-            del robo.setup_bot[bot_name]
-            del robo.activate_bot[bot_name]
+            if bot_name in robo.update_bot:
+                del robo.update_bot[bot_name]
+            if bot_name in robo.setup_bot:
+                del robo.setup_bot[bot_name]
+            if bot_name in robo.activate_bot:
+                del robo.activate_bot[bot_name]            
             indicators.clean_indicators(bot_name=bot_name)
             Bots.remove(bot_name)
             TreeTable.bot_menu.delete(iid=bot_name)
@@ -929,7 +932,8 @@ class SettingsApp:
                 TreeTable.bots.delete(iid=bot_name)
             disp.bot_event_prev = ""
             var.bot_thread_active[bot_name] = False
-            del robo.run_bot[bot_name]
+            if bot_name in robo.run_bot:
+                del robo.run_bot[bot_name]
             del self.modules[bot_name]
             del var.orders[bot_name]
             functions.remove_bot_klines(bot_name)
@@ -939,6 +943,7 @@ class SettingsApp:
                 err = str(e)
             else:
                 err += f"\n{str(e)}"
+
         return [err, message]
 
     def delete_warning(self, bot_name: str) -> bool:
