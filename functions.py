@@ -1104,6 +1104,7 @@ class Function(WS, Variables):
                             sumreal=instrument.sumreal,
                             entry_price=instrument.avgEntryPrice,
                         )
+                        pnl = "?"
                         if symbol in rest:
                             position = instrument.currentQty - rest[symbol]
                             volume = instrument.volume - rest_volume[symbol]
