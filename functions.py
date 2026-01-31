@@ -1831,9 +1831,9 @@ class Function(WS, Variables):
             pnl = sumreal + res["sumreal"]
             entry_pnl = entry_sumreal + res["sumreal"]
             if qty > 0:
-                entry_pnl_percent = (price - entry_price) / entry_price * 100
+                entry_pnl_percent = (price - entry_price) / price * 100
             else:
-                entry_pnl_percent = (entry_price - price) / entry_price * 100
+                entry_pnl_percent = (entry_price - price) / price * 100
         else:
             # no such symbol for the certain market, therefore there is no order book, hence
             # no closing price for the position. PNL cannot be calculated.
