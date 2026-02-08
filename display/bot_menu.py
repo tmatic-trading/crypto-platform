@@ -1269,6 +1269,8 @@ def import_bot_module(bot_name: str, update=False) -> None:
         module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
         Bots[bot_name].error_message = {}
         Bots[bot_name].multitrade = False
+        Bots[bot_name].block = []
+        Bots[bot_name].count = 0
         try:
             if module in sys.modules:
                 del sys.modules[module]
