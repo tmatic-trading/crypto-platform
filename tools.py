@@ -306,6 +306,8 @@ class Tool(Instrument):
                 else:
                     order = var.orders[bot.name][clOrdID]
                     if order["price"] != price:
+                        bot.count += 1
+                        Bot.wait(bot, bot.count, self.market)
                         res = WS.replace_limit(
                             ws,
                             leavesQty=order["leavesQty"],
@@ -315,6 +317,7 @@ class Tool(Instrument):
                             orderQty=order["orderQty"],
                             clOrdID=clOrdID,
                         )
+                        bot.block.pop(0)
         else:
             self._empty_orderbook(qty=qty, price=price, bot_name=bot.name)
         if cancel:
