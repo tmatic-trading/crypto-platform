@@ -31,9 +31,9 @@ class Bot(BotData):
         bot_name = name(inspect.stack())
         bot = Bots[bot_name]
         self.__dict__ = bot.__dict__
-        self.logger = var.logger 
+        self.logger = var.logger
 
-    def wait(self, count: int, market: str) -> None:
+    def wait(self, count: int, operation: str, market: str) -> Union[str, None]:
         """
         Waiting for the previous operation to complete on a specific bot.
         Sometimes we send an order to the exchange, and the previous one is
@@ -46,6 +46,10 @@ class Bot(BotData):
         -----------
         count: int
             The serial number of each bot's operation.
+        operation: str
+            Trading operation such as Buy, Sell, Remove, Replace.
+        market: str
+            Name of the exchange.
         """
         self.block.append(count)
         tm = time.time()
@@ -60,7 +64,7 @@ class Bot(BotData):
                     + " connection to the exchange "
                     + market
                     + " or other possible issues."
-                )  
+                )
                 var.queue_info.put(
                     {
                         "market": "",
@@ -73,7 +77,7 @@ class Bot(BotData):
                 )
                 tm = time.time()
                 error_count += 1
-                if error_count > 10:
+                if error_count > 5:
                     var.queue_info.put(
                         {
                             "market": "",
@@ -81,9 +85,29 @@ class Bot(BotData):
                             "time": datetime.now(tz=timezone.utc),
                             "warning": "error",
                         }
-                    ) 
-                    error_count = 0
+                    )
                     self.logger.error(error_log_message)
+                    exit_message = (
+                        "The current "
+                        + operation
+                        + " operation for the bot "
+                        + self.name
+                        + " was canceled because the previous operation did"
+                        + " not completed."
+                    )
+                    var.queue_info.put(
+                        {
+                            "market": "",
+                            "message": exit_message,
+                            "time": datetime.now(tz=timezone.utc),
+                            "warning": "error",
+                            "emi": self.name,
+                        }
+                    )
+                    self.logger.error(exit_message)
+                    return
+
+        return "success"
 
     def remove(self, clOrdID: str = "", symbol: str = "") -> None:
         """
@@ -121,8 +145,9 @@ class Bot(BotData):
                     order = ord[clOrdID]
                     ws = Markets[order["market"]]
                     self.count += 1
-                    self.wait(self.count, order["market"])
-                    WS.remove_order(ws, order=ord[clOrdID])
+                    r = self.wait(self.count, "Remove", order["market"])
+                    if r == "success":
+                        WS.remove_order(ws, order=ord[clOrdID])
                     self.block.pop(0)
                 else:
                     message = "Removing. Order with clOrdID=" + clOrdID + " not found."
@@ -160,22 +185,23 @@ class Bot(BotData):
         if self.state == "Active" and disp.f9 == "ON":
             ord = var.orders[self.name]
             if clOrdID in ord:
+                order = ord[clOrdID]
                 ws = Markets[order["market"]]
                 self.count += 1
-                self.wait(self.count, order["market"])
-                order = ord[clOrdID]
-                res = WS.replace_limit(
-                    ws,
-                    leavesQty=order["leavesQty"],
-                    price=price,
-                    orderID=order["orderID"],
-                    symbol=order["symbol"],
-                    orderQty=order["orderQty"],
-                    clOrdID=clOrdID,
-                )
-                if isinstance(res, dict):
-                    self.block.pop(0)
-                    return clOrdID
+                r = self.wait(self.count, "Replace", order["market"])
+                if r == "success":
+                    res = WS.replace_limit(
+                        ws,
+                        leavesQty=order["leavesQty"],
+                        price=price,
+                        orderID=order["orderID"],
+                        symbol=order["symbol"],
+                        orderQty=order["orderQty"],
+                        clOrdID=clOrdID,
+                    )
+                    if isinstance(res, dict):
+                        return clOrdID
+                self.block.pop(0)
             else:
                 message = "Replacing. Order with clOrdID=" + clOrdID + " not found."
                 var.queue_info.put(
@@ -293,30 +319,32 @@ class Tool(Instrument):
                     if side == "Sell":
                         qty = -qty
                     bot.count += 1
-                    Bot.wait(bot, bot.count, self.market)
-                    res = WS.place_order(
-                        ws,
-                        quantity=qty,
-                        price=price,
-                        clOrdID=clOrdID,
-                        symbol=self.symbol_tuple,
-                        ordType=ordType,
-                    )
+                    r = Bot.wait(bot, bot.count, side, self.market)
+                    if r == "success":
+                        res = WS.place_order(
+                            ws,
+                            quantity=qty,
+                            price=price,
+                            clOrdID=clOrdID,
+                            symbol=self.symbol_tuple,
+                            ordType=ordType,
+                        )
                     bot.block.pop(0)
                 else:
                     order = var.orders[bot.name][clOrdID]
                     if order["price"] != price:
                         bot.count += 1
-                        Bot.wait(bot, bot.count, self.market)
-                        res = WS.replace_limit(
-                            ws,
-                            leavesQty=order["leavesQty"],
-                            price=price,
-                            orderID=order["orderID"],
-                            symbol=order["symbol"],
-                            orderQty=order["orderQty"],
-                            clOrdID=clOrdID,
-                        )
+                        r = Bot.wait(bot, bot.count, "Replace", self.market)
+                        if r == "success":
+                            res = WS.replace_limit(
+                                ws,
+                                leavesQty=order["leavesQty"],
+                                price=price,
+                                orderID=order["orderID"],
+                                symbol=order["symbol"],
+                                orderQty=order["orderQty"],
+                                clOrdID=clOrdID,
+                            )
                         bot.block.pop(0)
         else:
             self._empty_orderbook(qty=qty, price=price, bot_name=bot.name)

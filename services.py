@@ -14,7 +14,6 @@ from botinit.variables import Variables as robo
 from common.data import BotData, Bots, Instrument
 from common.variables import Variables as var
 from display.messages import ErrorMessage, Message
-from indicators import BreakDown
 
 if platform.system() == "Windows":
     import ctypes

@@ -902,7 +902,7 @@ class SettingsApp:
             if bot_name in robo.setup_bot:
                 del robo.setup_bot[bot_name]
             if bot_name in robo.activate_bot:
-                del robo.activate_bot[bot_name]            
+                del robo.activate_bot[bot_name]
             indicators.clean_indicators(bot_name=bot_name)
             Bots.remove(bot_name)
             TreeTable.bot_menu.delete(iid=bot_name)

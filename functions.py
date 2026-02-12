@@ -573,7 +573,7 @@ class Function(WS, Variables):
                 order_message = "Order replaced " + row["symbol"][0]
                 if emi in var.orders and clOrdID in var.orders[emi]:
                     if price == var.orders[emi][clOrdID]["price"]:
-                        info_q == None
+                        info_q = None
                     else:
                         var.orders[emi][clOrdID]["orderID"] = row["orderID"]
                         info_p = price

@@ -2,7 +2,6 @@ import platform
 import tkinter as tk
 import tkinter.font
 import webbrowser
-from datetime import datetime
 from tkinter import ttk
 from typing import Callable, Union
 
@@ -487,7 +486,7 @@ class Variables:
         fg_color,
         command=on_menu_select,
         menu_items=[
-            "<F1> Home", 
+            "<F1> Home",
             "<F9> Trading ON",
             "<F8> Settings",
             "<F7> Bot Menu",
