@@ -832,8 +832,9 @@ class Function(WS, Variables):
                         next_minute = (
                             int(utcnow.minute / timefr_minutes) * timefr_minutes
                         )
+                        next_hour = int((utcnow.hour * 60) // timefr_minutes * timefr_minutes / 60)
                         dt_now = utcnow.replace(
-                            minute=next_minute, second=0, microsecond=0
+                            hour=next_hour, minute=next_minute, second=0, microsecond=0
                         )
                         try:
                             ask = instrument.asks[0][0]
@@ -859,12 +860,12 @@ class Function(WS, Variables):
                                 market=instrument.market, message=message, warning=True
                             )
                             bid = values["data"][-1]["open_bid"]
+                        dt = (dt_now.year - 2000) * 10000 + dt_now.month * 100 + dt_now.day
+                        tm = dt_now.hour * 100 + dt_now.minute
                         values["data"].append(
                             {
-                                "date": (utcnow.year - 2000) * 10000
-                                + utcnow.month * 100
-                                + utcnow.day,
-                                "time": utcnow.hour * 100 + utcnow.minute,
+                                "date": dt,
+                                "time": tm,
                                 "open_bid": bid,
                                 "open_ask": ask,
                                 "hi": ask,
