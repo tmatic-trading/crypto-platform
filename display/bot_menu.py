@@ -397,11 +397,7 @@ class SettingsApp:
 
         def change_state() -> None:
             if state.get() != bot.state:
-                if prev_state == "Disconnected":
-                    update = True
-                else:
-                    update = False
-                err = update_bot_state(new_state=state.get(), bot=bot, update=update)
+                err = update_bot_state(new_state=state.get(), bot=bot)
                 if err is None:
                     text_label["text"] = format_text()
                     res_label["text"] = f"State changed to `{bot.state}`."
@@ -411,7 +407,6 @@ class SettingsApp:
             service.wrap(self.brief_frame, padx=self.padx)
 
         bot = Bots[bot_name]
-        prev_state = bot.state
         self.check_bot_file(bot_name=bot_name)
         self.switch(option="option")
         disp.bot_menu_option = "activate"
@@ -1019,7 +1014,7 @@ class SettingsApp:
                     bot.error_message = {}
 
 
-def update_bot_state(new_state: str, bot: BotData, update=False) -> Union[str, None]:
+def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
     """
     Updates the database entry when the bot's state changes.
 
@@ -1040,17 +1035,19 @@ def update_bot_state(new_state: str, bot: BotData, update=False) -> Union[str, N
     )
     if err is None:
         bot.state = new_state
+        if bot.state == "Disconnected":
+            update = False
+        else:
+            update = True
         import_bot_module(bot.name, update=update)
         update_bot_info(bot_name=bot.name)
     if update:
-        if Bots[disp.bot_name].state != "Disconnected":
-            if update:
-                service.call_bot_function(
-                    function=robo.setup_bot[bot.name], bot_name=bot.name
-                )
-            service.call_bot_function(
-                function=robo.activate_bot[bot.name], bot_name=bot.name
-            )
+        service.call_bot_function(
+            function=robo.setup_bot[bot.name], bot_name=bot.name
+        )
+        service.call_bot_function(
+            function=robo.activate_bot[bot.name], bot_name=bot.name
+        )
 
         return
 
