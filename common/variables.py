@@ -45,7 +45,7 @@ def expire_pattern(scope: int) -> dict:
     year_subt = 2000
     for year in range(this_year, this_year + scope + 1):
         if year - this_year == scope:
-            end_month = datetime.now().month
+            end_month = datetime.now(tz=timezone.utc).month
         if year - year_subt > 99:
             year_subt += 100
         year -= year_subt
@@ -119,7 +119,7 @@ class Variables:
     orders = dict()
     timeframe_human_format = OrderedDict(
         [
-            ("tick", None),
+            ("tick", 0),
             ("1min", 1),
             ("2min", 2),
             ("3min", 3),

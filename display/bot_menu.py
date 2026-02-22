@@ -1042,9 +1042,7 @@ def update_bot_state(new_state: str, bot: BotData) -> Union[str, None]:
         import_bot_module(bot.name, update=update)
         update_bot_info(bot_name=bot.name)
     if update:
-        service.call_bot_function(
-            function=robo.setup_bot[bot.name], bot_name=bot.name
-        )
+        service.call_bot_function(function=robo.setup_bot[bot.name], bot_name=bot.name)
         service.call_bot_function(
             function=robo.activate_bot[bot.name], bot_name=bot.name
         )
@@ -1342,7 +1340,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
             robo.activate_bot[bot_name] = "No activate"
         if update:
             functions.init_bot_klines(bot_name)
-        tm = datetime.now()
+        tm = datetime.now(tz=timezone.utc)
         month = "0" * (2 - len(str(tm.month))) + str(tm.month)
         day = "0" * (2 - len(str(tm.day))) + str(tm.day)
         hr = "0" * (2 - len(str(tm.hour))) + str(tm.hour)

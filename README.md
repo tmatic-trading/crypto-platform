@@ -551,16 +551,18 @@ kline = Bitmex["XBTUSDT"].add_kline()
 kline(-1)
 ```
 
-A value of -1 returns data for the most recent period, -2 for the period before the most recent, and so on.
+A value of 0 returns data for the most recent period, -1 for the period before the most recent, and so on.
 
 ```Python
 {
     "date": 240820,
     "time": 134500,
+    "bid": 63264.5,
+    "ask": 63265,
     "open_bid": 63259.5,
     "open_ask": 63260.0,
-    "hi": 63260.0,
-    "lo": 63259.5,
+    "hi": 63265.0,
+    "lo": 63250.5,
     "funding": -0.11806,
     "datetime": datetime.datetime(
         2024, 8, 20, 13, 45, tzinfo=datetime.timezone.utc

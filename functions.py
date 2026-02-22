@@ -794,11 +794,19 @@ class Function(WS, Variables):
             position["entry_pnl"] = res["entry_pnl"]
             position["entry_pnl_percent"] = res["entry_pnl_percent"]
 
-    def update_and_run_bots(self, bots: set, timefr: str):
+    def update_and_run_bots(
+        self, bots: set = set(), timefr: str = "", utcnow: datetime = None
+    ) -> None:
+        if timefr == "":
+            bots = Bots.keys()
         bot_list = list()
         for bot_name in bots:
             bot = Bots[bot_name]
-            if bot.timefr == timefr:
+            timefr_minutes = var.timeframe_human_format[bot.timefr]
+            if (
+                bot.timefr != "tick"
+                and utcnow > bot.time + timedelta(minutes=timefr_minutes)
+            ) or timefr == "tick":
                 if not bot.error_message:
                     if bot.state != "Disconnected":
                         if bot.state == "Active":
@@ -808,6 +816,7 @@ class Function(WS, Variables):
                             function=robo.update_bot[bot_name],
                             bot_name=bot_name,
                         )
+                bot.time = service.align_time(utcnow, timefr_minutes)
         service.run_bots(bot_list=bot_list)
 
     def kline_update_market(self: Markets, utcnow: datetime) -> None:
@@ -820,22 +829,13 @@ class Function(WS, Variables):
                     timefr_minutes = var.timeframe_human_format[timefr]
                     if utcnow > values["time"] + timedelta(minutes=timefr_minutes):
                         instrument = self.Instrument[symbol]
-                        Function.update_and_run_bots(
-                            self, bots=values["robots"], timefr=timefr
-                        )
                         Function.save_kline_data(
                             self,
                             row=values["data"][-1],
                             symbol=symbol,
                             timefr=timefr,
                         )
-                        next_minute = (
-                            int(utcnow.minute / timefr_minutes) * timefr_minutes
-                        )
-                        next_hour = int((utcnow.hour * 60) // timefr_minutes * timefr_minutes / 60)
-                        dt_now = utcnow.replace(
-                            hour=next_hour, minute=next_minute, second=0, microsecond=0
-                        )
+                        dt_now = service.align_time(utcnow, timefr_minutes)
                         try:
                             ask = instrument.asks[0][0]
                         except IndexError:
@@ -860,7 +860,11 @@ class Function(WS, Variables):
                                 market=instrument.market, message=message, warning=True
                             )
                             bid = values["data"][-1]["open_bid"]
-                        dt = (dt_now.year - 2000) * 10000 + dt_now.month * 100 + dt_now.day
+                        dt = (
+                            (dt_now.year - 2000) * 10000
+                            + dt_now.month * 100
+                            + dt_now.day
+                        )
                         tm = dt_now.hour * 100 + dt_now.minute
                         values["data"].append(
                             {
@@ -875,6 +879,7 @@ class Function(WS, Variables):
                             }
                         )
                         values["time"] = dt_now
+        Function.update_and_run_bots(self, utcnow=utcnow)
 
     def refresh_on_screen(self: Markets, utc: datetime) -> None:
         """

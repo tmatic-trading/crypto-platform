@@ -223,6 +223,7 @@ class BotData:
     iter: int = 0
     strategy_log: str
     multitrade: str = ""
+    time: datetime
 
     # Technical. Ensures the order in which transactions are executed. See
     # tools.py wait().

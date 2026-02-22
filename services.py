@@ -941,6 +941,12 @@ def init_bot(
     bot.backtest_data = dict()
     bot.iter = 0
     bot.bot_pnl = dict()
+    if timefr != "tick":
+        bot.time = align_time(
+            datetime.now(tz=timezone.utc), var.timeframe_human_format[timefr]
+        )
+    else:
+        bot.time = datetime.now(tz=timezone.utc)
 
 
 def get_clOrdID(row: dict) -> tuple:
@@ -1029,3 +1035,15 @@ def humanFormat(instrument: Instrument, volNow: int) -> str:
 
 def calculate_entry_pnl() -> float:
     pass
+
+
+def align_time(utcnow: datetime, timefr_minutes: int) -> datetime:
+    """
+    Aligns time according to timeframes for kline and bots.
+    """
+    if not timefr_minutes:
+        return utcnow
+    next_minute = int(utcnow.minute / timefr_minutes) * timefr_minutes
+    next_hour = int((utcnow.hour * 60) // timefr_minutes * timefr_minutes / 60)
+
+    return utcnow.replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)

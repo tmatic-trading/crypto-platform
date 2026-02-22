@@ -185,7 +185,7 @@ def try_response(response, exception):
 
         # Save error in error.log when try_response failed.
 
-        error = f"try_response failed {datetime.now()}\n#\n"
+        error = f"try_response failed {datetime.now(tz=timezone.utc)}\n#\n"
         error += f"{exception.__class__.args}\n#\n"
         error += f"___exception {exception}\n#\n"
         error += f"___exception.__class__.__name__ {exception.__class__.__name__}\n#\n"
