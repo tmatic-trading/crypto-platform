@@ -932,6 +932,7 @@ class SettingsApp:
             del self.modules[bot_name]
             del var.orders[bot_name]
             functions.remove_bot_klines(bot_name)
+            functions.check_klines_update(bot_name)
             functions.update_order_form()
         except Exception as e:
             if err is None:
@@ -1260,6 +1261,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
     update: bool
         Evaluates to True when strategy.py is updated.
     """
+    functions.remove_bot_klines(bot_name)
     if Bots[bot_name].state != "Disconnected":
         module = "algo." + bot_name + "." + bot_manager.strategy_file.split(".")[0]
         Bots[bot_name].error_message = {}
@@ -1358,6 +1360,7 @@ def import_bot_module(bot_name: str, update=False) -> None:
             del robo.update_bot[bot_name]
         if bot_name in robo.activate_bot:
             del robo.activate_bot[bot_name]
+    functions.check_klines_update(bot_name)
 
 
 def insert_bot_log(

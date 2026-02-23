@@ -3181,6 +3181,23 @@ def init_bot_klines(bot_name: str) -> None:
                 var.logger.error(message)
                 time.sleep(2)
 
+def check_klines_update(bot_name: str) -> None:
+    """
+    Cancels the Kline update for a specific exchange if there are no bots in 
+    the subscription.
+    """
+    for market in var.market_list:
+        ws = Markets[market]
+        for symbol, timeframes in ws.klines.items():
+            copy = timeframes.copy()
+            for timefr in copy.keys():
+                if not ws.klines[symbol][timefr]["robots"]:
+                    var.lock_kline_update.acquire(True)
+                    del ws.klines[symbol][timefr]
+                    if not ws.klines:
+                        del ws.klines[symbol]
+                    var.lock_kline_update.release()
+
 
 def remove_bot_klines(bot_name: str) -> None:
     """
@@ -3189,18 +3206,11 @@ def remove_bot_klines(bot_name: str) -> None:
     """
     for market in var.market_list:
         ws = Markets[market]
-        ws.klines
         for symbol, timeframes in ws.klines.items():
             copy = timeframes.copy()
             for timefr, value in copy.items():
                 if bot_name in value["robots"]:
                     ws.klines[symbol][timefr]["robots"].remove(bot_name)
-                    if not ws.klines[symbol][timefr]["robots"]:
-                        var.lock_kline_update.acquire(True)
-                        del ws.klines[symbol][timefr]
-                        if not ws.klines:
-                            del ws.klines[symbol]
-                        var.lock_kline_update.release()
 
 
 def setup_klines():
