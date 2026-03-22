@@ -102,10 +102,18 @@ def get_usage():
     Variables.usage_count += 1
 
 
-def ticksize_rounding(price: float, ticksize: float) -> float:
+def ticksize_rounding(price: float, ticksize: float, rside: int = 0) -> float:
     """
     Rounds the price depending on the tickSize value.
     """
+    if rside:
+        coeff = 1 / ticksize
+        result = int(coeff * price) / coeff
+        if rside < 0 and result < price:
+            result += ticksize
+            
+        return result
+    
     arg = 1 / ticksize
     res = round(price * arg, 0) / arg
 
